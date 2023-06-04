@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="external-files-in-media-library" basedir="." default="help">
+
+    <!-- Include config file containing  -->
+    <loadproperties srcFile="build.properties" />
+
+    <!-- Sets variables which can later be used. -->
+    <property name="src.dir" location="../" />
+    <property name="build.dir" location="../releases" />
+    <property name="log.dir" location="./" />
+
+    <!-- check for necessary vars -->
+    <fail unless="plugin.slug" />
+    <fail unless="plugin.version" />
+    <fail message="Do not run as root!">
+        <condition>
+            <equals arg1="root" arg2="${user.name}"/>
+        </condition>
+    </fail>
+
+    <!-- set version number in plugin-file for the release -->
+    <target name="setVersionNumber">
+        <delete file="${build.dir}/${plugin.slug}-release.php"/>
+        <copy file="${src.dir}/${plugin.slug}.php" tofile="${src.dir}/${plugin.slug}-release.php"/>
+        <replace file="${src.dir}/${plugin.slug}-release.php">
+            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
+        </replace>
+
+        <copy file="${src.dir}/languages/external-medias-library.pot" tofile="${log.dir}/languages/external-medias-library.pot"/>
+        <replace file="${src.dir}/languages/external-medias-library.pot">
+            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
+        </replace>
+
+        <copy file="${src.dir}/languages/external-medias-library-de_DE.po" tofile="${log.dir}/languages/external-medias-library-de_DE.po"/>
+        <replace file="${src.dir}/languages/external-medias-library-de_DE.po">
+            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
+        </replace>
+
+        <copy file="${src.dir}/languages/external-medias-library-de_DE_formal.po" tofile="${log.dir}/languages/external-medias-library-de_DE_formal.po"/>
+        <replace file="${src.dir}/languages/external-medias-library-de_DE_formal.po">
+            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
+        </replace>
+    </target>
+
+    <!-- create release-zip -->
+    <target name="build" description="builds a new release" depends="setVersionNumber">
+        <delete file="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
+        <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
+            <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
+            <zipfileset dir="${src.dir}/classes" prefix="${plugin.slug}/classes" />
+            <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
+            <zipfileset dir="${src.dir}/languages" prefix="${plugin.slug}/languages" />
+            <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt" prefix="${plugin.slug}" />
+            <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
+        </zip>
+        <delete file="${src.dir}/${plugin.slug}-release.php"/>
+        <copy file="${log.dir}/languages/external-medias-library.pot" tofile="${src.dir}/languages/external-medias-library.pot" overwrite="true" />
+        <copy file="${log.dir}/languages/external-medias-library-de_DE.po" tofile="${src.dir}/languages/external-medias-library-de_DE.po" overwrite="true" />
+        <copy file="${log.dir}/languages/external-medias-library-de_DE_formal.po" tofile="${src.dir}/languages/external-medias-library-de_DE_formal.po" overwrite="true" />
+    </target>
+
+    <target name="help">
+        <java classname="org.apache.tools.ant.Main">
+            <arg value="-projecthelp" />
+            <arg value="-buildfile" />
+            <arg value="build.xml" />
+        </java>
+    </target>
+
+</project>

@@ -1,0 +1,448 @@
+# Copyright (C) 2023 Thomas Zwirner
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: External files in Media Library @@VersionNumber@@\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/external-files-in-"
+"media-library\n"
+"POT-Creation-Date: 2023-06-04T16:46:08+02:00\n"
+"PO-Revision-Date: 2023-06-04 16:47+0200\n"
+"Last-Translator: Thomas Zwirner <info@thomaszwirner.de>\n"
+"Language-Team: \n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0.1\n"
+"X-Domain: external-medias-library\n"
+
+#. Plugin Name of the plugin
+msgid "External files in Media Library"
+msgstr "Externe Dateien in der Medienbibliothek"
+
+#. Description of the plugin
+msgid "Enables the Media Library to use external files."
+msgstr "Ermöglicht es der Medienbibliothek, externe Dateien zu verwenden."
+
+#. Author of the plugin
+msgid "Thomas Zwirner"
+msgstr "Thomas Zwirner"
+
+#. Author URI of the plugin
+msgid "https://www.thomaszwirner.de"
+msgstr "https://www.thomaszwirner.de"
+
+#: classes/eml/class-transient.php:163
+msgid "Dismiss this notice."
+msgstr "Diesen Hinweis ausblenden."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:242
+msgid "URL %1$s successfully added in media library."
+msgstr "URL %1$s erfolgreich in Medienbibliothek hinzugefügt."
+
+#. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message
+#: classes/eml/Controller/class-external-files.php:250
+msgid "URL %1$s could not be saved because of this error: %2$s"
+msgstr ""
+"Die URL %1$s konnte wegen dieses Fehlers nicht gespeichert werden: %2$s"
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:270
+msgid "Given string %s is not a valid url starting with http."
+msgstr ""
+"Die angegebene Zeichenkette %s ist keine gültige Url, die mit http beginnt."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:277
+msgid "Given string %s is not a valid url."
+msgstr "Die angegebene Zeichenkette %s ist keine gültige Url."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:298
+msgid "Given url %s already exist in media library."
+msgstr "Die angegebene URL %s existiert bereits in der Medienbibliothek."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:325
+msgid "Given URL %s is not available."
+msgstr "Die angegebene URL %s ist nicht verfügbar."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:332
+msgid "Given URL %1$s response with http-status %2$d."
+msgstr "Die angegebene URL %1$s antwortet mit dem http-status %2$d."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:340
+msgid "Given URL %s response without Content-type."
+msgstr "Die angegebene URL %s verfügt über keinen Content-Type."
+
+#. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type
+#: classes/eml/Controller/class-external-files.php:348
+msgid "Given URL %1$s response with a not allowed mime-type %2$s."
+msgstr ""
+"Die angegebene URL %1$s antwortet mit einem nicht zulässigen Content-type "
+"%2$s."
+
+#. translators: %1$s will be replaced by the url of the file.
+#: classes/eml/Controller/class-external-files.php:354
+msgid "Given URL %1$s is available."
+msgstr "Die angegebene URL %1$s ist nicht erreichbar."
+
+#. translators: %1$s will be replaced by the file-URL
+#: classes/eml/Controller/class-external-files.php:376
+msgid "URL %1$s has been deleted from media library."
+msgstr "Die URL %1$s wurde aus der Medienbibliothek gelöscht."
+
+#: classes/eml/Controller/class-external-files.php:418
+msgid "GIF"
+msgstr "GIF"
+
+#: classes/eml/Controller/class-external-files.php:422
+msgid "JPG/JPEG"
+msgstr "JPG/JPEG"
+
+#: classes/eml/Controller/class-external-files.php:426
+msgid "PNG"
+msgstr "PNG"
+
+#: classes/eml/Controller/class-external-files.php:430
+msgid "WEBP"
+msgstr "WEBP"
+
+#: classes/eml/Controller/class-external-files.php:434
+msgid "PDF"
+msgstr "PDF"
+
+#: classes/eml/Controller/class-external-files.php:438
+msgid "ZIP"
+msgstr "ZIP"
+
+#: classes/eml/Controller/class-external-files.php:442
+msgid "MP4 Video"
+msgstr "MP4 Video"
+
+#: classes/eml/Controller/class-external-files.php:702
+msgid "Error creating cache directory."
+msgstr "Fehler beim Erstellen des Cache-Verzeichnisses."
+
+#: classes/eml/Controller/class-init.php:214
+msgid "Mime-Type not allowed"
+msgstr "Content-type ist nicht erlaubt."
+
+#: classes/eml/View/class-logs.php:25
+msgid "URL"
+msgstr "URL"
+
+#: classes/eml/View/class-logs.php:26
+msgid "date"
+msgstr "Datum"
+
+#: classes/eml/View/class-logs.php:27
+msgid "state"
+msgstr "Status"
+
+#: classes/eml/View/class-logs.php:28
+msgid "log"
+msgstr "Log"
+
+#: inc/admin.php:27 inc/admin.php:741
+msgid "General Settings"
+msgstr "Allgemeine Einstellungen"
+
+#: inc/admin.php:33
+msgid ""
+"Each file in media library has a attachment page which could be called in "
+"frontend. With this option you can disable this attachment page for files "
+"with URLs."
+msgstr ""
+"Jede Datei in der Medienbibliothek hat eine Anhangseite, die im Frontend "
+"aufgerufen werden kann. Mit dieser Option können Sie diese Anhangsseite für "
+"Dateien mit URLs deaktivieren."
+
+#: inc/admin.php:35
+msgid "This is handled by Yoast SEO."
+msgstr "Das wird durch Yoast SEO übernommen."
+
+#: inc/admin.php:41
+msgid "Disable the attachment page for URL-files"
+msgstr "Deaktivieren Sie die Anhangseite für URL-Dateien"
+
+#: inc/admin.php:57
+msgid "Disable the check"
+msgstr "Deaktiviere die Prüfung"
+
+#: inc/admin.php:64
+msgid "Set interval for file-check"
+msgstr "Intervall für die Dateiprüfung festlegen"
+
+#: inc/admin.php:71
+msgid ""
+"Defines the time interval in which files with URLs are automatically checked "
+"for its availability."
+msgstr ""
+"Legt das Zeitintervall fest, in dem Dateien mit URLs automatisch auf ihre "
+"Verfügbarkeit geprüft werden."
+
+#: inc/admin.php:86
+msgid "Select allowed mime-types"
+msgstr "Erlaubte Content-Types auswählen"
+
+#: inc/admin.php:94
+msgid ""
+"Choose the mime-types you wish to allow as external URL. If you change this "
+"setting, already used external files will not change their accessibility in "
+"frontend."
+msgstr ""
+"Wählen Sie die Content-Types, die Sie als externe URL zulassen möchten. Wenn "
+"Sie diese Einstellung ändern, werden bereits verwendete externe Dateien im "
+"Frontend nicht mehr zugänglich sein."
+
+#: inc/admin.php:102
+msgid "Log-mode"
+msgstr "Log-Mode"
+
+#: inc/admin.php:110
+msgid "normal"
+msgstr "normal"
+
+#: inc/admin.php:111
+msgid "log warnings"
+msgstr "Warnungen loggen"
+
+#: inc/admin.php:112
+msgid "log all"
+msgstr "alles loggen"
+
+#: inc/admin.php:121
+msgid "Delete all data on deinstallation"
+msgstr "Löschen aller Daten bei Deinstallation"
+
+#: inc/admin.php:128
+msgid ""
+"If this option is enabled all URL-files will be deleted during "
+"deinstallation of this plugin."
+msgstr ""
+"Wenn diese Option aktiviert ist, werden alle URL-Dateien bei der "
+"Deinstallation des Plugins gelöscht."
+
+#: inc/admin.php:138
+msgid "Adding files"
+msgstr "Hinzufügen von Dateien"
+
+#: inc/admin.php:154
+msgid "Select user roles"
+msgstr "Benutzerrollen auswählen"
+
+#: inc/admin.php:162
+msgid "Select roles which should be allowed to add external files."
+msgstr ""
+"Wählen Sie die Rollen aus, denen es erlaubt sein soll, externe Dateien "
+"hinzuzufügen."
+
+#: inc/admin.php:175
+msgid "User new files should be assigned to"
+msgstr "Benutzer dem neue Dateien zugewiesen werden"
+
+#: inc/admin.php:182
+msgid ""
+"This is only a fallback if the actual user is not available (e.g. via CLI-"
+"import). New files are normally assigned to the user who add them."
+msgstr ""
+"Dies ist nur ein Fallback, wenn der eigentliche Benutzer nicht verfügbar ist "
+"(z. B. über CLI-Import). Neue Dateien werden normalerweise dem Benutzer "
+"zugewiesen, der sie hinzugefügt hat."
+
+#: inc/admin.php:193
+msgid "Images Settings"
+msgstr "Bild-Einstellungen"
+
+#: inc/admin.php:201
+msgid "Mode for image handling"
+msgstr "Modus für Bild-Bearbeitung"
+
+#: inc/admin.php:208
+msgid "Defines how external images are handled."
+msgstr "Legt fest, wie externe Bilder behandelt werden."
+
+#: inc/admin.php:210
+msgid "host them extern"
+msgstr "extern hosten"
+
+#: inc/admin.php:211
+msgid "download and host them local"
+msgstr "runterladen und lokal hosten"
+
+#: inc/admin.php:220
+msgid "Enable proxy for images"
+msgstr "Aktiviere Proxy für Bilder"
+
+#: inc/admin.php:227
+msgid ""
+"This option is only available if images are hosted external. If this option "
+"is disabled, external images will be embedded with their external URL. To "
+"prevent privacy protection issue you could enable this option to load the "
+"images locally."
+msgstr ""
+"Diese Option ist nur verfügbar, wenn die Bilder extern gehostet werden. Wenn "
+"diese Option deaktiviert ist, werden die externen Bilder mit ihrer externen "
+"URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, können Sie "
+"diese Option aktivieren, um die Bilder lokal zu laden."
+
+#: inc/admin.php:236
+msgid "Max age for cached images in proxy in hours"
+msgstr "Höchstalter für zwischengespeicherte Bilder im Proxy in Stunden"
+
+#: inc/admin.php:243
+msgid ""
+"Defines how long images, which are loaded via our own proxy, are saved "
+"locally. After this time their cache will be renewed."
+msgstr ""
+"Legt fest, wie lange Bilder, die über unseren eigenen Proxy geladen werden, "
+"lokal gespeichert werden. Nach dieser Zeit wird ihr Cache erneuert."
+
+#: inc/admin.php:258
+msgid "Settings for External files in Media Library"
+msgstr "Einstellungen für externe Dateien in der Medienbibliothek"
+
+#: inc/admin.php:259
+msgid "External files in Medias Library"
+msgstr "Externe Dateien in der Mediathek"
+
+#: inc/admin.php:324 inc/admin.php:370
+msgid "Add external URL"
+msgid_plural "Add external URLs"
+msgstr[0] "Externe URL hinzufügen"
+msgstr[1] "Externe URLs hinzufügen"
+
+#: inc/admin.php:335 inc/admin.php:381
+msgid "Add this URL"
+msgid_plural "Add this URLs"
+msgstr[0] "Diese URL hinzufügen"
+msgstr[1] "Diese URLs hinzufügen"
+
+#. translators: %1$s will be replaced with the URL for add new media
+#: inc/admin.php:345
+msgid "Add external files <a href=\"%1$s\">here</a>."
+msgstr "Füge externe Dateien <a href=\"%1$s\">hier</a> hinzu."
+
+#: inc/admin.php:405
+msgid "No URLs given to import."
+msgstr "Keine URL für den Import angegeben."
+
+#. translators: %1$s will be replaced by the edit-URL of the saved file.
+#: inc/admin.php:439
+msgid "The given URL <a href=\"%1$s\">has been saved</a> in media library."
+msgstr ""
+"Die angegebene URL <a href=\"%1$s\">wurde in der Medienbibliothek "
+"gespeichert</a>."
+
+#. translators: %1$s will be replaced by list of successfully saved URLs.
+#: inc/admin.php:450
+msgid "The following URLs has been saved in media library: %1$s"
+msgstr "Die folgenden URLs wurden in der Medien-Bibiliothek gespeichert: %1$s"
+
+#. translators: %1$s is replaced by the file-list, %2$s is replaced by the URL to the plugin-log
+#: inc/admin.php:469
+msgid ""
+"<p>Following URL could not be saved in the media library:</p>%1$s<p>Details "
+"are visible <a href=\"%2$s\">in the log</a>.</p>"
+msgid_plural ""
+"<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details "
+"are visible <a href=\"%2$s\">in the log</a>.</p>"
+msgstr[0] ""
+"<p>Folgende URL konnte nicht in der Mediathek gespeichert werden:</p>"
+"%1$s<p>Details sind <a href=\"%2$s\">im Protokoll</a> nachzulesen.</p>"
+msgstr[1] ""
+"<p>Folgende URLs konnten nicht in der Mediathek gespeichert werden:</p>"
+"%1$s<p>Details sind <a href=\"%2$s\">im Protokoll</a> nachzulesen.</p>"
+
+#: inc/admin.php:500
+msgid "All files"
+msgstr "Alle Dateien"
+
+#: inc/admin.php:501
+msgid "only external URLs"
+msgstr "nur externe URLs"
+
+#: inc/admin.php:502
+msgid "no external URLs"
+msgstr "nur nicht externe URLs"
+
+#: inc/admin.php:569
+msgid "External file"
+msgstr "Externe Datei"
+
+#: inc/admin.php:608
+msgid "File-URL:"
+msgstr "Datei-URL:"
+
+#: inc/admin.php:613 inc/admin.php:695
+msgid "File-URL is available."
+msgstr "Datei-URL ist erreichbar."
+
+#. translators: %1$s will be replaced by the URL for the logs
+#: inc/admin.php:621
+msgid ""
+"File-URL is NOT available! Check <a href=\"%1$s\">the log</a> for details."
+msgstr ""
+"Datei-URL ist nicht erreichbar. Prüfe <a href=\"%1$s\">das Log</a> für "
+"Details dazu."
+
+#: inc/admin.php:627
+msgid "Recheck availability"
+msgstr "Verfügbarkeit prüfen"
+
+#: inc/admin.php:631
+msgid "This file is local hostet."
+msgstr "Die Datei ist lokal gehostet."
+
+#: inc/admin.php:633
+msgid "This file is extern hostet."
+msgstr "Die Datei ist extern gehostet."
+
+#: inc/admin.php:641
+msgid "This file is delivered through proxied cache."
+msgstr "Diese Datei wird über einen Proxy-Cache bereitgestellt."
+
+#: inc/admin.php:643
+msgid "This file is not cached in proxy."
+msgstr "Die Datei ist keine über den Proxy gecachte Datei."
+
+#: inc/admin.php:654
+msgid "This file is not an external file."
+msgstr "Die Datei ist keine externe Datei."
+
+#: inc/admin.php:675
+msgid "No ID given."
+msgstr "Keine ID angegeben."
+
+#. translators: %1$s will be replaced by the URL for the logs
+#: inc/admin.php:702
+msgid ""
+"URL-File is NOT available! Check <a href=\"%1$s\">the log</a> for details."
+msgstr ""
+"URL-Datei ist nicht erreichbar. Prüfe <a href=\"%1$s\">das Log</a> für "
+"Details dazu."
+
+#: inc/admin.php:750 inc/admin.php:801
+msgid "Logs"
+msgstr "Logs"
+
+#: inc/admin.php:966
+msgid "The given interval does not exists."
+msgstr "Das angegebene Intervall existiert nicht."
+
+#: inc/admin.php:1054
+msgid "The given mime-type is not supported. Setting will not be saved."
+msgstr ""
+"Der angegebene Content-type wird nicht Unterstützung. Einstellung wird nicht "
+"gespeichert."
+
+#: inc/admin.php:1101
+msgid "External files could not be used as no mime-types are allowed."
+msgstr ""
+"Externe Dateien konnten nicht verwendet werden, da deren Content-type nicht "
+"erlaubt ist."

@@ -1,0 +1,14 @@
+{
+    "name": "threadi/eml",
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^2.3"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs"
+        ],
+        "post-update-cmd": [
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs"
+        ]
+    }
+}
