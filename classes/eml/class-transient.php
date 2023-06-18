@@ -44,7 +44,7 @@ class Transient {
 	 *
 	 * @var array
 	 */
-	private array $action;
+	private array $action = array();
 
 	/**
 	 * Constructor for this object.
