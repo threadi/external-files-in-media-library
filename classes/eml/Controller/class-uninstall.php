@@ -7,6 +7,11 @@
 
 namespace threadi\eml\Controller;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use threadi\eml\Model\Log;
 use threadi\eml\Transients;
 

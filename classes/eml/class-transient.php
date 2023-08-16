@@ -7,6 +7,11 @@
 
 namespace threadi\eml;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Initialize a single transient-object.
  */

@@ -5,6 +5,11 @@
  * @package external-files-in-media-library
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Add autoloader for each php-class in this plugin.
  */

@@ -5,6 +5,16 @@
  * @package external-files-in-media-library
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+// if uninstall.php is not called by WordPress, die.
+if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
+    die;
+}
+
 // include necessary files.
 use threadi\eml\Controller\Uninstall;
 

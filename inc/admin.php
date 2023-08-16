@@ -5,6 +5,11 @@
  * @package external-files-in-media-library
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use threadi\eml\Controller\external_files;
 use threadi\eml\helper;
 use threadi\eml\Model\External_File;
@@ -880,7 +885,7 @@ function eml_admin_number_field( array $attr ): void {
 			   class="eml-field-width"
 			   title="<?php echo esc_attr( $title ); ?>"
 			<?php
-			echo $readonly;
+			echo esc_attr($readonly);
 			?>
 		>
 		<?php
