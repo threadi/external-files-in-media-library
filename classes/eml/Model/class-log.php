@@ -7,6 +7,11 @@
 
 namespace threadi\eml\Model;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use wpdb;
 
 /**
@@ -54,11 +59,7 @@ class Log {
 	 * @noinspection SqlResolve
 	 */
 	public function get_logs(): array {
-		$sql = '
-            SELECT `state`, `time` AS `date`, `log`, `url`
-            FROM ' . $this->table_name . '
-            ORDER BY `time` DESC';
-		return $this->wpdb->get_results( $sql, ARRAY_A );
+		return $this->wpdb->get_results( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $this->table_name . ' ORDER BY `time` DESC', ARRAY_A ); // phpcs:ignore
 	}
 
 	/**
@@ -107,7 +108,7 @@ class Log {
 	 */
 	public function uninstall(): void {
 		$sql = "DROP TABLE IF EXISTS {$this->table_name}";
-		$this->wpdb->query( $sql );
+		$this->wpdb->query( $sql ); // phpcs:ignore
 	}
 
 	/**
@@ -147,7 +148,7 @@ class Log {
 	 */
 	private function clean_log(): void {
 		$sql = sprintf( 'DELETE FROM `%s` WHERE `time` < DATE_SUB(NOW(), INTERVAL %d DAY)', $this->table_name, 50 );
-		$this->wpdb->query( $sql );
+		$this->wpdb->query( $sql ); // phpcs:ignore
 	}
 
 	/**
@@ -157,7 +158,7 @@ class Log {
 	 */
 	public function truncate_log(): void {
 		$sql = 'TRUNCATE TABLE `' . $this->table_name . '`';
-		$this->wpdb->query( $sql );
+		$this->wpdb->query( $sql ); // phpcs:ignore
 	}
 
 	/**
@@ -172,5 +173,4 @@ class Log {
 	private function get_level(): int {
 		return get_option( 'eml_log_mode', 0 );
 	}
-
 }

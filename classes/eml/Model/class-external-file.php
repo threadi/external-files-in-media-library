@@ -7,6 +7,11 @@
 
 namespace threadi\eml\Model;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use threadi\eml\Controller\External_Files;
 use threadi\eml\Controller\Proxy;
 
@@ -100,14 +105,14 @@ class External_File {
 		}
 
 		// use local proxy if enabled, this is an image and if we are not in wp-admin.
-		if ( $this->is_image() && 1 === absint( get_option( 'eml_proxy', 0 ) ) && false === $unproxied ) {
+		if ( ! empty( $this->url ) && $this->is_image() && 1 === absint( get_option( 'eml_proxy', 0 ) ) && false === $unproxied ) {
 			if ( empty( get_option( 'permalink_structure', '' ) ) ) {
 				// return link for simple permalinks.
 				return '?emlproxy=' . $this->get_title();
 			}
 
 			// return link for pretty permalinks.
-			return '/' . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+			return get_home_url() . '/' . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
 		}
 
 		// return normal URL.
@@ -346,7 +351,7 @@ class External_File {
 			return true;
 		}
 
-		// return false.
+		// set return value to false.
 		return false;
 	}
 

@@ -7,6 +7,11 @@
 
 namespace threadi\eml\Controller;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use finfo;
 use threadi\eml\Transients;
 
@@ -14,6 +19,7 @@ use threadi\eml\Transients;
  * Initialize the proxy-handler.
  */
 class Proxy {
+
 
 	/**
 	 * Instance of actual object.
@@ -32,14 +38,16 @@ class Proxy {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {}
+	private function __construct() {
+	}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {}
+	private function __clone() {
+	}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -122,19 +130,21 @@ class Proxy {
 
 		// get file object.
 		$external_file_obj = External_Files::get_instance()->get_file_by_title( $title );
+
+		// bail if no file object could be loaded or the loaded object is not valid.
 		if ( false === $external_file_obj || ( $external_file_obj && false === $external_file_obj->is_valid() ) ) {
 			return $template;
 		}
 
 		// get cached file and return it.
 		if ( $external_file_obj->is_cached() ) {
-			$this->return_binary( $external_file_obj->get_cached_file_content(), $external_file_obj->get_mime_type(), $external_file_obj->get_filesize(), $external_file_obj->get_url( true ) );
+			$this->return_binary( $external_file_obj->get_cache_file(), $external_file_obj->get_mime_type(), $external_file_obj->get_filesize(), $external_file_obj->get_url( true ) );
 		}
 
 		// get the external file.
 		$response = wp_remote_get( $external_file_obj->get_url( true ) );
 
-		// if response war successfully.
+		// if response was successfully.
 		if ( false === is_wp_error( $response ) ) {
 
 			// compare the retrieved mime-type with the saved mime-type.
@@ -164,7 +174,7 @@ class Proxy {
 			$external_file_obj->add_cache( $body );
 
 			// output the file.
-			$this->return_binary( $body, $mime_type, $file_size, $external_file_obj->get_url( true ) );
+			$this->return_binary( $external_file_obj->get_cache_file(), $mime_type, $file_size, $external_file_obj->get_url( true ) );
 		}
 
 		// fallback to 404-template.
@@ -174,18 +184,26 @@ class Proxy {
 	/**
 	 * Return binary of a file.
 	 *
-	 * @param string $binary The binary string to return.
+	 * @param string $file The local path to the file.
 	 * @param string $mime_type The mime-type to return.
 	 * @param int    $file_size The file-size of the binary string.
 	 * @param string $url The url of the file as base for filename.
 	 * @return void
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
-	private function return_binary( string $binary, string $mime_type, int $file_size, string $url ): void {
+	private function return_binary( string $file, string $mime_type, int $file_size, string $url ): void {
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// return header.
 		header( 'Content-Type: ' . $mime_type );
 		header( 'Content-Disposition: inline; filename="' . basename( $url ) . '"' );
 		header( 'Content-Length: ' . $file_size );
-		echo $binary;
+
+		// return file content via WP filesystem.
+		echo $wp_filesystem->get_contents( $file ); // phpcs:ignore WordPress.Security.EscapeOutput
 		exit;
 	}
 

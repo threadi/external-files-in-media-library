@@ -7,6 +7,11 @@
 
 namespace threadi\eml\View;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use threadi\eml\helper;
 use threadi\eml\Model\log;
 use WP_List_Table;

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-06-04T16:46:08+02:00\n"
+"POT-Creation-Date: 2023-08-16T20:32:14+02:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
 "X-Domain: external-medias-library\n"
@@ -30,358 +30,358 @@ msgstr ""
 msgid "https://www.thomaszwirner.de"
 msgstr ""
 
-#: classes/eml/class-transient.php:163
+#: classes/eml/class-transient.php:168
 msgid "Dismiss this notice."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:242
+#: classes/eml/Controller/class-external-files.php:247
 msgid "URL %1$s successfully added in media library."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message
-#: classes/eml/Controller/class-external-files.php:250
+#: classes/eml/Controller/class-external-files.php:255
 msgid "URL %1$s could not be saved because of this error: %2$s"
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:270
+#: classes/eml/Controller/class-external-files.php:275
 msgid "Given string %s is not a valid url starting with http."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:277
+#: classes/eml/Controller/class-external-files.php:282
 msgid "Given string %s is not a valid url."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:298
+#: classes/eml/Controller/class-external-files.php:303
 msgid "Given url %s already exist in media library."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:325
+#: classes/eml/Controller/class-external-files.php:330
 msgid "Given URL %s is not available."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:332
+#: classes/eml/Controller/class-external-files.php:337
 msgid "Given URL %1$s response with http-status %2$d."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:340
+#: classes/eml/Controller/class-external-files.php:345
 msgid "Given URL %s response without Content-type."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type
-#: classes/eml/Controller/class-external-files.php:348
+#: classes/eml/Controller/class-external-files.php:353
 msgid "Given URL %1$s response with a not allowed mime-type %2$s."
 msgstr ""
 
 #. translators: %1$s will be replaced by the url of the file.
-#: classes/eml/Controller/class-external-files.php:354
+#: classes/eml/Controller/class-external-files.php:359
 msgid "Given URL %1$s is available."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:376
+#: classes/eml/Controller/class-external-files.php:381
 msgid "URL %1$s has been deleted from media library."
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:418
+#: classes/eml/Controller/class-external-files.php:423
 msgid "GIF"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:422
+#: classes/eml/Controller/class-external-files.php:427
 msgid "JPG/JPEG"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:426
+#: classes/eml/Controller/class-external-files.php:431
 msgid "PNG"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:430
+#: classes/eml/Controller/class-external-files.php:435
 msgid "WEBP"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:434
+#: classes/eml/Controller/class-external-files.php:439
 msgid "PDF"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:438
+#: classes/eml/Controller/class-external-files.php:443
 msgid "ZIP"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:442
+#: classes/eml/Controller/class-external-files.php:447
 msgid "MP4 Video"
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:702
+#: classes/eml/Controller/class-external-files.php:707
 msgid "Error creating cache directory."
 msgstr ""
 
-#: classes/eml/Controller/class-init.php:214
+#: classes/eml/Controller/class-init.php:219
 msgid "Mime-Type not allowed"
 msgstr ""
 
-#: classes/eml/View/class-logs.php:25
+#: classes/eml/View/class-logs.php:30
 msgid "URL"
 msgstr ""
 
-#: classes/eml/View/class-logs.php:26
+#: classes/eml/View/class-logs.php:31
 msgid "date"
 msgstr ""
 
-#: classes/eml/View/class-logs.php:27
+#: classes/eml/View/class-logs.php:32
 msgid "state"
 msgstr ""
 
-#: classes/eml/View/class-logs.php:28
+#: classes/eml/View/class-logs.php:33
 msgid "log"
 msgstr ""
 
-#: inc/admin.php:27
-#: inc/admin.php:741
+#: inc/admin.php:32
+#: inc/admin.php:746
 msgid "General Settings"
 msgstr ""
 
-#: inc/admin.php:33
+#: inc/admin.php:38
 msgid "Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs."
 msgstr ""
 
-#: inc/admin.php:35
+#: inc/admin.php:40
 msgid "This is handled by Yoast SEO."
 msgstr ""
 
-#: inc/admin.php:41
+#: inc/admin.php:46
 msgid "Disable the attachment page for URL-files"
 msgstr ""
 
-#: inc/admin.php:57
+#: inc/admin.php:62
 msgid "Disable the check"
 msgstr ""
 
-#: inc/admin.php:64
+#: inc/admin.php:69
 msgid "Set interval for file-check"
 msgstr ""
 
-#: inc/admin.php:71
+#: inc/admin.php:76
 msgid "Defines the time interval in which files with URLs are automatically checked for its availability."
 msgstr ""
 
-#: inc/admin.php:86
+#: inc/admin.php:91
 msgid "Select allowed mime-types"
 msgstr ""
 
-#: inc/admin.php:94
+#: inc/admin.php:99
 msgid "Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend."
 msgstr ""
 
-#: inc/admin.php:102
+#: inc/admin.php:107
 msgid "Log-mode"
 msgstr ""
 
-#: inc/admin.php:110
+#: inc/admin.php:115
 msgid "normal"
 msgstr ""
 
-#: inc/admin.php:111
+#: inc/admin.php:116
 msgid "log warnings"
 msgstr ""
 
-#: inc/admin.php:112
+#: inc/admin.php:117
 msgid "log all"
 msgstr ""
 
-#: inc/admin.php:121
+#: inc/admin.php:126
 msgid "Delete all data on deinstallation"
 msgstr ""
 
-#: inc/admin.php:128
+#: inc/admin.php:133
 msgid "If this option is enabled all URL-files will be deleted during deinstallation of this plugin."
 msgstr ""
 
-#: inc/admin.php:138
+#: inc/admin.php:143
 msgid "Adding files"
 msgstr ""
 
-#: inc/admin.php:154
+#: inc/admin.php:159
 msgid "Select user roles"
 msgstr ""
 
-#: inc/admin.php:162
+#: inc/admin.php:167
 msgid "Select roles which should be allowed to add external files."
 msgstr ""
 
-#: inc/admin.php:175
+#: inc/admin.php:180
 msgid "User new files should be assigned to"
 msgstr ""
 
-#: inc/admin.php:182
+#: inc/admin.php:187
 msgid "This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them."
 msgstr ""
 
-#: inc/admin.php:193
+#: inc/admin.php:198
 msgid "Images Settings"
 msgstr ""
 
-#: inc/admin.php:201
+#: inc/admin.php:206
 msgid "Mode for image handling"
 msgstr ""
 
-#: inc/admin.php:208
+#: inc/admin.php:213
 msgid "Defines how external images are handled."
 msgstr ""
 
-#: inc/admin.php:210
+#: inc/admin.php:215
 msgid "host them extern"
 msgstr ""
 
-#: inc/admin.php:211
+#: inc/admin.php:216
 msgid "download and host them local"
 msgstr ""
 
-#: inc/admin.php:220
+#: inc/admin.php:225
 msgid "Enable proxy for images"
 msgstr ""
 
-#: inc/admin.php:227
+#: inc/admin.php:232
 msgid "This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally."
 msgstr ""
 
-#: inc/admin.php:236
+#: inc/admin.php:241
 msgid "Max age for cached images in proxy in hours"
 msgstr ""
 
-#: inc/admin.php:243
+#: inc/admin.php:248
 msgid "Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
 msgstr ""
 
-#: inc/admin.php:258
+#: inc/admin.php:263
 msgid "Settings for External files in Media Library"
 msgstr ""
 
-#: inc/admin.php:259
+#: inc/admin.php:264
 msgid "External files in Medias Library"
 msgstr ""
 
-#: inc/admin.php:324
-#: inc/admin.php:370
+#: inc/admin.php:329
+#: inc/admin.php:375
 msgid "Add external URL"
 msgid_plural "Add external URLs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin.php:335
-#: inc/admin.php:381
+#: inc/admin.php:340
+#: inc/admin.php:386
 msgid "Add this URL"
 msgid_plural "Add this URLs"
 msgstr[0] ""
 msgstr[1] ""
 
 #. translators: %1$s will be replaced with the URL for add new media
-#: inc/admin.php:345
+#: inc/admin.php:350
 msgid "Add external files <a href=\"%1$s\">here</a>."
 msgstr ""
 
-#: inc/admin.php:405
+#: inc/admin.php:410
 msgid "No URLs given to import."
 msgstr ""
 
 #. translators: %1$s will be replaced by the edit-URL of the saved file.
-#: inc/admin.php:439
+#: inc/admin.php:444
 msgid "The given URL <a href=\"%1$s\">has been saved</a> in media library."
 msgstr ""
 
 #. translators: %1$s will be replaced by list of successfully saved URLs.
-#: inc/admin.php:450
+#: inc/admin.php:455
 msgid "The following URLs has been saved in media library: %1$s"
 msgstr ""
 
 #. translators: %1$s is replaced by the file-list, %2$s is replaced by the URL to the plugin-log
-#: inc/admin.php:469
+#: inc/admin.php:474
 msgid "<p>Following URL could not be saved in the media library:</p>%1$s<p>Details are visible <a href=\"%2$s\">in the log</a>.</p>"
 msgid_plural "<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details are visible <a href=\"%2$s\">in the log</a>.</p>"
 msgstr[0] ""
 msgstr[1] ""
 
-#: inc/admin.php:500
+#: inc/admin.php:505
 msgid "All files"
 msgstr ""
 
-#: inc/admin.php:501
+#: inc/admin.php:506
 msgid "only external URLs"
 msgstr ""
 
-#: inc/admin.php:502
+#: inc/admin.php:507
 msgid "no external URLs"
 msgstr ""
 
-#: inc/admin.php:569
+#: inc/admin.php:574
 msgid "External file"
 msgstr ""
 
-#: inc/admin.php:608
+#: inc/admin.php:613
 msgid "File-URL:"
 msgstr ""
 
-#: inc/admin.php:613
-#: inc/admin.php:695
+#: inc/admin.php:618
+#: inc/admin.php:700
 msgid "File-URL is available."
 msgstr ""
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: inc/admin.php:621
+#: inc/admin.php:626
 msgid "File-URL is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr ""
 
-#: inc/admin.php:627
+#: inc/admin.php:632
 msgid "Recheck availability"
 msgstr ""
 
-#: inc/admin.php:631
+#: inc/admin.php:636
 msgid "This file is local hostet."
 msgstr ""
 
-#: inc/admin.php:633
+#: inc/admin.php:638
 msgid "This file is extern hostet."
 msgstr ""
 
-#: inc/admin.php:641
+#: inc/admin.php:646
 msgid "This file is delivered through proxied cache."
 msgstr ""
 
-#: inc/admin.php:643
+#: inc/admin.php:648
 msgid "This file is not cached in proxy."
 msgstr ""
 
-#: inc/admin.php:654
+#: inc/admin.php:659
 msgid "This file is not an external file."
 msgstr ""
 
-#: inc/admin.php:675
+#: inc/admin.php:680
 msgid "No ID given."
 msgstr ""
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: inc/admin.php:702
+#: inc/admin.php:707
 msgid "URL-File is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr ""
 
-#: inc/admin.php:750
-#: inc/admin.php:801
+#: inc/admin.php:755
+#: inc/admin.php:806
 msgid "Logs"
 msgstr ""
 
-#: inc/admin.php:966
+#: inc/admin.php:971
 msgid "The given interval does not exists."
 msgstr ""
 
-#: inc/admin.php:1054
+#: inc/admin.php:1059
 msgid "The given mime-type is not supported. Setting will not be saved."
 msgstr ""
 
-#: inc/admin.php:1101
+#: inc/admin.php:1106
 msgid "External files could not be used as no mime-types are allowed."
 msgstr ""

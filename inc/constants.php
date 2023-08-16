@@ -5,6 +5,11 @@
  * @package external-files-in-media-library
  */
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 /**
  * Name of the post-field where the external url of a file resides.
  */

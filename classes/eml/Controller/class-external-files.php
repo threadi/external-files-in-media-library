@@ -7,6 +7,11 @@
 
 namespace threadi\eml\Controller;
 
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 use threadi\eml\Helper;
 use threadi\eml\Model\external_file;
 use threadi\eml\Model\log;
