@@ -29,21 +29,21 @@ function eml_admin_menu_init(): void {
 	 */
 	add_settings_section(
 		'settings_section_main',
-		__( 'General Settings', 'external-medias-library' ),
+		__( 'General Settings', 'external-files-in-media-library' ),
 		'__return_true',
 		'eml_settings_page'
 	);
 
 	// set description for disabling the attachment pages.
-	$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-medias-library' );
+	$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
 	if ( method_exists( 'WPSEO_Options', 'get' ) ) {
-		$description = __( 'This is handled by Yoast SEO.', 'external-medias-library' );
+		$description = __( 'This is handled by Yoast SEO.', 'external-files-in-media-library' );
 	}
 
 	// Disable the attachment page.
 	add_settings_field(
 		'eml_disable_attachment_pages',
-		__( 'Disable the attachment page for URL-files', 'external-medias-library' ),
+		__( 'Disable the attachment page for URL-files', 'external-files-in-media-library' ),
 		'eml_admin_checkbox_field',
 		'eml_settings_page',
 		'settings_section_main',
@@ -59,21 +59,21 @@ function eml_admin_menu_init(): void {
 
 	// interval-setting for automatic file-check.
 	$values = array(
-		'eml_disable_check' => __( 'Disable the check', 'external-medias-library' ),
+		'eml_disable_check' => __( 'Disable the check', 'external-files-in-media-library' ),
 	);
 	foreach ( wp_get_schedules() as $name => $interval ) {
 		$values[ $name ] = $interval['display'];
 	}
 	add_settings_field(
 		'eml_check_interval',
-		__( 'Set interval for file-check', 'external-medias-library' ),
+		__( 'Set interval for file-check', 'external-files-in-media-library' ),
 		'eml_admin_select_field',
 		'eml_settings_page',
 		'settings_section_main',
 		array(
 			'label_for'   => 'eml_check_interval',
 			'fieldId'     => 'eml_check_interval',
-			'description' => __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-medias-library' ),
+			'description' => __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ),
 			'values'      => $values,
 		)
 	);
@@ -88,7 +88,7 @@ function eml_admin_menu_init(): void {
 	// select allowed mime-types.
 	add_settings_field(
 		'eml_allowed_mime_types',
-		__( 'Select allowed mime-types', 'external-medias-library' ),
+		__( 'Select allowed mime-types', 'external-files-in-media-library' ),
 		'eml_admin_multiselect_field',
 		'eml_settings_page',
 		'settings_section_main',
@@ -96,7 +96,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_allowed_mime_types',
 			'fieldId'     => 'eml_allowed_mime_types',
 			'values'      => $mime_types,
-			'description' => __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend.', 'external-medias-library' ),
+			'description' => __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend.', 'external-files-in-media-library' ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_allowed_mime_types', array( 'sanitize_callback' => 'eml_admin_validate_allowed_mime_types' ) );
@@ -104,7 +104,7 @@ function eml_admin_menu_init(): void {
 	// Log-mode.
 	add_settings_field(
 		'eml_log_mode',
-		__( 'Log-mode', 'external-medias-library' ),
+		__( 'Log-mode', 'external-files-in-media-library' ),
 		'eml_admin_select_field',
 		'eml_settings_page',
 		'settings_section_main',
@@ -112,9 +112,9 @@ function eml_admin_menu_init(): void {
 			'label_for' => 'eml_log_mode',
 			'fieldId'   => 'eml_log_mode',
 			'values'    => array(
-				'0' => __( 'normal', 'external-medias-library' ),
-				'1' => __( 'log warnings', 'external-medias-library' ),
-				'2' => __( 'log all', 'external-medias-library' ),
+				'0' => __( 'normal', 'external-files-in-media-library' ),
+				'1' => __( 'log warnings', 'external-files-in-media-library' ),
+				'2' => __( 'log all', 'external-files-in-media-library' ),
 			),
 		)
 	);
@@ -123,14 +123,14 @@ function eml_admin_menu_init(): void {
 	// Delete all data on deinstallation.
 	add_settings_field(
 		'eml_delete_on_deinstallation',
-		__( 'Delete all data on deinstallation', 'external-medias-library' ),
+		__( 'Delete all data on deinstallation', 'external-files-in-media-library' ),
 		'eml_admin_checkbox_field',
 		'eml_settings_page',
 		'settings_section_main',
 		array(
 			'label_for'   => 'eml_delete_on_deinstallation',
 			'fieldId'     => 'eml_delete_on_deinstallation',
-			'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-medias-library' ),
+			'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-files-in-media-library' ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_delete_on_deinstallation', array( 'sanitize_callback' => 'eml_admin_validate_checkbox' ) );
@@ -140,7 +140,7 @@ function eml_admin_menu_init(): void {
 	 */
 	add_settings_section(
 		'settings_section_add_files',
-		__( 'Adding files', 'external-medias-library' ),
+		__( 'Adding files', 'external-files-in-media-library' ),
 		'__return_true',
 		'eml_settings_page'
 	);
@@ -156,7 +156,7 @@ function eml_admin_menu_init(): void {
 	// Set roles to allow adding external URLs.
 	add_settings_field(
 		'eml_allowed_roles',
-		__( 'Select user roles', 'external-medias-library' ),
+		__( 'Select user roles', 'external-files-in-media-library' ),
 		'eml_admin_multiselect_field',
 		'eml_settings_page',
 		'settings_section_add_files',
@@ -164,7 +164,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_allowed_roles',
 			'fieldId'     => 'eml_allowed_roles',
 			'values'      => $user_roles,
-			'description' => __( 'Select roles which should be allowed to add external files.', 'external-medias-library' ),
+			'description' => __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_allowed_roles', array( 'sanitize_callback' => 'eml_admin_set_capability' ) );
@@ -177,14 +177,14 @@ function eml_admin_menu_init(): void {
 	// User new files should be assigned to.
 	add_settings_field(
 		'eml_user_assign',
-		__( 'User new files should be assigned to', 'external-medias-library' ),
+		__( 'User new files should be assigned to', 'external-files-in-media-library' ),
 		'eml_admin_select_field',
 		'eml_settings_page',
 		'settings_section_add_files',
 		array(
 			'label_for'   => 'eml_user_assign',
 			'fieldId'     => 'eml_user_assign',
-			'description' => __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-medias-library' ),
+			'description' => __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-files-in-media-library' ),
 			'values'      => $users,
 		)
 	);
@@ -195,7 +195,7 @@ function eml_admin_menu_init(): void {
 	 */
 	add_settings_section(
 		'settings_section_images',
-		__( 'Images Settings', 'external-medias-library' ),
+		__( 'Images Settings', 'external-files-in-media-library' ),
 		'__return_true',
 		'eml_settings_page'
 	);
@@ -203,17 +203,17 @@ function eml_admin_menu_init(): void {
 	// Image-mode.
 	add_settings_field(
 		'eml_images_mode',
-		__( 'Mode for image handling', 'external-medias-library' ),
+		__( 'Mode for image handling', 'external-files-in-media-library' ),
 		'eml_admin_select_field',
 		'eml_settings_page',
 		'settings_section_images',
 		array(
 			'label_for'   => 'eml_images_mode',
 			'fieldId'     => 'eml_images_mode',
-			'description' => __( 'Defines how external images are handled.', 'external-medias-library' ),
+			'description' => __( 'Defines how external images are handled.', 'external-files-in-media-library' ),
 			'values'      => array(
-				'external' => __( 'host them extern', 'external-medias-library' ),
-				'local'    => __( 'download and host them local', 'external-medias-library' ),
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
 			),
 		)
 	);
@@ -222,14 +222,14 @@ function eml_admin_menu_init(): void {
 	// Enable proxy in frontend.
 	add_settings_field(
 		'eml_proxy',
-		__( 'Enable proxy for images', 'external-medias-library' ),
+		__( 'Enable proxy for images', 'external-files-in-media-library' ),
 		'eml_admin_checkbox_field',
 		'eml_settings_page',
 		'settings_section_images',
 		array(
 			'label_for'   => 'eml_proxy',
 			'fieldId'     => 'eml_proxy',
-			'description' => __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-medias-library' ),
+			'description' => __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ),
 			'readonly' => get_option('eml_images_mode', '') != 'external'
 		)
 	);
@@ -238,14 +238,14 @@ function eml_admin_menu_init(): void {
 	// Max age for cached files.
 	add_settings_field(
 		'eml_proxy_max_age',
-		__( 'Max age for cached images in proxy in hours', 'external-medias-library' ),
+		__( 'Max age for cached images in proxy in hours', 'external-files-in-media-library' ),
 		'eml_admin_number_field',
 		'eml_settings_page',
 		'settings_section_images',
 		array(
 			'label_for'   => 'eml_proxy_max_age',
 			'fieldId'     => 'eml_proxy_max_age',
-			'description' => __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-medias-library' ),
+			'description' => __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ),
 			'readonly' => get_option('eml_images_mode', '') != 'external'
 		)
 	);
@@ -260,8 +260,8 @@ add_action( 'admin_init', 'eml_admin_menu_init' );
  */
 function eml_admin_menu_menu(): void {
 	add_options_page(
-		__( 'Settings for External files in Media Library', 'external-medias-library' ),
-		__( 'External files in Medias Library', 'external-medias-library' ),
+		__( 'Settings for External files in Media Library', 'external-files-in-media-library' ),
+		__( 'External files in Medias Library', 'external-files-in-media-library' ),
 		'manage_options',
 		'eml_settings',
 		'eml_admin_settings'
@@ -326,7 +326,7 @@ function eml_admin_add_multi_form(): void {
 			<div class="eml_add_external_files_wrapper">
 				<label for="external_files">
 					<?php
-					echo esc_html( _n( 'Add external URL', 'Add external URLs', 2, 'external-medias-library' ) );
+					echo esc_html( _n( 'Add external URL', 'Add external URLs', 2, 'external-files-in-media-library' ) );
 
 					// add link to settings for admin.
 					if ( current_user_can( 'manage_options' ) ) {
@@ -336,8 +336,8 @@ function eml_admin_add_multi_form(): void {
 					}
 					?>
 				</label>
-				<textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="<?php esc_html_e( 'Enter one URL per line for files you want to insert in your library', 'external-media-library' ); ?>"></textarea>
-				<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URLs', 2, 'external-medias-library' ) ); ?></button>
+				<textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="<?php esc_html_e( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ); ?>"></textarea>
+				<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URLs', 2, 'external-files-in-media-library' ) ); ?></button>
 			</div>
 		<?php
 	} else {
@@ -347,7 +347,7 @@ function eml_admin_add_multi_form(): void {
 				<p>
 					<?php
 						/* translators: %1$s will be replaced with the URL for add new media */
-						echo wp_kses_post( sprintf( __( 'Add external files <a href="%1$s">here</a>.', 'external-medias-library' ), esc_url( $url ) ) );
+						echo wp_kses_post( sprintf( __( 'Add external files <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
 					?>
 				</p>
 			</div>
@@ -372,7 +372,7 @@ function eml_admin_add_single_form(): void {
 	<div class="eml_add_external_files_wrapper">
 		<label for="external_files">
 			<?php
-				echo esc_html( _n( 'Add external URL', 'Add external URL', 1, 'external-medias-library' ) );
+				echo esc_html( _n( 'Add external URL', 'Add external URL', 1, 'external-files-in-media-library' ) );
 
 				// add link to settings for admin.
 			if ( current_user_can( 'manage_options' ) ) {
@@ -382,8 +382,8 @@ function eml_admin_add_single_form(): void {
 			}
 			?>
 		</label>
-		<input id="external_files" name="external_files" class="eml_add_external_files" type="url" placeholder="<?php echo esc_attr__( 'Enter an URL for a file you want to insert in your library', 'external-media-library' ); ?>">
-		<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URL', 1, 'external-medias-library' ) ); ?></button>
+		<input id="external_files" name="external_files" class="eml_add_external_files" type="url" placeholder="<?php echo esc_attr__( 'Enter an URL for a file you want to insert in your library', 'external-files-in-media-library' ); ?>">
+		<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URL', 1, 'external-files-in-media-library' ) ); ?></button>
 	</div>
 	<?php
 }
@@ -407,7 +407,7 @@ function eml_admin_add_urls_via_ajax(): void {
 	// create error-result.
 	$result = array(
 		'state'   => 'error',
-		'message' => __( 'No URLs given to import.', 'external-medias-library' ),
+		'message' => __( 'No URLs given to import.', 'external-files-in-media-library' ),
 	);
 
 	// get files-object.
@@ -441,7 +441,7 @@ function eml_admin_add_urls_via_ajax(): void {
 				$result = array(
 					'state'   => 'success',
 					/* translators: %1$s will be replaced by the edit-URL of the saved file. */
-					'message' => '<p>' . sprintf( __( 'The given URL <a href="%1$s">has been saved</a> in media library.', 'external-medias-library' ), esc_url( $files[0]->get_edit_url() ) ) . '</p>',
+					'message' => '<p>' . sprintf( __( 'The given URL <a href="%1$s">has been saved</a> in media library.', 'external-files-in-media-library' ), esc_url( $files[0]->get_edit_url() ) ) . '</p>',
 				);
 			} else {
 				$list = '<ul>';
@@ -452,7 +452,7 @@ function eml_admin_add_urls_via_ajax(): void {
 				$result = array(
 					'state'   => 'success',
 					/* translators: %1$s will be replaced by list of successfully saved URLs. */
-					'message' => '<p>' . sprintf( __( 'The following URLs has been saved in media library: %1$s', 'external-medias-library' ), wp_kses_post( $list ) ) . '</p>',
+					'message' => '<p>' . sprintf( __( 'The following URLs has been saved in media library: %1$s', 'external-files-in-media-library' ), wp_kses_post( $list ) ) . '</p>',
 				);
 			}
 		} else {
@@ -471,7 +471,7 @@ function eml_admin_add_urls_via_ajax(): void {
 				'state'   => 'error',
 				'message' => sprintf(
 					/* translators: %1$s is replaced by the file-list, %2$s is replaced by the URL to the plugin-log */
-					_n( '<p>Following URL could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', '<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', count( $errors ), 'external-medias-library' ),
+					_n( '<p>Following URL could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', '<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', count( $errors ), 'external-files-in-media-library' ),
 					$error_list,
 					$url_log
 				),
@@ -502,9 +502,9 @@ function eml_admin_add_media_filter_for_external_files(): void {
 
 	// define possible options.
 	$options = array(
-		'none'         => __( 'All files', 'external-medias-library' ),
-		'external'     => __( 'only external URLs', 'external-medias-library' ),
-		'non-external' => __( 'no external URLs', 'external-medias-library' ),
+		'none'         => __( 'All files', 'external-files-in-media-library' ),
+		'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
+		'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
 	);
 	?>
 	<!--suppress HtmlFormInputWithoutLabel -->
@@ -571,7 +571,7 @@ function eml_admin_add_media_box(): void {
 
 	// add box if the file is an external file-URL.
 	if ( $external_file_obj && $external_file_obj->is_valid() ) {
-		add_meta_box( 'attachment_external_file', __( 'External file', 'external-medias-library' ), 'eml_admin_media_box', 'attachment', 'side', 'low' );
+		add_meta_box( 'attachment_external_file', __( 'External file', 'external-files-in-media-library' ), 'eml_admin_media_box', 'attachment', 'side', 'low' );
 
 		// if this is an external hostet file, hide "Replace Media"-box from plugin "Enable Media Replace".
 		if ( false === $external_file_obj->is_locally_saved() ) {
@@ -610,12 +610,12 @@ function eml_admin_media_box(): void {
 		?>
 			<div class="misc-pub-external-file">
 				<p>
-					<?php echo esc_html__( 'File-URL:', 'external-medias-library'); ?><br><a href="<?php echo esc_url($url); ?>" title="<?php echo esc_attr($url); ?>"><?php echo esc_html($url_to_show); ?></a>
+					<?php echo esc_html__( 'File-URL:', 'external-files-in-media-library'); ?><br><a href="<?php echo esc_url($url); ?>" title="<?php echo esc_attr($url); ?>"><?php echo esc_html($url_to_show); ?></a>
 				</p>
 				<?php
 				if ( $external_file_obj->get_availability() ) {
 					?>
-						<p id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-medias-library' ); ?></p>
+						<p id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></p>
 					<?php
 				} else {
 					$log_url = helper::get_log_url();
@@ -623,19 +623,19 @@ function eml_admin_media_box(): void {
 						<p id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
 						<?php
 							/* translators: %1$s will be replaced by the URL for the logs */
-							echo sprintf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-medias-library' ), esc_url( $log_url ) );
+							echo sprintf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
 						?>
 						</p>
 					<?php
 				}
 				?>
-					<a class="button" href="#" id="eml_recheck_availability"><?php echo esc_html__( 'Recheck availability', 'external-medias-library' ); ?></a>
+					<a class="button" href="#" id="eml_recheck_availability"><?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?></a>
 					<p>
 						<?php
 						if ( false !== $external_file_obj->is_locally_saved() ) {
-							echo esc_html__( 'This file is local hostet.', 'external-medias-library' );
+							echo esc_html__( 'This file is local hostet.', 'external-files-in-media-library' );
 						} else {
-							echo esc_html__( 'This file is extern hostet.', 'external-medias-library' );
+							echo esc_html__( 'This file is extern hostet.', 'external-files-in-media-library' );
 						}
 						?>
 					</p>
@@ -643,9 +643,9 @@ function eml_admin_media_box(): void {
 						<?php
 						// TODO nur anzeigen wenn proxy aktiviert ist
 						if ( false !== $external_file_obj->is_cached() ) {
-							echo esc_html__( 'This file is delivered through proxied cache.', 'external-medias-library' );
+							echo esc_html__( 'This file is delivered through proxied cache.', 'external-files-in-media-library' );
 						} else {
-							echo esc_html__( 'This file is not cached in proxy.', 'external-medias-library' );
+							echo esc_html__( 'This file is not cached in proxy.', 'external-files-in-media-library' );
 						}
 						?>
 					</p>
@@ -656,7 +656,7 @@ function eml_admin_media_box(): void {
 				<div class="notice notice-error notice-alt inline">
 					<p>
 						<?php
-							echo esc_html__( 'This file is not an external file.', 'external-medias-library' );
+							echo esc_html__( 'This file is not an external file.', 'external-files-in-media-library' );
 						?>
 					</p>
 				</div>
@@ -677,7 +677,7 @@ function eml_admin_check_file_availability(): void {
 	// create error-result.
 	$result = array(
 		'state'   => 'error',
-		'message' => __( 'No ID given.', 'external-medias-library' ),
+		'message' => __( 'No ID given.', 'external-files-in-media-library' ),
 	);
 
 	// get ID.
@@ -697,14 +697,14 @@ function eml_admin_check_file_availability(): void {
 			if ( $external_file_obj->get_availability() ) {
 				$result = array(
 					'state'   => 'success',
-					'message' => __( 'File-URL is available.', 'external-medias-library' ),
+					'message' => __( 'File-URL is available.', 'external-files-in-media-library' ),
 				);
 			} else {
 				$url    = helper::get_log_url();
 				$result = array(
 					'state'   => 'error',
 					/* translators: %1$s will be replaced by the URL for the logs */
-					'message' => sprintf( __( 'URL-File is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-medias-library' ), $url ),
+					'message' => sprintf( __( 'URL-File is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), $url ),
 				);
 			}
 		}
@@ -743,7 +743,7 @@ function eml_admin_settings(): void {
 				<?php
 			endif;
 			?>
-			"><?php esc_html_e( 'General Settings', 'external-medias-library' ); ?></a>
+			"><?php esc_html_e( 'General Settings', 'external-files-in-media-library' ); ?></a>
 			<a href="?page=eml_settings&tab=logs" class="nav-tab
 			<?php
 			if ( 'logs' === $tab ) :
@@ -752,7 +752,7 @@ function eml_admin_settings(): void {
 				<?php
 			endif;
 			?>
-			"><?php esc_html_e( 'Logs', 'external-medias-library' ); ?></a>
+			"><?php esc_html_e( 'Logs', 'external-files-in-media-library' ); ?></a>
 		</nav>
 
 		<div class="tab-content">
@@ -803,7 +803,7 @@ function eml_admin_settings_tab_logs(): void {
 	?>
 	<div class="wrap">
 		<div id="icon-users" class="icon32"></div>
-		<h2><?php echo esc_html__( 'Logs', 'external-medias-library' ); ?></h2>
+		<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
 	<?php $log->display(); ?>
 	</div>
 	<?php
@@ -968,7 +968,7 @@ function eml_admin_validate_interval_select( string $value ): string {
 	// check if given interval exist.
 	$intervals = wp_get_schedules();
 	if ( empty( $intervals[ $value ] ) ) {
-		add_settings_error( 'eml_check_files', 'eml_check_files', __( 'The given interval does not exists.', 'external-medias-library' ) );
+		add_settings_error( 'eml_check_files', 'eml_check_files', __( 'The given interval does not exists.', 'external-files-in-media-library' ) );
 		return '';
 	}
 
@@ -1056,7 +1056,7 @@ function eml_admin_validate_allowed_mime_types( ?array $values ): ?array {
 
 	// show error of a not supported mime-type is set.
 	if ( $error ) {
-		add_settings_error( 'eml_allowed_mime_types', 'eml_allowed_mime_types', __( 'The given mime-type is not supported. Setting will not be saved.', 'external-medias-library' ) );
+		add_settings_error( 'eml_allowed_mime_types', 'eml_allowed_mime_types', __( 'The given mime-type is not supported. Setting will not be saved.', 'external-files-in-media-library' ) );
 	}
 
 	// if list is not empty, remove any notification about it.
@@ -1103,7 +1103,7 @@ function eml_admin_init(): void {
 		$transient_obj  = $transients_obj->add();
 		$transient_obj->set_dismissible_days( 14 );
 		$transient_obj->set_name( 'eml_missing_mime_types' );
-		$transient_obj->set_message( __( 'External files could not be used as no mime-types are allowed.', 'external-medias-library' ) );
+		$transient_obj->set_message( __( 'External files could not be used as no mime-types are allowed.', 'external-files-in-media-library' ) );
 		$transient_obj->set_type( 'error' );
 		$transient_obj->save();
 	}

@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: External files in Media Library @@VersionNumber@@\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/external-files-in-"
 "media-library\n"
-"POT-Creation-Date: 2023-08-16T20:32:14+02:00\n"
-"PO-Revision-Date: 2023-08-16 20:32+0200\n"
+"POT-Creation-Date: 2023-09-02T21:28:13+02:00\n"
+"PO-Revision-Date: 2023-09-02 21:29+0200\n"
 "Last-Translator: Thomas Zwirner <info@thomaszwirner.de>\n"
 "Language-Team: \n"
 "Language: de_DE\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.0.1\n"
-"X-Domain: external-medias-library\n"
+"X-Domain: external-files-in-media-library\n"
 
 #. Plugin Name of the plugin
 msgid "External files in Media Library"
@@ -317,6 +317,12 @@ msgid_plural "Add external URLs"
 msgstr[0] "Externe URL hinzufügen"
 msgstr[1] "Externe URLs hinzufügen"
 
+#: inc/admin.php:339
+msgid "Enter one URL per line for files you want to insert in your library"
+msgstr ""
+"Gibt eine URL pro Zeile für die Dateien ein, die Du deiner Mediathek "
+"hinzufügen möchtest"
+
 #: inc/admin.php:340 inc/admin.php:386
 msgid "Add this URL"
 msgid_plural "Add this URLs"
@@ -327,6 +333,11 @@ msgstr[1] "Diese URLs hinzufügen"
 #: inc/admin.php:350
 msgid "Add external files <a href=\"%1$s\">here</a>."
 msgstr "Füge externe Dateien <a href=\"%1$s\">hier</a> hinzu."
+
+#: inc/admin.php:385
+msgid "Enter an URL for a file you want to insert in your library"
+msgstr ""
+"Gib eine URL für eine Datei ein, die Du deiner Mediathek hinzufügen möchtest."
 
 #: inc/admin.php:410
 msgid "No URLs given to import."

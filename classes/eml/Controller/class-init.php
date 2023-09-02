@@ -216,7 +216,7 @@ class Init {
 
 				// add custom hint.
 				$url                 = add_query_arg( array( 'page' => 'eml_settings' ), 'options-general.php' );
-				$actions['eml-hint'] = '<a href="' . esc_url( $url ) . '">' . __( 'Mime-Type not allowed', 'external-medias-library' ) . '</a>';
+				$actions['eml-hint'] = '<a href="' . esc_url( $url ) . '">' . __( 'Mime-Type not allowed', 'external-files-in-media-library' ) . '</a>';
 			}
 
 			// if media_replace or remove_background exist and this is an external hosted file,
@@ -436,7 +436,6 @@ class Init {
 	 * @return void
 	 */
 	public function wp_init(): void {
-		load_plugin_textdomain( 'external-medias-library', false, dirname( plugin_basename( EML_PLUGIN ) ) . '/languages' );
+		load_plugin_textdomain( 'external-files-in-media-library', false, dirname( plugin_basename( EML_PLUGIN ) ) . '/languages' );
 	}
-
 }

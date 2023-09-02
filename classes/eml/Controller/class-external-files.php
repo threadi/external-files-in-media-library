@@ -244,7 +244,7 @@ class External_Files {
 
 				// return true as the file has been created successfully.
 				/* translators: %1$s will be replaced by the file-URL */
-				$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-medias-library' ), $url ), $url, 'success', 0 );
+				$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
 
 				return true;
 			}
@@ -252,7 +252,7 @@ class External_Files {
 
 		if ( is_wp_error( $attachment_id ) ) {
 			/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
-			$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-medias-library' ), $url, $attachment_id->errors['upload_error'][0] ), $url, 'error', 0 );        }
+			$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $url, $attachment_id->errors['upload_error'][0] ), $url, 'error', 0 );        }
 
 		// return false in case of errors.
 		return false;
@@ -272,14 +272,14 @@ class External_Files {
 		// given url starts not with http.
 		if ( ! str_starts_with( $url, 'http' ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given string %s is not a valid url starting with http.', 'external-medias-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given string %s is not a valid url starting with http.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			return false;
 		}
 
 		// given string is not an url.
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given string %s is not a valid url.', 'external-medias-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given string %s is not a valid url.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -300,7 +300,7 @@ class External_Files {
 		$results = new WP_Query( $query );
 		if ( $results->post_count > 0 ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given url %s already exist in media library.', 'external-medias-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given url %s already exist in media library.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -327,14 +327,14 @@ class External_Files {
 		// request resulted in error.
 		if ( is_wp_error( $response ) || empty( $response ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s is not available.', 'external-medias-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %s is not available.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			return false;
 		}
 
 		// file-url returns not with http-status 200.
 		if ( $response['http_response']->get_status() !== 200 ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-medias-library' ), $url, $response['http_response']->get_status() ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), $url, $response['http_response']->get_status() ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -342,7 +342,7 @@ class External_Files {
 		$response_headers_obj = $response['http_response']->get_headers();
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-medias-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -350,13 +350,13 @@ class External_Files {
 		$response_headers = $response_headers_obj->getAll();
 		if ( false === in_array( $response_headers['content-type'], $this->get_allowed_mime_types(), true ) ) {
 			/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-			$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-medias-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
 			return false;
 		}
 
 		// file is available.
 		/* translators: %1$s will be replaced by the url of the file. */
-		$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-medias-library' ), $url ), $url, 'success', 2 );
+		$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), $url ), $url, 'success', 2 );
 		return true;
 	}
 
@@ -378,7 +378,7 @@ class External_Files {
 
 		// log deletion.
 		/* translators: %1$s will be replaced by the file-URL */
-		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-medias-library' ), $external_file->get_url() ), $external_file->get_url(), 'success', 1 );
+		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-files-in-media-library' ), $external_file->get_url() ), $external_file->get_url(), 'success', 1 );
 	}
 
 	/**
@@ -420,31 +420,31 @@ class External_Files {
 			'eml_supported_mime_types',
 			array(
 				'image/gif'       => array(
-					'label' => __( 'GIF', 'external-medias-library' ),
+					'label' => __( 'GIF', 'external-files-in-media-library' ),
 					'ext'   => 'gif',
 				),
 				'image/jpeg'      => array(
-					'label' => __( 'JPG/JPEG', 'external-medias-library' ),
+					'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
 					'ext'   => 'jpg',
 				),
 				'image/png'       => array(
-					'label' => __( 'PNG', 'external-medias-library' ),
+					'label' => __( 'PNG', 'external-files-in-media-library' ),
 					'ext'   => 'png',
 				),
 				'image/webp'      => array(
-					'label' => __( 'WEBP', 'external-medias-library' ),
+					'label' => __( 'WEBP', 'external-files-in-media-library' ),
 					'ext'   => 'webp',
 				),
 				'application/pdf' => array(
-					'label' => __( 'PDF', 'external-medias-library' ),
+					'label' => __( 'PDF', 'external-files-in-media-library' ),
 					'ext'   => 'pdf',
 				),
 				'application/zip' => array(
-					'label' => __( 'ZIP', 'external-medias-library' ),
+					'label' => __( 'ZIP', 'external-files-in-media-library' ),
 					'ext'   => 'zip',
 				),
 				'video/mp4'       => array(
-					'label' => __( 'MP4 Video', 'external-medias-library' ),
+					'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
 					'ext'   => 'mp4',
 				),
 			)
@@ -704,7 +704,7 @@ class External_Files {
 	private function create_cache_directory( string $path ): void {
 		if ( ! file_exists( $path ) ) {
 			if ( false === wp_mkdir_p( $path ) ) {
-				$this->log->create( __( 'Error creating cache directory.', 'external-medias-library' ), '', 'error', 0 );
+				$this->log->create( __( 'Error creating cache directory.', 'external-files-in-media-library' ), '', 'error', 0 );
 			}
 		}
 	}

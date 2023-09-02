@@ -9,10 +9,10 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-08-16T20:32:14+02:00\n"
+"POT-Creation-Date: 2023-09-02T21:28:13+02:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.6.0\n"
-"X-Domain: external-medias-library\n"
+"X-Domain: external-files-in-media-library\n"
 
 #. Plugin Name of the plugin
 msgid "External files in Media Library"
@@ -273,6 +273,10 @@ msgid_plural "Add external URLs"
 msgstr[0] ""
 msgstr[1] ""
 
+#: inc/admin.php:339
+msgid "Enter one URL per line for files you want to insert in your library"
+msgstr ""
+
 #: inc/admin.php:340
 #: inc/admin.php:386
 msgid "Add this URL"
@@ -283,6 +287,10 @@ msgstr[1] ""
 #. translators: %1$s will be replaced with the URL for add new media
 #: inc/admin.php:350
 msgid "Add external files <a href=\"%1$s\">here</a>."
+msgstr ""
+
+#: inc/admin.php:385
+msgid "Enter an URL for a file you want to insert in your library"
 msgstr ""
 
 #: inc/admin.php:410

@@ -26,18 +26,18 @@
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
 
-        <copy file="${src.dir}/languages/external-medias-library.pot" tofile="${log.dir}/languages/external-medias-library.pot"/>
-        <replace file="${src.dir}/languages/external-medias-library.pot">
+        <copy file="${src.dir}/languages/external-files-in-media-library.pot" tofile="${log.dir}/languages/external-files-in-media-library.pot"/>
+        <replace file="${src.dir}/languages/external-files-in-media-library.pot">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
 
-        <copy file="${src.dir}/languages/external-medias-library-de_DE.po" tofile="${log.dir}/languages/external-medias-library-de_DE.po"/>
-        <replace file="${src.dir}/languages/external-medias-library-de_DE.po">
+        <copy file="${src.dir}/languages/external-files-in-media-library-de_DE.po" tofile="${log.dir}/languages/external-files-in-media-library-de_DE.po"/>
+        <replace file="${src.dir}/languages/external-files-in-media-library-de_DE.po">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
 
-        <copy file="${src.dir}/languages/external-medias-library-de_DE_formal.po" tofile="${log.dir}/languages/external-medias-library-de_DE_formal.po"/>
-        <replace file="${src.dir}/languages/external-medias-library-de_DE_formal.po">
+        <copy file="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po" tofile="${log.dir}/languages/external-files-in-media-library-de_DE_formal.po"/>
+        <replace file="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
     </target>
@@ -54,9 +54,9 @@
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>
         <delete file="${src.dir}/${plugin.slug}-release.php"/>
-        <copy file="${log.dir}/languages/external-medias-library.pot" tofile="${src.dir}/languages/external-medias-library.pot" overwrite="true" />
-        <copy file="${log.dir}/languages/external-medias-library-de_DE.po" tofile="${src.dir}/languages/external-medias-library-de_DE.po" overwrite="true" />
-        <copy file="${log.dir}/languages/external-medias-library-de_DE_formal.po" tofile="${src.dir}/languages/external-medias-library-de_DE_formal.po" overwrite="true" />
+        <copy file="${log.dir}/languages/external-files-in-media-library.pot" tofile="${src.dir}/languages/external-files-in-media-library.pot" overwrite="true" />
+        <copy file="${log.dir}/languages/external-files-in-media-library-de_DE.po" tofile="${src.dir}/languages/external-files-in-media-library-de_DE.po" overwrite="true" />
+        <copy file="${log.dir}/languages/external-files-in-media-library-de_DE_formal.po" tofile="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po" overwrite="true" />
     </target>
 
     <target name="help">
