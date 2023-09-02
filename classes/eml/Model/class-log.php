@@ -59,7 +59,9 @@ class Log {
 	 * @noinspection SqlResolve
 	 */
 	public function get_logs(): array {
-		return $this->wpdb->get_results( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $this->table_name . ' ORDER BY `time` DESC', ARRAY_A ); // phpcs:ignore
+		global $wpdb;
+		$table = $this->table_name;
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ); // phpcs:ignore
 	}
 
 	/**
