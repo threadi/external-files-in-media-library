@@ -26,7 +26,7 @@ I recommend to use [PoEdit](https://poedit.net/) to translate texts for this plu
 
 Run in main directory:
 
-`wp i18n make-pot . languages/external-medias-library.pot --exclude=svn/`
+`wp i18n make-pot . languages/external-files-in-media-library.pot --exclude=svn/`
 
 ### update translation-file
 

@@ -9,7 +9,7 @@
  * Author URI:        https://www.thomaszwirner.de
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       external-medias-library
+ * Text Domain:       external-files-in-media-library
  *
  * @package external-files-in-media-library
  */

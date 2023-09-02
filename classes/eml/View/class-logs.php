@@ -27,10 +27,10 @@ class Logs extends WP_List_Table {
 	 */
 	public function get_columns(): array {
 		return array(
-			'url'   => __( 'URL', 'external-medias-library' ),
-			'date'  => __( 'date', 'external-medias-library' ),
-			'state' => __( 'state', 'external-medias-library' ),
-			'log'   => __( 'log', 'external-medias-library' ),
+			'url'   => __( 'URL', 'external-files-in-media-library' ),
+			'date'  => __( 'date', 'external-files-in-media-library' ),
+			'state' => __( 'state', 'external-files-in-media-library' ),
+			'log'   => __( 'log', 'external-files-in-media-library' ),
 		);
 	}
 
