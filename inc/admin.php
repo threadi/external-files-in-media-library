@@ -81,8 +81,8 @@ function eml_admin_menu_init(): void {
 
 	// get possible mime types.
 	$mime_types = array();
-	foreach( External_Files::get_instance()->get_possible_mime_types() as $mime_type => $settings ) {
-		$mime_types[$mime_type] = $settings['label'];
+	foreach ( External_Files::get_instance()->get_possible_mime_types() as $mime_type => $settings ) {
+		$mime_types[ $mime_type ] = $settings['label'];
 	}
 
 	// select allowed mime-types.
@@ -230,7 +230,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_proxy',
 			'fieldId'     => 'eml_proxy',
 			'description' => __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ),
-			'readonly' => get_option('eml_images_mode', '') != 'external'
+			'readonly'    => 'external' !== get_option( 'eml_images_mode', '' ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_proxy', array( 'sanitize_callback' => 'eml_admin_validate_checkbox' ) );
@@ -246,7 +246,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_proxy_max_age',
 			'fieldId'     => 'eml_proxy_max_age',
 			'description' => __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ),
-			'readonly' => get_option('eml_images_mode', '') != 'external'
+			'readonly'    => 'external' !== get_option( 'eml_images_mode', '' ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_proxy_max_age', array( 'sanitize_callback' => 'eml_admin_validate_number' ) );
@@ -600,17 +600,17 @@ function eml_admin_media_box(): void {
 		$url = $external_file_obj->get_url( true );
 
 		// get shorter URL to show (only protocol and host) to save space.
-		$parsed_url = wp_parse_url($url);
+		$parsed_url  = wp_parse_url( $url );
 		$url_to_show = $url;
-		if( !empty($parsed_url['scheme']) ) {
-			$url_to_show = $parsed_url['scheme'].'://'.$parsed_url['host'].'..';
+		if ( ! empty( $parsed_url['scheme'] ) ) {
+			$url_to_show = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '..';
 		}
 
 		// output.
 		?>
 			<div class="misc-pub-external-file">
 				<p>
-					<?php echo esc_html__( 'File-URL:', 'external-files-in-media-library'); ?><br><a href="<?php echo esc_url($url); ?>" title="<?php echo esc_attr($url); ?>"><?php echo esc_html($url_to_show); ?></a>
+					<?php echo esc_html__( 'File-URL:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
 				</p>
 				<?php
 				if ( $external_file_obj->get_availability() ) {
@@ -641,7 +641,7 @@ function eml_admin_media_box(): void {
 					</p>
 					<p>
 						<?php
-						// TODO nur anzeigen wenn proxy aktiviert ist
+						// TODO nur anzeigen wenn proxy aktiviert ist.
 						if ( false !== $external_file_obj->is_cached() ) {
 							echo esc_html__( 'This file is delivered through proxied cache.', 'external-files-in-media-library' );
 						} else {
@@ -651,17 +651,17 @@ function eml_admin_media_box(): void {
 					</p>
 				</div>
 			<?php
-		} else {
-			?>
+	} else {
+		?>
 				<div class="notice notice-error notice-alt inline">
 					<p>
-						<?php
-							echo esc_html__( 'This file is not an external file.', 'external-files-in-media-library' );
-						?>
+					<?php
+						echo esc_html__( 'This file is not an external file.', 'external-files-in-media-library' );
+					?>
 					</p>
 				</div>
 			<?php
-		}
+	}
 }
 
 /**
@@ -878,14 +878,14 @@ function eml_admin_number_field( array $attr ): void {
 		?>
 		<input type="number" id="<?php echo esc_attr( $attr['fieldId'] ); ?>"
 			   name="<?php echo esc_attr( $attr['fieldId'] ); ?>"
-			   value="<?php echo esc_attr($value); ?>"
+			   value="<?php echo esc_attr( $value ); ?>"
 			   step="1"
 			   min="0"
 			   max="10000"
 			   class="eml-field-width"
 			   title="<?php echo esc_attr( $title ); ?>"
 			<?php
-			echo esc_attr($readonly);
+			echo esc_attr( $readonly );
 			?>
 		>
 		<?php
@@ -1154,9 +1154,9 @@ add_action( 'wp_ajax_dismiss_admin_notice', 'eml_admin_dismiss' );
 /**
  * Validate the value from number-field.
  *
- * @param $value
+ * @param string $value Variable to validate.
  * @return int
  */
-function eml_admin_validate_number( $value ): int {
-	return absint($value);
+function eml_admin_validate_number( string $value ): int {
+	return absint( $value );
 }

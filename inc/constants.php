@@ -7,7 +7,7 @@
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
-    exit;
+	exit;
 }
 
 /**
@@ -31,6 +31,6 @@ const EML_POST_IMPORT_MARKER = 'eml_imported';
 const EML_CAP_NAME = 'eml_manage_files';
 
 /**
- * options-list of transients.
+ * Options-list of transients.
  */
 const EML_TRANSIENT_LIST = 'eml_transients';
