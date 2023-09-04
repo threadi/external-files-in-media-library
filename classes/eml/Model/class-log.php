@@ -33,13 +33,6 @@ class Log {
 	private wpdb $wpdb;
 
 	/**
-	 * DB-Table-name.
-	 *
-	 * @var string
-	 */
-	private string $table_name;
-
-	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {
@@ -49,7 +42,7 @@ class Log {
 		$this->wpdb = $wpdb;
 
 		// set the table-name.
-		$this->table_name = $this->wpdb->prefix . 'eml_logs';
+		$this->wpdb->eml_table = $this->wpdb->prefix . 'eml_logs';
 	}
 
 	/**
@@ -60,8 +53,7 @@ class Log {
 	 */
 	public function get_logs(): array {
 		global $wpdb;
-		$table = $this->table_name;
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ); // phpcs:ignore
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ); // phpcs:ignore
 	}
 
 	/**
@@ -90,7 +82,7 @@ class Log {
 		$charset_collate = $this->wpdb->get_charset_collate();
 
 		// table for import-log.
-		$sql = 'CREATE TABLE ' . $this->table_name . " (
+		$sql = 'CREATE TABLE ' . $this->wpdb->eml_table . " (
             `id` mediumint(9) NOT NULL AUTO_INCREMENT,
             `time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
             `log` text DEFAULT '' NOT NULL,
@@ -109,8 +101,8 @@ class Log {
 	 * @return void
 	 */
 	public function uninstall(): void {
-		$sql = "DROP TABLE IF EXISTS {$this->table_name}";
-		$this->wpdb->query( $sql ); // phpcs:ignore
+		global $wpdb;
+		$this->wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->eml_table ) );
 	}
 
 	/**
@@ -131,7 +123,7 @@ class Log {
 
 		// add log entry.
 		$this->wpdb->insert(
-			$this->table_name,
+			$this->wpdb->eml_table,
 			array(
 				'time'  => gmdate( 'Y-m-d H:i:s' ),
 				'log'   => $message,
@@ -149,8 +141,8 @@ class Log {
 	 * @noinspection SqlResolve
 	 */
 	private function clean_log(): void {
-		$sql = sprintf( 'DELETE FROM `%s` WHERE `time` < DATE_SUB(NOW(), INTERVAL %d DAY)', $this->table_name, 50 );
-		$this->wpdb->query( $sql ); // phpcs:ignore
+		global $wpdb;
+		$this->wpdb->query( sprintf( 'DELETE FROM `%s` WHERE `time` < DATE_SUB(NOW(), INTERVAL %d DAY)', $wpdb->eml_table, 50 ) );
 	}
 
 	/**
@@ -159,8 +151,8 @@ class Log {
 	 * @return void
 	 */
 	public function truncate_log(): void {
-		$sql = 'TRUNCATE TABLE `' . $this->table_name . '`';
-		$this->wpdb->query( $sql ); // phpcs:ignore
+		global $wpdb;
+		$this->wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->eml_table ) );
 	}
 
 	/**
