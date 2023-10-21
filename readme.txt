@@ -2,11 +2,11 @@
 Contributors: threadi
 Tags: external files, media library, media
 Requires at least: 6.2
-Tested up to: 6.2.2
+Tested up to: 6.4
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 
 == Description ==
 
@@ -41,3 +41,7 @@ No, only public files can be used.
 
 = 1.0.0 =
 * Initial release
+
+= 1.0.1 =
+* Updated compatibility-flag for WordPress 6.4
+* Compatible with WordPress Coding Standards 3.0

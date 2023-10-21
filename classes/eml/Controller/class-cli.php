@@ -135,5 +135,4 @@ class Cli {
 		// return ok-message.
 		\WP_CLI::success( 'Plugin has been reset.' );
 	}
-
 }

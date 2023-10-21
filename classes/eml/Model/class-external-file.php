@@ -433,8 +433,7 @@ class External_File {
 	 */
 	public function delete_cache(): void {
 		if ( $this->is_cached() ) {
-			unlink( $this->get_cache_file() );
+			wp_delete_file( $this->get_cache_file() );
 		}
 	}
-
 }

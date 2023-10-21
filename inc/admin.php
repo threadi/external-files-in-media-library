@@ -623,7 +623,7 @@ function eml_admin_media_box(): void {
 						<p id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
 						<?php
 							/* translators: %1$s will be replaced by the URL for the logs */
-							echo sprintf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
+							printf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
 						?>
 						</p>
 					<?php
@@ -877,13 +877,13 @@ function eml_admin_number_field( array $attr ): void {
 
 		?>
 		<input type="number" id="<?php echo esc_attr( $attr['fieldId'] ); ?>"
-			   name="<?php echo esc_attr( $attr['fieldId'] ); ?>"
-			   value="<?php echo esc_attr( $value ); ?>"
-			   step="1"
-			   min="0"
-			   max="10000"
-			   class="eml-field-width"
-			   title="<?php echo esc_attr( $title ); ?>"
+				name="<?php echo esc_attr( $attr['fieldId'] ); ?>"
+				value="<?php echo esc_attr( $value ); ?>"
+				step="1"
+				min="0"
+				max="10000"
+				class="eml-field-width"
+				title="<?php echo esc_attr( $title ); ?>"
 			<?php
 			echo esc_attr( $readonly );
 			?>

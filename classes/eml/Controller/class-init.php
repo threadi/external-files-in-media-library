@@ -95,7 +95,7 @@ class Init {
 		// misc.
 		add_action(
 			'cli_init',
-			function() {
+			function () {
 				\WP_CLI::add_command( 'eml', 'threadi\eml\Controller\Cli' );
 			}
 		);
