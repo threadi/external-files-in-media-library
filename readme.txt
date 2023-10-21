@@ -45,3 +45,5 @@ No, only public files can be used.
 = 1.0.1 =
 * Updated compatibility-flag for WordPress 6.4
 * Compatible with WordPress Coding Standards 3.0
+* Fixed error in settings-save-process
+* Fixed typo in translations

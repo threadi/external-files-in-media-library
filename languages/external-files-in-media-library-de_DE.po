@@ -6,7 +6,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/external-files-in-"
 "media-library\n"
 "POT-Creation-Date: 2023-10-21T17:25:08+02:00\n"
-"PO-Revision-Date: 2023-10-21 17:25+0200\n"
+"PO-Revision-Date: 2023-10-21 17:34+0200\n"
 "Last-Translator: Thomas Zwirner <info@thomaszwirner.de>\n"
 "Language-Team: \n"
 "Language: de_DE\n"
@@ -89,7 +89,7 @@ msgstr ""
 #. translators: %1$s will be replaced by the url of the file.
 #: classes/eml/Controller/class-external-files.php:359
 msgid "Given URL %1$s is available."
-msgstr "Die angegebene URL %1$s ist nicht erreichbar."
+msgstr "Die angegebene URL %1$s ist erreichbar."
 
 #. translators: %1$s will be replaced by the file-URL
 #: classes/eml/Controller/class-external-files.php:381

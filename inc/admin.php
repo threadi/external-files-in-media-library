@@ -1154,9 +1154,10 @@ add_action( 'wp_ajax_dismiss_admin_notice', 'eml_admin_dismiss' );
 /**
  * Validate the value from number-field.
  *
- * @param string $value Variable to validate.
+ * @param string|null $value Variable to validate.
  * @return int
+ * @noinspection PhpUnused
  */
-function eml_admin_validate_number( string $value ): int {
+function eml_admin_validate_number( string|null $value ): int {
 	return absint( $value );
 }

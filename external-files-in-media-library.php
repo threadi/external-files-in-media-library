@@ -21,6 +21,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // get plugin-path.
 const EML_PLUGIN         = __FILE__;
+
+// set plugin-version.
 const EML_PLUGIN_VERSION = '@@VersionNumber@@';
 
 // include necessary file.
