@@ -130,7 +130,7 @@ class Helper {
 					if ( is_dir( $dir . DIRECTORY_SEPARATOR . $object ) && ! is_link( $dir . '/' . $object ) ) {
 						self::delete_directory_recursively( $dir . DIRECTORY_SEPARATOR . $object );
 					} else {
-						unlink( $dir . DIRECTORY_SEPARATOR . $object );
+						wp_delete_file( $dir . DIRECTORY_SEPARATOR . $object );
 					}
 				}
 			}

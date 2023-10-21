@@ -164,5 +164,4 @@ class Transients {
 	public function get_transient_by_name( string $transient ): Transient {
 		return new Transient( $transient );
 	}
-
 }

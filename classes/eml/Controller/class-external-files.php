@@ -736,5 +736,4 @@ class External_Files {
 		// call cache file deletion.
 		$external_file->delete_cache();
 	}
-
 }
