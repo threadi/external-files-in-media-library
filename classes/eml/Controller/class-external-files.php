@@ -435,6 +435,10 @@ class External_Files {
 					'label' => __( 'WEBP', 'external-files-in-media-library' ),
 					'ext'   => 'webp',
 				),
+				'image/svg+xml'   => array(
+					'label' => __( 'SVG', 'external-files-in-media-library' ),
+					'ext'   => 'svg',
+				),
 				'application/pdf' => array(
 					'label' => __( 'PDF', 'external-files-in-media-library' ),
 					'ext'   => 'pdf',
