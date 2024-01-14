@@ -53,3 +53,7 @@ Run in main directory:
 ### Repair
 
 `vendor/bin/phpcbf --standard=WordPress file`
+
+## Generate documentation
+
+`vendor/bin/wp-documentor parse classes --format=markdown --output=doc/hooks.md --prefix=eml`
