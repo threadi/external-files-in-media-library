@@ -51,3 +51,4 @@ No, only public files can be used.
 = 1.0.2 =
 * Added hook documentation
 * Added hint for hook documentation in settings
+* Removed language files from release

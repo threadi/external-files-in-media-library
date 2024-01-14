@@ -26,21 +26,6 @@
         <replace file="${src.dir}/${plugin.slug}-release.php">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
-
-        <copy file="${src.dir}/languages/external-files-in-media-library.pot" tofile="${log.dir}/languages/external-files-in-media-library.pot"/>
-        <replace file="${src.dir}/languages/external-files-in-media-library.pot">
-            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
-        </replace>
-
-        <copy file="${src.dir}/languages/external-files-in-media-library-de_DE.po" tofile="${log.dir}/languages/external-files-in-media-library-de_DE.po"/>
-        <replace file="${src.dir}/languages/external-files-in-media-library-de_DE.po">
-            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
-        </replace>
-
-        <copy file="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po" tofile="${log.dir}/languages/external-files-in-media-library-de_DE_formal.po"/>
-        <replace file="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po">
-            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
-        </replace>
     </target>
 
     <!-- install composer -->
@@ -69,14 +54,10 @@
             <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
             <zipfileset dir="${src.dir}/classes" prefix="${plugin.slug}/classes" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
-            <zipfileset dir="${src.dir}/languages" prefix="${plugin.slug}/languages" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>
         <delete file="${src.dir}/${plugin.slug}-release.php"/>
-        <copy file="${log.dir}/languages/external-files-in-media-library.pot" tofile="${src.dir}/languages/external-files-in-media-library.pot" overwrite="true" />
-        <copy file="${log.dir}/languages/external-files-in-media-library-de_DE.po" tofile="${src.dir}/languages/external-files-in-media-library-de_DE.po" overwrite="true" />
-        <copy file="${log.dir}/languages/external-files-in-media-library-de_DE_formal.po" tofile="${src.dir}/languages/external-files-in-media-library-de_DE_formal.po" overwrite="true" />
     </target>
 
     <target name="help">
