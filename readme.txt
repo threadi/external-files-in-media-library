@@ -49,4 +49,5 @@ No, only public files can be used.
 * Fixed typo in translations
 
 = 1.0.2 =
-* Add hook documentation
+* Added hook documentation
+* Added hint for hook documentation in settings

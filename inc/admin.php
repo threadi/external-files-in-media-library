@@ -96,7 +96,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_allowed_mime_types',
 			'fieldId'     => 'eml_allowed_mime_types',
 			'values'      => $mime_types,
-			'description' => __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend.', 'external-files-in-media-library' ),
+			'description' => sprintf( __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_hook_url() ) ),
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_allowed_mime_types', array( 'sanitize_callback' => 'eml_admin_validate_allowed_mime_types' ) );
