@@ -137,4 +137,13 @@ class Helper {
 			rmdir( $dir );
 		}
 	}
+
+    /**
+     * Return the hook-url.
+     *
+     * @return string
+     */
+    public static function get_hook_url(): string {
+        return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/hooks.md';
+    }
 }
