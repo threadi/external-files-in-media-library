@@ -11,6 +11,11 @@ jQuery(document).ready(function($) {
         // get field value
         let urls = $(this).parent().find('.eml_add_external_files').val();
 
+        // do nothing if list is empty.
+        if( urls.length === 0 ) {
+          return;
+        }
+
         // send request
         jQuery.ajax({
             url: emlJsVars.ajax_url,
