@@ -134,16 +134,21 @@ class Helper {
 					}
 				}
 			}
-			rmdir( $dir );
+
+			// get WP Filesystem-handler.
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			\WP_Filesystem();
+			global $wp_filesystem;
+			$wp_filesystem->delete( $dir );
 		}
 	}
 
-    /**
-     * Return the hook-url.
-     *
-     * @return string
-     */
-    public static function get_hook_url(): string {
-        return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/hooks.md';
-    }
+	/**
+	 * Return the hook-url.
+	 *
+	 * @return string
+	 */
+	public static function get_hook_url(): string {
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/hooks.md';
+	}
 }
