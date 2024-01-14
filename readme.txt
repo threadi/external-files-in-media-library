@@ -51,4 +51,5 @@ No, only public files can be used.
 = 1.0.2 =
 * Added hook documentation
 * Added hint for hook documentation in settings
+* Optimized handling of upload-form if nothing has been added there
 * Removed language files from release
