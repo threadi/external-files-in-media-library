@@ -99,7 +99,6 @@ class Init {
 				\WP_CLI::add_command( 'eml', 'threadi\eml\Controller\Cli' );
 			}
 		);
-		add_action( 'init', array( $this, 'wp_init' ), 10, 0 );
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
 		add_filter( 'redirect_canonical', array( $this, 'disable_attachment_page' ), 10, 0 );
 		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ), 10, 0 );
@@ -428,14 +427,5 @@ class Init {
 			$data['file'] = get_permalink( $attachment_id );
 		}
 		return $data;
-	}
-
-	/**
-	 * Add language-file.
-	 *
-	 * @return void
-	 */
-	public function wp_init(): void {
-		load_plugin_textdomain( 'external-files-in-media-library', false, dirname( plugin_basename( EML_PLUGIN ) ) . '/languages' );
 	}
 }
