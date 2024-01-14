@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="ExternalFilesMediaLibrary" namespace="ExternalFilesMediaLibraryCS\ExternalFilesMediaLibrary" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd">
+
+    <description>External Files for Media Library Coding Standards</description>
+
+    <!--
+    Included via WordPress-Extra.
+    <rule ref="WordPress-Core"/>
+    -->
+    <rule ref="WordPress-Docs"/>
+    <rule ref="WordPress-Extra"/>
+    <rule ref="WordPress">
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_query"/>
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_tax_query"/>
+    </rule>
+
+</ruleset>

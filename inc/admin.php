@@ -96,6 +96,7 @@ function eml_admin_menu_init(): void {
 			'label_for'   => 'eml_allowed_mime_types',
 			'fieldId'     => 'eml_allowed_mime_types',
 			'values'      => $mime_types,
+			/* translators: %1$s will be replaced by the external hook-documentation-URL */
 			'description' => sprintf( __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_hook_url() ) ),
 		)
 	);
@@ -491,6 +492,13 @@ add_action( 'wp_ajax_eml_add_external_urls', 'eml_admin_add_urls_via_ajax', 10, 
  * @return void
  */
 function eml_admin_add_media_filter_for_external_files(): void {
+	// check nonce.
+	if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-restrict-manage-posts' ) ) {
+		// redirect user back.
+		wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
+		exit;
+	}
+
 	// only for upload-screen.
 	$scr = get_current_screen();
 	if ( 'upload' !== $scr->base ) {
@@ -529,6 +537,13 @@ add_action( 'restrict_manage_posts', 'eml_admin_add_media_filter_for_external_fi
  */
 function eml_admin_add_media_do_filter_for_external_files( WP_Query $query ): void {
 	if ( is_admin() && $query->is_main_query() ) {
+		// check nonce.
+		if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-filter-posts' ) ) {
+			// redirect user back.
+			wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
+			exit;
+		}
+
 		if ( isset( $_GET['admin_filter_media_external_files'] ) ) {
 			if ( 'external' === $_GET['admin_filter_media_external_files'] ) {
 				$query->set(
@@ -722,6 +737,13 @@ add_action( 'wp_ajax_eml_check_availability', 'eml_admin_check_file_availability
  * @return void
  */
 function eml_admin_settings(): void {
+	// check nonce.
+	if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-settings' ) ) {
+		// redirect user back.
+		wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
+		exit;
+	}
+
 	// check user capabilities.
 	if ( false === current_user_can( 'manage_options' ) ) {
 		return;

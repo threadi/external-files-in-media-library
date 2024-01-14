@@ -416,56 +416,56 @@ class External_Files {
 	 * @return array
 	 */
 	public function get_possible_mime_types(): array {
-        $mime_types = array(
-            'image/gif'       => array(
-                'label' => __( 'GIF', 'external-files-in-media-library' ),
-                'ext'   => 'gif',
-            ),
-            'image/jpeg'      => array(
-                'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
-                'ext'   => 'jpg',
-            ),
-            'image/png'       => array(
-                'label' => __( 'PNG', 'external-files-in-media-library' ),
-                'ext'   => 'png',
-            ),
-            'image/webp'      => array(
-                'label' => __( 'WEBP', 'external-files-in-media-library' ),
-                'ext'   => 'webp',
-            ),
-            'application/pdf' => array(
-                'label' => __( 'PDF', 'external-files-in-media-library' ),
-                'ext'   => 'pdf',
-            ),
-            'application/zip' => array(
-                'label' => __( 'ZIP', 'external-files-in-media-library' ),
-                'ext'   => 'zip',
-            ),
-            'video/mp4'       => array(
-                'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
-                'ext'   => 'mp4',
-            ),
-        );
+		$mime_types = array(
+			'image/gif'       => array(
+				'label' => __( 'GIF', 'external-files-in-media-library' ),
+				'ext'   => 'gif',
+			),
+			'image/jpeg'      => array(
+				'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
+				'ext'   => 'jpg',
+			),
+			'image/png'       => array(
+				'label' => __( 'PNG', 'external-files-in-media-library' ),
+				'ext'   => 'png',
+			),
+			'image/webp'      => array(
+				'label' => __( 'WEBP', 'external-files-in-media-library' ),
+				'ext'   => 'webp',
+			),
+			'application/pdf' => array(
+				'label' => __( 'PDF', 'external-files-in-media-library' ),
+				'ext'   => 'pdf',
+			),
+			'application/zip' => array(
+				'label' => __( 'ZIP', 'external-files-in-media-library' ),
+				'ext'   => 'zip',
+			),
+			'video/mp4'       => array(
+				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
+				'ext'   => 'mp4',
+			),
+		);
 
-        /**
-         * Filter the possible mime types this plugin could support.
-         *
-         * To add files of type "your/mime" with extension "yourmime" use this example:
-         *
-         * ```
-         * add_filter( 'eml_supported_mime_types', function( $list ) {
-         *  $list['your/mime'] = array(
-         *      'label' => 'Title of your mime',
-         *      'ext' => 'yourmime'
-         *  );
-         *  return $list
-         * } );
-         * ```
-         *
-         * @since 1.0.0 Available since 1.0.0.
-         *
-         * @param array $mime_types List of supported mime types.
-         */
+		/**
+		 * Filter the possible mime types this plugin could support.
+		 *
+		 * To add files of type "your/mime" with extension "yourmime" use this example:
+		 *
+		 * ```
+		 * add_filter( 'eml_supported_mime_types', function( $list ) {
+		 *  $list['your/mime'] = array(
+		 *      'label' => 'Title of your mime',
+		 *      'ext' => 'yourmime'
+		 *  );
+		 *  return $list
+		 * } );
+		 * ```
+		 *
+		 * @since 1.0.0 Available since 1.0.0.
+		 *
+		 * @param array $mime_types List of supported mime types.
+		 */
 		return apply_filters( 'eml_supported_mime_types', $mime_types );
 	}
 

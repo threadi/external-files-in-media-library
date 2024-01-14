@@ -235,15 +235,15 @@ class Proxy {
 	 * @return string
 	 */
 	public function get_slug(): string {
-        $slug = $this->slug;
+		$slug = $this->slug;
 
-        /**
-         * Filter the slug for the proxy-URL.
-         *
-         * @since 1.0.0 Available since 1.0.0.
-         *
-         * @param string $slug The slug.
-         */
+		/**
+		 * Filter the slug for the proxy-URL.
+		 *
+		 * @since 1.0.0 Available since 1.0.0.
+		 *
+		 * @param string $slug The slug.
+		 */
 		return apply_filters( 'eml_proxy_slug', $slug );
 	}
 }
