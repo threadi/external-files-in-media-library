@@ -151,4 +151,19 @@ class Helper {
 	public static function get_hook_url(): string {
 		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/hooks.md';
 	}
+
+	/**
+	 * Get real content type from string.
+	 *
+	 * @param string $content_type
+	 *
+	 * @return string
+	 */
+	public static function get_content_type_from_string( string $content_type ): string {
+		preg_match_all( "/^(.*);(.*)$/mi", $content_type, $matches );
+		if ( ! empty( $matches[1] ) ) {
+			$content_type = $matches[1][0];
+		}
+		return $content_type;
+	}
 }
