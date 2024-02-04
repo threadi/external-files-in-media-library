@@ -2,11 +2,11 @@
 Contributors: threadi
 Tags: external files, media library, media
 Requires at least: 6.2
-Tested up to: 6.4
+Tested up to: 6.4.3
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 
 == Description ==
 
@@ -53,3 +53,6 @@ No, only public files can be used.
 * Added hint for hook documentation in settings
 * Optimized handling of upload-form if nothing has been added there
 * Removed language files from release
+
+= 1.0.3 =
+* Prevent usage of plugin with older PHP than required minimum
