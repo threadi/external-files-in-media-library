@@ -35,3 +35,28 @@ select.eml-field-width {
     position: relative;
     z-index: 1;
 }
+
+body.settings_page_eml_settings h1 {
+	display: inline-block;
+}
+
+body.settings_page_eml_settings .review-hint-button:after {
+	color: #d4af37;
+	content: "\f155 \f155 \f155 \f155 \f155";
+	display: inline-block;
+	font-family: "dashicons", sans-serif;
+	margin-left: 8px;
+}
+
+body.settings_page_eml_settings .nav-tab-help {
+	background-color: #fca15b;
+	float: right;
+}
+
+body.settings_page_eml_settings .nav-tab-help:before {
+	content: "\f125";
+	display: inline-block;
+	font-family: "dashicons", sans-serif;
+	font-size: 12px;
+	margin-right: 8px;
+}
