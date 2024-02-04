@@ -178,7 +178,7 @@ class External_Files {
 				$title = basename( $url_info['path'] );
 
 				// add file extension if we support the mime-type and if the title does not have any atm.
-				if ( empty(pathinfo($title, PATHINFO_EXTENSION)) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
+				if ( empty( pathinfo( $title, PATHINFO_EXTENSION ) ) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
 					$title .= '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
 				}
 			}
@@ -378,7 +378,7 @@ class External_Files {
 
 		// request does not have a valid content-type.
 		$response_headers = $response_headers_obj->getAll();
-		if( ! empty( $response_headers['content-type'] ) ) {
+		if ( ! empty( $response_headers['content-type'] ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
 				$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
@@ -396,7 +396,7 @@ class External_Files {
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
 		 */
-		if( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
+		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
 			// file is available.
 			/* translators: %1$s will be replaced by the url of the file. */
 			$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), $url ), $url, 'success', 2 );
@@ -404,7 +404,6 @@ class External_Files {
 			return true;
 		}
 
-		// return false.
 		return false;
 	}
 

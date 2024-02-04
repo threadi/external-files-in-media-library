@@ -60,3 +60,4 @@ No, only public files can be used.
 * Optimized content type detection
 * Optimized attachment title handling with special chars
 * Updated compatibility-flag for WordPress 6.4.3
+* Updated dependencies
