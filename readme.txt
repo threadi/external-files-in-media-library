@@ -6,7 +6,7 @@ Tested up to: 6.4.3
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.0.3
+Stable tag: 1.1.0
 
 == Description ==
 
@@ -54,6 +54,9 @@ No, only public files can be used.
 * Optimized handling of upload-form if nothing has been added there
 * Removed language files from release
 
-= 1.0.3 =
+= 1.1.0 =
+* Added multiple hooks
 * Prevent usage of plugin with older PHP than required minimum
 * Optimized content type detection
+* Updated compatibility-flag for WordPress 6.4.3
+#
