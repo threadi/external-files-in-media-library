@@ -302,6 +302,7 @@ function eml_admin_add_styles_and_js_admin(): void {
 			'urls_nonce'         => wp_create_nonce( 'eml-urls-upload-nonce' ),
 			'availability_nonce' => wp_create_nonce( 'eml-availability-check-nonce' ),
 			'dismiss_nonce'      => wp_create_nonce( 'eml-dismiss-nonce' ),
+			'title_rate_us' => __( 'Rate this plugin', 'external-files-in-media-library' )
 		)
 	);
 }
@@ -775,6 +776,7 @@ function eml_admin_settings(): void {
 			endif;
 			?>
 			"><?php esc_html_e( 'Logs', 'external-files-in-media-library' ); ?></a>
+			<a href="https://wordpress.org/support/plugin/external-files-in-media-library/" class="nav-tab nav-tab-help" target="_blank"><?php esc_html_e( 'Questions? Check our forum', 'external-files-in-media-library' ); ?></a>
 		</nav>
 
 		<div class="tab-content">
