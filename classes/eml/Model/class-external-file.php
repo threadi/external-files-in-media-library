@@ -206,8 +206,10 @@ class External_File {
 
 		// Update the meta-field for mime_type.
 		$meta              = wp_get_attachment_metadata( $this->get_id(), true );
-		$meta['mime_type'] = $mime_type;
-		wp_update_attachment_metadata( $this->get_id(), $meta );
+		if( is_array($meta) ) {
+			$meta['mime_type'] = $mime_type;
+			wp_update_attachment_metadata( $this->get_id(), $meta );
+		}
 	}
 
 	/**
@@ -283,8 +285,10 @@ class External_File {
 	public function set_filesize( int $file_size ): void {
 		// Update the thumbnail filename.
 		$meta             = wp_get_attachment_metadata( $this->get_id(), true );
-		$meta['filesize'] = $file_size;
-		wp_update_attachment_metadata( $this->get_id(), $meta );
+		if( is_array( $meta ) ) {
+			$meta['filesize'] = $file_size;
+			wp_update_attachment_metadata( $this->get_id(), $meta );
+		}
 
 		// set in object.
 		$this->filesize = $file_size;

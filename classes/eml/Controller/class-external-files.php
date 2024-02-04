@@ -164,11 +164,11 @@ class External_Files {
 				// get all possible mime-types our plugin supports.
 				$mime_types = $this->get_possible_mime_types();
 
-				// set title as filename.
-				$title = str_replace( '/', '', $url_info['path'] );
+				// get basename of path, if available.
+				$title = basename( $url_info['path'] );
 
-				// add file extension if we support the mime-type.
-				if ( ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
+				// add file extension if we support the mime-type and if the title does not have any atm.
+				if ( empty(pathinfo($title, PATHINFO_EXTENSION)) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
 					$title .= '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
 				}
 			}
@@ -348,10 +348,13 @@ class External_Files {
 
 		// request does not have a valid content-type.
 		$response_headers = $response_headers_obj->getAll();
-		if ( false === in_array( $response_headers['content-type'], $this->get_allowed_mime_types(), true ) ) {
-			/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-			$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
-			return false;
+		if( ! empty( $response_headers['content-type'] ) ) {
+			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_allowed_mime_types(), true ) ) {
+				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
+				$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
+
+				return false;
+			}
 		}
 
 		// file is available.
@@ -520,7 +523,7 @@ class External_Files {
 
 		// set content-type as mime-type in result-array.
 		if ( ! empty( $response_headers['content-type'] ) ) {
-			$results['mime-type'] = $response_headers['content-type'];
+			$results['mime-type'] = Helper::get_content_type_from_string( $response_headers['content-type'] );
 		}
 
 		// download file as temporary file for further analyses.

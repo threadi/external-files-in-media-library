@@ -56,3 +56,4 @@ No, only public files can be used.
 
 = 1.0.3 =
 * Prevent usage of plugin with older PHP than required minimum
+* Optimized content type detection
