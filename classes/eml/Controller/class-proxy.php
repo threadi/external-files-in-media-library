@@ -19,8 +19,6 @@ use threadi\eml\Transients;
  * Initialize the proxy-handler.
  */
 class Proxy {
-
-
 	/**
 	 * Instance of actual object.
 	 *
@@ -38,16 +36,14 @@ class Proxy {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -194,7 +190,7 @@ class Proxy {
 	private function return_binary( string $file, string $mime_type, int $file_size, string $url ): void {
 		// get WP Filesystem-handler.
 		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
+		WP_Filesystem();
 		global $wp_filesystem;
 
 		// return header.

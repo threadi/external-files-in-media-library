@@ -158,7 +158,9 @@ class External_File {
 	 */
 	public function get_title(): string {
 		if ( empty( $this->title ) ) {
+			remove_filter( 'the_title', 'wptexturize' );
 			$this->title = get_the_title( $this->get_id() );
+			add_filter( 'the_title', 'wptexturize' );
 		}
 		return $this->title;
 	}
