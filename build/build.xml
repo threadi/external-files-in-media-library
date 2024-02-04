@@ -40,15 +40,25 @@
         </exec>
     </target>
 
+    <!-- generate documentation -->
+    <target name="generate-documentation" depends="composer-install">
+        <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/wp-documentor">
+            <arg line="parse classes --format=markdown --output=docs/hooks.md --prefix=eml_"/>
+        </exec>
+    </target>
+
     <!-- check WCS compatibility -->
     <target name="check-wcs" depends="composer-install">
+        <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/phpcbf">
+            <arg line="--extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml ."/>
+        </exec>
         <exec dir="${src.dir}" failonerror="true" executable="vendor/bin/phpcs">
             <arg line="--extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml ."/>
         </exec>
     </target>
 
     <!-- create release-zip -->
-    <target name="build" description="builds a new release" depends="setVersionNumber,check-wcs">
+    <target name="build" description="builds a new release" depends="generate-documentation,setVersionNumber,check-wcs">
         <delete file="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
         <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
             <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />

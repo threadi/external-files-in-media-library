@@ -155,12 +155,12 @@ class Helper {
 	/**
 	 * Get real content type from string.
 	 *
-	 * @param string $content_type
+	 * @param string $content_type The content type string.
 	 *
 	 * @return string
 	 */
 	public static function get_content_type_from_string( string $content_type ): string {
-		preg_match_all( "/^(.*);(.*)$/mi", $content_type, $matches );
+		preg_match_all( '/^(.*);(.*)$/mi', $content_type, $matches );
 		if ( ! empty( $matches[1] ) ) {
 			$content_type = $matches[1][0];
 		}
