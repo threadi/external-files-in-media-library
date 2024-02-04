@@ -19,6 +19,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// do nothing if PHP-version is not 8.0 or newer.
+if ( version_compare( PHP_VERSION, '8.0', '<' ) ) {
+	return;
+}
+
 // get plugin-path.
 const EML_PLUGIN         = __FILE__;
 
