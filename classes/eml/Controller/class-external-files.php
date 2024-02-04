@@ -728,7 +728,7 @@ class External_Files {
 	public function get_file_by_title( string $title ): bool|External_File {
 		if ( ! empty( $title ) ) {
 			$query  = array(
-				'post_title'     => $title,
+				'title'          => $title,
 				'post_type'      => 'attachment',
 				'post_status'    => 'inherit',
 				'meta_query'     => array(
@@ -737,7 +737,7 @@ class External_Files {
 						'compare' => 'EXISTS',
 					),
 				),
-				'posts_per_page' => 1,
+				'posts_per_page' => -1,
 				'fields'         => 'ids',
 			);
 			$result = new WP_Query( $query );

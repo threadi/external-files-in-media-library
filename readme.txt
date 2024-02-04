@@ -58,5 +58,5 @@ No, only public files can be used.
 * Added multiple hooks
 * Prevent usage of plugin with older PHP than required minimum
 * Optimized content type detection
+* Optimized attachment title handling with special chars
 * Updated compatibility-flag for WordPress 6.4.3
-#
