@@ -152,6 +152,12 @@ class Transient {
 
 		// get the transients contents.
 		$entry = get_transient( $this->get_name() );
+
+		// bail if entry is empty.
+		if ( empty( $entry ) || ! isset( $entry['message'] ) ) {
+			return;
+		}
+
 		$this->set_message( $entry['message'] );
 		$this->set_type( $entry['type'] );
 		$this->set_dismissible_days( $entry['dismissible_days'] );
