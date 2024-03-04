@@ -416,7 +416,7 @@ function eml_admin_add_urls_via_ajax(): void {
 	$files_obj = external_files::get_instance();
 
 	// get the urls from request.
-	$urls      = isset( $_REQUEST['urls'] ) ? sanitize_textarea_field( wp_unslash( $_REQUEST['urls'] ) ) : '';
+	$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 	$url_array = explode( "\n", $urls );
 
 	if ( ! empty( $url_array ) ) {
@@ -1185,3 +1185,15 @@ add_action( 'wp_ajax_dismiss_admin_notice', 'eml_admin_dismiss' );
 function eml_admin_validate_number( string|null $value ): int {
 	return absint( $value );
 }
+
+/**
+ * URL-decode the file-title if it is used in admin (via AJAX).
+ *
+ * @param string $url
+ *
+ * @return string
+ */
+function eml_admin_file_title( string $url ): string {
+	return urldecode( $url );
+}
+add_filter( 'eml_file_import_title', 'eml_admin_file_title' );
