@@ -65,6 +65,7 @@ No, only public files can be used.
 = 1.1.1 =
 * Proxy-slug will now also be changed with simple permalinks
 * Updated compatibility-flag for WordPress 6.5
+* Updated hook documentation
 * Fixed support for spaces in URLs
 * Fixed typo in examples in hook-documentation
 * Fixed possible notice in transient-handler

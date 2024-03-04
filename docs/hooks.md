@@ -116,7 +116,7 @@ add_filter( 'eml_supported_mime_types', function( $list ) {
      'label' => 'Title of your mime',
      'ext' => 'yourmime'
  );
- return $list
+ return $list;
 } );
 ```
 
@@ -136,7 +136,7 @@ Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-e
 
 ### `eml_external_file_infos`
 
-*Filter the title for a single file during import.*
+*Filter the data of a single file during import.*
 
 **Arguments**
 
