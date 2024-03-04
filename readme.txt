@@ -2,11 +2,11 @@
 Contributors: threadi
 Tags: external files, media library, media
 Requires at least: 6.2
-Tested up to: 6.4.3
+Tested up to: 6.5
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 
 == Description ==
 
@@ -61,3 +61,9 @@ No, only public files can be used.
 * Optimized attachment title handling with special chars
 * Updated compatibility-flag for WordPress 6.4.3
 * Updated dependencies
+
+= 1.1.1 =
+* Proxy-slug will now also be changed with simple permalinks
+* Updated compatibility-flag for WordPress 6.5
+* Fixed possible notice in transient-handler
+* Fixed usage of proxy with simple permalinks

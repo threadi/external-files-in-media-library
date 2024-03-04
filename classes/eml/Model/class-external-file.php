@@ -108,11 +108,11 @@ class External_File {
 		if ( ! empty( $this->url ) && $this->is_image() && 1 === absint( get_option( 'eml_proxy', 0 ) ) && false === $unproxied ) {
 			if ( empty( get_option( 'permalink_structure', '' ) ) ) {
 				// return link for simple permalinks.
-				return '?emlproxy=' . $this->get_title();
+				return trailingslashit( get_home_url() ) . '?' . Proxy::get_instance()->get_slug() . '=' . $this->get_title();
 			}
 
 			// return link for pretty permalinks.
-			return get_home_url() . '/' . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+			return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
 		}
 
 		// return normal URL.

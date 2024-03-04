@@ -91,18 +91,18 @@ class Proxy {
 	 * @return void
 	 */
 	public function wp_init(): void {
-		add_rewrite_rule( $this->get_slug() . '/([a-z0-9-.]+)?$', 'index.php?emlproxy=$matches[1]', 'top' );
+		add_rewrite_rule( $this->get_slug() . '/([a-z0-9-.]+)?$', 'index.php?' . self::get_instance()->get_slug() . '=$matches[1]', 'top' );
 	}
 
 	/**
-	 * Whitelist the emlproxy parameter in query-vars.
+	 * Whitelist the proxy-slug parameter in query-vars.
 	 *
 	 * @param array $query_vars The query-vars of the actual request.
 	 *
 	 * @return array
 	 */
 	public function set_query_vars( array $query_vars ): array {
-		$query_vars[] = 'emlproxy';
+		$query_vars[] = self::get_instance()->get_slug();
 		return $query_vars;
 	}
 
@@ -117,12 +117,12 @@ class Proxy {
 	 * @return string
 	 */
 	public function run( string $template ): string {
-		if ( empty( get_query_var( 'emlproxy' ) ) ) {
+		if ( empty( get_query_var( self::get_instance()->get_slug() ) ) ) {
 			return $template;
 		}
 
 		// get the query-value.
-		$title = get_query_var( 'emlproxy' );
+		$title = get_query_var( self::get_instance()->get_slug() );
 
 		// get file object.
 		$external_file_obj = External_Files::get_instance()->get_file_by_title( $title );
