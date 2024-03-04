@@ -25,7 +25,7 @@ if ( version_compare( PHP_VERSION, '8.0', '<' ) ) {
 }
 
 // get plugin-path.
-const EML_PLUGIN         = __FILE__;
+const EML_PLUGIN = __FILE__;
 
 // set plugin-version.
 const EML_PLUGIN_VERSION = '@@VersionNumber@@';
