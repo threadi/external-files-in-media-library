@@ -302,7 +302,7 @@ function eml_admin_add_styles_and_js_admin(): void {
 			'urls_nonce'         => wp_create_nonce( 'eml-urls-upload-nonce' ),
 			'availability_nonce' => wp_create_nonce( 'eml-availability-check-nonce' ),
 			'dismiss_nonce'      => wp_create_nonce( 'eml-dismiss-nonce' ),
-			'title_rate_us' => __( 'Rate this plugin', 'external-files-in-media-library' )
+			'title_rate_us'      => __( 'Rate this plugin', 'external-files-in-media-library' ),
 		)
 	);
 }
@@ -416,7 +416,7 @@ function eml_admin_add_urls_via_ajax(): void {
 	$files_obj = external_files::get_instance();
 
 	// get the urls from request.
-	$urls      = isset( $_REQUEST['urls'] ) ? sanitize_textarea_field( wp_unslash( $_REQUEST['urls'] ) ) : '';
+	$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 	$url_array = explode( "\n", $urls );
 
 	if ( ! empty( $url_array ) ) {
@@ -1185,3 +1185,15 @@ add_action( 'wp_ajax_dismiss_admin_notice', 'eml_admin_dismiss' );
 function eml_admin_validate_number( string|null $value ): int {
 	return absint( $value );
 }
+
+/**
+ * URL-decode the file-title if it is used in admin (via AJAX).
+ *
+ * @param string $title The title to optimize.
+ *
+ * @return string
+ */
+function eml_admin_file_title( string $title ): string {
+	return urldecode( $title );
+}
+add_filter( 'eml_file_import_title', 'eml_admin_file_title' );

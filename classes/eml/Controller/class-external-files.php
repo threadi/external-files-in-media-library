@@ -357,14 +357,14 @@ class External_Files {
 		// request resulted in error.
 		if ( is_wp_error( $response ) || empty( $response ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s is not available.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %s is not available.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'error', 0 );
 			return false;
 		}
 
 		// file-url returns not with http-status 200.
 		if ( $response['http_response']->get_status() !== 200 ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), $url, $response['http_response']->get_status() ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -372,7 +372,7 @@ class External_Files {
 		$response_headers_obj = $response['http_response']->get_headers();
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
+			$this->log->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'error', 0 );
 			return false;
 		}
 
@@ -381,7 +381,7 @@ class External_Files {
 		if ( ! empty( $response_headers['content-type'] ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-				$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), $url, $response_headers['content-type'] ), $url, 'error', 0 );
+				$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $url ), $response_headers['content-type'] ), $url, 'error', 0 );
 
 				return false;
 			}
@@ -399,7 +399,7 @@ class External_Files {
 		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
 			// file is available.
 			/* translators: %1$s will be replaced by the url of the file. */
-			$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), $url ), $url, 'success', 2 );
+			$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'success', 2 );
 
 			return true;
 		}
@@ -425,7 +425,7 @@ class External_Files {
 
 		// log deletion.
 		/* translators: %1$s will be replaced by the file-URL */
-		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-files-in-media-library' ), $external_file->get_url() ), $external_file->get_url(), 'success', 1 );
+		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-files-in-media-library' ), esc_url( $external_file->get_url() ) ), $external_file->get_url(), 'success', 1 );
 	}
 
 	/**
@@ -505,7 +505,7 @@ class External_Files {
 		 *      'label' => 'Title of your mime',
 		 *      'ext' => 'yourmime'
 		 *  );
-		 *  return $list
+		 *  return $list;
 		 * } );
 		 * ```
 		 *
@@ -574,7 +574,7 @@ class External_Files {
 		$results['tmp-file'] = download_url( $url );
 
 		/**
-		 * Filter the title for a single file during import.
+		 * Filter the data of a single file during import.
 		 *
 		 * @since 1.1.0 Available since 1.1.0
 		 *
