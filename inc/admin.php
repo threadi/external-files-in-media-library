@@ -319,40 +319,45 @@ function eml_admin_add_multi_form(): void {
 		return;
 	}
 
+	// bail if get_current_screen() is not available (like for Divi).
+	if( ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+
 	// get actual screen.
 	$current_screen = get_current_screen();
 
 	// on "add"-screen show our custom form-field to add external files.
 	if ( 'add' === $current_screen->action ) {
 		?>
-			<div class="eml_add_external_files_wrapper">
-				<label for="external_files">
-					<?php
-					echo esc_html( _n( 'Add external URL', 'Add external URLs', 2, 'external-files-in-media-library' ) );
+		<div class="eml_add_external_files_wrapper">
+			<label for="external_files">
+				<?php
+				echo esc_html( _n( 'Add external URL', 'Add external URLs', 2, 'external-files-in-media-library' ) );
 
-					// add link to settings for admin.
-					if ( current_user_can( 'manage_options' ) ) {
-						?>
-							<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
-						<?php
-					}
+				// add link to settings for admin.
+				if ( current_user_can( 'manage_options' ) ) {
 					?>
-				</label>
-				<textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="<?php esc_html_e( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ); ?>"></textarea>
-				<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URLs', 2, 'external-files-in-media-library' ) ); ?></button>
-			</div>
+					<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
+					<?php
+				}
+				?>
+			</label>
+			<textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="<?php esc_html_e( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ); ?>"></textarea>
+			<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URLs', 2, 'external-files-in-media-library' ) ); ?></button>
+		</div>
 		<?php
 	} else {
 		$url = 'media-new.php';
 		?>
-			<div class="eml_add_external_files_wrapper">
-				<p>
-					<?php
-						/* translators: %1$s will be replaced with the URL for add new media */
-						echo wp_kses_post( sprintf( __( 'Add external files <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
-					?>
-				</p>
-			</div>
+		<div class="eml_add_external_files_wrapper">
+			<p>
+				<?php
+				/* translators: %1$s will be replaced with the URL for add new media */
+				echo wp_kses_post( sprintf( __( 'Add external files <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
+				?>
+			</p>
+		</div>
 		<?php
 	}
 }
@@ -498,6 +503,11 @@ function eml_admin_add_media_filter_for_external_files(): void {
 		// redirect user back.
 		wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
 		exit;
+	}
+
+	// bail if get_current_screen() is not available.
+	if( ! function_exists( 'get_current_screen' ) ) {
+		return;
 	}
 
 	// only for upload-screen.
