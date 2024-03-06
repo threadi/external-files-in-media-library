@@ -430,6 +430,7 @@ function eml_admin_add_urls_via_ajax(): void {
 		$files  = array();
 		foreach ( $url_array as $url ) {
 			if ( ! empty( $url ) ) {
+				$url = str_replace( '&amp;', '&', $url );
 				if ( ! $files_obj->add_file( $url ) ) {
 					$errors[] = $url;
 				} else {

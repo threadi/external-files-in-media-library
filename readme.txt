@@ -73,3 +73,4 @@ No, only public files can be used.
 
 = 1.1.2 =
 * Fixed possible error during check for current screen
+* Fixed usage of URLs with ampersand on AJAX-request
