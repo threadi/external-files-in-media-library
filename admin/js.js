@@ -20,7 +20,7 @@ jQuery(document).ready(function($) {
         // get button as object
         let button_obj = $(this);
 
-        // get field value
+        // get field value.
         let urls = $(this).parent().find('.eml_add_external_files').val();
 
         // do nothing if list is empty.
@@ -28,7 +28,7 @@ jQuery(document).ready(function($) {
           return;
         }
 
-        // send request
+        // send request.
         jQuery.ajax({
             url: emlJsVars.ajax_url,
             type: 'post',
