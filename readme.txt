@@ -6,7 +6,7 @@ Tested up to: 6.5
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 
 == Description ==
 
@@ -70,3 +70,6 @@ No, only public files can be used.
 * Fixed typo in examples in hook-documentation
 * Fixed possible notice in transient-handler
 * Fixed usage of proxy with simple permalinks
+
+= 1.1.2 =
+* Fixed possible error during check for current screen
