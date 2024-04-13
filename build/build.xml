@@ -13,6 +13,7 @@
     <fail unless="plugin.slug" />
     <fail unless="plugin.version" />
     <fail unless="composer.path" />
+    <fail unless="npm.path" />
     <fail message="Do not run as root!">
         <condition>
             <equals arg1="root" arg2="${user.name}"/>
@@ -47,6 +48,22 @@
         </exec>
     </target>
 
+    <!-- install npm -->
+    <target name="npm-install">
+        <delete file="${log.dir}/npm-install1.txt"/>
+        <exec dir="${src.dir}/vendor/threadi/wp-easy-dialog/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install1.txt">
+            <arg line="install"/>
+        </exec>
+    </target>
+
+    <!-- build via npm -->
+    <target name="npm-build" depends="npm-install">
+        <delete file="${log.dir}/npm-build1.txt"/>
+        <exec dir="${src.dir}/vendor/threadi/wp-easy-dialog/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
+            <arg line="run build"/>
+        </exec>
+    </target>
+
     <!-- check WCS compatibility -->
     <target name="check-wcs" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/phpcbf">
@@ -58,12 +75,13 @@
     </target>
 
     <!-- create release-zip -->
-    <target name="build" description="builds a new release" depends="generate-documentation,setVersionNumber,check-wcs">
+    <target name="build" description="builds a new release" depends="check-wcs,npm-build,generate-documentation,setVersionNumber">
         <delete file="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
         <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
             <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
             <zipfileset dir="${src.dir}/classes" prefix="${plugin.slug}/classes" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
+            <zipfileset dir="${src.dir}/vendor/threadi/wp-easy-dialog/build/" prefix="${plugin.slug}/vendor/threadi/wp-easy-dialog/build/" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>

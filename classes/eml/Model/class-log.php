@@ -48,12 +48,16 @@ class Log {
 	/**
 	 * Return logs.
 	 *
+	 * @param string $url The URL to filter for, get only last entry (optional).
+	 *
 	 * @return array
-	 * @noinspection SqlResolve
 	 */
-	public function get_logs(): array {
+	public function get_logs( string $url = '' ): array {
 		global $wpdb;
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ); // phpcs:ignore
+		if ( ! empty( $url ) ) {
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
+		}
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
 	}
 
 	/**

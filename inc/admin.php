@@ -13,6 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use threadi\eml\Controller\external_files;
 use threadi\eml\helper;
 use threadi\eml\Model\External_File;
+use threadi\eml\Model\Log;
 use threadi\eml\Transients;
 use threadi\eml\View\logs;
 
@@ -298,11 +299,21 @@ function eml_admin_add_styles_and_js_admin(): void {
 		'eml-admin',
 		'emlJsVars',
 		array(
-			'ajax_url'           => admin_url( 'admin-ajax.php' ),
-			'urls_nonce'         => wp_create_nonce( 'eml-urls-upload-nonce' ),
-			'availability_nonce' => wp_create_nonce( 'eml-availability-check-nonce' ),
-			'dismiss_nonce'      => wp_create_nonce( 'eml-dismiss-nonce' ),
-			'title_rate_us'      => __( 'Rate this plugin', 'external-files-in-media-library' ),
+			'ajax_url'              => admin_url( 'admin-ajax.php' ),
+			'urls_nonce'            => wp_create_nonce( 'eml-urls-upload-nonce' ),
+			'availability_nonce'    => wp_create_nonce( 'eml-availability-check-nonce' ),
+			'dismiss_nonce'         => wp_create_nonce( 'eml-dismiss-nonce' ),
+			'get_import_info_nonce' => wp_create_nonce( 'eml-url-upload-info-nonce' ),
+			'title_rate_us'         => __( 'Rate this plugin', 'external-files-in-media-library' ),
+			'title_import_progress' => __( 'Import of URLs running', 'external-files-in-media-library' ),
+			'title_import_ended'    => __( 'Import has been run', 'external-files-in-media-library' ),
+			'text_import_ended'     => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
+			'lbl_ok'                => __( 'OK', 'external-files-in-media-library' ),
+			'lbl_cancel'            => __( 'Cancel', 'external-files-in-media-library' ),
+			'text_urls_imported'    => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
+			'text_urls_errors'      => __( 'Following errors occurred', 'external-files-in-media-library' ),
+			'title_no_urls'         => __( 'No URLs given', 'external-files-in-media-library' ),
+			'text_no_urls'          => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
 		)
 	);
 }
@@ -320,7 +331,7 @@ function eml_admin_add_multi_form(): void {
 	}
 
 	// bail if get_current_screen() is not available (like for Divi).
-	if( ! function_exists( 'get_current_screen' ) ) {
+	if ( ! function_exists( 'get_current_screen' ) ) {
 		return;
 	}
 
@@ -329,12 +340,31 @@ function eml_admin_add_multi_form(): void {
 
 	// on "add"-screen show our custom form-field to add external files.
 	if ( 'add' === $current_screen->action ) {
-		?>
-		<div class="eml_add_external_files_wrapper">
-			<label for="external_files">
-				<?php
-				echo esc_html( _n( 'Add external URL', 'Add external URLs', 2, 'external-files-in-media-library' ) );
+		// create dialog.
+		$dialog = array(
+			'className' => 'eml',
+			'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . '</label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'eml_upload_files();',
+					'variant' => 'primary',
+					'text'    => __( 'Add URLs', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
 
+		?>
+			<div class="eml_add_external_files_wrapper">
+				<a href="#" class="button button-secondary wp-easy-dialog" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
+				<?php
 				// add link to settings for admin.
 				if ( current_user_can( 'manage_options' ) ) {
 					?>
@@ -342,10 +372,7 @@ function eml_admin_add_multi_form(): void {
 					<?php
 				}
 				?>
-			</label>
-			<textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="<?php esc_html_e( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ); ?>"></textarea>
-			<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URLs', 2, 'external-files-in-media-library' ) ); ?></button>
-		</div>
+			</div>
 		<?php
 	} else {
 		$url = 'media-new.php';
@@ -374,23 +401,38 @@ function eml_admin_add_single_form(): void {
 		return;
 	}
 
-	// show our custom form to add single external file.
+	// create dialog.
+	$dialog = array(
+		'className' => 'eml',
+		'title'     => __( 'Add external URL', 'external-files-in-media-library' ),
+		'texts'     => array(
+			'<label for="external_files">' . esc_html__( 'Enter the URL you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
+		),
+		'buttons'   => array(
+			array(
+				'action'  => 'eml_upload_files();',
+				'variant' => 'primary',
+				'text'    => __( 'Add URL', 'external-files-in-media-library' ),
+			),
+			array(
+				'action'  => 'closeDialog();',
+				'variant' => 'secondary',
+				'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+			),
+		),
+	);
+
 	?>
 	<div class="eml_add_external_files_wrapper">
-		<label for="external_files">
-			<?php
-				echo esc_html( _n( 'Add external URL', 'Add external URL', 1, 'external-files-in-media-library' ) );
-
-				// add link to settings for admin.
-			if ( current_user_can( 'manage_options' ) ) {
-				?>
-					<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
-				<?php
-			}
+		<a href="#" class="button button-secondary wp-easy-dialog" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external file', 'external-files-in-media-library' ); ?></a>
+		<?php
+		// add link to settings for admin.
+		if ( current_user_can( 'manage_options' ) ) {
 			?>
-		</label>
-		<input id="external_files" name="external_files" class="eml_add_external_files" type="url" placeholder="<?php echo esc_attr__( 'Enter an URL for a file you want to insert in your library', 'external-files-in-media-library' ); ?>">
-		<button class="button eml_add_external_upload"><?php echo esc_html( _n( 'Add this URL', 'Add this URL', 1, 'external-files-in-media-library' ) ); ?></button>
+			<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
+			<?php
+		}
+		?>
 	</div>
 	<?php
 }
@@ -400,7 +442,6 @@ add_action( 'post-html-upload-ui', 'eml_admin_add_single_form', 10, 0 );
  * Process ajax-request for insert multiple urls to media library.
  *
  * @return       void
- * @noinspection PhpNoReturnAttributeCanBeAddedInspection
  */
 function eml_admin_add_urls_via_ajax(): void {
 	// check nonce.
@@ -408,14 +449,21 @@ function eml_admin_add_urls_via_ajax(): void {
 
 	// check capability.
 	if ( false === current_user_can( EML_CAP_NAME ) ) {
-		wp_die( '0', 400 );
+		wp_send_json( array() );
 	}
 
-	// create error-result.
-	$result = array(
-		'state'   => 'error',
-		'message' => __( 'No URLs given to import.', 'external-files-in-media-library' ),
-	);
+	// mark import as running.
+	update_option( 'eml_import_running', time() );
+
+	// reset counter.
+	update_option( 'eml_import_url_count', 0 );
+
+	// cleanup lists.
+	delete_option( 'eml_import_errors' );
+	delete_option( 'eml_import_files' );
+
+	// set initial title.
+	update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
 	// get files-object.
 	$files_obj = external_files::get_instance();
@@ -424,12 +472,25 @@ function eml_admin_add_urls_via_ajax(): void {
 	$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 	$url_array = explode( "\n", $urls );
 
+	// collect errors.
+	$errors = array();
+	$files  = array();
+
 	if ( ! empty( $url_array ) ) {
+		// save count of URLs.
+		update_option( 'eml_import_url_max', count( $url_array ) );
+
 		// loop through them to add them to media library.
-		$errors = array();
-		$files  = array();
+
 		foreach ( $url_array as $url ) {
+			// update counter for URLs.
+			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
+
 			if ( ! empty( $url ) ) {
+				// update title for progress.
+				/* translators: %1$s will be replaced by the URL which is imported. */
+				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_url( $url ) ) );
+
 				$url = str_replace( '&amp;', '&', $url );
 				if ( ! $files_obj->add_file( $url ) ) {
 					$errors[] = $url;
@@ -437,61 +498,67 @@ function eml_admin_add_urls_via_ajax(): void {
 					// get file-object for list.
 					$file = $files_obj->get_file_by_url( $url );
 					if ( $file instanceof External_File && $file->is_valid() ) {
-						$files[] = $file;
+						$files[] = array(
+							'url'       => $file->get_url(),
+							'edit_link' => $file->get_edit_url(),
+						);
 					}
 				}
 			}
 		}
-
-		// return ok-message if no error occurred.
-		if ( empty( $errors ) ) {
-			if ( 1 === count( $files ) ) {
-				$result = array(
-					'state'   => 'success',
-					/* translators: %1$s will be replaced by the edit-URL of the saved file. */
-					'message' => '<p>' . sprintf( __( 'The given URL <a href="%1$s">has been saved</a> in media library.', 'external-files-in-media-library' ), esc_url( $files[0]->get_edit_url() ) ) . '</p>',
-				);
-			} else {
-				$list = '<ul>';
-				foreach ( $files as $file ) {
-					$list .= '<li><a href="' . esc_url( $file->get_edit_url() ) . '">' . esc_url( $file->get_url() ) . '</a></li>';
-				}
-				$list  .= '</ul>';
-				$result = array(
-					'state'   => 'success',
-					/* translators: %1$s will be replaced by list of successfully saved URLs. */
-					'message' => '<p>' . sprintf( __( 'The following URLs has been saved in media library: %1$s', 'external-files-in-media-library' ), wp_kses_post( $list ) ) . '</p>',
-				);
-			}
-		} else {
-			// collect the error-list for the response.
-			$error_list = '<ul class="eml-file-list">';
-			foreach ( $errors as $error ) {
-				$error_list .= '<li>' . esc_html( $error ) . '</li>';
-			}
-			$error_list .= '</ul>';
-
-			// get the log-url.
-			$url_log = helper::get_log_url();
-
-			// collect response.
-			$result = array(
-				'state'   => 'error',
-				'message' => sprintf(
-					/* translators: %1$s is replaced by the file-list, %2$s is replaced by the URL to the plugin-log */
-					_n( '<p>Following URL could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', '<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details are visible <a href="%2$s">in the log</a>.</p>', count( $errors ), 'external-files-in-media-library' ),
-					$error_list,
-					$url_log
-				),
-			);
-		}
 	}
 
-	// send response as JSON.
-	echo wp_json_encode( $result );
-	wp_die();
+	// set title after import has been run.
+	if ( ! empty( $files ) ) {
+		update_option( 'eml_import_files', $files );
+	} else {
+		delete_option( 'eml_import_title' );
+	}
+
+	// get log instance.
+	$log = Log::get_instance();
+
+	// secure errors.
+	$errors_for_response = array();
+	foreach ( $errors as $url ) {
+		$log_entry             = $log->get_logs( $url );
+		$errors_for_response[] = array(
+			'url' => $url,
+			'log' => ! empty( $log_entry ) ? $log_entry[0]['log'] : '',
+		);
+	}
+	update_option( 'eml_import_errors', $errors_for_response );
+
+	// mark import as not running.
+	delete_option( 'eml_import_running' );
+
+	// send empty response as JSON.
+	wp_send_json( array() );
 }
 add_action( 'wp_ajax_eml_add_external_urls', 'eml_admin_add_urls_via_ajax', 10, 0 );
+
+/**
+ * Return info about running import of files via AJAX-request.
+ *
+ * @return void
+ */
+function eml_admin_get_external_urls_import_info(): void {
+	// check nonce.
+	check_ajax_referer( 'eml-url-upload-info-nonce', 'nonce' );
+
+	// return import info.
+	wp_send_json(
+		array(
+			absint( get_option( 'eml_import_url_count', 0 ) ),
+			absint( get_option( 'eml_import_url_max', 0 ) ),
+			absint( get_option( 'eml_import_running', 0 ) ),
+			wp_kses_post( get_option( 'eml_import_title', '' ) ),
+			get_option( 'eml_import_files', array() ),
+			get_option( 'eml_import_errors', array() ),
+		)
+	);
+}
+add_action( 'wp_ajax_eml_get_external_urls_import_info', 'eml_admin_get_external_urls_import_info', 10, 0 );
 
 /**
  * Add filter in media library for external files.
@@ -507,7 +574,7 @@ function eml_admin_add_media_filter_for_external_files(): void {
 	}
 
 	// bail if get_current_screen() is not available.
-	if( ! function_exists( 'get_current_screen' ) ) {
+	if ( ! function_exists( 'get_current_screen' ) ) {
 		return;
 	}
 
@@ -1208,3 +1275,39 @@ function eml_admin_file_title( string $title ): string {
 	return urldecode( $title );
 }
 add_filter( 'eml_file_import_title', 'eml_admin_file_title' );
+
+/**
+ * Add WP Dialog Easy scripts in wp-admin.
+ */
+function eml_dialog_embed(): void {
+	// define paths: adjust if necessary.
+	$path = trailingslashit( plugin_dir_path( EML_PLUGIN ) ) . 'vendor/threadi/wp-easy-dialog/';
+	$url  = trailingslashit( plugin_dir_url( EML_PLUGIN ) ) . 'vendor/threadi/wp-easy-dialog/';
+
+	// bail if path does not exist.
+	if ( ! file_exists( $path ) ) {
+		return;
+	}
+
+	// embed the dialog-components JS-script.
+	$script_asset_path = $path . 'build/index.asset.php';
+	$script_asset      = require $script_asset_path;
+	wp_enqueue_script(
+		'wp-easy-dialog',
+		$url . 'build/index.js',
+		$script_asset['dependencies'],
+		$script_asset['version'],
+		true
+	);
+
+	// embed the dialog-components CSS-script.
+	$admin_css      = $url . 'build/style-index.css';
+	$admin_css_path = $path . 'build/style-index.css';
+	wp_enqueue_style(
+		'wp-easy-dialog',
+		$admin_css,
+		array( 'wp-components' ),
+		filemtime( $admin_css_path )
+	);
+}
+add_action( 'admin_enqueue_scripts', 'eml_dialog_embed' );
