@@ -90,6 +90,11 @@ class Uninstall {
 			'eml_user_assign',
 			'eml_proxy',
 			'eml_proxy_max_age',
+			'eml_import_url_count',
+			'eml_import_url_max',
+			'eml_import_running',
+			'eml_import_title',
+			'eml_import_errors',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );

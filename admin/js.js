@@ -86,8 +86,8 @@ jQuery(document).ready(function($) {
     $('div[data-dismissible] button.notice-dismiss').on('click',
         function (event) {
             event.preventDefault();
-            var $this = $(this);
-            var attr_value, option_name, dismissible_length, data;
+            let $this = $(this);
+            let attr_value, option_name, dismissible_length, data;
             attr_value = $this.closest('div[data-dismissible]').attr('data-dismissible').split('-');
 
             // Remove the dismissible length from the attribute value and rejoin the array.
@@ -106,3 +106,142 @@ jQuery(document).ready(function($) {
         }
     );
 });
+
+/**
+ * Handling for upload of URLs from textarea in dialog.
+ */
+function eml_upload_files() {
+  let urls = jQuery( '#external_files' ).val();
+
+  // do nothing if list is empty.
+  if( urls.length === 0 ) {
+    let dialog_config = {
+      detail: {
+        className: 'eml',
+        title: emlJsVars.title_no_urls,
+        texts: [
+          '<p>' + emlJsVars.text_no_urls + '</p>'
+        ],
+        buttons: [
+          {
+            'action': 'location.reload();',
+            'variant': 'primary',
+            'text': emlJsVars.lbl_ok
+          },
+        ]
+      }
+    }
+    eml_create_dialog( dialog_config );
+    return;
+  }
+
+  // send request.
+  jQuery.ajax({
+    url: emlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      urls: urls,
+      action: 'eml_add_external_urls',
+      nonce: emlJsVars.urls_nonce
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: emlJsVars.title_import_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      eml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { eml_upload_files_get_info() }, 200);
+    }
+  });
+}
+
+/**
+ * Get info about running import of URLs.
+ */
+function eml_upload_files_get_info() {
+  jQuery.ajax( {
+    type: "POST",
+    url: emlJsVars.ajax_url,
+    data: {
+      'action': 'eml_get_external_urls_import_info',
+      'nonce': emlJsVars.get_import_info_nonce
+    },
+    success: function (data) {
+      let count = parseInt( data[0] );
+      let max = parseInt( data[1] );
+      let running = parseInt( data[2] );
+      let status = data[3];
+      let files = data[4];
+      let errors = data[5];
+
+      // show progress.
+      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
+      jQuery( '#progress_status' ).html( status );
+
+      /**
+       * If import is still running, get next info in 200ms.
+       * If import is not running and error occurred, show the error.
+       * If import is not running and no error occurred, show ok-message.
+       */
+      if ( running >= 1 ) {
+        setTimeout( function () {
+          eml_upload_files_get_info()
+        }, 200 );
+      }
+      else {
+        let message = '<p>' + emlJsVars.text_import_ended + '</p>';
+        if( files.length > 0 ) {
+          message = message + '<p><strong>' + emlJsVars.text_urls_imported + ':</strong></p><ul class="ok-list">';
+          for (file of files) {
+            message = message + '<li><a href="' + file.url + '" target="_blank">' + file.url + '</a> <a href="' + file.edit_link + '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+          }
+          message = message + '</ul>';
+        }
+        if( errors.length > 0 ) {
+          message = message + '<p><strong>' + emlJsVars.text_urls_errors + ':</strong></p><ul class="error-list">';
+          for (error of errors) {
+            message = message + '<li><a href="' + error.url + '" target="_blank">' + error.url + '</a><br>' + error.log + '</li>';
+          }
+          message = message + '</ul>';
+        }
+        let dialog_config = {
+          detail: {
+            className: 'eml',
+            title: emlJsVars.title_import_ended,
+            texts: [
+              message
+            ],
+            buttons: [
+              {
+                'action': 'location.reload();',
+                'variant': 'primary',
+                'text': emlJsVars.lbl_ok
+              }
+            ]
+          }
+        }
+        eml_create_dialog( dialog_config );
+      }
+    }
+  } )
+}
+
+/**
+ * Helper to create a new dialog with given config.
+ *
+ * @param config
+ */
+function eml_create_dialog( config ) {
+  document.body.dispatchEvent(new CustomEvent("wp-easy-dialog", config));
+}

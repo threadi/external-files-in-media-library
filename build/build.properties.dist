@@ -4,5 +4,8 @@ plugin.slug=external-files-in-media-library
 # version number to use
 plugin.version=
 
+# set path to npm-binary
+npm.path=
+
 # set path to composer-binary
 composer.path=

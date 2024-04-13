@@ -1,24 +1,7 @@
 .eml_add_external_files_wrapper {
     max-width: 400px;
     margin: 1em auto 0;
-}
-
-.eml_add_external_files_wrapper label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 0.5em;
-}
-
-.eml_add_external_files_wrapper input[type='url'] {
-    margin-bottom: 0.5em;
-    width: 100%;
-}
-
-.eml_add_external_files_wrapper textarea {
-    display: block;
-    height: 72px;
-    margin-bottom: 0.5em;
-    width: 100%;
+	text-align: center;
 }
 
 select.eml-field-width {
@@ -27,8 +10,9 @@ select.eml-field-width {
 
 .eml_settings_link {
     display: inline-block;
-    float: right;
+	margin-left: 1em;
     text-decoration: none;
+	vertical-align: middle;
 }
 
 .eml-transient {
@@ -59,4 +43,27 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	font-family: "dashicons", sans-serif;
 	font-size: 12px;
 	margin-right: 8px;
+}
+
+.eml .wp-easy-dialog-text label {
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+.eml .wp-easy-dialog-text input[type="url"] {
+	display: block;
+	margin-bottom: 0.5em;
+	width: 100%;
+}
+
+.eml .wp-easy-dialog-text textarea {
+	display: block;
+	height: 100px;
+	margin-bottom: 0.5em;
+	width: 100%;
+}
+
+.eml .wp-easy-dialog-text .error-list, .eml .wp-easy-dialog-text .ok-list {
+	list-style: disc;
+	margin-left: 14px;
 }
