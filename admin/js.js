@@ -68,16 +68,31 @@ jQuery(document).ready(function($) {
                 nonce: emlJsVars.availability_nonce
             },
             success: function (response) {
-                if( response.length > 0 ) {
-                    let response_json = JSON.parse(response);
-                    let p = $("#eml_url_file_state");
-                    if( response_json.state === 'error' ) {
-                        p.html('<span class="dashicons dashicons-no-alt"></span> ' + response_json.message);
-                    }
-                    else {
-                        p.html('<span class="dashicons dashicons-yes-alt"></span> ' + response_json.message);
-                    }
+              let p = $("#eml_url_file_state");
+              let dialog_config = {
+                detail: {
+                  className: 'eml',
+                  title: emlJsVars.title_availability_refreshed,
+                  texts: [
+                    '<p>' + emlJsVars.text_not_available + '</p>'
+                  ],
+                  buttons: [
+                    {
+                      'action': 'closeDialog();',
+                      'variant': 'primary',
+                      'text': emlJsVars.lbl_ok
+                    },
+                  ]
                 }
+              }
+              if( response.state === 'error' ) {
+                  p.html('<span class="dashicons dashicons-no-alt"></span> ' + response.message);
+              }
+              else {
+                  p.html('<span class="dashicons dashicons-yes-alt"></span> ' + response.message);
+                  dialog_config.detail.texts[0] = '<p>' + emlJsVars.text_is_available + '</p>';
+              }
+              eml_create_dialog( dialog_config );
             }
         });
     });

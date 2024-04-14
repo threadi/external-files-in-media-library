@@ -1,6 +1,7 @@
 .eml_add_external_files_wrapper {
-    max-width: 400px;
+	border: 4px dashed #c3c4c7;
     margin: 1em auto 0;
+	padding: 2em 0;
 	text-align: center;
 }
 
@@ -10,7 +11,7 @@ select.eml-field-width {
 
 .eml_settings_link {
     display: inline-block;
-	margin-left: 1em;
+	margin-top: .5em;
     text-decoration: none;
 	vertical-align: middle;
 }
@@ -66,4 +67,18 @@ body.settings_page_eml_settings .nav-tab-help:before {
 .eml .wp-easy-dialog-text .error-list, .eml .wp-easy-dialog-text .ok-list {
 	list-style: disc;
 	margin-left: 14px;
+}
+
+.misc-pub-external-file span {
+	vertical-align: middle;
+}
+
+#eml_recheck_availability {
+	padding: 0 1em;
+	vertical-align: middle;
+}
+
+#eml_recheck_availability:before {
+	position: relative;
+	left: -6px;
 }

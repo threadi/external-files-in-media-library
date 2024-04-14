@@ -299,21 +299,24 @@ function eml_admin_add_styles_and_js_admin(): void {
 		'eml-admin',
 		'emlJsVars',
 		array(
-			'ajax_url'              => admin_url( 'admin-ajax.php' ),
-			'urls_nonce'            => wp_create_nonce( 'eml-urls-upload-nonce' ),
-			'availability_nonce'    => wp_create_nonce( 'eml-availability-check-nonce' ),
-			'dismiss_nonce'         => wp_create_nonce( 'eml-dismiss-nonce' ),
-			'get_import_info_nonce' => wp_create_nonce( 'eml-url-upload-info-nonce' ),
-			'title_rate_us'         => __( 'Rate this plugin', 'external-files-in-media-library' ),
-			'title_import_progress' => __( 'Import of URLs running', 'external-files-in-media-library' ),
-			'title_import_ended'    => __( 'Import has been run', 'external-files-in-media-library' ),
-			'text_import_ended'     => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
-			'lbl_ok'                => __( 'OK', 'external-files-in-media-library' ),
-			'lbl_cancel'            => __( 'Cancel', 'external-files-in-media-library' ),
-			'text_urls_imported'    => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
-			'text_urls_errors'      => __( 'Following errors occurred', 'external-files-in-media-library' ),
-			'title_no_urls'         => __( 'No URLs given', 'external-files-in-media-library' ),
-			'text_no_urls'          => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
+			'ajax_url'                     => admin_url( 'admin-ajax.php' ),
+			'urls_nonce'                   => wp_create_nonce( 'eml-urls-upload-nonce' ),
+			'availability_nonce'           => wp_create_nonce( 'eml-availability-check-nonce' ),
+			'dismiss_nonce'                => wp_create_nonce( 'eml-dismiss-nonce' ),
+			'get_import_info_nonce'        => wp_create_nonce( 'eml-url-upload-info-nonce' ),
+			'title_rate_us'                => __( 'Rate this plugin', 'external-files-in-media-library' ),
+			'title_import_progress'        => __( 'Import of URLs running', 'external-files-in-media-library' ),
+			'title_import_ended'           => __( 'Import has been run', 'external-files-in-media-library' ),
+			'text_import_ended'            => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
+			'lbl_ok'                       => __( 'OK', 'external-files-in-media-library' ),
+			'lbl_cancel'                   => __( 'Cancel', 'external-files-in-media-library' ),
+			'text_urls_imported'           => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
+			'text_urls_errors'             => __( 'Following errors occurred', 'external-files-in-media-library' ),
+			'title_no_urls'                => __( 'No URLs given', 'external-files-in-media-library' ),
+			'text_no_urls'                 => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
+			'title_availability_refreshed' => __( 'Availability refreshed', 'external-files-in-media-library' ),
+			'text_not_available'           => __( 'The file is NOT available.', 'external-files-in-media-library' ),
+			'text_is_available'            => __( 'The file is available.', 'external-files-in-media-library' ),
 		)
 	);
 }
@@ -368,7 +371,7 @@ function eml_admin_add_multi_form(): void {
 				// add link to settings for admin.
 				if ( current_user_can( 'manage_options' ) ) {
 					?>
-					<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
+					<br><a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_html__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
 					<?php
 				}
 				?>
@@ -706,45 +709,50 @@ function eml_admin_media_box(): void {
 				<p>
 					<?php echo esc_html__( 'File-URL:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
 				</p>
-				<?php
-				if ( $external_file_obj->get_availability() ) {
-					?>
-						<p id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></p>
+				<p>
 					<?php
-				} else {
-					$log_url = helper::get_log_url();
-					?>
-						<p id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
+					if ( $external_file_obj->get_availability() ) {
+						?>
+						<span id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></span>
+						<?php
+					} else {
+						$log_url = helper::get_log_url();
+						?>
+							<span id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
 						<?php
 							/* translators: %1$s will be replaced by the URL for the logs */
 							printf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
 						?>
-						</p>
-					<?php
-				}
-				?>
-					<a class="button" href="#" id="eml_recheck_availability"><?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?></a>
-					<p>
+						</span>
+						<?php
+					}
+					?>
+					<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
+				</p>
+					<p><span class="dashicons dashicons-yes-alt"></span>
 						<?php
 						if ( false !== $external_file_obj->is_locally_saved() ) {
-							echo esc_html__( 'This file is local hostet.', 'external-files-in-media-library' );
+							echo esc_html__( 'File is local hostet.', 'external-files-in-media-library' );
 						} else {
-							echo esc_html__( 'This file is extern hostet.', 'external-files-in-media-library' );
+							echo esc_html__( 'File is extern hostet.', 'external-files-in-media-library' );
 						}
 						?>
 					</p>
-					<p>
-						<?php
-						// TODO nur anzeigen wenn proxy aktiviert ist.
-						if ( false !== $external_file_obj->is_cached() ) {
-							echo esc_html__( 'This file is delivered through proxied cache.', 'external-files-in-media-library' );
-						} else {
-							echo esc_html__( 'This file is not cached in proxy.', 'external-files-in-media-library' );
-						}
-						?>
-					</p>
-				</div>
-			<?php
+				<?php
+				if ( get_option( 'eml_proxy' ) ) {
+					?>
+						<p>
+							<?php
+							if ( false !== $external_file_obj->is_cached() ) {
+								echo '<span class="dashicons dashicons-yes-alt"></span> ' . esc_html__( 'File is delivered through proxied cache.', 'external-files-in-media-library' );
+							} else {
+								echo '<span class="dashicons dashicons-no-alt"></span> ' . esc_html__( 'File is not cached in proxy.', 'external-files-in-media-library' );
+							}
+							?>
+						</p>
+					</div>
+					<?php
+				}
 	} else {
 		?>
 				<div class="notice notice-error notice-alt inline">
@@ -762,7 +770,6 @@ function eml_admin_media_box(): void {
  * Check file availability.
  *
  * @return       void
- * @noinspection PhpNoReturnAttributeCanBeAddedInspection
  */
 function eml_admin_check_file_availability(): void {
 	// check nonce.
@@ -805,8 +812,7 @@ function eml_admin_check_file_availability(): void {
 	}
 
 	// send response as JSON.
-	echo wp_json_encode( $result );
-	wp_die();
+	wp_send_json( $result );
 }
 add_action( 'wp_ajax_eml_check_availability', 'eml_admin_check_file_availability', 10, 0 );
 
@@ -878,8 +884,7 @@ function eml_admin_settings_tab_general(): void {
 	}
 
 	?>
-	<!--suppress HtmlUnknownTarget -->
-	<form method="POST" action="options.php">
+	<form method="POST" action="<?php echo esc_url( get_admin_url() ); ?>options.php">
 	<?php
 	settings_fields( 'eml_settings_group' );
 	do_settings_sections( 'eml_settings_page' );
