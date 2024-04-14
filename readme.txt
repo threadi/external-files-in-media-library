@@ -8,9 +8,11 @@ License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: 1.2.0
 
+Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
+
 == Description ==
 
-Add external files to your media database to link or embed them in your website. The plugin integrates them into your WordPress as if they were locally available. So you can use the files in all places where the media library is used like all other files.
+Add one or more files under Media > "Add new media file". You can use the files in all places where the media library is used.
 
 The plugin checks for you automatically on a regular basis whether the external files you have stored are still available.
 
@@ -77,4 +79,7 @@ No, only public files can be used.
 
 = 1.2.0 =
 * New import dialog with progress and extended info about the import
+* Show proxy hint on file only if proxy is enabled
+* Optimized style for box with infos about external files
 * Updated compatibility-flag for WordPress 6.5.2
+* Updated dependencies

@@ -68,3 +68,17 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	list-style: disc;
 	margin-left: 14px;
 }
+
+.misc-pub-external-file span {
+	vertical-align: middle;
+}
+
+#eml_recheck_availability {
+	padding: 0 1em;
+	vertical-align: middle;
+}
+
+#eml_recheck_availability:before {
+	position: relative;
+	left: -6px;
+}
