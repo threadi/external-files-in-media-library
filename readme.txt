@@ -87,3 +87,4 @@ No, only public files can be used.
 = 1.2.1 =
 * Added support for hook of plugin "Download List Block with Icons" for mark external files with rel-external
 * Updated compatibility-flag for WordPress 6.5.3
+* Updated dependencies
