@@ -439,13 +439,13 @@ class Init {
 	 * @return string
 	 */
 	public function downloadlist_rel_attribute( string $rel_attribute, array $file ): string {
-		// bail if array is empty
-		if( empty( $file ) ) {
+		// bail if array is empty.
+		if ( empty( $file ) ) {
 			return $rel_attribute;
 		}
 
-		// bail if id is not given
-		if( empty( $file['id'] ) ) {
+		// bail if id is not given.
+		if ( empty( $file['id'] ) ) {
 			return $rel_attribute;
 		}
 
