@@ -110,6 +110,7 @@ class Init {
 
 		// hooks for third-party-plugins.
 		add_filter( 'massedge-wp-eml/export/add_attachment', array( $this, 'prevent_external_attachment_in_export' ), 10, 2 );
+		add_filter( 'downloadlist_rel_attribute', array( $this, 'downloadlist_rel_attribute' ), 10, 2 );
 	}
 
 	/**
@@ -427,5 +428,41 @@ class Init {
 			$data['file'] = get_permalink( $attachment_id );
 		}
 		return $data;
+	}
+
+	/**
+	 * Set the rel-attribute for external files with Downloadlist-plugin.
+	 *
+	 * @param string $rel_attribute The rel-value.
+	 * @param array  $file The file-attributes.
+	 *
+	 * @return string
+	 */
+	public function downloadlist_rel_attribute( string $rel_attribute, array $file ): string {
+		// bail if array is empty
+		if( empty( $file ) ) {
+			return $rel_attribute;
+		}
+
+		// bail if id is not given
+		if( empty( $file['id'] ) ) {
+			return $rel_attribute;
+		}
+
+		// check if this is an external file.
+		$external_file_obj = $this->external_files_obj->get_file( $file['id'] );
+
+		// quick return the given $url if file is not a URL-file.
+		if ( false === $external_file_obj ) {
+			return $rel_attribute;
+		}
+
+		// return the original url if this URL-file is not valid or not available.
+		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
+			return $rel_attribute;
+		}
+
+		// return external value for rel-attribute.
+		return 'external';
 	}
 }
