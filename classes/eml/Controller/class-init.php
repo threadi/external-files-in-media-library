@@ -286,7 +286,8 @@ class Init {
 
 		// check if the file is an external file, an image and if it is really external hosted.
 		if (
-			$external_file_obj->is_valid()
+			$external_file_obj
+			&& $external_file_obj->is_valid()
 			&& false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->is_image()
 		) {
@@ -324,7 +325,8 @@ class Init {
 
 		// check if the file is an external file, an image and if it is really external hosted.
 		if (
-			$external_file_obj->is_valid()
+			$external_file_obj
+			&& $external_file_obj->is_valid()
 			&& false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->is_image()
 		) {
@@ -349,7 +351,8 @@ class Init {
 
 			// check if the file is an external file, an image and if it is really external hosted.
 			if (
-				$external_file_obj->is_valid()
+				$external_file_obj
+				&& $external_file_obj->is_valid()
 				&& false === $external_file_obj->is_locally_saved()
 				&& $external_file_obj->is_image()
 			) {
@@ -424,7 +427,7 @@ class Init {
 		$external_file_obj = $this->external_files_obj->get_file( $attachment_id );
 
 		// check if the file is an external file.
-		if ( $external_file_obj->is_valid() ) {
+		if ( $external_file_obj && $external_file_obj->is_valid() ) {
 			$data['file'] = get_permalink( $attachment_id );
 		}
 		return $data;

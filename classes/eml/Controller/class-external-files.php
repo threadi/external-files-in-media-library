@@ -709,7 +709,7 @@ class External_Files {
 			$result = new WP_Query( $query );
 			if ( 1 === $result->post_count ) {
 				$external_file_obj = $this->get_file( $result->posts[0] );
-				if ( $external_file_obj->is_valid() ) {
+				if ( $external_file_obj && $external_file_obj->is_valid() ) {
 					return $external_file_obj;
 				}
 			}
@@ -742,7 +742,7 @@ class External_Files {
 			$result = new WP_Query( $query );
 			if ( 1 === $result->post_count ) {
 				$external_file_obj = $this->get_file( $result->posts[0] );
-				if ( $external_file_obj->is_valid() ) {
+				if ( $external_file_obj && $external_file_obj->is_valid() ) {
 					return $external_file_obj;
 				}
 			}

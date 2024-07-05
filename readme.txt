@@ -2,11 +2,11 @@
 Contributors: threadi
 Tags: external files, media library, media
 Requires at least: 6.2
-Tested up to: 6.5.3
+Tested up to: 6.6
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 
 Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
 
@@ -88,3 +88,8 @@ No, only public files can be used.
 * Added support for hook of plugin "Download List Block with Icons" for mark external files with rel-external
 * Updated compatibility-flag for WordPress 6.5.3
 * Updated dependencies
+
+= 1.2.2 =
+* Updated compatibility-flag for WordPress 6.6
+* Updated dependencies
+* Fixed potential error on attachment pages
