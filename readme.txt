@@ -39,7 +39,8 @@ No, only public files can be used.
 
 == Screenshots ==
 
-1.
+1. Field to add external files in Media > Add New Media File.
+2. Dialog to add URLs of external files.
 
 == Changelog ==
 
