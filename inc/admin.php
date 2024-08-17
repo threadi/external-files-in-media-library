@@ -1296,7 +1296,13 @@ function eml_dialog_embed(): void {
 
 	// embed the dialog-components JS-script.
 	$script_asset_path = $path . 'build/index.asset.php';
-	$script_asset      = require $script_asset_path;
+
+	// bail if file does not exist.
+	if ( ! file_exists( $script_asset_path ) ) {
+		return;
+	}
+
+	$script_asset = require $script_asset_path;
 	wp_enqueue_script(
 		'wp-easy-dialog',
 		$url . 'build/index.js',

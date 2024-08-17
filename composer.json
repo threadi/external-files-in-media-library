@@ -1,5 +1,6 @@
 {
     "name": "threadi/eml",
+    "version": "1.2.3",
     "scripts": {
         "post-install-cmd": [
             "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra"
@@ -19,6 +20,6 @@
     },
     "require": {
         "php": "^8.0",
-        "threadi/wp-easy-dialog": "dev-master"
+        "threadi/wp-easy-dialog": "^1.0.7"
     }
 }

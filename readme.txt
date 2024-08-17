@@ -6,7 +6,7 @@ Tested up to: 6.6
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 
 Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
 
@@ -17,6 +17,8 @@ Add one or more files under Media > "Add new media file". You can use the files 
 The plugin checks for you automatically on a regular basis whether the external files you have stored are still available.
 
 In the settings you can define whether image files are hosted locally in your hosting or externally.
+
+The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
 ---
 
@@ -93,3 +95,6 @@ No, only public files can be used.
 * Updated compatibility-flag for WordPress 6.6
 * Updated dependencies
 * Fixed potential error on attachment pages
+
+= 1.2.3 =
+* Updated dependencies
