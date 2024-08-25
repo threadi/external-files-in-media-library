@@ -299,26 +299,26 @@ function eml_admin_add_styles_and_js_admin(): void {
 		'eml-admin',
 		'emlJsVars',
 		array(
-			'ajax_url'                     => admin_url( 'admin-ajax.php' ),
-			'urls_nonce'                   => wp_create_nonce( 'eml-urls-upload-nonce' ),
-			'availability_nonce'           => wp_create_nonce( 'eml-availability-check-nonce' ),
-			'dismiss_nonce'                => wp_create_nonce( 'eml-dismiss-nonce' ),
-			'get_import_info_nonce'        => wp_create_nonce( 'eml-url-upload-info-nonce' ),
-			'switch_hosting_nonce'        => wp_create_nonce( 'eml-switch-hosting-nonce' ),
-			'title_rate_us'                => __( 'Rate this plugin', 'external-files-in-media-library' ),
-			'title_import_progress'        => __( 'Import of URLs running', 'external-files-in-media-library' ),
-			'title_import_ended'           => __( 'Import has been run', 'external-files-in-media-library' ),
-			'text_import_ended'            => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
-			'lbl_ok'                       => __( 'OK', 'external-files-in-media-library' ),
-			'lbl_cancel'                   => __( 'Cancel', 'external-files-in-media-library' ),
-			'text_urls_imported'           => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
-			'text_urls_errors'             => __( 'Following errors occurred', 'external-files-in-media-library' ),
-			'title_no_urls'                => __( 'No URLs given', 'external-files-in-media-library' ),
-			'text_no_urls'                 => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
-			'title_availability_refreshed' => __( 'Availability refreshed', 'external-files-in-media-library' ),
-			'text_not_available'           => __( 'The file is NOT available.', 'external-files-in-media-library' ),
-			'text_is_available'            => __( 'The file is available.', 'external-files-in-media-library' ),
-			'title_hosting_changed' => __( 'Hosting changed.', 'external-files-in-media-library' ),
+			'ajax_url'                      => admin_url( 'admin-ajax.php' ),
+			'urls_nonce'                    => wp_create_nonce( 'eml-urls-upload-nonce' ),
+			'availability_nonce'            => wp_create_nonce( 'eml-availability-check-nonce' ),
+			'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
+			'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
+			'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
+			'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
+			'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
+			'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
+			'text_import_ended'             => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
+			'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
+			'lbl_cancel'                    => __( 'Cancel', 'external-files-in-media-library' ),
+			'text_urls_imported'            => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
+			'text_urls_errors'              => __( 'Following errors occurred', 'external-files-in-media-library' ),
+			'title_no_urls'                 => __( 'No URLs given', 'external-files-in-media-library' ),
+			'text_no_urls'                  => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
+			'title_availability_refreshed'  => __( 'Availability refreshed', 'external-files-in-media-library' ),
+			'text_not_available'            => __( 'The file is NOT available.', 'external-files-in-media-library' ),
+			'text_is_available'             => __( 'The file is available.', 'external-files-in-media-library' ),
+			'title_hosting_changed'         => __( 'Hosting changed.', 'external-files-in-media-library' ),
 			'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
 		)
 	);
@@ -736,13 +736,17 @@ function eml_admin_media_box(): void {
 						<?php
 						if ( false !== $external_file_obj->is_locally_saved() ) {
 							echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-							if( $external_file_obj->is_image() ) {
-								?> <a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a><?php
+							if ( $external_file_obj->is_image() ) {
+								?>
+								<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+								<?php
 							}
 						} else {
 							echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-							if( $external_file_obj->is_image() ) {
-								?> <a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a><?php
+							if ( $external_file_obj->is_image() ) {
+								?>
+								<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+								<?php
 							}
 						}
 						?>
@@ -1370,34 +1374,33 @@ add_action( 'admin_head', 'eml_admin_head' );
  * @return array
  */
 function eml_add_media_columns( array $columns ): array {
-	$columns['external_files'] = __('External file', 'external-files-in-media-library');
+	$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );
 	return $columns;
 }
-add_filter('manage_upload_columns', 'eml_add_media_columns' );
+add_filter( 'manage_upload_columns', 'eml_add_media_columns' );
 
 /**
  * Add content for our custom column in media table.
  *
  * @param string $column_name The requested column.
- * @param int $attachment_id The requested attachment id.
+ * @param int    $attachment_id The requested attachment id.
  *
  * @return void
  */
 function eml_add_media_column_content( string $column_name, int $attachment_id ): void {
-	if( 'external_files' === $column_name ) {
+	if ( 'external_files' === $column_name ) {
 		// get the external object for this file.
 		$external_file = External_Files::get_instance()->get_file( $attachment_id );
 
 		// bail if it is not an external file.
 		if ( ! $external_file || false === $external_file->is_valid() ) {
 			echo '<span class="dashicons dashicons-no"></span>';
-		}
-		else {
+		} else {
 			echo '<span class="dashicons dashicons-yes"></span>';
 		}
 	}
 }
-add_action('manage_media_custom_column', 'eml_add_media_column_content', 10, 2);
+add_action( 'manage_media_custom_column', 'eml_add_media_column_content', 10, 2 );
 
 /**
  * Switch the hosting of a single file from local to extern or extern to local.
@@ -1429,7 +1432,7 @@ function eml_admin_eml_switch_hosting(): void {
 		$external_file_obj = $external_files_obj->get_file( $attachment_id );
 
 		// bail if object could not be loaded.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}
@@ -1438,7 +1441,7 @@ function eml_admin_eml_switch_hosting(): void {
 		$url = $external_file_obj->get_url( true );
 
 		// bail if file is not an external file.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			$result = array(
 				'state'   => 'error',
 				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
@@ -1446,14 +1449,14 @@ function eml_admin_eml_switch_hosting(): void {
 			wp_send_json( $result );
 		}
 
-		if( $external_file_obj->is_locally_saved() ) {
+		if ( $external_file_obj->is_locally_saved() ) {
 			// get all files for this attachment and delete them local.
 			wp_delete_attachment_files( $external_file_obj->get_id(), wp_get_attachment_metadata( $external_file_obj->get_id() ), get_post_meta( $external_file_obj->get_id(), '_wp_attachment_backup_sizes', true ), get_attached_file( $external_file_obj->get_id() ) );
 
 			// update attachment setting.
 			update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
 
-			// set setting to extern,
+			// set setting to extern.
 			$external_file_obj->set_is_local_saved( false );
 
 			// create return message.
@@ -1461,8 +1464,7 @@ function eml_admin_eml_switch_hosting(): void {
 				'state'   => 'success',
 				'message' => __( 'File is extern hosted.', 'external-files-in-media-library' ),
 			);
-		}
-		else {
+		} else {
 			// get external file infos.
 			$file_data = $external_files_obj->get_external_file_infos( $url );
 
@@ -1489,7 +1491,7 @@ function eml_admin_eml_switch_hosting(): void {
 
 				// remove base_url from local_url.
 				$upload_dir = wp_get_upload_dir();
-				$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+				$local_url  = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
 
 				// update attachment setting.
 				update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $local_url );
@@ -1498,16 +1500,16 @@ function eml_admin_eml_switch_hosting(): void {
 				$external_file_obj->set_is_local_saved( true );
 
 				// secure the files of this attachment.
-				$files = array( get_attached_file( $external_file_obj->get_id() ) );
+				$files     = array( get_attached_file( $external_file_obj->get_id() ) );
 				$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
-				if( ! empty( $meta_data['sizes'] ) ) {
-					foreach( $meta_data['sizes'] as $meta_file ) {
+				if ( ! empty( $meta_data['sizes'] ) ) {
+					foreach ( $meta_data['sizes'] as $meta_file ) {
 						$files[] = trailingslashit( $upload_dir['basedir'] ) . '2024/08/' . $meta_file['file'];
 					}
 				}
 
 				// secure the files of this attachment.
-				foreach( $files as $file ) {
+				foreach ( $files as $file ) {
 					$destination = trailingslashit( get_temp_dir() ) . basename( $file );
 					$wp_filesystem->copy( $file, $destination, true );
 				}
@@ -1516,7 +1518,7 @@ function eml_admin_eml_switch_hosting(): void {
 				wp_delete_attachment( $attachment_id, true );
 
 				// copy the secured files back.
-				foreach( $files as $file ) {
+				foreach ( $files as $file ) {
 					$source = trailingslashit( get_temp_dir() ) . basename( $file );
 					$wp_filesystem->copy( $source, $file, true );
 				}
@@ -1530,6 +1532,7 @@ function eml_admin_eml_switch_hosting(): void {
 		}
 
 		// log this event.
+		/* translators: %1$s will be replaced by the file URL. */
 		Log::get_instance()->create( sprintf( __( 'File %1$s has been switched the hosting.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
 	}
 
