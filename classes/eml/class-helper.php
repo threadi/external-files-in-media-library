@@ -166,4 +166,16 @@ class Helper {
 		}
 		return $content_type;
 	}
+
+	/**
+	 * Checks whether a given plugin is active.
+	 *
+	 * Used because WP's own function is_plugin_active() is not accessible everywhere.
+	 *
+	 * @param string $plugin Path to the plugin.
+	 * @return bool
+	 */
+	public static function is_plugin_active( string $plugin ): bool {
+		return in_array( $plugin, (array) get_option( 'active_plugins', array() ), true );
+	}
 }
