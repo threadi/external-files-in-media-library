@@ -101,4 +101,5 @@ No, only public files can be used.
 * Updated dependencies
 
 = 1.2.4 =
+* Added new column for marker of external files in media table
 * Compatibility with plugin Prevent Direct Access: hide options for external fields

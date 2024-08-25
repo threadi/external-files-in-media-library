@@ -82,3 +82,5 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	position: relative;
 	left: -6px;
 }
+
+.wp-list-table.media #external_files { width: 120px }

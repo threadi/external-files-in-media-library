@@ -1352,3 +1352,40 @@ function eml_admin_head(): void {
 	echo '</style>';
 }
 add_action( 'admin_head', 'eml_admin_head' );
+
+/**
+ * Add column to mark external files in media table.
+ *
+ * @param array $columns List of columns in media table.
+ *
+ * @return array
+ */
+function eml_add_media_columns( array $columns ): array {
+	$columns['external_files'] = __('External file', 'external-files-in-media-library');
+	return $columns;
+}
+add_filter('manage_upload_columns', 'eml_add_media_columns' );
+
+/**
+ * Add content for our custom column in media table.
+ *
+ * @param string $column_name The requested column.
+ * @param int $attachment_id The requested attachment id.
+ *
+ * @return void
+ */
+function eml_add_media_column_content( string $column_name, int $attachment_id ): void {
+	if( 'external_files' === $column_name ) {
+		// get the external object for this file.
+		$external_file = External_Files::get_instance()->get_file( $attachment_id );
+
+		// bail if it is not an external file.
+		if ( ! $external_file || false === $external_file->is_valid() ) {
+			echo '<span class="dashicons dashicons-no"></span>';
+		}
+		else {
+			echo '<span class="dashicons dashicons-yes"></span>';
+		}
+	}
+}
+add_action('manage_media_custom_column', 'eml_add_media_column_content', 10, 2);
