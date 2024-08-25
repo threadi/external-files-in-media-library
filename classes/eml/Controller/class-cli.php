@@ -35,7 +35,7 @@ class Cli {
 	public function import( array $urls = array() ): void {
 		if ( ! empty( $urls ) ) {
 			foreach ( $urls as $url ) {
-				$file_obj = external_files::get_instance();
+				$file_obj = External_Files::get_instance();
 				if ( $file_obj->add_file( $url ) ) {
 					\WP_CLI::success( $url . ' has been saved in media library.' );
 				} else {
@@ -60,7 +60,7 @@ class Cli {
 		$logs->create( 'All external files will be deleted via cli.', '', 'success', 2 );
 
 		// get external files object.
-		$external_files_obj = external_files::get_instance();
+		$external_files_obj = External_Files::get_instance();
 
 		// get all files created by this plugin in media library.
 		$files = $external_files_obj->get_files_in_media_library();
@@ -101,7 +101,7 @@ class Cli {
 	 */
 	public function check(): void {
 		// get object for external files.
-		$external_files_obj = external_files::get_instance();
+		$external_files_obj = External_Files::get_instance();
 
 		// run check for all files.
 		$external_files_obj->check_files();

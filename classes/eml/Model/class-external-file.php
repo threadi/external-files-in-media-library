@@ -320,7 +320,7 @@ class External_File {
 	 * @return bool
 	 */
 	public function is_locally_saved(): bool {
-		return (bool) get_post_meta( $this->get_id(), 'eml_locally_saved', true );
+		return 1 === absint( get_post_meta( $this->get_id(), 'eml_locally_saved', true ) );
 	}
 
 	/**

@@ -97,6 +97,50 @@ jQuery(document).ready(function($) {
         });
     });
 
+    /**
+     * Switch the hosting of an external file.
+     */
+    $('.button.eml-change-host').on( 'click', function(e) {
+        e.preventDefault();
+
+        // secure object where the text should be changed.
+        let obj = $(this).parent().find('span.eml-hosting-state');
+
+        // get the ID of the file
+        let id = $("#post_ID").val();
+
+        // send request
+        jQuery.ajax({
+          url: emlJsVars.ajax_url,
+          type: 'post',
+          data: {
+            id: id,
+            action: 'eml_switch_hosting',
+            nonce: emlJsVars.switch_hosting_nonce
+          },
+          success: function (response) {
+            let dialog_config = {
+              detail: {
+                className: 'eml',
+                title: emlJsVars.title_hosting_changed,
+                texts: [
+                  '<p>' + emlJsVars.text_hosting_has_been_changed + '</p>'
+                ],
+                buttons: [
+                  {
+                    'action': 'location.reload();',
+                    'variant': 'primary',
+                    'text': emlJsVars.lbl_ok
+                  },
+                ]
+              }
+            }
+            obj.html(response.message);
+            eml_create_dialog( dialog_config );
+          }
+        });
+    })
+
     // save to hide transient-messages via ajax-request
     $('div[data-dismissible] button.notice-dismiss').on('click',
         function (event) {
