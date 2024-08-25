@@ -1322,3 +1322,33 @@ function eml_dialog_embed(): void {
 	);
 }
 add_action( 'admin_enqueue_scripts', 'eml_dialog_embed' );
+
+/**
+ * Add custom CSS for third-party-plugins in backend.
+ *
+ * @return void
+ */
+function eml_admin_head(): void {
+	// get list of external files.
+	$external_files = External_Files::get_instance()->get_files_in_media_library();
+
+	// bail if no external files are set.
+	if ( empty( $external_files ) ) {
+		return;
+	}
+
+	// bail if any supported third-party-plugin is installed.
+	if ( ! Helper::is_plugin_active( 'prevent-direct-access/prevent-direct-access.php' ) ) {
+		return;
+	}
+
+	// output the custom css.
+	echo '<style>';
+	foreach ( $external_files as $external_file ) {
+		?>
+		#pda-v3-column_<?php echo absint( $external_file->get_id() ); ?> { display: none; }
+		<?php
+	}
+	echo '</style>';
+}
+add_action( 'admin_head', 'eml_admin_head' );
