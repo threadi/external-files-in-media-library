@@ -6,7 +6,7 @@ Tested up to: 6.6
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 
 Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
 
@@ -106,3 +106,6 @@ No, only public files can be used.
 * Compatibility with plugin Prevent Direct Access: hide options for external fields
 * Fixed some typos
 * Fixed wrong proxied URL after successful import of images
+
+= 1.3.1 =
+* Optimized proxy url handling

@@ -77,7 +77,7 @@ class Proxy {
 		/**
 		 * Run proxy to show called file.
 		 */
-		add_action( 'template_include', array( $this, 'run' ), 10, 1 );
+		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
 
 		/**
 		 * Refresh rewrite-cache if requested.
