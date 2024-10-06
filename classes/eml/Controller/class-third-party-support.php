@@ -72,7 +72,9 @@ class Third_Party_Support {
 	 */
 	private function get_third_party_support(): array {
 		$list = array(
+			'threadi\eml\Controller\ThirdPartySupport\Downloadlist',
 			'threadi\eml\Controller\ThirdPartySupport\Imgur',
+			'threadi\eml\Controller\ThirdPartySupport\Massedge',
 		);
 
 		/**

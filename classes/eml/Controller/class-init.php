@@ -108,16 +108,10 @@ class Init {
 		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ), 10, 0 );
 
 		// initialize proxy if enabled.
-		if ( 1 === absint( get_option( 'eml_proxy', 0 ) ) ) {
-			Proxy::get_instance()->init();
-		}
+		Proxy::get_instance()->init();
 
 		// our own hooks.
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
-
-		// hooks for third-party-plugins.
-		add_filter( 'massedge-wp-eml/export/add_attachment', array( $this, 'prevent_external_attachment_in_export' ), 10, 2 );
-		add_filter( 'downloadlist_rel_attribute', array( $this, 'downloadlist_rel_attribute' ), 10, 2 );
 	}
 
 	/**
@@ -344,32 +338,6 @@ class Init {
 	}
 
 	/**
-	 * Prevent usage of external hostet attachments by the export via https://wordpress.org/plugins/export-media-library/
-	 *
-	 * @param array $value The values.
-	 * @param array $params The params.
-	 *
-	 * @return array
-	 */
-	public function prevent_external_attachment_in_export( array $value, array $params ): array {
-		if ( isset( $params['attachment_id'] ) ) {
-			// get the external file object.
-			$external_file_obj = $this->external_files_obj->get_file( $params['attachment_id'] );
-
-			// check if the file is an external file, an image and if it is really external hosted.
-			if (
-				$external_file_obj
-				&& $external_file_obj->is_valid()
-				&& false === $external_file_obj->is_locally_saved()
-				&& $external_file_obj->is_image()
-			) {
-				return array();
-			}
-		}
-		return $value;
-	}
-
-	/**
 	 * Set the import-marker for all attachments.
 	 *
 	 * @param array $post_meta The attachment-meta.
@@ -438,42 +406,6 @@ class Init {
 			$data['file'] = get_permalink( $attachment_id );
 		}
 		return $data;
-	}
-
-	/**
-	 * Set the rel-attribute for external files with Downloadlist-plugin.
-	 *
-	 * @param string $rel_attribute The rel-value.
-	 * @param array  $file The file-attributes.
-	 *
-	 * @return string
-	 */
-	public function downloadlist_rel_attribute( string $rel_attribute, array $file ): string {
-		// bail if array is empty.
-		if ( empty( $file ) ) {
-			return $rel_attribute;
-		}
-
-		// bail if id is not given.
-		if ( empty( $file['id'] ) ) {
-			return $rel_attribute;
-		}
-
-		// check if this is an external file.
-		$external_file_obj = $this->external_files_obj->get_file( $file['id'] );
-
-		// quick return the given $url if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $rel_attribute;
-		}
-
-		// return the original url if this URL-file is not valid or not available.
-		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
-			return $rel_attribute;
-		}
-
-		// return external value for rel-attribute.
-		return 'external';
 	}
 
 	/**

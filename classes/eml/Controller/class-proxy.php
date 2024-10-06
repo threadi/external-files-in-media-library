@@ -64,6 +64,11 @@ class Proxy {
 	 * @return void
 	 */
 	public function init(): void {
+		// bail if proxy is not enabled.
+		if ( 0 === absint( get_option( 'eml_proxy', 0 ) ) ) {
+			return;
+		}
+
 		/**
 		 * Main init on each request.
 		 */

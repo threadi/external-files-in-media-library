@@ -35,7 +35,11 @@ Yes, you can select under Settings > External files in Media Library which roles
 
 = Can I also embed password-protected external files? =
 
-No, only public files can be used.
+Yes, but these files will included locally and not from the external URL.
+
+= Can I embed files from FTP? =
+
+Yes, but these files will included locally and not from the external URL.
 
 == Screenshots ==
 
@@ -112,4 +116,5 @@ No, only public files can be used.
 * Added support for FTP-URLs
 * Added support for credentials for HTTP- and FTP-URLs
 * Added wrapper to support third party plugins or platforms, e.g. Imgur
+* Move support for already supported plugins in new wrapper
 * Optimized proxy url handling

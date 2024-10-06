@@ -8,8 +8,6 @@
 namespace threadi\eml\Controller\ThirdPartySupport;
 
 // Exit if accessed directly.
-use threadi\eml\Model\Log;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

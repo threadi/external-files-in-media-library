@@ -82,7 +82,7 @@
             <zipfileset dir="${src.dir}/classes" prefix="${plugin.slug}/classes" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
             <zipfileset dir="${src.dir}/vendor/threadi/wp-easy-dialog/build/" prefix="${plugin.slug}/vendor/threadi/wp-easy-dialog/build/" />
-            <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt" prefix="${plugin.slug}" />
+            <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>
         <delete file="${src.dir}/${plugin.slug}-release.php"/>
