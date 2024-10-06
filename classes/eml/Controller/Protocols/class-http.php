@@ -117,7 +117,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type', $true, $this->get_url() ) ) {
+		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type_existence', $true, $this->get_url() ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 			return false;
@@ -135,7 +135,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_availability', $true, $this->get_url() ) ) ) {
+		if ( ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $this->get_url() ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
 				Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with the not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), $response_headers['content-type'] ), esc_url( $this->get_url() ), 'error', 0 );

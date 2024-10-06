@@ -119,6 +119,18 @@ class External_Files {
 	 * @return bool true if URL is added successfully.
 	 */
 	public function add_file( string $url ): bool {
+		$false = false;
+		/**
+		 * Filter the given URL against custom blacklists.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $false Return true if blacklist matches.
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if( apply_filters( 'eml_blacklist', $false, $url ) ) {
+			return false;
+		}
+
 		/**
 		 * Get the handler for this url depending on its protocol.
 		 */
