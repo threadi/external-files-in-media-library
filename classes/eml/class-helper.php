@@ -178,4 +178,92 @@ class Helper {
 	public static function is_plugin_active( string $plugin ): bool {
 		return in_array( $plugin, (array) get_option( 'active_plugins', array() ), true );
 	}
+
+	/**
+	 * Return true if the given mime_type is an image-mime-type.
+	 *
+	 * @param string $mime_type The mime-type to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_image_by_mime_type( string $mime_type ): bool {
+		return str_starts_with( $mime_type, 'image/' );
+	}
+
+	/**
+	 * Get possible mime-types.
+	 *
+	 * These are the mime-types this plugin supports. Not the enabled mime-types!
+	 *
+	 * We do not use @get_allowed_mime_types() as there might be much more mime-types as our plugin
+	 * could support.
+	 *
+	 * @return array
+	 */
+	public static function get_possible_mime_types(): array {
+		$mime_types = array(
+			'image/gif'       => array(
+				'label' => __( 'GIF', 'external-files-in-media-library' ),
+				'ext'   => 'gif',
+			),
+			'image/jpeg'      => array(
+				'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
+				'ext'   => 'jpg',
+			),
+			'image/png'       => array(
+				'label' => __( 'PNG', 'external-files-in-media-library' ),
+				'ext'   => 'png',
+			),
+			'image/webp'      => array(
+				'label' => __( 'WEBP', 'external-files-in-media-library' ),
+				'ext'   => 'webp',
+			),
+			'application/pdf' => array(
+				'label' => __( 'PDF', 'external-files-in-media-library' ),
+				'ext'   => 'pdf',
+			),
+			'application/zip' => array(
+				'label' => __( 'ZIP', 'external-files-in-media-library' ),
+				'ext'   => 'zip',
+			),
+			'video/mp4'       => array(
+				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
+				'ext'   => 'mp4',
+			),
+		);
+
+		/**
+		 * Filter the possible mime types this plugin could support.
+		 *
+		 * To add files of type "your/mime" with extension "yourmime" use this example:
+		 *
+		 * ```
+		 * add_filter( 'eml_supported_mime_types', function( $list ) {
+		 *  $list['your/mime'] = array(
+		 *      'label' => 'Title of your mime',
+		 *      'ext' => 'yourmime'
+		 *  );
+		 *  return $list;
+		 * } );
+		 * ```
+		 *
+		 * @since 1.0.0 Available since 1.0.0.
+		 *
+		 * @param array $mime_types List of supported mime types.
+		 */
+		return apply_filters( 'eml_supported_mime_types', $mime_types );
+	}
+
+	/**
+	 * Return allowed content types.
+	 *
+	 * @return array
+	 */
+	public static function get_allowed_mime_types(): array {
+		$list = get_option( 'eml_allowed_mime_types', array() );
+		if ( ! is_array( $list ) ) {
+			return array();
+		}
+		return $list;
+	}
 }

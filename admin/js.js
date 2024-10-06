@@ -28,12 +28,18 @@ jQuery(document).ready(function($) {
           return;
         }
 
+        // get the credentials (optional).
+        let login = $(this).parent().find('#eml_login').val();
+        let password = $(this).parent().find('#eml_password').val();
+
         // send request.
         jQuery.ajax({
             url: emlJsVars.ajax_url,
             type: 'post',
             data: {
                 urls: urls,
+                login: login,
+                password: password,
                 action: 'eml_add_external_urls',
                 nonce: emlJsVars.urls_nonce
             },
@@ -194,12 +200,18 @@ function eml_upload_files() {
     return;
   }
 
+  // get the credentials (optional).
+  let login = jQuery('#eml_login').val();
+  let password = jQuery('#eml_password').val();
+
   // send request.
   jQuery.ajax({
     url: emlJsVars.ajax_url,
     type: 'post',
     data: {
       urls: urls,
+      login: login,
+      password: password,
       action: 'eml_add_external_urls',
       nonce: emlJsVars.urls_nonce
     },

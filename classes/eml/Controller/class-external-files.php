@@ -31,11 +31,25 @@ class External_Files {
 	private static ?External_Files $instance = null;
 
 	/**
-	 * Log-object
+	 * Log-object.
 	 *
 	 * @var log
 	 */
 	private log $log;
+
+	/**
+	 * The login.
+	 *
+	 * @var string
+	 */
+	private string $login = '';
+
+	/**
+	 * The password.
+	 *
+	 * @var string
+	 */
+	private string $password = '';
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -98,19 +112,6 @@ class External_Files {
 	}
 
 	/**
-	 * Return allowed content types.
-	 *
-	 * @return array
-	 */
-	public function get_allowed_mime_types(): array {
-		$list = get_option( 'eml_allowed_mime_types', array() );
-		if ( ! is_array( $list ) ) {
-			return array();
-		}
-		return $list;
-	}
-
-	/**
 	 * Add the given file-url in media library as external-file-object.
 	 *
 	 * @param string $url   The URL to add.
@@ -119,16 +120,34 @@ class External_Files {
 	 */
 	public function add_file( string $url ): bool {
 		/**
+		 * Get the handler for this url depending on its protocol.
+		 */
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+		/**
+		 * Do nothing if url is using a not supported tcp protocol.
+		 */
+		if( ! $protocol_handler_obj ) {
+			return false;
+		}
+
+		/**
+		 * Add the given credentials, even if none are set.
+		 */
+		$protocol_handler_obj->set_login( $this->get_login() );
+		$protocol_handler_obj->set_password( $this->get_password() );
+
+		/**
 		 * Do nothing if file-check is not successful.
 		 */
-		if ( false === $this->check_url( $url ) ) {
+		if ( false === $protocol_handler_obj->check_url() ) {
 			return false;
 		}
 
 		/**
 		 * Do nothing if availability-check is not successful.
 		 */
-		if ( false === $this->check_availability( $url ) ) {
+		if ( false === $protocol_handler_obj->check_availability() ) {
 			return false;
 		}
 
@@ -162,27 +181,7 @@ class External_Files {
 		/**
 		 * Get file information via http-header.
 		 */
-		$file_data = $this->get_external_file_infos( $url );
-
-		/**
-		 * Get file-title.
-		 */
-		$title = ! empty( $file_data['title'] ) ? $file_data['title'] : '';
-		if ( empty( $title ) ) {
-			$url_info = wp_parse_url( $url );
-			if ( ! empty( $url_info ) ) {
-				// get all possible mime-types our plugin supports.
-				$mime_types = $this->get_possible_mime_types();
-
-				// get basename of path, if available.
-				$title = basename( $url_info['path'] );
-
-				// add file extension if we support the mime-type and if the title does not have any atm.
-				if ( empty( pathinfo( $title, PATHINFO_EXTENSION ) ) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
-					$title .= '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
-				}
-			}
-		}
+		$file_data = $protocol_handler_obj->get_external_file_infos();
 
 		/**
 		 * Filter the title for a single file during import.
@@ -193,7 +192,7 @@ class External_Files {
 		 * @param string $url The requested external URL.
 		 * @param array $file_data List of file settings detected by importer.
 		 */
-		$title = apply_filters( 'eml_file_import_title', $title, $url, $file_data );
+		$title = apply_filters( 'eml_file_import_title', $file_data['title'], $url, $file_data );
 
 		/**
 		 * Prepare attachment-post-settings.
@@ -203,10 +202,9 @@ class External_Files {
 		);
 
 		/**
-		 * If mime-type is an image, import it via sideload if this modus is enabled in plugin-settings.
+		 * Save this file local if protocol requires it.
 		 */
-		if ( 'local' === get_option( 'eml_images_mode', 'external' ) && $this->is_image_by_mime_type( $file_data['mime-type'] ) ) {
-
+		if ( $protocol_handler_obj->should_be_saved_local() ) {
 			// import file as image via WP-own functions.
 			$array = array(
 				'name'     => $title,
@@ -219,6 +217,10 @@ class External_Files {
 			$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
 			if ( ! is_wp_error( $attachment_id ) ) {
 				$file_data['local'] = true;
+			}
+			else {
+				// log the event.
+				Log::get_instance()->create( sprintf( __( 'URL %1$s could not be downloaded.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			}
 		} else {
 			/**
@@ -250,8 +252,8 @@ class External_Files {
 				// mark if this file is an external file locally saved.
 				$external_file_obj->set_is_local_saved( $file_data['local'] );
 
-				// set meta-data for images if modus is enabled for this.
-				if ( 'external' === get_option( 'eml_images_mode', 'external' ) && $this->is_image_by_mime_type( $file_data['mime-type'] ) ) {
+				// set meta-data for images if mode is enabled for this.
+				if ( ! $protocol_handler_obj->should_be_saved_local() ) {
 					if ( ! empty( $file_data['tmp-file'] ) ) {
 						$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
 
@@ -273,137 +275,10 @@ class External_Files {
 
 		if ( is_wp_error( $attachment_id ) ) {
 			/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
-			$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $url, $attachment_id->errors['upload_error'][0] ), $url, 'error', 0 );        }
+			$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $url, $attachment_id->errors['upload_error'][0] ), $url, 'error', 0 );
+		}
 
 		// return false in case of errors.
-		return false;
-	}
-
-	/**
-	 * Check the given file-url regarding its string.
-	 *
-	 * Return true if file-url is ok.
-	 * Return false if file-url is not ok
-	 *
-	 * @param string $url   The URL to check.
-	 *
-	 * @return bool
-	 */
-	private function check_url( string $url ): bool {
-		// given url starts not with http.
-		if ( ! str_starts_with( $url, 'http' ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given string %s is not a valid url starting with http.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
-			return false;
-		}
-
-		// given string is not an url.
-		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given string %s is not a valid url.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
-			return false;
-		}
-
-		// check for duplicate.
-		$query   = array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
-			'meta_query'     => array(
-				array(
-					'key'     => EML_POST_META_URL,
-					'value'   => $url,
-					'compare' => '=',
-				),
-			),
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-		$results = new WP_Query( $query );
-		if ( $results->post_count > 0 ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given url %s already exist in media library.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
-			return false;
-		}
-
-		// all ok with the url.
-		$return = true;
-		/**
-		 * Filter the resulting for checking an external URL.
-		 *
-		 * @since 1.1.0 Available since 1.1.0
-		 *
-		 * @param bool $return The result of this check.
-		 * @param string $url The requested external URL.
-		 */
-		return apply_filters( 'eml_check_url', $return, $url );
-	}
-
-	/**
-	 * Check the availability of a given file-url via http(s) incl. check of its content-type.
-	 *
-	 * @param string $url The URL to check.
-	 *
-	 * @return bool true if file is available, false if not.
-	 */
-	public function check_availability( string $url ): bool {
-		// check if url is available.
-		$args     = array(
-			'timeout'     => 30,
-			'httpversion' => '1.1',
-			'redirection' => 0,
-		);
-		$response = wp_remote_head( $url, $args );
-
-		// request resulted in error.
-		if ( is_wp_error( $response ) || empty( $response ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s is not available.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'error', 0 );
-			return false;
-		}
-
-		// file-url returns not with http-status 200.
-		if ( $response['http_response']->get_status() !== 200 ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), $url, 'error', 0 );
-			return false;
-		}
-
-		// request does not have a content-type header.
-		$response_headers_obj = $response['http_response']->get_headers();
-		if ( false === $response_headers_obj->offsetExists( 'content-type' ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'error', 0 );
-			return false;
-		}
-
-		// request does not have a valid content-type.
-		$response_headers = $response_headers_obj->getAll();
-		if ( ! empty( $response_headers['content-type'] ) ) {
-			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_allowed_mime_types(), true ) ) {
-				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-				$this->log->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $url ), $response_headers['content-type'] ), $url, 'error', 0 );
-
-				return false;
-			}
-		}
-
-		$return = true;
-		/**
-		 * Filter the resulting for checking an external URL.
-		 *
-		 * @since 1.1.0 Available since 1.1.0
-		 *
-		 * @param bool $return The result of this check.
-		 * @param string $url The requested external URL.
-		 */
-		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
-			// file is available.
-			/* translators: %1$s will be replaced by the url of the file. */
-			$this->log->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), esc_url( $url ) ), $url, 'success', 2 );
-
-			return true;
-		}
-
 		return false;
 	}
 
@@ -453,70 +328,6 @@ class External_Files {
 	}
 
 	/**
-	 * Get possible mime-types.
-	 *
-	 * These are the mime-types this plugin supports. Not the enabled mime-types!
-	 *
-	 * We do not use @get_allowed_mime_types() as there might be much more mime-types as our plugin
-	 * could support.
-	 *
-	 * @return array
-	 */
-	public function get_possible_mime_types(): array {
-		$mime_types = array(
-			'image/gif'       => array(
-				'label' => __( 'GIF', 'external-files-in-media-library' ),
-				'ext'   => 'gif',
-			),
-			'image/jpeg'      => array(
-				'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
-				'ext'   => 'jpg',
-			),
-			'image/png'       => array(
-				'label' => __( 'PNG', 'external-files-in-media-library' ),
-				'ext'   => 'png',
-			),
-			'image/webp'      => array(
-				'label' => __( 'WEBP', 'external-files-in-media-library' ),
-				'ext'   => 'webp',
-			),
-			'application/pdf' => array(
-				'label' => __( 'PDF', 'external-files-in-media-library' ),
-				'ext'   => 'pdf',
-			),
-			'application/zip' => array(
-				'label' => __( 'ZIP', 'external-files-in-media-library' ),
-				'ext'   => 'zip',
-			),
-			'video/mp4'       => array(
-				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
-				'ext'   => 'mp4',
-			),
-		);
-
-		/**
-		 * Filter the possible mime types this plugin could support.
-		 *
-		 * To add files of type "your/mime" with extension "yourmime" use this example:
-		 *
-		 * ```
-		 * add_filter( 'eml_supported_mime_types', function( $list ) {
-		 *  $list['your/mime'] = array(
-		 *      'label' => 'Title of your mime',
-		 *      'ext' => 'yourmime'
-		 *  );
-		 *  return $list;
-		 * } );
-		 * ```
-		 *
-		 * @since 1.0.0 Available since 1.0.0.
-		 *
-		 * @param array $mime_types List of supported mime types.
-		 */
-		return apply_filters( 'eml_supported_mime_types', $mime_types );
-	}
-
-	/**
 	 * Check all external files regarding their availability.
 	 *
 	 * @return void
@@ -524,127 +335,20 @@ class External_Files {
 	public function check_files(): void {
 		$files = $this->get_files_in_media_library();
 		foreach ( $files as $external_file_obj ) {
-			$external_file_obj->set_availability( $this->check_availability( $external_file_obj->get_url() ) );
-		}
-	}
-
-	/**
-	 * Check the availability of a given file-url via http(s) incl. check of its content-type.
-	 *
-	 * @param string $url The URL to check.
-	 *
-	 * @return array List of file-infos.
-	 */
-	public function get_external_file_infos( string $url ): array {
-		// initialize return array.
-		$results = array(
-			'filesize'  => 0,
-			'mime-type' => '',
-			'local'     => false,
-		);
-
-		// get the header-data of this url.
-		$args     = array(
-			'timeout'     => 30,
-			'httpversion' => '1.1',
-			'redirection' => 0,
-		);
-		$response = wp_remote_head( $url, $args );
-
-		// get header from response.
-		$response_headers_obj = $response['http_response']->get_headers();
-		$response_headers     = $response_headers_obj->getAll();
-
-		// set file size in result-array.
-		if ( ! empty( $response_headers['content-length'] ) ) {
-			$results['filesize'] = $response_headers['content-length'];
-		}
-
-		// set title from content-disposition.
-		if ( ! empty( $response_headers['content-disposition'] ) ) {
-			$results['title'] = $this->get_filename_from_disposition( (array) $response_headers['content-disposition'] );
-		}
-
-		// set content-type as mime-type in result-array.
-		if ( ! empty( $response_headers['content-type'] ) ) {
-			$results['mime-type'] = Helper::get_content_type_from_string( $response_headers['content-type'] );
-		}
-
-		// download file as temporary file for further analyses.
-		$results['tmp-file'] = download_url( $url );
-
-		/**
-		 * Filter the data of a single file during import.
-		 *
-		 * @since 1.1.0 Available since 1.1.0
-		 *
-		 * @param array $results List of detected file settings.
-		 * @param string $url The requested external URL.
-		 */
-		return apply_filters( 'eml_external_file_infos', $results, $url );
-	}
-
-	/**
-	 * Get the filename from content-disposition-header.
-	 *
-	 * @source WordPress-Importer
-	 *
-	 * @param array $disposition_header The disposition header-list.
-	 *
-	 * @return ?string
-	 * @noinspection DuplicatedCode
-	 * @noinspection PhpUnusedLocalVariableInspection
-	 */
-	private function get_filename_from_disposition( array $disposition_header ): ?string {
-		// Get the filename.
-		$filename = null;
-
-		foreach ( $disposition_header as $value ) {
-			$value = trim( $value );
-
-			if ( ! str_contains( $value, ';' ) ) {
+			// bail if obj is not an external file object.
+			if( ! $external_file_obj instanceof External_File ) {
 				continue;
 			}
 
-			list( $type, $attr_parts ) = explode( ';', $value, 2 );
+			// get the file url.
+			$url = $external_file_obj->get_url( true );
 
-			$attr_parts = explode( ';', $attr_parts );
-			$attributes = array();
+			// get the protocol handler for this URL.
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $url );
 
-			foreach ( $attr_parts as $part ) {
-				if ( ! str_contains( $part, '=' ) ) {
-					continue;
-				}
-
-				list( $key, $value ) = explode( '=', $part, 2 );
-
-				$attributes[ trim( $key ) ] = trim( $value );
-			}
-
-			if ( empty( $attributes['filename'] ) ) {
-				continue;
-			}
-
-			$filename = trim( $attributes['filename'] );
-
-			// Unquote quoted filename, but after trimming.
-			if ( str_starts_with( $filename, '"' ) && str_ends_with( $filename, '"' ) ) {
-				$filename = substr( $filename, 1, -1 );
-			}
+			// get and save its availability.
+			$external_file_obj->set_availability( $protocol_handler->check_availability() );
 		}
-
-		return $filename;
-	}
-
-	/**
-	 * Return true if the given mime_type is an image-mime-type.
-	 *
-	 * @param string $mime_type The mime-type to check.
-	 *
-	 * @return bool
-	 */
-	public function is_image_by_mime_type( $mime_type ): bool {
-		return str_starts_with( $mime_type, 'image/' );
 	}
 
 	/**
@@ -807,5 +511,45 @@ class External_Files {
 
 		// call cache file deletion.
 		$external_file->delete_cache();
+	}
+
+	/**
+	 * Return the login.
+	 *
+	 * @return string
+	 */
+	private function get_login(): string {
+		return $this->login;
+	}
+
+	/**
+	 * Set the login.
+	 *
+	 * @param string $login The login.
+	 *
+	 * @return void
+	 */
+	public function set_login( string $login ): void {
+		$this->login = $login;
+	}
+
+	/**
+	 * Return the password.
+	 *
+	 * @return string
+	 */
+	private function get_password(): string {
+		return $this->password;
+	}
+
+	/**
+	 * Set the password.
+	 *
+	 * @param string $password The password.
+	 *
+	 * @return void
+	 */
+	public function set_password( string $password ): void {
+		$this->password = $password;
 	}
 }

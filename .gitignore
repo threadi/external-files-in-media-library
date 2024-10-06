@@ -4,3 +4,4 @@ languages/*.json
 /vendor/
 /svn/
 /build/build.properties
+/todo.txt

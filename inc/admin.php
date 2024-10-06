@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use threadi\eml\Controller\External_Files;
+use threadi\eml\Controller\Protocols;
 use threadi\eml\helper;
 use threadi\eml\Model\External_File;
 use threadi\eml\Model\Log;
@@ -82,7 +83,7 @@ function eml_admin_menu_init(): void {
 
 	// get possible mime types.
 	$mime_types = array();
-	foreach ( External_Files::get_instance()->get_possible_mime_types() as $mime_type => $settings ) {
+	foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
 		$mime_types[ $mime_type ] = $settings['label'];
 	}
 
@@ -352,6 +353,7 @@ function eml_admin_add_multi_form(): void {
 			'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . '</label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
+				'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>'
 			),
 			'buttons'   => array(
 				array(
@@ -413,6 +415,7 @@ function eml_admin_add_single_form(): void {
 		'title'     => __( 'Add external URL', 'external-files-in-media-library' ),
 		'texts'     => array(
 			'<label for="external_files">' . esc_html__( 'Enter the URL you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
+			'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>'
 		),
 		'buttons'   => array(
 			array(
@@ -478,6 +481,10 @@ function eml_admin_add_urls_via_ajax(): void {
 	$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 	$url_array = explode( "\n", $urls );
 
+	// get the credentials.
+	$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+	$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
 	// collect errors.
 	$errors = array();
 	$files  = array();
@@ -486,8 +493,11 @@ function eml_admin_add_urls_via_ajax(): void {
 		// save count of URLs.
 		update_option( 'eml_import_url_max', count( $url_array ) );
 
-		// loop through them to add them to media library.
+		// add the credentials.
+		$files_obj->set_login( $login );
+		$files_obj->set_password( $password );
 
+		// loop through them to add them to media library.
 		foreach ( $url_array as $url ) {
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
@@ -706,6 +716,9 @@ function eml_admin_media_box(): void {
 			$url_to_show = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '..';
 		}
 
+		// get protocol handler for this URL.
+		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $external_file_obj->get_url( true ) );
+
 		// output.
 		?>
 			<div class="misc-pub-external-file">
@@ -729,21 +742,25 @@ function eml_admin_media_box(): void {
 						</span>
 						<?php
 					}
+					if( $protocol_handler->can_check_availability() ) {
+						?>
+						<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
+						<?php
+					}
 					?>
-					<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
 				</p>
 					<p><span class="dashicons dashicons-yes-alt"></span>
 						<?php
 						if ( false !== $external_file_obj->is_locally_saved() ) {
 							echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-							if ( $external_file_obj->is_image() ) {
+							if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
 								?>
 								<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 								<?php
 							}
 						} else {
 							echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-							if ( $external_file_obj->is_image() ) {
+							if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
 								?>
 								<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 								<?php
@@ -804,8 +821,11 @@ function eml_admin_check_file_availability(): void {
 		$external_file_obj = $external_files_obj->get_file( $attachment_id );
 
 		if ( $external_file_obj ) {
+			// get protocol handler for this url.
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $external_file_obj->get_url( true ) );
+
 			// check its availability.
-			$external_file_obj->set_availability( $external_files_obj->check_availability( $external_file_obj->get_url() ) );
+			$external_file_obj->set_availability( $protocol_handler->check_availability() );
 
 			// return result depending on availability-value.
 			if ( $external_file_obj->get_availability() ) {
@@ -1163,7 +1183,7 @@ function eml_admin_multiselect_field( array $attr ): void {
  */
 function eml_admin_validate_allowed_mime_types( ?array $values ): ?array {
 	// get the possible mime-types.
-	$mime_types = External_Files::get_instance()->get_possible_mime_types();
+	$mime_types = Helper::get_possible_mime_types();
 
 	// check if all mimes in the request are allowed.
 	$error = false;
@@ -1217,7 +1237,7 @@ function eml_admin_set_capability( ?array $values ): array {
  */
 function eml_admin_init(): void {
 	$external_files_obj = External_Files::get_instance();
-	if ( empty( $external_files_obj->get_allowed_mime_types() ) ) {
+	if ( empty( Helper::get_allowed_mime_types() ) ) {
 		// get the transients-object to add the new one.
 		$transients_obj = Transients::get_instance();
 		$transient_obj  = $transients_obj->add();

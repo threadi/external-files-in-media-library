@@ -13,7 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 use threadi\eml\Controller\External_Files;
+use threadi\eml\Controller\Protocol_Base;
+use threadi\eml\Controller\Protocols;
 use threadi\eml\Controller\Proxy;
+use threadi\eml\Helper;
 
 /**
  * Initialize the model for single external file-object.
@@ -54,13 +57,6 @@ class External_File {
 	 * @var int
 	 */
 	private int $filesize = 0;
-
-	/**
-	 * The marker if this file is locally saved.
-	 *
-	 * @var bool
-	 */
-	private bool $locally_saved = false;
 
 	/**
 	 * Constructor for this object.
@@ -228,7 +224,7 @@ class External_File {
 		}
 
 		// if mime-type of file is not allowed, set availability to false.
-		if ( ! in_array( $this->get_mime_type(), External_Files::get_instance()->get_allowed_mime_types(), true ) ) {
+		if ( ! in_array( $this->get_mime_type(), Helper::get_allowed_mime_types(), true ) ) {
 			$this->availability = false;
 		}
 
@@ -311,7 +307,7 @@ class External_File {
 	 * @return bool
 	 */
 	public function is_image(): bool {
-		return External_Files::get_instance()->is_image_by_mime_type( $this->get_mime_type() );
+		return Helper::is_image_by_mime_type( $this->get_mime_type() );
 	}
 
 	/**
@@ -333,9 +329,6 @@ class External_File {
 	public function set_is_local_saved( bool $locally_saved ): void {
 		// set in DB.
 		update_post_meta( $this->get_id(), 'eml_locally_saved', $locally_saved );
-
-		// set in object.
-		$this->locally_saved = $locally_saved;
 	}
 
 	/**
@@ -405,7 +398,7 @@ class External_File {
 	 */
 	private function get_file_extension(): string {
 		// get all possible mime-types.
-		$mime_types = External_Files::get_instance()->get_possible_mime_types();
+		$mime_types = Helper::get_possible_mime_types();
 
 		// return known extension for this mime-type.
 		if ( ! empty( $mime_types[ $this->get_mime_type() ] ) ) {

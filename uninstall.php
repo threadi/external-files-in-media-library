@@ -25,5 +25,4 @@ require_once 'inc/autoload.php';
 require_once 'inc/constants.php';
 
 // run the uninstaller-methods.
-$uninstall_obj = Uninstall::get_instance();
-$uninstall_obj->run();
+Uninstall::get_instance()->run();

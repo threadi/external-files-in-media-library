@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use threadi\eml\Helper;
 use WP_Post;
 use WP_Query;
 
@@ -107,6 +108,9 @@ class Init {
 		if ( 1 === absint( get_option( 'eml_proxy', 0 ) ) ) {
 			Proxy::get_instance()->init();
 		}
+
+		// our own hooks.
+		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
 
 		// hooks for third-party-plugins.
 		add_filter( 'massedge-wp-eml/export/add_attachment', array( $this, 'prevent_external_attachment_in_export' ), 10, 2 );
@@ -467,5 +471,39 @@ class Init {
 
 		// return external value for rel-attribute.
 		return 'external';
+	}
+
+	/**
+	 * Set the file title.
+	 *
+	 * @param string $title The title.
+	 * @param string $url   The used URL.
+	 * @param array  $file_data The file data.
+	 *
+	 * @return string
+	 */
+	public function set_file_title( string $title, string $url, array $file_data ): string {
+		// bail if title is set.
+		if( ! empty( $title ) ) {
+			return $title;
+		}
+
+		// get url data.
+		$url_info = wp_parse_url( $url );
+		if ( ! empty( $url_info ) ) {
+			// get all possible mime-types our plugin supports.
+			$mime_types = Helper::get_possible_mime_types();
+
+			// get basename of path, if available.
+			$title = basename( $url_info['path'] );
+
+			// add file extension if we support the mime-type and if the title does not have any atm.
+			if ( empty( pathinfo( $title, PATHINFO_EXTENSION ) ) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
+				$title .= '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
+			}
+		}
+
+		// return resulting list of file data.
+		return $title;
 	}
 }

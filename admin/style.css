@@ -84,3 +84,12 @@ body.settings_page_eml_settings .nav-tab-help:before {
 }
 
 .wp-list-table.media #external_files { width: 120px }
+
+.wp-easy-dialog.eml details {
+	margin-bottom: 1em;
+}
+
+.wp-easy-dialog.eml details summary {
+	cursor: pointer;
+	margin-bottom: 0.4em;
+}
