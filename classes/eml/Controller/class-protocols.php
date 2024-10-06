@@ -57,7 +57,7 @@ class Protocols {
 	private function get_protocols(): array {
 		$list = array(
 			'threadi\eml\Controller\Protocols\Ftp',
-			'threadi\eml\Controller\Protocols\Http'
+			'threadi\eml\Controller\Protocols\Http',
 		);
 
 		/**
@@ -77,10 +77,10 @@ class Protocols {
 	 * @return Protocol_Base|false
 	 */
 	public function get_protocol_object_for_url( string $url ): Protocol_Base|false {
-		foreach( $this->get_protocols() as $protocol_name ) {
+		foreach ( $this->get_protocols() as $protocol_name ) {
 			if ( is_string( $protocol_name ) && class_exists( $protocol_name ) ) {
 				$obj = new $protocol_name( $url );
-				if( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) {
+				if ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) {
 					return $obj;
 				}
 			}

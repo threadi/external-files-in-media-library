@@ -1,0 +1,121 @@
+<?php
+/**
+ * File to handle the Imgur support.
+ *
+ * @package thread\eml
+ */
+
+namespace threadi\eml\Controller\ThirdPartySupport;
+
+// Exit if accessed directly.
+use threadi\eml\Model\Log;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Object to handle Imgur-support.
+ */
+class Imgur {
+
+	/**
+	 * Instance of actual object.
+	 *
+	 * @var ?Imgur
+	 */
+	private static ?Imgur $instance = null;
+
+	/**
+	 * Constructor, not used as this a Singleton object.
+	 */
+	private function __construct() {}
+
+	/**
+	 * Prevent cloning of this object.
+	 *
+	 * @return void
+	 */
+	private function __clone() {}
+
+	/**
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Imgur
+	 */
+	public static function get_instance(): Imgur {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new Imgur();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize plugin.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_filter( 'eml_http_states', array( $this, 'add_http_state' ), 10, 2 );
+		add_filter( 'eml_http_check_content_type', array( $this, 'allow_http_response_without_content_type' ), 10, 2 );
+		add_filter( 'eml_http_save_local', array( $this, 'force_local_saving' ), 10, 2 );
+	}
+
+	/**
+	 * Add http state for Imgur.
+	 *
+	 * @param array  $http_states List of HTTP-states.
+	 * @param string $url The used URL.
+	 *
+	 * @return array
+	 */
+	public function add_http_state( array $http_states, string $url ): array {
+		// bail if this is not an imgur-URL.
+		if ( ! str_contains( $url, 'imgur' ) ) {
+			return $http_states;
+		}
+
+		// add the states Imgur is sending.
+		$http_states[] = 429;
+
+		// return the resulting list.
+		return $http_states;
+	}
+
+	/**
+	 * Do not check for content type.
+	 *
+	 * @param bool   $results The result.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function allow_http_response_without_content_type( bool $results, string $url ): bool {
+		// bail if this is not an imgur-URL.
+		if ( ! str_contains( $url, 'imgur' ) ) {
+			return $results;
+		}
+
+		// do not check for content type.
+		return false;
+	}
+
+	/**
+	 * Force local saving for Imgur files.
+	 *
+	 * @param bool   $results The result.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function force_local_saving( bool $results, string $url ): bool {
+		// bail if this is not an imgur-URL.
+		if ( ! str_contains( $url, 'imgur' ) ) {
+			return $results;
+		}
+
+		// force local saving for Imgur files.
+		return true;
+	}
+}

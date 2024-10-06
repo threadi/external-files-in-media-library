@@ -127,7 +127,7 @@ class External_Files {
 		/**
 		 * Do nothing if url is using a not supported tcp protocol.
 		 */
-		if( ! $protocol_handler_obj ) {
+		if ( ! $protocol_handler_obj ) {
 			return false;
 		}
 
@@ -184,6 +184,15 @@ class External_Files {
 		$file_data = $protocol_handler_obj->get_external_file_infos();
 
 		/**
+		 * Bail on error for tmp-file.
+		 */
+		if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
+			/* translators: %1$s will be replaced by the file-URL */
+			Log::get_instance()->create( sprintf( __( 'Given string %1$s results in error during request: <pre>%2$s</pre>', 'external-files-in-media-library' ), esc_url( $url ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+			return false;
+		}
+
+		/**
 		 * Filter the title for a single file during import.
 		 *
 		 * @since 1.1.0 Available since 1.1.0
@@ -217,9 +226,9 @@ class External_Files {
 			$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
 			if ( ! is_wp_error( $attachment_id ) ) {
 				$file_data['local'] = true;
-			}
-			else {
+			} else {
 				// log the event.
+				/* translators: %1$s will be replaced by the file-URL */
 				Log::get_instance()->create( sprintf( __( 'URL %1$s could not be downloaded.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
 			}
 		} else {
@@ -253,16 +262,14 @@ class External_Files {
 				$external_file_obj->set_is_local_saved( $file_data['local'] );
 
 				// set meta-data for images if mode is enabled for this.
-				if ( ! $protocol_handler_obj->should_be_saved_local() ) {
-					if ( ! empty( $file_data['tmp-file'] ) ) {
-						$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
+				if ( ! $protocol_handler_obj->should_be_saved_local() && ! empty( $file_data['tmp-file'] ) ) {
+					$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
 
-						// set file to our url.
-						$image_meta['file'] = $url;
+					// set file to our url.
+					$image_meta['file'] = $url;
 
-						// save the resulting image-data.
-						wp_update_attachment_metadata( $attachment_id, $image_meta );
-					}
+					// save the resulting image-data.
+					wp_update_attachment_metadata( $attachment_id, $image_meta );
 				}
 
 				// return true as the file has been created successfully.
@@ -336,7 +343,7 @@ class External_Files {
 		$files = $this->get_files_in_media_library();
 		foreach ( $files as $external_file_obj ) {
 			// bail if obj is not an external file object.
-			if( ! $external_file_obj instanceof External_File ) {
+			if ( ! $external_file_obj instanceof External_File ) {
 				continue;
 			}
 

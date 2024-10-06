@@ -48,11 +48,11 @@ Run in main directory:
 
 ### Run
 
-`vendor/bin/phpcs --standard=ruleset.xml file`
+`vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .`
 
 ### Repair
 
-`vendor/bin/phpcbf --standard=ruleset.xml file`
+`vendor/bin/phpcbf --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .`
 
 ## Generate documentation
 

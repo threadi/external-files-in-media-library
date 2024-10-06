@@ -49,12 +49,16 @@ class Log {
 	 * Return logs.
 	 *
 	 * @param string $url The URL to filter for, get only last entry (optional).
+	 * @param string $state The requested state.
 	 *
 	 * @return array
 	 */
-	public function get_logs( string $url = '' ): array {
+	public function get_logs( string $url = '', string $state = '' ): array {
 		global $wpdb;
 		if ( ! empty( $url ) ) {
+			if ( ! empty( $state ) ) {
+				return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
+			}
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
 		}
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );

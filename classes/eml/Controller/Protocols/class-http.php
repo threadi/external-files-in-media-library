@@ -27,7 +27,7 @@ class Http extends Protocol_Base {
 	 */
 	protected array $tcp_protocols = array(
 		'http',
-		'https'
+		'https',
 	);
 
 	/**
@@ -79,7 +79,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		return apply_filters( 'eml_check_url', $return, esc_url( $this->get_url() ) );
+		return apply_filters( 'eml_check_url', $return, $this->get_url() );
 	}
 
 	/**
@@ -98,8 +98,8 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// file-url returns not with http-status 200.
-		if ( $response['http_response']->get_status() !== 200 ) {
+		// file-url returns not compatible http-state.
+		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states(), true ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), $response['http_response']->get_status() ), esc_url( $this->get_url() ), 'error', 0 );
 			return false;
@@ -107,7 +107,17 @@ class Http extends Protocol_Base {
 
 		// request does not have a content-type header.
 		$response_headers_obj = $response['http_response']->get_headers();
-		if ( false === $response_headers_obj->offsetExists( 'content-type' ) ) {
+		$true                 = true;
+		/**
+		 * Filter for check if file has content-type given.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $true True if content type check should be run.
+		 * @param string $url The used URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type', $true, $this->get_url() ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 			return false;
@@ -115,10 +125,20 @@ class Http extends Protocol_Base {
 
 		// request does not have a valid content-type.
 		$response_headers = $response_headers_obj->getAll();
-		if ( ! empty( $response_headers['content-type'] ) ) {
+		$true             = true;
+		/**
+		 * Filter for check of file content type during availability check.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $true True if content type check should be run.
+		 * @param string $url The used URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_availability', $true, $this->get_url() ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-				Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with a not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), $response_headers['content-type'] ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with the not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), $response_headers['content-type'] ), esc_url( $this->get_url() ), 'error', 0 );
 				return false;
 			}
 		}
@@ -139,6 +159,7 @@ class Http extends Protocol_Base {
 			/* translators: %1$s will be replaced by the url of the file. */
 			Log::get_instance()->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'success', 2 );
 
+			// return true as file is available.
 			return true;
 		}
 
@@ -153,7 +174,7 @@ class Http extends Protocol_Base {
 	public function get_external_file_infos(): array {
 		// initialize return array.
 		$results = array(
-			'title' => '',
+			'title'     => '',
 			'filesize'  => 0,
 			'mime-type' => '',
 			'local'     => false,
@@ -186,9 +207,6 @@ class Http extends Protocol_Base {
 		$results['tmp-file'] = download_url( $this->get_url() );
 		remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 
-		// save results in object.
-		$this->file_infos = $results;
-
 		/**
 		 * Filter the data of a single file during import.
 		 *
@@ -199,7 +217,13 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $this->get_url() );
+		$results = apply_filters( 'eml_external_file_infos', $results, $this->get_url() );
+
+		// save results in object.
+		$this->file_infos = $results;
+
+		// return the resulting array.
+		return $results;
 	}
 
 	/**
@@ -264,12 +288,19 @@ class Http extends Protocol_Base {
 	 */
 	public function should_be_saved_local(): bool {
 		// if credentials are set, file should be saved local.
-		if( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
 			return true;
 		}
 
-		// otherwise use the settings.
-		return 'local' === get_option( 'eml_images_mode', 'external' ) && ! empty( $this->file_infos ) && Helper::is_image_by_mime_type( $this->file_infos['mime-type'] );
+		$result = 'local' === get_option( 'eml_images_mode', 'external' ) && ! empty( $this->file_infos ) && Helper::is_image_by_mime_type( $this->file_infos['mime-type'] );
+		/**
+		 * Force to save a http-file local or not.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $result True if file should be saved local.
+		 * @param string $url The used URL.
+		 */
+		return apply_filters( 'eml_http_save_local', $result, $this->get_url() );
 	}
 
 	/**
@@ -279,15 +310,15 @@ class Http extends Protocol_Base {
 	 */
 	private function get_header_args(): array {
 		// define basic header.
-		$args     = array(
+		$args = array(
 			'timeout'     => 30,
 			'httpversion' => '1.1',
 			'redirection' => 0,
 		);
 
 		// add credentials if set.
-		if( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
-			if( ! empty( $args['headers']['Authorization'] ) ) {
+		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+			if ( ! empty( $args['headers']['Authorization'] ) ) {
 				$args['headers'] = array();
 			}
 			$args['headers']['Authorization'] = 'Basic ' . base64_encode( $this->get_login() . ':' . $this->get_password() );
@@ -313,5 +344,23 @@ class Http extends Protocol_Base {
 	 */
 	public function set_download_url_header( array $parsed_args ): array {
 		return array_merge( $parsed_args, $this->get_header_args() );
+	}
+
+	/**
+	 * Return list of allowed http states.
+	 *
+	 * @return array
+	 */
+	private function get_allowed_http_states(): array {
+		$list = array( 200 );
+
+		/**
+		 * Filter the list of allowed http states.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $list List of http states.
+		 * @param string $url The used URL.
+		 */
+		return apply_filters( 'eml_http_states', $list, $this->get_url() );
 	}
 }

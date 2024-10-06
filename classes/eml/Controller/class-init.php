@@ -71,6 +71,9 @@ class Init {
 	 * @noinspection PhpFullyQualifiedNameUsageInspection
 	 */
 	public function init(): void {
+		// enable third party support.
+		Third_Party_Support::get_instance()->init();
+
 		// schedule.
 		add_action( 'eml_check_files', array( External_Files::get_instance(), 'check_files' ), 10, 0 );
 
@@ -484,7 +487,7 @@ class Init {
 	 */
 	public function set_file_title( string $title, string $url, array $file_data ): string {
 		// bail if title is set.
-		if( ! empty( $title ) ) {
+		if ( ! empty( $title ) ) {
 			return $title;
 		}
 

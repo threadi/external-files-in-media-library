@@ -353,7 +353,7 @@ function eml_admin_add_multi_form(): void {
 			'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . '</label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
-				'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>'
+				'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 			),
 			'buttons'   => array(
 				array(
@@ -415,7 +415,7 @@ function eml_admin_add_single_form(): void {
 		'title'     => __( 'Add external URL', 'external-files-in-media-library' ),
 		'texts'     => array(
 			'<label for="external_files">' . esc_html__( 'Enter the URL you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
-			'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>'
+			'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 		),
 		'buttons'   => array(
 			array(
@@ -482,7 +482,7 @@ function eml_admin_add_urls_via_ajax(): void {
 	$url_array = explode( "\n", $urls );
 
 	// get the credentials.
-	$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+	$login    = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 	$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 	// collect errors.
@@ -537,7 +537,7 @@ function eml_admin_add_urls_via_ajax(): void {
 	// secure errors.
 	$errors_for_response = array();
 	foreach ( $errors as $url ) {
-		$log_entry             = $log->get_logs( $url );
+		$log_entry             = $log->get_logs( $url, 'error' );
 		$errors_for_response[] = array(
 			'url' => $url,
 			'log' => ! empty( $log_entry ) ? $log_entry[0]['log'] : '',
@@ -742,7 +742,7 @@ function eml_admin_media_box(): void {
 						</span>
 						<?php
 					}
-					if( $protocol_handler->can_check_availability() ) {
+					if ( $protocol_handler->can_check_availability() ) {
 						?>
 						<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
 						<?php

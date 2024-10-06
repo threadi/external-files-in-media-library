@@ -31,7 +31,7 @@ class Ftp extends Protocol_Base {
 	protected array $tcp_protocols = array(
 		'ftp',
 		'ftps',
-		'sftp'
+		'sftp',
 	);
 
 	/**
@@ -81,25 +81,25 @@ class Ftp extends Protocol_Base {
 	public function get_external_file_infos(): array {
 		// initialize the file infos array.
 		$results = array(
-			'title' => basename( $this->get_url() ),
+			'title'     => basename( $this->get_url() ),
 			'filesize'  => 0,
 			'mime-type' => '',
-			'tmp-file' => '',
-			'local' => true,
+			'tmp-file'  => '',
+			'local'     => true,
 		);
 
 		// bail if no credentials are set.
-		if( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Missing credentials for FTP-URL %1$s.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 			return $results;
 		}
 
 		// get the path from given URL.
-		$parse_url = parse_url( $this->get_url() );
+		$parse_url = wp_parse_url( $this->get_url() );
 
 		// bail if validation is not resulting in an array.
-		if( ! is_array( $parse_url ) ) {
+		if ( ! is_array( $parse_url ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'FTP-URL %1$s looks not like an URL.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 			return $results;
@@ -111,39 +111,40 @@ class Ftp extends Protocol_Base {
 		// get the path.
 		$path = $parse_url['path'];
 
-		// Typically this is not defined, so we set it up just in case
+		// Typically this is not defined, so we set it up just in case.
 		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
 			define( 'FS_CONNECT_TIMEOUT', 30 );
 		}
 
 		// load necessary classes.
 		if ( ! function_exists( 'wp_tempnam' ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/file.php' );
+			require_once ABSPATH . 'wp-admin/includes/file.php';
 		}
 		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php' );
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
 		}
 		if ( ! class_exists( 'WP_Filesystem_FTPext' ) ) {
-			require_once( ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php' );
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php';
 		}
 
 		// define ftp connection.
 		$connection_arguments = array(
-			'port' => 21,
+			'port'     => 21,
 			'hostname' => $host,
 			'username' => $this->get_login(),
-			'password' => $this->get_password()
+			'password' => $this->get_password(),
 		);
 
 		// connect via FTP.
 		$ftp_connection = new WP_Filesystem_FTPext( $connection_arguments );
 		if ( ! $ftp_connection->connect() ) {
+			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'FTP-connection failed. Check the server-name %1$s and the given credentials.', 'external-files-in-media-library' ), $host ), $this->get_url(), 'error', 0 );
 			return $results;
 		}
 
 		// check if file exists.
-		if( ! $ftp_connection->is_file( $path ) ) {
+		if ( ! $ftp_connection->is_file( $path ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'FTP-URL %1$s does not exist.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 			return $results;
@@ -164,12 +165,12 @@ class Ftp extends Protocol_Base {
 
 		// save this file in a temporary directory.
 		$temp_file = wp_tempnam( $results['title'] );
-		if( $wp_filesystem->put_contents( $temp_file, $file_content ) ) {
+		if ( $wp_filesystem->put_contents( $temp_file, $file_content ) ) {
 			$results['tmp-file'] = $temp_file;
 		}
 
 		// get the mime types.
-		$mime_type = wp_check_filetype( $results['title'] );
+		$mime_type            = wp_check_filetype( $results['title'] );
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the size.

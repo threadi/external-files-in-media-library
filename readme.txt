@@ -111,4 +111,5 @@ No, only public files can be used.
 * Added support for different tcp-protocols
 * Added support for FTP-URLs
 * Added support for credentials for HTTP- and FTP-URLs
+* Added wrapper to support third party plugins or platforms, e.g. Imgur
 * Optimized proxy url handling

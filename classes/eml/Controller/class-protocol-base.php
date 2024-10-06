@@ -49,6 +49,8 @@ class Protocol_Base {
 
 	/**
 	 * Constructor, not used as this a Singleton object.
+	 *
+	 * @param string $url The URL to use.
 	 */
 	public function __construct( string $url ) {
 		$this->url = $url;
@@ -86,8 +88,8 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	public function is_url_compatible(): bool {
-		foreach( $this->get_tcp_protocols() as $tcp_protocol ) {
-			if( str_starts_with( $this->get_url(), $tcp_protocol ) ) {
+		foreach ( $this->get_tcp_protocols() as $tcp_protocol ) {
+			if ( str_starts_with( $this->get_url(), $tcp_protocol ) ) {
 				return true;
 			}
 		}
