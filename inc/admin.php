@@ -771,7 +771,6 @@ function eml_admin_media_box(): void {
 		if ( false !== $external_file_obj->is_locally_saved() ) {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
 			if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
-				var_dump($protocol_handler->can_change_hosting());
 				?>
 				<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 				<?php

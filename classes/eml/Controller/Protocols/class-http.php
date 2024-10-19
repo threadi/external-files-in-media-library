@@ -282,13 +282,19 @@ class Http extends Protocol_Base {
 	 * Return whether the file should be saved local (true) or not (false).
 	 *
 	 * Files from HTTP could be saved local if setting for it is enabled.
-	 * If credentials are set, all files should be saved local
+	 * If external file is not available via SSL but actual page is, save it local.
+	 * If credentials are set, all files should be saved local.
 	 *
 	 * @return bool
 	 */
 	public function should_be_saved_local(): bool {
 		// if credentials are set, file should be saved local.
 		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+			return true;
+		}
+
+		// check for ssl.
+		if( is_ssl() && ! str_starts_with( $this->get_url(), 'https://' ) ) {
 			return true;
 		}
 

@@ -117,6 +117,7 @@ Yes, but these files will included locally and not from the external URL.
 * Added support for credentials for HTTP- and FTP-URLs
 * Added wrapper to support third party plugins or platforms, e.g. Imgur
 * Added warning about old PHP-versions
+* External files which are not provided via SSL will be saved local if actual website is using SSL
 * Optimized proxy url handling
 * Optimized build process for releases
 * Replaced dialog library with new one
