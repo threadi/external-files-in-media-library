@@ -116,5 +116,7 @@ Yes, but these files will included locally and not from the external URL.
 * Added support for FTP-URLs
 * Added support for credentials for HTTP- and FTP-URLs
 * Added wrapper to support third party plugins or platforms, e.g. Imgur
+* Replaced dialog library with new one
 * Move support for already supported plugins in new wrapper
 * Optimized proxy url handling
+* Optimized build process for releases

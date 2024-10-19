@@ -189,7 +189,7 @@ function eml_upload_files() {
         ],
         buttons: [
           {
-            'action': 'location.reload();',
+            'action': 'edfw_open_dialog("add_eml_files");',
             'variant': 'primary',
             'text': emlJsVars.lbl_ok
           },
@@ -314,5 +314,5 @@ function eml_upload_files_get_info() {
  * @param config
  */
 function eml_create_dialog( config ) {
-  document.body.dispatchEvent(new CustomEvent("wp-easy-dialog", config));
+  document.body.dispatchEvent(new CustomEvent("easy-dialog-for-wordpress", config));
 }

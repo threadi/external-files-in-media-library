@@ -1,0 +1,13 @@
+* Credentials verschlüsselt an Datei speichern
+-> für Verfügbarkeitsprüfung nutzen (auch bei ftp)
+* Tools ergänzen:
+-> Massen-Import von FTP-Verzeichnis
+-> Massen-Import von lokalem Verzeichnis auf eigenem Server
+* Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
+* Daten migrieren: https://github.com/threadi/external-files-in-media-library/issues/36
+* Bei Deinstallation optional alle Dateien auf lokales Hosting wechseln
+* Transient-Kürzel von "pi-" auf "eml-" ändern
+* PHP 8.0-Warnung ergänzen
+* prüfen, ob http-Protokoll der Dateien zur Website passt (http != https)
+-> wenn nicht, dann bei Bildern automatisch Proxy nutzen
+-> wenn nicht, dann bei allen anderen Dateien Import nicht ermöglichen

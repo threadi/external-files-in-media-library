@@ -349,6 +349,7 @@ function eml_admin_add_multi_form(): void {
 	if ( 'add' === $current_screen->action ) {
 		// create dialog.
 		$dialog = array(
+			'id'        => 'add_eml_files',
 			'className' => 'eml',
 			'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
 			'texts'     => array(
@@ -371,7 +372,7 @@ function eml_admin_add_multi_form(): void {
 
 		?>
 			<div class="eml_add_external_files_wrapper">
-				<a href="#" class="button button-secondary wp-easy-dialog" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
+				<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
 				<?php
 				// add link to settings for admin.
 				if ( current_user_can( 'manage_options' ) ) {
@@ -411,6 +412,7 @@ function eml_admin_add_single_form(): void {
 
 	// create dialog.
 	$dialog = array(
+		'id'        => 'add_eml_files',
 		'className' => 'eml',
 		'title'     => __( 'Add external URL', 'external-files-in-media-library' ),
 		'texts'     => array(
@@ -433,7 +435,7 @@ function eml_admin_add_single_form(): void {
 
 	?>
 	<div class="eml_add_external_files_wrapper">
-		<a href="#" class="button button-secondary wp-easy-dialog" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external file', 'external-files-in-media-library' ); ?></a>
+		<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external file', 'external-files-in-media-library' ); ?></a>
 		<?php
 		// add link to settings for admin.
 		if ( current_user_can( 'manage_options' ) ) {
@@ -1319,8 +1321,8 @@ add_filter( 'eml_file_import_title', 'eml_admin_file_title' );
  */
 function eml_dialog_embed(): void {
 	// define paths: adjust if necessary.
-	$path = trailingslashit( plugin_dir_path( EML_PLUGIN ) ) . 'vendor/threadi/wp-easy-dialog/';
-	$url  = trailingslashit( plugin_dir_url( EML_PLUGIN ) ) . 'vendor/threadi/wp-easy-dialog/';
+	$path = trailingslashit( plugin_dir_path( EML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
+	$url  = trailingslashit( plugin_dir_url( EML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 
 	// bail if path does not exist.
 	if ( ! file_exists( $path ) ) {
@@ -1337,7 +1339,7 @@ function eml_dialog_embed(): void {
 
 	$script_asset = require $script_asset_path;
 	wp_enqueue_script(
-		'wp-easy-dialog',
+		'easy-dialog-for-wordpress',
 		$url . 'build/index.js',
 		$script_asset['dependencies'],
 		$script_asset['version'],
@@ -1348,7 +1350,7 @@ function eml_dialog_embed(): void {
 	$admin_css      = $url . 'build/style-index.css';
 	$admin_css_path = $path . 'build/style-index.css';
 	wp_enqueue_style(
-		'wp-easy-dialog',
+		'easy-dialog-for-wordpress',
 		$admin_css,
 		array( 'wp-components' ),
 		filemtime( $admin_css_path )

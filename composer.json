@@ -20,6 +20,6 @@
     },
     "require": {
         "php": "^8.0",
-        "threadi/wp-easy-dialog": "^1.0.7"
+        "threadi/easy-dialog-for-wordpress": "^1.0.0"
     }
 }

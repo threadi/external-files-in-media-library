@@ -127,7 +127,7 @@ class External_Files {
 		 * @param bool $false Return true if blacklist matches.
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if( apply_filters( 'eml_blacklist', $false, $url ) ) {
+		if ( apply_filters( 'eml_blacklist', $false, $url ) ) {
 			return false;
 		}
 

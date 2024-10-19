@@ -46,25 +46,25 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	margin-right: 8px;
 }
 
-.eml .wp-easy-dialog-text label {
+.eml .easy-dialog-for-wordpress-text label {
 	display: block;
 	margin-bottom: 0.5em;
 }
 
-.eml .wp-easy-dialog-text input[type="url"] {
+.eml .easy-dialog-for-wordpress-text input[type="url"] {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
 
-.eml .wp-easy-dialog-text textarea {
+.eml .easy-dialog-for-wordpress-text textarea {
 	display: block;
 	height: 100px;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
 
-.eml .wp-easy-dialog-text .error-list, .eml .wp-easy-dialog-text .ok-list {
+.eml .easy-dialog-for-wordpress-text .error-list, .eml .easy-dialog-for-wordpress-text .ok-list {
 	list-style: disc;
 	margin-left: 14px;
 }
@@ -85,11 +85,11 @@ body.settings_page_eml_settings .nav-tab-help:before {
 
 .wp-list-table.media #external_files { width: 120px }
 
-.wp-easy-dialog.eml details {
+.eml .easy-dialog-for-wordpress-text details {
 	margin-bottom: 1em;
 }
 
-.wp-easy-dialog.eml details summary {
+.eml .easy-dialog-for-wordpress-text details summary {
 	cursor: pointer;
 	margin-bottom: 0.4em;
 }

@@ -80,14 +80,14 @@ class GoogleDrive {
 
 		// check the URL against the blacklist.
 		$match = false;
-		foreach( $blacklist as $blacklist_url ) {
-			if( str_contains( $url, $blacklist_url ) ) {
+		foreach ( $blacklist as $blacklist_url ) {
+			if ( str_contains( $url, $blacklist_url ) ) {
 				$match = true;
 			}
 		}
 
 		// bail on no match.
-		if( ! $match ) {
+		if ( ! $match ) {
 			return false;
 		}
 
