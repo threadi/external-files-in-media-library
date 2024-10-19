@@ -1286,7 +1286,7 @@ function eml_admin_dismiss(): void {
 	}
 
 	// save value.
-	update_site_option( 'pi-dismissed-' . md5( $option_name ), $dismissible_length );
+	update_site_option( 'efiml-dismissed-' . md5( $option_name ), $dismissible_length );
 
 	// return nothing.
 	wp_die();

@@ -68,7 +68,7 @@ class Uninstall {
 			$transient_obj->delete();
 
 			// delete dismiss-marker for this transient.
-			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
+			delete_option( 'efiml-dismissed-' . md5( $transient_obj->get_name() ) );
 		}
 
 		// delete files, if option is enabled for it.

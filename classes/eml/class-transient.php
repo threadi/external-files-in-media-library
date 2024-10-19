@@ -249,7 +249,7 @@ class Transient {
 	 * @return string|int|false
 	 */
 	private function get_admin_transient_dismiss_cache(): string|int|false {
-		$cache_key = 'pi-dismissed-' . md5( $this->get_name() );
+		$cache_key = 'efiml-dismissed-' . md5( $this->get_name() );
 		$timeout   = get_option( $cache_key );
 		$timeout   = 'forever' === $timeout ? time() + 60 : $timeout;
 
