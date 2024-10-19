@@ -1562,3 +1562,33 @@ function eml_admin_eml_switch_hosting(): void {
 	wp_send_json( $result );
 }
 add_action( 'wp_ajax_eml_switch_hosting', 'eml_admin_eml_switch_hosting', 10, 0 );
+
+/**
+ * Check if website is using a valid SSL and show warning if not.
+ *
+ * @return void
+ */
+function eml_check_php(): void {
+	// get transients object.
+	$transients_obj = Transients::get_instance();
+
+	// bail if WordPress is in developer mode.
+	if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
+		$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
+		return;
+	}
+
+	// bail if PHP >= 8.1 is used.
+	if ( version_compare( PHP_VERSION, '8.1', '>' ) ) {
+		return;
+	}
+
+	// show hint for necessary configuration to restrict access to application files.
+	$transient_obj = Transients::get_instance()->add();
+	$transient_obj->set_type( 'error' );
+	$transient_obj->set_name( 'eml_php_hint' );
+	$transient_obj->set_dismissible_days( 90 );
+	$transient_obj->set_message( '<strong>' . __( 'Your website is using an outdated PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.0 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">are outdated</a> since December 2023. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
+	$transient_obj->save();
+}
+add_action( 'admin_init', 'eml_check_php' );
