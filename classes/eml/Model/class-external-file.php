@@ -410,7 +410,7 @@ class External_File {
 	 * @return string
 	 */
 	public function get_cache_file(): string {
-		// get path.
+		// get path for cache directory.
 		$path = External_Files::get_instance()->get_cache_directory();
 
 		// get filename.
@@ -460,9 +460,13 @@ class External_File {
 	 * @return void
 	 */
 	public function delete_cache(): void {
-		if ( $this->is_cached() ) {
-			wp_delete_file( $this->get_cache_file() );
+		// bail if is not cached.
+		if ( ! $this->is_cached() ) {
+			return;
 		}
+
+		// clear the cache.
+		wp_delete_file( $this->get_cache_file() );
 	}
 
 	/**
@@ -531,5 +535,147 @@ class External_File {
 
 		// return decrypted string.
 		return Crypt::get_instance()->decrypt( $password );
+	}
+
+	/**
+	 * Switch hosting of this file to local.
+	 *
+	 * @return bool
+	 */
+	public function switch_to_local(): bool {
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		WP_Filesystem();
+		global $wp_filesystem;
+
+		// get the handler for this url depending on its protocol.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+
+		// get external file infos.
+		$file_data = $protocol_handler_obj->get_external_file_infos();
+
+		// import file via WP-own functions.
+		$array = array(
+			'name'     => $this->get_title(),
+			'type'     => $file_data['mime-type'],
+			'tmp_name' => $file_data['tmp-file'],
+			'error'    => 0,
+			'size'     => $file_data['filesize'],
+		);
+
+		// remove URL from attachment-setting.
+		delete_post_meta( $this->get_id(), '_wp_attached_file' );
+
+		/**
+		 * Get user the attachment would be assigned to.
+		 */
+		$user_id = Helper::get_current_user_id();
+
+		/**
+		 * Prepare attachment-post-settings.
+		 */
+		$post_array = array(
+			'post_author' => $user_id,
+		);
+
+		// upload the external file.
+		$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
+
+		// bail on error.
+		if ( is_wp_error( $attachment_id ) ) {
+			return false;
+		}
+
+		// copy the relevant settings of the new uploaded file to the original.
+		wp_update_attachment_metadata( $this->get_id(), wp_get_attachment_metadata( $attachment_id ) );
+
+		// get the new local url.
+		$local_url = wp_get_attachment_url( $attachment_id );
+
+		// bail if no URL returned.
+		if( empty( $local_url ) ) {
+			return false;
+		}
+
+		// remove base_url from local_url.
+		$upload_dir = wp_get_upload_dir();
+		$local_url  = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+
+		// update attachment setting.
+		update_post_meta( $this->get_id(), '_wp_attached_file', $local_url );
+
+		// set setting for this file to local.
+		$this->set_is_local_saved( true );
+
+		// get the file path of the original.
+		$file = get_attached_file( $this->get_id() );
+
+		// secure the attached thumbnail files of this file.
+		$files     = array( $file );
+		$meta_data = wp_get_attachment_metadata( $this->get_id() );
+		if ( ! empty( $meta_data['sizes'] ) ) {
+			foreach ( $meta_data['sizes'] as $meta_file ) {
+				$files[] = trailingslashit( dirname( $file ) ) . $meta_file['file'];
+			}
+		}
+
+		// secure the files of this attachment.
+		foreach ( $files as $file ) {
+			$destination = trailingslashit( get_temp_dir() ) . basename( $file );
+			$wp_filesystem->copy( $file, $destination, true );
+		}
+
+		// delete the temporary uploaded file.
+		wp_delete_attachment( $attachment_id, true );
+
+		// copy the secured files back.
+		foreach ( $files as $file ) {
+			$source = trailingslashit( get_temp_dir() ) . basename( $file );
+			$wp_filesystem->copy( $source, $file, true );
+		}
+
+		// add to cache.
+		$this->add_to_cache();
+
+		// return true if switch was successfully.
+		return true;
+	}
+
+	/**
+	 * Switch hosting of this file to external.
+	 *
+	 * Only if used protocol supports this.
+	 * And no credentials are used.
+	 *
+	 * @return bool
+	 */
+	public function switch_to_external(): bool {
+		// bail if credentials are used.
+		if( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+			return false;
+		}
+
+		// get protocol object for this file.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+
+		// bail if protocol does not support external hosting.
+		if( $protocol_handler_obj->should_be_saved_local() ) {
+			return false;
+		}
+
+		// get all files for this attachment and delete them local.
+		wp_delete_attachment_files( $this->get_id(), wp_get_attachment_metadata( $this->get_id() ), get_post_meta( $this->get_id(), '_wp_attachment_backup_sizes', true ), get_attached_file( $this->get_id() ) );
+
+		// update attachment setting.
+		update_post_meta( $this->get_id(), '_wp_attached_file', $this->get_url() );
+
+		// set setting to extern.
+		$this->set_is_local_saved( false );
+
+		// delete from cache.
+		$this->delete_cache();
+
+		// return true if switch was successfully.
+		return true;
 	}
 }

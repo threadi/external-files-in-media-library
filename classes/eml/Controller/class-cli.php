@@ -11,6 +11,7 @@ namespace threadi\eml\Controller;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use threadi\eml\Model\External_File;
 use threadi\eml\Model\log;
 
 /**
@@ -132,5 +133,63 @@ class Cli {
 
 		// return ok-message.
 		\WP_CLI::success( 'Plugin has been reset.' );
+	}
+
+	/**
+	 * Switch hosting of all files to external (except for those with credentials or un-supported protocols).
+	 *
+	 * @return void
+	 */
+	public function switch_to_external(): void {
+		// get external files object.
+		$external_files_obj = External_Files::get_instance();
+
+		// switch hosting of files to local if option is enabled for it.
+		foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+			// bail if this is not an external file object.
+			if( ! $external_file_obj instanceof External_File ) {
+				continue;
+			}
+
+			// bail if file is already external hosted.
+			if( ! $external_file_obj->is_locally_saved() ) {
+				continue;
+			}
+
+			// switch the hosting of this file to external.
+			$external_file_obj->switch_to_external();
+		}
+
+		// return ok-message.
+		\WP_CLI::success( 'Files has been switches to external hosting.' );
+	}
+
+	/**
+	 * Switch hosting of all files to local.
+	 *
+	 * @return void
+	 */
+	public function switch_to_local(): void {
+		// get external files object.
+		$external_files_obj = External_Files::get_instance();
+
+		// switch hosting of files to local if option is enabled for it.
+		foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+			// bail if this is not an external file object.
+			if( ! $external_file_obj instanceof External_File ) {
+				continue;
+			}
+
+			// bail if file is already local hosted.
+			if( $external_file_obj->is_locally_saved() ) {
+				continue;
+			}
+
+			// switch the hosting of this file to local.
+			$external_file_obj->switch_to_local();
+		}
+
+		// return ok-message.
+		\WP_CLI::success( 'Files has been switches to local hosting.' );
 	}
 }

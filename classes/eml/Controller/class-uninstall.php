@@ -10,6 +10,7 @@ namespace threadi\eml\Controller;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use threadi\eml\Model\External_File;
 use threadi\eml\Model\Log;
 use threadi\eml\Transients;
 
@@ -67,18 +68,39 @@ class Uninstall {
 
 			// delete dismiss-marker for this transient.
 			delete_option( 'efiml-dismissed-' . md5( $transient_obj->get_name() ) );
+
+			// backward-compatibility to < 2.0.0.
+			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
 		}
 
-		// delete files, if option is enabled for it.
+		// delete files managed by this plugin, if option is enabled for it.
 		if ( get_option( 'eml_delete_on_deinstallation', false ) ) {
 			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
 				$external_files_obj->delete_file( $external_file_obj );
+			}
+		}
+		elseif( get_option( 'eml_switch_on_uninstallation', false ) ) {
+			// switch hosting of files to local if option is enabled for it.
+			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+				// bail if this is not an external file object.
+				if( ! $external_file_obj instanceof External_File ) {
+					continue;
+				}
+
+				// bail if file is already local hosted.
+				if( $external_file_obj->is_locally_saved() ) {
+					continue;
+				}
+
+				// switch the hosting of this file to local.
+				$external_file_obj->switch_to_local();
 			}
 		}
 
 		// delete options this plugin has used.
 		$options = array(
 			'eml_delete_on_deinstallation',
+			'eml_switch_on_uninstallation',
 			'eml_disable_attachment_pages',
 			'eml_check_interval',
 			'eml_allowed_mime_types',

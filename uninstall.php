@@ -15,12 +15,12 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	die;
 }
 
-// include necessary files.
 use threadi\eml\Controller\Uninstall;
 
 // get plugin-path.
 const EML_PLUGIN = __FILE__;
 
+// include necessary files.
 require_once 'inc/autoload.php';
 require_once 'inc/constants.php';
 

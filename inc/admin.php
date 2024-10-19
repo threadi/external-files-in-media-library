@@ -121,10 +121,10 @@ function eml_admin_menu_init(): void {
 	);
 	register_setting( 'eml_settings_group', 'eml_log_mode' );
 
-	// Delete all data on deinstallation.
+	// Delete all data on uninstallation.
 	add_settings_field(
 		'eml_delete_on_deinstallation',
-		__( 'Delete all data on deinstallation', 'external-files-in-media-library' ),
+		__( 'Delete all data on uninstallation', 'external-files-in-media-library' ),
 		'eml_admin_checkbox_field',
 		'eml_settings_page',
 		'settings_section_main',
@@ -135,6 +135,21 @@ function eml_admin_menu_init(): void {
 		)
 	);
 	register_setting( 'eml_settings_group', 'eml_delete_on_deinstallation', array( 'sanitize_callback' => 'eml_admin_validate_checkbox' ) );
+
+	// Switch all external files to local hosting during uninstallation.
+	add_settings_field(
+		'eml_switch_on_uninstallation',
+		__( 'Switch external files  to local hosting during uninstallation', 'external-files-in-media-library' ),
+		'eml_admin_checkbox_field',
+		'eml_settings_page',
+		'settings_section_main',
+		array(
+			'label_for'   => 'eml_switch_on_uninstallation',
+			'fieldId'     => 'eml_switch_on_uninstallation',
+			'description' => __( 'If this option is enabled all external files will be saved local during uninstallation of this plugin.', 'external-files-in-media-library' ),
+		)
+	);
+	register_setting( 'eml_settings_group', 'eml_switch_on_uninstallation', array( 'sanitize_callback' => 'eml_admin_validate_checkbox' ) );
 
 	/**
 	 * Files Section.
@@ -1449,11 +1464,6 @@ function eml_admin_eml_switch_hosting(): void {
 	// check nonce.
 	check_ajax_referer( 'eml-switch-hosting-nonce', 'nonce' );
 
-	// get WP Filesystem-handler.
-	require_once ABSPATH . '/wp-admin/includes/file.php';
-	WP_Filesystem();
-	global $wp_filesystem;
-
 	// create error-result.
 	$result = array(
 		'state'   => 'error',
@@ -1462,149 +1472,71 @@ function eml_admin_eml_switch_hosting(): void {
 
 	// get ID.
 	$attachment_id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
-	if ( $attachment_id > 0 ) {
-		// get files-object.
-		$external_files_obj = External_Files::get_instance();
 
-		// get the file.
-		$external_file_obj = $external_files_obj->get_file( $attachment_id );
+	// bail if id is not given.
+	if ( 0 === $attachment_id ) {
+		wp_send_json( $result );
+	}
+	// get files-object.
+	$external_files_obj = External_Files::get_instance();
 
-		// bail if object could not be loaded.
-		if ( ! $external_file_obj ) {
+	// get the file.
+	$external_file_obj = $external_files_obj->get_file( $attachment_id );
+
+	// bail if object could not be loaded.
+	if ( ! $external_file_obj ) {
+		// send response as JSON.
+		wp_send_json( $result );
+	}
+
+	// get the external URL.
+	$url = $external_file_obj->get_url( true );
+
+	// bail if file is not an external file.
+	if ( ! $external_file_obj->is_valid() ) {
+		$result = array(
+			'state'   => 'error',
+			'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
+		);
+		wp_send_json( $result );
+	}
+
+	/**
+	 * Switch from local to external.
+	 */
+	if ( $external_file_obj->is_locally_saved() ) {
+		// switch to external and show error if it runs in an error.
+		if( ! $external_file_obj->switch_to_external() ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}
 
-		// get the external URL.
-		$url = $external_file_obj->get_url( true );
+		// create return message.
+		$result = array(
+			'state'   => 'success',
+			'message' => __( 'File is extern hosted.', 'external-files-in-media-library' ),
+		);
+	} else {
+		/**
+		 * Switch from external to local.
+		 */
 
-		// bail if file is not an external file.
-		if ( ! $external_file_obj->is_valid() ) {
-			$result = array(
-				'state'   => 'error',
-				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
-			);
+		// switch to local and show error if it runs in an error.
+		if( ! $external_file_obj->switch_to_local() ) {
+			// send response as JSON.
 			wp_send_json( $result );
 		}
 
-		/**
-		 * Switch from local to external.
-		 */
-		if ( $external_file_obj->is_locally_saved() ) {
-			// get all files for this attachment and delete them local.
-			wp_delete_attachment_files( $external_file_obj->get_id(), wp_get_attachment_metadata( $external_file_obj->get_id() ), get_post_meta( $external_file_obj->get_id(), '_wp_attachment_backup_sizes', true ), get_attached_file( $external_file_obj->get_id() ) );
-
-			// update attachment setting.
-			update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
-
-			// set setting to extern.
-			$external_file_obj->set_is_local_saved( false );
-
-			// create return message.
-			$result = array(
-				'state'   => 'success',
-				'message' => __( 'File is extern hosted.', 'external-files-in-media-library' ),
-			);
-		} else {
-			/**
-			 * Switch from external to local.
-			 */
-
-			// get the handler for this url depending on its protocol.
-			$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
-
-			// get external file infos.
-			$file_data = $protocol_handler_obj->get_external_file_infos();
-
-			// import file via WP-own functions.
-			$array = array(
-				'name'     => $external_file_obj->get_title(),
-				'type'     => $file_data['mime-type'],
-				'tmp_name' => $file_data['tmp-file'],
-				'error'    => 0,
-				'size'     => $file_data['filesize'],
-			);
-
-			// remove URL from attachment-setting.
-			delete_post_meta( $external_file_obj->get_id(), '_wp_attached_file' );
-
-			/**
-			 * Get user the attachment would be assigned to.
-			 */
-			$user_id = Helper::get_current_user_id();
-
-			/**
-			 * Prepare attachment-post-settings.
-			 */
-			$post_array = array(
-				'post_author' => $user_id,
-			);
-
-			// upload the external file.
-			$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
-
-			// bail on error.
-			if ( is_wp_error( $attachment_id ) ) {
-				// send response as JSON.
-				wp_send_json( $result );
-			}
-
-			// copy the relevant settings of the new uploaded file to the original.
-			wp_update_attachment_metadata( $external_file_obj->get_id(), wp_get_attachment_metadata( $attachment_id ) );
-
-			// get the new local url.
-			$local_url = wp_get_attachment_url( $attachment_id );
-
-			// bail if no URL returned.
-			if( empty( $local_url ) ) {
-				return;
-			}
-
-			// remove base_url from local_url.
-			$upload_dir = wp_get_upload_dir();
-			$local_url  = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
-
-			// update attachment setting.
-			update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $local_url );
-
-			// set setting for this file to local.
-			$external_file_obj->set_is_local_saved( true );
-
-			// secure the attached thumbnail files of this file.
-			$files     = array( get_attached_file( $external_file_obj->get_id() ) );
-			$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
-			if ( ! empty( $meta_data['sizes'] ) ) {
-				foreach ( $meta_data['sizes'] as $meta_file ) {
-					$files[] = trailingslashit( $upload_dir['basedir'] ) . '2024/08/' . $meta_file['file']; // TODO !!!
-				}
-			}
-
-			// secure the files of this attachment.
-			foreach ( $files as $file ) {
-				$destination = trailingslashit( get_temp_dir() ) . basename( $file );
-				$wp_filesystem->copy( $file, $destination, true );
-			}
-
-			// delete the temporary uploaded file.
-			wp_delete_attachment( $attachment_id, true );
-
-			// copy the secured files back.
-			foreach ( $files as $file ) {
-				$source = trailingslashit( get_temp_dir() ) . basename( $file );
-				$wp_filesystem->copy( $source, $file, true );
-			}
-
-			// create return message.
-			$result = array(
-				'state'   => 'success',
-				'message' => __( 'File is local hosted.', 'external-files-in-media-library' ),
-			);
-		}
-
-		// log this event.
-		/* translators: %1$s will be replaced by the file URL. */
-		Log::get_instance()->create( sprintf( __( 'File %1$s has been switched the hosting.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
+		// create return message.
+		$result = array(
+			'state'   => 'success',
+			'message' => __( 'File is local hosted.', 'external-files-in-media-library' ),
+		);
 	}
+
+	// log this event.
+	/* translators: %1$s will be replaced by the file URL. */
+	Log::get_instance()->create( sprintf( __( 'File %1$s has been switched the hosting.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
 
 	// send response as JSON.
 	wp_send_json( $result );
