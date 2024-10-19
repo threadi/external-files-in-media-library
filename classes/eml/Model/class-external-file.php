@@ -7,13 +7,12 @@
 
 namespace threadi\eml\Model;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
+use finfo;
+use threadi\eml\Controller\Crypt;
 use threadi\eml\Controller\External_Files;
-use threadi\eml\Controller\Protocol_Base;
 use threadi\eml\Controller\Protocols;
 use threadi\eml\Controller\Proxy;
 use threadi\eml\Helper;
@@ -339,39 +338,69 @@ class External_File {
 	 * @return bool
 	 */
 	public function is_cached(): bool {
-		if ( file_exists( $this->get_cache_file() ) ) {
-			// check the age of the cached file and compare it with max age for cached files.
-			if ( filemtime( $this->get_cache_file() ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
-				// return false as file is to old and should be renewed.
-				return false;
-			}
-
-			// return true as it is cached and not to old.
-			return true;
+		// bail if cached file does not exist.
+		if ( ! file_exists( $this->get_cache_file() ) ) {
+			return false;
 		}
 
-		// set return value to false.
-		return false;
+		// check the age of the cached file and compare it with max age for cached files.
+		if ( filemtime( $this->get_cache_file() ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
+			// return false as file is to old and should be renewed.
+			return false;
+		}
+
+		// return true as it is cached and not to old.
+		return true;
 	}
 
 	/**
 	 * Add file to cache.
 	 *
-	 * @param string $content The content to save in cache.
 	 * @return void
 	 */
-	public function add_cache( string $content ): void {
+	public function add_to_cache(): void {
 		global $wp_filesystem;
-
-		// Make sure that the above variable is properly setup.
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		WP_Filesystem();
+
+		/**
+		 * Get the handler for this url depending on its protocol.
+		 */
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+
+		/**
+		 * Do nothing if url is using a not supported tcp protocol.
+		 */
+		if ( ! $protocol_handler_obj ) {
+			return;
+		}
+
+		/**
+		 * Get info about the external file.
+		 */
+		$file_data = $protocol_handler_obj->get_external_file_infos();
+
+		// compare the retrieved mime-type with the saved mime-type.
+		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
+			// other mime-type received => do not proxy this file.
+			return;
+		}
+
+		// get the body.
+		$body = $wp_filesystem->get_contents( $file_data['tmp-file'] );
+
+		// check mime-type of the binary-data and compare it with header-data.
+		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
+		$binary_mime_type = $binary_data_info->buffer( $body );
+		if ( $binary_mime_type !== $file_data['mime-type'] ) {
+			return;
+		}
 
 		// set path incl. md5-filename and extension.
 		$path = $this->get_cache_file();
 
 		// save the given content to the path.
-		$wp_filesystem->put_contents( $path, $content );
+		$wp_filesystem->put_contents( $path, $body );
 	}
 
 	/**
@@ -434,5 +463,73 @@ class External_File {
 		if ( $this->is_cached() ) {
 			wp_delete_file( $this->get_cache_file() );
 		}
+	}
+
+	/**
+	 * Save the login on object.
+	 *
+	 * @param string $login The login.
+	 *
+	 * @return void
+	 */
+	public function set_login( string $login ): void {
+		// bail if no login is given.
+		if( empty( $login ) ) {
+			return;
+		}
+
+		// save as encrypted value in db.
+		update_post_meta( $this->get_id(), 'eml_login', Crypt::get_instance()->encrypt( $login ) );
+	}
+
+	/**
+	 * Save the password on object.
+	 *
+	 * @param string $password The password.
+	 *
+	 * @return void
+	 */
+	public function set_password( string $password ): void {
+		// bail if no password is given.
+		if( empty( $password ) ) {
+			return;
+		}
+
+		// save as encrypted value in db.
+		update_post_meta( $this->get_id(), 'eml_password', Crypt::get_instance()->encrypt( $password ) );
+	}
+
+	/**
+	 * Return decrypted login.
+	 *
+	 * @return string
+	 */
+	public function get_login(): string {
+		$login = (string)get_post_meta( $this->get_id(), 'eml_login', true );
+
+		// bail if string is empty.
+		if( empty( $login ) ) {
+			return '';
+		}
+
+		// return decrypted string.
+		return Crypt::get_instance()->decrypt( $login );
+	}
+
+	/**
+	 * Return decrypted login.
+	 *
+	 * @return string
+	 */
+	public function get_password(): string {
+		$password = (string)get_post_meta( $this->get_id(), 'eml_password', true );
+
+		// bail if string is empty.
+		if( empty( $password ) ) {
+			return '';
+		}
+
+		// return decrypted string.
+		return Crypt::get_instance()->decrypt( $password );
 	}
 }

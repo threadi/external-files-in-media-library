@@ -122,6 +122,7 @@ class Proxy {
 	 * @return string
 	 */
 	public function run( string $template ): string {
+		// bail if this is not our proxy-slug.
 		if ( empty( get_query_var( self::get_instance()->get_slug() ) ) ) {
 			return $template;
 		}
@@ -134,51 +135,19 @@ class Proxy {
 
 		// bail if no file object could be loaded or the loaded object is not valid.
 		if ( false === $external_file_obj || ( $external_file_obj && false === $external_file_obj->is_valid() ) ) {
+			// fallback to 404.
 			return $template;
 		}
 
-		// get cached file and return it.
-		if ( $external_file_obj->is_cached() ) {
-			$this->return_binary( $external_file_obj->get_cache_file(), $external_file_obj->get_mime_type(), $external_file_obj->get_filesize(), $external_file_obj->get_url( true ) );
+		// if file is not cached, do it now.
+		if ( ! $external_file_obj->is_cached() ) {
+			$external_file_obj->add_to_cache();
 		}
 
-		// get the external file.
-		$response = wp_remote_get( $external_file_obj->get_url( true ) );
+		// output the cached file.
+		$this->return_binary( $external_file_obj->get_cache_file(), $external_file_obj->get_mime_type(), $external_file_obj->get_filesize(), $external_file_obj->get_url( true ) );
 
-		// if response was successfully.
-		if ( false === is_wp_error( $response ) ) {
-
-			// compare the retrieved mime-type with the saved mime-type.
-			$mime_type = wp_remote_retrieve_header( $response, 'content-type' );
-			if ( $mime_type !== $external_file_obj->get_mime_type() ) {
-				// other mime-type received => do not proxy this file.
-				return $template;
-			}
-
-			// get file size.
-			$file_size = wp_remote_retrieve_header( $response, 'content-length' );
-
-			// get body.
-			$body = wp_remote_retrieve_body( $response );
-			if ( empty( $body ) ) {
-				return $template;
-			}
-
-			// check mime-type of the binary-data and compare it with header-data.
-			$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
-			$binary_mime_type = $binary_data_info->buffer( $body );
-			if ( $binary_mime_type !== $mime_type ) {
-				return $template;
-			}
-
-			// add file to cache.
-			$external_file_obj->add_cache( $body );
-
-			// output the file.
-			$this->return_binary( $external_file_obj->get_cache_file(), $mime_type, $file_size, $external_file_obj->get_url( true ) );
-		}
-
-		// fallback to 404-template.
+		// fallback to 404.
 		return $template;
 	}
 

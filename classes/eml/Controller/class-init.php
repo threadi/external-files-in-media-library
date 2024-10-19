@@ -7,10 +7,8 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
 use threadi\eml\Helper;
 use WP_Post;
@@ -324,16 +322,21 @@ class Init {
 		// get the external file object.
 		$external_file_obj = $this->external_files_obj->get_file( $attachment_id );
 
-		// check if the file is an external file, an image and if it is really external hosted.
+		// bail if this is not an external file.
+		if( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+			return $sources;
+		}
+
+		// bail with empty array if this is an image which is external hosted.
 		if (
-			$external_file_obj
-			&& $external_file_obj->is_valid()
-			&& false === $external_file_obj->is_locally_saved()
+			false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->is_image()
 		) {
 			// return empty array as we can not optimize external images.
 			return array();
 		}
+
+		// return resulting array.
 		return $sources;
 	}
 

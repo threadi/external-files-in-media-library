@@ -34,3 +34,13 @@ const EML_CAP_NAME = 'eml_manage_files';
  * Options-list of transients.
  */
 const EML_TRANSIENT_LIST = 'eml_transients';
+
+/**
+ * Name of our openssl hash.
+ */
+const EML_HASH = 'eml_hash';
+
+/**
+ * Name of our sodium hash.
+ */
+const EML_SODIUM_HASH = 'eml_sodium_hash';

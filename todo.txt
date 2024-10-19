@@ -1,5 +1,3 @@
-* Credentials verschlüsselt an Datei speichern
--> für Verfügbarkeitsprüfung nutzen (auch bei ftp)
 * Tools ergänzen:
 -> Massen-Import von FTP-Verzeichnis
 -> Massen-Import von lokalem Verzeichnis auf eigenem Server

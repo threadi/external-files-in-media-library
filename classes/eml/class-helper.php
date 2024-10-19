@@ -266,4 +266,41 @@ class Helper {
 		}
 		return $list;
 	}
+
+	/**
+	 * Return our support forum URL.
+	 *
+	 * @return string
+	 */
+    public static function get_plugin_support_url(): string {
+		return 'https://wordpress.org/support/plugin/external-files-in-media-library/';
+    }
+
+	/**
+	 * Return ID of the current WP-user.
+	 *
+	 * @return int
+	 */
+	public static function get_current_user_id(): int {
+		$user_id = get_current_user_id();
+
+		// bail if ID is given.
+		if( $user_id > 0 ) {
+			return $user_id;
+		}
+
+		// get user from setting.
+		$user_id = absint( get_option( 'eml_user_assign', 0 ) );
+
+		// check if user exists.
+		$user_obj = get_user_by( 'ID', $user_id );
+
+		// Fallback: search for an administrator.
+		if ( false === $user_obj ) {
+			return Helper::get_first_administrator_user();
+		}
+
+		// return resulting user ID.
+		return $user_id;
+	}
 }

@@ -7,10 +7,8 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
 use threadi\eml\Helper;
 use threadi\eml\Model\external_file;
@@ -166,19 +164,7 @@ class External_Files {
 		/**
 		 * Get user the attachment would be assigned to.
 		 */
-		$user_id = get_current_user_id();
-		if ( 0 === $user_id ) {
-			// get user from setting.
-			$user_id = absint( get_option( 'eml_user_assign', 0 ) );
-
-			// check if user exists.
-			$user_obj = get_user_by( 'ID', $user_id );
-
-			// Fallback: search for an administrator.
-			if ( false === $user_obj ) {
-				$user_id = helper::get_first_administrator_user();
-			}
-		}
+		$user_id = Helper::get_current_user_id();
 
 		/**
 		 * Filter the user_id for a single file during import.
@@ -250,55 +236,62 @@ class External_Files {
 			$attachment_id = wp_insert_attachment( $post_array, $url );
 		}
 
-		if ( ! is_wp_error( $attachment_id ) && absint( $attachment_id ) > 0 ) {
-			// get external file object. to update its settings.
-			$external_file_obj = $this->get_file( $attachment_id );
-
-			if ( $external_file_obj ) {
-				// mark this attachment as one of our own plugin.
-				$external_file_obj->set_url( $url );
-
-				// set title.
-				$external_file_obj->set_title( $title );
-
-				// set mime-type.
-				$external_file_obj->set_mime_type( $file_data['mime-type'] );
-
-				// set availability-status (true for 'is available', false if not).
-				$external_file_obj->set_availability( true );
-
-				// set filesize.
-				$external_file_obj->set_filesize( $file_data['filesize'] );
-
-				// mark if this file is an external file locally saved.
-				$external_file_obj->set_is_local_saved( $file_data['local'] );
-
-				// set meta-data for images if mode is enabled for this.
-				if ( ! $protocol_handler_obj->should_be_saved_local() && ! empty( $file_data['tmp-file'] ) ) {
-					$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
-
-					// set file to our url.
-					$image_meta['file'] = $url;
-
-					// save the resulting image-data.
-					wp_update_attachment_metadata( $attachment_id, $image_meta );
-				}
-
-				// return true as the file has been created successfully.
-				/* translators: %1$s will be replaced by the file-URL */
-				$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
-
-				return true;
-			}
-		}
-
+		// bail on any error.
 		if ( is_wp_error( $attachment_id ) ) {
 			/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
 			$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $url, $attachment_id->errors['upload_error'][0] ), $url, 'error', 0 );
+			return false;
 		}
 
-		// return false in case of errors.
-		return false;
+		// get external file object. to update its settings.
+		$external_file_obj = $this->get_file( $attachment_id );
+
+		// bail if object could not be loaded.
+		if( ! $external_file_obj ) {
+			/* translators: %1$s will be replaced by the file-URL */
+			$this->log->create( sprintf( __( 'External file object for URL %1$s could not be loaded.', 'external-files-in-media-library' ), $url ), $url, 'error', 0 );
+			return false;
+		}
+
+		// mark this attachment as one of our own plugin through setting the URL.
+		$external_file_obj->set_url( $url );
+
+		// set title.
+		$external_file_obj->set_title( $title );
+
+		// set mime-type.
+		$external_file_obj->set_mime_type( $file_data['mime-type'] );
+
+		// set availability-status (true for 'is available', false if not).
+		$external_file_obj->set_availability( true );
+
+		// set filesize.
+		$external_file_obj->set_filesize( $file_data['filesize'] );
+
+		// mark if this file is an external file locally saved.
+		$external_file_obj->set_is_local_saved( $file_data['local'] );
+
+		// set meta-data for images if mode is enabled for this.
+		if ( ! $protocol_handler_obj->should_be_saved_local() && ! empty( $file_data['tmp-file'] ) ) {
+			$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
+
+			// set file to our url.
+			$image_meta['file'] = $url;
+
+			// save the resulting image-data.
+			wp_update_attachment_metadata( $attachment_id, $image_meta );
+		}
+
+		// return true as the file has been created successfully.
+		/* translators: %1$s will be replaced by the file-URL */
+		$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
+
+		// save the credentials on the object, if set.
+		$external_file_obj->set_login( $this->get_login() );
+		$external_file_obj->set_password( $this->get_password() );
+
+		// return ok.
+		return true;
 	}
 
 	/**
@@ -359,11 +352,8 @@ class External_Files {
 				continue;
 			}
 
-			// get the file url.
-			$url = $external_file_obj->get_url( true );
-
 			// get the protocol handler for this URL.
-			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $url );
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
 
 			// get and save its availability.
 			$external_file_obj->set_availability( $protocol_handler->check_availability() );

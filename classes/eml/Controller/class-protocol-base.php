@@ -7,12 +7,10 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-use WP_Query;
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+use WP_Query;
 
 /**
  * Object to handle different protocols.
@@ -215,9 +213,11 @@ class Protocol_Base {
 	/**
 	 * Return whether this URL could change its hosting.
 	 *
+	 * It is not possible if the file has credentials set.
+	 *
 	 * @return bool
 	 */
 	public function can_change_hosting(): bool {
-		return true;
+		return empty( $this->get_login() ) && empty( $this->get_password() );
 	}
 }

@@ -7,10 +7,8 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
 use threadi\eml\Helper;
 use threadi\eml\Model\Log;

@@ -7,10 +7,10 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
+use threadi\eml\Model\External_File;
 
 /**
  * Object to handle different protocols.
@@ -72,6 +72,8 @@ class Protocols {
 	/**
 	 * Return the protocol handler for the given URL.
 	 *
+	 * This can be used before an external file object for this URL exist.
+	 *
 	 * @param string $url The url to check.
 	 *
 	 * @return Protocol_Base|false
@@ -81,6 +83,32 @@ class Protocols {
 			if ( is_string( $protocol_name ) && class_exists( $protocol_name ) ) {
 				$obj = new $protocol_name( $url );
 				if ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) {
+					return $obj;
+				}
+			}
+		}
+
+		// return false if no protocol could be found.
+		return false;
+	}
+
+	/**
+	 * Return the protocol handler for a given external file object.
+	 *
+	 * @param External_File $external_file The object for the external file.
+	 *
+	 * @return Protocol_Base|false
+	 */
+	public function get_protocol_object_for_external_file( External_File $external_file ): Protocol_Base|false {
+		foreach ( $this->get_protocols() as $protocol_name ) {
+			if ( is_string( $protocol_name ) && class_exists( $protocol_name ) ) {
+				$obj = new $protocol_name( $external_file->get_url( true ) );
+				if ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) {
+					// configure its credentials, even it nothing are set.
+					$obj->set_login( $external_file->get_login() );
+					$obj->set_password( $external_file->get_password() );
+
+					// return resulting object.
 					return $obj;
 				}
 			}

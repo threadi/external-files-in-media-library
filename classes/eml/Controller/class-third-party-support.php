@@ -9,10 +9,8 @@
 
 namespace threadi\eml\Controller;
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Object to handle third party support.
