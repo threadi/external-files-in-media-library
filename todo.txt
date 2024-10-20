@@ -1,6 +1,5 @@
 * Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
 * Daten migrieren: https://github.com/threadi/external-files-in-media-library/issues/36
-* Einstellungen in Plugin-Liste verlinken
 * Timeout für jedes Protokoll als Konfiguration ergänzen
 * Klassen auf PSR4 umstellen
 * mehr Hooks ergänzen
