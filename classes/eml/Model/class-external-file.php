@@ -265,6 +265,13 @@ class External_File {
 		// get value from DB.
 		if ( empty( $this->filesize ) ) {
 			$meta           = wp_get_attachment_metadata( $this->get_id(), true );
+
+			// bail if file size is not in meta.
+			if( empty( $meta['filesize'] ) ) {
+				return 0;
+			}
+
+			// set file size.
 			$this->filesize = $meta['filesize'];
 		}
 

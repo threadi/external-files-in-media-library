@@ -330,4 +330,13 @@ class Helper {
 		// return resulting user ID.
 		return $user_id;
 	}
+
+	/**
+	 * Check if WP CLI has been called.
+	 *
+	 * @return bool
+	 */
+	public static function is_cli(): bool {
+		return defined( 'WP_CLI' ) && WP_CLI;
+	}
 }

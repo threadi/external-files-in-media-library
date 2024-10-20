@@ -1,0 +1,259 @@
+<?php
+/**
+ * File to handle support for plugin "Exmage".
+ *
+ * @source https://wordpress.org/plugins/exmage-wp-image-links/
+ *
+ * @package thread\eml
+ */
+
+namespace threadi\eml\Controller\ThirdPartySupport;
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+use threadi\eml\Controller\External_Files;
+use threadi\eml\Controller\Protocols;
+use threadi\eml\Helper;
+use threadi\eml\Transients;
+use WP_Query;
+
+/**
+ * Object to handle support for this plugin.
+ */
+class Exmage {
+
+	/**
+	 * Instance of actual object.
+	 *
+	 * @var ?Exmage
+	 */
+	private static ?Exmage $instance = null;
+
+	/**
+	 * Constructor, not used as this a Singleton object.
+	 */
+	private function __construct() {}
+
+	/**
+	 * Prevent cloning of this object.
+	 *
+	 * @return void
+	 */
+	private function __clone() {}
+
+	/**
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Exmage
+	 */
+	public static function get_instance(): Exmage {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new Exmage();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize this support.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		// bail if exmage is not installed.
+		if( ! Helper::is_plugin_active( 'exmage-wp-image-links/exmage-wp-image-links.php' ) ) {
+			return;
+		}
+
+		// misc.
+		add_filter( 'admin_init', array( $this, 'show_hint' ) );
+		add_action( 'admin_action_eml_migrate_exmage', array( $this, 'migrate_per_request' ) );
+		add_action(
+			'cli_init',
+			function () {
+				\WP_CLI::add_command( 'eml', 'threadi\eml\Controller\ThirdPartySupport\Cli\Exmage' );
+			}
+		);
+	}
+
+	/**
+	 * Show hint that Exmage is used and we could migrate.
+	 *
+	 * @return void
+	 */
+	public function show_hint(): void {
+		// get transients object.
+		$transients_obj = Transients::get_instance();
+
+		// bail if no exmage files are found.
+		if( empty( $this->get_files() ) ) {
+			$transients_obj->get_transient_by_name( 'eml_exmage_migrate' )->delete();
+			return;
+		}
+
+		// create URL for migration per click.
+		$url = add_query_arg(
+			array(
+				'action' => 'eml_migrate_exmage',
+				'nonce' => wp_create_nonce( 'eml-migrate-exmage' )
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			'title'     => __( 'Migrate from Exmage to External Files for Media Library', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<p><strong>' . __( 'Are you sure you want to migrate your files?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'After the migration you will not be able to use the Exmage functions on your files. But you could use the features of External Files for Media Library.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Hint: create a backup before you run this migration.', 'external-files-in-media-library' ) . '</p>'
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, migrate', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'No', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// create hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'eml_exmage_migrate' );
+		$transient_obj->set_message( __( '<strong>We detected that you are using Exmage - great!</strong> Click on the following button to migrate the Exmage-files.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( $url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '">' . __( 'Migrate now', 'external-files-in-media-library' ) . '</a>'  );
+		$transient_obj->set_dismissible_days( 30 );
+		$transient_obj->save();
+	}
+
+	/**
+	 * Return list of all exmage files.
+	 *
+	 * @return array
+	 */
+	public function get_files(): array {
+		// get all exmage files.
+		$query = array(
+			'post_type' => 'attachment',
+			'post_status' => 'inherit',
+			'meta_query' => array(
+				array(
+					'key' => '_exmage_external_url',
+					'compare' => 'EXIST'
+				)
+			),
+			'posts_per_page' => -1,
+			'fields' => 'ids'
+		);
+		$results = new WP_Query( $query );
+
+		// return resulting list.
+		return $results->get_posts();
+	}
+
+	/**
+	 * Migrate per request in backend.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function migrate_per_request(): void {
+		// check nonce.
+		if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-migrate-exmage' ) ) {
+			// redirect user back.
+			wp_safe_redirect( wp_get_referer() );
+			exit;
+		}
+
+		$this->migrate();
+
+		// redirect user back.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
+	}
+
+	/**
+	 * Run the migration.
+	 *
+	 * @return void
+	 */
+	public function migrate(): void {
+		$posts = $this->get_files();
+
+		// bail if no results found.
+		if( empty( $posts ) ) {
+			Helper::is_cli() ? \WP_CLI::success( 'No exmage files found.' ) : '';
+			return;
+		}
+
+		// show progress.
+		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( 'Migrate vom Exmage', count( $posts ) ) : false;
+
+		// loop through them.
+		foreach( $posts as $post_id ) {
+			// get the external URL.
+			$url = get_post_meta( $post_id, '_exmage_external_url', true );
+
+			// bail if url is not given.
+			if( empty( $url ) ) {
+				// show progress.
+				$progress ? $progress->tick() : '';
+				continue;
+			}
+
+			// get external files object for this post.
+			$external_files_obj = External_Files::get_instance()->get_file( $post_id );
+
+			// set the URL.
+			$external_files_obj->set_url( $url );
+
+			// get the protocol handler for this file.
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_files_obj );
+
+			// bail if protocol is not supported.
+			if( ! $protocol_handler ) {
+				// show progress.
+				$progress ? $progress->tick() : '';
+				continue;
+			}
+
+			// bail if protocol handler does not support get_url_info (which should never happen as Exmage only support http).
+			if( ! method_exists( $protocol_handler, 'get_url_info' ) ) {
+				// show progress.
+				$progress ? $progress->tick() : '';
+				continue;
+			}
+
+			// check and set availability.
+			$external_files_obj->set_availability( $protocol_handler->check_availability( $url ) );
+
+			// get the file infos.
+			$file_data = $protocol_handler->get_url_info( $url );
+
+			// get the meta data.
+			$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $post_id );
+
+			// set file to our url.
+			$image_meta['file'] = $file_data['url'];
+
+			// save the resulting image-data.
+			wp_update_attachment_metadata( $post_id, $image_meta );
+
+			// remove exmage marker from this item.
+			delete_post_meta( $post_id, '_exmage_external_url' );
+
+			// show progress.
+			$progress ? $progress->tick() : '';
+		}
+
+		// finish progress.
+		$progress ? $progress->finish() : '';
+	}
+}

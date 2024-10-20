@@ -54,7 +54,7 @@ class Massedge {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this support.
 	 *
 	 * @return void
 	 */
