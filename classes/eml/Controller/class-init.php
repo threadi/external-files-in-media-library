@@ -214,8 +214,7 @@ class Init {
 				unset( $actions['download'] );
 
 				// add custom hint.
-				$url                 = add_query_arg( array( 'page' => 'eml_settings' ), 'options-general.php' );
-				$actions['eml-hint'] = '<a href="' . esc_url( $url ) . '">' . __( 'Mime-Type not allowed', 'external-files-in-media-library' ) . '</a>';
+				$actions['eml-hint'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-Type not allowed', 'external-files-in-media-library' ) . '</a>';
 			}
 
 			// if media_replace or remove_background exist and this is an external hosted file,
@@ -245,8 +244,7 @@ class Init {
 		$external_file_obj = $this->external_files_obj->get_file( $post_id );
 		if ( $external_file_obj && false !== $external_file_obj->is_valid() ) {
 			if ( false === $external_file_obj->get_availability() ) {
-				$url = add_query_arg( array( 'page' => 'eml_settings' ), 'options-general.php' );
-				return esc_url( $url );
+				return esc_url( Helper::get_config_url() );
 			}
 		}
 		return $link;

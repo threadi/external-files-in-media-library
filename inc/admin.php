@@ -1582,3 +1582,19 @@ function eml_check_php(): void {
 	$transient_obj->save();
 }
 add_action( 'admin_init', 'eml_check_php' );
+
+/**
+ * Add link to settings in plugin list.
+ *
+ * @param array $links List of links.
+ *
+ * @return array
+ */
+function eml_add_setting_link( array $links ): array {
+	// add link to settings.
+	$links[] = "<a href='" . esc_url( Helper::get_config_url() ) . "'>" . __( 'Settings', 'external-files-in-media-library' ) . '</a>';
+
+	// return resulting list of links.
+	return $links;
+}
+add_filter( 'plugin_action_links_' . plugin_basename( EML_PLUGIN ), 'eml_add_setting_link' );
