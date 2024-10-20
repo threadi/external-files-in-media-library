@@ -5,9 +5,44 @@
 
 ## Actions
 
-*This project does not contain any WordPress actions.*
+### `eml_after_file_save`
+
+*Run additional tasks after new external file has been added.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$external_file_obj` | `\threadi\eml\Controller\External_File` | The object of the external file.
+`$file_data` | `array` | The array with the file data.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 300](eml/Controller/class-external-files.php#L300-L307)
 
 ## Filters
+
+### `eml_crypt_methods`
+
+*Filter the available crypt-methods.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$methods` | `array` | List of methods.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`1.0.0` | Available since 1.0.0.
+
+Source: [classes/eml/Controller/class-crypt.php](eml/Controller/class-crypt.php), [line 124](eml/Controller/class-crypt.php#L124-L130)
 
 ### `eml_check_url`
 
@@ -26,7 +61,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/Protocols/class-ftp.php](eml/Controller/Protocols/class-ftp.php), [line 55](eml/Controller/Protocols/class-ftp.php#L55-L64)
+Source: [classes/eml/Controller/Protocols/class-ftp.php](eml/Controller/Protocols/class-ftp.php), [line 57](eml/Controller/Protocols/class-ftp.php#L57-L66)
 
 ### `eml_external_file_infos`
 
@@ -45,7 +80,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/Protocols/class-ftp.php](eml/Controller/Protocols/class-ftp.php), [line 179](eml/Controller/Protocols/class-ftp.php#L179-L187)
+Source: [classes/eml/Controller/Protocols/class-ftp.php](eml/Controller/Protocols/class-ftp.php), [line 181](eml/Controller/Protocols/class-ftp.php#L181-L189)
 
 ### `eml_check_url`
 
@@ -56,7 +91,7 @@ Source: [classes/eml/Controller/Protocols/class-ftp.php](eml/Controller/Protocol
 Argument | Type | Description
 -------- | ---- | -----------
 `$return` | `bool` | The result of this check.
-`$this->get_url()` |  | 
+`$url` | `string` | The requested external URL.
 
 **Changelog**
 
@@ -64,7 +99,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 72](eml/Controller/Protocols/class-http.php#L72-L82)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 59](eml/Controller/Protocols/class-http.php#L59-L69)
 
 ### `eml_http_check_content_type_existence`
 
@@ -73,9 +108,9 @@ Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protoco
 Argument | Type | Description
 -------- | ---- | -----------
 `$true` |  | 
-`$this->get_url()` |  | 
+`$url` |  | 
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 120](eml/Controller/Protocols/class-http.php#L120-L120)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 109](eml/Controller/Protocols/class-http.php#L109-L109)
 
 ### `eml_http_check_content_type`
 
@@ -84,9 +119,9 @@ Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protoco
 Argument | Type | Description
 -------- | ---- | -----------
 `$true` |  | 
-`$this->get_url()` |  | 
+`$url` |  | 
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 138](eml/Controller/Protocols/class-http.php#L138-L138)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 127](eml/Controller/Protocols/class-http.php#L127-L127)
 
 ### `eml_check_url_availability`
 
@@ -97,7 +132,7 @@ Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protoco
 Argument | Type | Description
 -------- | ---- | -----------
 `$return` | `bool` | The result of this check.
-`$this->get_url()` |  | 
+`$url` | `string` | The requested external URL.
 
 **Changelog**
 
@@ -105,7 +140,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 147](eml/Controller/Protocols/class-http.php#L147-L157)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 136](eml/Controller/Protocols/class-http.php#L136-L146)
 
 ### `eml_external_file_infos`
 
@@ -116,7 +151,7 @@ Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protoco
 Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
-`$this->get_url()` |  | 
+`$url` | `string` | The requested external URL.
 
 **Changelog**
 
@@ -124,11 +159,11 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 210](eml/Controller/Protocols/class-http.php#L210-L220)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 363](eml/Controller/Protocols/class-http.php#L363-L373)
 
 ### `eml_http_save_local`
 
-*Force to save a http-file local or not.*
+*Filter if a http-file should be saved local or not.*
 
 **Arguments**
 
@@ -143,7 +178,26 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 296](eml/Controller/Protocols/class-http.php#L296-L303)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 455](eml/Controller/Protocols/class-http.php#L455-L462)
+
+### `eml_http_save_local`
+
+*Filter if a http-file should be saved local or not.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$result` | `bool` | True if file should be saved local.
+`$url` | `string` | The used URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 488](eml/Controller/Protocols/class-http.php#L488-L495)
 
 ### `eml_http_header_args`
 
@@ -161,7 +215,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 327](eml/Controller/Protocols/class-http.php#L327-L333)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 519](eml/Controller/Protocols/class-http.php#L519-L525)
 
 ### `eml_http_states`
 
@@ -172,7 +226,7 @@ Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protoco
 Argument | Type | Description
 -------- | ---- | -----------
 `$list` | `array` | List of http states.
-`$this->get_url()` |  | 
+`$url` |  | 
 
 **Changelog**
 
@@ -180,7 +234,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 357](eml/Controller/Protocols/class-http.php#L357-L364)
+Source: [classes/eml/Controller/Protocols/class-http.php](eml/Controller/Protocols/class-http.php), [line 551](eml/Controller/Protocols/class-http.php#L551-L557)
 
 ### `eml_proxy_slug`
 
@@ -198,7 +252,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [classes/eml/Controller/class-proxy.php](eml/Controller/class-proxy.php), [line 241](eml/Controller/class-proxy.php#L241-L248)
+Source: [classes/eml/Controller/class-proxy.php](eml/Controller/class-proxy.php), [line 210](eml/Controller/class-proxy.php#L210-L217)
 
 ### `eml_third_party_support`
 
@@ -216,7 +270,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [classes/eml/Controller/class-third-party-support.php](eml/Controller/class-third-party-support.php), [line 81](eml/Controller/class-third-party-support.php#L81-L87)
+Source: [classes/eml/Controller/class-third-party-support.php](eml/Controller/class-third-party-support.php), [line 79](eml/Controller/class-third-party-support.php#L79-L85)
 
 ### `eml_tcp_protocols`
 
@@ -235,7 +289,7 @@ Version | Description
 ------- | -----------
 `1.4.0` | Available since 1.4.0.
 
-Source: [classes/eml/Controller/class-protocol-base.php](eml/Controller/class-protocol-base.php), [line 76](eml/Controller/class-protocol-base.php#L76-L82)
+Source: [classes/eml/Controller/class-protocol-base.php](eml/Controller/class-protocol-base.php), [line 74](eml/Controller/class-protocol-base.php#L74-L80)
 
 ### `eml_blacklist`
 
@@ -254,7 +308,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 123](eml/Controller/class-external-files.php#L123-L130)
+Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 126](eml/Controller/class-external-files.php#L126-L133)
 
 ### `eml_file_import_user`
 
@@ -273,7 +327,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 183](eml/Controller/class-external-files.php#L183-L191)
+Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 172](eml/Controller/class-external-files.php#L172-L180)
 
 ### `eml_file_import_title`
 
@@ -284,7 +338,7 @@ Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-e
 Argument | Type | Description
 -------- | ---- | -----------
 `$file_data['title']` |  | 
-`$url` | `string` | The requested external URL.
+`$file_data['url']` |  | 
 `$file_data` | `array` | List of file settings detected by importer.
 
 **Changelog**
@@ -293,7 +347,27 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 207](eml/Controller/class-external-files.php#L207-L216)
+Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 195](eml/Controller/class-external-files.php#L195-L204)
+
+### `eml_file_import_attachment`
+
+*Filter the attachment settings*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$post_array` | `string` | The attachment settings.
+`$file_data['url']` |  | 
+`$file_data` | `array` | List of file settings detected by importer.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0
+
+Source: [classes/eml/Controller/class-external-files.php](eml/Controller/class-external-files.php), [line 214](eml/Controller/class-external-files.php#L214-L223)
 
 ### `eml_protocols`
 
@@ -315,7 +389,7 @@ Source: [classes/eml/Controller/class-protocols.php](eml/Controller/class-protoc
 
 ### `eml_supported_mime_types`
 
-*Filter the possible mime types this plugin could support.*
+*Filter the possible mime types this plugin could support. This is the list used for the setting in backend.*
 
 To add files of type "your/mime" with extension "yourmime" use this example:
 
@@ -341,7 +415,25 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [classes/eml/class-helper.php](eml/class-helper.php), [line 235](eml/class-helper.php#L235-L254)
+Source: [classes/eml/class-helper.php](eml/class-helper.php), [line 240](eml/class-helper.php#L240-L259)
+
+### `eml_get_mime_types`
+
+*Filter the list of possible mime types. This is the list used by the plugin during file-checks.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array` | List of mime types.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [classes/eml/class-helper.php](eml/class-helper.php), [line 276](eml/class-helper.php#L276-L282)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>

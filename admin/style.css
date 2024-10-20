@@ -1,3 +1,5 @@
+.eml > div { min-width: 500px }
+
 .eml_add_external_files_wrapper {
 	border: 4px dashed #c3c4c7;
     margin: 1em auto 0;

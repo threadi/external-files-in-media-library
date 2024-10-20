@@ -75,7 +75,10 @@ class Crypt_Base {
 	 * @return string
 	 */
 	public function encrypt( string $plain_text ): string {
-		return '';
+		if ( empty( $plain_text ) ) {
+			return '';
+		}
+		return $plain_text;
 	}
 
 	/**
@@ -86,7 +89,10 @@ class Crypt_Base {
 	 * @return string
 	 */
 	public function decrypt( string $encrypted_text ): string {
-		return '';
+		if ( empty( $encrypted_text ) ) {
+			return '';
+		}
+		return $encrypted_text;
 	}
 
 	/**

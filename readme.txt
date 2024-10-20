@@ -14,9 +14,36 @@ Add external files to your media library to link or embed them in your website. 
 
 Add one or more files under Media > "Add new media file". You can use the files in all places where the media library is used.
 
+== Mass-Import ==
+
+You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import
+and the plugin will import any supported files from it.
+
+== TCP Protocols ==
+
+You can use the following TCP-protocols to import external files in your media library:
+
+* http://
+* https://
+* ftp://
+* ftps://
+* sftp://
+* ssh://
+* file://
+
+Some of them require credentials, for http it is optional.
+
+== Checks ==
+
 The plugin checks for you automatically on a regular basis whether the external files you have stored are still available.
 
+== Settings ==
+
 In the settings you can define whether image files are hosted locally in your hosting or externally.
+
+== Repository and documentation ==
+
+You find some documentations [here](https://github.com/threadi/external-files-in-media-library/docs/).
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
@@ -29,7 +56,7 @@ The development repository is on [GitHub](https://github.com/threadi/external-fi
 
 == Frequently Asked Questions ==
 
-= Can I prevent other users from adding external files? =
+= Can I prevent other WordPress-users from adding external files? =
 
 Yes, you can select under Settings > External files in Media Library which roles gets the ability to add external files.
 
@@ -40,6 +67,14 @@ Yes, but these files will included locally and not from the external URL.
 = Can I embed files from FTP? =
 
 Yes, but these files will included locally and not from the external URL.
+
+= Can I import complete directories? =
+
+Yes, you can. Just enter the directory to import.
+
+= Can I import from my local server? =
+
+Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///var/www/path/to/file.png
 
 == Screenshots ==
 
@@ -112,17 +147,23 @@ Yes, but these files will included locally and not from the external URL.
 * Fixed wrong proxied URL after successful import of images
 
 = 2.0.0 =
+* Added support for import of directories with multiple files
 * Added support for different tcp-protocols
 * Added support for FTP-URLs
-* Added support for credentials for HTTP- and FTP-URLs
+* Added support for SSH/SFTP-URLs
+* Added support for file-URL (to import from local server)
+* Added support for credentials for each tcp-protocol
 * Added wrapper to support third party plugins or platforms, e.g. Imgur
 * Added warning about old PHP-versions
 * Added option to switch external files to local hosting during uninstallation of the plugin
 * Added WP CLI option to switch hosting of all files to local or external
+* Added documentation for each possible option in GitHub
 * External files which are not provided via SSL will be saved local if actual website is using SSL
+* Extended WP CLI support with progressbar, states and arguments
 * Optimized proxy url handling
 * Optimized build process for releases
 * Replaced dialog library with new one
 * Renamed internal transient prefix for better compatibility with other plugins
 * Move support for already supported plugins in new wrapper
 * Fixed some typos
+* Fixed error with import of multiple files via WP CLI

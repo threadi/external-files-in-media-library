@@ -78,17 +78,16 @@ class Uninstall {
 			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
 				$external_files_obj->delete_file( $external_file_obj );
 			}
-		}
-		elseif( get_option( 'eml_switch_on_uninstallation', false ) ) {
+		} elseif ( get_option( 'eml_switch_on_uninstallation', false ) ) {
 			// switch hosting of files to local if option is enabled for it.
 			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
 				// bail if this is not an external file object.
-				if( ! $external_file_obj instanceof External_File ) {
+				if ( ! $external_file_obj instanceof External_File ) {
 					continue;
 				}
 
 				// bail if file is already local hosted.
-				if( $external_file_obj->is_locally_saved() ) {
+				if ( $external_file_obj->is_locally_saved() ) {
 					continue;
 				}
 

@@ -366,7 +366,7 @@ function eml_admin_add_multi_form(): void {
 			'className' => 'eml',
 			'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . '</label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
+				'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
 				'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 			),
 			'buttons'   => array(
@@ -514,32 +514,46 @@ function eml_admin_add_urls_via_ajax(): void {
 
 		// loop through them to add them to media library.
 		foreach ( $url_array as $url ) {
+			// bail if URL is empty.
+			if ( empty( $url ) ) {
+				continue;
+			}
+
+			// cleanup the JS-URL.
+			$url = str_replace( '&amp;', '&', $url );
+
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
 
-			if ( ! empty( $url ) ) {
-				// update title for progress.
-				/* translators: %1$s will be replaced by the URL which is imported. */
-				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_url( $url ) ) );
+			// update title for progress.
+			/* translators: %1$s will be replaced by the URL which is imported. */
+			update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( $url ) ) );
 
-				$url = str_replace( '&amp;', '&', $url );
-				if ( ! $files_obj->add_file( $url ) ) {
-					$errors[] = $url;
-				} else {
-					// get file-object for list.
-					$file = $files_obj->get_file_by_url( $url );
-					if ( $file instanceof External_File && $file->is_valid() ) {
-						$files[] = array(
-							'url'       => $file->get_url( true ),
-							'edit_link' => $file->get_edit_url(),
-						);
-					}
-				}
+			// import file in media library.
+			$file_added = $files_obj->add_from_url( $url );
+
+			// bail on error.
+			if ( ! $file_added ) {
+				$errors[] = $url;
 			}
+
+			// get the newly added file-object for list of files.
+			$external_file_obj = $files_obj->get_file_by_url( $url );
+
+			// bail if external file object could not be loaded or is not valid.
+			if ( ! ( $external_file_obj instanceof External_File && $external_file_obj->is_valid() ) ) {
+				continue;
+			}
+
+			// add file to the list.
+			$files[] = array(
+				'url'       => $external_file_obj->get_url( true ),
+				'edit_link' => $external_file_obj->get_edit_url(),
+			);
 		}
 	}
 
-	// set title after import has been run.
+	// set progress title after import has been run.
 	if ( ! empty( $files ) ) {
 		update_option( 'eml_import_files', $files );
 	} else {
@@ -720,7 +734,7 @@ function eml_admin_media_box(): void {
 	$external_file_obj = $external_files_obj->get_file( get_the_ID() );
 
 	// bail if this is not an external file.
-	if ( !( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+	if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 		?>
 		<div class="notice notice-error notice-alt inline">
 			<p>
@@ -736,20 +750,16 @@ function eml_admin_media_box(): void {
 	// get the unproxied file URL.
 	$url = $external_file_obj->get_url( true );
 
-	// get shorter URL to show (only protocol and host) to save space.
-	$parsed_url  = wp_parse_url( $url );
-	$url_to_show = $url;
-	if ( ! empty( $parsed_url['scheme'] ) ) {
-		$url_to_show = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '..';
-	}
-
 	// get protocol handler for this URL.
 	$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
 
 	// bail if no protocol handler could be loaded.
-	if( ! $protocol_handler ) {
+	if ( ! $protocol_handler ) {
 		return;
 	}
+
+	// get URL for show depending on used protocol.
+	$url_to_show = $protocol_handler->get_link();
 
 	// output.
 	?>
@@ -1506,7 +1516,7 @@ function eml_admin_eml_switch_hosting(): void {
 	 */
 	if ( $external_file_obj->is_locally_saved() ) {
 		// switch to external and show error if it runs in an error.
-		if( ! $external_file_obj->switch_to_external() ) {
+		if ( ! $external_file_obj->switch_to_external() ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}
@@ -1522,7 +1532,7 @@ function eml_admin_eml_switch_hosting(): void {
 		 */
 
 		// switch to local and show error if it runs in an error.
-		if( ! $external_file_obj->switch_to_local() ) {
+		if ( ! $external_file_obj->switch_to_local() ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}

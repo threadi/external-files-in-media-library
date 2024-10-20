@@ -323,7 +323,7 @@ class Init {
 		$external_file_obj = $this->external_files_obj->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
 			return $sources;
 		}
 

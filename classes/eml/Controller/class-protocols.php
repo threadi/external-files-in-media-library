@@ -11,6 +11,7 @@ namespace threadi\eml\Controller;
 defined( 'ABSPATH' ) || exit;
 
 use threadi\eml\Model\External_File;
+use threadi\eml\Model\Log;
 
 /**
  * Object to handle different protocols.
@@ -56,14 +57,16 @@ class Protocols {
 	 */
 	private function get_protocols(): array {
 		$list = array(
+			'threadi\eml\Controller\Protocols\File',
 			'threadi\eml\Controller\Protocols\Ftp',
 			'threadi\eml\Controller\Protocols\Http',
+			'threadi\eml\Controller\Protocols\Sftp',
 		);
 
 		/**
 		 * Filter the list of available protocols.
 		 *
-		 * @since 1.4.0 Available since 1.4.0.
+		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $list List of protocol handler.
 		 */
 		return apply_filters( 'eml_protocols', $list );
@@ -79,17 +82,46 @@ class Protocols {
 	 * @return Protocol_Base|false
 	 */
 	public function get_protocol_object_for_url( string $url ): Protocol_Base|false {
+		// define variable for result.
+		$result = false;
+
 		foreach ( $this->get_protocols() as $protocol_name ) {
-			if ( is_string( $protocol_name ) && class_exists( $protocol_name ) ) {
-				$obj = new $protocol_name( $url );
-				if ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) {
-					return $obj;
-				}
+			// bail if name is not a string.
+			if ( ! is_string( $protocol_name ) ) {
+				continue;
 			}
+
+			// bail if name is not an existing class.
+			if ( ! class_exists( $protocol_name ) ) {
+				continue;
+			}
+
+			// create object with given URL.
+			$obj = new $protocol_name( $url );
+
+			// bail if protocol is not a Protocol_Base object.
+			if( ! $obj instanceof Protocol_Base ) {
+				continue;
+			}
+
+			// bail if protocol could not be used.
+			if( ! $obj->is_available() ) {
+				/* translators: %1$s will be replaced by the file-URL */
+				Log::get_instance()->create( sprintf( __( 'Your hosting does not match the requirements to import the given URL %1$s. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+				continue;
+			}
+
+			// bail if URL is not compatible with this URL.
+			if ( ! $obj->is_url_compatible() ) {
+				continue;
+			}
+
+			// set as return value.
+			$result = $obj;
 		}
 
-		// return false if no protocol could be found.
-		return false;
+		// return the resulting value.
+		return $result;
 	}
 
 	/**

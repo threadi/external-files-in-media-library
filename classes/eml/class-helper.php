@@ -160,10 +160,15 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_content_type_from_string( string $content_type ): string {
+		// read the mime type without charset.
 		preg_match_all( '/^(.*);(.*)$/mi', $content_type, $matches );
+
+		// get it.
 		if ( ! empty( $matches[1] ) ) {
 			$content_type = $matches[1][0];
 		}
+
+		// return it.
 		return $content_type;
 	}
 
@@ -233,7 +238,7 @@ class Helper {
 		);
 
 		/**
-		 * Filter the possible mime types this plugin could support.
+		 * Filter the possible mime types this plugin could support. This is the list used for the setting in backend.
 		 *
 		 * To add files of type "your/mime" with extension "yourmime" use this example:
 		 *
@@ -260,11 +265,33 @@ class Helper {
 	 * @return array
 	 */
 	public static function get_allowed_mime_types(): array {
+		// get the list from settings.
 		$list = get_option( 'eml_allowed_mime_types', array() );
+
+		// is list is empty, return empty list.
 		if ( ! is_array( $list ) ) {
 			return array();
 		}
-		return $list;
+
+		/**
+		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $list List of mime types.
+		 */
+		return apply_filters( 'eml_get_mime_types', $list );
+	}
+
+	/**
+	 * Return URL to documentation to add URLs.
+	 *
+	 * @return string
+	 */
+	public static function get_support_url_for_urls(): string {
+		if( Languages::get_instance()->is_german_language() ) {
+			return 'https://github.com/threadi/external-files-in-media-library/docs/quickstart_de.md';
+		}
+		return 'https://github.com/threadi/external-files-in-media-library/docs/quickstart.md';
 	}
 
 	/**
@@ -272,9 +299,9 @@ class Helper {
 	 *
 	 * @return string
 	 */
-    public static function get_plugin_support_url(): string {
+	public static function get_plugin_support_url(): string {
 		return 'https://wordpress.org/support/plugin/external-files-in-media-library/';
-    }
+	}
 
 	/**
 	 * Return ID of the current WP-user.
@@ -285,7 +312,7 @@ class Helper {
 		$user_id = get_current_user_id();
 
 		// bail if ID is given.
-		if( $user_id > 0 ) {
+		if ( $user_id > 0 ) {
 			return $user_id;
 		}
 
@@ -297,7 +324,7 @@ class Helper {
 
 		// Fallback: search for an administrator.
 		if ( false === $user_obj ) {
-			return Helper::get_first_administrator_user();
+			return self::get_first_administrator_user();
 		}
 
 		// return resulting user ID.

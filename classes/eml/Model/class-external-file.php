@@ -378,7 +378,7 @@ class External_File {
 		/**
 		 * Get info about the external file.
 		 */
-		$file_data = $protocol_handler_obj->get_external_file_infos();
+		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
 
 		// compare the retrieved mime-type with the saved mime-type.
 		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
@@ -478,7 +478,7 @@ class External_File {
 	 */
 	public function set_login( string $login ): void {
 		// bail if no login is given.
-		if( empty( $login ) ) {
+		if ( empty( $login ) ) {
 			return;
 		}
 
@@ -495,7 +495,7 @@ class External_File {
 	 */
 	public function set_password( string $password ): void {
 		// bail if no password is given.
-		if( empty( $password ) ) {
+		if ( empty( $password ) ) {
 			return;
 		}
 
@@ -509,10 +509,10 @@ class External_File {
 	 * @return string
 	 */
 	public function get_login(): string {
-		$login = (string)get_post_meta( $this->get_id(), 'eml_login', true );
+		$login = (string) get_post_meta( $this->get_id(), 'eml_login', true );
 
 		// bail if string is empty.
-		if( empty( $login ) ) {
+		if ( empty( $login ) ) {
 			return '';
 		}
 
@@ -526,10 +526,10 @@ class External_File {
 	 * @return string
 	 */
 	public function get_password(): string {
-		$password = (string)get_post_meta( $this->get_id(), 'eml_password', true );
+		$password = (string) get_post_meta( $this->get_id(), 'eml_password', true );
 
 		// bail if string is empty.
-		if( empty( $password ) ) {
+		if ( empty( $password ) ) {
 			return '';
 		}
 
@@ -552,7 +552,7 @@ class External_File {
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 
 		// get external file infos.
-		$file_data = $protocol_handler_obj->get_external_file_infos();
+		$file_data = $protocol_handler_obj->get_external_infos();
 
 		// import file via WP-own functions.
 		$array = array(
@@ -561,6 +561,7 @@ class External_File {
 			'tmp_name' => $file_data['tmp-file'],
 			'error'    => 0,
 			'size'     => $file_data['filesize'],
+			'url'      => $this->get_url(),
 		);
 
 		// remove URL from attachment-setting.
@@ -593,7 +594,7 @@ class External_File {
 		$local_url = wp_get_attachment_url( $attachment_id );
 
 		// bail if no URL returned.
-		if( empty( $local_url ) ) {
+		if ( empty( $local_url ) ) {
 			return false;
 		}
 
@@ -651,7 +652,7 @@ class External_File {
 	 */
 	public function switch_to_external(): bool {
 		// bail if credentials are used.
-		if( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
 			return false;
 		}
 
@@ -659,7 +660,7 @@ class External_File {
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 
 		// bail if protocol does not support external hosting.
-		if( $protocol_handler_obj->should_be_saved_local() ) {
+		if ( $protocol_handler_obj->should_be_saved_local() ) {
 			return false;
 		}
 

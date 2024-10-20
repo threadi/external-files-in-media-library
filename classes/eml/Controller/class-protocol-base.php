@@ -25,7 +25,7 @@ class Protocol_Base {
 	private string $url = '';
 
 	/**
-	 * List of supported tcp protocols.
+	 * List of supported tcp protocols with their ports.
 	 *
 	 * @var array
 	 */
@@ -74,10 +74,35 @@ class Protocol_Base {
 		/**
 		 * Filter the tcp protocols.
 		 *
-		 * @since 1.4.0 Available since 1.4.0.
+		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $tcp_protocols List of tcp protocol of this object (e.g. 'http').
 		 */
 		return apply_filters( 'eml_tcp_protocols', $tcp_protocols, $this );
+	}
+
+	/**
+	 * Return the default port of the used protocol.
+	 *
+	 * @param string $tcp_protocol The protocol (e.g. "ftps").
+	 *
+	 * @return int
+	 */
+	protected function get_port_by_protocol( string $tcp_protocol ): int {
+		// get list of protocols.
+		$tcp_protocols = $this->get_tcp_protocols();
+
+		// bail if list is empty.
+		if( empty( $tcp_protocols) ) {
+			return 0;
+		}
+
+		// bail if protocol is unknown.
+		if( empty( $tcp_protocols[ $tcp_protocol ] ) ) {
+			return 0;
+		}
+
+		// return the port.
+		return $tcp_protocols[ $tcp_protocol ];
 	}
 
 	/**
@@ -86,7 +111,7 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	public function is_url_compatible(): bool {
-		foreach ( $this->get_tcp_protocols() as $tcp_protocol ) {
+		foreach ( $this->get_tcp_protocols() as $tcp_protocol => $port ) {
 			if ( str_starts_with( $this->get_url(), $tcp_protocol ) ) {
 				return true;
 			}
@@ -99,32 +124,38 @@ class Protocol_Base {
 	/**
 	 * Check format of given URL.
 	 *
+	 * @param string $url The URL to check.
+	 *
 	 * @return bool
 	 */
-	public function check_url(): bool {
+	public function check_url( string $url ): bool {
+		if ( empty( $url ) ) {
+			return false;
+		}
 		return false;
 	}
 
 	/**
 	 * Check the availability of a given file-url.
+	 *
+	 * @param string $url The URL to check.
 	 *
 	 * @return bool true if file is available, false if not.
 	 */
-	public function check_availability(): bool {
+	public function check_availability( string $url ): bool {
+		if ( empty( $url ) ) {
+			return false;
+		}
 		return false;
 	}
 
 	/**
 	 * Check the availability of a given file-url.
 	 *
-	 * @return array List of file-infos.
+	 * @return array List of files with its infos.
 	 */
-	public function get_external_file_infos(): array {
-		return array(
-			'filesize'  => 0,
-			'mime-type' => '',
-			'local'     => false,
-		);
+	public function get_external_infos(): array {
+		return array();
 	}
 
 	/**
@@ -179,16 +210,18 @@ class Protocol_Base {
 	/**
 	 * Check given URL for duplicate.
 	 *
+	 * @param string $url The URL to check.
+	 *
 	 * @return bool
 	 */
-	protected function check_for_duplicate(): bool {
+	protected function check_for_duplicate( string $url ): bool {
 		$query   = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
 					'key'     => EML_POST_META_URL,
-					'value'   => $this->get_url(),
+					'value'   => $url,
 					'compare' => '=',
 				),
 			),
@@ -219,5 +252,32 @@ class Protocol_Base {
 	 */
 	public function can_change_hosting(): bool {
 		return empty( $this->get_login() ) && empty( $this->get_password() );
+	}
+
+	/**
+	 * Return whether this protocol could be used.
+	 *
+	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		return false;
+	}
+
+	/**
+	 * Return the link to the given URL.
+	 *
+	 * @return string
+	 */
+	public function get_link(): string {
+		// get shorter URL to show (only protocol and host) to save space.
+		$parsed_url  = wp_parse_url( $this->get_url() );
+		if ( ! empty( $parsed_url['scheme'] ) && ! empty( $parsed_url['host'] ) ) {
+			return $parsed_url['scheme'] . '://' . $parsed_url['host'] . '..';
+		}
+
+		// return the plain URL.
+		return $this->get_url();
 	}
 }
