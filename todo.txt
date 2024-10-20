@@ -1,5 +1,5 @@
-* Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
+* Settings-Object verwenden
 * Timeout für jedes Protokoll als Konfiguration ergänzen
-* Klassen auf PSR4 umstellen
 * mehr Hooks ergänzen
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
+* Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9

@@ -1,0 +1,921 @@
+<?php
+/**
+ * This file contains a controller-object to handle external files operations.
+ *
+ * @package external-files-in-media-library
+ */
+
+namespace ExternalFilesInMediaLibrary\ExternalFiles;
+
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Query;
+
+/**
+ * Controller for external file-urls-tasks.
+ *
+ * @noinspection PhpUnused
+ */
+class Files {
+	/**
+	 * Instance of actual object.
+	 *
+	 * @var Files|null
+	 */
+	private static ?Files $instance = null;
+
+	/**
+	 * Log-object.
+	 *
+	 * @var log
+	 */
+	private log $log;
+
+	/**
+	 * The login.
+	 *
+	 * @var string
+	 */
+	private string $login = '';
+
+	/**
+	 * The password.
+	 *
+	 * @var string
+	 */
+	private string $password = '';
+
+	/**
+	 * Constructor, not used as this a Singleton object.
+	 */
+	private function __construct() {
+		// get log-object.
+		$this->log = Log::get_instance();
+	}
+
+	/**
+	 * Prevent cloning of this object.
+	 *
+	 * @return void
+	 */
+	private function __clone() { }
+
+	/**
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Files
+	 */
+	public static function get_instance(): Files {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize this object.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_action( 'add_meta_boxes_attachment', array( $this, 'add_media_box' ), 20, 0 );
+
+		// add ajax hooks.
+		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
+
+		// use our own hooks.
+		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ) );
+	}
+
+	/**
+	 * Get all external files in media library as external_file-object-array.
+	 *
+	 * @return array
+	 */
+	public function get_files_in_media_library(): array {
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'meta_query'     => array(
+				array(
+					'key'     => EML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+			),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+		if ( $result->post_count > 0 ) {
+			$results = array();
+			foreach ( $result->posts as $attachment_id ) {
+				$external_file_obj = $this->get_file( $attachment_id );
+				if ( $external_file_obj ) {
+					$results[] = $external_file_obj;
+				}
+			}
+			return $results;
+		}
+		return array();
+	}
+
+	/**
+	 * Add a URL in media library.
+	 *
+	 * If URL is a directory we try to import all files there.
+	 * If URL is a single file, it will be imported.
+	 *
+	 * This is the main function for any import.
+	 *
+	 * @param string $url The URL to add.
+	 *
+	 * @return bool true if anything from the URL has been added successfully.
+	 */
+	public function add_from_url( string $url ): bool {
+		$false = false;
+		/**
+		 * Filter the given URL against custom blacklists.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $false Return true if blacklist matches.
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( apply_filters( 'eml_blacklist', $false, $url ) ) {
+			return false;
+		}
+
+		/**
+		 * Get the handler for this URL depending on its protocol.
+		 */
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+		/**
+		 * Do nothing if url is using a not supported tcp protocol.
+		 */
+		if ( ! $protocol_handler_obj ) {
+			/* translators: %1$s will be replaced by the file-URL */
+			Log::get_instance()->create( sprintf( __( 'Given URL %1$s is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			return false;
+		}
+
+		/**
+		 * Add the given credentials, even if none are set.
+		 */
+		$protocol_handler_obj->set_login( $this->get_login() );
+		$protocol_handler_obj->set_password( $this->get_password() );
+
+		/**
+		 * Get information about files under the given URL.
+		 */
+		$files = $protocol_handler_obj->get_external_infos();
+
+		/**
+		 * Do nothing if check of URL resulted in empty file list.
+		 */
+		if ( empty( $files ) ) {
+			/* translators: %1$s will be replaced by the file-URL */
+			Log::get_instance()->create( sprintf( __( 'No files found under given URL %1$s.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			return false;
+		}
+
+		/**
+		 * Get user the attachment would be assigned to.
+		 */
+		$user_id = Helper::get_current_user_id();
+
+		/**
+		 * Filter the user_id for a single file during import.
+		 *
+		 * @since 1.1.0 Available since 1.1.0
+		 *
+		 * @param int $user_id The title generated by importer.
+		 * @param string $url The requested external URL.
+		 */
+		$user_id = apply_filters( 'eml_file_import_user', $user_id, $url );
+
+		/**
+		 * Loop through the results and save each in the media library.
+		 */
+		foreach ( $files as $file_data ) {
+			// bail file is given, but has an error.
+			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
+				/* translators: %1$s will be replaced by the file-URL */
+				Log::get_instance()->create( sprintf( __( 'Given string %1$s results in error during request: <pre>%2$s</pre>', 'external-files-in-media-library' ), esc_url( $url ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+				continue;
+			}
+
+			/**
+			 * Filter the title for a single file during import.
+			 *
+			 * @since 1.1.0 Available since 1.1.0
+			 *
+			 * @param string $title     The title generated by importer.
+			 * @param string $url       The requested external URL.
+			 * @param array  $file_data List of file settings detected by importer.
+			 */
+			$title = apply_filters( 'eml_file_import_title', $file_data['title'], $file_data['url'], $file_data );
+
+			/**
+			 * Prepare attachment-post-settings.
+			 */
+			$post_array = array(
+				'post_author' => $user_id,
+				'post_name'   => $title,
+			);
+
+			/**
+			 * Filter the attachment settings
+			 *
+			 * @since 2.0.0 Available since 2.0.0
+			 *
+			 * @param string $post_array     The attachment settings.
+			 * @param string $url       The requested external URL.
+			 * @param array  $file_data List of file settings detected by importer.
+			 */
+			$post_array = apply_filters( 'eml_file_import_attachment', $post_array, $file_data['url'], $file_data );
+
+			/**
+			 * Save this file local if it is required.
+			 */
+			if ( false !== $file_data['local'] ) {
+				// import file as image via WP-own functions.
+				$array = array(
+					'name'     => $title,
+					'type'     => $file_data['mime-type'],
+					'tmp_name' => $file_data['tmp-file'],
+					'error'    => 0,
+					'size'     => $file_data['filesize'],
+				);
+
+				$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
+			} else {
+				/**
+				 * For all other files: simply create the attachment.
+				 */
+				$attachment_id = wp_insert_attachment( $post_array, $file_data['url'] );
+			}
+
+			// bail on any error.
+			if ( is_wp_error( $attachment_id ) ) {
+				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
+				$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $file_data['url'], $attachment_id->errors['upload_error'][0] ), $file_data['url'], 'error', 0 );
+				continue;
+			}
+
+			// get external file object to update its settings.
+			$external_file_obj = $this->get_file( $attachment_id );
+
+			// bail if object could not be loaded.
+			if ( ! $external_file_obj ) {
+				/* translators: %1$s will be replaced by the file-URL */
+				$this->log->create( sprintf( __( 'External file object for URL %1$s could not be loaded.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'error', 0 );
+				continue;
+			}
+
+			// mark this attachment as one of our own plugin through setting the URL.
+			$external_file_obj->set_url( $file_data['url'] );
+
+			// set title.
+			$external_file_obj->set_title( $title );
+
+			// set mime-type.
+			$external_file_obj->set_mime_type( $file_data['mime-type'] );
+
+			// set availability-status (true for 'is available', false if not).
+			$external_file_obj->set_availability( true );
+
+			// set filesize.
+			$external_file_obj->set_filesize( $file_data['filesize'] );
+
+			// mark if this file is an external file locally saved.
+			$external_file_obj->set_is_local_saved( $file_data['local'] );
+
+			// set meta-data for images if mode is enabled for this.
+			if ( ! $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
+				$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
+
+				// set file to our url.
+				$image_meta['file'] = $file_data['url'];
+
+				// save the resulting image-data.
+				wp_update_attachment_metadata( $attachment_id, $image_meta );
+			}
+
+			// return true as the file has been created successfully.
+			/* translators: %1$s will be replaced by the file-URL */
+			$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'success', 0 );
+
+			// save the credentials on the object, if set.
+			$external_file_obj->set_login( $this->get_login() );
+			$external_file_obj->set_password( $this->get_password() );
+
+			/**
+			 * Run additional tasks after new external file has been added.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 * @param File $external_file_obj The object of the external file.
+			 * @param array $file_data The array with the file data.
+			 */
+			do_action( 'eml_after_file_save', $external_file_obj, $file_data );
+		}
+
+		// return ok.
+		return true;
+	}
+
+	/**
+	 * Log deletion of external urls in media library.
+	 *
+	 * @param int $attachment_id  The attachment_id which will be deleted.
+	 *
+	 * @return void
+	 */
+	public function log_url_deletion( int $attachment_id ): void {
+		// get the external file object.
+		$external_file = $this->get_file( $attachment_id );
+
+		// bail if it is not an external file.
+		if ( ! $external_file || false === $external_file->is_valid() ) {
+			return;
+		}
+
+		// log deletion.
+		/* translators: %1$s will be replaced by the file-URL */
+		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-files-in-media-library' ), esc_url( $external_file->get_url() ) ), $external_file->get_url(), 'success', 1 );
+	}
+
+	/**
+	 * Return external_file object of single attachment by given ID without checking its availability.
+	 *
+	 * @param int $attachment_id    The attachment_id where we want to call the External_File-object.
+	 * @return false|File
+	 */
+	public function get_file( int $attachment_id ): false|File {
+		if ( false !== is_attachment( $attachment_id ) ) {
+			return false;
+		}
+		return new File( $attachment_id );
+	}
+
+	/**
+	 * Delete the given external-file-object with all its data from media library.
+	 *
+	 * @param File $external_file_obj  The External_File which will be deleted.
+	 *
+	 * @return void
+	 */
+	public function delete_file( File $external_file_obj ): void {
+		wp_delete_attachment( $external_file_obj->get_id(), true );
+	}
+
+	/**
+	 * Check all external files regarding their availability.
+	 *
+	 * @return void
+	 */
+	public function check_files(): void {
+		// get all files.
+		$files = $this->get_files_in_media_library();
+
+		// bail if no files are found.
+		if ( empty( $files ) ) {
+			return;
+		}
+
+		// loop through the files and check each.
+		foreach ( $files as $external_file_obj ) {
+			// bail if obj is not an external file object.
+			if ( ! $external_file_obj instanceof File ) {
+				continue;
+			}
+
+			// get the protocol handler for this URL.
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+
+			// bail if handler is false.
+			if ( ! $protocol_handler ) {
+				continue;
+			}
+
+			// get and save its availability.
+			$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
+		}
+	}
+
+	/**
+	 * Get all imported external files.
+	 *
+	 * @return array
+	 */
+	public function get_imported_external_files(): array {
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'key'     => EML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+				array(
+					'key'   => EML_POST_IMPORT_MARKER,
+					'value' => 1,
+				),
+			),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+		if ( $result->post_count > 0 ) {
+			$results = array();
+			foreach ( $result->posts as $attachment_id ) {
+				$external_file_obj = $this->get_file( $attachment_id );
+				if ( $external_file_obj ) {
+					$results[] = $external_file_obj;
+				}
+			}
+			return $results;
+		}
+		return array();
+	}
+
+	/**
+	 * Get file-object by URL.
+	 *
+	 * @param string $url The file-url we search.
+	 *
+	 * @return false|File
+	 */
+	public function get_file_by_url( string $url ): false|File {
+		// bail if url is empty.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// query for the post with the given URL.
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'meta_query'     => array(
+				array(
+					'key'     => EML_POST_META_URL,
+					'value'   => $url,
+					'compare' => '=',
+				),
+			),
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+
+		// bail if more or less than 1 is found.
+		if ( 1 !== $result->post_count ) {
+			return false;
+		}
+
+		// get the external file object for the match.
+		$external_file_obj = $this->get_file( $result->posts[0] );
+
+		// bail if the external file object could not be created or is not valid.
+		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+			return false;
+		}
+
+		// return the object.
+		return $external_file_obj;
+	}
+
+	/**
+	 * Get file-object by its title.
+	 *
+	 * @param string $title The file-url we search.
+	 *
+	 * @return bool|File
+	 */
+	public function get_file_by_title( string $title ): bool|File {
+		// bail if no title is given.
+		if ( empty( $title ) ) {
+			return false;
+		}
+
+		// query for attachments of this plugin with this title.
+		$query  = array(
+			'title'          => $title,
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'meta_query'     => array(
+				array(
+					'key'     => EML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+			),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+
+		// bail on no results.
+		if ( 1 !== $result->post_count ) {
+			return false;
+		}
+
+		// get the external file object.
+		$external_file_obj = $this->get_file( $result->posts[0] );
+
+		// bail if object could not be loaded or is not valid.
+		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+			return false;
+		}
+
+		// return the object.
+		return $external_file_obj;
+	}
+
+	/**
+	 * Return the cache-directory for proxied external files.
+	 * Handles also the existence of the directory.
+	 *
+	 * @return string
+	 */
+	public function get_cache_directory(): string {
+		// create string with path for directory.
+		$path = trailingslashit( WP_CONTENT_DIR ) . 'cache/eml/';
+
+		// create it if necessary.
+		$this->create_cache_directory( $path );
+
+		// return path.
+		return $path;
+	}
+
+	/**
+	 * Create cache directory.
+	 *
+	 * @param string $path The path to the cache directory.
+	 * @return void
+	 */
+	private function create_cache_directory( string $path ): void {
+		if ( ! file_exists( $path ) ) {
+			if ( false === wp_mkdir_p( $path ) ) {
+				$this->log->create( __( 'Error creating cache directory.', 'external-files-in-media-library' ), '', 'error', 0 );
+			}
+		}
+	}
+
+	/**
+	 * Delete the cache directory.
+	 *
+	 * @return void
+	 */
+	public function delete_cache_directory(): void {
+		Helper::delete_directory_recursively( $this->get_cache_directory() );
+	}
+
+	/**
+	 * If file is deleted, delete also its proxy-cache, if set.
+	 *
+	 * @param int $attachment_id The ID of the attachment.
+	 * @return void
+	 */
+	public function delete_file_from_cache( int $attachment_id ): void {
+		// get the external file object.
+		$external_file = $this->get_file( $attachment_id );
+
+		// bail if it is not an external file.
+		if ( ! $external_file || false === $external_file->is_valid() ) {
+			return;
+		}
+
+		// call cache file deletion.
+		$external_file->delete_cache();
+	}
+
+	/**
+	 * Return the login.
+	 *
+	 * @return string
+	 */
+	private function get_login(): string {
+		return $this->login;
+	}
+
+	/**
+	 * Set the login.
+	 *
+	 * @param string $login The login.
+	 *
+	 * @return void
+	 */
+	public function set_login( string $login ): void {
+		$this->login = $login;
+	}
+
+	/**
+	 * Return the password.
+	 *
+	 * @return string
+	 */
+	private function get_password(): string {
+		return $this->password;
+	}
+
+	/**
+	 * Set the password.
+	 *
+	 * @param string $password The password.
+	 *
+	 * @return void
+	 */
+	public function set_password( string $password ): void {
+		$this->password = $password;
+	}
+
+	/**
+	 * Add meta box for external fields on media edit screen.
+	 *
+	 * @return void
+	 */
+	public function add_media_box(): void {
+		// get file by its ID.
+		$external_file_obj = $this->get_file( get_the_ID() );
+
+		// bail if the file is not an external file-URL.
+		if ( ! $external_file_obj || ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+			return;
+		}
+
+		// add the box.
+		add_meta_box( 'attachment_external_file', __( 'External file', 'external-files-in-media-library' ), array( $this, 'add_media_box_with_file_info' ), 'attachment', 'side', 'low' );
+
+		// if this is an external hostet file, hide "Replace Media"-box from plugin "Enable Media Replace".
+		if ( false === $external_file_obj->is_locally_saved() ) {
+			remove_meta_box( 'emr-replace-box', 'attachment', 'side' );
+			remove_meta_box( 'emr-showthumbs-box', 'attachment', 'side' );
+		}
+	}
+
+	/**
+	 * Create the content of the meta-box on media-edit-page.
+	 *
+	 * @return void
+	 */
+	public function add_media_box_with_file_info(): void {
+		// get file by its ID.
+		$external_file_obj = $this->get_file( get_the_ID() );
+
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+			?>
+			<div class="notice notice-error notice-alt inline">
+				<p>
+					<?php
+					echo esc_html__( 'This file is not an external file.', 'external-files-in-media-library' );
+					?>
+				</p>
+			</div>
+			<?php
+			return;
+		}
+
+		// get the unproxied file URL.
+		$url = $external_file_obj->get_url( true );
+
+		// get protocol handler for this URL.
+		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+
+		// bail if no protocol handler could be loaded.
+		if ( ! $protocol_handler ) {
+			return;
+		}
+
+		// get URL for show depending on used protocol.
+		$url_to_show = $protocol_handler->get_link();
+
+		// output.
+		?>
+		<div class="misc-pub-external-file">
+		<p>
+			<?php echo esc_html__( 'File-URL:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
+		</p>
+		<p>
+			<?php
+			if ( $external_file_obj->get_availability() ) {
+				?>
+				<span id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></span>
+				<?php
+			} else {
+				$log_url = helper::get_log_url();
+				?>
+				<span id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
+					<?php
+					/* translators: %1$s will be replaced by the URL for the logs */
+					printf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
+					?>
+				</span>
+				<?php
+			}
+			if ( $protocol_handler->can_check_availability() ) {
+				?>
+				<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
+				<?php
+			}
+			?>
+		</p>
+		<p><span class="dashicons dashicons-yes-alt"></span>
+			<?php
+			if ( false !== $external_file_obj->is_locally_saved() ) {
+				echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
+				if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+					?>
+					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+					<?php
+				}
+			} else {
+				echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
+				if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+					?>
+					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+					<?php
+				}
+			}
+			?>
+		</p>
+		<?php
+		if ( get_option( 'eml_proxy' ) ) {
+			?>
+			<p>
+				<?php
+				if ( false !== $external_file_obj->is_cached() ) {
+					echo '<span class="dashicons dashicons-yes-alt"></span> ' . esc_html__( 'File is delivered through proxied cache.', 'external-files-in-media-library' );
+				} else {
+					echo '<span class="dashicons dashicons-no-alt"></span> ' . esc_html__( 'File is not cached in proxy.', 'external-files-in-media-library' );
+				}
+				?>
+			</p>
+			</div>
+			<?php
+		}
+	}
+
+	/**
+	 * Check file availability via AJAX request.
+	 *
+	 * @return       void
+	 */
+	public function check_file_availability_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'eml-availability-check-nonce', 'nonce' );
+
+		// create error-result.
+		$result = array(
+			'state'   => 'error',
+			'message' => __( 'No ID given.', 'external-files-in-media-library' ),
+		);
+
+		// get ID.
+		$attachment_id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+
+		// bail if no file is given.
+		if ( 0 === $attachment_id ) {
+			// send response as JSON.
+			wp_send_json( $result );
+		}
+
+		// get the single external file-object.
+		$external_file_obj = $this->get_file( $attachment_id );
+
+		// bail if file could not be loaded.
+		if ( ! $external_file_obj ) {
+			// send response as JSON.
+			wp_send_json( $result );
+		}
+
+		// get protocol handler for this url.
+		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+
+		// check and save its availability.
+		$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
+
+		// return result depending on availability-value.
+		if ( $external_file_obj->get_availability() ) {
+			$result = array(
+				'state'   => 'success',
+				'message' => __( 'File-URL is available.', 'external-files-in-media-library' ),
+			);
+
+			// send response as JSON.
+			wp_send_json( $result );
+		}
+
+		// return error if file is not available.
+		$result = array(
+			'state'   => 'error',
+			/* translators: %1$s will be replaced by the URL for the logs */
+			'message' => sprintf( __( 'URL-File is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), Helper::get_log_url() ),
+		);
+
+		// send response as JSON.
+		wp_send_json( $result );
+	}
+
+	/**
+	 * URL-decode the file-title if it is used in admin (via AJAX).
+	 *
+	 * @param string $title The title to optimize.
+	 *
+	 * @return string
+	 */
+	public function optimize_file_title( string $title ): string {
+		return urldecode( $title );
+	}
+
+	/**
+	 * Switch the hosting of a single file from local to extern or extern to local.
+	 *
+	 * @return       void
+	 */
+	public function switch_hosting_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'eml-switch-hosting-nonce', 'nonce' );
+
+		// create error-result.
+		$result = array(
+			'state'   => 'error',
+			'message' => __( 'No ID given.', 'external-files-in-media-library' ),
+		);
+
+		// get ID.
+		$attachment_id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+
+		// bail if id is not given.
+		if ( 0 === $attachment_id ) {
+			wp_send_json( $result );
+		}
+
+		// get the file.
+		$external_file_obj = $this->get_file( $attachment_id );
+
+		// bail if object could not be loaded.
+		if ( ! $external_file_obj ) {
+			// send response as JSON.
+			wp_send_json( $result );
+		}
+
+		// get the external URL.
+		$url = $external_file_obj->get_url( true );
+
+		// bail if file is not an external file.
+		if ( ! $external_file_obj->is_valid() ) {
+			$result = array(
+				'state'   => 'error',
+				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
+			);
+			wp_send_json( $result );
+		}
+
+		/**
+		 * Switch from local to external.
+		 */
+		if ( $external_file_obj->is_locally_saved() ) {
+			// switch to external and show error if it runs in an error.
+			if ( ! $external_file_obj->switch_to_external() ) {
+				// send response as JSON.
+				wp_send_json( $result );
+			}
+
+			// create return message.
+			$result = array(
+				'state'   => 'success',
+				'message' => __( 'File is extern hosted.', 'external-files-in-media-library' ),
+			);
+		} else {
+			/**
+			 * Switch from external to local.
+			 */
+
+			// switch to local and show error if it runs in an error.
+			if ( ! $external_file_obj->switch_to_local() ) {
+				// send response as JSON.
+				wp_send_json( $result );
+			}
+
+			// create return message.
+			$result = array(
+				'state'   => 'success',
+				'message' => __( 'File is local hosted.', 'external-files-in-media-library' ),
+			);
+		}
+
+		// log this event.
+		/* translators: %1$s will be replaced by the file URL. */
+		Log::get_instance()->create( sprintf( __( 'File %1$s has been switched the hosting.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
+
+		// send response as JSON.
+		wp_send_json( $result );
+	}
+}

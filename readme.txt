@@ -147,6 +147,7 @@ Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///v
 * Fixed wrong proxied URL after successful import of images
 
 = 2.0.0 =
+* Revamped plugin
 * Added support for import of directories with multiple files
 * Added support for different tcp-protocols
 * Added support for FTP-URLs

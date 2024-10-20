@@ -44,7 +44,7 @@
     <!-- generate documentation -->
     <target name="generate-documentation" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/wp-documentor">
-            <arg line="parse classes --format=markdown --output=docs/hooks.md --prefix=eml_"/>
+            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_"/>
         </exec>
     </target>
 
@@ -74,20 +74,39 @@
         </exec>
     </target>
 
+    <!-- generate autoloader for release -->
+    <target name="autoloader-generation">
+        <delete file="${log.dir}/autoloader-generation.txt"/>
+        <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/autoloader-generation.txt">
+            <arg line="dump-autoload -oa --no-dev"/>
+        </exec>
+    </target>
+
+    <!-- generate autoloader for dev -->
+    <target name="autoloader-generation-dev">
+        <delete file="${log.dir}/autoloader-generation-dev.txt"/>
+        <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/autoloader-generation-dev.txt">
+            <arg line="dump-autoload -oa"/>
+        </exec>
+    </target>
+
     <!-- init project -->
-    <target name="init" description="initialize the project" depends="composer-install,npm-build" />
+    <target name="init" description="initialize the project" depends="composer-install,autoloader-generation-dev,npm-build" />
 
     <!-- create release-zip -->
-    <target name="build" description="builds a new release" depends="init,generate-documentation,check-wcs,setVersionNumber">
+    <target name="build" description="builds a new release" depends="init,generate-documentation,autoloader-generation,check-wcs,setVersionNumber">
         <delete file="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
         <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
             <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
-            <zipfileset dir="${src.dir}/classes" prefix="${plugin.slug}/classes" />
+            <zipfileset dir="${src.dir}/app" prefix="${plugin.slug}/app" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
+            <zipfileset dir="${src.dir}/vendor" includes="autoload.php" fullpath="${plugin.slug}/vendor/autoload.php" />
+            <zipfileset dir="${src.dir}/vendor/composer" prefix="${plugin.slug}/vendor/composer" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>
+        <antcall target="autoloader-generation-dev" />
         <delete file="${src.dir}/${plugin.slug}-release.php"/>
     </target>
 

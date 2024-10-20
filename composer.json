@@ -12,6 +12,16 @@
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "classmap-authoritative": true,
+        "apcu-autoloader": true,
+        "prepend-autoloader": false,
+        "platform-check": false
+    },
+    "autoload": {
+        "psr-4": {
+            "ExternalFilesInMediaLibrary\\": "app/"
         }
     },
     "require-dev": {

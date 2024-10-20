@@ -16,6 +16,8 @@
         <exclude name="WordPress.DB.DirectDatabaseQuery"/>
         <!-- Exclude base64-warnings for backwards-compatibility with older plugin-version, but it also disabled serialize-warning .. -->
         <exclude name="WordPress.PHP.DiscouragedPHPFunctions"/>
+        <!-- Excluded in favour to match PSR-4-namings of classes. -->
+        <exclude name="WordPress.Files.FileName"/>
     </rule>
 
 </ruleset>
