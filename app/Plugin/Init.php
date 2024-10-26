@@ -58,7 +58,7 @@ class Init {
 	 */
 	public static function get_instance(): Init {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new Init();
+			self::$instance = new self();
 		}
 
 		return self::$instance;
@@ -74,6 +74,9 @@ class Init {
 	public function init(): void {
 		// initialize the admin-support.
 		Admin::get_instance()->init();
+
+		// initialize the settings.
+		Settings::get_instance()->init();
 
 		// enable third party support.
 		ThirdPartySupport::get_instance()->init();

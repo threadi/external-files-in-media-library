@@ -18,6 +18,8 @@
         <exclude name="WordPress.PHP.DiscouragedPHPFunctions"/>
         <!-- Excluded in favour to match PSR-4-namings of classes. -->
         <exclude name="WordPress.Files.FileName"/>
+        <!-- Exclude override of globals -->
+        <exclude name="WordPress.WP.GlobalVariablesOverride"/>
     </rule>
 
 </ruleset>

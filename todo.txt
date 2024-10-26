@@ -1,4 +1,3 @@
-* Settings-Object verwenden
 * Timeout für jedes Protokoll als Konfiguration ergänzen
 * mehr Hooks ergänzen
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs

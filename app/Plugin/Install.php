@@ -129,6 +129,9 @@ class Install {
 			update_option( 'eml_proxy_max_age', 24 );
 		}
 
+		// register settings.
+		// TODO !!!
+
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();
 	}
