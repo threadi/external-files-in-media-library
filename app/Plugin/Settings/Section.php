@@ -53,7 +53,16 @@ class Section {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return $this->name;
+		$name = $this->name;
+
+		/**
+		 * Filter the name of a section object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $name The name.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_section_name', $name, $this );
 	}
 
 	/**
@@ -73,7 +82,16 @@ class Section {
 	 * @return string
 	 */
 	public function get_title(): string {
-		return $this->title;
+		$title = $this->title;
+
+		/**
+		 * Filter the title of a section object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $title The title.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_section_title', $title, $this );
 	}
 
 	/**
@@ -93,7 +111,16 @@ class Section {
 	 * @return ?Settings
 	 */
 	public function get_setting(): ?Settings {
-		return $this->setting;
+		$setting = $this->setting;
+
+		/**
+		 * Filter the settings of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param Settings $setting The settings.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_section_setting', $setting, $this );
 	}
 
 	/**
@@ -124,7 +151,12 @@ class Section {
 	 * @return void
 	 */
 	public function set_callback( string|array $callback ): void {
-		// TODO check if callable.
+		// bail if given callback is not callable.
+		if ( ! is_callable( $callback ) ) {
+			return;
+		}
+
+		// set the callback.
 		$this->callback = $callback;
 	}
 }

@@ -275,11 +275,13 @@ class Settings {
 		$setting->set_section( $general_settings_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 30 );
-		$setting->set_field( array(
-			'type' => 'Number',
-			'title' => __( 'Max. Timeout in seconds', 'external-files-in-media-library' ),
-			'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' )
-		) );
+		$setting->set_field(
+			array(
+				'type'        => 'Number',
+				'title'       => __( 'Max. Timeout in seconds', 'external-files-in-media-library' ),
+				'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' ),
+			)
+		);
 		$setting->set_field( $field );
 
 		// add setting.

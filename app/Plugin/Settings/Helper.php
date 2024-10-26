@@ -68,4 +68,33 @@ class Helper {
 		// return false if not object could be found.
 		return false;
 	}
+
+	/**
+	 * Check if given type is valid for setting.
+	 *
+	 * @param string $type The type to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_setting_type_valid( string $type ): bool {
+		return in_array( $type, self::get_setting_types(), true );
+	}
+
+	/**
+	 * Return list of valid data types for settings. They are given by WordPress.
+	 *
+	 * @source https://developer.wordpress.org/reference/functions/register_setting/
+	 *
+	 * @return array
+	 */
+	private static function get_setting_types(): array {
+		return array(
+			'string',
+			'boolean',
+			'integer',
+			'number',
+			'array',
+			'object',
+		);
+	}
 }

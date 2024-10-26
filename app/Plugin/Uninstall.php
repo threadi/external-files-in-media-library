@@ -102,7 +102,7 @@ class Uninstall {
 			'eml_import_running',
 			'eml_import_title',
 			'eml_import_errors',
-			'eml_transients'
+			'eml_transients',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );
@@ -115,7 +115,6 @@ class Uninstall {
 		$external_files_obj->delete_cache_directory();
 
 		// delete Log-database-table.
-		$log = Log::get_instance();
-		$log->uninstall();
+		Log::get_instance()->uninstall();
 	}
 }

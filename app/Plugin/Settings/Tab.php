@@ -88,7 +88,16 @@ class Tab {
 	 * @return string
 	 */
 	public function get_name(): string {
-		return $this->name;
+		$name = $this->name;
+
+		/**
+		 * Filter the name of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $name The name.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_name', $name, $this );
 	}
 
 	/**
@@ -108,7 +117,16 @@ class Tab {
 	 * @return string
 	 */
 	public function get_title(): string {
-		return $this->title;
+		$title = $this->title;
+
+		/**
+		 * Filter the title of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $title The title.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_title', $title, $this );
 	}
 
 	/**
@@ -162,7 +180,16 @@ class Tab {
 	 * @return array
 	 */
 	public function get_settings(): array {
-		return $this->settings;
+		$settings = $this->settings;
+
+		/**
+		 * Filter the settings of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $settings The settings.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_settings', $settings, $this );
 	}
 
 	/**
@@ -211,7 +238,16 @@ class Tab {
 	 * @return array
 	 */
 	public function get_sections(): array {
-		return $this->sections;
+		$sections = $this->sections;
+
+		/**
+		 * Filter the sections of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $sections The settings.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_settings', $sections, $this );
 	}
 
 	/**
@@ -280,7 +316,16 @@ class Tab {
 	 * @return string
 	 */
 	public function get_url(): string {
-		return $this->url;
+		$url = $this->url;
+
+		/**
+		 * Filter the url of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $url The settings.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_settings', $url, $this );
 	}
 
 	/**
@@ -300,7 +345,16 @@ class Tab {
 	 * @return string
 	 */
 	public function get_url_target(): string {
-		return $this->url_target;
+		$url_target = $this->url_target;
+
+		/**
+		 * Filter the url target of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $url_target The url target.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_settings', $url_target, $this );
 	}
 
 	/**
@@ -311,7 +365,12 @@ class Tab {
 	 * @return void
 	 */
 	public function set_url_target( string $url_target ): void {
-		// TODO check for valid value.
+		// bail if target does not have a valid value.
+		if ( ! in_array( $url_target, array( '_self', '_blank', '_top', '_parent' ), true ) ) {
+			return;
+		}
+
+		// set the target-value.
 		$this->url_target = $url_target;
 	}
 
@@ -321,7 +380,16 @@ class Tab {
 	 * @return string
 	 */
 	public function get_tab_class(): string {
-		return $this->tab_class;
+		$tab_class = $this->tab_class;
+
+		/**
+		 * Filter the class of a tabs object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $tab_class The tab class.
+		 * @param Tab $this The tab-object.
+		 */
+		return apply_filters( 'eml_settings_tab_settings', $tab_class, $this );
 	}
 
 	/**

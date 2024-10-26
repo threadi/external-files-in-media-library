@@ -202,7 +202,12 @@ class Setting {
 	 * @return void
 	 */
 	public function set_type( string $type ): void {
-		// TODO check the type value.
+		// bail if given type is not supported.
+		if ( ! Helper::is_setting_type_valid( $type ) ) {
+			return;
+		}
+
+		// set the type.
 		$this->type = $type;
 	}
 

@@ -126,7 +126,16 @@ class Settings {
 	 * @return array
 	 */
 	public function get_tabs(): array {
-		return $this->tabs;
+		$tabs = $this->tabs;
+
+		/**
+		 * Filter the list of setting tabs.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $tabs List of tabs.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_tabs', $tabs, $this );
 	}
 
 	/**
@@ -169,7 +178,16 @@ class Settings {
 	 * @return string
 	 */
 	public function get_title(): string {
-		return $this->title;
+		$title = $this->title;
+
+		/**
+		 * Filter the title of settings object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $title The title.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_title', $title, $this );
 	}
 
 	/**
@@ -189,7 +207,16 @@ class Settings {
 	 * @return string
 	 */
 	public function get_menu_title(): string {
-		return $this->menu_title;
+		$menu_title = $this->menu_title;
+
+		/**
+		 * Filter the menu title of settings object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $menu_title The menu title.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_title', $menu_title, $this );
 	}
 
 	/**
@@ -209,7 +236,16 @@ class Settings {
 	 * @return string
 	 */
 	public function get_menu_slug(): string {
-		return $this->menu_slug;
+		$menu_slug = $this->menu_slug;
+
+		/**
+		 * Filter the menu slug of settings object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $menu_slug The menu slug.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_menu_slug', $menu_slug, $this );
 	}
 
 	/**
@@ -231,6 +267,7 @@ class Settings {
 	public function add_menu(): void {
 		global $submenu;
 
+		// decide how to add the menu depending on given parent slug.
 		switch ( $this->get_menu_parent_slug() ) {
 			case 'options-general.php':
 				add_options_page(
@@ -269,7 +306,7 @@ class Settings {
 						$this->get_menu_slug(),
 						$tab->get_title(),
 						$tab->get_title(),
-						$this->get_capability(), // TODO tab-specific.
+						$this->get_capability(),
 						$tab->get_name(),
 						$tab->get_callback()
 					);
@@ -396,7 +433,6 @@ class Settings {
 	 * @return void
 	 */
 	public function set_capability( string $capability ): void {
-		// TODO check if it exist.
 		$this->capability = $capability;
 	}
 
@@ -535,7 +571,16 @@ class Settings {
 	 * @return string
 	 */
 	public function get_menu_icon(): string {
-		return $this->menu_icon;
+		$menu_icon = $this->menu_icon;
+
+		/**
+		 * Filter the menu slug of settings object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $menu_icon The menu icon.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_menu_icon', $menu_icon, $this );
 	}
 
 	/**
@@ -546,7 +591,6 @@ class Settings {
 	 * @return void
 	 */
 	public function set_menu_icon( string $menu_icon ): void {
-		// TODO check the setting.
 		$this->menu_icon = $menu_icon;
 	}
 
@@ -556,7 +600,16 @@ class Settings {
 	 * @return string
 	 */
 	public function get_menu_parent_slug(): string {
-		return $this->menu_parent_slug;
+		$parent_menu_slug = $this->menu_parent_slug;
+
+		/**
+		 * Filter the menu slug of settings object.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $parent_menu_slug The parent menu slug.
+		 * @param Settings $this The settings-object.
+		 */
+		return apply_filters( 'eml_settings_parent_menu_slug', $parent_menu_slug, $this );
 	}
 
 	/**
@@ -567,7 +620,6 @@ class Settings {
 	 * @return void
 	 */
 	public function set_menu_parent_slug( string $menu_parent_slug ): void {
-		// TODO check for possible slugs.
 		$this->menu_parent_slug = $menu_parent_slug;
 	}
 
@@ -594,7 +646,12 @@ class Settings {
 	 * @return void
 	 */
 	public function set_callback( array $callback ): void {
-		// TODO check callback.
+		// bail if given callback is not callable.
+		if ( ! is_callable( $callback ) ) {
+			return;
+		}
+
+		// set the callback.
 		$this->callback = $callback;
 	}
 
@@ -620,7 +677,25 @@ class Settings {
 			return $value;
 		}
 
-		// TODO check if type is valid and supported.
+		// bail if given type is not supported.
+		if ( ! Helper::is_setting_type_valid( $field_settings->get_type() ) ) {
+			return $value;
+		}
+
+		// if type is a string, secure for string.
+		if ( 'string' === $field_settings->get_type() ) {
+			return (string) $value;
+		}
+
+		// if type is a boolean, secure for boolean.
+		if ( 'boolean' === $field_settings->get_type() ) {
+			return (bool) $value;
+		}
+
+		// if type is an object, secure for object.
+		if ( 'object' === $field_settings->get_type() ) {
+			return (object) $value;
+		}
 
 		// if type is array, secure for array.
 		if ( 'array' === $field_settings->get_type() ) {
@@ -634,7 +709,7 @@ class Settings {
 		}
 
 		// if type is int, secure value for int.
-		if ( 'integer' === $field_settings->get_type() ) {
+		if ( 'integer' === $field_settings->get_type() || 'number' === $field_settings->get_type() ) {
 			return absint( $value );
 		}
 
@@ -710,7 +785,7 @@ class Settings {
 	}
 
 	/**
-	 * Do run during activation of the plugin.
+	 * Run this tasks during activation of the plugin.
 	 *
 	 * @return void
 	 */
@@ -722,12 +797,12 @@ class Settings {
 			}
 
 			// bail if default value is empty.
-			if( ! $setting->is_default_set() ) {
+			if ( ! $setting->is_default_set() ) {
 				continue;
 			}
 
 			// bail if option is already set.
-			if( false !== get_option( $setting->get_name(), false ) ) {
+			if ( false !== get_option( $setting->get_name(), false ) ) {
 				continue;
 			}
 

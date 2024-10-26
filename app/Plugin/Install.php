@@ -71,8 +71,6 @@ class Install {
 			}
 		}
 
-		error_log('1111');
-
 		// install settings.
 		Settings::get_instance()->activation();
 
