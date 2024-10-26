@@ -503,7 +503,7 @@ class Http extends Protocol_Base {
 	private function get_header_args(): array {
 		// define basic header.
 		$args = array(
-			'timeout'     => 30,
+			'timeout'     => get_option( 'eml_timeout' ),
 			'httpversion' => '1.1',
 			'redirection' => 0,
 		);

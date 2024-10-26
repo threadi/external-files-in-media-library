@@ -678,11 +678,15 @@ class Settings {
 	}
 
 	/**
-	 * Do run during activation of the plugin.
+	 * Get just the settings from tabs of this settings object.
 	 *
-	 * @return void
+	 * @return array
 	 */
-	public function activation(): void {
+	private function get_settings(): array {
+		// variable for list of settings.
+		$settings = array();
+
+		// loop through the tabs.
 		foreach ( $this->get_tabs() as $tab ) {
 			// bail if tab is not a Tab object.
 			if ( ! $tab instanceof Tab ) {
@@ -697,15 +701,49 @@ class Settings {
 				}
 
 				// add the default values for each setting.
-				add_option( $setting->get_name(), $setting->get_default(), '', true );
+				$settings[] = $setting;
 			}
+		}
+
+		// return resulting settings.
+		return $settings;
+	}
+
+	/**
+	 * Do run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		foreach ( $this->get_settings() as $setting ) {
+			// bail if tab is not a Tab object.
+			if ( ! $setting instanceof Setting ) {
+				continue;
+			}
+
+			// bail if default value is empty.
+			if( ! $setting->is_default_set() ) {
+				continue;
+			}
+
+			// bail if option is already set.
+			if( false !== get_option( $setting->get_name(), false ) ) {
+				continue;
+			}
+
+			// add the option.
+			add_option( $setting->get_name(), $setting->get_default(), '', true );
 		}
 	}
 
 	/**
-	 * Do run during deactivation of the plugin.
+	 * Delete all settings.
 	 *
 	 * @return void
 	 */
-	public function deactivation(): void {}
+	public function delete_settings(): void {
+		foreach ( $this->get_settings() as $setting ) {
+			delete_option( $setting->get_name() );
+		}
+	}
 }

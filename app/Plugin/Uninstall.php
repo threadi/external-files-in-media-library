@@ -97,26 +97,19 @@ class Uninstall {
 
 		// delete options this plugin has used.
 		$options = array(
-			'eml_delete_on_deinstallation',
-			'eml_switch_on_uninstallation',
-			'eml_disable_attachment_pages',
-			'eml_check_interval',
-			'eml_allowed_mime_types',
-			'eml_images_mode',
-			'eml_log_mode',
-			'eml_allowed_roles',
-			'eml_user_assign',
-			'eml_proxy',
-			'eml_proxy_max_age',
 			'eml_import_url_count',
 			'eml_import_url_max',
 			'eml_import_running',
 			'eml_import_title',
 			'eml_import_errors',
+			'eml_transients'
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );
 		}
+
+		// clean managed settings.
+		Settings\Settings::get_instance()->delete_settings();
 
 		// cleanup own cache.
 		$external_files_obj->delete_cache_directory();

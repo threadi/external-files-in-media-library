@@ -47,7 +47,7 @@ class Setting {
 	 *
 	 * @var mixed
 	 */
-	private mixed $default = '';
+	private mixed $default = null;
 
 	/**
 	 * Show in REST API.
@@ -253,5 +253,14 @@ class Setting {
 	 */
 	public function set_save_callback( array $save_callback ): void {
 		$this->save_callback = $save_callback;
+	}
+
+	/**
+	 * Return whether a default value is set.
+	 *
+	 * @return bool
+	 */
+	public function is_default_set(): bool {
+		return $this->get_default() !== null;
 	}
 }

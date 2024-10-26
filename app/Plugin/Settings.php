@@ -59,8 +59,6 @@ class Settings {
 	 */
 	public function init(): void {
 		add_action( 'plugins_loaded', array( $this, 'add_settings' ) );
-		register_activation_hook( EML_PLUGIN, array( Settings\Settings::get_instance(), 'activation' ) );
-		register_deactivation_hook( EML_PLUGIN, array( Settings\Settings::get_instance(), 'deactivation' ) );
 	}
 
 	/**
@@ -113,6 +111,8 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_check_interval' );
 		$setting->set_section( $general_settings_tab_main );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'daily' );
 		$field = new Select();
 		$field->set_title( __( 'Set interval for file-check', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
@@ -129,26 +129,14 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_allowed_mime_types' );
 		$setting->set_section( $general_settings_tab_main );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
 		$field->set_description( sprintf( __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_hook_url() ) ) );
 		$field->set_options( $mime_types );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
-		$setting->set_field( $field );
-
-		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_log_mode' );
-		$setting->set_section( $general_settings_tab_main );
-		$field = new Select();
-		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
-		$field->set_options(
-			array(
-				'0' => __( 'normal', 'external-files-in-media-library' ),
-				'1' => __( 'log warnings', 'external-files-in-media-library' ),
-				'2' => __( 'log all', 'external-files-in-media-library' ),
-			)
-		);
 		$setting->set_field( $field );
 
 		// add setting.
@@ -161,6 +149,8 @@ class Settings {
 				'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-files-in-media-library' ),
 			)
 		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
 
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_switch_on_uninstallation' );
@@ -172,6 +162,8 @@ class Settings {
 				'description' => __( 'If this option is enabled all external files will be saved local during uninstallation of this plugin.', 'external-files-in-media-library' ),
 			)
 		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
 
 		// add section.
 		$general_settings_tab_files = $general_settings_tab->add_section( 'settings_section_add_files' );
@@ -189,6 +181,8 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_allowed_roles' );
 		$setting->set_section( $general_settings_tab_files );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select user roles', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ) );
@@ -204,6 +198,8 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_settings_tab_files );
+		$setting->set_type( 'integer' );
+		$setting->set_default( Helper::get_first_administrator_user() );
 		$field = new Select();
 		$field->set_title( __( 'User new files should be assigned to', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-files-in-media-library' ) );
@@ -218,6 +214,8 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_images_mode' );
 		$setting->set_section( $general_settings_tab_images );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
 		$field = new Select();
 		$field->set_title( __( 'Mode for image handling', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines how external images are handled.', 'external-files-in-media-library' ) );
@@ -232,22 +230,23 @@ class Settings {
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_proxy' );
 		$setting->set_section( $general_settings_tab_images );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
 		$field = new Checkbox();
 		$field->set_title( __( 'Enable proxy for images', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ) );
-		$field->set_readonly( 'external' === get_option( 'eml_images_mode', '' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_images_mode', '' ) );
 		$setting->set_field( $field );
 
 		// add setting.
 		$setting = $general_settings_tab->add_setting( 'eml_proxy_max_age' );
 		$setting->set_section( $general_settings_tab_images );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 );
 		$field = new Number();
 		$field->set_title( __( 'Max age for cached images in proxy in hours', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
-
-		// set the default tab.
-		$settings_obj->set_default_tab( $general_settings_tab );
 
 		// add the logs tab.
 		$general_logs_tab = $settings_obj->add_tab( 'eml_logs' );
@@ -261,6 +260,46 @@ class Settings {
 		$general_helper_tab->set_url_target( '_blank' );
 		$general_helper_tab->set_tab_class( 'nav-tab-help' );
 		$general_helper_tab->set_show_in_menu( true );
+
+		// add the advanced tab.
+		$general_advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
+		$general_advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
+
+		// add section.
+		$general_settings_tab_advanced = $general_advanced_tab->add_section( 'settings_section_advanced' );
+		$general_settings_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
+		$general_settings_tab_advanced->set_setting( $settings_obj );
+
+		// add setting.
+		$setting = $general_advanced_tab->add_setting( 'eml_timeout' );
+		$setting->set_section( $general_settings_tab_advanced );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 30 );
+		$setting->set_field( array(
+			'type' => 'Number',
+			'title' => __( 'Max. Timeout in seconds', 'external-files-in-media-library' ),
+			'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' )
+		) );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $general_advanced_tab->add_setting( 'eml_log_mode' );
+		$setting->set_section( $general_settings_tab_advanced );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Select();
+		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'0' => __( 'normal', 'external-files-in-media-library' ),
+				'1' => __( 'log warnings', 'external-files-in-media-library' ),
+				'2' => __( 'log all', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+
+		// set the default tab.
+		$settings_obj->set_default_tab( $general_settings_tab );
 
 		// initialize this settings object.
 		$settings_obj->init();
@@ -374,5 +413,18 @@ class Settings {
 			<?php $log->display(); ?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Run during plugin activation.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		// add all settings.
+		$this->add_settings();
+
+		// run the installation of them.
+		Settings\Settings::get_instance()->activation();
 	}
 }

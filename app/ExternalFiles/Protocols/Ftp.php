@@ -115,7 +115,7 @@ class Ftp extends Protocol_Base {
 
 		// typically this is not defined, so we set it up just in case.
 		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
-			define( 'FS_CONNECT_TIMEOUT', 30 );
+			define( 'FS_CONNECT_TIMEOUT', get_option( 'eml_timeout' ) );
 		}
 
 		// load necessary classes.

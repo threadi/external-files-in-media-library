@@ -71,66 +71,10 @@ class Install {
 			}
 		}
 
-		// disable attachment-pages of URL-files on activation.
-		if ( ! get_option( 'eml_disable_attachment_pages', false ) ) {
-			update_option( 'eml_disable_attachment_pages', 1 );
-		}
+		error_log('1111');
 
-		// enable the deletion of all URL-files during uninstallation of this plugin.
-		if ( ! get_option( 'eml_delete_on_deinstallation', false ) ) {
-			update_option( 'eml_delete_on_deinstallation', 1 );
-		}
-
-		// set default mime-types we enable.
-		if ( ! get_option( 'eml_allowed_mime_types' ) ) {
-			update_option( 'eml_allowed_mime_types', array( 'application/pdf', 'image/jpeg', 'image/png' ) );
-		}
-
-		// set image-mode to external hosting.
-		if ( ! get_option( 'eml_images_mode' ) ) {
-			update_option( 'eml_images_mode', 'external' );
-		}
-
-		// set log-mode to normal.
-		if ( ! get_option( 'eml_log_mode' ) ) {
-			update_option( 'eml_log_mode', '0' );
-		}
-
-		// set user roles who can add external files.
-		if ( ! get_option( 'eml_allowed_roles' ) ) {
-			// define list of allowed roles.
-			$user_roles = array(
-				'administrator',
-				'editor',
-			);
-
-			// set capabilities.
-			Helper::set_capabilities( $user_roles );
-
-			// set the defined on-install supported roles in the settings.
-			update_option( 'eml_allowed_roles', $user_roles );
-		}
-
-		// user new files should be assigned to (only fallback).
-		if ( ! get_option( 'eml_user_assign' ) ) {
-			// set him as fallback-user.
-			update_option( 'eml_user_assign', Helper::get_first_administrator_user() );
-		}
-
-		// enable the image-proxy initially.
-		if ( ! get_option( 'eml_proxy' ) ) {
-			// set him as fallback-user.
-			update_option( 'eml_proxy', 1 );
-		}
-
-		// set max age for files in proxy-cache.
-		if ( ! get_option( 'eml_proxy_max_age' ) ) {
-			// set him as fallback-user.
-			update_option( 'eml_proxy_max_age', 24 );
-		}
-
-		// register settings.
-		// TODO !!!
+		// install settings.
+		Settings::get_instance()->activation();
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();

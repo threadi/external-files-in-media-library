@@ -82,23 +82,6 @@ class Select extends Field_Base {
 	}
 
 	/**
-	 * The sanitize callback for this field.
-	 *
-	 * @param mixed $value The value to save.
-	 *
-	 * @return mixed
-	 */
-	public function sanitize_callback( mixed $value ): int {
-		// bail if value is null.
-		if ( is_null( $value ) ) {
-			return 0;
-		}
-
-		// return the value.
-		return absint( $value );
-	}
-
-	/**
 	 * Return the options for this field.
 	 *
 	 * @return array
