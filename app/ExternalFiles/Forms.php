@@ -169,7 +169,7 @@ class Forms {
 				// add link to settings for admin.
 				if ( current_user_can( 'manage_options' ) ) {
 					?>
-					<br><a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_html__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+					<br><a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_html__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
 					<?php
 				}
 				?>
@@ -231,7 +231,7 @@ class Forms {
 			// add link to settings for admin.
 			if ( current_user_can( 'manage_options' ) ) {
 				?>
-				<a href="<?php echo esc_url( helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
+				<a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
 				<?php
 			}
 			?>

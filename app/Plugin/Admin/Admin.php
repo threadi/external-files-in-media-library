@@ -69,6 +69,9 @@ class Admin {
 		// initialize the files object.
 		Files::get_instance()->init();
 
+		// initialize transients.
+		Transients::get_instance()->init();
+
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
@@ -94,7 +97,8 @@ class Admin {
 		$transient_obj  = $transients_obj->add();
 		$transient_obj->set_dismissible_days( 14 );
 		$transient_obj->set_name( 'eml_missing_mime_types' );
-		$transient_obj->set_message( __( 'External files could not be used as no mime-types are allowed.', 'external-files-in-media-library' ) );
+		/* translators: %1$s will be replaced by the URL for the plugin configuration. */
+		$transient_obj->set_message( sprintf( __( '<strong>External files could not be used as no mime-types are allowed.</strong> Go to <a href="%1$s">Settings</a> to choose mime-types you want to use.', 'external-files-in-media-library' ), esc_url( Helper::get_config_url() ) ) );
 		$transient_obj->set_type( 'error' );
 		$transient_obj->save();
 	}

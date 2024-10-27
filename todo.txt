@@ -1,3 +1,4 @@
+* TODOs anschauen
 * mehr Hooks ergänzen
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
 * Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9

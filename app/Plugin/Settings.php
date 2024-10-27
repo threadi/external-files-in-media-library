@@ -62,6 +62,29 @@ class Settings {
 	}
 
 	/**
+	 * Return the menu slug for the settings.
+	 *
+	 * @return string
+	 */
+	private function get_menu_slug(): string {
+		return 'eml_settings';
+	}
+
+	/**
+	 * Return the link to the settings.
+	 *
+	 * @return string
+	 */
+	public function get_url(): string {
+		return add_query_arg(
+			array(
+				'page' => $this->get_menu_slug(),
+			),
+			'options-general.php'
+		);
+	}
+
+	/**
 	 * Add our custom settings for this plugin.
 	 *
 	 * @return void
@@ -71,7 +94,7 @@ class Settings {
 		$settings_obj = Settings\Settings::get_instance();
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
-		$settings_obj->set_menu_slug( 'eml_settings' );
+		$settings_obj->set_menu_slug( $this->get_menu_slug() );
 
 		// add the settings tabs.
 		$general_settings_tab = $settings_obj->add_tab( 'eml_general' );

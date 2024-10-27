@@ -709,7 +709,7 @@ class Files {
 				<span id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></span>
 				<?php
 			} else {
-				$log_url = helper::get_log_url();
+				$log_url = Helper::get_log_url();
 				?>
 				<span id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
 					<?php

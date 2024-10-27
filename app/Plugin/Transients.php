@@ -196,8 +196,6 @@ class Transients {
 	 * Handles Ajax request to persist notices dismissal.
 	 * Uses check_ajax_referer to verify nonce.
 	 *
-	 * TODO fertigstellen
-	 *
 	 * @return void
 	 * @noinspection PhpUnused
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection

@@ -163,8 +163,10 @@ Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///v
 * Added migration tool to switch the external files from Exmage to this one
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with progressbar, states and arguments
+* Replaced settings management with optimized objects
 * Optimized proxy url handling
 * Optimized build process for releases
+* Optimized transients of this plugin
 * Replaced dialog library with new one
 * Renamed internal transient prefix for better compatibility with other plugins
 * Move support for already supported plugins in new wrapper

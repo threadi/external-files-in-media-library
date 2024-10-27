@@ -43,12 +43,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_config_url(): string {
-		return add_query_arg(
-			array(
-				'page' => 'eml_settings',
-			),
-			'options-general.php'
-		);
+		return Settings::get_instance()->get_url();
 	}
 
 	/**
@@ -266,8 +261,13 @@ class Helper {
 		// get the list from settings.
 		$list = get_option( 'eml_allowed_mime_types', array() );
 
+		// bail if setting is not an array.
+		if( ! is_array( $list ) ) {
+			return array();
+		}
+
 		// is list is empty, return empty list.
-		if ( ! is_array( $list ) ) {
+		if ( empty( $list ) ) {
 			return array();
 		}
 
@@ -336,5 +336,14 @@ class Helper {
 	 */
 	public static function is_cli(): bool {
 		return defined( 'WP_CLI' ) && WP_CLI;
+	}
+
+	/**
+	 * Return URL where user can add files for media library.
+	 *
+	 * @return string
+	 */
+	public static function get_add_media_url(): string {
+		return add_query_arg( array(), get_admin_url() . 'media-new.php' );
 	}
 }
