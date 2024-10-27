@@ -167,6 +167,7 @@ Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///v
 * Optimized proxy url handling
 * Optimized build process for releases
 * Optimized transients of this plugin
+* Optimized log table with much more options
 * Replaced dialog library with new one
 * Renamed internal transient prefix for better compatibility with other plugins
 * Move support for already supported plugins in new wrapper

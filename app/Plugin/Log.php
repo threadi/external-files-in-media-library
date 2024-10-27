@@ -59,6 +59,9 @@ class Log {
 			}
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
 		}
+		elseif( ! empty( $state ) ) {
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
+		}
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
 	}
 

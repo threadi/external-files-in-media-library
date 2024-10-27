@@ -49,16 +49,12 @@ class Helper {
 	/**
 	 * Return the url of the logs of this plugin.
 	 *
+	 * @param string $url The URL to filter for.
+	 *
 	 * @return string
 	 */
-	public static function get_log_url(): string {
-		return add_query_arg(
-			array(
-				'page' => 'eml_settings',
-				'tab'  => 'logs',
-			),
-			'options-general.php'
-		);
+	public static function get_log_url( string $url = '' ): string {
+		return Settings::get_instance()->get_url( 'eml_logs', $url );
 	}
 
 	/**

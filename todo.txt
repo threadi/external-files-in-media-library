@@ -1,8 +1,4 @@
 * mehr Hooks ergänzen
-* Log-Tabelle optimieren
--> Status vorne
--> Button zum Löschen von allen Einträgen
--> Pagination
 * Extern gehostet ist das Vorschaubild in falscher Größe
 * Review-URL zentral verwalten (und in js.js dynamisch einbinden)
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs

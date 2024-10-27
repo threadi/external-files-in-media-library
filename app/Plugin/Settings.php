@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
+use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 
 /**
  * Object which handles the settings of this plugin.
@@ -71,16 +72,42 @@ class Settings {
 	}
 
 	/**
-	 * Return the link to the settings.
+	 * Return the php page the settings will be using.
 	 *
 	 * @return string
 	 */
-	public function get_url(): string {
+	private function get_php_page(): string {
+		return 'options-general.php';
+	}
+
+	/**
+	 * Return the link to the settings.
+	 *
+	 * @param string $tab The tab.
+	 * @param string $url The URL to filter for.
+	 *
+	 * @return string
+	 */
+	public function get_url( string $tab = '', string $url = '' ): string {
+		// define base array.
+		$array = array(
+			'page' => $this->get_menu_slug(),
+		);
+
+		// add tab, if set.
+		if( ! empty( $tab ) ) {
+			$array['tab'] = $tab;
+		}
+
+		// add URL, if set.
+		if( ! empty( $url ) ) {
+			$array['url'] = $url;
+		}
+
+		// return the URL.
 		return add_query_arg(
-			array(
-				'page' => $this->get_menu_slug(),
-			),
-			'options-general.php'
+			$array,
+			get_admin_url() . $this->get_php_page()
 		);
 	}
 
@@ -95,6 +122,7 @@ class Settings {
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
+		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
 
 		// add the settings tabs.
 		$general_settings_tab = $settings_obj->add_tab( 'eml_general' );
@@ -271,19 +299,6 @@ class Settings {
 		$field->set_description( __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 
-		// add the logs tab.
-		$general_logs_tab = $settings_obj->add_tab( 'eml_logs' );
-		$general_logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
-		$general_logs_tab->set_callback( array( $this, 'show_logs' ) );
-
-		// add the helper tab.
-		$general_helper_tab = $settings_obj->add_tab( 'eml_helper' );
-		$general_helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
-		$general_helper_tab->set_url( 'https://wordpress.org/support/plugin/external-files-in-media-library/' );
-		$general_helper_tab->set_url_target( '_blank' );
-		$general_helper_tab->set_tab_class( 'nav-tab-help' );
-		$general_helper_tab->set_show_in_menu( true );
-
 		// add the advanced tab.
 		$general_advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
 		$general_advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
@@ -322,6 +337,18 @@ class Settings {
 			)
 		);
 		$setting->set_field( $field );
+
+		// add the logs tab.
+		$general_logs_tab = $settings_obj->add_tab( 'eml_logs' );
+		$general_logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
+		$general_logs_tab->set_callback( array( $this, 'show_logs' ) );
+
+		// add the helper tab.
+		$general_helper_tab = $settings_obj->add_tab( 'eml_helper' );
+		$general_helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
+		$general_helper_tab->set_url( Helper::get_plugin_support_url() );
+		$general_helper_tab->set_url_target( '_blank' );
+		$general_helper_tab->set_tab_class( 'nav-tab-help' );
 
 		// set the default tab.
 		$settings_obj->set_default_tab( $general_settings_tab );
@@ -435,7 +462,10 @@ class Settings {
 		<div class="wrap">
 			<div id="icon-users" class="icon32"></div>
 			<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
-			<?php $log->display(); ?>
+			<?php
+			$log->views();
+			$log->display();
+			?>
 		</div>
 		<?php
 	}

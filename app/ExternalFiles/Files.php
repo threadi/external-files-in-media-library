@@ -858,6 +858,9 @@ class Files {
 			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
+		?>
+		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries.', 'external-files-in-media-library' ); ?></a></li>
+		<?php
 		?></ul><?php
 	}
 

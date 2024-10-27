@@ -102,3 +102,14 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	cursor: pointer;
 	margin-bottom: 0.4em;
 }
+
+.settings_page_eml_settings #state { width: 80px }
+
+.settings_page_eml_settings #date { width: 120px }
+
+.settings_page_eml_settings #url { width: 320px }
+
+.settings_page_eml_settings .current {
+	color: #000;
+	font-weight: 600;
+}

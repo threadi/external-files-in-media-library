@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
@@ -75,6 +76,7 @@ class Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
 		add_action( 'admin_init', array( $this, 'check_php' ) );
+		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -185,5 +187,23 @@ class Admin {
 
 		// return resulting list of links.
 		return $links;
+	}
+
+	/**
+	 * Empty the log per request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function empty_log(): void {
+		// check the nonce.
+		check_admin_referer( 'eml-empty-log', 'nonce' );
+
+		// empty the table.
+		Log::get_instance()->truncate_log();
+
+		// redirect user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
 	}
 }
