@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains a helper class for this plugin.
+ * This file contains a helper object for this plugin.
  *
  * @package external-files-in-media-library
  */
@@ -69,10 +69,12 @@ class Helper {
 	 * @return void
 	 */
 	public static function set_capabilities( array $user_roles ): void {
-		global $wp_roles;
+		if ( ! ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) ) {
+			return;
+		}
 
 		// set the capability 'eml_manage_files' for the given roles.
-		foreach ( $wp_roles->roles as $slug => $role ) {
+		foreach ( wp_roles()->roles as $slug => $role ) {
 			// get the role-object.
 			$role_obj = get_role( $slug );
 
@@ -90,9 +92,9 @@ class Helper {
 	/**
 	 * Get the ID of the first administrator user.
 	 *
-	 * @return int|null
+	 * @return int
 	 */
-	public static function get_first_administrator_user(): ?int {
+	public static function get_first_administrator_user(): int {
 		$user_id = 0;
 
 		// get first admin-user.
@@ -101,12 +103,22 @@ class Helper {
 			'number' => 1,
 		);
 		$results = new WP_User_Query( $query );
-		$roles   = $results->get_results();
-		if ( ! empty( $roles ) ) {
-			$user_id = $roles[0]->ID;
+
+		// bail on no results.
+		if( 0 === $results->get_total() ) {
+			return $user_id;
 		}
 
-		return $user_id;
+		// get the results.
+		$roles   = $results->get_results();
+
+		// bail if first entry does not exist.
+		if( empty( $roles[0] ) ) {
+			return $user_id;
+		}
+
+		// return the ID of the first entry.
+		return $roles[0]->ID;
 	}
 
 	/**
@@ -116,28 +128,37 @@ class Helper {
 	 * @return void
 	 */
 	public static function delete_directory_recursively( string $dir ): void {
-		if ( is_dir( $dir ) ) {
-			$objects = scandir( $dir );
-			foreach ( $objects as $object ) {
-				if ( '.' !== $object && '..' !== $object ) {
-					if ( is_dir( $dir . DIRECTORY_SEPARATOR . $object ) && ! is_link( $dir . '/' . $object ) ) {
-						self::delete_directory_recursively( $dir . DIRECTORY_SEPARATOR . $object );
-					} else {
-						wp_delete_file( $dir . DIRECTORY_SEPARATOR . $object );
-					}
-				}
+		// bail if given string is not a directory.
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+
+		// get all subdirectories and files in this directory.
+		$objects = scandir( $dir );
+
+		// loop through them.
+		foreach ( $objects as $object ) {
+			// bail on "."-entries.
+			if ( '.' === $object || '..' === $object ) {
+				continue;
 			}
 
-			// get WP Filesystem-handler.
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			\WP_Filesystem();
-			global $wp_filesystem;
-			$wp_filesystem->delete( $dir );
+			if ( is_dir( $dir . DIRECTORY_SEPARATOR . $object ) && ! is_link( $dir . '/' . $object ) ) {
+				self::delete_directory_recursively( $dir . DIRECTORY_SEPARATOR . $object );
+			} else {
+				wp_delete_file( $dir . DIRECTORY_SEPARATOR . $object );
+			}
 		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+		$wp_filesystem->delete( $dir );
 	}
 
 	/**
-	 * Return the hook-url.
+	 * Return the hook-documentation-URL.
 	 *
 	 * @return string
 	 */
@@ -233,7 +254,7 @@ class Helper {
 		/**
 		 * Filter the possible mime types this plugin could support. This is the list used for the setting in backend.
 		 *
-		 * To add files of type "your/mime" with extension "yourmime" use this example:
+		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
 		 * ```
 		 * add_filter( 'eml_supported_mime_types', function( $list ) {
@@ -272,9 +293,22 @@ class Helper {
 		}
 
 		/**
-		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks.
+		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks
+		 * and is not visible or editable in backend.
+		 *
+		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
+		 *
+		 *  ```
+		 *  add_filter( 'eml_get_mime_types', function( $list ) {
+		 *   $list['your/mime'] = array(
+		 *       'label' => 'Title of your mime',
+		 *       'ext' => 'yourmime'
+		 *   );
+		 *   return $list;
+		 *  } );
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
+		 *
 		 * @param array $list List of mime types.
 		 */
 		return apply_filters( 'eml_get_mime_types', $list );

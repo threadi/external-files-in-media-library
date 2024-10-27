@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 
 /**
- * Initialize the plugin, connect all together.
+ * Object which handles the installation of this plugin.
  */
 class Install {
 

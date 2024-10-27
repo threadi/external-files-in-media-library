@@ -13,7 +13,7 @@ use WP_Query;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Initialize the admin tasks for this plugin.
+ * Object which extends the attachment tables in backend.
  */
 class Tables {
 
@@ -27,21 +27,19 @@ class Tables {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return Forms
+	 * @return Tables
 	 */
 	public static function get_instance(): Tables {
 		if ( is_null( self::$instance ) ) {

@@ -11,9 +11,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
- * Initialize the admin tasks for this plugin.
+ * Initialize the backend forms for external files.
  */
 class Forms {
 
@@ -50,7 +51,7 @@ class Forms {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize the backend forms for external files.
 	 *
 	 * @return void
 	 */
@@ -267,7 +268,7 @@ class Forms {
 		update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
 		// get files-object.
-		$files_obj = External_Files::get_instance();
+		$files_obj = Files::get_instance();
 
 		// get the urls from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
@@ -318,7 +319,7 @@ class Forms {
 				$external_file_obj = $files_obj->get_file_by_url( $url );
 
 				// bail if external file object could not be loaded or is not valid.
-				if ( ! ( $external_file_obj instanceof External_File && $external_file_obj->is_valid() ) ) {
+				if ( ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
 					continue;
 				}
 

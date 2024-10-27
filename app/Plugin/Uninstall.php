@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 
 /**
  * Uninstall this plugin.
@@ -112,7 +113,7 @@ class Uninstall {
 		Settings\Settings::get_instance()->delete_settings();
 
 		// cleanup own cache.
-		$external_files_obj->delete_cache_directory();
+		Proxy::get_instance()->delete_cache_directory();
 
 		// delete Log-database-table.
 		Log::get_instance()->uninstall();

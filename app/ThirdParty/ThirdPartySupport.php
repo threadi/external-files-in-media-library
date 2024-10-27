@@ -75,10 +75,12 @@ class ThirdPartySupport {
 	private function get_third_party_support(): array {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
+			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\GoogleDrive',
 			'ExternalFilesInMediaLibrary\ThirdParty\Imgur',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
 
 		/**

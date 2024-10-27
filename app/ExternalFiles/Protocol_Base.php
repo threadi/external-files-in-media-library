@@ -215,6 +215,19 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	protected function check_for_duplicate( string $url ): bool {
+		$false = false;
+		/**
+		 * Filter to prevent duplicate check.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $false Must be true to prevent check.
+		 * @param string $url The used URL.
+		 */
+		if( apply_filters( 'eml_duplicate_check', $false, $url ) ) {
+			return false;
+		}
+
+		// query for file with same URL.
 		$query   = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',

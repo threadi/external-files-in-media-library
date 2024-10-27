@@ -16,7 +16,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
 
 /**
- * Initialize the plugin, connect all together.
+ * Object which handles the settings of this plugin.
  */
 class Settings {
 

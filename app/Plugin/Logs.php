@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use WP_List_Table;
 
 /**
- * Initialize the viewer.
+ * Initialize the log viewer.
  */
 class Logs extends WP_List_Table {
 	/**

@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains a model-object for a single External_File.
+ * This file contains a model-object for a single File.
  *
  * @package external-files-in-media-library
  */
@@ -415,7 +415,7 @@ class File {
 	 */
 	public function get_cache_file(): string {
 		// get path for cache directory.
-		$path = Files::get_instance()->get_cache_directory();
+		$path = Proxy::get_instance()->get_cache_directory();
 
 		// get filename.
 		$filename = md5( $this->get_url() ) . '.' . $this->get_file_extension();
@@ -542,6 +542,15 @@ class File {
 	}
 
 	/**
+	 * Return whether this file is using credentials.
+	 *
+	 * @return bool
+	 */
+	public function has_credentials(): bool {
+		return ! empty( $this->get_login() ) && ! empty( $this->get_password() );
+	}
+
+	/**
 	 * Switch hosting of this file to local.
 	 *
 	 * @return bool
@@ -555,16 +564,27 @@ class File {
 		// get the handler for this url depending on its protocol.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 
+		// prevent duplicate check for this file.
+		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ), 10, 2 );
+
 		// get external file infos.
 		$file_data = $protocol_handler_obj->get_external_infos();
+
+		// remove prevent duplicate check for this file.
+		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ) );
+
+		// bail if no file data could be loaded.
+		if( empty( $file_data ) ) {
+			return false;
+		}
 
 		// import file via WP-own functions.
 		$array = array(
 			'name'     => $this->get_title(),
-			'type'     => $file_data['mime-type'],
-			'tmp_name' => $file_data['tmp-file'],
+			'type'     => $file_data[0]['mime-type'],
+			'tmp_name' => $file_data[0]['tmp-file'],
 			'error'    => 0,
-			'size'     => $file_data['filesize'],
+			'size'     => $file_data[0]['filesize'],
 			'url'      => $this->get_url(),
 		);
 
@@ -681,6 +701,23 @@ class File {
 		$this->delete_cache();
 
 		// return true if switch was successfully.
+		return true;
+	}
+
+	/**
+	 * Prevent duplicate check.
+	 *
+	 * @param bool   $return_value The resulting value.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function prevent_duplicate_check( bool $return_value, string $url ): bool {
+		// bail if URL is not our URL.
+		if( $url !== $this->get_url( true ) ) {
+			return $return_value;
+		}
+
 		return true;
 	}
 }

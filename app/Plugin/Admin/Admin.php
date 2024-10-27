@@ -14,7 +14,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use ExternalFilesInMediaLibrary\Plugin\Logs;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**

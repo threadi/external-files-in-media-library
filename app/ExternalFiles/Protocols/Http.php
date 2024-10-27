@@ -442,13 +442,26 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		// if URL is not SSL but project is, file should be saved local.
-		if ( is_ssl() && ! str_starts_with( $this->get_url(), 'https://' ) ) {
+		$url = $this->get_url();
+		$true = true;
+
+		/**
+		 * Filter whether files should be forced to save local
+		 * if URL is using SSL but the website not.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 *
+		 * @param bool $true Use false to disable this.
+		 * @param string $url The URL to check.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'eml_http_ssl', $true, $url ) ) {
 			return true;
 		}
 
 		// get the external file object.
-		$external_file_obj = Files::get_instance()->get_file_by_url( $this->get_url() );
+		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
 		// if setting enables local saving for images, file should be saved local.
 		$result = 'local' === get_option( 'eml_images_mode', 'external' ) && $external_file_obj->is_image();
@@ -459,7 +472,7 @@ class Http extends Protocol_Base {
 		 * @param bool $result True if file should be saved local.
 		 * @param string $url The used URL.
 		 */
-		return apply_filters( 'eml_http_save_local', $result, $this->get_url() );
+		return apply_filters( 'eml_http_save_local', $result, $url );
 	}
 
 	/**
@@ -478,8 +491,19 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		// if URL is not SSL but project is, file should be saved local.
-		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) ) {
+		$true = true;
+		/**
+		 * Filter whether files should be forced to save local
+		 * if URL is using SSL but the website not.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 *
+		 * @param bool $true Use false to disable this.
+		 * @param string $url The URL to check.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'eml_http_ssl', $true, $url ) ) {
 			return true;
 		}
 

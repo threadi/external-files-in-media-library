@@ -61,7 +61,7 @@ class Exmage {
 	 * @return void
 	 */
 	public function init(): void {
-		// bail if exmage is not installed.
+		// bail if Exmage is not active.
 		if ( ! Helper::is_plugin_active( 'exmage-wp-image-links/exmage-wp-image-links.php' ) ) {
 			return;
 		}

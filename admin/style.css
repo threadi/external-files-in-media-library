@@ -85,6 +85,13 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	left: -6px;
 }
 
+.misc-pub-external-file > li {
+	text-indent: -24px;
+	padding-left: 24px;
+}
+
+.misc-pub-external-file > li .dashicons { text-indent: 0 }
+
 .wp-list-table.media #external_files { width: 120px }
 
 .eml .easy-dialog-for-wordpress-text details {

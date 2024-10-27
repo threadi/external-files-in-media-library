@@ -107,7 +107,7 @@ class Cli {
 		// loop through the files and delete them.
 		foreach ( $files as $external_file_obj ) {
 			// bail if this is not an external file object.
-			if ( ! $external_file_obj instanceof External_File ) {
+			if ( ! $external_file_obj instanceof File ) {
 				continue;
 			}
 

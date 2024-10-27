@@ -10,10 +10,12 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
- * Initialize the proxy-handler.
+ * Object which handles all proxy tasks.
  */
 class Proxy {
 	/**
@@ -212,5 +214,49 @@ class Proxy {
 		 * @param string $slug The slug.
 		 */
 		return apply_filters( 'eml_proxy_slug', $slug );
+	}
+
+	/**
+	 * Return the cache-directory for proxied external files.
+	 * Handles also the existence of the directory.
+	 *
+	 * @return string
+	 */
+	public function get_cache_directory(): string {
+		// create string with path for directory.
+		$path = trailingslashit( WP_CONTENT_DIR ) . 'cache/eml/';
+
+		// create it if necessary.
+		$this->create_cache_directory( $path );
+
+		// return path.
+		return $path;
+	}
+
+	/**
+	 * Create cache directory.
+	 *
+	 * @param string $path The path to the cache directory.
+	 * @return void
+	 */
+	private function create_cache_directory( string $path ): void {
+		// bail if file exist.
+		if ( file_exists( $path ) ) {
+			return;
+		}
+
+		// create directory and check response.
+		if ( false === wp_mkdir_p( $path ) ) {
+			Log::get_instance()->create( __( 'Error creating cache directory.', 'external-files-in-media-library' ), '', 'error', 0 );
+		}
+	}
+
+	/**
+	 * Delete the cache directory.
+	 *
+	 * @return void
+	 */
+	public function delete_cache_directory(): void {
+		Helper::delete_directory_recursively( $this->get_cache_directory() );
 	}
 }
