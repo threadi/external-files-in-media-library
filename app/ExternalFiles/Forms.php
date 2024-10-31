@@ -184,7 +184,7 @@ class Forms {
 				<p>
 					<?php
 					/* translators: %1$s will be replaced with the URL for add new media */
-					echo wp_kses_post( sprintf( __( 'Add external files <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
+					echo wp_kses_post( sprintf( __( 'Add external files via their URL <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
 					?>
 				</p>
 			</div>

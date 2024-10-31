@@ -94,7 +94,7 @@ class Settings {
 	 *
 	 * @return void
 	 */
-	private function __clone() { }
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -523,7 +523,7 @@ class Settings {
 				// get the field object.
 				$field = $setting->get_field();
 
-				if ( function_exists( 'add_settings_field' ) ) {
+				if ( function_exists( 'add_settings_field' ) && $setting->get_section() instanceof Section ) {
 					// add the field for this setting.
 					add_settings_field(
 						$setting->get_name(),

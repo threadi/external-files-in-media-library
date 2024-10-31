@@ -100,6 +100,11 @@ class Setting {
 	/**
 	 * Set the field to this setting.
 	 *
+	 * If $field is array it should contain:
+	 * - type => one of: Checkbox, MultiSelect, Number, Select (required)
+	 * - title => the title to use
+	 * - description => the description to show
+	 *
 	 * @param array|Field_Base $field The field to use or its configuration as array.
 	 *
 	 * @return false|Field_Base
@@ -148,9 +153,9 @@ class Setting {
 	/**
 	 * Return the section.
 	 *
-	 * @return Section
+	 * @return Section|null
 	 */
-	public function get_section(): Section {
+	public function get_section(): Section|null {
 		return $this->section;
 	}
 
@@ -195,7 +200,7 @@ class Setting {
 	}
 
 	/**
-	 * Set the type of this setting (e.g. "boolean" or "string").
+	 * Set the type of this setting (one of: "boolean", "integer", "string", "number", "array", "object").
 	 *
 	 * @param string $type The type.
 	 *

@@ -117,7 +117,7 @@ class Settings {
 	 * @return void
 	 */
 	public function add_settings(): void {
-		// get the settings object.
+		// get and configure the basic settings object.
 		$settings_obj = Settings\Settings::get_instance();
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );

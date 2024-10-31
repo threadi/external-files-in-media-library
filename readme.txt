@@ -23,13 +23,13 @@ and the plugin will import any supported files from it.
 
 You can use the following TCP-protocols to import external files in your media library:
 
-* http://
-* https://
-* ftp://
-* ftps://
-* sftp://
-* ssh://
-* file://
+* `http://`
+* `https://`
+* `ftp://`
+* `ftps://`
+* `sftp://`
+* `ssh://`
+* `file://`
 
 Some of them require credentials, for http it is optional.
 
@@ -75,6 +75,12 @@ Yes, you can. Just enter the directory to import.
 = Can I import from my local server? =
 
 Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///var/www/path/to/file.png
+
+= Can I import external product images for WooCommerce? =
+
+Yes, simply enable the setting under Settings > External files in Media Library > WooCommerce. Add your external URLs
+for images in the CSV you want to import as it is already possible with WooCommerce. They will be handled as
+external files by this plugin.
 
 == Screenshots ==
 

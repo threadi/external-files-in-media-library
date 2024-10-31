@@ -80,6 +80,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\GoogleDrive',
 			'ExternalFilesInMediaLibrary\ThirdParty\Imgur',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
 

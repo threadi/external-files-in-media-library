@@ -245,6 +245,12 @@ class Http extends Protocol_Base {
 				if ( empty( $url ) || '/' === $url ) {
 					continue;
 				}
+				// check if given file is a local file which exist in media library.
+				if( $this->is_local_file( $this->get_url() ) ) {
+					/* translators: %1$s will be replaced by the file-URL */
+					Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+					return array();
+				}
 
 				// concat the URL.
 				$file_url = path_join( $this->get_url(), $url );
@@ -268,10 +274,17 @@ class Http extends Protocol_Base {
 				$files[] = $file;
 			}
 		} else {
+			// check if given file is a local file which exist in media library.
+			if( $this->is_local_file( $this->get_url() ) ) {
+				/* translators: %1$s will be replaced by the file-URL */
+				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+				return array();
+			}
+
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -590,5 +603,17 @@ class Http extends Protocol_Base {
 	 */
 	public function is_available(): bool {
 		return function_exists( 'wp_remote_head' );
+	}
+
+	/**
+	 * Check if given URL exist in local media library.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	private function is_local_file( string $url ): bool {
+		$attachment_id = attachment_url_to_postid( $url );
+		return 0 !== $attachment_id;
 	}
 }
