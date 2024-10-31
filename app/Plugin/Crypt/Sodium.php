@@ -53,9 +53,9 @@ class Sodium extends Crypt_Base {
 	}
 
 	/**
-	 * Get sodium-encrypted text.
+	 * Get encrypted text.
 	 *
-	 * @param string $plain_text The encrypted text.
+	 * @param string $plain_text The text to encrypt.
 	 *
 	 * @return string
 	 */
@@ -77,9 +77,9 @@ class Sodium extends Crypt_Base {
 	}
 
 	/**
-	 * Get sodium-decrypted text.
+	 * Get decrypted text.
 	 *
-	 * @param string $encrypted_text The encrypted text.
+	 * @param string $encrypted_text Text to encrypt.
 	 *
 	 * @return string
 	 */

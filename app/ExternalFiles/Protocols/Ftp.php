@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the ftp support.
+ * File which handles the FTP support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -39,10 +39,10 @@ class Ftp extends Protocol_Base {
 	private array $ftp_connections = array();
 
 	/**
-	 * Check the given file-url regarding its string.
+	 * Check the given URL regarding its string.
 	 *
-	 * Return true if file-url is ok.
-	 * Return false if file-url is not ok
+	 * Return true if URL is ok.
+	 * Return false if URL is not ok
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -71,7 +71,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @param string $url The given URL.
 	 *
@@ -82,7 +82,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @return array List of file-infos.
 	 */

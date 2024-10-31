@@ -16,7 +16,7 @@ use WP_Post;
 use WP_Query;
 
 /**
- * Controller for external file-urls-tasks.
+ * Controller for external files-tasks.
  *
  * @noinspection PhpUnused
  */
@@ -234,7 +234,7 @@ class Files {
 		}
 
 		// bail if list is empty.
-		if( empty( $results ) ) {
+		if ( empty( $results ) ) {
 			return array();
 		}
 
@@ -322,6 +322,14 @@ class Files {
 		 * Loop through the results and save each in the media library.
 		 */
 		foreach ( $files as $file_data ) {
+			/**
+			 * Run additional tasks before new external file will be added.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 * @param array $file_data The array with the file data.
+			 */
+			do_action( 'eml_before_file_save', $file_data );
+
 			// bail if file is given, but has an error.
 			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
@@ -428,8 +436,8 @@ class Files {
 				$image_meta['file'] = $file_data['url'];
 
 				// change file name for each size.
-				foreach( $image_meta['sizes'] as $size_name => $size_data ) {
-					$image_meta['sizes'][$size_name]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+				foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
+					$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
 				}
 
 				// save the resulting image-data.
@@ -439,7 +447,7 @@ class Files {
 				$external_file_obj->add_to_cache();
 			}
 
-			// return true as the file has been created successfully.
+			// log that URL has been added as file in media library.
 			/* translators: %1$s will be replaced by the file-URL */
 			$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'success', 0 );
 
@@ -504,7 +512,7 @@ class Files {
 	 */
 	public function delete_file( File $external_file_obj ): void {
 		// if this is an image, get its sizes.
-		if( $external_file_obj->is_image() ) {
+		if ( $external_file_obj->is_image() ) {
 			// get WP Filesystem-handler.
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			\WP_Filesystem();
@@ -514,13 +522,13 @@ class Files {
 			$image_meta_data = wp_get_attachment_metadata( $external_file_obj->get_id(), true );
 
 			// loop through the sizes and delete each from our own directory.
-			if( ! empty( $image_meta_data['sizes'] ) ) {
-				foreach( $image_meta_data['sizes'] as $size_data ) {
+			if ( ! empty( $image_meta_data['sizes'] ) ) {
+				foreach ( $image_meta_data['sizes'] as $size_data ) {
 					// get file path.
 					$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size_data['width'], $size_data['height'] );
 
 					// bail if file does not exist.
-					if( ! $wp_filesystem->exists( $file ) ) {
+					if ( ! $wp_filesystem->exists( $file ) ) {
 						continue;
 					}
 
@@ -601,7 +609,7 @@ class Files {
 		// get the list.
 		$results = array();
 
-		// loop through the results-
+		// loop through the results.
 		foreach ( $result->get_posts() as $attachment_id ) {
 			// get the external file object.
 			$external_file_obj = $this->get_file( $attachment_id );
@@ -782,12 +790,12 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if the file is not an external file-URL.
-		if ( ! $external_file_obj )  {
+		if ( ! $external_file_obj ) {
 			return;
 		}
 
 		// bail if file is not valid.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -855,26 +863,26 @@ class Files {
 				<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
 				<?php
 			}
-		?>
+			?>
 		</li>
 		<li><span class="dashicons dashicons-yes-alt"></span>
 		<?php
-			if ( false !== $external_file_obj->is_locally_saved() ) {
-				echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-				if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
-					?>
+		if ( false !== $external_file_obj->is_locally_saved() ) {
+			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
+			if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
-				}
-			} else {
-				echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-				if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
-					?>
+			}
+		} else {
+			echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
+			if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
-				}
 			}
-			?>
+		}
+		?>
 		</li>
 		<?php
 		if ( get_option( 'eml_proxy' ) ) {
@@ -890,15 +898,15 @@ class Files {
 			</li>
 			<?php
 		}
-		if( $external_file_obj->has_credentials() ) {
+		if ( $external_file_obj->has_credentials() ) {
 			?>
 			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
 		?>
 		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries.', 'external-files-in-media-library' ); ?></a></li>
+		</ul>
 		<?php
-		?></ul><?php
 	}
 
 	/**
@@ -938,7 +946,7 @@ class Files {
 		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
 
 		// bail if protocol handler could not be loaded.
-		if( ! $protocol_handler ) {
+		if ( ! $protocol_handler ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}
@@ -1074,7 +1082,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if file is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $actions;
 		}
 
@@ -1111,7 +1119,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if file is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $file;
 		}
 
@@ -1132,8 +1140,8 @@ class Files {
 	/**
 	 * Prevent image downsizing for external hosted images.
 	 *
-	 * @param array|bool $result        The resulting array with image-data.
-	 * @param int|string $attachment_id The attachment ID.
+	 * @param array|bool   $result        The resulting array with image-data.
+	 * @param int|string   $attachment_id The attachment ID.
 	 * @param array|string $size               The requested size.
 	 *
 	 * @return bool|array
@@ -1143,7 +1151,7 @@ class Files {
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
 		// bail if file is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $result;
 		}
 
@@ -1158,7 +1166,7 @@ class Files {
 			&& $external_file_obj->is_image()
 		) {
 			// if requested size is a string, get its sizes.
-			if( is_string( $size ) ) {
+			if ( is_string( $size ) ) {
 				$size = array(
 					absint( get_option( $size . '_size_w' ) ),
 					absint( get_option( $size . '_size_h' ) ),
@@ -1169,7 +1177,7 @@ class Files {
 			$image_data = wp_get_attachment_metadata( $attachment_id );
 
 			// bail if both sizes are 0.
-			if( 0 === $size[0] && 0 === $size[1] ) {
+			if ( 0 === $size[0] && 0 === $size[1] ) {
 				// set return-array so that WP won't generate an image for it.
 				return array(
 					$external_file_obj->get_url(),
@@ -1180,7 +1188,7 @@ class Files {
 			}
 
 			// use already existing thumb.
-			if( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) ) {
+			if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) ) {
 				// return the thumb.
 				return array(
 					trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'],
@@ -1292,15 +1300,15 @@ class Files {
 		}
 
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_disable_attachment_pages', 0 ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_disable_attachment_pages', 0 ) ) ) {
 			return;
 		}
 
-		// get the external files
+		// get the external files.
 		$external_file_obj = $this->get_file( get_the_ID() );
 
 		// bail if file could not be loaded.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return;
 		}
 
@@ -1363,7 +1371,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if file could not be loaded.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $data;
 		}
 

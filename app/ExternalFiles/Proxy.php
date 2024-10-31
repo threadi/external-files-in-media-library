@@ -131,10 +131,10 @@ class Proxy {
 
 		// get basename from request for sized images.
 		$size = array();
-		if( 1 === preg_match('/(.*)-(.*)x(.*)\.(.*)/', $title, $matches) ) {
-			$size = array(
+		if ( 1 === preg_match( '/(.*)-(.*)x(.*)\.(.*)/', $title, $matches ) ) {
+			$size  = array(
 				absint( $matches[2] ),
-				absint( $matches[3] )
+				absint( $matches[3] ),
 			);
 			$title = $matches[1] . '.' . $matches[4];
 		}
@@ -157,13 +157,13 @@ class Proxy {
 		$cached_file_path = $external_file_obj->get_cache_file( $size );
 
 		// bail if file does not exist.
-		if( ! file_exists( $cached_file_path ) ) {
+		if ( ! file_exists( $cached_file_path ) ) {
 			return $template;
 		}
 
 		// get file size.
 		$filesize = $external_file_obj->get_filesize();
-		if( ! empty( $size ) ) {
+		if ( ! empty( $size ) ) {
 			$filesize = wp_filesize( $cached_file_path );
 		}
 
@@ -180,7 +180,7 @@ class Proxy {
 	 * @param string $file The local path to the file.
 	 * @param string $mime_type The mime-type to return.
 	 * @param int    $file_size The file-size of the binary string.
-	 * @param string $url The url of the file as base for filename.
+	 * @param string $url The URL of the file as base for filename.
 	 * @return void
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */

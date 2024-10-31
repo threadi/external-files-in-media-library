@@ -48,6 +48,10 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	margin-right: 8px;
 }
 
+body.settings_page_eml_settings .dashicons-no { color: red }
+
+body.settings_page_eml_settings .dashicons-yes { color: green }
+
 .eml .easy-dialog-for-wordpress-text label {
 	display: block;
 	margin-bottom: 0.5em;

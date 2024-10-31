@@ -38,7 +38,7 @@ class Sftp extends Protocol_Base {
 	private array $ssh_connections = array();
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @return array List of file-infos.
 	 */

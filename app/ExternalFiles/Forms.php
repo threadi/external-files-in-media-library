@@ -100,7 +100,7 @@ class Forms {
 				'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
-				'review_url' => Helper::get_plugin_review_url(),
+				'review_url'                    => Helper::get_plugin_review_url(),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
@@ -145,9 +145,9 @@ class Forms {
 			$dialog = array(
 				'id'        => 'add_eml_files',
 				'className' => 'eml',
-				'title'     => __( 'Add external URLs', 'external-files-in-media-library' ),
+				'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<label for="external_files">' . esc_html__( 'Enter one URL per line for files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
+					'<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
 					'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 				),
 				'buttons'   => array(
@@ -207,9 +207,9 @@ class Forms {
 		$dialog = array(
 			'id'        => 'add_eml_files',
 			'className' => 'eml',
-			'title'     => __( 'Add external URL', 'external-files-in-media-library' ),
+			'title'     => __( 'Add URL', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<label for="external_files">' . esc_html__( 'Enter the URL you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
+				'<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
 				'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 			),
 			'buttons'   => array(

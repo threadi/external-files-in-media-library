@@ -52,23 +52,32 @@ class OpenSsl extends Crypt_Base {
 		$iv             = openssl_random_pseudo_bytes( $iv_length );
 		$ciphertext_raw = openssl_encrypt( $plain_text, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
 		$hmac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
-		return base64_encode( $iv . $hmac . $ciphertext_raw );
+		return base64_encode( base64_encode( $iv ) . ':' . base64_encode( $hmac . $ciphertext_raw ) );
 	}
 
 	/**
-	 * Get openssl-encrypted text.
+	 * Get decrypted text.
 	 *
 	 * @param string $encrypted_text The encrypted text.
 	 *
 	 * @return string
 	 */
 	public function decrypt( string $encrypted_text ): string {
-		$c                  = base64_decode( $encrypted_text );
-		$cipher             = 'AES-128-CBC';
-		$iv_length          = openssl_cipher_iv_length( $cipher );
-		$iv                 = substr( $c, 0, $iv_length );
-		$hmac               = substr( $c, $iv_length, $sha2len = 32 );
-		$ciphertext_raw     = substr( $c, $iv_length + $sha2len );
+		$cipher    = 'AES-128-CBC';
+		$iv_length = openssl_cipher_iv_length( $cipher );
+		$c         = base64_decode( $encrypted_text );
+		if ( str_contains( $c, ':' ) ) {
+			$c_exploded     = explode( ':', $c );
+			$iv             = base64_decode( $c_exploded[0] );
+			$iv             = substr( $iv, 0, $iv_length );
+			$c              = base64_decode( $c_exploded[1] );
+			$hmac           = substr( $c, 0, $sha2len = 32 );
+			$ciphertext_raw = substr( $c, $sha2len, strlen( $c ) );
+		} else {
+			$iv             = substr( $c, 0, $iv_length );
+			$hmac           = substr( $c, $iv_length, $sha2len = 32 );
+			$ciphertext_raw = substr( $c, $iv_length + $sha2len );
+		}
 		$original_plaintext = openssl_decrypt( $ciphertext_raw, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
 		$calc_mac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
 		if ( $hmac && hash_equals( $hmac, $calc_mac ) ) {

@@ -76,7 +76,7 @@ class Protocols {
 	 *
 	 * This can be used before an external file object for this URL exist.
 	 *
-	 * @param string $url The url to check.
+	 * @param string $url The URL to check.
 	 *
 	 * @return Protocol_Base|false
 	 */

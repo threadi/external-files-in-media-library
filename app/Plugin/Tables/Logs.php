@@ -43,7 +43,7 @@ class Logs extends WP_List_Table {
 
 		// get URL-filter.
 		$url = filter_input( INPUT_GET, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if( is_null( $url ) ) {
+		if ( is_null( $url ) ) {
 			$url = '';
 		}
 
@@ -204,12 +204,12 @@ class Logs extends WP_List_Table {
 		);
 
 		// add filter for errors.
-		$url          = add_query_arg( array( 'errors' => 1 ) );
-		$list[ 'errors' ] = '<a href="' . esc_url( $url ) . '"' . ( 1 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'Errors', 'external-files-in-media-library' ) . '</a>';
+		$url            = add_query_arg( array( 'errors' => 1 ) );
+		$list['errors'] = '<a href="' . esc_url( $url ) . '"' . ( 1 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'Errors', 'external-files-in-media-library' ) . '</a>';
 
 		// show filter for requested URL.
-		if( ! is_null( $requested_url ) ) {
-			$list[ 'url' ] = '<span class="current">' . esc_html( url_shorten( $requested_url ) ) . '</span>';
+		if ( ! is_null( $requested_url ) ) {
+			$list['url'] = '<span class="current">' . esc_html( url_shorten( $requested_url ) ) . '</span>';
 		}
 
 		/**

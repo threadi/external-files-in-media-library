@@ -30,7 +30,7 @@ class File extends Protocol_Base {
 	);
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @return array List of file-infos.
 	 */
@@ -152,7 +152,7 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * Files from SFTP should be saved local every time.
+	 * Files from local should be saved local every time.
 	 *
 	 * @return bool
 	 */
@@ -161,7 +161,7 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * SFTP-urls could not check its availability.
+	 * Local URLs could not check its availability.
 	 *
 	 * @return bool
 	 */
@@ -170,7 +170,7 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * SFTP-files could not change its hosting.
+	 * Local files could not change its hosting.
 	 *
 	 * @return bool
 	 */

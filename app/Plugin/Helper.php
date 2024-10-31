@@ -38,7 +38,7 @@ class Helper {
 	}
 
 	/**
-	 * Return the url of the configuration of this plugin.
+	 * Return the URL of the configuration of this plugin.
 	 *
 	 * @return string
 	 */
@@ -47,7 +47,7 @@ class Helper {
 	}
 
 	/**
-	 * Return the url of the logs of this plugin.
+	 * Return the URL of the logs of this plugin.
 	 *
 	 * @param string $url The URL to filter for.
 	 *
@@ -101,15 +101,15 @@ class Helper {
 		$results = new WP_User_Query( $query );
 
 		// bail on no results.
-		if( 0 === $results->get_total() ) {
+		if ( 0 === $results->get_total() ) {
 			return $user_id;
 		}
 
 		// get the results.
-		$roles   = $results->get_results();
+		$roles = $results->get_results();
 
 		// bail if first entry does not exist.
-		if( empty( $roles[0] ) ) {
+		if ( empty( $roles[0] ) ) {
 			return $user_id;
 		}
 
@@ -279,7 +279,7 @@ class Helper {
 		$list = get_option( 'eml_allowed_mime_types', array() );
 
 		// bail if setting is not an array.
-		if( ! is_array( $list ) ) {
+		if ( ! is_array( $list ) ) {
 			return array();
 		}
 
@@ -302,6 +302,7 @@ class Helper {
 		 *   );
 		 *   return $list;
 		 *  } );
+		 *  ```
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
@@ -402,7 +403,7 @@ class Helper {
 		$file_info = pathinfo( $filename );
 
 		// bail if path info is not an array.
-		if( ! is_array( $file_info ) ) {
+		if ( ! is_array( $file_info ) ) {
 			return $filename;
 		}
 

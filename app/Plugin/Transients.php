@@ -204,11 +204,6 @@ class Transients {
 		// check nonce.
 		check_ajax_referer( 'eml-dismiss-nonce', 'nonce' );
 
-		// bail if function is not called via AJAX.
-		if ( ! defined( 'DOING_AJAX' ) ) {
-			wp_die();
-		}
-
 		// get values.
 		$option_name        = isset( $_POST['option_name'] ) ? sanitize_text_field( wp_unslash( $_POST['option_name'] ) ) : false;
 		$dismissible_length = isset( $_POST['dismissible_length'] ) ? sanitize_text_field( wp_unslash( $_POST['dismissible_length'] ) ) : 14;

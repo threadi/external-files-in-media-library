@@ -484,10 +484,10 @@ class Settings {
 			// get the sections of this tab.
 			$sections = $tab->get_sections();
 
-			if( function_exists( 'add_settings_section' ) ) {
+			if ( function_exists( 'add_settings_section' ) ) {
 				// loop through the sections of this tab.
 				$section_count = count( $sections );
-				for ( $sec = 0; $sec < $section_count; $sec ++ ) {
+				for ( $sec = 0; $sec < $section_count; $sec++ ) {
 					// get the section array entry.
 					$section = $sections[ $sec ];
 
@@ -523,7 +523,7 @@ class Settings {
 				// get the field object.
 				$field = $setting->get_field();
 
-				if( function_exists( 'add_settings_field' ) ) {
+				if ( function_exists( 'add_settings_field' ) ) {
 					// add the field for this setting.
 					add_settings_field(
 						$setting->get_name(),

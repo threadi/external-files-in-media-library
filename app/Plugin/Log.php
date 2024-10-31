@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use wpdb;
-
 /**
  * Model for log.
  */
@@ -24,58 +22,21 @@ class Log {
 	private static ?Log $instance = null;
 
 	/**
-	 * DB-connection.
-	 *
-	 * @var wpdb
-	 */
-	private wpdb $wpdb;
-
-	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-		global $wpdb;
-
-		// get the db-connection.
-		$this->wpdb = $wpdb;
-
-		// set the table-name.
-		$this->wpdb->eml_table = $this->wpdb->prefix . 'eml_logs';
-	}
-
-	/**
-	 * Return logs.
-	 *
-	 * @param string $url The URL to filter for, get only last entry (optional).
-	 * @param string $state The requested state.
-	 *
-	 * @return array
-	 */
-	public function get_logs( string $url = '', string $state = '' ): array {
-		global $wpdb;
-		if ( ! empty( $url ) ) {
-			if ( ! empty( $state ) ) {
-				return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
-			}
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
-		}
-		elseif( ! empty( $state ) ) {
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
-		}
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->eml_table . ' WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() { }
+	private function __clone() {}
 
 	/**
 	 * Return the instance of this Singleton object.
 	 */
-	public static function get_instance(): log {
+	public static function get_instance(): Log {
 		if ( ! static::$instance instanceof static ) {
 			static::$instance = new static();
 		}
@@ -88,10 +49,11 @@ class Log {
 	 * @return void
 	 */
 	public function install(): void {
-		$charset_collate = $this->wpdb->get_charset_collate();
+		global $wpdb;
+		$charset_collate = $wpdb->get_charset_collate();
 
 		// table for import-log.
-		$sql = 'CREATE TABLE ' . $this->wpdb->eml_table . " (
+		$sql = 'CREATE TABLE ' . $wpdb . "eml_logs (
             `id` mediumint(9) NOT NULL AUTO_INCREMENT,
             `time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
             `log` text DEFAULT '' NOT NULL,
@@ -111,11 +73,11 @@ class Log {
 	 */
 	public function uninstall(): void {
 		global $wpdb;
-		$this->wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->eml_table ) );
+		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->prefix . 'eml_logs' ) );
 	}
 
 	/**
-	 * Create new log-entry
+	 * Create new Log-entry
 	 *
 	 * @param string $message The text for this entry.
 	 * @param string $url The URL this entry is assigned to.
@@ -125,14 +87,16 @@ class Log {
 	 * @return void
 	 */
 	public function create( string $message, string $url, string $state, int $level = 0 ): void {
+		global $wpdb;
+
 		// log only if log-level for the new entry is higher or equal actual setting.
 		if ( ! ( $level >= $this->get_level() ) ) {
 			return;
 		}
 
 		// add log entry.
-		$this->wpdb->insert(
-			$this->wpdb->eml_table,
+		$wpdb->insert(
+			$wpdb->prefix . 'eml_logs',
 			array(
 				'time'  => gmdate( 'Y-m-d H:i:s' ),
 				'log'   => $message,
@@ -144,6 +108,27 @@ class Log {
 	}
 
 	/**
+	 * Return logs.
+	 *
+	 * @param string $url The URL to filter for, get only last entry (optional).
+	 * @param string $state The requested state (optional).
+	 *
+	 * @return array
+	 */
+	public function get_logs( string $url = '', string $state = '' ): array {
+		global $wpdb;
+		if ( ! empty( $url ) ) {
+			if ( ! empty( $state ) ) {
+				return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
+			}
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
+		} elseif ( ! empty( $state ) ) {
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
+		}
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
+	}
+
+	/**
 	 * Cleanup log from old entries.
 	 *
 	 * @return void
@@ -151,7 +136,7 @@ class Log {
 	 */
 	private function clean_log(): void {
 		global $wpdb;
-		$this->wpdb->query( sprintf( 'DELETE FROM `%s` WHERE `time` < DATE_SUB(NOW(), INTERVAL %d DAY)', $wpdb->eml_table, 50 ) );
+		$wpdb->query( sprintf( 'DELETE FROM `%s` WHERE `time` < DATE_SUB(NOW(), INTERVAL %d DAY)', $wpdb->prefix . 'eml_logs', 50 ) );
 	}
 
 	/**
@@ -161,7 +146,7 @@ class Log {
 	 */
 	public function truncate_log(): void {
 		global $wpdb;
-		$this->wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->eml_table ) );
+		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->prefix . 'eml_logs' ) );
 	}
 
 	/**

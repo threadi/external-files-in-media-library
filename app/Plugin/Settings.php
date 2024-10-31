@@ -95,12 +95,12 @@ class Settings {
 		);
 
 		// add tab, if set.
-		if( ! empty( $tab ) ) {
+		if ( ! empty( $tab ) ) {
 			$array['tab'] = $tab;
 		}
 
 		// add URL, if set.
-		if( ! empty( $url ) ) {
+		if ( ! empty( $url ) ) {
 			$array['url'] = $url;
 		}
 
@@ -320,7 +320,6 @@ class Settings {
 				'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_field( $field );
 
 		// add setting.
 		$setting = $general_advanced_tab->add_setting( 'eml_log_mode' );

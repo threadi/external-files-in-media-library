@@ -70,7 +70,7 @@ class Crypt_Base {
 	/**
 	 * Encrypt a given text.
 	 *
-	 * @param string $plain_text The plain text.
+	 * @param string $plain_text Text to encrypt.
 	 *
 	 * @return string
 	 */

@@ -37,10 +37,10 @@ class Http extends Protocol_Base {
 	private array $http_heads = array();
 
 	/**
-	 * Check the given file-url regarding its string.
+	 * Check the given URL regarding its string.
 	 *
-	 * Return true if file-url is ok.
-	 * Return false if file-url is not ok
+	 * Return true if URL is ok.
+	 * Return false if URL is not ok
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -70,7 +70,7 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url via http(s) incl. check of its content-type.
+	 * Check the availability of a given URL via http(s) incl. check of its content-type.
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -87,7 +87,7 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// file-url returns not compatible http-state.
+		// URL returns not compatible http-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
@@ -187,7 +187,7 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url via http(s) incl. check of its content-type.
+	 * Check the availability of a given URL via http(s) incl. check of its content-type.
 	 *
 	 * @return array List of files from the given URL with its infos.
 	 */
@@ -442,7 +442,7 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		$url = $this->get_url();
+		$url  = $this->get_url();
 		$true = true;
 
 		/**

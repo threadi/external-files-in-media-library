@@ -78,12 +78,12 @@ class EnableMediaReplace {
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if the file is not an external file-URL.
-		if ( ! $external_file_obj )  {
+		if ( ! $external_file_obj ) {
 			return;
 		}
 
 		// bail if file is not valid.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -95,8 +95,8 @@ class EnableMediaReplace {
 	/**
 	 * Remove actions from this plugin in row listing.
 	 *
-	 * @param array   $actions
-	 * @param WP_Post $post
+	 * @param array   $actions List if actions.
+	 * @param WP_Post $post The post as object.
 	 *
 	 * @return array
 	 */
@@ -105,7 +105,7 @@ class EnableMediaReplace {
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if file is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $actions;
 		}
 

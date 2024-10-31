@@ -154,14 +154,14 @@ class Admin {
 		// get transients object.
 		$transients_obj = Transients::get_instance();
 
-		// bail if WordPress is in developer mode.
-		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
+		// bail if PHP >= 8.1 is used.
+		if ( version_compare( PHP_VERSION, '8.1', '>' ) ) {
 			return;
 		}
 
-		// bail if PHP >= 8.1 is used.
-		if ( version_compare( PHP_VERSION, '8.1', '>' ) ) {
+		// bail if WordPress is in developer mode.
+		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
+			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
 		}
 

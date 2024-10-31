@@ -27,7 +27,7 @@ class File {
 	private int $id = 0;
 
 	/**
-	 * External url of this file.
+	 * External URL of this file.
 	 *
 	 * @var string
 	 */
@@ -84,7 +84,7 @@ class File {
 	}
 
 	/**
-	 * Get the external url.
+	 * Get the external URL.
 	 *
 	 * @param bool $unproxied Whether this call could be use proxy (true) or not (false).
 	 *
@@ -260,7 +260,7 @@ class File {
 	 */
 	public function get_filesize(): int {
 		// return value if it is already known.
-		if( ! empty( $this->filesize ) ) {
+		if ( ! empty( $this->filesize ) ) {
 			return $this->filesize;
 		}
 
@@ -426,7 +426,7 @@ class File {
 		$filename = md5( $this->get_url() ) . '.' . $this->get_file_extension();
 
 		// check size.
-		if( ! empty( $size ) ) {
+		if ( ! empty( $size ) ) {
 			$filename = md5( $this->get_url() ) . '-' . $size[0] . 'x' . $size[1] . '.' . $this->get_file_extension();
 		}
 
@@ -453,24 +453,6 @@ class File {
 
 		// return empty string.
 		return '';
-	}
-
-	/**
-	 * Return the content of the cached file.
-	 *
-	 * TODO werden die Bilder beim löschen vom Attachment auch gelöscht?
-	 *
-	 * @return string
-	 */
-	public function get_cached_file_content(): string {
-		global $wp_filesystem;
-
-		// Make sure that the above variable is properly setup.
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		WP_Filesystem();
-
-		// return the file content.
-		return $wp_filesystem->get_contents( $this->get_cache_file() );
 	}
 
 	/**
@@ -589,7 +571,7 @@ class File {
 		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ) );
 
 		// bail if no file data could be loaded.
-		if( empty( $file_data ) ) {
+		if ( empty( $file_data ) ) {
 			return false;
 		}
 
@@ -729,7 +711,7 @@ class File {
 	 */
 	public function prevent_duplicate_check( bool $return_value, string $url ): bool {
 		// bail if URL is not our URL.
-		if( $url !== $this->get_url( true ) ) {
+		if ( $url !== $this->get_url( true ) ) {
 			return $return_value;
 		}
 

@@ -106,7 +106,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check if url is compatible with the given protocol.
+	 * Check if URL is compatible with the given protocol.
 	 *
 	 * @return bool
 	 */
@@ -136,7 +136,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -150,7 +150,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given file-url.
+	 * Check the availability of a given URL.
 	 *
 	 * @return array List of files with its infos.
 	 */
@@ -223,7 +223,7 @@ class Protocol_Base {
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
 		 */
-		if( apply_filters( 'eml_duplicate_check', $false, $url ) ) {
+		if ( apply_filters( 'eml_duplicate_check', $false, $url ) ) {
 			return false;
 		}
 

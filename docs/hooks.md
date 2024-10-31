@@ -22,7 +22,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 317](ExternalFiles/Files.php#L317-L324)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 446](ExternalFiles/Files.php#L446-L453)
 
 ## Filters
 
@@ -42,7 +42,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Languages.php](Plugin/Languages.php), [line 83](Plugin/Languages.php#L83-L90)
+Source: [app/Plugin/Languages.php](Plugin/Languages.php), [line 76](Plugin/Languages.php#L76-L83)
 
 ### `eml_crypt_methods`
 
@@ -62,11 +62,29 @@ Version | Description
 
 Source: [app/Plugin/Crypt.php](Plugin/Crypt.php), [line 121](Plugin/Crypt.php#L121-L127)
 
+### `eml_log_table_filter`
+
+*Filter the list before output.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array` | List of filter.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 215](Plugin/Tables/Logs.php#L215-L221)
+
 ### `eml_supported_mime_types`
 
 *Filter the possible mime types this plugin could support. This is the list used for the setting in backend.*
 
-To add files of type "your/mime" with extension "yourmime" use this example:
+To add files of type "your/mime" with file extension ".yourmime" use this example:
 
 ```
 add_filter( 'eml_supported_mime_types', function( $list ) {
@@ -90,11 +108,24 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 238](Plugin/Helper.php#L238-L257)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 250](Plugin/Helper.php#L250-L269)
 
 ### `eml_get_mime_types`
 
-*Filter the list of possible mime types. This is the list used by the plugin during file-checks.*
+*Filter the list of possible mime types. This is the list used by the plugin during file-checks
+and is not visible or editable in backend.*
+
+To add files of type "your/mime" with file extension ".yourmime" use this example:
+
+```
+add_filter( 'eml_get_mime_types', function( $list ) {
+ $list['your/mime'] = array(
+     'label' => 'Title of your mime',
+     'ext' => 'yourmime'
+ );
+ return $list;
+} );
+```
 
 **Arguments**
 
@@ -108,7 +139,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 274](Plugin/Helper.php#L274-L280)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 291](Plugin/Helper.php#L291-L311)
 
 ### `eml_settings_section_name`
 
@@ -393,7 +424,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 576](Plugin/Settings/Settings.php#L576-L583)
+Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 580](Plugin/Settings/Settings.php#L580-L587)
 
 ### `eml_settings_parent_menu_slug`
 
@@ -412,7 +443,19 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 605](Plugin/Settings/Settings.php#L605-L612)
+Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 609](Plugin/Settings/Settings.php#L609-L616)
+
+### `eml_attachment_link`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$false` |  | 
+`$url` |  | 
+`$attachment_id` |  | 
+
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 168](ExternalFiles/Files.php#L168-L168)
 
 ### `eml_blacklist`
 
@@ -423,7 +466,7 @@ Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 
 Argument | Type | Description
 -------- | ---- | -----------
 `$false` | `bool` | Return true if blacklist matches.
-`$url` |  | 
+`$url` | `string` | The given URL.
 
 **Changelog**
 
@@ -431,7 +474,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 141](ExternalFiles/Files.php#L141-L148)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 259](ExternalFiles/Files.php#L259-L268)
 
 ### `eml_file_import_user`
 
@@ -450,7 +493,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 191](ExternalFiles/Files.php#L191-L199)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 311](ExternalFiles/Files.php#L311-L319)
 
 ### `eml_file_import_title`
 
@@ -470,7 +513,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 212](ExternalFiles/Files.php#L212-L221)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 332](ExternalFiles/Files.php#L332-L341)
 
 ### `eml_file_import_attachment`
 
@@ -490,7 +533,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 231](ExternalFiles/Files.php#L231-L240)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 351](ExternalFiles/Files.php#L351-L360)
 
 ### `eml_tcp_protocols`
 
@@ -510,6 +553,25 @@ Version | Description
 `2.0.0` | Available since 2.0.0.
 
 Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 74](ExternalFiles/Protocol_Base.php#L74-L80)
+
+### `eml_duplicate_check`
+
+*Filter to prevent duplicate check.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$false` | `bool` | Must be true to prevent check.
+`$url` | `string` | The used URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 219](ExternalFiles/Protocol_Base.php#L219-L226)
 
 ### `eml_external_file_infos`
 
@@ -628,24 +690,16 @@ Version | Description
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 363](ExternalFiles/Protocols/Http.php#L363-L373)
 
-### `eml_http_save_local`
-
-*Filter if a http-file should be saved local or not.*
+### `eml_http_ssl`
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$result` | `bool` | True if file should be saved local.
-`$this->get_url()` |  | 
+`$true` |  | 
+`$url` |  | 
 
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 455](ExternalFiles/Protocols/Http.php#L455-L462)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 459](ExternalFiles/Protocols/Http.php#L459-L459)
 
 ### `eml_http_save_local`
 
@@ -664,7 +718,37 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 488](ExternalFiles/Protocols/Http.php#L488-L495)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 468](ExternalFiles/Protocols/Http.php#L468-L475)
+
+### `eml_http_ssl`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$true` |  | 
+`$url` |  | 
+
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 506](ExternalFiles/Protocols/Http.php#L506-L506)
+
+### `eml_http_save_local`
+
+*Filter if a http-file should be saved local or not.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$result` | `bool` | True if file should be saved local.
+`$url` | `string` | The used URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.0.0` | Available since 2.0.0.
+
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 512](ExternalFiles/Protocols/Http.php#L512-L519)
 
 ### `eml_http_header_args`
 
@@ -682,7 +766,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 519](ExternalFiles/Protocols/Http.php#L519-L525)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 543](ExternalFiles/Protocols/Http.php#L543-L549)
 
 ### `eml_http_states`
 
@@ -701,7 +785,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 551](ExternalFiles/Protocols/Http.php#L551-L557)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 575](ExternalFiles/Protocols/Http.php#L575-L581)
 
 ### `eml_check_url`
 
@@ -775,7 +859,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 207](ExternalFiles/Proxy.php#L207-L214)
+Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 233](ExternalFiles/Proxy.php#L233-L240)
 
 ### `eml_third_party_support`
 
@@ -793,7 +877,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 84](ThirdParty/ThirdPartySupport.php#L84-L90)
+Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 86](ThirdParty/ThirdPartySupport.php#L86-L92)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>

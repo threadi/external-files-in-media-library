@@ -12,16 +12,17 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 
 /**
- * Handler for cli-commands.
+ * Handle external files via WP CLI.
  *
  * @noinspection PhpUnused
  */
 class Cli {
 
 	/**
-	 * Import as parameter given external urls in the media library.
+	 * Import given URL(s) in the media library.
 	 *
 	 * <URLs>
 	 * : List of URLs to import in media library.
@@ -99,24 +100,24 @@ class Cli {
 	public function delete( array $urls = array() ): void {
 		// get log-object to log this action.
 		$logs = Log::get_instance();
-		$logs->create( 'All external files will be deleted via cli.', '', 'success', 2 );
+		$logs->create( 'All external files will be deleted via WP CLI.', '', 'success', 2 );
 
 		// get external files object.
 		$external_files_obj = Files::get_instance();
 
 		$files_to_delete = array();
-		if( ! empty( $urls ) ) {
+		if ( ! empty( $urls ) ) {
 			foreach ( $urls as $url ) {
 				$files_to_delete[] = $external_files_obj->get_file_by_url( $url );
 			}
-		}
-		else {
+		} else {
 			// get all files created by this plugin in media library.
 			$files_to_delete = $external_files_obj->get_files_in_media_library();
 		}
 
 		// bail if no files found.
 		if ( empty( $files_to_delete ) ) {
+			$logs->create( 'No files found to delete.', '', 'success', 2 );
 			\WP_CLI::error( 'There are no external URLs to delete.' );
 			return;
 		}
@@ -142,11 +143,12 @@ class Cli {
 		$progress->finish();
 
 		// show resulting message.
+		$logs->create( count( $files_to_delete ) . ' URLs has been deleted.', '', 'success', 2 );
 		\WP_CLI::success( count( $files_to_delete ) . ' URLs has been deleted.' );
 	}
 
 	/**
-	 * Cleanup complete log.
+	 * Cleanup the plugin-own log.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
@@ -165,23 +167,55 @@ class Cli {
 	/**
 	 * Check all URLs in the media library.
 	 *
+	 * [<URLs>]
+	 * : List of URLs to check. They must exist in media library.
+	 *
+	 * @param array $urls List of URLs.
+	 *
 	 * @return void
-	 * @noinspection PhpUnused
-	 * @noinspection PhpUndefinedClassInspection
 	 */
-	public function check(): void {
+	public function check( array $urls = array() ): void {
 		// get object for external files.
 		$external_files_obj = Files::get_instance();
 
-		// run check for all files.
-		$external_files_obj->check_files();
+		// check the given files.
+		if ( ! empty( $urls ) ) {
+			foreach ( $urls as $url ) {
+				// get the file object for this URL.
+				$external_file_obj = $external_files_obj->get_file_by_url( $url );
+
+				// bail if it is not existent.
+				if ( ! $external_file_obj ) {
+					continue;
+				}
+
+				// bail if it is not valid.
+				if ( ! $external_file_obj->is_valid() ) {
+					continue;
+				}
+
+				// get the protocol handler for this URL.
+				$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+
+				// bail if handler is false.
+				if ( ! $protocol_handler ) {
+					continue;
+				}
+
+				// run the check for this file.
+				$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
+			}
+		} else {
+			// run check for all files.
+			$external_files_obj->check_files();
+		}
 
 		// return ok-message.
 		\WP_CLI::success( 'URL-check has been run.' );
 	}
 
 	/**
-	 * Reset the plugin as it will be de- and reinstalled.
+	 * Reset the plugin. It will be de- and re-installed.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
@@ -207,17 +241,36 @@ class Cli {
 	}
 
 	/**
-	 * Switch hosting of all files to external (except for those with credentials or un-supported protocols).
+	 * Switch hosting of files to external.
+	 *
+	 * Except for those with credentials or un-supported protocols.
+	 * If no URLs given all external files will be switched.
+	 *
+	 * [<URLs>]
+	 * : List of URLs for switch.
+	 *
+	 * @param array $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
 	 */
-	public function switch_to_external(): void {
+	public function switch_to_external( array $urls = array() ): void {
 		// get external files object.
 		$external_files_obj = Files::get_instance();
 
+		// get files depending on arguments.
+		$files = array();
+		if ( ! empty( $urls ) ) {
+			foreach ( $urls as $url ) {
+				$files[] = $external_files_obj->get_file_by_url( $url );
+			}
+		} else {
+			// get all files.
+			$files = $external_files_obj->get_files_in_media_library();
+		}
+
 		// switch hosting of files to local if option is enabled for it.
-		foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+		foreach ( $files as $external_file_obj ) {
 			// bail if this is not an external file object.
 			if ( ! $external_file_obj instanceof File ) {
 				continue;
@@ -237,17 +290,36 @@ class Cli {
 	}
 
 	/**
-	 * Switch hosting of all files to local.
+	 * Switch hosting of files to local.
+	 *
+	 * Except for those with credentials or un-supported protocols.
+	 *  If no URLs given all external files will be switched.
+	 *
+	 * [<URLs>]
+	 * : List of URLs for switch.
+	 *
+	 * @param array $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
 	 */
-	public function switch_to_local(): void {
+	public function switch_to_local( array $urls = array() ): void {
 		// get external files object.
 		$external_files_obj = Files::get_instance();
 
+		// get files depending on arguments.
+		$files = array();
+		if ( ! empty( $urls ) ) {
+			foreach ( $urls as $url ) {
+				$files[] = $external_files_obj->get_file_by_url( $url );
+			}
+		} else {
+			// get all files.
+			$files = $external_files_obj->get_files_in_media_library();
+		}
+
 		// switch hosting of files to local if option is enabled for it.
-		foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+		foreach ( $files as $external_file_obj ) {
 			// bail if this is not an external file object.
 			if ( ! $external_file_obj instanceof File ) {
 				continue;

@@ -22,13 +22,6 @@ class Languages {
 	private static ?Languages $instance = null;
 
 	/**
-	 * Fallback-language.
-	 *
-	 * @var string
-	 */
-	private string $fallback_language_name = 'en';
-
-	/**
 	 * Constructor for Init-Handler.
 	 */
 	private function __construct() {}
