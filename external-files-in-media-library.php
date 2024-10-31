@@ -33,8 +33,7 @@ const EML_PLUGIN = __FILE__;
 require_once __DIR__ . '/vendor/autoload.php';
 
 // include necessary file.
-require_once 'inc/constants.php';
+require_once __DIR__ . '/inc/constants.php';
 
 // initialize plugin.
-$eml = Init::get_instance();
-$eml->init();
+Init::get_instance()->init();

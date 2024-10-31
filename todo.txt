@@ -1,3 +1,4 @@
-* WooCommerce-Support als Einstellung aktivierbar machen
+* WP 6.7 test
+* Test von Update 1.x auf 2.0.0
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
 * Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
