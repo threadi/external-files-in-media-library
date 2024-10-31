@@ -100,6 +100,7 @@ class Forms {
 				'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
+				'review_url' => Helper::get_plugin_review_url(),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),

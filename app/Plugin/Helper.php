@@ -323,6 +323,18 @@ class Helper {
 	}
 
 	/**
+	 * Return our review URL.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_review_url(): string {
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'https://de.wordpress.org/plugins/external-files-in-media-library/#reviews';
+		}
+		return 'https://wordpress.org/plugins/external-files-in-media-library/#reviews';
+	}
+
+	/**
 	 * Return our support forum URL.
 	 *
 	 * @return string

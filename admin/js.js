@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
     $('body.settings_page_eml_settings h1').each(function() {
       let button = document.createElement('a');
       button.className = 'review-hint-button page-title-action';
-      button.href = 'https://wordpress.org/plugins/external-files-in-media-library/#reviews';
+      button.href = emlJsVars.review_url;
       button.innerHTML = emlJsVars.title_rate_us;
       button.target = '_blank';
       this.after(button);
