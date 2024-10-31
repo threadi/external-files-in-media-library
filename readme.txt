@@ -2,7 +2,7 @@
 Contributors: threadi
 Tags: external files, media library, media
 Requires at least: 6.2
-Tested up to: 6.6
+Tested up to: 6.7
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -168,6 +168,7 @@ external files by this plugin.
 * Added link to settings in plugin list
 * Added migration tool to switch the external files from Exmage to this one
 * Added thumbnail support for proxied images
+* Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments
 * Replaced settings management with optimized objects

@@ -246,7 +246,7 @@ class Http extends Protocol_Base {
 					continue;
 				}
 				// check if given file is a local file which exist in media library.
-				if( $this->is_local_file( $this->get_url() ) ) {
+				if ( $this->is_local_file( $this->get_url() ) ) {
 					/* translators: %1$s will be replaced by the file-URL */
 					Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
 					return array();
@@ -275,7 +275,7 @@ class Http extends Protocol_Base {
 			}
 		} else {
 			// check if given file is a local file which exist in media library.
-			if( $this->is_local_file( $this->get_url() ) ) {
+			if ( $this->is_local_file( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
 				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
 				return array();
