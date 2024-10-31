@@ -91,7 +91,7 @@ class Files {
 		add_filter( 'wp_get_attachment_url', array( $this, 'get_attachment_url' ), 10, 2 );
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
-		add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 2 );
+		add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 3 );
 		add_action( 'import_end', array( $this, 'import_end' ), 10, 0 );
 		add_filter( 'redirect_canonical', array( $this, 'disable_attachment_page' ), 10, 0 );
 		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ), 10, 0 );
@@ -415,24 +415,33 @@ class Files {
 			// mark if this file is an external file locally saved.
 			$external_file_obj->set_is_local_saved( $file_data['local'] );
 
+			// save the credentials on the object, if set.
+			$external_file_obj->set_login( $this->get_login() );
+			$external_file_obj->set_password( $this->get_password() );
+
 			// set meta-data for images if mode is enabled for this.
-			if ( ! $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
+			if ( false === $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
+				// create the image meta data.
 				$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
 
 				// set file to our url.
 				$image_meta['file'] = $file_data['url'];
 
+				// change file name for each size.
+				foreach( $image_meta['sizes'] as $size_name => $size_data ) {
+					$image_meta['sizes'][$size_name]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+				}
+
 				// save the resulting image-data.
 				wp_update_attachment_metadata( $attachment_id, $image_meta );
+
+				// add file cache.
+				$external_file_obj->add_to_cache();
 			}
 
 			// return true as the file has been created successfully.
 			/* translators: %1$s will be replaced by the file-URL */
 			$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'success', 0 );
-
-			// save the credentials on the object, if set.
-			$external_file_obj->set_login( $this->get_login() );
-			$external_file_obj->set_password( $this->get_password() );
 
 			/**
 			 * Run additional tasks after new external file has been added.
@@ -494,6 +503,34 @@ class Files {
 	 * @return void
 	 */
 	public function delete_file( File $external_file_obj ): void {
+		// if this is an image, get its sizes.
+		if( $external_file_obj->is_image() ) {
+			// get WP Filesystem-handler.
+			require_once ABSPATH . '/wp-admin/includes/file.php';
+			\WP_Filesystem();
+			global $wp_filesystem;
+
+			// get the image meta data.
+			$image_meta_data = wp_get_attachment_metadata( $external_file_obj->get_id(), true );
+
+			// loop through the sizes and delete each from our own directory.
+			if( ! empty( $image_meta_data['sizes'] ) ) {
+				foreach( $image_meta_data['sizes'] as $size_data ) {
+					// get file path.
+					$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size_data['width'], $size_data['height'] );
+
+					// bail if file does not exist.
+					if( ! $wp_filesystem->exists( $file ) ) {
+						continue;
+					}
+
+					// delete it.
+					$wp_filesystem->delete( $file );
+				}
+			}
+		}
+
+		// delete the file entry itself.
 		wp_delete_attachment( $external_file_obj->get_id(), true );
 	}
 
@@ -1095,14 +1132,15 @@ class Files {
 	/**
 	 * Prevent image downsizing for external hosted images.
 	 *
-	 * @param array|bool $result The resulting array with image-data.
-	 * @param int        $attachment_id The attachment ID.
+	 * @param array|bool $result        The resulting array with image-data.
+	 * @param int|string $attachment_id The attachment ID.
+	 * @param array|string $size               The requested size.
 	 *
 	 * @return bool|array
 	 */
-	public function image_downsize( array|bool $result, int $attachment_id ): bool|array {
+	public function image_downsize( array|bool $result, int|string $attachment_id, array|string $size ): bool|array {
 		// get the external file object.
-		$external_file_obj = $this->get_file( $attachment_id );
+		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
 		// bail if file is not an external file.
 		if( ! $external_file_obj ) {
@@ -1119,14 +1157,84 @@ class Files {
 			false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->is_image()
 		) {
+			// if requested size is a string, get its sizes.
+			if( is_string( $size ) ) {
+				$size = array(
+					absint( get_option( $size . '_size_w' ) ),
+					absint( get_option( $size . '_size_h' ) ),
+				);
+			}
+
 			// get image data.
 			$image_data = wp_get_attachment_metadata( $attachment_id );
 
-			// set return-array so that WP won't generate an image for it.
+			// bail if both sizes are 0.
+			if( 0 === $size[0] && 0 === $size[1] ) {
+				// set return-array so that WP won't generate an image for it.
+				return array(
+					$external_file_obj->get_url(),
+					$image_data['width'] ? $image_data['width'] : 0,
+					$image_data['height'] ? $image_data['height'] : 0,
+					false,
+				);
+			}
+
+			// use already existing thumb.
+			if( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) ) {
+				// return the thumb.
+				return array(
+					trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'],
+					$size[0],
+					$size[1],
+					false,
+				);
+			}
+
+			// get image editor as object.
+			$image_editor = wp_get_image_editor( $external_file_obj->get_cache_file() );
+
+			// on error return the original image.
+			if ( is_wp_error( $image_editor ) ) {
+				// set return-array so that WP won't generate an image for it.
+				return array(
+					$external_file_obj->get_url(),
+					$image_data['width'] ? $image_data['width'] : 0,
+					$image_data['height'] ? $image_data['height'] : 0,
+					false,
+				);
+			}
+
+			/**
+			 * Generate the requested thumb and save it in metadata for the image.
+			 */
+
+			// generate the filename for the thumb.
+			$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1] );
+
+			// public filename.
+			$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1] );
+
+			// resize the image.
+			$image_editor->resize( $size[0], $size[1], true );
+
+			// save the resized image and get its data.
+			$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
+
+			// remove the path from the resized image data.
+			unset( $new_image_data['path'] );
+
+			// replace the filename in the resized image data with the public filename we use in our proxy.
+			$new_image_data['file'] = $public_filename;
+
+			// update the meta data.
+			$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
+			wp_update_attachment_metadata( $attachment_id, $image_data );
+
+			// return the thumb.
 			return array(
-				$external_file_obj->get_url(),
-				$image_data['width'] ?? 0,
-				$image_data['height'] ?? 0,
+				trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $public_filename,
+				$size[0],
+				$size[1],
 				false,
 			);
 		}

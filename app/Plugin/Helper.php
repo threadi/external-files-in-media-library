@@ -376,4 +376,25 @@ class Helper {
 	public static function get_add_media_url(): string {
 		return add_query_arg( array(), get_admin_url() . 'media-new.php' );
 	}
+
+	/**
+	 * Generate a sizes filename.
+	 *
+	 * @param string $filename The original filename.
+	 * @param int    $width The width to use.
+	 * @param int    $height The height to use.
+	 *
+	 * @return string
+	 */
+	public static function generate_sizes_filename( string $filename, int $width, int $height ): string {
+		$file_info = pathinfo( $filename );
+
+		// bail if path info is not an array.
+		if( ! is_array( $file_info ) ) {
+			return $filename;
+		}
+
+		// return concat string for the filename.
+		return $file_info['filename'] . '-' . $width . 'x' . $height . '.' . $file_info['extension'];
+	}
 }

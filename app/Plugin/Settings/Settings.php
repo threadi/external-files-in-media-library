@@ -484,24 +484,26 @@ class Settings {
 			// get the sections of this tab.
 			$sections = $tab->get_sections();
 
-			// loop through the sections of this tab.
-			$section_count = count( $sections );
-			for ( $sec = 0;$sec < $section_count; $sec++ ) {
-				// get the section array entry.
-				$section = $sections[ $sec ];
+			if( function_exists( 'add_settings_section' ) ) {
+				// loop through the sections of this tab.
+				$section_count = count( $sections );
+				for ( $sec = 0; $sec < $section_count; $sec ++ ) {
+					// get the section array entry.
+					$section = $sections[ $sec ];
 
-				// bail if section is not Section.
-				if ( ! $section instanceof Section ) {
-					continue;
+					// bail if section is not Section.
+					if ( ! $section instanceof Section ) {
+						continue;
+					}
+
+					// add section.
+					add_settings_section(
+						$section->get_name(),
+						$section->get_title(),
+						$section->get_callback(),
+						$tab->get_name()
+					);
 				}
-
-				// add section.
-				add_settings_section(
-					$section->get_name(),
-					$section->get_title(),
-					$section->get_callback(),
-					$tab->get_name()
-				);
 			}
 
 			// get the settings for this tab.
@@ -521,17 +523,19 @@ class Settings {
 				// get the field object.
 				$field = $setting->get_field();
 
-				// add the field for this setting.
-				add_settings_field(
-					$setting->get_name(),
-					$field->get_title(),
-					$field->get_callback(),
-					$tab->get_name(),
-					$setting->get_section()->get_name(),
-					array(
-						'setting' => $setting,
-					)
-				);
+				if( function_exists( 'add_settings_field' ) ) {
+					// add the field for this setting.
+					add_settings_field(
+						$setting->get_name(),
+						$field->get_title(),
+						$field->get_callback(),
+						$tab->get_name(),
+						$setting->get_section()->get_name(),
+						array(
+							'setting' => $setting,
+						)
+					);
+				}
 
 				// register the setting.
 				register_setting(

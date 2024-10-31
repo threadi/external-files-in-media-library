@@ -259,18 +259,21 @@ class File {
 	 * @return int
 	 */
 	public function get_filesize(): int {
-		// get value from DB.
-		if ( empty( $this->filesize ) ) {
-			$meta = wp_get_attachment_metadata( $this->get_id(), true );
-
-			// bail if file size is not in meta.
-			if ( empty( $meta['filesize'] ) ) {
-				return 0;
-			}
-
-			// set file size.
-			$this->filesize = $meta['filesize'];
+		// return value if it is already known.
+		if( ! empty( $this->filesize ) ) {
+			return $this->filesize;
 		}
+
+		// get value from DB.
+		$meta = wp_get_attachment_metadata( $this->get_id(), true );
+
+		// bail if file size is not in meta.
+		if ( empty( $meta['filesize'] ) ) {
+			return 0;
+		}
+
+		// set file size.
+		$this->filesize = $meta['filesize'];
 
 		// return the file size.
 		return $this->filesize;
@@ -342,13 +345,16 @@ class File {
 	 * @return bool
 	 */
 	public function is_cached(): bool {
+		// get path for cached file.
+		$cached_file = $this->get_cache_file();
+
 		// bail if cached file does not exist.
-		if ( ! file_exists( $this->get_cache_file() ) ) {
+		if ( ! file_exists( $cached_file ) ) {
 			return false;
 		}
 
 		// check the age of the cached file and compare it with max age for cached files.
-		if ( filemtime( $this->get_cache_file() ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
+		if ( filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
 			// return false as file is to old and should be renewed.
 			return false;
 		}
@@ -411,14 +417,21 @@ class File {
 	 * Return the cache-filename for this file.
 	 * It does also contain the path.
 	 *
+	 * @param array $size The requested size.
+	 *
 	 * @return string
 	 */
-	public function get_cache_file(): string {
-		// get path for cache directory.
-		$path = Proxy::get_instance()->get_cache_directory();
-
+	public function get_cache_file( array $size = array() ): string {
 		// get filename.
 		$filename = md5( $this->get_url() ) . '.' . $this->get_file_extension();
+
+		// check size.
+		if( ! empty( $size ) ) {
+			$filename = md5( $this->get_url() ) . '-' . $size[0] . 'x' . $size[1] . '.' . $this->get_file_extension();
+		}
+
+		// get path for cache directory.
+		$path = Proxy::get_instance()->get_cache_directory();
 
 		// return resulting string without further checks.
 		return $path . $filename;
@@ -429,7 +442,7 @@ class File {
 	 *
 	 * @return string
 	 */
-	private function get_file_extension(): string {
+	public function get_file_extension(): string {
 		// get all possible mime-types.
 		$mime_types = Helper::get_possible_mime_types();
 
@@ -444,6 +457,8 @@ class File {
 
 	/**
 	 * Return the content of the cached file.
+	 *
+	 * TODO werden die Bilder beim löschen vom Attachment auch gelöscht?
 	 *
 	 * @return string
 	 */

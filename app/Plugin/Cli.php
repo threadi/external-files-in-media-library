@@ -23,6 +23,15 @@ class Cli {
 	/**
 	 * Import as parameter given external urls in the media library.
 	 *
+	 * <URLs>
+	 * : List of URLs to import in media library.
+	 *
+	 * [--login=<value>]
+	 * : Set authentication login to use for any added URL.
+	 *
+	 * [--password=<value>]
+	 * : Set authentication password to use for any added URL.
+	 *
 	 * @param array $urls Array of URLs which might be given as parameter on CLI-command.
 	 * @param array $arguments List of parameter to use for the given URLs.
 	 *
@@ -80,11 +89,14 @@ class Cli {
 	/**
 	 * Delete all urls in media library which are imported by this plugin.
 	 *
+	 * [<URLs>]
+	 * : List of URLs to delete from in media library. If nothing is given all external files are deleted.
+	 *
+	 * @param array $urls List of URLs.
+	 *
 	 * @return void
-	 * @noinspection PhpUnused
-	 * @noinspection PhpUndefinedClassInspection
 	 */
-	public function delete(): void {
+	public function delete( array $urls = array() ): void {
 		// get log-object to log this action.
 		$logs = Log::get_instance();
 		$logs->create( 'All external files will be deleted via cli.', '', 'success', 2 );
@@ -92,20 +104,28 @@ class Cli {
 		// get external files object.
 		$external_files_obj = Files::get_instance();
 
-		// get all files created by this plugin in media library.
-		$files = $external_files_obj->get_files_in_media_library();
+		$files_to_delete = array();
+		if( ! empty( $urls ) ) {
+			foreach ( $urls as $url ) {
+				$files_to_delete[] = $external_files_obj->get_file_by_url( $url );
+			}
+		}
+		else {
+			// get all files created by this plugin in media library.
+			$files_to_delete = $external_files_obj->get_files_in_media_library();
+		}
 
 		// bail if no files found.
-		if ( empty( $files ) ) {
-			\WP_CLI::error( 'There are no external urls to delete.' );
+		if ( empty( $files_to_delete ) ) {
+			\WP_CLI::error( 'There are no external URLs to delete.' );
 			return;
 		}
 
 		// show progress.
-		$progress = \WP_CLI\Utils\make_progress_bar( 'Delete external files from media library', count( $files ) );
+		$progress = \WP_CLI\Utils\make_progress_bar( 'Delete external files from media library', count( $files_to_delete ) );
 
 		// loop through the files and delete them.
-		foreach ( $files as $external_file_obj ) {
+		foreach ( $files_to_delete as $external_file_obj ) {
 			// bail if this is not an external file object.
 			if ( ! $external_file_obj instanceof File ) {
 				continue;
@@ -122,7 +142,7 @@ class Cli {
 		$progress->finish();
 
 		// show resulting message.
-		\WP_CLI::success( count( $files ) . ' URLs has been deleted.' );
+		\WP_CLI::success( count( $files_to_delete ) . ' URLs has been deleted.' );
 	}
 
 	/**

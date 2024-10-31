@@ -161,8 +161,9 @@ Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///v
 * Added documentation for each possible option in GitHub
 * Added link to settings in plugin list
 * Added migration tool to switch the external files from Exmage to this one
+* Added thumbnail support for proxied images
 * External files which are not provided via SSL will be saved local if actual website is using SSL
-* Extended WP CLI support with progressbar, states and arguments
+* Extended WP CLI support with documentation, progressbar, states and arguments
 * Replaced settings management with optimized objects
 * Optimized proxy url handling
 * Optimized build process for releases

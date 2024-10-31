@@ -95,7 +95,7 @@ class Proxy {
 	 * @return void
 	 */
 	public function wp_init(): void {
-		add_rewrite_rule( $this->get_slug() . '/([a-z0-9-.]+)?$', 'index.php?' . self::get_instance()->get_slug() . '=$matches[1]', 'top' );
+		add_rewrite_rule( $this->get_slug() . '/([a-z0-9-.]+)?$', 'index.php?' . $this->get_slug() . '=$matches[1]', 'top' );
 	}
 
 	/**
@@ -106,7 +106,7 @@ class Proxy {
 	 * @return array
 	 */
 	public function set_query_vars( array $query_vars ): array {
-		$query_vars[] = self::get_instance()->get_slug();
+		$query_vars[] = $this->get_slug();
 		return $query_vars;
 	}
 
@@ -122,12 +122,22 @@ class Proxy {
 	 */
 	public function run( string $template ): string {
 		// bail if this is not our proxy-slug.
-		if ( empty( get_query_var( self::get_instance()->get_slug() ) ) ) {
+		if ( empty( get_query_var( $this->get_slug() ) ) ) {
 			return $template;
 		}
 
 		// get the query-value.
-		$title = get_query_var( self::get_instance()->get_slug() );
+		$title = get_query_var( $this->get_slug() );
+
+		// get basename from request for sized images.
+		$size = array();
+		if( 1 === preg_match('/(.*)-(.*)x(.*)\.(.*)/', $title, $matches) ) {
+			$size = array(
+				absint( $matches[2] ),
+				absint( $matches[3] )
+			);
+			$title = $matches[1] . '.' . $matches[4];
+		}
 
 		// get file object.
 		$external_file_obj = Files::get_instance()->get_file_by_title( $title );
@@ -138,13 +148,27 @@ class Proxy {
 			return $template;
 		}
 
-		// if file is not cached, do it now.
+		// if original file is not cached, do it now.
 		if ( ! $external_file_obj->is_cached() ) {
 			$external_file_obj->add_to_cache();
 		}
 
+		// get cached file path.
+		$cached_file_path = $external_file_obj->get_cache_file( $size );
+
+		// bail if file does not exist.
+		if( ! file_exists( $cached_file_path ) ) {
+			return $template;
+		}
+
+		// get file size.
+		$filesize = $external_file_obj->get_filesize();
+		if( ! empty( $size ) ) {
+			$filesize = wp_filesize( $cached_file_path );
+		}
+
 		// output the cached file.
-		$this->return_binary( $external_file_obj->get_cache_file(), $external_file_obj->get_mime_type(), $external_file_obj->get_filesize(), $external_file_obj->get_url( true ) );
+		$this->return_binary( $cached_file_path, $external_file_obj->get_mime_type(), $filesize, $external_file_obj->get_url( true ) );
 
 		// fallback to 404.
 		return $template;
