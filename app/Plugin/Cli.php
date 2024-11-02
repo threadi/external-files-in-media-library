@@ -39,12 +39,6 @@ class Cli {
 	 * @return void
 	 */
 	public function import( array $urls = array(), array $arguments = array() ): void {
-		// bail if no urls are given.
-		if ( empty( $urls ) ) {
-			\WP_CLI::error( 'Please add one or more URL as parameters.' );
-			return;
-		}
-
 		// array for the list of results.
 		$results = array();
 
@@ -54,7 +48,7 @@ class Cli {
 		$external_files_obj->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
 
 		// show progress.
-		$progress = \WP_CLI\Utils\make_progress_bar( 'Import files from given URL', count( $urls ) );
+		$progress = \WP_CLI\Utils\make_progress_bar( _n( 'Import files from given URL', 'Import files from given URLs', count( $urls ), 'external-files-in-media-library' ), count( $urls ) );
 
 		// check each single given url.
 		foreach ( $urls as $url ) {
@@ -65,15 +59,18 @@ class Cli {
 
 			// bail if given string is not a URL.
 			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-				$results[] = $url . ' is not a valid URL and will not be saved.';
+				/* translators: %1$s will be replaced by URL. */
+				$results[] = sprintf( __( '%1$s is not a valid URL and will not be saved.', 'external-files-in-media-library' ), $url );
 				continue;
 			}
 
 			// try to add this URL as single file.
 			if ( $external_files_obj->add_from_url( $url ) ) {
-				$results[] = $url . ' has been saved in media library.';
+				/* translators: %1$s will be replaced by URL. */
+				$results[] = sprintf( __( '%1$s has been saved in media library.', 'external-files-in-media-library' ), $url );
 			} else {
-				$results[] = $url . ' could not be saved in media library. Take a look in the log for details.';
+				/* translators: %1$s will be replaced by URL. */
+				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log for details.', 'external-files-in-media-library' ), $url );
 			}
 
 			// show progress.
@@ -84,7 +81,7 @@ class Cli {
 		$progress->finish();
 
 		// show results.
-		\WP_CLI::success( "Results of the import:\n" . implode( "\n", $results ) );
+		\WP_CLI::success( __( 'Results of the import:', 'external-files-in-media-library' ) . "\n" . implode( "\n", $results ) );
 	}
 
 	/**
@@ -100,7 +97,7 @@ class Cli {
 	public function delete( array $urls = array() ): void {
 		// get log-object to log this action.
 		$logs = Log::get_instance();
-		$logs->create( 'All external files will be deleted via WP CLI.', '', 'success', 2 );
+		$logs->create( __( 'External files will be deleted via WP CLI.', 'external-files-in-media-library' ), '', 'success', 2 );
 
 		// get external files object.
 		$external_files_obj = Files::get_instance();
@@ -125,13 +122,13 @@ class Cli {
 
 		// bail if no files found.
 		if ( empty( $files_to_delete ) ) {
-			$logs->create( 'No files found to delete.', '', 'success', 2 );
-			\WP_CLI::error( 'There are no external URLs to delete.' );
+			$logs->create( __( 'No files found to delete.', 'external-files-in-media-library' ), '', 'success', 2 );
+			\WP_CLI::error( __( 'There are no external URLs to delete.', 'external-files-in-media-library' ) );
 			return;
 		}
 
 		// show progress.
-		$progress = \WP_CLI\Utils\make_progress_bar( 'Delete external files from media library', count( $files_to_delete ) );
+		$progress = \WP_CLI\Utils\make_progress_bar( __( 'Delete external files from media library', 'external-files-in-media-library' ), count( $files_to_delete ) );
 
 		// loop through the files and delete them.
 		foreach ( $files_to_delete as $external_file_obj ) {
@@ -151,8 +148,8 @@ class Cli {
 		$progress->finish();
 
 		// show resulting message.
-		$logs->create( count( $files_to_delete ) . ' URLs has been deleted.', '', 'success', 2 );
-		\WP_CLI::success( count( $files_to_delete ) . ' URLs has been deleted.' );
+		$logs->create( sprintf( __('%1$d URLs have been deleted.', 'external-files-in-media-library' ), count( $files_to_delete ) ), '', 'success', 2 );
+		\WP_CLI::success( sprintf( __( '%1$d URLs have been deleted.', 'external-files-in-media-library' ), count( $files_to_delete ) ) );
 	}
 
 	/**
@@ -169,7 +166,7 @@ class Cli {
 		$logs->truncate_log();
 
 		// log what we have done.
-		$logs->create( 'Log has been cleared via cli.', '', 'success', 2 );
+		$logs->create( __( 'Log has been cleared via cli.', 'external-files-in-media-library' ), '', 'success', 2 );
 	}
 
 	/**
@@ -219,7 +216,7 @@ class Cli {
 		}
 
 		// return ok-message.
-		\WP_CLI::success( 'URL-check has been run.' );
+		\WP_CLI::success( __( 'URL-check has been run.', 'external-files-in-media-library' ) );
 	}
 
 	/**
@@ -242,10 +239,10 @@ class Cli {
 
 		// log resetting via cli.
 		$logs = Log::get_instance();
-		$logs->create( 'Plugin has been reset via cli.', '', 'success', 2 );
+		$logs->create( __( 'Plugin have been reset via cli.', 'external-files-in-media-library' ), '', 'success', 2 );
 
 		// return ok-message.
-		\WP_CLI::success( 'Plugin has been reset.' );
+		\WP_CLI::success( __( 'Plugin have been reset.', 'external-files-in-media-library' ) );
 	}
 
 	/**
@@ -294,7 +291,7 @@ class Cli {
 		}
 
 		// return ok-message.
-		\WP_CLI::success( 'Files has been switches to external hosting.' );
+		\WP_CLI::success( __( 'Files have been switches to external hosting.', 'external-files-in-media-library' ) );
 	}
 
 	/**
@@ -343,6 +340,6 @@ class Cli {
 		}
 
 		// return ok-message.
-		\WP_CLI::success( 'Files has been switches to local hosting.' );
+		\WP_CLI::success( __( 'Files have been switches to local hosting.', 'external-files-in-media-library' ) );
 	}
 }

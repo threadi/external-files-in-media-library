@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Thomas Zwirner
+# Copyright (C) 2024 Thomas Zwirner
 # This file is distributed under the GPL-2.0-or-later.
 msgid ""
 msgstr ""
@@ -9,387 +9,842 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-10-21T17:25:08+02:00\n"
+"POT-Creation-Date: 2024-11-02T17:03:35+01:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.8.1\n"
+"X-Generator: WP-CLI 2.10.0\n"
 "X-Domain: external-files-in-media-library\n"
 
 #. Plugin Name of the plugin
+#: external-files-in-media-library.php
 msgid "External files in Media Library"
 msgstr ""
 
 #. Description of the plugin
+#: external-files-in-media-library.php
 msgid "Enables the Media Library to use external files."
 msgstr ""
 
 #. Author of the plugin
+#: external-files-in-media-library.php
 msgid "Thomas Zwirner"
 msgstr ""
 
 #. Author URI of the plugin
+#: external-files-in-media-library.php
 msgid "https://www.thomaszwirner.de"
 msgstr ""
 
-#: classes/eml/class-transient.php:168
-msgid "Dismiss this notice."
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Files.php:285
+msgid "Given URL %1$s is using a not supported TCP protocol. You will not be able to use this URL for external files in media library."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:247
-msgid "URL %1$s successfully added in media library."
+#: app/ExternalFiles/Files.php:305
+msgid "No files found under given URL %1$s."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Files.php:339
+msgid "Given string %1$s results in error during request: <pre>%2$s</pre>"
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message
-#: classes/eml/Controller/class-external-files.php:255
+#: app/ExternalFiles/Files.php:397
 msgid "URL %1$s could not be saved because of this error: %2$s"
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:275
-msgid "Given string %s is not a valid url starting with http."
+#: app/ExternalFiles/Files.php:407
+msgid "External file object for URL %1$s could not be loaded."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:282
-msgid "Given string %s is not a valid url."
+#: app/ExternalFiles/Files.php:473
+msgid "URL %1$s successfully added in media library."
 msgstr ""
 
 #. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:303
-msgid "Given url %s already exist in media library."
-msgstr ""
-
-#. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:330
-msgid "Given URL %s is not available."
-msgstr ""
-
-#. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:337
-msgid "Given URL %1$s response with http-status %2$d."
-msgstr ""
-
-#. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:345
-msgid "Given URL %s response without Content-type."
-msgstr ""
-
-#. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type
-#: classes/eml/Controller/class-external-files.php:353
-msgid "Given URL %1$s response with a not allowed mime-type %2$s."
-msgstr ""
-
-#. translators: %1$s will be replaced by the url of the file.
-#: classes/eml/Controller/class-external-files.php:359
-msgid "Given URL %1$s is available."
-msgstr ""
-
-#. translators: %1$s will be replaced by the file-URL
-#: classes/eml/Controller/class-external-files.php:381
+#: app/ExternalFiles/Files.php:507
 msgid "URL %1$s has been deleted from media library."
 msgstr ""
 
-#: classes/eml/Controller/class-external-files.php:423
-msgid "GIF"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:427
-msgid "JPG/JPEG"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:431
-msgid "PNG"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:435
-msgid "WEBP"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:439
-msgid "PDF"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:443
-msgid "ZIP"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:447
-msgid "MP4 Video"
-msgstr ""
-
-#: classes/eml/Controller/class-external-files.php:707
-msgid "Error creating cache directory."
-msgstr ""
-
-#: classes/eml/Controller/class-init.php:219
-msgid "Mime-Type not allowed"
-msgstr ""
-
-#: classes/eml/View/class-logs.php:30
-msgid "URL"
-msgstr ""
-
-#: classes/eml/View/class-logs.php:31
-msgid "date"
-msgstr ""
-
-#: classes/eml/View/class-logs.php:32
-msgid "state"
-msgstr ""
-
-#: classes/eml/View/class-logs.php:33
-msgid "log"
-msgstr ""
-
-#: inc/admin.php:32
-#: inc/admin.php:746
-msgid "General Settings"
-msgstr ""
-
-#: inc/admin.php:38
-msgid "Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs."
-msgstr ""
-
-#: inc/admin.php:40
-msgid "This is handled by Yoast SEO."
-msgstr ""
-
-#: inc/admin.php:46
-msgid "Disable the attachment page for URL-files"
-msgstr ""
-
-#: inc/admin.php:62
-msgid "Disable the check"
-msgstr ""
-
-#: inc/admin.php:69
-msgid "Set interval for file-check"
-msgstr ""
-
-#: inc/admin.php:76
-msgid "Defines the time interval in which files with URLs are automatically checked for its availability."
-msgstr ""
-
-#: inc/admin.php:91
-msgid "Select allowed mime-types"
-msgstr ""
-
-#: inc/admin.php:99
-msgid "Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend."
-msgstr ""
-
-#: inc/admin.php:107
-msgid "Log-mode"
-msgstr ""
-
-#: inc/admin.php:115
-msgid "normal"
-msgstr ""
-
-#: inc/admin.php:116
-msgid "log warnings"
-msgstr ""
-
-#: inc/admin.php:117
-msgid "log all"
-msgstr ""
-
-#: inc/admin.php:126
-msgid "Delete all data on deinstallation"
-msgstr ""
-
-#: inc/admin.php:133
-msgid "If this option is enabled all URL-files will be deleted during deinstallation of this plugin."
-msgstr ""
-
-#: inc/admin.php:143
-msgid "Adding files"
-msgstr ""
-
-#: inc/admin.php:159
-msgid "Select user roles"
-msgstr ""
-
-#: inc/admin.php:167
-msgid "Select roles which should be allowed to add external files."
-msgstr ""
-
-#: inc/admin.php:180
-msgid "User new files should be assigned to"
-msgstr ""
-
-#: inc/admin.php:187
-msgid "This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them."
-msgstr ""
-
-#: inc/admin.php:198
-msgid "Images Settings"
-msgstr ""
-
-#: inc/admin.php:206
-msgid "Mode for image handling"
-msgstr ""
-
-#: inc/admin.php:213
-msgid "Defines how external images are handled."
-msgstr ""
-
-#: inc/admin.php:215
-msgid "host them extern"
-msgstr ""
-
-#: inc/admin.php:216
-msgid "download and host them local"
-msgstr ""
-
-#: inc/admin.php:225
-msgid "Enable proxy for images"
-msgstr ""
-
-#: inc/admin.php:232
-msgid "This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally."
-msgstr ""
-
-#: inc/admin.php:241
-msgid "Max age for cached images in proxy in hours"
-msgstr ""
-
-#: inc/admin.php:248
-msgid "Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
-msgstr ""
-
-#: inc/admin.php:263
-msgid "Settings for External files in Media Library"
-msgstr ""
-
-#: inc/admin.php:264
-msgid "External files in Medias Library"
-msgstr ""
-
-#: inc/admin.php:329
-#: inc/admin.php:375
-msgid "Add external URL"
-msgid_plural "Add external URLs"
-msgstr[0] ""
-msgstr[1] ""
-
-#: inc/admin.php:339
-msgid "Enter one URL per line for files you want to insert in your library"
-msgstr ""
-
-#: inc/admin.php:340
-#: inc/admin.php:386
-msgid "Add this URL"
-msgid_plural "Add this URLs"
-msgstr[0] ""
-msgstr[1] ""
-
-#. translators: %1$s will be replaced with the URL for add new media
-#: inc/admin.php:350
-msgid "Add external files <a href=\"%1$s\">here</a>."
-msgstr ""
-
-#: inc/admin.php:385
-msgid "Enter an URL for a file you want to insert in your library"
-msgstr ""
-
-#: inc/admin.php:410
-msgid "No URLs given to import."
-msgstr ""
-
-#. translators: %1$s will be replaced by the edit-URL of the saved file.
-#: inc/admin.php:444
-msgid "The given URL <a href=\"%1$s\">has been saved</a> in media library."
-msgstr ""
-
-#. translators: %1$s will be replaced by list of successfully saved URLs.
-#: inc/admin.php:455
-msgid "The following URLs has been saved in media library: %1$s"
-msgstr ""
-
-#. translators: %1$s is replaced by the file-list, %2$s is replaced by the URL to the plugin-log
-#: inc/admin.php:474
-msgid "<p>Following URL could not be saved in the media library:</p>%1$s<p>Details are visible <a href=\"%2$s\">in the log</a>.</p>"
-msgid_plural "<p>Following URLs could not be saved in the media library:</p>%1$s<p>Details are visible <a href=\"%2$s\">in the log</a>.</p>"
-msgstr[0] ""
-msgstr[1] ""
-
-#: inc/admin.php:505
-msgid "All files"
-msgstr ""
-
-#: inc/admin.php:506
-msgid "only external URLs"
-msgstr ""
-
-#: inc/admin.php:507
-msgid "no external URLs"
-msgstr ""
-
-#: inc/admin.php:574
+#: app/ExternalFiles/Files.php:800
+#: app/ExternalFiles/Tables.php:172
 msgid "External file"
 msgstr ""
 
-#: inc/admin.php:613
-msgid "File-URL:"
+#: app/ExternalFiles/Files.php:837
+msgid "External URL of this file:"
 msgstr ""
 
-#: inc/admin.php:618
-#: inc/admin.php:700
+#: app/ExternalFiles/Files.php:845
+#: app/ExternalFiles/Files.php:965
 msgid "File-URL is available."
 msgstr ""
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: inc/admin.php:626
+#: app/ExternalFiles/Files.php:853
 msgid "File-URL is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr ""
 
-#: inc/admin.php:632
+#: app/ExternalFiles/Files.php:860
 msgid "Recheck availability"
 msgstr ""
 
-#: inc/admin.php:636
-msgid "This file is local hostet."
+#: app/ExternalFiles/Files.php:868
+#: app/ExternalFiles/Files.php:1064
+msgid "File is local hosted."
 msgstr ""
 
-#: inc/admin.php:638
-msgid "This file is extern hostet."
+#: app/ExternalFiles/Files.php:871
+msgid "Switch to extern"
 msgstr ""
 
-#: inc/admin.php:646
-msgid "This file is delivered through proxied cache."
+#: app/ExternalFiles/Files.php:875
+#: app/ExternalFiles/Files.php:1049
+msgid "File is extern hosted."
 msgstr ""
 
-#: inc/admin.php:648
-msgid "This file is not cached in proxy."
+#: app/ExternalFiles/Files.php:878
+msgid "Switch to local"
 msgstr ""
 
-#: inc/admin.php:659
-msgid "This file is not an external file."
+#: app/ExternalFiles/Files.php:890
+msgid "File is delivered through proxied cache."
 msgstr ""
 
-#: inc/admin.php:680
+#: app/ExternalFiles/Files.php:892
+msgid "File is not cached in proxy."
+msgstr ""
+
+#: app/ExternalFiles/Files.php:900
+msgid "File is protected with login and password."
+msgstr ""
+
+#: app/ExternalFiles/Files.php:904
+msgid "Show log entries"
+msgstr ""
+
+#: app/ExternalFiles/Files.php:908
+msgid "Reset thumbnails"
+msgstr ""
+
+#: app/ExternalFiles/Files.php:928
+#: app/ExternalFiles/Files.php:1006
 msgid "No ID given."
 msgstr ""
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: inc/admin.php:707
+#: app/ExternalFiles/Files.php:976
 msgid "URL-File is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr ""
 
-#: inc/admin.php:755
-#: inc/admin.php:806
+#: app/ExternalFiles/Files.php:1032
+msgid "Given file is not an external file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file URL.
+#: app/ExternalFiles/Files.php:1070
+msgid "File %1$s has been switched the hosting."
+msgstr ""
+
+#: app/ExternalFiles/Files.php:1106
+msgid "Mime-Type not allowed"
+msgstr ""
+
+#: app/ExternalFiles/File_Types.php:117
+msgid "File type could not be detected. Fallback to general file."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:104
+msgid "Rate this plugin"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:105
+msgid "Import of URLs running"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:106
+msgid "Import has been run"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:107
+msgid "The import of given URLs has been run."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:108
+msgid "OK"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:109
+#: app/ExternalFiles/Forms.php:162
+#: app/ExternalFiles/Forms.php:224
+#: app/Plugin/Tables/Logs.php:153
+msgid "Cancel"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:110
+msgid "The following URLs has been imported successfully"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:111
+msgid "Following errors occurred"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:112
+msgid "No URLs given"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:113
+msgid "Please enter one or more URLs to import in the field."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:114
+msgid "Availability refreshed"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:115
+msgid "The file is NOT available."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:116
+msgid "The file is available."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:117
+msgid "Hosting changed."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:118
+msgid "The hosting of this file has been changed."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:148
+msgid "Add URLs of external files"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:150
+msgid "Enter one URL per line for external files you want to insert in your library"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:151
+msgid "Add credentials to access these URLs"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:151
+#: app/ExternalFiles/Forms.php:213
+msgid "Login"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:151
+#: app/ExternalFiles/Forms.php:213
+msgid "Password"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:151
+#: app/ExternalFiles/Forms.php:213
+msgid "Hint:"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:151
+#: app/ExternalFiles/Forms.php:213
+msgid "files with credentials will be saved locally."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:157
+msgid "Add URLs"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:169
+msgid "Add external files"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:174
+#: app/Plugin/Admin/Admin.php:186
+msgid "Settings"
+msgstr ""
+
+#. translators: %1$s will be replaced with the URL for add new media
+#: app/ExternalFiles/Forms.php:187
+msgid "Add external files via their URL <a href=\"%1$s\" target=\"_blank\">here (opens new window)</a>."
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:210
+#: app/ExternalFiles/Forms.php:219
+msgid "Add URL"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:212
+msgid "Enter the URL of an external file you want to insert in your library"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:213
+msgid "Add credentials to access these URL"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:231
+msgid "Add external file"
+msgstr ""
+
+#: app/ExternalFiles/Forms.php:269
+msgid "Import of URLs starting .."
+msgstr ""
+
+#. translators: %1$s will be replaced by the URL which is imported.
+#: app/ExternalFiles/Forms.php:309
+msgid "Importing URL %1$s"
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols.php:109
+msgid "Your hosting does not match the requirements to import the given URL %1$s. You will not be able to use this URL for external files in media library."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/File.php:100
+msgid "File-URL %1$s does not exist."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/File.php:114
+msgid "File-URL %1$s returns an empty file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:55
+msgid "Given URL %s already exist in media library."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:96
+msgid "Missing credentials for import from FTP-URL %1$s."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:106
+msgid "FTP-URL %1$s looks not like an URL."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:155
+msgid "FTP-directory %1$s returns no files."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:171
+#: app/ExternalFiles/Protocols/Http.php:276
+#: app/ExternalFiles/Protocols/Sftp.php:123
+msgid "Given file %1$s already exist in media library."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:229
+msgid "FTP-URL %1$s returns an empty file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Ftp.php:324
+msgid "FTP-connection failed. Check the server-name %1$s and the given credentials."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:53
+msgid "Given string %s is not a valid url."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:86
+msgid "Given URL %s is not available."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:93
+msgid "Given URL %1$s response with http-status %2$d."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:111
+msgid "Given URL %s response without Content-type."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type
+#: app/ExternalFiles/Protocols/Http.php:130
+msgid "Given URL %1$s response with the not allowed mime-type %2$s."
+msgstr ""
+
+#. translators: %1$s will be replaced by the URL of the file.
+#: app/ExternalFiles/Protocols/Http.php:149
+msgid "Given URL %1$s is available."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:243
+msgid "Given directory URL %s could not be loaded."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:253
+msgid "Given directory URL %s does not contain any linked files."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:266
+#: app/ExternalFiles/Protocols/Http.php:295
+msgid "Given URL %s already exist in media library as normal file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Http.php:302
+msgid "Given URL %s already exist in media library as external file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the URL of the file.
+#: app/ExternalFiles/Protocols/Http.php:387
+msgid "Given URL %1$s could not be downloaded."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:52
+msgid "Missing credentials for import from SFTP-URL %1$s."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:63
+msgid "SFTP-URL %1$s looks not like an URL."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:107
+msgid "SFTP-directory %1$s returns no files."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:180
+msgid "SFTP-URL %1$s does not exist."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:189
+msgid "SFTP-URL %1$s returns an empty file."
+msgstr ""
+
+#. translators: %1$s will be replaced by the file-URL
+#: app/ExternalFiles/Protocols/Sftp.php:257
+msgid "SSH/SFTP-connection failed. Check the server-name %1$s and the given credentials."
+msgstr ""
+
+#: app/ExternalFiles/Proxy.php:254
+msgid "Error creating cache directory."
+msgstr ""
+
+#: app/ExternalFiles/Tables.php:93
+msgid "All files"
+msgstr ""
+
+#: app/ExternalFiles/Tables.php:94
+msgid "only external URLs"
+msgstr ""
+
+#: app/ExternalFiles/Tables.php:95
+msgid "no external URLs"
+msgstr ""
+
+#. translators: %1$s will be replaced by the URL for the plugin configuration.
+#: app/Plugin/Admin/Admin.php:102
+msgid "<strong>External files could not be used as no mime-types are allowed.</strong> Go to <a href=\"%1$s\">Settings</a> to choose mime-types you want to use."
+msgstr ""
+
+#: app/Plugin/Admin/Admin.php:173
+msgid "Your website is using an outdated PHP-version!"
+msgstr ""
+
+#: app/Plugin/Admin/Admin.php:173
+msgid "Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.0 or older. These versions <a href=\"https://www.php.net/supported-versions.php\" target=\"_blank\">are outdated</a> since December 2023. To continue using the plugins new features, please update your PHP version."
+msgstr ""
+
+#: app/Plugin/Admin/Admin.php:173
+msgid "Talk to your hosting support team about this."
+msgstr ""
+
+#: app/Plugin/Cli.php:81
+msgid "Results of the import:"
+msgstr ""
+
+#. translators: %1$s will be replaced by our support-URL.
+#: app/Plugin/Crypt.php:103
+msgid "No supported encryption method found. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
+msgstr ""
+
+#. translators: %1$s will nbe replaced by our support-URL.
+#: app/Plugin/Crypt/Sodium.php:72
+msgid "Error on encrypting with PHP-sodium. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
+msgstr ""
+
+#. translators: %1$s will nbe replaced by our support-URL.
+#: app/Plugin/Crypt/Sodium.php:101
+msgid "Error on decrypting with PHP-sodium. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
+msgstr ""
+
+#: app/Plugin/Helper.php:232
+msgid "GIF"
+msgstr ""
+
+#: app/Plugin/Helper.php:236
+msgid "JPG/JPEG"
+msgstr ""
+
+#: app/Plugin/Helper.php:240
+msgid "PNG"
+msgstr ""
+
+#: app/Plugin/Helper.php:244
+msgid "WEBP"
+msgstr ""
+
+#: app/Plugin/Helper.php:248
+msgid "PDF"
+msgstr ""
+
+#: app/Plugin/Helper.php:252
+msgid "ZIP"
+msgstr ""
+
+#: app/Plugin/Helper.php:256
+msgid "MP4 Video"
+msgstr ""
+
+#. translators: %1$s will be replaced by the URL where user can add media files.
+#: app/Plugin/Install.php:84
+msgid "<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href=\"%1$s\">here</a>."
+msgstr ""
+
+#: app/Plugin/Settings.php:124
+msgid "External files in Medias Library"
+msgstr ""
+
+#: app/Plugin/Settings.php:125
+msgid "Settings for External files in Media Library"
+msgstr ""
+
+#: app/Plugin/Settings.php:135
+#: app/Plugin/Settings.php:173
+msgid "General Settings"
+msgstr ""
+
+#: app/Plugin/Settings.php:139
+msgid "Permissions"
+msgstr ""
+
+#: app/Plugin/Settings.php:143
+msgid "Images"
+msgstr ""
+
+#: app/Plugin/Settings.php:147
+msgid "Video"
+msgstr ""
+
+#: app/Plugin/Settings.php:151
+msgid "Advanced"
+msgstr ""
+
+#: app/Plugin/Settings.php:155
+#: app/Plugin/Settings.php:530
 msgid "Logs"
 msgstr ""
 
-#: inc/admin.php:971
+#: app/Plugin/Settings.php:160
+msgid "Questions? Check our forum"
+msgstr ""
+
+#: app/Plugin/Settings.php:178
+msgid "Permissions to add files"
+msgstr ""
+
+#: app/Plugin/Settings.php:183
+msgid "Images Settings"
+msgstr ""
+
+#: app/Plugin/Settings.php:189
+msgid "Video Settings"
+msgstr ""
+
+#: app/Plugin/Settings.php:195
+msgid "Advanced settings"
+msgstr ""
+
+#: app/Plugin/Settings.php:202
+msgid "Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs."
+msgstr ""
+
+#: app/Plugin/Settings.php:204
+msgid "This is handled by Yoast SEO."
+msgstr ""
+
+#: app/Plugin/Settings.php:213
+msgid "Disable the attachment page for URL-files"
+msgstr ""
+
+#: app/Plugin/Settings.php:220
+msgid "Disable the check"
+msgstr ""
+
+#: app/Plugin/Settings.php:238
+msgid "Select allowed mime-types"
+msgstr ""
+
+#. translators: %1$s will be replaced by the external hook-documentation-URL
+#: app/Plugin/Settings.php:240
+msgid "Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href=\"%1$s\" target=\"_blank\">at our hooks (opens new window)</a>."
+msgstr ""
+
+#: app/Plugin/Settings.php:251
+msgid "Set interval for file-check"
+msgstr ""
+
+#: app/Plugin/Settings.php:252
+msgid "Defines the time interval in which files with URLs are automatically checked for its availability."
+msgstr ""
+
+#: app/Plugin/Settings.php:263
+msgid "Delete all data on uninstallation"
+msgstr ""
+
+#: app/Plugin/Settings.php:264
+msgid "If this option is enabled all URL-files will be deleted during deinstallation of this plugin."
+msgstr ""
+
+#: app/Plugin/Settings.php:276
+msgid "Switch external files  to local hosting during uninstallation"
+msgstr ""
+
+#: app/Plugin/Settings.php:277
+msgid "If this option is enabled all external files will be saved local during uninstallation of this plugin."
+msgstr ""
+
+#: app/Plugin/Settings.php:297
+msgid "Select user roles"
+msgstr ""
+
+#: app/Plugin/Settings.php:298
+msgid "Select roles which should be allowed to add external files."
+msgstr ""
+
+#: app/Plugin/Settings.php:314
+msgid "User new files should be assigned to"
+msgstr ""
+
+#: app/Plugin/Settings.php:315
+msgid "This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them."
+msgstr ""
+
+#: app/Plugin/Settings.php:325
+msgid "Mode for image handling"
+msgstr ""
+
+#: app/Plugin/Settings.php:326
+msgid "Defines how external images are handled."
+msgstr ""
+
+#: app/Plugin/Settings.php:329
+#: app/Plugin/Settings.php:379
+msgid "host them extern"
+msgstr ""
+
+#: app/Plugin/Settings.php:330
+#: app/Plugin/Settings.php:380
+msgid "download and host them local"
+msgstr ""
+
+#: app/Plugin/Settings.php:341
+msgid "Enable proxy for images"
+msgstr ""
+
+#: app/Plugin/Settings.php:342
+msgid "This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally."
+msgstr ""
+
+#: app/Plugin/Settings.php:352
+msgid "Max age for cached images in proxy in hours"
+msgstr ""
+
+#: app/Plugin/Settings.php:353
+msgid "Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
+msgstr ""
+
+#: app/Plugin/Settings.php:364
+msgid "Max. Timeout in seconds"
+msgstr ""
+
+#: app/Plugin/Settings.php:365
+msgid "Defines the maximum timeout for any external request for files."
+msgstr ""
+
+#: app/Plugin/Settings.php:375
+msgid "Mode for video handling"
+msgstr ""
+
+#: app/Plugin/Settings.php:376
+msgid "Defines how external video are handled."
+msgstr ""
+
+#: app/Plugin/Settings.php:391
+msgid "Enable proxy for videos"
+msgstr ""
+
+#: app/Plugin/Settings.php:392
+msgid "This option is only available if videos are hosted external. If this option is disabled, external videos will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the videos locally."
+msgstr ""
+
+#: app/Plugin/Settings.php:402
+msgid "Max age for cached video in proxy in hours"
+msgstr ""
+
+#: app/Plugin/Settings.php:403
+msgid "Defines how long videos, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
+msgstr ""
+
+#: app/Plugin/Settings.php:412
+msgid "Log-mode"
+msgstr ""
+
+#: app/Plugin/Settings.php:415
+msgid "normal"
+msgstr ""
+
+#: app/Plugin/Settings.php:416
+msgid "log warnings"
+msgstr ""
+
+#: app/Plugin/Settings.php:417
+msgid "log all"
+msgstr ""
+
+#: app/Plugin/Settings.php:447
 msgid "The given interval does not exists."
 msgstr ""
 
-#: inc/admin.php:1059
+#: app/Plugin/Settings.php:482
 msgid "The given mime-type is not supported. Setting will not be saved."
 msgstr ""
 
-#: inc/admin.php:1106
-msgid "External files could not be used as no mime-types are allowed."
+#: app/Plugin/Settings.php:558
+msgid "These settings only apply to files that are provided via http. Files from other protocols (such as ftp) are generally only saved locally without a proxy."
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:28
+msgid "State"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:29
+msgid "Date"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:30
+msgid "URL"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:31
+msgid "Log"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:139
+msgid "Empty log entries"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:141
+msgid "Are you sure you want to empty the log?"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:142
+msgid "You will loose any log until now."
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:148
+msgid "Yes, empty the log"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:159
+msgid "Empty the log"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:168
+msgid "No log entries found."
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:180
+msgid "Error"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:181
+msgid "Success"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:182
+msgid "Info"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:203
+msgid "All"
+msgstr ""
+
+#: app/Plugin/Tables/Logs.php:208
+msgid "Errors"
+msgstr ""
+
+#: app/Plugin/Transient.php:172
+msgid "Dismiss this notice."
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:106
+msgid "Migrate from Exmage to External Files for Media Library"
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:108
+msgid "Are you sure you want to migrate your files?"
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:109
+msgid "After the migration you will not be able to use the Exmage functions on your files. But you could use the features of External Files for Media Library."
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:110
+msgid "Hint: create a backup before you run this migration."
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:116
+msgid "Yes, migrate"
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:121
+msgid "No"
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:129
+msgid "<strong>We detected that you are using Exmage - great!</strong> Click on the following button to migrate the Exmage-files."
+msgstr ""
+
+#: app/ThirdParty/Exmage.php:129
+msgid "Migrate now"
+msgstr ""
+
+#: app/ThirdParty/GoogleDrive.php:94
+msgid "Given GoogleDrive-URL could not be used as external embed image in websites."
+msgstr ""
+
+#: app/ThirdParty/Imgur.php:155
+msgid "Given Imgur-URL could not be used as external embed image in websites."
+msgstr ""
+
+#: app/ThirdParty/WooCommerce.php:89
+#: app/ThirdParty/WooCommerce.php:91
+msgid "WooCommerce"
+msgstr ""
+
+#: app/ThirdParty/WooCommerce.php:97
+msgid "Enable support for WooCommerce"
+msgstr ""
+
+#: app/ThirdParty/WooCommerce.php:98
+msgid "If enabled any external hosted images during CSV-import will be handled as external files by this plugin."
 msgstr ""

@@ -1,9 +1,7 @@
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
 * Massen-Import per Schedule
-* CLI: alle Texte übersetzbar machen mit default sprache von WordPress
 * Import & Export von Einstellungen
 * Helper ergänzen
-* individuelles anpassen von cache verzeichnis per Hook ermöglichen
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
 * Test von Update 1.x auf 2.0.0
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
