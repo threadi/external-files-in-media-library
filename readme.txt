@@ -169,6 +169,7 @@ external files by this plugin.
 * Added migration tool to switch the external files from Exmage to this one
 * Added thumbnail support for proxied images
 * Added settings for videos which now can also be proxied
+* Multiple new hooks
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments

@@ -222,6 +222,14 @@ class Proxy {
 		// create string with path for directory.
 		$path = trailingslashit( WP_CONTENT_DIR ) . 'cache/eml/';
 
+		/**
+		 * Filter the cache directory.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $path The absolute path to the directory.
+		 */
+		$path = apply_filters( 'eml_proxy_path', $path );
+
 		// create it if necessary.
 		$this->create_cache_directory( $path );
 
