@@ -164,12 +164,9 @@ class Exmage {
 	 */
 	public function migrate_per_request(): void {
 		// check nonce.
-		if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-migrate-exmage' ) ) {
-			// redirect user back.
-			wp_safe_redirect( wp_get_referer() );
-			exit;
-		}
+		check_admin_referer( 'eml-migrate-exmage', 'nonce' );
 
+		// run the migration.
 		$this->migrate();
 
 		// redirect user back.

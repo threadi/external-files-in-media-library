@@ -109,6 +109,9 @@ class Files {
 		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ) );
 		add_action( 'eml_check_files', array( $this, 'check_files' ), 10, 0 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
+
+		// add admin actions.
+		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
 	}
 
 	/**
@@ -511,32 +514,8 @@ class Files {
 	 * @return void
 	 */
 	public function delete_file( File $external_file_obj ): void {
-		// if this is an image, get its sizes.
-		if ( $external_file_obj->is_image() ) {
-			// get WP Filesystem-handler.
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			\WP_Filesystem();
-			global $wp_filesystem;
-
-			// get the image meta data.
-			$image_meta_data = wp_get_attachment_metadata( $external_file_obj->get_id(), true );
-
-			// loop through the sizes and delete each from our own directory.
-			if ( ! empty( $image_meta_data['sizes'] ) ) {
-				foreach ( $image_meta_data['sizes'] as $size_data ) {
-					// get file path.
-					$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size_data['width'], $size_data['height'] );
-
-					// bail if file does not exist.
-					if ( ! $wp_filesystem->exists( $file ) ) {
-						continue;
-					}
-
-					// delete it.
-					$wp_filesystem->delete( $file );
-				}
-			}
-		}
+		// delete thumbs.
+		$external_file_obj->delete_thumbs();
 
 		// delete the file entry itself.
 		wp_delete_attachment( $external_file_obj->get_id(), true );
@@ -904,7 +883,14 @@ class Files {
 			<?php
 		}
 		?>
-		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries.', 'external-files-in-media-library' ); ?></a></li>
+		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
+		<?php
+		if( $external_file_obj->is_image() ) {
+			?>
+			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $this->get_thumbnail_reset_url( $external_file_obj ) ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
+			<?php
+		}
+		?>
 		</ul>
 		<?php
 	}
@@ -1188,7 +1174,7 @@ class Files {
 			}
 
 			// use already existing thumb.
-			if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) ) {
+			if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && file_exists( $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'] ) ) {
 				// return the thumb.
 				return array(
 					trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'],
@@ -1447,5 +1433,62 @@ class Files {
 
 		// return resulting list of file data.
 		return $title;
+	}
+
+	/**
+	 * Return the thumbnail reset URL for single external file.
+	 *
+	 * @param File $external_file_obj
+	 *
+	 * @return string
+	 */
+	private function get_thumbnail_reset_url( File $external_file_obj ): string {
+		return add_query_arg(
+			array(
+				'action' => 'eml_reset_thumbnails',
+				'post' => $external_file_obj->get_id(),
+				'nonce' => wp_create_nonce( 'eml-reset-thumbnails' )
+			),
+			get_admin_url() . 'admin.php'
+		);
+	}
+
+	/**
+	 * Reset thumbnails if single file by request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function reset_thumbnails_by_request(): void {
+		// check referer.
+		check_admin_referer( 'eml-reset-thumbnails', 'nonce' );
+
+		// get the file id.
+		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if post id is not given.
+		if( 0 === $post_id ) {
+			wp_safe_redirect( wp_get_referer() );
+			exit;
+		}
+
+		// get the external file object.
+		$external_file_obj = $this->get_file( $post_id );
+
+		// bail if object could not be loaded.
+		if( ! $external_file_obj ) {
+			wp_safe_redirect( wp_get_referer() );
+			exit;
+		}
+
+		// delete the thumbs of this file.
+		$external_file_obj->delete_thumbs();
+
+		// generate the thumbs.
+
+
+		// redirect user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
 	}
 }

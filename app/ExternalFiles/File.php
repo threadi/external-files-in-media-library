@@ -717,4 +717,43 @@ class File {
 
 		return true;
 	}
+
+	/**
+	 * Delete thumbs of this file.
+	 *
+	 * @return void
+	 */
+	public function delete_thumbs(): void {
+		// bail if this is not an image.
+		if ( ! $this->is_image() ) {
+			return;
+		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// get the image meta data.
+		$image_meta_data = wp_get_attachment_metadata( $this->get_id(), true );
+
+		// bail if no sizes are given.
+		if ( empty( $image_meta_data['sizes'] ) ) {
+			return;
+		}
+
+		// loop through the sizes.
+		foreach ( $image_meta_data['sizes'] as $size_data ) {
+			// get file path.
+			$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'] );
+
+			// bail if file does not exist.
+			if ( ! $wp_filesystem->exists( $file ) ) {
+				continue;
+			}
+
+			// delete it.
+			$wp_filesystem->delete( $file );
+		}
+	}
 }
