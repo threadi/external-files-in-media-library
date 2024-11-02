@@ -438,15 +438,17 @@ class Files {
 				// set file to our url.
 				$image_meta['file'] = $file_data['url'];
 
-				// change file name for each size.
-				foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
-					$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+				// change file name for each size, if given.
+				if( ! empty( $image_meta['sizes'] ) ) {
+					foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
+						$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+					}
 				}
 
 				// save the resulting image-data.
 				wp_update_attachment_metadata( $attachment_id, $image_meta );
 
-				// add file cache.
+				// add file to local cache if it is an image.
 				$external_file_obj->add_to_cache();
 			}
 

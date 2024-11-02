@@ -369,6 +369,11 @@ class File {
 	 * @return void
 	 */
 	public function add_to_cache(): void {
+		// bail if this is not an image.
+		if( ! $this->is_image() ) {
+			return;
+		}
+
 		global $wp_filesystem;
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		WP_Filesystem();
