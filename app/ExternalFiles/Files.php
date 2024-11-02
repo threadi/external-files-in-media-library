@@ -515,12 +515,6 @@ class Files {
 	 * @return false|File
 	 */
 	public function get_file( int $attachment_id ): false|File {
-		// bail if file is not an attachment.
-		if ( false !== is_attachment( $attachment_id ) ) {
-			return false;
-		}
-
-		// return the external file object.
 		return new File( $attachment_id );
 	}
 
@@ -1299,7 +1293,7 @@ class Files {
 	 */
 	public function disable_attachment_page(): void {
 		// bail if this is not an attachment page.
-		if ( ! is_attachment() ) {
+		if ( false === is_attachment() ) {
 			return;
 		}
 
