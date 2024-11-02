@@ -117,32 +117,96 @@ class Settings {
 	 * @return void
 	 */
 	public function add_settings(): void {
-		// get and configure the basic settings object.
+		/**
+		 * Configure the basic settings object.
+		 */
 		$settings_obj = Settings\Settings::get_instance();
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
 
-		// add the settings tabs.
-		$general_settings_tab = $settings_obj->add_tab( 'eml_general' );
-		$general_settings_tab->set_name( 'eml_general' );
-		$general_settings_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
+		/**
+		 * Configure all tabs for this object.
+		 */
+		// the general tab.
+		$general_tab = $settings_obj->add_tab( 'eml_general' );
+		$general_tab->set_name( 'eml_general' );
+		$general_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 
+		// the permissions tab.
+		$permissions_tab = $settings_obj->add_tab( 'eml_permissions' );
+		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
+
+		// the images tab.
+		$images_tab = $settings_obj->add_tab( 'eml_images' );
+		$images_tab->set_title( __( 'Images', 'external-files-in-media-library' ) );
+
+		// the video tab.
+		$video_tab = $settings_obj->add_tab( 'eml_video' );
+		$video_tab->set_title( __( 'Video', 'external-files-in-media-library' ) );
+
+		// the advanced tab.
+		$advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
+		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
+
+		// the logs tab.
+		$logs_tab = $settings_obj->add_tab( 'eml_logs' );
+		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
+		$logs_tab->set_callback( array( $this, 'show_logs' ) );
+
+		// the helper tab.
+		$helper_tab = $settings_obj->add_tab( 'eml_helper' );
+		$helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
+		$helper_tab->set_url( Helper::get_plugin_support_url() );
+		$helper_tab->set_url_target( '_blank' );
+		$helper_tab->set_tab_class( 'nav-tab-help' );
+
+		// set the default tab.
+		$settings_obj->set_default_tab( $general_tab );
+
+		/**
+		 * Configure all sections for this settings object.
+		 */
+		// the main section.
+		$general_tab_main = $general_tab->add_section( 'settings_section_main' );
+		$general_tab_main->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
+		$general_tab_main->set_setting( $settings_obj );
+
+		// the files section.
+		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files' );
+		$permissions_tab_files->set_title( __( 'Permissions to add files', 'external-files-in-media-library' ) );
+		$permissions_tab_files->set_setting( $settings_obj );
+
+		// the images section.
+		$images_tab_images = $images_tab->add_section( 'settings_section_images' );
+		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
+		$images_tab_images->set_callback( array( $this, 'show_protocol_hint' ) );
+		$images_tab_images->set_setting( $settings_obj );
+
+		// the videos section.
+		$videos_tab_videos = $video_tab->add_section( 'settings_section_images' );
+		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
+		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
+		$videos_tab_videos->set_setting( $settings_obj );
+
+		// the advanced section.
+		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced' );
+		$advanced_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
+		$advanced_tab_advanced->set_setting( $settings_obj );
+
+		/**
+		 * Add the settings to the settings object.
+		 */
 		// set description for disabling the attachment pages.
 		$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
 		if ( method_exists( 'WPSEO_Options', 'get' ) ) {
 			$description = __( 'This is handled by Yoast SEO.', 'external-files-in-media-library' );
 		}
 
-		// add section.
-		$general_settings_tab_main = $general_settings_tab->add_section( 'settings_section_main' );
-		$general_settings_tab_main->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
-		$general_settings_tab_main->set_setting( $settings_obj );
-
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_disable_attachment_pages' );
-		$setting->set_section( $general_settings_tab_main );
+		$setting = $settings_obj->add_setting( 'eml_disable_attachment_pages' );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox();
@@ -159,18 +223,6 @@ class Settings {
 			$values[ $name ] = $interval['display'];
 		}
 
-		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_check_interval' );
-		$setting->set_section( $general_settings_tab_main );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'daily' );
-		$field = new Select();
-		$field->set_title( __( 'Set interval for file-check', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
-		$field->set_options( $values );
-		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
-		$setting->set_field( $field );
-
 		// get possible mime types.
 		$mime_types = array();
 		foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
@@ -178,10 +230,10 @@ class Settings {
 		}
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_allowed_mime_types' );
-		$setting->set_section( $general_settings_tab_main );
+		$setting = $settings_obj->add_setting( 'eml_allowed_mime_types' );
+		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'array' );
-		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) );
+		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) ); // TODO variabel machen per filter.
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
@@ -191,8 +243,20 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_delete_on_deinstallation' );
-		$setting->set_section( $general_settings_tab_main );
+		$setting = $settings_obj->add_setting( 'eml_check_interval' );
+		$setting->set_section( $general_tab_main );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'daily' );
+		$field = new Select();
+		$field->set_title( __( 'Set interval for file-check', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
+		$field->set_options( $values );
+		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_delete_on_deinstallation' );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -204,8 +268,8 @@ class Settings {
 		$setting->set_default( 1 );
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_switch_on_uninstallation' );
-		$setting->set_section( $general_settings_tab_main );
+		$setting = $settings_obj->add_setting( 'eml_switch_on_uninstallation' );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -216,11 +280,6 @@ class Settings {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 
-		// add section.
-		$general_settings_tab_files = $general_settings_tab->add_section( 'settings_section_add_files' );
-		$general_settings_tab_files->set_title( __( 'Adding files', 'external-files-in-media-library' ) );
-		$general_settings_tab_files->set_setting( $settings_obj );
-
 		// get user roles.
 		$user_roles = array();
 		if ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) {
@@ -230,8 +289,8 @@ class Settings {
 		}
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_allowed_roles' );
-		$setting->set_section( $general_settings_tab_files );
+		$setting = $settings_obj->add_setting( 'eml_allowed_roles' );
+		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
@@ -247,8 +306,8 @@ class Settings {
 		}
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_user_assign' );
-		$setting->set_section( $general_settings_tab_files );
+		$setting = $settings_obj->add_setting( 'eml_user_assign' );
+		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'integer' );
 		$setting->set_default( Helper::get_first_administrator_user() );
 		$field = new Select();
@@ -257,14 +316,9 @@ class Settings {
 		$field->set_options( $users );
 		$setting->set_field( $field );
 
-		// add section.
-		$general_settings_tab_images = $general_settings_tab->add_section( 'settings_section_images' );
-		$general_settings_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
-		$general_settings_tab_images->set_setting( $settings_obj );
-
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_images_mode' );
-		$setting->set_section( $general_settings_tab_images );
+		$setting = $settings_obj->add_setting( 'eml_images_mode' );
+		$setting->set_section( $images_tab_images );
 		$setting->set_type( 'string' );
 		$setting->set_default( 'external' );
 		$field = new Select();
@@ -279,8 +333,8 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_proxy' );
-		$setting->set_section( $general_settings_tab_images );
+		$setting = $settings_obj->add_setting( 'eml_proxy' );
+		$setting->set_section( $images_tab_images );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox();
@@ -290,8 +344,8 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $general_settings_tab->add_setting( 'eml_proxy_max_age' );
-		$setting->set_section( $general_settings_tab_images );
+		$setting = $settings_obj->add_setting( 'eml_proxy_max_age' );
+		$setting->set_section( $images_tab_images );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 24 );
 		$field = new Number();
@@ -299,18 +353,9 @@ class Settings {
 		$field->set_description( __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 
-		// add the advanced tab.
-		$general_advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
-		$general_advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
-
-		// add section.
-		$general_settings_tab_advanced = $general_advanced_tab->add_section( 'settings_section_advanced' );
-		$general_settings_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
-		$general_settings_tab_advanced->set_setting( $settings_obj );
-
 		// add setting.
-		$setting = $general_advanced_tab->add_setting( 'eml_timeout' );
-		$setting->set_section( $general_settings_tab_advanced );
+		$setting = $settings_obj->add_setting( 'eml_timeout' );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 30 );
 		$setting->set_field(
@@ -322,8 +367,45 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $general_advanced_tab->add_setting( 'eml_log_mode' );
-		$setting->set_section( $general_settings_tab_advanced );
+		$setting = $settings_obj->add_setting( 'eml_video_mode' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
+		$field = new Select();
+		$field->set_title( __( 'Mode for video handling', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how external video are handled.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_video_proxy' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable proxy for videos', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This option is only available if videos are hosted external. If this option is disabled, external videos will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the videos locally.', 'external-files-in-media-library' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_video_proxy_max_age' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 * 7 );
+		$field = new Number();
+		$field->set_title( __( 'Max age for cached video in proxy in hours', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how long videos, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_log_mode' );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Select();
@@ -336,21 +418,6 @@ class Settings {
 			)
 		);
 		$setting->set_field( $field );
-
-		// add the logs tab.
-		$general_logs_tab = $settings_obj->add_tab( 'eml_logs' );
-		$general_logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
-		$general_logs_tab->set_callback( array( $this, 'show_logs' ) );
-
-		// add the helper tab.
-		$general_helper_tab = $settings_obj->add_tab( 'eml_helper' );
-		$general_helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
-		$general_helper_tab->set_url( Helper::get_plugin_support_url() );
-		$general_helper_tab->set_url_target( '_blank' );
-		$general_helper_tab->set_tab_class( 'nav-tab-help' );
-
-		// set the default tab.
-		$settings_obj->set_default_tab( $general_settings_tab );
 
 		// initialize this settings object.
 		$settings_obj->init();
@@ -480,5 +547,14 @@ class Settings {
 
 		// run the installation of them.
 		Settings\Settings::get_instance()->activation();
+	}
+
+	/**
+	 * Show protocol hint for images and videos.
+	 *
+	 * @return void
+	 */
+	public function show_protocol_hint(): void {
+		echo esc_html__( 'These settings only apply to files that are provided via http. Files from other protocols (such as ftp) are generally only saved locally without a proxy.', 'external-files-in-media-library' );
 	}
 }

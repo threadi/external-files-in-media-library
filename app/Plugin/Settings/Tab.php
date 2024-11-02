@@ -148,7 +148,7 @@ class Tab {
 	 * @return false|Setting
 	 */
 	public function add_setting( string|Setting $setting ): false|Setting {
-		// initialize the tab object value.
+		// initialize the setting object value.
 		$setting_obj = false;
 
 		// if value is a string, create the tab object first.
@@ -277,6 +277,9 @@ class Tab {
 			return false;
 		}
 
+		// set the tab where this section is assigned to.
+		$section_obj->set_tab( $this );
+
 		// add the section to the list of sections of this tab.
 		$this->sections[] = $section_obj;
 
@@ -319,7 +322,7 @@ class Tab {
 		$url = $this->url;
 
 		/**
-		 * Filter the url of a tabs object.
+		 * Filter the URL of a tabs object.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param string $url The settings.
@@ -348,10 +351,10 @@ class Tab {
 		$url_target = $this->url_target;
 
 		/**
-		 * Filter the url target of a tabs object.
+		 * Filter the URL target of a tabs object.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param string $url_target The url target.
+		 * @param string $url_target The URL target.
 		 * @param Tab $this The tab-object.
 		 */
 		return apply_filters( 'eml_settings_tab_settings', $url_target, $this );

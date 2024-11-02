@@ -115,7 +115,7 @@ class Files {
 	}
 
 	/**
-	 * Return the url of an external file.
+	 * Return the URL of an external file.
 	 *
 	 * @param string $url               The URL which is requested.
 	 * @param int    $attachment_id     The attachment-ID which is requested.
@@ -130,7 +130,7 @@ class Files {
 			return $url;
 		}
 
-		// return the original url if this URL-file is not valid or not available.
+		// return the original URL if this URL-file is not valid or not available.
 		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
 			return $url;
 		}
@@ -278,7 +278,7 @@ class Files {
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
 
 		/**
-		 * Do nothing if url is using a not supported tcp protocol.
+		 * Do nothing if URL is using a not supported tcp protocol.
 		 */
 		if ( ! $protocol_handler_obj ) {
 			/* translators: %1$s will be replaced by the file-URL */
@@ -432,21 +432,37 @@ class Files {
 
 			// set meta-data for images if mode is enabled for this.
 			if ( false === $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
-				// create the image meta data.
-				$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
+				// TODO implement file-specific metadata.
 
-				// set file to our url.
-				$image_meta['file'] = $file_data['url'];
+				// update meta data for images.
+				if ( $external_file_obj->is_image() ) {
+					// create the image meta data.
+					$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
 
-				// change file name for each size, if given.
-				if( ! empty( $image_meta['sizes'] ) ) {
-					foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
-						$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+					// set file to our url.
+					$image_meta['file'] = $file_data['url'];
+
+					// change file name for each size, if given.
+					if ( ! empty( $image_meta['sizes'] ) ) {
+						foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
+							$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+						}
 					}
+
+					// save the resulting image-data.
+					wp_update_attachment_metadata( $attachment_id, $image_meta );
 				}
 
-				// save the resulting image-data.
-				wp_update_attachment_metadata( $attachment_id, $image_meta );
+				// update meta data for videos.
+				if ( $external_file_obj->is_video() ) {
+					// collect meta data.
+					$video_meta = array(
+						'filesize' => $file_data['filesize'],
+					);
+
+					// save the resulting image-data.
+					wp_update_attachment_metadata( $attachment_id, $video_meta );
+				}
 
 				// add file to local cache if it is an image.
 				$external_file_obj->add_to_cache();
@@ -616,7 +632,7 @@ class Files {
 	 * @return false|File
 	 */
 	public function get_file_by_url( string $url ): false|File {
-		// bail if url is empty.
+		// bail if URL is empty.
 		if ( empty( $url ) ) {
 			return false;
 		}
@@ -866,7 +882,7 @@ class Files {
 		?>
 		</li>
 		<?php
-		if ( get_option( 'eml_proxy' ) ) {
+		if ( ( $external_file_obj->is_image() && get_option( 'eml_proxy' ) ) || ( $external_file_obj->is_video() && get_option( 'eml_video_proxy' ) ) ) {
 			?>
 			<li>
 				<?php
@@ -887,7 +903,7 @@ class Files {
 		?>
 		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
 		<?php
-		if( $external_file_obj->is_image() ) {
+		if ( $external_file_obj->is_image() ) {
 			?>
 			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $this->get_thumbnail_reset_url( $external_file_obj ) ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
 			<?php
@@ -1414,7 +1430,7 @@ class Files {
 			return $title;
 		}
 
-		// get url data.
+		// get URL data.
 		$url_info = wp_parse_url( $url );
 
 		// bail if url_info is empty.
@@ -1440,7 +1456,7 @@ class Files {
 	/**
 	 * Return the thumbnail reset URL for single external file.
 	 *
-	 * @param File $external_file_obj
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return string
 	 */
@@ -1448,8 +1464,8 @@ class Files {
 		return add_query_arg(
 			array(
 				'action' => 'eml_reset_thumbnails',
-				'post' => $external_file_obj->get_id(),
-				'nonce' => wp_create_nonce( 'eml-reset-thumbnails' )
+				'post'   => $external_file_obj->get_id(),
+				'nonce'  => wp_create_nonce( 'eml-reset-thumbnails' ),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -1469,7 +1485,7 @@ class Files {
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if post id is not given.
-		if( 0 === $post_id ) {
+		if ( 0 === $post_id ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
@@ -1478,7 +1494,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if object could not be loaded.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
@@ -1487,7 +1503,6 @@ class Files {
 		$external_file_obj->delete_thumbs();
 
 		// generate the thumbs.
-
 
 		// redirect user.
 		wp_safe_redirect( wp_get_referer() );

@@ -43,7 +43,7 @@ class Protocols {
 	 */
 	public static function get_instance(): Protocols {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new Protocols();
+			self::$instance = new self();
 		}
 
 		return self::$instance;

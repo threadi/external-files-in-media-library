@@ -189,7 +189,7 @@ class Logs extends WP_List_Table {
 	 * @return array
 	 */
 	protected function get_views(): array {
-		// get main url without filter.
+		// get main URL without filter.
 		$url = remove_query_arg( array( 'errors', 'url' ) );
 
 		// get called error-parameter.

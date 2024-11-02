@@ -107,6 +107,17 @@ class File {
 			return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
 		}
 
+		// use local proxy if enabled, this is a video and if we are not in wp-admin.
+		if ( ! empty( $this->url ) && $this->is_video() && 1 === absint( get_option( 'eml_video_proxy', 0 ) ) && false === $unproxied ) {
+			if ( empty( get_option( 'permalink_structure', '' ) ) ) {
+				// return link for simple permalinks.
+				return trailingslashit( get_home_url() ) . '?' . Proxy::get_instance()->get_slug() . '=' . $this->get_title();
+			}
+
+			// return link for pretty permalinks.
+			return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+		}
+
 		// return normal URL.
 		return $this->url;
 	}
@@ -317,6 +328,15 @@ class File {
 	}
 
 	/**
+	 * Return whether this URL-file an image.
+	 *
+	 * @return bool
+	 */
+	public function is_video(): bool {
+		return Helper::is_video_by_mime_type( $this->get_mime_type() );
+	}
+
+	/**
 	 * Return whether this URL-file is an image.
 	 *
 	 * @return bool
@@ -353,8 +373,14 @@ class File {
 			return false;
 		}
 
-		// check the age of the cached file and compare it with max age for cached files.
-		if ( filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
+		// check for images the age of the cached file and compare it with max age for cached files.
+		if ( $this->is_image() && filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
+			// return false as file is to old and should be renewed.
+			return false;
+		}
+
+		// check for videos the age of the cached file and compare it with max age for cached files.
+		if ( $this->is_video() && filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_video_proxy_max_age', 168 ) ) * 60 * 60 ) ) {
 			// return false as file is to old and should be renewed.
 			return false;
 		}
@@ -369,8 +395,8 @@ class File {
 	 * @return void
 	 */
 	public function add_to_cache(): void {
-		// bail if this is not an image.
-		if( ! $this->is_image() ) {
+		// bail if this is not an image or video.
+		if ( ! $this->is_image() && ! $this->is_video() ) {
 			return;
 		}
 
@@ -379,12 +405,12 @@ class File {
 		WP_Filesystem();
 
 		/**
-		 * Get the handler for this url depending on its protocol.
+		 * Get the handler for this URL depending on its protocol.
 		 */
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 
 		/**
-		 * Do nothing if url is using a not supported tcp protocol.
+		 * Do nothing if URL is using a not supported tcp protocol.
 		 */
 		if ( ! $protocol_handler_obj ) {
 			return;
@@ -563,7 +589,7 @@ class File {
 		WP_Filesystem();
 		global $wp_filesystem;
 
-		// get the handler for this url depending on its protocol.
+		// get the handler for this URL depending on its protocol.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 
 		// prevent duplicate check for this file.

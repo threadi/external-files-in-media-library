@@ -108,7 +108,15 @@ class Cli {
 		$files_to_delete = array();
 		if ( ! empty( $urls ) ) {
 			foreach ( $urls as $url ) {
-				$files_to_delete[] = $external_files_obj->get_file_by_url( $url );
+				$external_file_obj = $external_files_obj->get_file_by_url( $url );
+
+				// bail if object could not be loaded.
+				if ( ! $external_file_obj ) {
+					continue;
+				}
+
+				// add to list.
+				$files_to_delete[] = $external_file_obj;
 			}
 		} else {
 			// get all files created by this plugin in media library.

@@ -52,7 +52,7 @@ class Ftp extends Protocol_Base {
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $url ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 			return false;
 		}
 

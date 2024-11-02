@@ -77,7 +77,7 @@ class Http extends Protocol_Base {
 	 * @return bool true if file is available, false if not.
 	 */
 	public function check_availability( string $url ): bool {
-		// check if url is available.
+		// check if URL is available.
 		$response = wp_remote_head( $url, $this->get_header_args() );
 
 		// request resulted in an error.
@@ -145,7 +145,7 @@ class Http extends Protocol_Base {
 		 */
 		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
 			// file is available.
-			/* translators: %1$s will be replaced by the url of the file. */
+			/* translators: %1$s will be replaced by the URL of the file. */
 			Log::get_instance()->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'success', 2 );
 
 			// return true as file is available.
@@ -207,14 +207,26 @@ class Http extends Protocol_Base {
 		$response_headers_obj = $response['http_response']->get_headers();
 		$response_headers     = $response_headers_obj->getAll();
 
-		// if content-type is "text/html" it must be a directory listing.
+		// if content-type is "text/html" it could be a directory listing.
 		if ( ! empty( $response_headers['content-type'] ) && Helper::get_content_type_from_string( $response_headers['content-type'] ) === 'text/html' ) {
+			/**
+			 * Filter the URL with custom import methods.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 * @param array $array Result list with infos.
+			 * @param string $url The URL to import.
+			 */
+			$results = apply_filters( 'eml_filter_url_response', array(), $this->get_url() );
+			if ( ! empty( $results ) ) {
+				return array( $results );
+			}
+
 			// get WP Filesystem-handler.
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			\WP_Filesystem();
 			global $wp_filesystem;
 
-			// get all files from response and get info to each one.
+			// save the content of the URL in a temporary file.
 			add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 			$tmp_content_file = download_url( $this->get_url() );
 			remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
@@ -222,10 +234,13 @@ class Http extends Protocol_Base {
 			// get the content.
 			$content = $wp_filesystem->get_contents( $tmp_content_file );
 
-			// bail if saving failed.
+			// delete the temporary file.
+			$wp_filesystem->delete( $tmp_content_file );
+
+			// bail if saving has been failed.
 			if ( ! $content ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given directory url %s could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given directory URL %s could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -235,20 +250,20 @@ class Http extends Protocol_Base {
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given directory url %s does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given directory URL %s does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
 			// loop through the matches.
 			foreach ( $matches[1] as $url ) {
-				// bail if url is empty or just "/".
+				// bail if URL is empty or just "/".
 				if ( empty( $url ) || '/' === $url ) {
 					continue;
 				}
 				// check if given file is a local file which exist in media library.
 				if ( $this->is_local_file( $this->get_url() ) ) {
 					/* translators: %1$s will be replaced by the file-URL */
-					Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+					Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
 					return array();
 				}
 
@@ -277,14 +292,14 @@ class Http extends Protocol_Base {
 			// check if given file is a local file which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+				Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
 				return array();
 			}
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given url %s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -368,7 +383,7 @@ class Http extends Protocol_Base {
 		// bail if error occurred.
 		if ( is_wp_error( $results['tmp-file'] ) ) {
 			// file is available.
-			/* translators: %1$s will be replaced by the url of the file. */
+			/* translators: %1$s will be replaced by the URL of the file. */
 			Log::get_instance()->create( sprintf( __( 'Given URL %1$s could not be downloaded.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'success', 2 );
 			return array();
 		}
@@ -476,8 +491,16 @@ class Http extends Protocol_Base {
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
-		// if setting enables local saving for images, file should be saved local.
-		$result = 'local' === get_option( 'eml_images_mode', 'external' ) && $external_file_obj->is_image();
+		// bail if object could not be loaded.
+		if ( ! $external_file_obj ) {
+			return false;
+		}
+
+		// if setting enables local saving for images or videos, file should be saved local.
+		$result = (
+			( 'local' === get_option( 'eml_images_mode', 'external' ) && $external_file_obj->is_image() )
+			|| ( 'local' === get_option( 'eml_video_mode', 'external' ) && $external_file_obj->is_video() )
+		);
 		/**
 		 * Filter if a http-file should be saved local or not.
 		 *

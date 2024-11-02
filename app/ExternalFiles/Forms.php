@@ -148,7 +148,7 @@ class Forms {
 				'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
-					'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
+					'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 				),
 				'buttons'   => array(
 					array(
@@ -210,7 +210,7 @@ class Forms {
 			'title'     => __( 'Add URL', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
-				'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint: files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
+				'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 			),
 			'buttons'   => array(
 				array(

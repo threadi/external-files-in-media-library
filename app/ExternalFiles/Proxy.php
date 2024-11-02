@@ -63,8 +63,8 @@ class Proxy {
 	 * @return void
 	 */
 	public function init(): void {
-		// bail if proxy is not enabled.
-		if ( 0 === absint( get_option( 'eml_proxy', 0 ) ) ) {
+		// bail if proxy is not enabled, neither for images nor for videos.
+		if ( 0 === absint( get_option( 'eml_proxy', 0 ) ) && 0 === absint( get_option( 'eml_video_proxy', 0 ) ) ) {
 			return;
 		}
 
@@ -95,7 +95,7 @@ class Proxy {
 	 * @return void
 	 */
 	public function wp_init(): void {
-		add_rewrite_rule( $this->get_slug() . '/([a-z0-9-.]+)?$', 'index.php?' . $this->get_slug() . '=$matches[1]', 'top' );
+		add_rewrite_rule( $this->get_slug() . '/([a-zA-Z0-9-_.]+)?$', 'index.php?' . $this->get_slug() . '=$matches[1]', 'top' );
 	}
 
 	/**
@@ -161,43 +161,15 @@ class Proxy {
 			return $template;
 		}
 
-		// get file size.
-		$filesize = $external_file_obj->get_filesize();
-		if ( ! empty( $size ) ) {
-			$filesize = wp_filesize( $cached_file_path );
-		}
+		// get the object of this file type.
+		$file_type_obj = File_Types::get_instance()->get_protocol_object_for_file_obj( $external_file_obj );
+		$file_type_obj->set_size( $size );
 
-		// output the cached file.
-		$this->return_binary( $cached_file_path, $external_file_obj->get_mime_type(), $filesize, $external_file_obj->get_url( true ) );
+		// output the proxied file.
+		$file_type_obj->get_proxied_file();
 
 		// fallback to 404.
 		return $template;
-	}
-
-	/**
-	 * Return binary of a file.
-	 *
-	 * @param string $file The local path to the file.
-	 * @param string $mime_type The mime-type to return.
-	 * @param int    $file_size The file-size of the binary string.
-	 * @param string $url The URL of the file as base for filename.
-	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
-	 */
-	private function return_binary( string $file, string $mime_type, int $file_size, string $url ): void {
-		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
-
-		// return header.
-		header( 'Content-Type: ' . $mime_type );
-		header( 'Content-Disposition: inline; filename="' . basename( $url ) . '"' );
-		header( 'Content-Length: ' . $file_size );
-
-		// return file content via WP filesystem.
-		echo $wp_filesystem->get_contents( $file ); // phpcs:ignore WordPress.Security.EscapeOutput
-		exit;
 	}
 
 	/**

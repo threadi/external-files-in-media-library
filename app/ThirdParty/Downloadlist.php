@@ -85,7 +85,7 @@ class Downloadlist {
 			return $rel_attribute;
 		}
 
-		// return the original url if this URL-file is not valid or not available.
+		// return the original URL if this URL-file is not valid or not available.
 		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
 			return $rel_attribute;
 		}

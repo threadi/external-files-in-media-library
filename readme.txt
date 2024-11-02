@@ -160,7 +160,7 @@ external files by this plugin.
 * Added support for SSH/SFTP-URLs
 * Added support for file-URL (to import from local server)
 * Added support for credentials for each tcp-protocol
-* Added wrapper to support third party plugins or platforms, e.g. Imgur
+* Added wrapper to support third party plugins or platforms, e.g. Imgur or Google Drive
 * Added warning about old PHP-versions
 * Added option to switch external files to local hosting during uninstallation of the plugin
 * Added WP CLI option to switch hosting of all files to local or external
@@ -168,6 +168,7 @@ external files by this plugin.
 * Added link to settings in plugin list
 * Added migration tool to switch the external files from Exmage to this one
 * Added thumbnail support for proxied images
+* Added settings for videos which now can also be proxied
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments

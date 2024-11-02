@@ -15,18 +15,25 @@ defined( 'ABSPATH' ) || exit;
  */
 class Section {
 	/**
-	 * The internal name of this tab.
+	 * The internal name of this section.
 	 *
 	 * @var string
 	 */
 	private string $name = '';
 
 	/**
-	 * The title of this tab.
+	 * The title of this section.
 	 *
 	 * @var string
 	 */
 	private string $title = '';
+
+	/**
+	 * The assigned tab.
+	 *
+	 * @var Tab|false
+	 */
+	private Tab|false $tab = false;
 
 	/**
 	 * Setting this section belongs to.
@@ -158,5 +165,25 @@ class Section {
 
 		// set the callback.
 		$this->callback = $callback;
+	}
+
+	/**
+	 * Return the tab this section is assigned to.
+	 *
+	 * @return Tab|null
+	 */
+	public function get_tab(): Tab|false {
+		return $this->tab;
+	}
+
+	/**
+	 * Set the tab this section is assigned to.
+	 *
+	 * @param Tab $tab The tab object.
+	 *
+	 * @return void
+	 */
+	public function set_tab( Tab $tab ): void {
+		$this->tab = $tab;
 	}
 }

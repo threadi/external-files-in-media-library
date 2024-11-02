@@ -22,6 +22,13 @@ class Settings {
 	private array $tabs = array();
 
 	/**
+	 * List of settings.
+	 *
+	 * @var array
+	 */
+	private array $settings = array();
+
+	/**
 	 * Set the default tab.
 	 *
 	 * @var Tab|null
@@ -117,6 +124,7 @@ class Settings {
 	public function init(): void {
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_init', array( $this, 'register_fields' ) );
 		add_action( 'rest_api_init', array( $this, 'register_settings' ) );
 	}
 
@@ -353,7 +361,7 @@ class Settings {
 
 		?>
 		<div class="wrap">
-			<h1><?php echo esc_html( $this->get_title() ); ?></h1>
+			<h1 class="wp-heading-inline"><?php echo esc_html( $this->get_title() ); ?></h1>
 			<nav class="nav-tab-wrapper">
 				<?php
 					// loop through the tabs.
@@ -462,6 +470,45 @@ class Settings {
 	 * @return void
 	 */
 	public function register_settings(): void {
+		// bail if no settings are set.
+		if ( ! $this->has_settings() ) {
+			return;
+		}
+
+		// loop through the settings.
+		foreach ( $this->get_settings() as $setting ) {
+			if ( ! $setting instanceof Setting ) {
+				continue;
+			}
+
+			// register the setting.
+			register_setting(
+				$setting->get_section()->get_tab()->get_name(),
+				$setting->get_name(),
+				array(
+					'sanitize_callback' => $setting->get_field()->get_sanitize_callback(),
+					'type'              => $setting->get_type(),
+					'default'           => $setting->get_default(),
+					'show_in_rest'      => $setting->is_show_in_rest(),
+				)
+			);
+
+			// sanitize the option before any output.
+			add_filter( 'option_' . $setting->get_name(), array( $this, 'sanitize_option' ), 10, 2 );
+
+			// run custom callback before updating an option.
+			if ( $setting->has_save_callback() ) {
+				add_filter( 'pre_update_option_' . $setting->get_name(), $setting->get_save_callback(), 10, 2 );
+			}
+		}
+	}
+
+	/**
+	 * Register the fields, visible in backend.
+	 *
+	 * @return void
+	 */
+	public function register_fields(): void {
 		// bail if no tabs are set.
 		if ( ! $this->has_tabs() ) {
 			return;
@@ -507,11 +554,11 @@ class Settings {
 			}
 
 			// get the settings for this tab.
-			$settings = $tab->get_settings();
+			$settings = $this->get_settings_for_tab( $tab );
 
 			// loop through the settings.
 			$settings_count = count( $settings );
-			for ( $set = 0;$set < $settings_count;$set++ ) {
+			for ( $set = 0; $set < $settings_count; $set++ ) {
 				// get the settings array entry.
 				$setting = $settings[ $set ];
 
@@ -535,26 +582,6 @@ class Settings {
 							'setting' => $setting,
 						)
 					);
-				}
-
-				// register the setting.
-				register_setting(
-					$tab->get_name(),
-					$setting->get_name(),
-					array(
-						'sanitize_callback' => $field->get_sanitize_callback(),
-						'type'              => $setting->get_type(),
-						'default'           => $setting->get_default(),
-						'show_in_rest'      => $setting->is_show_in_rest(),
-					)
-				);
-
-				// sanitize the option before any output.
-				add_filter( 'option_' . $setting->get_name(), array( $this, 'sanitize_option' ), 10, 2 );
-
-				// run custom callback before updating an option.
-				if ( $setting->has_save_callback() ) {
-					add_filter( 'pre_update_option_' . $setting->get_name(), $setting->get_save_callback(), 10, 2 );
 				}
 			}
 		}
@@ -757,35 +784,12 @@ class Settings {
 	}
 
 	/**
-	 * Get just the settings from tabs of this settings object.
+	 * Return the actual settings.
 	 *
 	 * @return array
 	 */
 	private function get_settings(): array {
-		// variable for list of settings.
-		$settings = array();
-
-		// loop through the tabs.
-		foreach ( $this->get_tabs() as $tab ) {
-			// bail if tab is not a Tab object.
-			if ( ! $tab instanceof Tab ) {
-				continue;
-			}
-
-			// check its settings.
-			foreach ( $tab->get_settings() as $setting ) {
-				// bail if tab is not a Tab object.
-				if ( ! $setting instanceof Setting ) {
-					continue;
-				}
-
-				// add the default values for each setting.
-				$settings[] = $setting;
-			}
-		}
-
-		// return resulting settings.
-		return $settings;
+		return $this->settings;
 	}
 
 	/**
@@ -824,5 +828,78 @@ class Settings {
 		foreach ( $this->get_settings() as $setting ) {
 			delete_option( $setting->get_name() );
 		}
+	}
+
+	/**
+	 * Add single setting.
+	 *
+	 * @param string|Setting $setting The settings object or its internal name.
+	 *
+	 * @return false|Setting
+	 */
+	public function add_setting( string|Setting $setting ): false|Setting {
+		// initialize the setting object value.
+		$setting_obj = false;
+
+		// if value is a string, create the tab object first.
+		if ( is_string( $setting ) ) {
+			$setting_obj = new Setting();
+			$setting_obj->set_name( $setting );
+		}
+
+		// if value is a Tab object, use it.
+		if ( $setting instanceof Setting ) {
+			$setting_obj = $setting;
+		}
+
+		// bail if $tab_obj is not set.
+		if ( ! $setting_obj instanceof Setting ) {
+			return false;
+		}
+
+		// add the setting to the list of settings of this tab.
+		$this->settings[] = $setting_obj;
+
+		// return the tab object.
+		return $setting_obj;
+	}
+
+	/**
+	 * Return settings for given tab.
+	 *
+	 * @param Tab $tab The tab as object.
+	 *
+	 * @return array
+	 */
+	private function get_settings_for_tab( Tab $tab ): array {
+		// list of settings for this tab.
+		$tab_settings = array();
+
+		// loop through the settings.
+		foreach ( $this->get_settings() as $setting ) {
+			if ( ! $setting instanceof Setting ) {
+				continue;
+			}
+
+			// bail if setting is not assigned to this tab.
+			if ( $setting->get_section()->get_tab() !== $tab ) {
+				continue;
+			}
+
+			// add to the list.
+			$tab_settings[] = $setting;
+		}
+
+		// return resulting list.
+		return $tab_settings;
+	}
+
+	/**
+	 * Return whether settings are available.
+	 *
+	 * @return bool
+	 */
+	private function has_settings(): bool {
+		return ! empty( $this->get_settings() );
 	}
 }

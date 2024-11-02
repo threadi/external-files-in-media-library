@@ -82,6 +82,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
+			'ExternalFilesInMediaLibrary\ThirdParty\Youtube',
 		);
 
 		/**

@@ -8,9 +8,9 @@
 namespace ExternalFilesInMediaLibrary\ExternalFiles;
 
 // prevent direct access.
-use WP_Query;
-
 defined( 'ABSPATH' ) || exit;
+
+use WP_Query;
 
 /**
  * Object which extends the attachment tables in backend.

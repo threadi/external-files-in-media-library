@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for Google Drive.
+ * File to handle support for the Google Drive platform.
  *
  * @package external-files-in-media-library
  */
@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
- * Object to handle support for this plugin.
+ * Object to handle support for this platform.
  */
 class GoogleDrive {
 
@@ -57,6 +57,7 @@ class GoogleDrive {
 	public function init(): void {
 		add_filter( 'eml_blacklist', array( $this, 'check_url' ), 10, 2 );
 	}
+
 	/**
 	 * Check if given URL is using a not possible Google Drive-URL.
 	 *
@@ -66,12 +67,12 @@ class GoogleDrive {
 	 * @return bool
 	 */
 	public function check_url( bool $results, string $url ): bool {
-		// bail if this is not an imgur-URL.
+		// bail if this is not a Google-URL.
 		if ( ! str_contains( $url, 'google.com' ) ) {
 			return $results;
 		}
 
-		// list of Imgur-URLs which cannot be used for <img>-elements.
+		// list of Google Drive-URLs which cannot be used for <img>-elements.
 		$blacklist = array(
 			'https://drive.google.com/file/',
 		);

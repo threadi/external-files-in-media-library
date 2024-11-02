@@ -196,7 +196,7 @@ class Exmage {
 			// get the external URL.
 			$url = get_post_meta( $post_id, '_exmage_external_url', true );
 
-			// bail if url is not given.
+			// bail if URL is not given.
 			if ( empty( $url ) ) {
 				// show progress.
 				$progress ? $progress->tick() : '';
