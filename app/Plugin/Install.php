@@ -57,7 +57,7 @@ class Install {
 	 * @return void
 	 */
 	public function activation(): void {
-		define( 'EML_ACTIVATION_RUNNING', 1 );
+		define( 'EFML_ACTIVATION_RUNNING', 1 );
 
 		// initialize Log-database-table.
 		Log::get_instance()->install();
@@ -96,7 +96,7 @@ class Install {
 	 * @return void
 	 */
 	public function deactivation(): void {
-		define( 'EML_DEACTIVATION_RUNNING', 1 );
+		define( 'EFML_DEACTIVATION_RUNNING', 1 );
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();

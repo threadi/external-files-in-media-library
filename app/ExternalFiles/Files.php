@@ -219,7 +219,7 @@ class Files {
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
-					'key'     => EML_POST_META_URL,
+					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
 				),
 			),
@@ -660,11 +660,11 @@ class Files {
 			'meta_query'     => array(
 				'relation' => 'AND',
 				array(
-					'key'     => EML_POST_META_URL,
+					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
 				),
 				array(
-					'key'   => EML_POST_IMPORT_MARKER,
+					'key'   => EFML_POST_IMPORT_MARKER,
 					'value' => 1,
 				),
 			),
@@ -718,7 +718,7 @@ class Files {
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
-					'key'     => EML_POST_META_URL,
+					'key'     => EFML_POST_META_URL,
 					'value'   => $url,
 					'compare' => '=',
 				),
@@ -765,7 +765,7 @@ class Files {
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
-					'key'     => EML_POST_META_URL,
+					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
 				),
 			),
@@ -1347,7 +1347,7 @@ class Files {
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
-					'key'   => EML_POST_IMPORT_MARKER,
+					'key'   => EFML_POST_IMPORT_MARKER,
 					'value' => 1,
 				),
 			),
@@ -1363,7 +1363,7 @@ class Files {
 
 		// delete the import marker for each of these files.
 		foreach ( $result->get_posts() as $attachment_id ) {
-			delete_post_meta( $attachment_id, EML_POST_IMPORT_MARKER );
+			delete_post_meta( $attachment_id, EFML_POST_IMPORT_MARKER );
 		}
 	}
 

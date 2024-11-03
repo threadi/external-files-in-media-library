@@ -40,13 +40,13 @@ class Sodium extends Crypt_Base {
 	 * @throws Exception Possible exception.
 	 */
 	protected function __construct() {
-		$this->set_hash( sodium_base642bin( get_option( EML_SODIUM_HASH, '' ), $this->get_coding_id() ) );
+		$this->set_hash( sodium_base642bin( get_option( EFML_SODIUM_HASH, '' ), $this->get_coding_id() ) );
 
 		// initially generate a hash if it is empty.
 		if ( empty( $this->get_hash() ) ) {
 			$hash = sodium_crypto_aead_xchacha20poly1305_ietf_keygen();
 			$this->set_hash( $hash );
-			update_option( EML_SODIUM_HASH, sodium_bin2base64( $this->get_hash(), $this->get_coding_id() ) );
+			update_option( EFML_SODIUM_HASH, sodium_bin2base64( $this->get_hash(), $this->get_coding_id() ) );
 		}
 
 		parent::__construct();

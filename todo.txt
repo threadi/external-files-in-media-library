@@ -1,4 +1,3 @@
-* Konstanten von EML_ in EFML_ umbennenen wegen "Enhanced Media Library"-plugin
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
 * Import & Export von Einstellungen
 * Helper ergänzen

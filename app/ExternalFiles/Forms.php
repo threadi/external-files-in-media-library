@@ -86,7 +86,7 @@ class Forms {
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-admin',
-			plugins_url( '/admin/js.js', EML_PLUGIN ),
+			plugins_url( '/admin/js.js', EFML_PLUGIN ),
 			array( 'jquery' ),
 			filemtime( Helper::get_plugin_dir() . '/admin/js.js' ),
 			true
@@ -95,7 +95,7 @@ class Forms {
 		// admin-specific styles.
 		wp_enqueue_style(
 			'eml-admin',
-			plugins_url( '/admin/style.css', EML_PLUGIN ),
+			plugins_url( '/admin/style.css', EFML_PLUGIN ),
 			array(),
 			filemtime( Helper::get_plugin_dir() . '/admin/style.css' ),
 		);
@@ -138,7 +138,7 @@ class Forms {
 	 */
 	public function add_multi_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EML_CAP_NAME ) ) {
+		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -211,7 +211,7 @@ class Forms {
 	 */
 	public function add_single_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EML_CAP_NAME ) ) {
+		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -264,7 +264,7 @@ class Forms {
 		check_ajax_referer( 'eml-urls-upload-nonce', 'nonce' );
 
 		// check capability.
-		if ( false === current_user_can( EML_CAP_NAME ) ) {
+		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
 		}
 

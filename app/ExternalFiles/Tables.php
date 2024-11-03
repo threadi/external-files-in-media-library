@@ -142,7 +142,7 @@ class Tables {
 				'meta_query',
 				array(
 					array(
-						'key'     => EML_POST_META_URL,
+						'key'     => EFML_POST_META_URL,
 						'compare' => 'EXISTS',
 					),
 				)
@@ -153,7 +153,7 @@ class Tables {
 				'meta_query',
 				array(
 					array(
-						'key'     => EML_POST_META_URL,
+						'key'     => EFML_POST_META_URL,
 						'compare' => 'NOT EXISTS',
 					),
 				)

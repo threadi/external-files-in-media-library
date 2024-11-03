@@ -129,12 +129,12 @@ class Schedules {
 		}
 
 		// bail if plugin activation is running.
-		if ( defined( 'EML_ACTIVATION_RUNNING' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) ) {
 			return $our_events;
 		}
 
 		// bail if plugin deactivation is running.
-		if ( defined( 'EML_DEACTIVATION_RUNNING' ) ) {
+		if ( defined( 'EFML_DEACTIVATION_RUNNING' ) ) {
 			return $our_events;
 		}
 

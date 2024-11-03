@@ -23,7 +23,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_plugin_dir(): string {
-		return plugin_dir_path( EML_PLUGIN );
+		return plugin_dir_path( EFML_PLUGIN );
 	}
 
 	/**
@@ -77,10 +77,10 @@ class Helper {
 			// check if given role is in list of on-install supported roles.
 			if ( in_array( $slug, $user_roles, true ) ) {
 				// add capability.
-				$role_obj->add_cap( EML_CAP_NAME );
+				$role_obj->add_cap( EFML_CAP_NAME );
 			} else {
 				// remove capability.
-				$role_obj->remove_cap( EML_CAP_NAME );
+				$role_obj->remove_cap( EFML_CAP_NAME );
 			}
 		}
 	}

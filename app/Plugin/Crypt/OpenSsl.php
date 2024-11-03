@@ -27,13 +27,13 @@ class OpenSsl extends Crypt_Base {
 	 * Constructor for this object.
 	 */
 	protected function __construct() {
-		$this->set_hash( get_option( EML_HASH, '' ) );
+		$this->set_hash( get_option( EFML_HASH, '' ) );
 
 		// initially generate a hash if it is empty.
 		if ( empty( $this->get_hash() ) ) {
 			$hash = hash( 'sha256', wp_rand() );
 			$this->set_hash( $hash );
-			update_option( EML_HASH, $this->get_hash() );
+			update_option( EFML_HASH, $this->get_hash() );
 		}
 
 		parent::__construct();

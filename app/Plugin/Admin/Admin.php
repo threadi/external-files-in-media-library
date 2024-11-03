@@ -79,7 +79,7 @@ class Admin {
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 
 		// misc.
-		add_filter( 'plugin_action_links_' . plugin_basename( EML_PLUGIN ), array( $this, 'add_setting_link' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
 	}
 
 	/**
@@ -109,8 +109,8 @@ class Admin {
 	 */
 	public function add_dialog_scripts(): void {
 		// define paths: adjust if necessary.
-		$path = trailingslashit( plugin_dir_path( EML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
-		$url  = trailingslashit( plugin_dir_url( EML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
+		$path = trailingslashit( plugin_dir_path( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
+		$url  = trailingslashit( plugin_dir_url( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 
 		// bail if path does not exist.
 		if ( ! file_exists( $path ) ) {

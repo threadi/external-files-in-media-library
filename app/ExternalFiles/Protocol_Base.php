@@ -240,7 +240,7 @@ class Protocol_Base {
 			'post_status'    => 'inherit',
 			'meta_query'     => array(
 				array(
-					'key'     => EML_POST_META_URL,
+					'key'     => EFML_POST_META_URL,
 					'value'   => $url,
 					'compare' => '=',
 				),

@@ -73,8 +73,8 @@ class Init {
 		Schedules::get_instance()->init();
 
 		// plugin-actions.
-		register_activation_hook( EML_PLUGIN, array( Install::get_instance(), 'activation' ) );
-		register_deactivation_hook( EML_PLUGIN, array( Install::get_instance(), 'deactivation' ) );
+		register_activation_hook( EFML_PLUGIN, array( Install::get_instance(), 'activation' ) );
+		register_deactivation_hook( EFML_PLUGIN, array( Install::get_instance(), 'deactivation' ) );
 
 		// misc.
 		add_action( 'cli_init', array( $this, 'cli' ) );

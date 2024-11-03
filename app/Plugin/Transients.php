@@ -94,7 +94,7 @@ class Transients {
 		$transients = array();
 
 		// get list of our own transients from DB as array.
-		$transients_from_db = get_option( EML_TRANSIENT_LIST, array() );
+		$transients_from_db = get_option( EFML_TRANSIENT_LIST, array() );
 		if ( ! is_array( $transients_from_db ) ) {
 			$transients_from_db = array();
 		}
@@ -138,7 +138,7 @@ class Transients {
 		}
 
 		// update the transients-list in db.
-		update_option( EML_TRANSIENT_LIST, $transients_in_db );
+		update_option( EFML_TRANSIENT_LIST, $transients_in_db );
 	}
 
 	/**
@@ -165,7 +165,7 @@ class Transients {
 		foreach ( $transients as $transient ) {
 			$transients_in_db[] = $transient->get_name();
 		}
-		update_option( EML_TRANSIENT_LIST, $transients_in_db );
+		update_option( EFML_TRANSIENT_LIST, $transients_in_db );
 	}
 
 	/**

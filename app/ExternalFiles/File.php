@@ -93,7 +93,7 @@ class File {
 	public function get_url( bool $unproxied = false ): string {
 		// if external URL not known, get it now.
 		if ( empty( $this->url ) ) {
-			$this->url = get_post_meta( $this->get_id(), EML_POST_META_URL, true );
+			$this->url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
 		}
 
 		// use local proxy if enabled, this is an image and if we are not in wp-admin.
@@ -130,7 +130,7 @@ class File {
 	 */
 	public function set_url( string $url ): void {
 		// set in DB.
-		update_post_meta( $this->get_id(), EML_POST_META_URL, $url );
+		update_post_meta( $this->get_id(), EFML_POST_META_URL, $url );
 
 		// set in object.
 		$this->url = $url;
@@ -227,7 +227,7 @@ class File {
 	public function get_availability(): bool {
 		// get value from DB.
 		if ( empty( $this->availability ) ) {
-			$this->availability = get_post_meta( $this->get_id(), EML_POST_META_AVAILABILITY, true );
+			$this->availability = get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
 		}
 
 		// if mime-type of file is not allowed, set availability to false.
@@ -248,7 +248,7 @@ class File {
 	 */
 	public function set_availability( bool $availability ): void {
 		// set in DB.
-		update_post_meta( $this->get_id(), EML_POST_META_AVAILABILITY, true );
+		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
 
 		// set in object.
 		$this->availability = $availability;
