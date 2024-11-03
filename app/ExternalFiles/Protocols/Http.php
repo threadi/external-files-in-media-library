@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -87,10 +88,10 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// URL returns not compatible http-state.
+		// URL returns not compatible HTTP-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with http-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with HTTP-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -191,7 +192,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @return array List of files from the given URL with its infos.
 	 */
-	public function get_external_infos(): array {
+	public function get_url_infos(): array {
 		// initialize list of files.
 		$files = array();
 
@@ -221,6 +222,15 @@ class Http extends Protocol_Base {
 				return array( $results );
 			}
 
+			/**
+			 * Run action on beginning of presumed directory import.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 */
+			do_action( 'eml_http_directory_import_start', $this->get_url() );
+
 			// get WP Filesystem-handler.
 			require_once ABSPATH . '/wp-admin/includes/file.php';
 			\WP_Filesystem();
@@ -231,75 +241,163 @@ class Http extends Protocol_Base {
 			$tmp_content_file = download_url( $this->get_url() );
 			remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 
+			// bail if temp file resulted in error.
+			if ( is_wp_error( $tmp_content_file ) ) {
+				/* translators: %1$s will be replaced by the file-URL, %2$s by the error in JSON-format */
+				Log::get_instance()->create( sprintf( __( 'Temp file for %1$s could not be created because of the following error: <code>%2$s</code>', 'external-files-in-media-library' ), esc_url( $this->get_url() ), wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+				return array();
+			}
+
 			// get the content.
 			$content = $wp_filesystem->get_contents( $tmp_content_file );
 
 			// delete the temporary file.
-			$wp_filesystem->delete( $tmp_content_file );
+			Files::get_instance()->cleanup_temp_file( $tmp_content_file );
 
 			// bail if saving has been failed.
 			if ( ! $content ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given directory URL %s could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'The presumed directory URL %s could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
-			// parse all links to get their URLs.
-			preg_match_all( "<a href=\x22(.+?)\x22>", $content, $matches );
+			/**
+			 * Filter the content with regex via HTTP-protocol.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param array $results The results.
+			 * @param string $content The content to parse.
+			 *
+			 * @paaram string $url The URL used.
+			 */
+			$matches = apply_filters( 'eml_http_directory_regex', array(), $content, $this->get_url() );
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given directory URL %s does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'The presumed directory URL %s does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
+
+			// add files to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( $matches[1], $this->get_login(), $this->get_password() );
+				return array();
+			}
+
+			// show progress.
+			/* translators: %1$s is replaced by a URL. */
+			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory URL %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $matches[1] ) ) : '';
+
+			/**
+			 * Run action if we have files to check via HTTP-protocol.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 * @param array $matches List of matches (the URLs).
+			 */
+			do_action( 'eml_http_directory_import_files', $this->get_url(), $matches[1] );
 
 			// loop through the matches.
 			foreach ( $matches[1] as $url ) {
 				// bail if URL is empty or just "/".
 				if ( empty( $url ) || '/' === $url ) {
+					// show progress.
+					$progress ? $progress->tick() : '';
+
+					// bail this file.
 					continue;
 				}
-				// check if given file is a local file which exist in media library.
-				if ( $this->is_local_file( $this->get_url() ) ) {
-					/* translators: %1$s will be replaced by the file-URL */
-					Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
-					return array();
+
+				// concat the URL if $url to not start with http.
+				$file_url = $url;
+				if ( false === str_starts_with( $url, 'http' ) ) {
+					$file_url_parts = wp_parse_url( $this->get_url() . $url );
+					if ( is_array( $file_url_parts ) ) {
+						$file_url = $file_url_parts['scheme'] . '://' . $file_url_parts['host'] . str_replace( '//', '/', $file_url_parts['path'] );
+					}
 				}
 
-				// concat the URL.
-				$file_url = path_join( $this->get_url(), $url );
+				// check if given file is a local file which exist in media library.
+				if ( $this->is_local_file( $file_url ) ) {
+					/* translators: %1$s will be replaced by the file-URL */
+					Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as local file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+
+					// show progress.
+					$progress ? $progress->tick() : '';
+
+					// bail this file.
+					continue;
+				}
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
 					/* translators: %1$s will be replaced by the file-URL */
 					Log::get_instance()->create( sprintf( __( 'Given file %1$s already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ) ), esc_url( $file_url ), 'error', 0 );
+
+					// show progress.
+					$progress ? $progress->tick() : '';
+
+					// bail this file.
 					continue;
 				}
 
+				/**
+				 * Run action just before the file check via HTTP-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_url   The URL to import.
+				 */
+				do_action( 'eml_http_directory_import_file_check', $file_url );
+
 				// get file data.
 				$file = $this->get_url_info( $file_url );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
 
 				// bail if no data resulted.
 				if ( empty( $file ) ) {
 					continue;
 				}
 
+				/**
+				 * Run action just before the file is added to the list via HTTP-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_url   The URL to import.
+				 * @param array $files List of files.
+				 */
+				do_action( 'eml_http_directory_import_file_before_to_list', $file_url, $matches[1] );
+
 				// add the file with its data to the list.
 				$files[] = $file;
 			}
+
+			// finish progress.
+			$progress ? $progress->finish() : '';
 		} else {
 			// check if given file is a local file which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+				Log::get_instance()->create( sprintf( __( 'Given URL %1$s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
 				return array();
 			}
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given URL %1$s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				return array();
+			}
+
+			// add file to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
 				return array();
 			}
 
@@ -383,8 +481,10 @@ class Http extends Protocol_Base {
 		// bail if error occurred.
 		if ( is_wp_error( $results['tmp-file'] ) ) {
 			// file is available.
-			/* translators: %1$s will be replaced by the URL of the file. */
-			Log::get_instance()->create( sprintf( __( 'Given URL %1$s could not be downloaded.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'success', 2 );
+			/* translators: %1$s will be replaced by the file-URL, %2$s by the error in JSON-format */
+			Log::get_instance()->create( sprintf( __( 'Temp file for %1$s could not be created because of the following error: <code>%2$s</code>', 'external-files-in-media-library' ), esc_url( $this->get_url() ), wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+
+			// return empty array as we got not the file.
 			return array();
 		}
 

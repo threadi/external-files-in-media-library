@@ -421,6 +421,11 @@ class File {
 		 */
 		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
 
+		// do not proxy this file if no mime-type has been received.
+		if ( empty( $file_data['mime-type'] ) ) {
+			return;
+		}
+
 		// compare the retrieved mime-type with the saved mime-type.
 		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
 			// other mime-type received => do not proxy this file.
@@ -596,7 +601,7 @@ class File {
 		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ), 10, 2 );
 
 		// get external file infos.
-		$file_data = $protocol_handler_obj->get_external_infos();
+		$file_data = $protocol_handler_obj->get_url_infos();
 
 		// remove prevent duplicate check for this file.
 		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ) );

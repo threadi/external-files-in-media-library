@@ -48,7 +48,7 @@ class Admin {
 	 */
 	public static function get_instance(): Admin {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;

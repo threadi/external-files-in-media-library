@@ -10,7 +10,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
  * Object which handles the installation of this plugin.
@@ -43,7 +45,7 @@ class Install {
 	 */
 	public static function get_instance(): Install {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -55,35 +57,37 @@ class Install {
 	 * @return void
 	 */
 	public function activation(): void {
-		// initialize Log-database-table.
-		$log = Log::get_instance();
-		$log->install();
+		define( 'EML_ACTIVATION_RUNNING', 1 );
 
-		// add schedule for file-check.
-		if ( ! wp_next_scheduled( 'eml_check_files' ) ) {
-			if ( ! get_option( 'eml_check_interval', false ) ) {
-				update_option( 'eml_check_interval', 'daily' );
-			}
-			if ( get_option( 'eml_check_interval' ) !== 'eml_disable_check' ) {
-				wp_schedule_event( time(), get_option( 'eml_check_interval' ), 'eml_check_files' );
-			}
-		}
+		// initialize Log-database-table.
+		Log::get_instance()->install();
 
 		// install settings.
 		Settings::get_instance()->activation();
 
+		// initialize the queue-handling.
+		$files_obj = Queue::get_instance();
+		$files_obj->install();
+		$files_obj->init_queue();
+		Settings\Settings::get_instance()->activation();
+
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();
 
-		// show welcome message.
+		// install the schedules.
+		Schedules::get_instance()->create_schedules();
+
+		// trigger a welcome message if it is not already set.
 		$transients_obj = Transients::get_instance();
-		$transient_obj  = $transients_obj->add();
-		$transient_obj->set_dismissible_days( 2 );
-		$transient_obj->set_name( 'eml_welcome' );
-		/* translators: %1$s will be replaced by the URL where user can add media files. */
-		$transient_obj->set_message( sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) );
-		$transient_obj->set_type( 'success' );
-		$transient_obj->save();
+		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_set() ) {
+			$transient_obj = $transients_obj->add();
+			$transient_obj->set_dismissible_days( 2 );
+			$transient_obj->set_name( 'eml_welcome' );
+			/* translators: %1$s will be replaced by the URL where user can add media files. */
+			$transient_obj->set_message( sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) );
+			$transient_obj->set_type( 'success' );
+			$transient_obj->save();
+		}
 	}
 
 	/**
@@ -92,7 +96,9 @@ class Install {
 	 * @return void
 	 */
 	public function deactivation(): void {
-		// remove schedule.
-		wp_clear_scheduled_hook( 'eml_check_files' );
+		define( 'EML_DEACTIVATION_RUNNING', 1 );
+
+		// remove schedules.
+		Schedules::get_instance()->delete_all();
 	}
 }

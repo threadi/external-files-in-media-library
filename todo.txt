@@ -1,9 +1,36 @@
+* Konstanten von EML_ in EFML_ umbennenen wegen "Enhanced Media Library"-plugin
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
-* Massen-Import per Schedule
 * Import & Export von Einstellungen
 * Helper ergänzen
+* Kopieren von Log für Forenbeitrag ermöglichen (Code-Block?)
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
+* Statistik unter Einstellungen
+-> wie viele URLs sind aktuell importiert
+-> wie viel Speicherplatz belegt der Proxy
+* Warnung für deutschsprachige Nutzer hinsichtlich DSGVO anzeigen
 * Test von Update 1.x auf 2.0.0
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
 -> https://developers.google.com/youtube/v3/getting-started?hl=de
 * Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
+
+Tests:
+* Einzelimport per CLI über:
+-> http
+-> ftp
+-> sftp
+-> file
+* Massenimport per CLI über:
+-> http
+-> ftp
+-> sftp
+-> file
+* Einzelimport per Backend über:
+-> http
+-> ftp
+-> sftp
+-> file
+* Massenimport per Backend über:
+-> http
+-> ftp
+-> sftp
+-> file

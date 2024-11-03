@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
  * Handle external files via WP CLI.
@@ -33,6 +34,9 @@ class Cli {
 	 * [--password=<value>]
 	 * : Set authentication password to use for any added URL.
 	 *
+	 * [--queue]
+	 * : Adds the given URL(s) to the queue.
+	 *
 	 * @param array $urls Array of URLs which might be given as parameter on CLI-command.
 	 * @param array $arguments List of parameter to use for the given URLs.
 	 *
@@ -47,6 +51,9 @@ class Cli {
 		$external_files_obj->set_login( ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '' );
 		$external_files_obj->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
 
+		// get the queue settings.
+		$add_to_queue = ! empty( $arguments['queue'] );
+
 		// show progress.
 		$progress = \WP_CLI\Utils\make_progress_bar( _n( 'Import files from given URL', 'Import files from given URLs', count( $urls ), 'external-files-in-media-library' ), count( $urls ) );
 
@@ -54,6 +61,10 @@ class Cli {
 		foreach ( $urls as $url ) {
 			// bail if URL is empty.
 			if ( empty( $url ) ) {
+				// show progress.
+				$progress->tick();
+
+				// bail this URL.
 				continue;
 			}
 
@@ -61,13 +72,21 @@ class Cli {
 			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
 				/* translators: %1$s will be replaced by URL. */
 				$results[] = sprintf( __( '%1$s is not a valid URL and will not be saved.', 'external-files-in-media-library' ), $url );
+
+				// show progress.
+				$progress->tick();
+
+				// bail this URL.
 				continue;
 			}
 
 			// try to add this URL as single file.
-			if ( $external_files_obj->add_from_url( $url ) ) {
+			if ( $external_files_obj->add_url( $url, $add_to_queue ) ) {
 				/* translators: %1$s will be replaced by URL. */
 				$results[] = sprintf( __( '%1$s has been saved in media library.', 'external-files-in-media-library' ), $url );
+			} elseif ( $add_to_queue ) {
+					/* translators: %1$s will be replaced by URL. */
+					$results[] = sprintf( __( '%1$s has been added to the queue. It will be imported automatically in your media library.', 'external-files-in-media-library' ), $url );
 			} else {
 				/* translators: %1$s will be replaced by URL. */
 				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log for details.', 'external-files-in-media-library' ), $url );
@@ -85,7 +104,7 @@ class Cli {
 	}
 
 	/**
-	 * Delete all urls in media library which are imported by this plugin.
+	 * Delete all URLs in media library which are imported by this plugin.
 	 *
 	 * [<URLs>]
 	 * : List of URLs to delete from in media library. If nothing is given all external files are deleted.
@@ -128,7 +147,7 @@ class Cli {
 		}
 
 		// show progress.
-		$progress = \WP_CLI\Utils\make_progress_bar( __( 'Delete external files from media library', 'external-files-in-media-library' ), count( $files_to_delete ) );
+		$progress = \WP_CLI\Utils\make_progress_bar( __( 'Deleting external files from media library', 'external-files-in-media-library' ), count( $files_to_delete ) );
 
 		// loop through the files and delete them.
 		foreach ( $files_to_delete as $external_file_obj ) {
@@ -148,7 +167,9 @@ class Cli {
 		$progress->finish();
 
 		// show resulting message.
-		$logs->create( sprintf( __('%1$d URLs have been deleted.', 'external-files-in-media-library' ), count( $files_to_delete ) ), '', 'success', 2 );
+		/* translators: %1$d is replaced by a number. */
+		$logs->create( sprintf( __( '%1$d URLs have been deleted.', 'external-files-in-media-library' ), count( $files_to_delete ) ), '', 'success', 2 );
+		/* translators: %1$d is replaced by a number. */
 		\WP_CLI::success( sprintf( __( '%1$d URLs have been deleted.', 'external-files-in-media-library' ), count( $files_to_delete ) ) );
 	}
 
@@ -341,5 +362,44 @@ class Cli {
 
 		// return ok-message.
 		\WP_CLI::success( __( 'Files have been switches to local hosting.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Process the queue.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function process_queue(): void {
+		Queue::get_instance()->process_queue();
+
+		// return ok-message.
+		\WP_CLI::success( __( 'The queue has been processed.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Clear the queue (delete every entry).
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function clear_queue(): void {
+		Queue::get_instance()->clear();
+
+		// return ok-message.
+		\WP_CLI::success( __( 'The queue has been cleared.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Remove error URLs from queue.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function cleanup_queue(): void {
+		Queue::get_instance()->clear();
+
+		// return ok-message.
+		\WP_CLI::success( __( 'Error-URLs has been removed from the queue.', 'external-files-in-media-library' ) );
 	}
 }

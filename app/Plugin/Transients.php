@@ -40,7 +40,7 @@ class Transients {
 	 */
 	public static function get_instance(): Transients {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;

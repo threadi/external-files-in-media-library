@@ -46,6 +46,13 @@ class Protocol_Base {
 	private string $password = '';
 
 	/**
+	 * The queue mode.
+	 *
+	 * @var bool
+	 */
+	private bool $queue_mode = false;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 *
 	 * @param string $url The URL to use.
@@ -154,7 +161,7 @@ class Protocol_Base {
 	 *
 	 * @return array List of files with its infos.
 	 */
-	public function get_external_infos(): array {
+	public function get_url_infos(): array {
 		return array();
 	}
 
@@ -292,5 +299,25 @@ class Protocol_Base {
 
 		// return the plain URL.
 		return $this->get_url();
+	}
+
+	/**
+	 * Return whether this object is run in queue mode (true) or not (false).
+	 *
+	 * @return bool
+	 */
+	protected function is_queue_mode(): bool {
+		return $this->queue_mode;
+	}
+
+	/**
+	 * Set the queue mode.
+	 *
+	 * @param bool $add_to_queue True if URLs should be just added to the queue.
+	 *
+	 * @return void
+	 */
+	public function set_queue_mode( bool $add_to_queue ): void {
+		$this->queue_mode = $add_to_queue;
 	}
 }

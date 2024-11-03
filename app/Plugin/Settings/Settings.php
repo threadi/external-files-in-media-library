@@ -110,7 +110,7 @@ class Settings {
 	 */
 	public static function get_instance(): Settings {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -755,28 +755,20 @@ class Settings {
 	 *
 	 * @return false|Setting
 	 */
-	private function get_setting( string $option ): false|Setting {
-		foreach ( $this->get_tabs() as $tab ) {
-			// bail if tab is not a Tab object.
-			if ( ! $tab instanceof Tab ) {
+	public function get_setting( string $option ): false|Setting {
+		foreach ( $this->get_settings() as $setting ) {
+			// bail if setting is not a Setting object.
+			if ( ! $setting instanceof Setting ) {
 				continue;
 			}
 
-			// check its settings.
-			foreach ( $tab->get_settings() as $setting ) {
-				// bail if tab is not a Tab object.
-				if ( ! $setting instanceof Setting ) {
-					continue;
-				}
-
-				// bail if setting has not the searched name.
-				if ( $option !== $setting->get_name() ) {
-					continue;
-				}
-
-				// return the object.
-				return $setting;
+			// bail if setting has not the searched name.
+			if ( $option !== $setting->get_name() ) {
+				continue;
 			}
+
+			// return the object.
+			return $setting;
 		}
 
 		// return false if no setting with the given name could be found.
@@ -901,5 +893,64 @@ class Settings {
 	 */
 	private function has_settings(): bool {
 		return ! empty( $this->get_settings() );
+	}
+
+	/**
+	 * Return tab object by its name.
+	 *
+	 * @param string $tab_name The tab name.
+	 *
+	 * @return false|Tab
+	 */
+	public function get_tab( string $tab_name ): false|Tab {
+		foreach ( $this->get_tabs() as $tab_obj ) {
+			// bail if this is not a Tab object.
+			if ( ! $tab_obj instanceof Tab ) {
+				continue;
+			}
+
+			// bail if names does not match.
+			if ( $tab_obj->get_name() !== $tab_name ) {
+				continue;
+			}
+
+			return $tab_obj;
+		}
+
+		// return false if not object could be found.
+		return false;
+	}
+
+	/**
+	 * Return section object by its name.
+	 *
+	 * @param string $section_name The section name.
+	 *
+	 * @return false|Section
+	 */
+	public function get_section( string $section_name ): false|Section {
+		foreach ( $this->get_tabs() as $tab_obj ) {
+			// bail if this is not a Tab object.
+			if ( ! $tab_obj instanceof Tab ) {
+				continue;
+			}
+
+			foreach ( $tab_obj->get_sections() as $section_obj ) {
+				// bail if this is not a Section object.
+				if ( ! $section_obj instanceof Section ) {
+					continue;
+				}
+
+				// bail if names does not match.
+				if ( $section_obj->get_name() !== $section_name ) {
+					continue;
+				}
+
+				return $section_obj;
+			}
+		}
+
+		// return false if not object could be found.
+		return false;
 	}
 }

@@ -154,6 +154,7 @@ external files by this plugin.
 
 = 2.0.0 =
 * Revamped plugin
+* Added queue for importing large amount of URLs
 * Added support for import of directories with multiple files
 * Added support for different tcp-protocols
 * Added support for FTP-URLs
@@ -169,7 +170,7 @@ external files by this plugin.
 * Added migration tool to switch the external files from Exmage to this one
 * Added thumbnail support for proxied images
 * Added settings for videos which now can also be proxied
-* Multiple new hooks
+* Added multiple new hooks
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments

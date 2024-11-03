@@ -273,4 +273,13 @@ class Setting {
 	public function is_default_set(): bool {
 		return $this->get_default() !== null;
 	}
+
+	/**
+	 * Return the value of this setting.
+	 *
+	 * @return mixed
+	 */
+	public function get_value(): mixed {
+		return get_option( $this->get_name() );
+	}
 }

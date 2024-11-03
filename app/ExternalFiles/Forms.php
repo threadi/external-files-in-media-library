@@ -64,6 +64,17 @@ class Forms {
 		// add ajax endpoints.
 		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
+
+		// our own actions.
+		add_action( 'eml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );
+		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'eml_http_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'eml_file_import_before_save', array( $this, 'set_import_file_save' ) );
+		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'eml_http_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 	}
 
 	/**
@@ -121,7 +132,7 @@ class Forms {
 	}
 
 	/**
-	 * Output form to enter multiple urls for external files.
+	 * Output form to enter multiple URLs for external files.
 	 *
 	 * @return void
 	 */
@@ -148,6 +159,7 @@ class Forms {
 				'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
+					'<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>',
 					'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 				),
 				'buttons'   => array(
@@ -193,7 +205,7 @@ class Forms {
 	}
 
 	/**
-	 * Output form to enter multiple urls for external files.
+	 * Output form to enter multiple URLs for external files.
 	 *
 	 * @return void
 	 */
@@ -210,6 +222,7 @@ class Forms {
 			'title'     => __( 'Add URL', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
+				'<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URL to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>',
 				'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
 			),
 			'buttons'   => array(
@@ -242,7 +255,7 @@ class Forms {
 	}
 
 	/**
-	 * Process ajax-request for insert multiple urls to media library.
+	 * Process ajax-request for insert multiple URLs to media library.
 	 *
 	 * @return       void
 	 */
@@ -271,13 +284,16 @@ class Forms {
 		// get files-object.
 		$files_obj = Files::get_instance();
 
-		// get the urls from request.
+		// get the URLs from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$url_array = explode( "\n", $urls );
 
 		// get the credentials.
 		$login    = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get the queue setting.
+		$add_to_queue = absint( filter_input( INPUT_POST, 'add_to_queue', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// collect errors.
 		$errors = array();
@@ -308,11 +324,11 @@ class Forms {
 				/* translators: %1$s will be replaced by the URL which is imported. */
 				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( $url ) ) );
 
-				// import file in media library.
-				$file_added = $files_obj->add_from_url( $url );
+				// import file in media library if enqueue option is not set.
+				$file_added = $files_obj->add_url( $url, $add_to_queue );
 
-				// bail on error.
-				if ( ! $file_added ) {
+				// add URL to list of errors if add to queue was not used.
+				if ( ! $file_added && ! $add_to_queue ) {
 					$errors[] = $url;
 				}
 
@@ -380,5 +396,56 @@ class Forms {
 				get_option( 'eml_import_errors', array() ),
 			)
 		);
+	}
+
+	/**
+	 * Set import title if HTTP import of presumed directory URL is starting.
+	 *
+	 * @param string $url The used URL.
+	 *
+	 * @return void
+	 */
+	public function set_http_import_title_start( string $url ): void {
+		/* translators: %1$s is replaced by a URL. */
+		update_option( 'eml_import_title', sprintf( __( 'Import of presumed directory URL %1$s starting ..', 'external-files-in-media-library' ), $url ) );
+	}
+
+	/**
+	 * Set import title if HTTP import will check a URL.
+	 *
+	 * @param string $url The used URL.
+	 *
+	 * @return void
+	 */
+	public function set_import_file_check( string $url ): void {
+		/* translators: %1$s is replaced by a URL. */
+		update_option( 'eml_import_title', sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count' ) ) + 1 );
+	}
+
+	/**
+	 * Set import title if HTTP import will save a URL in the media library.
+	 *
+	 * @param string $url The used URL.
+	 *
+	 * @return void
+	 */
+	public function set_import_file_save( string $url ): void {
+		/* translators: %1$s is replaced by a URL. */
+		update_option( 'eml_import_title', sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count' ) ) + 1 );
+	}
+
+	/**
+	 * Set new max value during import.
+	 *
+	 * @param string $url The used URL.
+	 * @param array  $matches The list of matches on this URL.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function set_import_max( string $url, array $matches ): void {
+		update_option( 'eml_import_url_max', absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
 	}
 }

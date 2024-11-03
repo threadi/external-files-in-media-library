@@ -421,4 +421,25 @@ class Helper {
 		// return concat string for the filename.
 		return $file_info['filename'] . '-' . $width . 'x' . $height . '.' . $file_info['extension'];
 	}
+
+	/**
+	 * Return the possible intervals as array.
+	 *
+	 * @return array
+	 */
+	public static function get_intervals(): array {
+		// collect the list.
+		$values = array();
+
+		// add disable option first.
+		$values['eml_disable_check'] = __( 'Disabled', 'external-files-in-media-library' );
+
+		// loop through all possible intervals from WordPress and add them to the list.
+		foreach ( wp_get_schedules() as $name => $interval ) {
+			$values[ $name ] = $interval['display'];
+		}
+
+		// return the resulting list.
+		return $values;
+	}
 }

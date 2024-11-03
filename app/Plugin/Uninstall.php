@@ -45,7 +45,7 @@ class Uninstall {
 	 */
 	public static function get_instance(): Uninstall {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -57,6 +57,11 @@ class Uninstall {
 	 * @return void
 	 */
 	public function run(): void {
+		define( 'EML_DEACTIVATION_RUNNING', 1 );
+
+		// remove schedules.
+		Schedules::get_instance()->delete_all();
+
 		// get external files object.
 		$external_files_obj = Files::get_instance();
 

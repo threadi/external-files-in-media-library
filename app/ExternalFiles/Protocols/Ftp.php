@@ -14,6 +14,8 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Filesystem_FTPext;
 
@@ -86,14 +88,14 @@ class Ftp extends Protocol_Base {
 	 *
 	 * @return array List of file-infos.
 	 */
-	public function get_external_infos(): array {
+	public function get_url_infos(): array {
 		// initialize list of files.
 		$files = array();
 
 		// bail if no credentials are set.
 		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Missing credentials for import from FTP-URL %1$s.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Missing credentials for import from FTP-path %1$s.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 			return array();
 		}
 
@@ -103,7 +105,7 @@ class Ftp extends Protocol_Base {
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'FTP-URL %1$s looks not like an URL.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'FTP-path %1$s looks not like an URL.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 			return array();
 		}
 
@@ -148,32 +150,85 @@ class Ftp extends Protocol_Base {
 
 		// if FTP-path is a directory, import all files from there.
 		if ( $ftp_connection->is_dir( $path ) ) {
+			/**
+			 * Run action on beginning of presumed directory import via FTP-protocol.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 */
+			do_action( 'eml_ftp_directory_import_start', $this->get_url() );
+
 			// get the files from FTP directory as list.
 			$file_list = $ftp_connection->dirlist( $path );
 			if ( empty( $file_list ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
 				Log::get_instance()->create( sprintf( __( 'FTP-directory %1$s returns no files.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 
+				// exit the process.
 				return array();
 			}
 
+			// convert the dirlist-array to a file_list array with complete URLs as value for queuing.
+			$file_list_new = array();
+			foreach ( $file_list as $filename => $settings ) {
+				$file_list_new[] = $this->get_url() . $filename;
+			}
+
+			// add files to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( $file_list_new, $this->get_login(), $this->get_password() );
+				return array();
+			}
+
+			/**
+			 * Run action if we have files to check via FTP-protocol.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 * @param array $file_list List of files.
+			 */
+			do_action( 'eml_ftp_directory_import_files', $this->get_url(), $file_list );
+
+			// show progress.
+			/* translators: %1$s is replaced by a URL. */
+			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory URL %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $file_list ) ) : '';
+
 			// loop through the matches.
 			foreach ( $file_list as $filename => $settings ) {
-				// get the file path on ftp.
+				// get the file path on FTP.
 				$file_path = $path . $filename;
 
-				// get url.
-				$url = $this->get_url() . $filename;
+				// get URL.
+				$file_url = $this->get_url() . $filename;
 
 				// check for duplicate.
-				if ( $this->check_for_duplicate( $url ) ) {
+				if ( $this->check_for_duplicate( $file_url ) ) {
 					/* translators: %1$s will be replaced by the file-URL */
 					Log::get_instance()->create( sprintf( __( 'Given file %1$s already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ) ), esc_url( $file_path ), 'error', 0 );
+
+					// show progress.
+					$progress ? $progress->tick() : '';
+
+					// bail on duplicate file.
 					continue;
 				}
 
+				/**
+				 * Run action just before the file check via FTP-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_url   The URL to import.
+				 */
+				do_action( 'eml_ftp_directory_import_file_check', $file_url );
+
 				// get the file data.
 				$results = $this->get_url_info( $file_path, $ftp_connection );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
 
 				// bail if results are empty.
 				if ( empty( $results ) ) {
@@ -181,12 +236,31 @@ class Ftp extends Protocol_Base {
 				}
 
 				// add the URL to the results.
-				$results['url'] = $url;
+				$results['url'] = $file_url;
+
+				/**
+				 * Run action just before the file is added to the list via FTP-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_url   The URL to import.
+				 * @param array $file_list_new List of files to process.
+				 */
+				do_action( 'eml_ftp_directory_import_file_before_to_list', $file_url, $file_list_new );
 
 				// add file to the list.
 				$files[] = $results;
 			}
+
+			// finish progress.
+			$progress ? $progress->finish() : '';
 		} else {
+			// add files to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( array( $path ), $this->get_login(), $this->get_password() );
+				return array();
+			}
+
 			// add file to the list.
 			$results = $this->get_url_info( $path, $ftp_connection );
 
@@ -226,8 +300,9 @@ class Ftp extends Protocol_Base {
 		$file_content = $ftp_connection->get_contents( $file_path );
 		if ( empty( $file_content ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'FTP-URL %1$s returns an empty file.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'FTP-path %1$s returns an empty file.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
 
+			// return empty array as we got not the file.
 			return array();
 		}
 
@@ -270,7 +345,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * FTP-urls could not check its availability.
+	 * FTP-paths could not check its availability.
 	 *
 	 * @return bool
 	 */
@@ -321,7 +396,7 @@ class Ftp extends Protocol_Base {
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'FTP-connection failed. Check the server-name %1$s and the given credentials.', 'external-files-in-media-library' ), $connection_arguments['hostname'] ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the server-name %1$s and the given credentials. Error: <code>%2$s</code>', 'external-files-in-media-library' ), $connection_arguments['hostname'], wp_json_encode( $connection->errors ) ), $this->get_url(), 'error', 0 );
 			return false;
 		}
 

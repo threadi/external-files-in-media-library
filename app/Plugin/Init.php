@@ -45,7 +45,7 @@ class Init {
 	 */
 	public static function get_instance(): Init {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -68,6 +68,9 @@ class Init {
 
 		// initialize proxy.
 		Proxy::get_instance()->init();
+
+		// initialize schedules.
+		Schedules::get_instance()->init();
 
 		// plugin-actions.
 		register_activation_hook( EML_PLUGIN, array( Install::get_instance(), 'activation' ) );

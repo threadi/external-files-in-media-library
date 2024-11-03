@@ -89,7 +89,8 @@ class WooCommerce {
 		$woocommerce_settings_tab->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 		$woocommerce_settings_section = $woocommerce_settings_tab->add_section( 'eml_woocommerce_settings' );
 		$woocommerce_settings_section->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
-		$woocommerce_settings_setting = $woocommerce_settings_tab->add_setting( 'eml_woocommerce' );
+		$woocommerce_settings_setting = $settings_obj->add_setting( 'eml_woocommerce' );
+		$woocommerce_settings_setting->set_section( $woocommerce_settings_section );
 		$woocommerce_settings_setting->set_type( 'integer' );
 		$woocommerce_settings_setting->set_default( 1 );
 		$woocommerce_settings_setting->set_field(
@@ -99,7 +100,6 @@ class WooCommerce {
 				'type'        => 'Checkbox',
 			)
 		);
-		$woocommerce_settings_setting->set_section( $woocommerce_settings_section );
 	}
 
 	/**
@@ -116,7 +116,7 @@ class WooCommerce {
 		}
 
 		// add the image and bail if it was not successfully.
-		if ( ! Files::get_instance()->add_from_url( $data['raw_image_id'] ) ) {
+		if ( ! Files::get_instance()->add_url( $data['raw_image_id'] ) ) {
 			return $data;
 		}
 
@@ -180,7 +180,7 @@ class WooCommerce {
 		// loop through the list.
 		foreach ( $data['raw_gallery_image_ids'] as $index => $url ) {
 			// add the image and bail if it was not successfully.
-			if ( ! Files::get_instance()->add_from_url( $url ) ) {
+			if ( ! Files::get_instance()->add_url( $url ) ) {
 				continue;
 			}
 

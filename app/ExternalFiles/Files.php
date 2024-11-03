@@ -50,6 +50,13 @@ class Files {
 	private string $password = '';
 
 	/**
+	 * The process start time for import.
+	 *
+	 * @var float
+	 */
+	private float $start_time = 0.0;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {
@@ -83,6 +90,9 @@ class Files {
 	 * @return void
 	 */
 	public function init(): void {
+		// initialize the queue.
+		Queue::get_instance()->init();
+
 		// misc.
 		add_action( 'add_meta_boxes_attachment', array( $this, 'add_media_box' ), 20, 1 );
 
@@ -107,8 +117,12 @@ class Files {
 
 		// use our own hooks.
 		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ) );
-		add_action( 'eml_check_files', array( $this, 'check_files' ), 10, 0 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
+		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
+		add_action( 'eml_file_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
+		add_action( 'eml_ftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
+		add_action( 'eml_http_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
+		add_action( 'eml_sftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -251,13 +265,16 @@ class Files {
 	 * This is the main function for any import.
 	 *
 	 * If URL is a directory we try to import all files from this directory.
-	 * If URL is a single file, it will be imported.
+	 * If URL is a single file, this single file will be imported.
+	 *
+	 * The import will be use a protocol handler matching the protocol of the used URL.
 	 *
 	 * @param string $url The URL to add.
+	 * @param bool   $add_to_queue Whether this URL should just be added to the queue.
 	 *
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
-	public function add_from_url( string $url ): bool {
+	public function add_url( string $url, bool $add_to_queue = false ): bool {
 		$false = false;
 		/**
 		 * Filter the given URL against custom blacklists.
@@ -271,6 +288,11 @@ class Files {
 		if ( apply_filters( 'eml_blacklist', $false, $url ) ) {
 			return false;
 		}
+
+		/**
+		 * Save the start time.
+		 */
+		$this->set_import_start_time();
 
 		/**
 		 * Get the handler for this URL depending on its protocol.
@@ -293,16 +315,33 @@ class Files {
 		$protocol_handler_obj->set_password( $this->get_password() );
 
 		/**
-		 * Get information about files under the given URL.
+		 * Set queue-mode.
 		 */
-		$files = $protocol_handler_obj->get_external_infos();
+		$protocol_handler_obj->set_queue_mode( $add_to_queue );
+
+		// embed necessary files.
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		/**
-		 * Do nothing if check of URL resulted in empty file list.
+		 * Get information about files under the given URL.
 		 */
-		if ( empty( $files ) ) {
+		$files = $protocol_handler_obj->get_url_infos();
+
+		/**
+		 * Do nothing if check of URL resulted in empty file list if queue is not used.
+		 */
+		if ( empty( $files ) && ! $add_to_queue ) {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'No files found under given URL %1$s.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			return false;
+		}
+
+		/**
+		 * Do nothing if check of URL resulted in empty list if queue is used.
+		 */
+		if ( empty( $files ) && $add_to_queue ) {
 			return false;
 		}
 
@@ -322,6 +361,15 @@ class Files {
 		$user_id = apply_filters( 'eml_file_import_user', $user_id, $url );
 
 		/**
+		 * Run action just before we go through the list of resulting files.
+		 */
+		do_action( 'eml_before_file_list', $url, $files );
+
+		// show progress.
+		/* translators: %1$s is replaced by a URL. */
+		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( _n( 'Save file from URL %1$s', 'Save files from URL %1$s', count( $files ), 'external-files-in-media-library' ), esc_url( $url ) ), count( $files ) ) : '';
+
+		/**
 		 * Loop through the results and save each in the media library.
 		 */
 		foreach ( $files as $file_data ) {
@@ -337,6 +385,11 @@ class Files {
 			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
 				Log::get_instance()->create( sprintf( __( 'Given string %1$s results in error during request: <pre>%2$s</pre>', 'external-files-in-media-library' ), esc_url( $url ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// bail to next file.
 				continue;
 			}
 
@@ -371,6 +424,15 @@ class Files {
 			$post_array = apply_filters( 'eml_file_import_attachment', $post_array, $file_data['url'], $file_data );
 
 			/**
+			 * Run action just before the file is saved in database.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $file_url   The URL to import.
+			 */
+			do_action( 'eml_file_import_before_save', $file_data['url'] );
+
+			/**
 			 * Save this file local if it is required.
 			 */
 			if ( false !== $file_data['local'] ) {
@@ -395,6 +457,11 @@ class Files {
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
 				$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $file_data['url'], $attachment_id->errors['upload_error'][0] ), $file_data['url'], 'error', 0 );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// bail to next file.
 				continue;
 			}
 
@@ -405,6 +472,11 @@ class Files {
 			if ( ! $external_file_obj ) {
 				/* translators: %1$s will be replaced by the file-URL */
 				$this->log->create( sprintf( __( 'External file object for URL %1$s could not be loaded.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'error', 0 );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// bail to next file.
 				continue;
 			}
 
@@ -480,14 +552,23 @@ class Files {
 			 * @param array $file_data The array with the file data.
 			 */
 			do_action( 'eml_after_file_save', $external_file_obj, $file_data );
+
+			// cleanup the temporary file.
+			$this->cleanup_temp_file( $file_data['tmp-file'] );
+
+			// show progress.
+			$progress ? $progress->tick() : '';
 		}
+
+		// finish the progress.
+		$progress ? $progress->finish() : '';
 
 		// return ok.
 		return true;
 	}
 
 	/**
-	 * Log deletion of external urls in media library.
+	 * Log deletion of external URLs in media library.
 	 *
 	 * @param int $attachment_id  The attachment_id which will be deleted.
 	 *
@@ -1501,5 +1582,115 @@ class Files {
 		// redirect user.
 		wp_safe_redirect( wp_get_referer() );
 		exit;
+	}
+
+	/**
+	 * Parse the content by HTML-links to get their href-values.
+	 *
+	 * @param array  $matches The matches.
+	 * @param string $content The content to parse.
+	 *
+	 * @return array
+	 */
+	public function use_link_regex( array $matches, string $content ): array {
+		// parse all links in the given content to get their URLs.
+		if ( 0 < preg_match_all( "<a href=\x22(.+?)\x22>", $content, $my_matches ) ) {
+			return $my_matches;
+		}
+
+		// return empty results.
+		return $matches;
+	}
+
+	/**
+	 * Return the import start time.
+	 *
+	 * @return float
+	 */
+	private function get_import_start_time(): float {
+		return $this->start_time;
+	}
+
+	/**
+	 * Set the start time.
+	 *
+	 * @return void
+	 */
+	private function set_import_start_time(): void {
+		$this->start_time = microtime( true );
+	}
+
+	/**
+	 * Check runtime of the actual PHP-process.
+	 *
+	 * If it is nearly the configured max_execution_time kill itself.
+	 *
+	 * In addition to max_execution_time, there are other timeouts in PHP that we cannot access.
+	 * Therefore, this is only an approximation of the possible environment.
+	 *
+	 * As soon as the assumed maximum value is reached, all other URLs in the run are placed
+	 * in the queue and the import is aborted by killing the PHP process.
+	 *
+	 * @param string $url The actual processed file URL.
+	 * @param array  $file_list List of files to process.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function check_runtime( string $url, array $file_list ): void {
+		// bail if setting is disabled.
+		if ( 1 !== absint( get_option( 'eml_max_execution_check' ) ) ) {
+			return;
+		}
+
+		// get max_execution_time setting.
+		$max_execution_time = absint( ini_get( 'max_execution_time' ) ); // in seconds.
+
+		// bail if max_execution_time is 0 or -1 (e.g. via WP CLI).
+		if ( $max_execution_time <= 0 ) {
+			return;
+		}
+
+		// get the actual runtime.
+		$runtime = microtime( true ) - $this->get_import_start_time();
+
+		// cancel process if runtime is nearly reached.
+		if ( (float) $runtime >= $max_execution_time ) {
+			// add files to queue.
+			Queue::get_instance()->add_urls( $file_list, $this->get_login(), $this->get_password() );
+
+			// log the event.
+			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported were saved in the queue and are now automatically imported individually.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+			// kill process.
+			exit;
+		}
+	}
+
+	/**
+	 * Cleanup temporary files.
+	 *
+	 * @param string $file The path to the file.
+	 *
+	 * @return void
+	 */
+	public function cleanup_temp_file( string $file ): void {
+		// bail if string is empty.
+		if ( empty( $file ) ) {
+			return;
+		}
+
+		// bail if file does not exist.
+		if ( ! file_exists( $file ) ) {
+			return;
+		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// delete the temporary file.
+		$wp_filesystem->delete( $file );
 	}
 }

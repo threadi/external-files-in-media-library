@@ -14,6 +14,8 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
@@ -26,7 +28,7 @@ class File extends Protocol_Base {
 	 * @var array
 	 */
 	protected array $tcp_protocols = array(
-		'file' => - 1,
+		'file' => -1,
 	);
 
 	/**
@@ -34,33 +36,92 @@ class File extends Protocol_Base {
 	 *
 	 * @return array List of file-infos.
 	 */
-	public function get_external_infos(): array {
+	public function get_url_infos(): array {
 		// initialize list of files.
 		$files = array();
 
 		// check if given URL is a directory.
 		if ( is_dir( $this->get_url() ) ) {
-			foreach ( scandir( $this->get_url() ) as $file ) {
+			/**
+			 * Run action on beginning of presumed directory import via file-protocol.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 */
+			do_action( 'eml_file_directory_import_start', $this->get_url() );
+
+			// get the files.
+			$file_list = scandir( $this->get_url() );
+
+			// add files to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( $file_list, $this->get_login(), $this->get_password() );
+				return array();
+			}
+
+			// show progress.
+			/* translators: %1$s is replaced by a URL. */
+			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $file_list ) ) : '';
+
+			// loop through the directory.
+			foreach ( $file_list as $file ) {
 				// get file path.
 				$file_path = $this->get_url() . $file;
 
 				// bail if this is not a file.
 				if ( ! is_file( $file_path ) ) {
+					// show progress.
+					$progress ? $progress->tick() : '';
+
+					// bail to next file.
 					continue;
 				}
+
+				/**
+				 * Run action just before the file check via file-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_path   The filepath to import.
+				 */
+				do_action( 'eml_file_directory_import_file_check', $file_path );
 
 				// get file data.
 				$results = $this->get_url_info( $file_path );
 
+				// show progress.
+				$progress ? $progress->tick() : '';
+
 				// bail if results are empty.
 				if ( empty( $results ) ) {
-					return array();
+					// bail to next file.
+					continue;
 				}
+
+				/**
+				 * Run action just before the file is added to the list via file-protocol.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 *
+				 * @param string $file_path   The filepath to import.
+				 * @param array $file_list List of files.
+				 */
+				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
 				// add file to the list.
 				$files[] = $results;
 			}
+
+			// finish the progress.
+			$progress ? $progress->finish() : '';
 		} else {
+			// add files to list in queue mode.
+			if ( $this->is_queue_mode() ) {
+				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
+				return array();
+			}
+
 			// gert file data.
 			$results = $this->get_url_info( $this->get_url() );
 

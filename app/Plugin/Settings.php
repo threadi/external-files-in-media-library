@@ -47,7 +47,7 @@ class Settings {
 	 */
 	public static function get_instance(): Settings {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
+			self::$instance = new static();
 		}
 
 		return self::$instance;
@@ -215,14 +215,6 @@ class Settings {
 		$field->set_readonly( method_exists( 'WPSEO_Options', 'get' ) );
 		$setting->set_field( $field );
 
-		// interval-setting for automatic file-check.
-		$values = array(
-			'eml_disable_check' => __( 'Disable the check', 'external-files-in-media-library' ),
-		);
-		foreach ( wp_get_schedules() as $name => $interval ) {
-			$values[ $name ] = $interval['display'];
-		}
-
 		// get possible mime types.
 		$mime_types = array();
 		foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
@@ -250,8 +242,9 @@ class Settings {
 		$field = new Select();
 		$field->set_title( __( 'Set interval for file-check', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
-		$field->set_options( $values );
+		$field->set_options( Helper::get_intervals() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
+		$setting->set_save_callback( array( $this, 'update_interval_setting' ) );
 		$setting->set_field( $field );
 
 		// add setting.
@@ -404,6 +397,16 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_max_execution_check' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable max execution check', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled after every URL during import the max execution of the PHP-processes is checked regarding the PHP-<i>max_execution_time</i>-setting in your hosting.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_log_mode' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
@@ -431,28 +434,54 @@ class Settings {
 	 * @return string
 	 */
 	public function sanitize_interval_setting( string $value ): string {
+		// get option.
+		$option = str_replace( 'sanitize_option_', '', current_filter() );
+
+		// bail if value is empty.
 		if ( empty( $value ) ) {
+			add_settings_error( $option, $option, __( 'An interval has to be set.', 'external-files-in-media-library' ) );
 			return '';
 		}
 
-		// disable the check.
+		// bail if value is 'eml_disable_check'.
 		if ( 'eml_disable_check' === $value ) {
-			wp_clear_scheduled_hook( 'eml_check_files' );
 			return $value;
 		}
 
-		// check if given interval exist.
+		// check if the given interval exists.
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $value ] ) ) {
-			add_settings_error( 'eml_check_files', 'eml_check_files', __( 'The given interval does not exists.', 'external-files-in-media-library' ) );
-			return '';
+			/* translators: %1$s will be replaced by the name of the used interval */
+			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exists.', 'external-files-in-media-library' ), esc_html( $value ) ) );
 		}
 
-		// change the interval.
-		wp_clear_scheduled_hook( 'eml_check_files' );
-		wp_schedule_event( time(), $value, 'eml_check_files' );
+		// return the value.
+		return $value;
+	}
 
-		// return value for option-value.
+	/**
+	 * Update the schedule if interval has been changed.
+	 *
+	 * @param string|null $value The given value for the interval.
+	 *
+	 * @return string
+	 */
+	public function update_interval_setting( string|null $value ): string {
+		// get check files-schedule-object.
+		$check_files_schedule = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files();
+
+		// if new value is 'eml_disable_check' remove the schedule.
+		if ( 'eml_disable_check' === $value ) {
+			$check_files_schedule->delete();
+		} else {
+			// set the new interval.
+			$check_files_schedule->set_interval( $value );
+
+			// reset the schedule.
+			$check_files_schedule->reset();
+		}
+
+		// return the new value to save it via WP.
 		return $value;
 	}
 
@@ -526,7 +555,6 @@ class Settings {
 		$log->prepare_items();
 		?>
 		<div class="wrap">
-			<div id="icon-users" class="icon32"></div>
 			<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
 			<?php
 			$log->views();

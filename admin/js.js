@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
     /**
      * Add rating hint.
      */
-    $('body.settings_page_eml_settings h1').each(function() {
+    $('body.settings_page_eml_settings h1.wp-heading-inline').each(function() {
       let button = document.createElement('a');
       button.className = 'review-hint-button page-title-action';
       button.href = emlJsVars.review_url;
@@ -12,7 +12,7 @@ jQuery(document).ready(function($) {
     })
 
     /**
-     * Add AJAX-functionality to upload new urls on Media > Add New
+     * Add AJAX-functionality to upload new URLs on Media > Add New
      */
     $('button.eml_add_external_upload').on('click', function(e) {
         e.preventDefault();
@@ -28,6 +28,9 @@ jQuery(document).ready(function($) {
           return;
         }
 
+        // get queue setting.
+        let add_to_queue = $(this).parent().find('#add_to_queue').is(':checked') ? 1 : 0;
+
         // get the credentials (optional).
         let login = $(this).parent().find('#eml_login').val();
         let password = $(this).parent().find('#eml_password').val();
@@ -40,6 +43,7 @@ jQuery(document).ready(function($) {
                 urls: urls,
                 login: login,
                 password: password,
+                add_to_queue: add_to_queue,
                 action: 'eml_add_external_urls',
                 nonce: emlJsVars.urls_nonce
             },
@@ -204,6 +208,9 @@ function eml_upload_files() {
   let login = jQuery('#eml_login').val();
   let password = jQuery('#eml_password').val();
 
+  // get queue setting.
+  let add_to_queue = jQuery('#add_to_queue').is(':checked') ? 1 : 0;
+
   // send request.
   jQuery.ajax({
     url: emlJsVars.ajax_url,
@@ -212,6 +219,7 @@ function eml_upload_files() {
       urls: urls,
       login: login,
       password: password,
+      add_to_queue: add_to_queue,
       action: 'eml_add_external_urls',
       nonce: emlJsVars.urls_nonce
     },
