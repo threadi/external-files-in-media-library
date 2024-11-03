@@ -1,4 +1,7 @@
-* wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
+* Dialog-optimierungen:
+-> in fortschritt anzeigen wie viele dateien schon erledigt sind und wie viele insgesamt
+-> wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
+-> Ergebnis besser formatieren
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
 * Statistik unter Einstellungen
 -> wie viele URLs sind aktuell importiert
