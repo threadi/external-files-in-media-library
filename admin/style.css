@@ -107,6 +107,8 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-bottom: 0.4em;
 }
 
+.settings_page_eml_settings #options { width: 80px }
+
 .settings_page_eml_settings #state { width: 80px }
 
 .settings_page_eml_settings #date { width: 120px }
@@ -116,4 +118,23 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 .settings_page_eml_settings .current {
 	color: #000;
 	font-weight: 600;
+}
+
+body.settings_page_eml_settings .copied {
+	position: relative;
+	z-index: 1;
+}
+
+body.settings_page_eml_settings .copied:after {
+	animation: 2s fadeOut;
+	animation-fill-mode: forwards;
+	color: green;
+	content: attr(data-copied-label);
+	display: inline-block;
+	font-size: 16px;
+	font-family: Arial, sans-serif;
+	margin-left: 2px;
+	position: absolute;
+	top: -2px;
+	z-index: 2;
 }

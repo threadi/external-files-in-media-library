@@ -77,6 +77,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
 		add_action( 'admin_init', array( $this, 'check_php' ) );
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
+		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -201,6 +202,35 @@ class Admin {
 
 		// empty the table.
 		Log::get_instance()->truncate_log();
+
+		// redirect user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
+	}
+
+	/**
+	 * Delete single log entry.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function delete_log_entry(): void {
+		// check the nonce.
+		check_admin_referer( 'eml-log-delete-entry', 'nonce' );
+
+		// get the ID from request.
+		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// empty the table.
+		Log::get_instance()->delete_log( $id );
+
+		// show ok message.
+		$transients_obj = Transients::get_instance();
+		$transient_obj  = $transients_obj->add();
+		$transient_obj->set_name( 'eml_log_entry_deleted' );
+		$transient_obj->set_message( __( 'The log entry has been deleted.', 'external-files-in-media-library' ) );
+		$transient_obj->set_type( 'success' );
+		$transient_obj->save();
 
 		// redirect user.
 		wp_safe_redirect( wp_get_referer() );

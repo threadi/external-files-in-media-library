@@ -303,8 +303,7 @@ class Files {
 		 * Do nothing if URL is using a not supported tcp protocol.
 		 */
 		if ( ! $protocol_handler_obj ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given URL %1$s is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -333,8 +332,7 @@ class Files {
 		 * Do nothing if check of URL resulted in empty file list if queue is not used.
 		 */
 		if ( empty( $files ) && ! $add_to_queue ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'No files found under given URL %1$s.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'No files found under given URL.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -367,7 +365,7 @@ class Files {
 
 		// show progress.
 		/* translators: %1$s is replaced by a URL. */
-		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( _n( 'Save file from URL %1$s', 'Save files from URL %1$s', count( $files ), 'external-files-in-media-library' ), esc_url( $url ) ), count( $files ) ) : '';
+		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( _n( 'Save file from URL', 'Save files from URL', count( $files ), 'external-files-in-media-library' ), count( $files ) ) : '';
 
 		/**
 		 * Loop through the results and save each in the media library.
@@ -455,8 +453,8 @@ class Files {
 
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
-				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by a WP-error-message */
-				$this->log->create( sprintf( __( 'URL %1$s could not be saved because of this error: %2$s', 'external-files-in-media-library' ), $file_data['url'], $attachment_id->errors['upload_error'][0] ), $file_data['url'], 'error', 0 );
+				/* translators: %1$s will be replaced by a WP-error-message */
+				$this->log->create( sprintf( __( 'URL could not be saved because of this error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_json_encode( $attachment_id->errors['upload_error'][0] ) ), $file_data['url'], 'error', 0 );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -470,8 +468,7 @@ class Files {
 
 			// bail if object could not be loaded.
 			if ( ! $external_file_obj ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				$this->log->create( sprintf( __( 'External file object for URL %1$s could not be loaded.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'error', 0 );
+				$this->log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_data['url'], 'error', 0 );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -541,8 +538,7 @@ class Files {
 			}
 
 			// log that URL has been added as file in media library.
-			/* translators: %1$s will be replaced by the file-URL */
-			$this->log->create( sprintf( __( 'URL %1$s successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'] ), $file_data['url'], 'success', 0 );
+			$this->log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'], 'success', 0 );
 
 			/**
 			 * Run additional tasks after new external file has been added.
@@ -584,8 +580,7 @@ class Files {
 		}
 
 		// log deletion.
-		/* translators: %1$s will be replaced by the file-URL */
-		Log::get_instance()->create( sprintf( __( 'URL %1$s has been deleted from media library.', 'external-files-in-media-library' ), esc_url( $external_file->get_url() ) ), $external_file->get_url(), 'success', 1 );
+		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file->get_url(), 'success', 1 );
 	}
 
 	/**
@@ -1142,7 +1137,7 @@ class Files {
 
 		// log this event.
 		/* translators: %1$s will be replaced by the file URL. */
-		Log::get_instance()->create( sprintf( __( 'File %1$s has been switched the hosting.', 'external-files-in-media-library' ), $url ), $url, 'success', 0 );
+		Log::get_instance()->create( __( 'File has been switched the hosting.', 'external-files-in-media-library' ), $url, 'success', 0 );
 
 		// send response as JSON.
 		wp_send_json( $result );

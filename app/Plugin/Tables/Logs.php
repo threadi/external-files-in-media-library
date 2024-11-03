@@ -25,6 +25,7 @@ class Logs extends WP_List_Table {
 	 */
 	public function get_columns(): array {
 		return array(
+			'options' => __( 'Options', 'external-files-in-media-library' ),
 			'state' => __( 'State', 'external-files-in-media-library' ),
 			'date'  => __( 'Date', 'external-files-in-media-library' ),
 			'url'   => __( 'URL', 'external-files-in-media-library' ),
@@ -109,6 +110,7 @@ class Logs extends WP_List_Table {
 	 */
 	public function column_default( $item, $column_name ) {
 		return match ( $column_name ) {
+			'options' => $this->get_item_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
 			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . url_shorten( $item[ $column_name ], 50 ) . '</a>',
@@ -219,5 +221,56 @@ class Logs extends WP_List_Table {
 		 * @param array $list List of filter.
 		 */
 		return apply_filters( 'eml_log_table_filter', $list );
+	}
+
+	/**
+	 * Show options on entry depending on its entities.
+	 *
+	 * @param array $item The item.
+	 *
+	 * @return string
+	 */
+	private function get_item_options( array $item ): string {
+		// add copy option.
+		$output = '<a class="dashicons dashicons-admin-page copy-text-attr" href="#" data-text="' . esc_attr( $item['url'] . ' => ' . $item['log'] ) . '" data-copied-label="' . esc_attr__( 'Copied', 'external-files-in-media-library' ) . '" title="' . esc_attr__( 'Copy this entry in your clipboard', 'external-files-in-media-library' ) . '"></a>';
+
+		// add delete option.
+		if( current_user_can( 'manage_options' ) ) {
+			// create delete-URL.
+			$url = add_query_arg(
+				array(
+					'action' => 'eml_log_delete_entry',
+					'id' => $item['id'],
+					'nonce' => wp_create_nonce( 'eml-log-delete-entry' )
+				),
+				get_admin_url() . 'admin.php'
+			);
+
+			// create dialog.
+			$dialog = array(
+				'title'   => __( 'Delete log entry', 'external-files-in-media-library' ),
+				'texts'   => array(
+					'<p><strong>' . __( 'Are you sure you want to delete this log entry?', 'external-files-in-media-library' ) . '</strong></p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'location.href="' . $url . '";',
+						'variant' => 'primary',
+						'text'    => __( 'Yes', 'external-files-in-media-library' ),
+					),
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'secondary',
+						'text'    => __( 'No', 'external-files-in-media-library' ),
+					),
+				),
+			);
+
+			// add output.
+			$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
+		}
+
+		// return the output.
+		return $output;
 	}
 }

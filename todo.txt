@@ -1,7 +1,6 @@
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
 * Import & Export von Einstellungen
 * Helper ergänzen
-* Kopieren von Log für Forenbeitrag ermöglichen (Code-Block?)
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
 * Statistik unter Einstellungen
 -> wie viele URLs sind aktuell importiert

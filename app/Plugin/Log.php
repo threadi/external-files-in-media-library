@@ -119,13 +119,13 @@ class Log {
 		global $wpdb;
 		if ( ! empty( $url ) ) {
 			if ( ! empty( $state ) ) {
-				return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
+				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
 			}
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
 		} elseif ( ! empty( $state ) ) {
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
 		}
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
 	}
 
 	/**
@@ -160,5 +160,23 @@ class Log {
 	 */
 	private function get_level(): int {
 		return get_option( 'eml_log_mode', 0 );
+	}
+
+	/**
+	 * Delete single log entry.
+	 *
+	 * @param int $id
+	 *
+	 * @return void
+	 */
+	public function delete_log( int $id ): void {
+		// bail if id is not given.
+		if( 0 === $id ) {
+			return;
+		}
+
+		// delete the entry.
+		global $wpdb;
+		$wpdb->query( sprintf( 'DELETE FROM %s WHERE `id` = %d', $wpdb->prefix . 'eml_logs', $id ) );
 	}
 }

@@ -51,7 +51,7 @@ class Http extends Protocol_Base {
 		// given string is not an url.
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given string %s is not a valid url.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid url.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -83,15 +83,14 @@ class Http extends Protocol_Base {
 
 		// request resulted in an error.
 		if ( is_wp_error( $response ) || empty( $response ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given URL %s is not available.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL is not available.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
 			return false;
 		}
 
 		// URL returns not compatible HTTP-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with HTTP-status %2$d.', 'external-files-in-media-library' ), esc_url( $url ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
+			/* translators: %1$d will be replaced by the HTTP-Status. */
+			Log::get_instance()->create( sprintf( __( 'Given URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -108,8 +107,7 @@ class Http extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type_existence', $true, $url ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given URL %s response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -127,8 +125,8 @@ class Http extends Protocol_Base {
 		 */
 		if ( ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
-				/* translators: %1$s will be replaced by the file-URL, %2$s will be replaced by its Mime-Type */
-				Log::get_instance()->create( sprintf( __( 'Given URL %1$s response with the not allowed mime-type %2$s.', 'external-files-in-media-library' ), esc_url( $url ), $response_headers['content-type'] ), esc_url( $url ), 'error', 0 );
+				/* translators: %1$s will be replaced by its Mime-Type */
+				Log::get_instance()->create( sprintf( __( 'Given URL response with the not allowed mime-type %1$s.', 'external-files-in-media-library' ), $response_headers['content-type'] ), esc_url( $url ), 'error', 0 );
 				return false;
 			}
 		}
@@ -146,8 +144,7 @@ class Http extends Protocol_Base {
 		 */
 		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
 			// file is available.
-			/* translators: %1$s will be replaced by the URL of the file. */
-			Log::get_instance()->create( sprintf( __( 'Given URL %1$s is available.', 'external-files-in-media-library' ), esc_url( $url ) ), esc_url( $url ), 'success', 2 );
+			Log::get_instance()->create( __( 'Given URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2 );
 
 			// return true as file is available.
 			return true;
@@ -256,8 +253,7 @@ class Http extends Protocol_Base {
 
 			// bail if saving has been failed.
 			if ( ! $content ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'The presumed directory URL %s could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'The presumed directory URL could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -275,8 +271,7 @@ class Http extends Protocol_Base {
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'The presumed directory URL %s does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'The presumed directory URL does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -322,8 +317,7 @@ class Http extends Protocol_Base {
 
 				// check if given file is a local file which exist in media library.
 				if ( $this->is_local_file( $file_url ) ) {
-					/* translators: %1$s will be replaced by the file-URL */
-					Log::get_instance()->create( sprintf( __( 'Given URL %s already exist in media library as local file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+					Log::get_instance()->create( __( 'Given URL already exist in media library as local file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2 );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -334,8 +328,7 @@ class Http extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					/* translators: %1$s will be replaced by the file-URL */
-					Log::get_instance()->create( sprintf( __( 'Given file %1$s already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ) ), esc_url( $file_url ), 'error', 0 );
+					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error', 0 );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -383,15 +376,13 @@ class Http extends Protocol_Base {
 		} else {
 			// check if given file is a local file which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given URL %1$s already exist in media library as normal file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 2 );
+				Log::get_instance()->create( __( 'Given URL already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2 );
 				return array();
 			}
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given URL %1$s already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'Given URL already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 

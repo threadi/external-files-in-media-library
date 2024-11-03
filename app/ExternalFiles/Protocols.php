@@ -105,8 +105,7 @@ class Protocols {
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Your hosting does not match the requirements to import the given URL %1$s. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+				Log::get_instance()->create( __( 'Your hosting does not match the requirements to import the given URL. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
 				continue;
 			}
 

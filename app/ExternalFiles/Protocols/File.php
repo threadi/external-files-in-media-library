@@ -157,8 +157,7 @@ class File extends Protocol_Base {
 
 		// bail if file does not exist.
 		if ( ! file_exists( $file_path ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'File-URL %1$s does not exist.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
 			return array();
 		}
@@ -171,8 +170,7 @@ class File extends Protocol_Base {
 		// get the file contents.
 		$file_content = $wp_filesystem->get_contents( $file_path );
 		if ( empty( $file_content ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'File-URL %1$s returns an empty file.', 'external-files-in-media-library' ), $this->get_url() ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'File-URL returns an empty file.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
 			return array();
 		}

@@ -174,6 +174,17 @@ jQuery(document).ready(function($) {
             $this.closest('div[data-dismissible]').hide('slow');
         }
     );
+
+  /**
+   * Copy strings in clipboard.
+   */
+  $(".settings_page_eml_settings .copy-text-attr").on("click", function( e ) {
+    e.preventDefault();
+    $(this).removeClass("copied");
+    if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
+      $(this).addClass("copied");
+    }
+  });
 });
 
 /**
@@ -323,4 +334,22 @@ function eml_upload_files_get_info() {
  */
 function eml_create_dialog( config ) {
   document.body.dispatchEvent(new CustomEvent("easy-dialog-for-wordpress", config));
+}
+
+/**
+ * Copy given text to clipboard.
+ *
+ * @param text The text to copy.
+ */
+function efml_copy_to_clipboard( text ) {
+  let helper = document.createElement("textarea");
+  document.body.appendChild(helper);
+  helper.value = text.replace(/(<([^>]+)>)/gi, "");
+  helper.select();
+  if( document.execCommand("copy") ) {
+    document.body.removeChild(helper);
+    return true;
+  }
+  document.body.removeChild(helper);
+  return false;
 }
