@@ -121,7 +121,7 @@ class Button extends Field_Base {
 	/**
 	 * Set button title.
 	 *
-	 * @param string $title
+	 * @param string $title The title to set.
 	 *
 	 * @return void
 	 */
@@ -156,7 +156,7 @@ class Button extends Field_Base {
 	 */
 	private function get_custom_attributes(): string {
 		$attributes = '';
-		foreach( $this->button_custom_attributes as $name => $value ) {
+		foreach ( $this->button_custom_attributes as $name => $value ) {
 			$attributes .= ' ' . $name . '="' . esc_attr( $value ) . '"';
 		}
 
@@ -184,22 +184,22 @@ class Button extends Field_Base {
 		$classes = implode( ' ', $this->button_classes );
 
 		// bail if list is empty.
-		if( empty( $classes ) ) {
+		if ( empty( $classes ) ) {
 			return '';
 		}
 
 		// return the list of classes.
-		return ' '. $classes;
+		return ' ' . $classes;
 	}
 
 	/**
 	 * Add single class to the list of classes for the button.
 	 *
-	 * @param string $class The class name.
+	 * @param string $class_name The class name.
 	 *
 	 * @return void
 	 */
-	public function add_class( string $class ): void {
-		$this->button_classes[] = $class;
+	public function add_class( string $class_name ): void {
+		$this->button_classes[] = $class_name;
 	}
 }

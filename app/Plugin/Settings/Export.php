@@ -69,10 +69,16 @@ class Export {
 	 */
 	public function add_settings( Settings $settings_obj ): void {
 		// the import/export section in advanced.
-		$advanced_tab_importexport = $settings_obj->get_tab('eml_advanced')->get_section( 'settings_section_advanced_importexport' );
+		$advanced_tab_importexport = $settings_obj->get_tab( 'eml_advanced' )->get_section( 'settings_section_advanced_importexport' );
 
 		// create export URL.
-		$export_url = add_query_arg( array( 'action' => 'eml_setting_export', 'nonce' => wp_create_nonce( 'eml-setting-export' ) ), get_admin_url() . 'admin.php' );
+		$export_url = add_query_arg(
+			array(
+				'action' => 'eml_setting_export',
+				'nonce'  => wp_create_nonce( 'eml-setting-export' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
 
 		// create export dialog.
 		$dialog = array(
@@ -122,7 +128,7 @@ class Export {
 		$settings = Settings::get_instance()->get_settings();
 
 		// bail if list is empty.
-		if( empty( $settings ) ) {
+		if ( empty( $settings ) ) {
 			// show hint.
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_type( 'error' );
@@ -139,19 +145,19 @@ class Export {
 		$export_settings = array();
 
 		// convert this array to a simple one with "setting_name" > "value".
-		foreach( $settings as $settings_obj ) {
+		foreach ( $settings as $settings_obj ) {
 			// bail if this setting is not a Setting object.
-			if( ! $settings_obj instanceof Setting ) {
+			if ( ! $settings_obj instanceof Setting ) {
 				continue;
 			}
 
 			// bail if export is prevented.
-			if( $settings_obj->is_export_prevented() ) {
+			if ( $settings_obj->is_export_prevented() ) {
 				continue;
 			}
 
 			// add to export array.
-			$export_settings[$settings_obj->get_name()] = $settings_obj->get_value();
+			$export_settings[ $settings_obj->get_name() ] = $settings_obj->get_value();
 		}
 
 		// create filename for JSON-download-file.

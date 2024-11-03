@@ -71,6 +71,13 @@ class Setting {
 	private bool $prevent_export = false;
 
 	/**
+	 * Help text for this setting.
+	 *
+	 * @var string
+	 */
+	private string $help = '';
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {}
@@ -308,5 +315,34 @@ class Setting {
 	 */
 	public function prevent_export( bool $prevent_export ): void {
 		$this->prevent_export = $prevent_export;
+	}
+
+	/**
+	 * Return whether this setting has a help text.
+	 *
+	 * @return bool
+	 */
+	public function has_help(): bool {
+		return ! empty( $this->help );
+	}
+
+	/**
+	 * Return the help text for this setting.
+	 *
+	 * @return string
+	 */
+	public function get_help(): string {
+		return $this->help;
+	}
+
+	/**
+	 * Set the help text.
+	 *
+	 * @param string $help The help text.
+	 *
+	 * @return void
+	 */
+	public function set_help( string $help ): void {
+		$this->help = $help;
 	}
 }

@@ -171,6 +171,7 @@ external files by this plugin.
 * Added thumbnail support for proxied images
 * Added settings for videos which now can also be proxied
 * Added import and export for plugin settings
+* Added a handful help texts for WordPress-own help system
 * Added multiple new hooks
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL

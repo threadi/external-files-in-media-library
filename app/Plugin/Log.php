@@ -165,18 +165,18 @@ class Log {
 	/**
 	 * Delete single log entry.
 	 *
-	 * @param int $id
+	 * @param int $id The ID of the entry to delete.
 	 *
 	 * @return void
 	 */
 	public function delete_log( int $id ): void {
 		// bail if id is not given.
-		if( 0 === $id ) {
+		if ( 0 === $id ) {
 			return;
 		}
 
 		// delete the entry.
 		global $wpdb;
-		$wpdb->query( sprintf( 'DELETE FROM %s WHERE `id` = %d', $wpdb->prefix . 'eml_logs', $id ) );
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $wpdb->prefix . 'eml_logs WHERE `id` = %d', array( $id ) ) );
 	}
 }

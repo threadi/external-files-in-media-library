@@ -123,6 +123,7 @@ class Files {
 		add_action( 'eml_ftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_action( 'eml_http_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
+		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1687,5 +1688,37 @@ class Files {
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );
+	}
+
+	/**
+	 * Add help for the settings of this plugin.
+	 *
+	 * @param array $help_list List of help tabs.
+	 *
+	 * @return array
+	 */
+	public function add_help( array $help_list ): array {
+		$content  = '<h1>' . __( 'Upload external files', 'external-files-in-media-library' ) . '</h1>';
+		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
+		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
+		/* translators: %1$s will be replaced by a URL. */
+		$content .= '<ol><li>' . sprintf( __( 'Go to Media > <a href="%1$s">New file</a>.', 'external-files-in-media-library' ), esc_url( add_query_arg( array(), get_admin_url() . 'media-new.php' ) ) ) . '</li>';
+		$content .= '<li>' . __( 'Click on the button "Add external files".', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Paste the URLs you want to add in the field in the new dialog.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Optionally add credentials below the field.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Click on "Add URLs".', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Wait until you get an answer.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Take a look at your added external files in the media library.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '</ol>';
+
+		// add help for the settings of this plugin.
+		$help_list[] = array(
+			'id'      => 'eml-upload',
+			'title'   => __( 'Upload external files', 'external-files-in-media-library' ),
+			'content' => $content,
+		);
+
+		// return list of help.
+		return $help_list;
 	}
 }

@@ -436,14 +436,14 @@ class Tab {
 	 * @return false|Section
 	 */
 	public function get_section( string $section_name ): false|Section {
-		foreach( $this->get_sections() as $section_obj ) {
+		foreach ( $this->get_sections() as $section_obj ) {
 			// bail if section is not Section object.
-			if( ! $section_obj instanceof Section ) {
+			if ( ! $section_obj instanceof Section ) {
 				continue;
 			}
 
 			// bail if names do not match.
-			if( $section_obj->get_name() !== $section_name ) {
+			if ( $section_obj->get_name() !== $section_name ) {
 				continue;
 			}
 

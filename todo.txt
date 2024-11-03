@@ -1,5 +1,4 @@
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
-* Helper ergänzen
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
 * Statistik unter Einstellungen
 -> wie viele URLs sind aktuell importiert

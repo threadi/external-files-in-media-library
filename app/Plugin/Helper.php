@@ -449,7 +449,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_mimetypes_doc_url(): string {
-		if( Languages::get_instance()->is_german_language() ) {
+		if ( Languages::get_instance()->is_german_language() ) {
 			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/MimeTypes_de.md';
 		}
 		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/MimeTypes.md';

@@ -82,11 +82,11 @@ class Import {
 			'eml-import-admin',
 			'efmlImportJsVars',
 			array(
-				'ajax_url'                     => admin_url( 'admin-ajax.php' ),
-				'settings_import_file_nonce' => wp_create_nonce( 'eml-import-settings' ),
+				'ajax_url'                           => admin_url( 'admin-ajax.php' ),
+				'settings_import_file_nonce'         => wp_create_nonce( 'eml-import-settings' ),
 				'title_settings_import_file_missing' => __( 'Required file missing', 'external-files-in-media-library' ),
-				'text_settings_import_file_missing' => __( 'Please choose a JSON-file with settings of <i>External Files in Media Library</i> to import.', 'external-files-in-media-library' ),
-				'lbl_ok' => __( 'OK', 'external-files-in-media-library' ),
+				'text_settings_import_file_missing'  => __( 'Please choose a JSON-file with settings of <i>External Files in Media Library</i> to import.', 'external-files-in-media-library' ),
+				'lbl_ok'                             => __( 'OK', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -100,14 +100,14 @@ class Import {
 	 */
 	public function add_settings( Settings $settings_obj ): void {
 		// the import/export section in advanced.
-		$advanced_tab_importexport = $settings_obj->get_tab('eml_advanced')->get_section( 'settings_section_advanced_importexport' );
+		$advanced_tab_importexport = $settings_obj->get_tab( 'eml_advanced' )->get_section( 'settings_section_advanced_importexport' );
 
 		// create import dialog.
 		$dialog = array(
 			'title'   => __( 'Import plugin settings', 'external-files-in-media-library' ),
 			'texts'   => array(
 				'<p><strong>' . __( 'Click on the button below to chose your JSON-file with the settings.', 'external-files-in-media-library' ) . '</strong></p>',
-				'<input type="file" accept="application/json" name="import_settings_file" id="import_settings_file">'
+				'<input type="file" accept="application/json" name="import_settings_file" id="import_settings_file">',
 			),
 			'buttons' => array(
 				array(
@@ -158,25 +158,25 @@ class Import {
 						'text'    => __( 'OK', 'external-files-in-media-library' ),
 					),
 				),
-			)
+			),
 		);
 
 		// bail if no file is given.
 		if ( ! isset( $_FILES ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'No file was uploaded.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		// bail if file has no size.
 		if ( isset( $_FILES['file']['size'] ) && 0 === $_FILES['file']['size'] ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is no size.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		// bail if file type is not JSON.
 		if ( isset( $_FILES['file']['type'] ) && 'application/json' !== $_FILES['file']['type'] ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a valid JSON-file.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		// allow JSON-files.
@@ -187,20 +187,20 @@ class Import {
 			$filetype = wp_check_filetype( sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ) );
 			if ( 'json' !== $filetype['ext'] ) {
 				$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file does not have the file extension <i>.json</i>.', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json($dialog);
+				wp_send_json( $dialog );
 			}
 		}
 
 		// bail if no tmp_name is available.
 		if ( ! isset( $_FILES['file']['tmp_name'] ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file could not be saved. Contact your hoster about this problem.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		// bail if uploaded file is not readable.
 		if ( isset( $_FILES['file']['tmp_name'] ) && ! file_exists( sanitize_text_field( $_FILES['file']['tmp_name'] ) ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file could not be saved. Contact your hoster about this problem.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		// get WP Filesystem-handler for read the file.
@@ -215,7 +215,7 @@ class Import {
 		// bail if JSON-code does not contain one of our settings.
 		if ( ! isset( $settings_array['eml_log_mode'] ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a valid JSON-file with settings for this plugin.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json($dialog);
+			wp_send_json( $dialog );
 		}
 
 		/**
@@ -231,7 +231,7 @@ class Import {
 		// import the settings.
 		foreach ( $settings_array as $field_name => $field_value ) {
 			// check if given setting is used in this plugin.
-			if( ! $settings_obj->get_setting( $field_name ) ) {
+			if ( ! $settings_obj->get_setting( $field_name ) ) {
 				continue;
 			}
 
@@ -240,11 +240,11 @@ class Import {
 		}
 
 		// return that import was successfully.
-		$dialog['detail']['title'] = __( 'Settings have been imported', 'external-files-in-media-library' );
-		$dialog['detail']['texts'][0] = '<p><strong>' . __( 'Import has been run successfully.', 'external-files-in-media-library' ) . '</strong></p>';
-		$dialog['detail']['texts'][1] = '<p>' . __( 'The new settings are now active. Click on the button below to reload the page and see the settings.', 'external-files-in-media-library' ) . '</p>';
+		$dialog['detail']['title']                = __( 'Settings have been imported', 'external-files-in-media-library' );
+		$dialog['detail']['texts'][0]             = '<p><strong>' . __( 'Import has been run successfully.', 'external-files-in-media-library' ) . '</strong></p>';
+		$dialog['detail']['texts'][1]             = '<p>' . __( 'The new settings are now active. Click on the button below to reload the page and see the settings.', 'external-files-in-media-library' ) . '</p>';
 		$dialog['detail']['buttons'][0]['action'] = 'location.reload();';
-		wp_send_json($dialog);
+		wp_send_json( $dialog );
 	}
 
 	/**

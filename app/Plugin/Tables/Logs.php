@@ -26,10 +26,10 @@ class Logs extends WP_List_Table {
 	public function get_columns(): array {
 		return array(
 			'options' => __( 'Options', 'external-files-in-media-library' ),
-			'state' => __( 'State', 'external-files-in-media-library' ),
-			'date'  => __( 'Date', 'external-files-in-media-library' ),
-			'url'   => __( 'URL', 'external-files-in-media-library' ),
-			'log'   => __( 'Log', 'external-files-in-media-library' ),
+			'state'   => __( 'State', 'external-files-in-media-library' ),
+			'date'    => __( 'Date', 'external-files-in-media-library' ),
+			'url'     => __( 'URL', 'external-files-in-media-library' ),
+			'log'     => __( 'Log', 'external-files-in-media-library' ),
 		);
 	}
 
@@ -235,13 +235,13 @@ class Logs extends WP_List_Table {
 		$output = '<a class="dashicons dashicons-admin-page copy-text-attr" href="#" data-text="' . esc_attr( $item['url'] . ' => ' . $item['log'] ) . '" data-copied-label="' . esc_attr__( 'Copied', 'external-files-in-media-library' ) . '" title="' . esc_attr__( 'Copy this entry in your clipboard', 'external-files-in-media-library' ) . '"></a>';
 
 		// add delete option.
-		if( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_options' ) ) {
 			// create delete-URL.
 			$url = add_query_arg(
 				array(
 					'action' => 'eml_log_delete_entry',
-					'id' => $item['id'],
-					'nonce' => wp_create_nonce( 'eml-log-delete-entry' )
+					'id'     => $item['id'],
+					'nonce'  => wp_create_nonce( 'eml-log-delete-entry' ),
 				),
 				get_admin_url() . 'admin.php'
 			);
