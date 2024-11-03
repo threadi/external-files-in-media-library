@@ -64,6 +64,13 @@ class Setting {
 	private array $save_callback = array();
 
 	/**
+	 * Export prevent marker.
+	 *
+	 * @var bool
+	 */
+	private bool $prevent_export = false;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {}
@@ -281,5 +288,25 @@ class Setting {
 	 */
 	public function get_value(): mixed {
 		return get_option( $this->get_name() );
+	}
+
+	/**
+	 * Return whether to prevent the export of this setting.
+	 *
+	 * @return bool
+	 */
+	public function is_export_prevented(): bool {
+		return $this->prevent_export;
+	}
+
+	/**
+	 * Set prevent the export of this setting.
+	 *
+	 * @param bool $prevent_export True to prevent the export.
+	 *
+	 * @return void
+	 */
+	public function prevent_export( bool $prevent_export ): void {
+		$this->prevent_export = $prevent_export;
 	}
 }

@@ -23,7 +23,7 @@ class Field_Base {
 	protected string $type_name = '';
 
 	/**
-	 * The title for this field.
+	 * The title / label for this field.
 	 *
 	 * @var string
 	 */

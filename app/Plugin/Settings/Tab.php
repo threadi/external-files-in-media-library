@@ -427,4 +427,30 @@ class Tab {
 	public function set_show_in_menu( bool $show_in_menu ): void {
 		$this->show_in_menu = $show_in_menu;
 	}
+
+	/**
+	 * Return a section of this tab by its name.
+	 *
+	 * @param string $section_name The name of the searched section.
+	 *
+	 * @return false|Section
+	 */
+	public function get_section( string $section_name ): false|Section {
+		foreach( $this->get_sections() as $section_obj ) {
+			// bail if section is not Section object.
+			if( ! $section_obj instanceof Section ) {
+				continue;
+			}
+
+			// bail if names do not match.
+			if( $section_obj->get_name() !== $section_name ) {
+				continue;
+			}
+
+			return $section_obj;
+		}
+
+		// return false if object has not been found.
+		return false;
+	}
 }

@@ -1,5 +1,4 @@
 * wenn nicht unterstützter Mime-Type gefunden wird auf Einstellungen verlinken
-* Import & Export von Einstellungen
 * Helper ergänzen
 * nachträgliches verschieben des cache verzeichnisses ermöglichen
 * Statistik unter Einstellungen

@@ -122,6 +122,11 @@ class Settings {
 	 * @return void
 	 */
 	public function init(): void {
+		// initiate import and export.
+		Import::get_instance()->init();
+		Export::get_instance()->init();
+
+		// use hooks.
 		add_action( 'admin_menu', array( $this, 'add_menu' ) );
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_init', array( $this, 'register_fields' ) );
@@ -780,7 +785,7 @@ class Settings {
 	 *
 	 * @return array
 	 */
-	private function get_settings(): array {
+	public function get_settings(): array {
 		return $this->settings;
 	}
 

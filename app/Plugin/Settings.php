@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Import;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 
 /**
@@ -144,7 +145,7 @@ class Settings {
 
 		// the video tab.
 		$video_tab = $settings_obj->add_tab( 'eml_video' );
-		$video_tab->set_title( __( 'Video', 'external-files-in-media-library' ) );
+		$video_tab->set_title( __( 'Videos', 'external-files-in-media-library' ) );
 
 		// the advanced tab.
 		$advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
@@ -421,6 +422,15 @@ class Settings {
 			)
 		);
 		$setting->set_field( $field );
+
+		// add the import/export section in advanced.
+		$advanced_tab_importexport = $settings_obj->get_tab('eml_advanced')->add_section( 'settings_section_advanced_importexport' );
+		$advanced_tab_importexport->set_title( __( 'Export & Import settings', 'external-files-in-media-library' ) );
+		$advanced_tab_importexport->set_setting( $settings_obj );
+
+		// add import/export settings.
+		Settings\Import::get_instance()->add_settings( $settings_obj );
+		Settings\Export::get_instance()->add_settings( $settings_obj );
 
 		// initialize this settings object.
 		$settings_obj->init();

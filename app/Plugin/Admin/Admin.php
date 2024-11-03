@@ -166,7 +166,7 @@ class Admin {
 			return;
 		}
 
-		// show hint for necessary configuration to restrict access to application files.
+		// show hint for old PHP-version.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_type( 'error' );
 		$transient_obj->set_name( 'eml_php_hint' );
