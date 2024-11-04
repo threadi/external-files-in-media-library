@@ -72,7 +72,7 @@ class PreventDirectAccess {
 	 */
 	public function add_style(): void {
 		// get external files as list.
-		$external_files = Files::get_instance()->get_files_in_media_library();
+		$external_files = Files::get_instance()->get_files();
 
 		// output the custom css.
 		echo '<style>';

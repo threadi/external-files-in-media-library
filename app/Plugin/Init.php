@@ -36,7 +36,7 @@ class Init {
 	 *
 	 * @return void
 	 */
-	private function __clone() { }
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -71,6 +71,9 @@ class Init {
 
 		// initialize schedules.
 		Schedules::get_instance()->init();
+
+		// initialize statistics.
+		Statistics::get_instance()->init();
 
 		// plugin-actions.
 		register_activation_hook( EFML_PLUGIN, array( Install::get_instance(), 'activation' ) );

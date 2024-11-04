@@ -25,6 +25,7 @@ class Helper {
 			'ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect',
 			'ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number',
 			'ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select',
+			'ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Value',
 		);
 	}
 

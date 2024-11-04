@@ -80,12 +80,12 @@ class Uninstall {
 
 		// delete files managed by this plugin, if option is enabled for it.
 		if ( get_option( 'eml_delete_on_deinstallation', false ) ) {
-			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
 				$external_files_obj->delete_file( $external_file_obj );
 			}
 		} elseif ( get_option( 'eml_switch_on_uninstallation', false ) ) {
 			// switch hosting of files to local if option is enabled for it.
-			foreach ( $external_files_obj->get_files_in_media_library() as $external_file_obj ) {
+			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
 				// bail if this is not an external file object.
 				if ( ! $external_file_obj instanceof File ) {
 					continue;

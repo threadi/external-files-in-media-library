@@ -486,16 +486,24 @@ class Settings {
 				continue;
 			}
 
+			// collect arguments.
+			$args = array(
+				'type'              => $setting->get_type(),
+				'default'           => $setting->get_default(),
+				'show_in_rest'      => $setting->is_show_in_rest(),
+			);
+
+			// if field is set, add its sanitize callback.
+			$field_obj = $setting->get_field();
+			if( $field_obj instanceof Field_Base ) {
+				$args['sanitize_callback'] = $field_obj->get_sanitize_callback();
+			}
+
 			// register the setting.
 			register_setting(
 				$setting->get_section()->get_tab()->get_name(),
 				$setting->get_name(),
-				array(
-					'sanitize_callback' => $setting->get_field()->get_sanitize_callback(),
-					'type'              => $setting->get_type(),
-					'default'           => $setting->get_default(),
-					'show_in_rest'      => $setting->is_show_in_rest(),
-				)
+				$args
 			);
 
 			// sanitize the option before any output.
@@ -575,7 +583,7 @@ class Settings {
 				// get the field object.
 				$field = $setting->get_field();
 
-				if ( function_exists( 'add_settings_field' ) && $setting->get_section() instanceof Section ) {
+				if ( $field instanceof Field_Base && function_exists( 'add_settings_field' ) && $setting->get_section() instanceof Section ) {
 					// add the field for this setting.
 					add_settings_field(
 						$setting->get_name(),
@@ -812,7 +820,7 @@ class Settings {
 			}
 
 			// add the option.
-			add_option( $setting->get_name(), $setting->get_default(), '', true );
+			add_option( $setting->get_name(), $setting->get_default(), '', $setting->is_autoloaded() );
 		}
 	}
 

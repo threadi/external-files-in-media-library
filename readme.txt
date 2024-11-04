@@ -173,6 +173,7 @@ external files by this plugin.
 * Added import and export for plugin settings
 * Added a handful help texts for WordPress-own help system
 * Added multiple new hooks
+* Added statistic about used files.
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments

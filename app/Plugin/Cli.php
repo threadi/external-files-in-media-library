@@ -136,7 +136,7 @@ class Cli {
 			}
 		} else {
 			// get all files created by this plugin in media library.
-			$files_to_delete = $external_files_obj->get_files_in_media_library();
+			$files_to_delete = $external_files_obj->get_files();
 		}
 
 		// bail if no files found.
@@ -292,7 +292,7 @@ class Cli {
 			}
 		} else {
 			// get all files.
-			$files = $external_files_obj->get_files_in_media_library();
+			$files = $external_files_obj->get_files();
 		}
 
 		// switch hosting of files to local if option is enabled for it.
@@ -341,7 +341,7 @@ class Cli {
 			}
 		} else {
 			// get all files.
-			$files = $external_files_obj->get_files_in_media_library();
+			$files = $external_files_obj->get_files();
 		}
 
 		// switch hosting of files to local if option is enabled for it.

@@ -126,6 +126,7 @@ class Import {
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_import_settings' );
 		$setting->set_section( $advanced_tab_importexport );
+		$setting->set_autoload( false );
 		$setting->prevent_export( true );
 		$field = new Button();
 		$field->set_title( __( 'Import', 'external-files-in-media-library' ) );

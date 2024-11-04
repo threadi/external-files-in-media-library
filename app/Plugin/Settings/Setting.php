@@ -71,6 +71,13 @@ class Setting {
 	private bool $prevent_export = false;
 
 	/**
+	 * Autoload.
+	 *
+	 * @var bool
+	 */
+	private bool $autoload = true;
+
+	/**
 	 * Help text for this setting.
 	 *
 	 * @var string
@@ -344,5 +351,25 @@ class Setting {
 	 */
 	public function set_help( string $help ): void {
 		$this->help = $help;
+	}
+
+	/**
+	 * Return whether to autoload this setting.
+	 *
+	 * @return bool
+	 */
+	public function is_autoloaded(): bool {
+		return $this->autoload;
+	}
+
+	/**
+	 * Set if this setting should be autoloaded (true) or not (false).
+	 *
+	 * @param bool $autoload The new autoload value.
+	 *
+	 * @return void
+	 */
+	public function set_autoload( bool $autoload ): void {
+		$this->autoload = $autoload;
 	}
 }

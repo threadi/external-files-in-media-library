@@ -214,7 +214,7 @@ class Files {
 	 *
 	 * @return array
 	 */
-	public function get_files_in_media_library(): array {
+	public function get_files(): array {
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
@@ -573,15 +573,23 @@ class Files {
 	 */
 	public function log_url_deletion( int $attachment_id ): void {
 		// get the external file object.
-		$external_file = $this->get_file( $attachment_id );
+		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if it is not an external file.
-		if ( ! $external_file || false === $external_file->is_valid() ) {
+		if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
 			return;
 		}
 
+		/**
+		 * Run additional tasks for URL deletion.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param File $external_file_obj The object which has been deleted.
+		 */
+		do_action( 'eml_file_delete', $external_file_obj );
+
 		// log deletion.
-		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file->get_url(), 'success', 1 );
+		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file_obj->get_url(), 'success', 1 );
 	}
 
 	/**
@@ -617,7 +625,7 @@ class Files {
 	 */
 	public function check_files(): void {
 		// get all files.
-		$files = $this->get_files_in_media_library();
+		$files = $this->get_files();
 
 		// bail if no files are found.
 		if ( empty( $files ) ) {

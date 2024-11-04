@@ -78,6 +78,13 @@ class Tab {
 	private bool $show_in_menu = false;
 
 	/**
+	 * Hide save button.
+	 *
+	 * @var bool
+	 */
+	private bool $hide_save = false;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {}
@@ -203,7 +210,7 @@ class Tab {
 			<?php
 			settings_fields( $this->get_name() );
 			do_settings_sections( $this->get_name() );
-			submit_button();
+			$this->is_save_hidden() ? '' : submit_button();
 			?>
 		</form>
 		<?php
@@ -310,6 +317,12 @@ class Tab {
 	 * @return void
 	 */
 	public function set_callback( array $callback ): void {
+		// bail if callback is not callable.
+		if( ! is_callable( $callback ) ) {
+			return;
+		}
+
+		// set the callback.
 		$this->callback = $callback;
 	}
 
@@ -452,5 +465,25 @@ class Tab {
 
 		// return false if object has not been found.
 		return false;
+	}
+
+	/**
+	 * Return whether to hide the save button.
+	 **
+	 * @return bool
+	 */
+	public function is_save_hidden(): bool {
+		return $this->hide_save;
+	}
+
+	/**
+	 * Set hide the save button.
+	 *
+	 * @param bool $hide_save_button
+	 *
+	 * @return void
+	 */
+	public function set_hide_save( bool $hide_save_button ): void {
+		$this->hide_save = $hide_save_button;
 	}
 }
