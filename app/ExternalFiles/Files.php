@@ -116,7 +116,7 @@ class Files {
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
 
 		// use our own hooks.
-		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ) );
+		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ), 10, 3 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
 		add_action( 'eml_file_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
@@ -382,8 +382,8 @@ class Files {
 
 			// bail if file is given, but has an error.
 			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
-				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( sprintf( __( 'Given string %1$s results in error during request: <pre>%2$s</pre>', 'external-files-in-media-library' ), esc_url( $url ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+				/* translators: %1$s will be replaced by an error-code. */
+				Log::get_instance()->create( sprintf( __( 'Given URL results in error during request: <pre>%1$s</pre>', 'external-files-in-media-library' ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -515,7 +515,7 @@ class Files {
 					// change file name for each size, if given.
 					if ( ! empty( $image_meta['sizes'] ) ) {
 						foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
-							$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'] );
+							$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'], $external_file_obj->get_file_extension() );
 						}
 					}
 
@@ -778,7 +778,7 @@ class Files {
 		);
 		$result = new WP_Query( $query );
 
-		// bail on no results.
+		// bail if not a single result is in array.
 		if ( 1 !== $result->post_count ) {
 			return false;
 		}
@@ -1061,13 +1061,33 @@ class Files {
 
 	/**
 	 * URL-decode the file-title if it is used in admin (via AJAX).
+	 * Also sanitize the filename for full compatibility with requirements (incl. file extension).
 	 *
 	 * @param string $title The title to optimize.
+	 * @param string $url The used URL.
+	 * @param array  $file_data The file data.
 	 *
 	 * @return string
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function optimize_file_title( string $title ): string {
-		return urldecode( $title );
+	public function optimize_file_title( string $title, string $url, array $file_data ): string {
+		$title = sanitize_file_name( urldecode( $title ) );
+
+		// bail if title does contain an "." as it seems to be have a file extension.
+		if( false !== str_contains( $title, '.' ) ) {
+			return $title;
+		}
+
+		// get all possible mime-types.
+		$mime_types = Helper::get_possible_mime_types();
+
+		// bail with half title if mime type is unknown.
+		if ( empty( $mime_types[ $file_data['mime-type'] ] ) ) {
+			return $title;
+		}
+
+		// return title with added file extension.
+		return $title . '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
 	}
 
 	/**
@@ -1300,10 +1320,10 @@ class Files {
 			 */
 
 			// generate the filename for the thumb.
-			$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1] );
+			$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
 			// public filename.
-			$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1] );
+			$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
 			// resize the image.
 			$image_editor->resize( $size[0], $size[1], true );

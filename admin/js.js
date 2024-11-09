@@ -17,9 +17,6 @@ jQuery(document).ready(function($) {
     $('button.eml_add_external_upload').on('click', function(e) {
         e.preventDefault();
 
-        // get button as object
-        let button_obj = $(this);
-
         // get field value.
         let urls = $(this).parent().find('.eml_add_external_files').val();
 
@@ -47,15 +44,9 @@ jQuery(document).ready(function($) {
                 action: 'eml_add_external_urls',
                 nonce: emlJsVars.urls_nonce
             },
-            success: function (response) {
-                if( response.length > 0 ) {
-                    let response_json = JSON.parse(response);
-                    // remove all other responses
-                    $('.eml-response').remove();
-                    // add the response
-                    $('<div class="eml-response ' + ( response_json.state === 'error' ? 'error' : 'updated' ) + '">' + response_json.message +'</div>').insertAfter(button_obj);
-                }
-            }
+            error: function( jqXHR, textStatus, errorThrown ) {
+              eml_ajax_error_dialog( errorThrown )
+            },
         });
     });
 
@@ -76,6 +67,9 @@ jQuery(document).ready(function($) {
                 id: id,
                 action: 'eml_check_availability',
                 nonce: emlJsVars.availability_nonce
+            },
+            error: function( jqXHR, textStatus, errorThrown ) {
+              eml_ajax_error_dialog( errorThrown )
             },
             success: function (response) {
               let p = $("#eml_url_file_state");
@@ -127,6 +121,9 @@ jQuery(document).ready(function($) {
             id: id,
             action: 'eml_switch_hosting',
             nonce: emlJsVars.switch_hosting_nonce
+          },
+          error: function( jqXHR, textStatus, errorThrown ) {
+            eml_ajax_error_dialog( errorThrown )
           },
           success: function (response) {
             let dialog_config = {
@@ -234,6 +231,9 @@ function eml_upload_files() {
       action: 'eml_add_external_urls',
       nonce: emlJsVars.urls_nonce
     },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      eml_ajax_error_dialog( errorThrown )
+    },
     beforeSend: function() {
       // show progress.
       let dialog_config = {
@@ -251,7 +251,7 @@ function eml_upload_files() {
       eml_create_dialog( dialog_config );
 
       // get info about progress.
-      setTimeout(function() { eml_upload_files_get_info() }, 200);
+      setTimeout(function() { eml_upload_files_get_info() }, emlJsVars.info_timeout);
     }
   });
 }
@@ -267,60 +267,31 @@ function eml_upload_files_get_info() {
       'action': 'eml_get_external_urls_import_info',
       'nonce': emlJsVars.get_import_info_nonce
     },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      eml_ajax_error_dialog( errorThrown )
+    },
     success: function (data) {
       let count = parseInt( data[0] );
       let max = parseInt( data[1] );
       let running = parseInt( data[2] );
       let status = data[3];
-      let files = data[4];
-      let errors = data[5];
+      let dialog_config = data[4];
 
       // show progress.
       jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
       jQuery( '#progress_status' ).html( status );
 
       /**
-       * If import is still running, get next info in 200ms.
+       * If import is still running, get next info in xy ms.
        * If import is not running and error occurred, show the error.
        * If import is not running and no error occurred, show ok-message.
        */
       if ( running >= 1 ) {
         setTimeout( function () {
           eml_upload_files_get_info()
-        }, 200 );
+        }, emlJsVars.info_timeout );
       }
       else {
-        let message = '<p>' + emlJsVars.text_import_ended + '</p>';
-        if( files.length > 0 ) {
-          message = message + '<p><strong>' + emlJsVars.text_urls_imported + ':</strong></p><ul class="ok-list">';
-          for (file of files) {
-            message = message + '<li><a href="' + file.url + '" target="_blank">' + file.url + '</a> <a href="' + file.edit_link + '" target="_blank" class="dashicons dashicons-edit"></a></li>';
-          }
-          message = message + '</ul>';
-        }
-        if( errors.length > 0 ) {
-          message = message + '<p><strong>' + emlJsVars.text_urls_errors + ':</strong></p><ul class="error-list">';
-          for (error of errors) {
-            message = message + '<li><a href="' + error.url + '" target="_blank">' + error.url + '</a><br>' + error.log + '</li>';
-          }
-          message = message + '</ul>';
-        }
-        let dialog_config = {
-          detail: {
-            className: 'eml',
-            title: emlJsVars.title_import_ended,
-            texts: [
-              message
-            ],
-            buttons: [
-              {
-                'action': 'location.reload();',
-                'variant': 'primary',
-                'text': emlJsVars.lbl_ok
-              }
-            ]
-          }
-        }
         eml_create_dialog( dialog_config );
       }
     }
@@ -352,4 +323,40 @@ function efml_copy_to_clipboard( text ) {
   }
   document.body.removeChild(helper);
   return false;
+}
+
+/**
+ * Define dialog for AJAX-errors.
+ */
+function eml_ajax_error_dialog( errortext, texts ) {
+  if( errortext === undefined || errortext.length === 0 ) {
+    errortext = 'Request Timeout';
+  }
+  let message = '<p>' + emlJsVars.txt_error + '</p>';
+  message = message + '<ul>';
+  if( texts && texts[errortext] ) {
+    message = message + '<li>' + texts[errortext] + '</li>';
+  }
+  else {
+    message = message + '<li>' + errortext + '</li>';
+  }
+  message = message + '</ul>';
+
+  // show dialog.
+  let dialog_config = {
+    detail: {
+      title: emlJsVars.title_error,
+      texts: [
+        message
+      ],
+      buttons: [
+        {
+          'action': 'location.reload();',
+          'variant': 'primary',
+          'text': emlJsVars.lbl_ok
+        }
+      ]
+    }
+  }
+  eml_create_dialog( dialog_config );
 }

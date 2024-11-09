@@ -240,8 +240,8 @@ class Http extends Protocol_Base {
 
 			// bail if temp file resulted in error.
 			if ( is_wp_error( $tmp_content_file ) ) {
-				/* translators: %1$s will be replaced by the file-URL, %2$s by the error in JSON-format */
-				Log::get_instance()->create( sprintf( __( 'Temp file for %1$s could not be created because of the following error: <code>%2$s</code>', 'external-files-in-media-library' ), esc_url( $this->get_url() ), wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+				/* translators: %1$s by the error in JSON-format */
+				Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) ), esc_url( $this->get_url() ), 'error', 0 );
 				return array();
 			}
 
@@ -472,8 +472,8 @@ class Http extends Protocol_Base {
 		// bail if error occurred.
 		if ( is_wp_error( $results['tmp-file'] ) ) {
 			// file is available.
-			/* translators: %1$s will be replaced by the file-URL, %2$s by the error in JSON-format */
-			Log::get_instance()->create( sprintf( __( 'Temp file for %1$s could not be created because of the following error: <code>%2$s</code>', 'external-files-in-media-library' ), esc_url( $this->get_url() ), wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+			/* translators: %1$s by the error in JSON-format */
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) ), esc_url( $this->get_url() ), 'error', 0 );
 
 			// return empty array as we got not the file.
 			return array();
@@ -541,6 +541,7 @@ class Http extends Protocol_Base {
 			}
 		}
 
+		// return resulting filename.
 		return $filename;
 	}
 

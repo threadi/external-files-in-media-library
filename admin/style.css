@@ -1,4 +1,4 @@
-.eml > div { min-width: 500px }
+.eml > div { min-width: 640px }
 
 .eml_add_external_files_wrapper {
 	border: 4px dashed #c3c4c7;
@@ -75,6 +75,60 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-left: 14px;
 }
 
+.eml .easy-dialog-for-wordpress-text:has(.eml-success-list) p, .eml .easy-dialog-for-wordpress-text:has(.eml-error-list) p {
+	margin-bottom: 0;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list, .eml .easy-dialog-for-wordpress-text .eml-error-list {
+	margin-top: 0;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li, .eml .easy-dialog-for-wordpress-text .eml-error-list li {
+	text-indent: -10px;
+	padding-left: 18px;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li:before, .eml .easy-dialog-for-wordpress-text .eml-error-list li:before {
+	color: red;
+	content: "\f158";
+	display: inline-block;
+	font-family: dashicons, sans-serif;
+	margin-right: 0.3em;
+	font-size: 16px;
+	vertical-align: middle;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li:before {
+	content: "\f147";
+	color: green;
+}
+
+.eml details summary::-webkit-details-marker, .eml details summary::marker {
+	display: none;
+	content: "";
+}
+
+.eml details summary:before {
+	content: "\f139";
+	display: inline-block;
+	font-family: dashicons, sans-serif;
+	font-size: 24px;
+	vertical-align: middle;
+	padding: 0;
+	line-height: 1;
+	text-indent: -4px;
+	margin-right: 4px;
+	margin-top: -1px;
+}
+
+.eml details[open] summary:before {
+	content: "\f140";
+}
+
+.eml details[open] > div, .eml details[open] > p { margin-left: 24px }
+
+.eml a { text-decoration: none }
+
 .misc-pub-external-file span {
 	vertical-align: middle;
 }
@@ -138,3 +192,4 @@ body.settings_page_eml_settings .copied:after {
 	top: -2px;
 	z-index: 2;
 }
+

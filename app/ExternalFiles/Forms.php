@@ -75,6 +75,8 @@ class Forms {
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
+		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
+		add_filter( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
 	}
 
 	/**
@@ -100,6 +102,15 @@ class Forms {
 			filemtime( Helper::get_plugin_dir() . '/admin/style.css' ),
 		);
 
+		$info_timeout = 200;
+		/**
+		 * Filter the info timeout for AJAX-info-request.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param int $info_timeout The timeout in ms (default 200ms).
+		 */
+		$info_timeout = apply_filters( 'eml_import_info_timeout', $info_timeout );
+
 		// add php-vars to our js-script.
 		wp_localize_script(
 			'eml-admin',
@@ -115,11 +126,12 @@ class Forms {
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
-				'text_import_ended'             => __( 'The import of given URLs has been run.', 'external-files-in-media-library' ),
+				'text_import_ended'             => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
 				'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
 				'lbl_cancel'                    => __( 'Cancel', 'external-files-in-media-library' ),
-				'text_urls_imported'            => __( 'The following URLs has been imported successfully', 'external-files-in-media-library' ),
-				'text_urls_errors'              => __( 'Following errors occurred', 'external-files-in-media-library' ),
+				'lbl_close' => __( 'Close', 'external-files-in-media-library' ),
+				'text_urls_imported'            => __( 'The following URLs were successfully imported:', 'external-files-in-media-library' ),
+				'text_urls_errors'              => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 				'title_no_urls'                 => __( 'No URLs given', 'external-files-in-media-library' ),
 				'text_no_urls'                  => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
 				'title_availability_refreshed'  => __( 'Availability refreshed', 'external-files-in-media-library' ),
@@ -127,6 +139,9 @@ class Forms {
 				'text_is_available'             => __( 'The file is available.', 'external-files-in-media-library' ),
 				'title_hosting_changed'         => __( 'Hosting changed.', 'external-files-in-media-library' ),
 				'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
+				'txt_error' => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
+				'title_error' => __( 'An error occurred.', 'external-files-in-media-library' ),
+				'info_timeout' => $info_timeout
 			)
 		);
 	}
@@ -297,9 +312,25 @@ class Forms {
 
 		// collect errors.
 		$errors = array();
-		$files  = array();
 
+		/**
+		 * Run additional tasks just before AJAX-related import of URLs is started.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $url_array List of URLs to import.
+		 */
+		do_action( 'eml_import_ajax_start', $url_array );
+
+		// if URLs are given, check them.
 		if ( ! empty( $url_array ) ) {
+			/**
+			 * Loop through them to add them to media library after filtering the URL list.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 * @param array $url_array The list of URLs to add.
+			 */
+			$url_array = apply_filters( 'eml_import_urls', $url_array );
+
 			// save count of URLs.
 			update_option( 'eml_import_url_max', count( $url_array ) );
 
@@ -307,7 +338,7 @@ class Forms {
 			$files_obj->set_login( $login );
 			$files_obj->set_password( $password );
 
-			// loop through them to add them to media library.
+			// loop through the list of URLs to add them.
 			foreach ( $url_array as $url ) {
 				// bail if URL is empty.
 				if ( empty( $url ) ) {
@@ -317,57 +348,64 @@ class Forms {
 				// cleanup the JS-URL.
 				$url = str_replace( '&amp;', '&', $url );
 
-				// update counter for URLs.
-				update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
-
 				// update title for progress.
 				/* translators: %1$s will be replaced by the URL which is imported. */
-				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( $url ) ) );
+				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
 				// import file in media library if enqueue option is not set.
 				$file_added = $files_obj->add_url( $url, $add_to_queue );
+
+				// update counter for URLs.
+				update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
 
 				// add URL to list of errors if add to queue was not used.
 				if ( ! $file_added && ! $add_to_queue ) {
 					$errors[] = $url;
 				}
-
-				// get the newly added file-object for list of files.
-				$external_file_obj = $files_obj->get_file_by_url( $url );
-
-				// bail if external file object could not be loaded or is not valid.
-				if ( ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
-					continue;
-				}
-
-				// add file to the list.
-				$files[] = array(
-					'url'       => $external_file_obj->get_url( true ),
-					'edit_link' => $external_file_obj->get_edit_url(),
-				);
 			}
-		}
-
-		// set progress title after import has been run.
-		if ( ! empty( $files ) ) {
-			update_option( 'eml_import_files', $files );
-		} else {
-			delete_option( 'eml_import_title' );
 		}
 
 		// get log instance.
 		$log = Log::get_instance();
 
-		// secure errors.
+		// collect the errors for response.
 		$errors_for_response = array();
+
+		/**
+		 * Filter the errors during an AJAX-request to add URLs.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $errors List of errors.
+		 */
+		$errors = apply_filters( 'eml_import_urls_errors', $errors );
+
+		// loop through the errors.
 		foreach ( $errors as $url ) {
+			// get log entry for this URLs.
 			$log_entry             = $log->get_logs( $url, 'error' );
+
+			// bail if log is empty.
+			if( empty( $log_entry ) ) {
+				continue;
+			}
+
+			// add the result to the response.
 			$errors_for_response[] = array(
 				'url' => $url,
-				'log' => ! empty( $log_entry ) ? $log_entry[0]['log'] : '',
+				'log' => $log_entry[0]['log'],
 			);
 		}
+
+		// add errors for output via info-request.
 		update_option( 'eml_import_errors', $errors_for_response );
+
+		/**
+		 * Run additional tasks just before AJAX-related import of URLs is marked as completed.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $url_array List of URLs to import.
+		 */
+		do_action( 'eml_import_ajax_end', $url_array );
 
 		// mark import as not running.
 		delete_option( 'eml_import_running' );
@@ -377,7 +415,7 @@ class Forms {
 	}
 
 	/**
-	 * Return info about running import of files via AJAX-request.
+	 * Return info about running import of URLs via AJAX-request.
 	 *
 	 * @return void
 	 */
@@ -385,15 +423,75 @@ class Forms {
 		// check nonce.
 		check_ajax_referer( 'eml-url-upload-info-nonce', 'nonce' );
 
+		// get the running marker.
+		$running = absint( get_option( 'eml_import_running', 0 ) );
+
+		// if import is not running build the dialog for the response.
+		$dialog = array();
+		if( 1 !== $running ) {
+			// collect result text.
+			$result = '';
+
+			// get list of errors.
+			$errors = get_option( 'eml_import_errors' );
+
+			// add errors to the resulting text list.
+			if( ! empty( $errors ) ) {
+				$result .= '<p><strong>' . _n( 'The following error occurred:', 'The following error occurred:', count( $errors ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-error-list">';
+				foreach ( $errors as $error ) {
+					$result .= '<li><a href="' . esc_url( $error['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $error['url'] ) ) . '</a><br>' . wp_kses_post( $error['log'] ) . '</li>';
+				}
+				$result .= '</ul>';
+			}
+
+			// get list of successfully imported URLs.
+			$successfully_imported_urls = get_option( 'eml_import_files' );
+
+			// check if this is an array.
+			if( ! is_array( $successfully_imported_urls ) ) {
+				$successfully_imported_urls = array();
+			}
+
+			// set URL count.
+			$url_count = count( $successfully_imported_urls );
+
+			// add successfully imported URLs to the resulting text list.
+			if( ! empty( $successfully_imported_urls ) ) {
+				$result .= '<p><strong>' . _n( 'The following URL have been saved successfully:', 'The following URLs has been saved successfully:', count( $successfully_imported_urls ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-success-list">';
+				foreach ( $successfully_imported_urls as $url ) {
+					$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+				}
+				$result .= '</ul>';
+			}
+
+			// create dialog.
+			$dialog = array(
+				'detail' => array(
+					'className' => 'eml',
+					'title'   => __( 'Import has been run', 'external-files-in-media-library' ),
+					'texts'   => array(
+						'<p><strong>' . sprintf( _n( 'The import has checked %1$d URL with the following result:', 'The import has checked %1$d URLs with the following result:', $url_count, 'external-files-in-media-library' ), $url_count ) . '</strong></p>',
+						$result
+					),
+					'buttons' => array(
+						array(
+							'action'  => 'closeDialog();',
+							'variant' => 'primary',
+							'text'    => __( 'Finalized', 'external-files-in-media-library' ),
+						),
+					),
+				)
+			);
+		}
+
 		// return import info.
 		wp_send_json(
 			array(
 				absint( get_option( 'eml_import_url_count', 0 ) ),
 				absint( get_option( 'eml_import_url_max', 0 ) ),
-				absint( get_option( 'eml_import_running', 0 ) ),
+				$running,
 				wp_kses_post( get_option( 'eml_import_title', '' ) ),
-				get_option( 'eml_import_files', array() ),
-				get_option( 'eml_import_errors', array() ),
+				$dialog,
 			)
 		);
 	}
@@ -447,5 +545,50 @@ class Forms {
 	 */
 	public function set_import_max( string $url, array $matches ): void {
 		update_option( 'eml_import_url_max', absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
+	}
+
+	/**
+	 * Filter the URLs to add.
+	 *
+	 * @param array $urls The list of URLs.
+	 *
+	 * @return array
+	 */
+	public function filter_urls( array $urls ): array {
+		$url_array = array();
+
+		// loop through them to check if they are additionally separated by comma.
+		foreach( $urls as $url ) {
+			$url_array = array_merge( $url_array, explode( ',', $url ) );
+		}
+
+		// return the resulting list.
+		return $url_array;
+	}
+
+	/**
+	 * Add successfully imported URL to the list of successfully imported URLs.
+	 *
+	 * @param File $external_file_obj The file object.
+	 *
+	 * @return void
+	 */
+	public function add_imported_url_to_list( File $external_file_obj ): void {
+		// get actual list.
+		$files = get_option( 'eml_import_files' );
+
+		// if list is not an array, create one.
+		if( ! is_array( $files ) ) {
+			$files = array();
+		}
+
+		// add this file in the array.
+		$files[] = array(
+			'url' => $external_file_obj->get_url( true ),
+			'edit_link' => $external_file_obj->get_edit_url()
+		);
+
+		// update the list.
+		update_option( 'eml_import_files', $files );
 	}
 }

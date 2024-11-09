@@ -405,21 +405,27 @@ class Helper {
 	 * Generate a sizes filename.
 	 *
 	 * @param string $filename The original filename.
-	 * @param int    $width The width to use.
-	 * @param int    $height The height to use.
+	 * @param int    $width    The width to use.
+	 * @param int    $height   The height to use.
+	 * @param string $extension Optionally set extension.
 	 *
 	 * @return string
 	 */
-	public static function generate_sizes_filename( string $filename, int $width, int $height ): string {
-		$file_info = pathinfo( $filename );
+	public static function generate_sizes_filename( string $filename, int $width, int $height, string $extension = '' ): string {
+		$file_path_info = pathinfo( $filename );
 
 		// bail if path info is not an array.
-		if ( ! is_array( $file_info ) ) {
+		if ( ! is_array( $file_path_info ) ) {
 			return $filename;
 		}
 
+		// if no extension could be extracted get one from the files mime type.
+		if( empty( $file_path_info['extension'] ) ) {
+			$file_path_info['extension'] = $extension;
+		}
+
 		// return concat string for the filename.
-		return $file_info['filename'] . '-' . $width . 'x' . $height . '.' . $file_info['extension'];
+		return $file_path_info['filename'] . '-' . $width . 'x' . $height . '.' . $file_path_info['extension'];
 	}
 
 	/**
@@ -453,5 +459,49 @@ class Helper {
 			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/MimeTypes_de.md';
 		}
 		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/MimeTypes.md';
+	}
+
+	/**
+	 * Return a shortened URL with domain and filename on base of given URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	public static function shorten_url( string $url ): string {
+		// get the parse URL.
+		$parsed_url = parse_url( $url );
+
+		// bail if URL could not be parsed.
+		if( ! is_array( $parsed_url ) ) {
+			return $url;
+		}
+
+		// collect the resulting URL.
+		$shortened_url = '';
+
+		// add protocol.
+		if( ! empty( $parsed_url['scheme'] ) ) {
+			$shortened_url .= $parsed_url['scheme'] . '://';
+		}
+
+		// add host.
+		if( ! empty( $parsed_url['host'] ) ) {
+			$shortened_url .= $parsed_url['host'];
+		}
+
+		// add the filename.
+		if( ! empty( $parsed_url['path'] ) ) {
+			// get the potential filename.
+			$filename = '/' . basename( $parsed_url['path'] );
+
+			// if filename is not exact the path add the filename to the URL.
+			if( $filename !== $parsed_url['path'] ) {
+				$shortened_url .= '/../' . basename( $parsed_url['path'] );
+			}
+		}
+
+		// return thr shortened URL.
+		return $shortened_url;
 	}
 }

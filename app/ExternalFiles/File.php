@@ -781,7 +781,7 @@ class File {
 		// loop through the sizes.
 		foreach ( $image_meta_data['sizes'] as $size_data ) {
 			// get file path.
-			$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'] );
+			$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'], $this->get_file_extension() );
 
 			// bail if file does not exist.
 			if ( ! $wp_filesystem->exists( $file ) ) {
