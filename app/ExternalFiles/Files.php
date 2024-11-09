@@ -110,6 +110,7 @@ class Files {
 		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
 		add_action( 'delete_attachment', array( $this, 'log_url_deletion' ), 10, 1 );
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
+		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
 
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
@@ -1461,7 +1462,7 @@ class Files {
 	}
 
 	/**
-	 * Force permalink-URL for file-attribute in meta-data for external url-files
+	 * Force permalink-URL for file-attribute in meta-data for external URL-files
 	 * to change the link-target if attachment-pages are disabled via attachment_link-hook.
 	 *
 	 * @param array $data The image-data.
@@ -1748,5 +1749,38 @@ class Files {
 
 		// return list of help.
 		return $help_list;
+	}
+
+	/**
+	 * Check the srcset metadata for external files. Remove 'file' entry if it is not an image as this results in
+	 * possible warnings via @media.php.
+	 *
+	 * @param array $image_meta The meta data.
+	 * @param array $size_array The size array.
+	 * @param string $image_src The src.
+	 * @param int $attachment_id The attachment id.
+	 *
+	 * @return array
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function check_srcset_meta( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
+		// get external file object.
+		$external_file_obj = $this->get_file( $attachment_id );
+
+		// bail if this is not an external file.
+		if( ! $external_file_obj ) {
+			return $image_meta;
+		}
+
+		// bail if given file is an image.
+		if( $external_file_obj->is_image() ) {
+			return $image_meta;
+		}
+
+		// remove the file-setting from array.
+		unset( $image_meta['file'] );
+
+		// return resulting meta.
+		return $image_meta;
 	}
 }
