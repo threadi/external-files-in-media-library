@@ -504,4 +504,16 @@ class Helper {
 		// return thr shortened URL.
 		return $shortened_url;
 	}
+
+	/**
+	 * Return wikipedia link for GPRD.
+	 *
+	 * @return string
+	 */
+	public static function get_gprd_url(): string {
+		if( Languages::get_instance()->is_german_language() ) {
+			return 'https://de.wikipedia.org/wiki/Datenschutz-Grundverordnung';
+		}
+		return 'https://en.wikipedia.org/wiki/General_Data_Protection_Regulation';
+	}
 }

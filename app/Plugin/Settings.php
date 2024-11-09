@@ -62,6 +62,7 @@ class Settings {
 	public function init(): void {
 		add_action( 'init', array( $this, 'add_settings' ) );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ) );
+		add_action( 'admin_action_eml_disable_gprd_hint', array( $this, 'disable_gprd_hint_by_request' ) );
 	}
 
 	/**
@@ -445,6 +446,17 @@ class Settings {
 		$advanced_tab_importexport->set_title( __( 'Export & Import settings', 'external-files-in-media-library' ) );
 		$advanced_tab_importexport->set_setting( $settings_obj );
 
+		// add setting.
+		$gprd_hint_setting = $settings_obj->add_setting( 'eml_disable_gprd_warning' );
+		$gprd_hint_setting->set_section( $advanced_tab_advanced );
+		$gprd_hint_setting->set_show_in_rest( false );
+		$gprd_hint_setting->set_type( 'integer' );
+		$gprd_hint_setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Disable GRPD-hint', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If disabled we will not warn you about the GPRD regulations regarding external files in websites.', 'external-files-in-media-library' ) );
+		$gprd_hint_setting->set_field( $field );
+
 		// add import/export settings.
 		Settings\Import::get_instance()->add_settings( $settings_obj );
 		Settings\Export::get_instance()->add_settings( $settings_obj );
@@ -650,5 +662,37 @@ class Settings {
 
 		// return list of help.
 		return $help_list;
+	}
+
+	/**
+	 * Return the link to disable the GPRD-warning.
+	 *
+	 * @return string
+	 */
+	public function disable_gprd_hint_url(): string {
+		return add_query_arg(
+			array(
+				'action' => 'eml_disable_gprd_hint',
+				'nonce' => wp_create_nonce( 'eml-disable-gprd-hint' )
+			),
+			get_admin_url() . 'admin.php'
+		);
+	}
+
+	/**
+	 * Disable GPRD-hint by request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function disable_gprd_hint_by_request(): void {
+		check_admin_referer( 'eml-disable-gprd-hint', 'nonce' );
+
+		// set the option.
+		update_option( 'eml_disable_gprd_warning', 1 );
+
+		// forward user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
 	}
 }
