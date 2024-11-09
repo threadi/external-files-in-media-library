@@ -162,7 +162,7 @@ class Proxy {
 		}
 
 		// get the object of this file type.
-		$file_type_obj = File_Types::get_instance()->get_protocol_object_for_file_obj( $external_file_obj );
+		$file_type_obj = File_Types::get_instance()->get_type_object_for_file_obj( $external_file_obj );
 		$file_type_obj->set_size( $size );
 
 		// output the proxied file.

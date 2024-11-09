@@ -8,9 +8,9 @@
 namespace ExternalFilesInMediaLibrary\ExternalFiles;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\Plugin\Log;
-
 defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
  * Object to handle different protocols.
@@ -82,7 +82,7 @@ class File_Types {
 	 *
 	 * @return File_Types_Base
 	 */
-	public function get_protocol_object_for_file_obj( File $external_file_obj ): File_Types_Base {
+	public function get_type_object_for_file_obj( File $external_file_obj ): File_Types_Base {
 		// bail with default file object if mime type is not given.
 		if ( empty( $external_file_obj->get_mime_type() ) ) {
 			// return the default file object if nothing matches.

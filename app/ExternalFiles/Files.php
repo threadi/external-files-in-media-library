@@ -501,39 +501,10 @@ class Files {
 			$external_file_obj->set_login( $this->get_login() );
 			$external_file_obj->set_password( $this->get_password() );
 
-			// set meta-data for images if mode is enabled for this.
+			// set meta-data for the file if mode is enabled for this.
 			if ( false === $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
-				// TODO implement file-specific metadata.
-
-				// update meta data for images.
-				if ( $external_file_obj->is_image() ) {
-					// create the image meta data.
-					$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $attachment_id );
-
-					// set file to our url.
-					$image_meta['file'] = $file_data['url'];
-
-					// change file name for each size, if given.
-					if ( ! empty( $image_meta['sizes'] ) ) {
-						foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
-							$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'], $external_file_obj->get_file_extension() );
-						}
-					}
-
-					// save the resulting image-data.
-					wp_update_attachment_metadata( $attachment_id, $image_meta );
-				}
-
-				// update meta data for videos.
-				if ( $external_file_obj->is_video() ) {
-					// collect meta data.
-					$video_meta = array(
-						'filesize' => $file_data['filesize'],
-					);
-
-					// save the resulting image-data.
-					wp_update_attachment_metadata( $attachment_id, $video_meta );
-				}
+				$file_type = File_Types::get_instance()->get_type_object_for_file_obj( $external_file_obj );
+				$file_type->set_metadata( $file_data );
 
 				// add file to local cache if it is an image.
 				$external_file_obj->add_to_cache();
