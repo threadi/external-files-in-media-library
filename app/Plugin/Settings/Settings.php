@@ -488,14 +488,14 @@ class Settings {
 
 			// collect arguments.
 			$args = array(
-				'type'              => $setting->get_type(),
-				'default'           => $setting->get_default(),
-				'show_in_rest'      => $setting->is_show_in_rest(),
+				'type'         => $setting->get_type(),
+				'default'      => $setting->get_default(),
+				'show_in_rest' => $setting->is_show_in_rest(),
 			);
 
 			// if field is set, add its sanitize callback.
 			$field_obj = $setting->get_field();
-			if( $field_obj instanceof Field_Base ) {
+			if ( $field_obj instanceof Field_Base ) {
 				$args['sanitize_callback'] = $field_obj->get_sanitize_callback();
 			}
 

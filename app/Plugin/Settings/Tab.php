@@ -318,7 +318,7 @@ class Tab {
 	 */
 	public function set_callback( array $callback ): void {
 		// bail if callback is not callable.
-		if( ! is_callable( $callback ) ) {
+		if ( ! is_callable( $callback ) ) {
 			return;
 		}
 
@@ -469,7 +469,8 @@ class Tab {
 
 	/**
 	 * Return whether to hide the save button.
-	 **
+	 * *
+	 *
 	 * @return bool
 	 */
 	public function is_save_hidden(): bool {
@@ -479,7 +480,7 @@ class Tab {
 	/**
 	 * Set hide the save button.
 	 *
-	 * @param bool $hide_save_button
+	 * @param bool $hide_save_button Hide the button (true) or not (false).
 	 *
 	 * @return void
 	 */

@@ -222,7 +222,7 @@ class Proxy {
 	 * @return string
 	 */
 	public function get_cache_directory(): string {
-		// get setting
+		// get setting for proxy path.
 		$path_part = get_option( 'eml_proxy_path', 'cache/eml/' );
 
 		// create string with path for directory.
@@ -285,18 +285,18 @@ class Proxy {
 		$dialog = array(
 			'detail' => array(
 				'className' => 'eml',
-				'title'   => __( 'Proxy has been reset', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'title'     => __( 'Proxy has been reset', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p>' . __( 'The proxy has been reset.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',
 						'text'    => __( 'OK', 'external-files-in-media-library' ),
 					),
 				),
-			)
+			),
 		);
 
 		// response with dialog.

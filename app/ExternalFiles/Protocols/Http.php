@@ -123,7 +123,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
+		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by its Mime-Type */
 				Log::get_instance()->create( sprintf( __( 'Given URL response with the not allowed mime-type %1$s.', 'external-files-in-media-library' ), $response_headers['content-type'] ), esc_url( $url ), 'error', 0 );

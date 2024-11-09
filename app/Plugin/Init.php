@@ -57,6 +57,9 @@ class Init {
 	 * @return void
 	 */
 	public function init(): void {
+		// update handling.
+		Update::get_instance()->init();
+
 		// initialize the admin-support.
 		Admin::get_instance()->init();
 

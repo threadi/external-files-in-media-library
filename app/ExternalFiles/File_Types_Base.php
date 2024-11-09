@@ -52,14 +52,14 @@ class File_Types_Base {
 	public function is_file_compatible(): bool {
 		// bail if list is empty.
 		if ( empty( $this->get_mime_types() ) ) {
-			return true;
+			return false;
 		}
 
 		// get the external file object.
 		$external_file_obj = $this->get_file();
 
 		// check the mime types.
-		$result = in_array( $this->get_file(), $this->get_mime_types(), true );
+		$result = in_array( $this->get_file()->get_mime_type(), $this->get_mime_types(), true );
 
 		/**
 		 * Filter the result of file type compatibility check.

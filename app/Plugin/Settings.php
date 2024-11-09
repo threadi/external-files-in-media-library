@@ -728,7 +728,7 @@ class Settings {
 		return add_query_arg(
 			array(
 				'action' => 'eml_disable_gprd_hint',
-				'nonce' => wp_create_nonce( 'eml-disable-gprd-hint' )
+				'nonce'  => wp_create_nonce( 'eml-disable-gprd-hint' ),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -761,7 +761,7 @@ class Settings {
 	 */
 	public function save_proxy_path( string $new_value, string $old_value ): string {
 		// bail if value has not been changed.
-		if( $new_value === $old_value ) {
+		if ( $new_value === $old_value ) {
 			return $old_value;
 		}
 
@@ -772,7 +772,7 @@ class Settings {
 		$old_value_path = trailingslashit( WP_CONTENT_DIR ) . $old_value;
 
 		// bail if new path already exist.
-		if( file_exists( $new_value_path ) ) {
+		if ( file_exists( $new_value_path ) ) {
 			return $old_value;
 		}
 

@@ -182,6 +182,7 @@ body.settings_page_eml_settings .copied {
 body.settings_page_eml_settings .copied:after {
 	animation: 2s fadeOut;
 	animation-fill-mode: forwards;
+	background-color: #fff;
 	color: green;
 	content: attr(data-copied-label);
 	display: inline-block;

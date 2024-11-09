@@ -122,7 +122,7 @@ class Forms {
 				'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
-				'reset_proxy_nonce'          => wp_create_nonce( 'eml-reset-proxy-nonce' ),
+				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
@@ -130,7 +130,7 @@ class Forms {
 				'text_import_ended'             => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
 				'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
 				'lbl_cancel'                    => __( 'Cancel', 'external-files-in-media-library' ),
-				'lbl_close' => __( 'Close', 'external-files-in-media-library' ),
+				'lbl_close'                     => __( 'Close', 'external-files-in-media-library' ),
 				'text_urls_imported'            => __( 'The following URLs were successfully imported:', 'external-files-in-media-library' ),
 				'text_urls_errors'              => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 				'title_no_urls'                 => __( 'No URLs given', 'external-files-in-media-library' ),
@@ -140,9 +140,9 @@ class Forms {
 				'text_is_available'             => __( 'The file is available.', 'external-files-in-media-library' ),
 				'title_hosting_changed'         => __( 'Hosting changed.', 'external-files-in-media-library' ),
 				'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
-				'txt_error' => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
-				'title_error' => __( 'An error occurred.', 'external-files-in-media-library' ),
-				'info_timeout' => $info_timeout
+				'txt_error'                     => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
+				'title_error'                   => __( 'An error occurred.', 'external-files-in-media-library' ),
+				'info_timeout'                  => $info_timeout,
 			)
 		);
 	}
@@ -383,10 +383,10 @@ class Forms {
 		// loop through the errors.
 		foreach ( $errors as $url ) {
 			// get log entry for this URLs.
-			$log_entry             = $log->get_logs( $url, 'error' );
+			$log_entry = $log->get_logs( $url, 'error' );
 
 			// bail if log is empty.
-			if( empty( $log_entry ) ) {
+			if ( empty( $log_entry ) ) {
 				continue;
 			}
 
@@ -429,7 +429,7 @@ class Forms {
 
 		// if import is not running build the dialog for the response.
 		$dialog = array();
-		if( 1 !== $running ) {
+		if ( 1 !== $running ) {
 			// collect result text.
 			$result = '';
 
@@ -437,7 +437,7 @@ class Forms {
 			$errors = get_option( 'eml_import_errors' );
 
 			// add errors to the resulting text list.
-			if( ! empty( $errors ) ) {
+			if ( ! empty( $errors ) ) {
 				$result .= '<p><strong>' . _n( 'The following error occurred:', 'The following error occurred:', count( $errors ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-error-list">';
 				foreach ( $errors as $error ) {
 					$result .= '<li><a href="' . esc_url( $error['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $error['url'] ) ) . '</a><br>' . wp_kses_post( $error['log'] ) . '</li>';
@@ -449,7 +449,7 @@ class Forms {
 			$successfully_imported_urls = get_option( 'eml_import_files' );
 
 			// check if this is an array.
-			if( ! is_array( $successfully_imported_urls ) ) {
+			if ( ! is_array( $successfully_imported_urls ) ) {
 				$successfully_imported_urls = array();
 			}
 
@@ -457,7 +457,7 @@ class Forms {
 			$url_count = count( $successfully_imported_urls );
 
 			// add successfully imported URLs to the resulting text list.
-			if( ! empty( $successfully_imported_urls ) ) {
+			if ( ! empty( $successfully_imported_urls ) ) {
 				$result .= '<p><strong>' . _n( 'The following URL have been saved successfully:', 'The following URLs has been saved successfully:', count( $successfully_imported_urls ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-success-list">';
 				foreach ( $successfully_imported_urls as $url ) {
 					$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
@@ -469,19 +469,20 @@ class Forms {
 			$dialog = array(
 				'detail' => array(
 					'className' => 'eml',
-					'title'   => __( 'Import has been run', 'external-files-in-media-library' ),
-					'texts'   => array(
+					'title'     => __( 'Import has been run', 'external-files-in-media-library' ),
+					'texts'     => array(
+						/* translators: %1$d will be replaced by a number. */
 						'<p><strong>' . sprintf( _n( 'The import has checked %1$d URL with the following result:', 'The import has checked %1$d URLs with the following result:', $url_count, 'external-files-in-media-library' ), $url_count ) . '</strong></p>',
-						$result
+						$result,
 					),
-					'buttons' => array(
+					'buttons'   => array(
 						array(
 							'action'  => 'closeDialog();',
 							'variant' => 'primary',
 							'text'    => __( 'Finalized', 'external-files-in-media-library' ),
 						),
 					),
-				)
+				),
 			);
 		}
 
@@ -559,7 +560,7 @@ class Forms {
 		$url_array = array();
 
 		// loop through them to check if they are additionally separated by comma.
-		foreach( $urls as $url ) {
+		foreach ( $urls as $url ) {
 			$url_array = array_merge( $url_array, explode( ',', $url ) );
 		}
 
@@ -579,14 +580,14 @@ class Forms {
 		$files = get_option( 'eml_import_files' );
 
 		// if list is not an array, create one.
-		if( ! is_array( $files ) ) {
+		if ( ! is_array( $files ) ) {
 			$files = array();
 		}
 
 		// add this file in the array.
 		$files[] = array(
-			'url' => $external_file_obj->get_url( true ),
-			'edit_link' => $external_file_obj->get_edit_url()
+			'url'       => $external_file_obj->get_url( true ),
+			'edit_link' => $external_file_obj->get_edit_url(),
 		);
 
 		// update the list.

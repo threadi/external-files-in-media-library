@@ -420,7 +420,7 @@ class Helper {
 		}
 
 		// if no extension could be extracted get one from the files mime type.
-		if( empty( $file_path_info['extension'] ) ) {
+		if ( empty( $file_path_info['extension'] ) ) {
 			$file_path_info['extension'] = $extension;
 		}
 
@@ -470,10 +470,10 @@ class Helper {
 	 */
 	public static function shorten_url( string $url ): string {
 		// get the parse URL.
-		$parsed_url = parse_url( $url );
+		$parsed_url = wp_parse_url( $url );
 
 		// bail if URL could not be parsed.
-		if( ! is_array( $parsed_url ) ) {
+		if ( ! is_array( $parsed_url ) ) {
 			return $url;
 		}
 
@@ -481,22 +481,22 @@ class Helper {
 		$shortened_url = '';
 
 		// add protocol.
-		if( ! empty( $parsed_url['scheme'] ) ) {
+		if ( ! empty( $parsed_url['scheme'] ) ) {
 			$shortened_url .= $parsed_url['scheme'] . '://';
 		}
 
 		// add host.
-		if( ! empty( $parsed_url['host'] ) ) {
+		if ( ! empty( $parsed_url['host'] ) ) {
 			$shortened_url .= $parsed_url['host'];
 		}
 
 		// add the filename.
-		if( ! empty( $parsed_url['path'] ) ) {
+		if ( ! empty( $parsed_url['path'] ) ) {
 			// get the potential filename.
 			$filename = '/' . basename( $parsed_url['path'] );
 
 			// if filename is not exact the path add the filename to the URL.
-			if( $filename !== $parsed_url['path'] ) {
+			if ( $filename !== $parsed_url['path'] ) {
 				$shortened_url .= '/../' . basename( $parsed_url['path'] );
 			}
 		}
@@ -511,7 +511,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_gprd_url(): string {
-		if( Languages::get_instance()->is_german_language() ) {
+		if ( Languages::get_instance()->is_german_language() ) {
 			return 'https://de.wikipedia.org/wiki/Datenschutz-Grundverordnung';
 		}
 		return 'https://en.wikipedia.org/wiki/General_Data_Protection_Regulation';

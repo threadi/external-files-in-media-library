@@ -1047,7 +1047,7 @@ class Files {
 		$title = sanitize_file_name( urldecode( $title ) );
 
 		// bail if title does contain an "." as it seems to be have a file extension.
-		if( false !== str_contains( $title, '.' ) ) {
+		if ( false !== str_contains( $title, '.' ) ) {
 			return $title;
 		}
 
@@ -1253,11 +1253,11 @@ class Files {
 			$image_data = wp_get_attachment_metadata( $attachment_id );
 
 			// if image data is fall, create the array manually.
-			if( ! $image_data ) {
+			if ( ! $image_data ) {
 				$image_data = array(
-					'sizes' => array(),
-					'width' => 0,
-					'height' => 0
+					'sizes'  => array(),
+					'width'  => 0,
+					'height' => 0,
 				);
 			}
 
@@ -1736,10 +1736,10 @@ class Files {
 	 * Check the srcset metadata for external files. Remove 'file' entry if it is not an image as this results in
 	 * possible warnings via @media.php.
 	 *
-	 * @param array $image_meta The meta data.
-	 * @param array $size_array The size array.
+	 * @param array  $image_meta The meta data.
+	 * @param array  $size_array The size array.
 	 * @param string $image_src The src.
-	 * @param int $attachment_id The attachment id.
+	 * @param int    $attachment_id The attachment id.
 	 *
 	 * @return array
 	 * @noinspection PhpUnusedParameterInspection
@@ -1749,12 +1749,12 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $image_meta;
 		}
 
 		// bail if given file is an image.
-		if( $external_file_obj->is_image() ) {
+		if ( $external_file_obj->is_image() ) {
 			return $image_meta;
 		}
 

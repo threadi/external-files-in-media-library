@@ -1,7 +1,5 @@
-* Test von Update 1.x auf 2.0.0
 * Import von Videos von Youtube, Bildern von Insta etc. über deren APIs
 -> https://developers.google.com/youtube/v3/getting-started?hl=de
-* Frontend-Upload über anderes Plugin?
 * Multisite-Support: https://github.com/threadi/external-files-in-media-library/issues/9
 
 Tests:

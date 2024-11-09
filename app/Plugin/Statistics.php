@@ -97,8 +97,8 @@ class Statistics {
 		$file_count_setting->prevent_export( true );
 		$file_count_setting->set_field(
 			array(
-				'type' => 'Value',
-				'title' => __( 'External file counter', 'external-files-in-media-library' )
+				'type'  => 'Value',
+				'title' => __( 'External file counter', 'external-files-in-media-library' ),
 			)
 		);
 
@@ -111,9 +111,9 @@ class Statistics {
 		$file_size_setting->prevent_export( true );
 		$file_size_setting->set_field(
 			array(
-				'type' => 'Value',
-				'title' => __( 'External file sizes', 'external-files-in-media-library' ),
-				'description' => __( 'The value is in bytes.', 'external-files-in-media-library' )
+				'type'        => 'Value',
+				'title'       => __( 'External file sizes', 'external-files-in-media-library' ),
+				'description' => __( 'The value is in bytes.', 'external-files-in-media-library' ),
 			)
 		);
 
@@ -121,7 +121,7 @@ class Statistics {
 		$url = add_query_arg(
 			array(
 				'action' => 'eml_recalc_files',
-				'nonce' => wp_create_nonce( 'eml-recalc-files' )
+				'nonce'  => wp_create_nonce( 'eml-recalc-files' ),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -254,7 +254,7 @@ class Statistics {
 		$files = Files::get_instance()->get_files();
 
 		// if no files could be loaded, set all settings to 0.
-		if( empty( $files ) ) {
+		if ( empty( $files ) ) {
 			$this->set_file_count( 0 );
 			$this->set_file_sizes( 0 );
 
@@ -273,14 +273,14 @@ class Statistics {
 
 		// loop through the list and count the values.
 		$file_count = 0;
-		$file_size = 0;
-		foreach( $files as $file ) {
+		$file_size  = 0;
+		foreach ( $files as $file ) {
 			// bail if this is not a File object.
-			if( ! $file instanceof File ) {
+			if ( ! $file instanceof File ) {
 				continue;
 			}
 
-			$file_count++;
+			++$file_count;
 			$file_size = $file_size + $file->get_filesize();
 		}
 

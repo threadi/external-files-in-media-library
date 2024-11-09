@@ -55,13 +55,13 @@ class Text extends Field_Base {
 
 		?>
 		<input type="text" id="<?php echo esc_attr( $setting->get_name() ); ?>"
-		       name="<?php echo esc_attr( $setting->get_name() ); ?>"
-		       value="<?php echo esc_attr( get_option( $setting->get_name(), '' ) ); ?>"
+				name="<?php echo esc_attr( $setting->get_name() ); ?>"
+				value="<?php echo esc_attr( get_option( $setting->get_name(), '' ) ); ?>"
 			<?php
 			echo ( $field->is_readonly() ? ' disabled="disabled"' : '' );
 			?>
-			   class="eml-field-width"
-			   title="<?php echo esc_attr( $field->get_title() ); ?>"
+				class="eml-field-width"
+				title="<?php echo esc_attr( $field->get_title() ); ?>"
 		>
 		<?php
 
