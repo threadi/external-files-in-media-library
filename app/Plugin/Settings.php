@@ -10,10 +10,12 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 
@@ -149,6 +151,10 @@ class Settings {
 		$video_tab = $settings_obj->add_tab( 'eml_video' );
 		$video_tab->set_title( __( 'Videos', 'external-files-in-media-library' ) );
 
+		// the proxy tab.
+		$proxy_tab = $settings_obj->add_tab( 'eml_proxy' );
+		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
+
 		// the advanced tab.
 		$advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
 		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
@@ -192,6 +198,11 @@ class Settings {
 		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
 		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
 		$videos_tab_videos->set_setting( $settings_obj );
+
+		// the proxy section.
+		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy' );
+		$proxy_tab_proxy->set_title( __( 'Proxy settings', 'external-files-in-media-library' ) );
+		$proxy_tab_proxy->set_setting( $settings_obj );
 
 		// the advanced section.
 		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced' );
@@ -453,9 +464,53 @@ class Settings {
 		$gprd_hint_setting->set_type( 'integer' );
 		$gprd_hint_setting->set_default( 0 );
 		$field = new Checkbox();
-		$field->set_title( __( 'Disable GRPD-hint', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Disable GPRD-hint', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If disabled we will not warn you about the GPRD regulations regarding external files in websites.', 'external-files-in-media-library' ) );
 		$gprd_hint_setting->set_field( $field );
+
+		// add setting to change the proxy path.
+		$proxy_path_setting = $settings_obj->add_setting( 'eml_proxy_path' );
+		$proxy_path_setting->set_section( $proxy_tab_proxy );
+		$proxy_path_setting->set_show_in_rest( false );
+		$proxy_path_setting->set_type( 'string' );
+		$proxy_path_setting->set_default( 'cache/eml/' );
+		$proxy_path_setting->set_save_callback( array( $this, 'save_proxy_path' ) );
+		$field = new Text();
+		$field->set_title( __( 'Proxy path', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is the path on the filesystem of your WordPress relativ to the <i>wp-content</i> directory. If you change it, the new directory should not exist. All cached files will be copied.', 'external-files-in-media-library' ) );
+		$proxy_path_setting->set_field( $field );
+
+		// create proxy reset dialog.
+		$dialog = array(
+			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'efml_reset_proxy();',
+					'variant' => 'primary',
+					'text'    => __( 'Reset now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_proxy_clear' );
+		$setting->set_section( $proxy_tab_proxy );
+		$setting->set_autoload( false );
+		$setting->prevent_export( true );
+		$field = new Button();
+		$field->set_title( __( 'Reset proxy cache', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
+		$setting->set_field( $field );
 
 		// add import/export settings.
 		Settings\Import::get_instance()->add_settings( $settings_obj );
@@ -694,5 +749,42 @@ class Settings {
 		// forward user.
 		wp_safe_redirect( wp_get_referer() );
 		exit;
+	}
+
+	/**
+	 * Check the proxy path if it has been changed.
+	 *
+	 * @param string $new_value The old value.
+	 * @param string $old_value The new value.
+	 *
+	 * @return string
+	 */
+	public function save_proxy_path( string $new_value, string $old_value ): string {
+		// bail if value has not been changed.
+		if( $new_value === $old_value ) {
+			return $old_value;
+		}
+
+		// create absolute path for new value.
+		$new_value_path = trailingslashit( WP_CONTENT_DIR ) . $new_value;
+
+		// create absolute path for old value.
+		$old_value_path = trailingslashit( WP_CONTENT_DIR ) . $old_value;
+
+		// bail if new path already exist.
+		if( file_exists( $new_value_path ) ) {
+			return $old_value;
+		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		WP_Filesystem();
+		global $wp_filesystem;
+
+		// move all files from old to new directory.
+		$wp_filesystem->move( $old_value_path, $new_value_path );
+
+		// return the new value.
+		return $new_value;
 	}
 }

@@ -87,6 +87,9 @@ class Proxy {
 		 * Refresh rewrite-cache if requested.
 		 */
 		add_action( 'wp', array( $this, 'do_refresh' ) );
+
+		// misc.
+		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 	}
 
 	/**
@@ -219,8 +222,11 @@ class Proxy {
 	 * @return string
 	 */
 	public function get_cache_directory(): string {
+		// get setting
+		$path_part = get_option( 'eml_proxy_path', 'cache/eml/' );
+
 		// create string with path for directory.
-		$path = trailingslashit( WP_CONTENT_DIR ) . 'cache/eml/';
+		$path = trailingslashit( WP_CONTENT_DIR ) . $path_part;
 
 		/**
 		 * Filter the cache directory.
@@ -262,5 +268,38 @@ class Proxy {
 	 */
 	public function delete_cache_directory(): void {
 		Helper::delete_directory_recursively( $this->get_cache_directory() );
+	}
+
+	/**
+	 * Reset the proxy via AJAX request.
+	 *
+	 * @return void
+	 */
+	public function reset_via_ajax(): void {
+		check_ajax_referer( 'eml-reset-proxy-nonce', 'nonce' );
+
+		// reset by deleting the directory.
+		$this->delete_cache_directory();
+
+		// create answer dialog.
+		$dialog = array(
+			'detail' => array(
+				'className' => 'eml',
+				'title'   => __( 'Proxy has been reset', 'external-files-in-media-library' ),
+				'texts'   => array(
+					'<p>' . __( 'The proxy has been reset.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			)
+		);
+
+		// response with dialog.
+		wp_send_json( $dialog );
 	}
 }

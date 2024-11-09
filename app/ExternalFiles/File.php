@@ -760,8 +760,8 @@ class File {
 	 * @return void
 	 */
 	public function delete_thumbs(): void {
-		// bail if this is not an image.
-		if ( ! $this->is_image() ) {
+		// bail if this is not cached.
+		if ( ! $this->is_cached() ) {
 			return;
 		}
 

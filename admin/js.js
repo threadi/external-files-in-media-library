@@ -360,3 +360,23 @@ function eml_ajax_error_dialog( errortext, texts ) {
   }
   eml_create_dialog( dialog_config );
 }
+
+/**
+ * Reset proxy via request.
+ */
+function efml_reset_proxy() {
+  jQuery.ajax( {
+    type: "POST",
+    url: emlJsVars.ajax_url,
+    data: {
+      'action': 'eml_reset_proxy',
+      'nonce': emlJsVars.reset_proxy_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      eml_ajax_error_dialog( errorThrown )
+    },
+    success: function (dialog_config) {
+      eml_create_dialog( dialog_config );
+    }
+  } )
+}

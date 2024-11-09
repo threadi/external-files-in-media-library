@@ -57,7 +57,9 @@ class Uninstall {
 	 * @return void
 	 */
 	public function run(): void {
-		define( 'EFML_DEACTIVATION_RUNNING', 1 );
+		if ( ! defined( 'EFML_DEACTIVATION_RUNNING' ) ) {
+			define( 'EFML_DEACTIVATION_RUNNING', 1 );
+		}
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();

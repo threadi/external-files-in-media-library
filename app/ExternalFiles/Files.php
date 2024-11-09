@@ -783,6 +783,7 @@ class Files {
 		}
 
 		// call cache file deletion.
+		$external_file->delete_thumbs();
 		$external_file->delete_cache();
 	}
 
@@ -1251,13 +1252,22 @@ class Files {
 			// get image data.
 			$image_data = wp_get_attachment_metadata( $attachment_id );
 
+			// if image data is fall, create the array manually.
+			if( ! $image_data ) {
+				$image_data = array(
+					'sizes' => array(),
+					'width' => 0,
+					'height' => 0
+				);
+			}
+
 			// bail if both sizes are 0.
 			if ( 0 === $size[0] && 0 === $size[1] ) {
 				// set return-array so that WP won't generate an image for it.
 				return array(
 					$external_file_obj->get_url(),
-					$image_data['width'] ? $image_data['width'] : 0,
-					$image_data['height'] ? $image_data['height'] : 0,
+					isset( $image_data['width'] ) ? $image_data['width'] : 0,
+					isset( $image_data['height'] ) ? $image_data['height'] : 0,
 					false,
 				);
 			}
@@ -1281,8 +1291,8 @@ class Files {
 				// set return-array so that WP won't generate an image for it.
 				return array(
 					$external_file_obj->get_url(),
-					$image_data['width'] ? $image_data['width'] : 0,
-					$image_data['height'] ? $image_data['height'] : 0,
+					isset( $image_data['width'] ) ? $image_data['width'] : 0,
+					isset( $image_data['height'] ) ? $image_data['height'] : 0,
 					false,
 				);
 			}
