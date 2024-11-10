@@ -4,6 +4,10 @@
 
 This repository provides the features of the WordPress plugin _External files in media library_. The repository is used as a basis for deploying the plugin to the WordPress repository. It is not intended to run as a plugin as it is, even if that is possible for development.
 
+## Hint
+
+As user of the plugin you find documentation for protocols and handling in the [doc-directory](https://github.com/threadi/external-files-in-media-library/tree/master/docs/).
+
 ## Usage
 
 After checkout go through the following steps:

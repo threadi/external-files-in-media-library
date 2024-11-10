@@ -16,8 +16,7 @@ Add one or more files under Media > "Add new media file". You can use the files 
 
 == Mass-Import ==
 
-You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import
-and the plugin will import any supported files from it.
+You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it.
 
 == TCP Protocols ==
 
@@ -66,7 +65,7 @@ Yes, but these files will included locally and not from the external URL.
 
 = Can I embed files from FTP? =
 
-Yes, but these files will included locally and not from the external URL.
+Yes, see [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/ftp.md).
 
 = Can I import complete directories? =
 
@@ -74,13 +73,17 @@ Yes, you can. Just enter the directory to import.
 
 = Can I import from my local server? =
 
-Yes, you can. Simply enter the absolute path with file-protocol, e.g.: file:///var/www/path/to/file.png
+Yes, you can. Simply enter the absolute path with file-protocol, e.g.: `file:///var/www/path/to/file.png` - see also [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/file.md).
 
 = Can I import external product images for WooCommerce? =
 
 Yes, simply enable the setting under Settings > External files in Media Library > WooCommerce. Add your external URLs
 for images in the CSV you want to import as it is already possible with WooCommerce. They will be handled as
-external files by this plugin.
+external files by this plugin. This also allows you to use all protocols supported by the plugin for importing these files.
+
+= Is there a WP CLI command? =
+
+Yes, there are many options on WP CLI, see [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
 
 == Screenshots ==
 
