@@ -1,3 +1,5 @@
+.eml > div { min-width: 640px }
+
 .eml_add_external_files_wrapper {
 	border: 4px dashed #c3c4c7;
     margin: 1em auto 0;
@@ -21,10 +23,6 @@ select.eml-field-width {
     z-index: 1;
 }
 
-body.settings_page_eml_settings h1 {
-	display: inline-block;
-}
-
 body.settings_page_eml_settings .review-hint-button:after {
 	color: #d4af37;
 	content: "\f155 \f155 \f155 \f155 \f155";
@@ -46,28 +44,86 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	margin-right: 8px;
 }
 
-.eml .wp-easy-dialog-text label {
+body.settings_page_eml_settings .dashicons-no { color: red }
+
+body.settings_page_eml_settings .dashicons-yes { color: green }
+
+.eml .easy-dialog-for-wordpress-text label {
 	display: block;
 	margin-bottom: 0.5em;
 }
 
-.eml .wp-easy-dialog-text input[type="url"] {
+.eml .easy-dialog-for-wordpress-text input[type="url"] {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
 
-.eml .wp-easy-dialog-text textarea {
+.eml .easy-dialog-for-wordpress-text textarea {
 	display: block;
 	height: 100px;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
 
-.eml .wp-easy-dialog-text .error-list, .eml .wp-easy-dialog-text .ok-list {
+.eml .easy-dialog-for-wordpress-text .error-list, .eml .easy-dialog-for-wordpress-text .ok-list {
 	list-style: disc;
 	margin-left: 14px;
 }
+
+.eml .easy-dialog-for-wordpress-text:has(.eml-success-list) p, .eml .easy-dialog-for-wordpress-text:has(.eml-error-list) p {
+	margin-bottom: 0;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list, .eml .easy-dialog-for-wordpress-text .eml-error-list {
+	margin-top: 0;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li, .eml .easy-dialog-for-wordpress-text .eml-error-list li {
+	text-indent: -10px;
+	padding-left: 18px;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li:before, .eml .easy-dialog-for-wordpress-text .eml-error-list li:before {
+	color: red;
+	content: "\f158";
+	display: inline-block;
+	font-family: dashicons, sans-serif;
+	margin-right: 0.3em;
+	font-size: 16px;
+	vertical-align: middle;
+}
+
+.eml .easy-dialog-for-wordpress-text .eml-success-list li:before {
+	content: "\f147";
+	color: green;
+}
+
+.eml details summary::-webkit-details-marker, .eml details summary::marker {
+	display: none;
+	content: "";
+}
+
+.eml details summary:before {
+	content: "\f139";
+	display: inline-block;
+	font-family: dashicons, sans-serif;
+	font-size: 24px;
+	vertical-align: middle;
+	padding: 0;
+	line-height: 1;
+	text-indent: -4px;
+	margin-right: 4px;
+	margin-top: -1px;
+}
+
+.eml details[open] summary:before {
+	content: "\f140";
+}
+
+.eml details[open] > div, .eml details[open] > p { margin-left: 24px }
+
+.eml a { text-decoration: none }
 
 .misc-pub-external-file span {
 	vertical-align: middle;
@@ -83,4 +139,54 @@ body.settings_page_eml_settings .nav-tab-help:before {
 	left: -6px;
 }
 
+.misc-pub-external-file > li {
+	text-indent: -24px;
+	padding-left: 24px;
+}
+
+.misc-pub-external-file > li .dashicons { text-indent: 0 }
+
 .wp-list-table.media #external_files { width: 120px }
+
+.eml .easy-dialog-for-wordpress-text details {
+	margin-bottom: 1em;
+}
+
+.eml .easy-dialog-for-wordpress-text details summary {
+	cursor: pointer;
+	margin-bottom: 0.4em;
+}
+
+.settings_page_eml_settings #options { width: 80px }
+
+.settings_page_eml_settings #state { width: 80px }
+
+.settings_page_eml_settings #date { width: 120px }
+
+.settings_page_eml_settings .eml-log-table #url { width: 320px }
+
+.settings_page_eml_settings .current {
+	color: #000;
+	font-weight: 600;
+}
+
+body.settings_page_eml_settings .copied {
+	position: relative;
+	z-index: 1;
+}
+
+body.settings_page_eml_settings .copied:after {
+	animation: 2s fadeOut;
+	animation-fill-mode: forwards;
+	background-color: #fff;
+	color: green;
+	content: attr(data-copied-label);
+	display: inline-block;
+	font-size: 16px;
+	font-family: Arial, sans-serif;
+	margin-left: 2px;
+	position: absolute;
+	top: -2px;
+	z-index: 2;
+}
+

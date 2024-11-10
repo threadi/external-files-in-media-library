@@ -48,12 +48,20 @@ Run in main directory:
 
 ### Run
 
-`vendor/bin/phpcs --standard=ruleset.xml file`
+`vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .`
 
 ### Repair
 
-`vendor/bin/phpcbf --standard=ruleset.xml file`
+`vendor/bin/phpcbf --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .`
 
 ## Generate documentation
 
 `vendor/bin/wp-documentor parse classes --format=markdown --output=doc/hooks.md --prefix=eml`
+
+## Check for WordPress VIP Coding Standards
+
+Hint: this check runs against the VIP-GO-platform which is not our target for this plugin. Many warnings can be ignored.
+
+### Run
+
+`vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=WordPress-VIP-Go .`

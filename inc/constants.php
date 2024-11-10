@@ -13,24 +13,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Name of the post-field where the external url of a file resides.
  */
-const EML_POST_META_URL = 'eml_external_file';
+const EFML_POST_META_URL = 'eml_external_file';
 
 /**
  * State of external file url (available or not).
  */
-const EML_POST_META_AVAILABILITY = 'eml_external_file_state';
+const EFML_POST_META_AVAILABILITY = 'eml_external_file_state';
 
 /**
  * Import-Marker.
  */
-const EML_POST_IMPORT_MARKER = 'eml_imported';
+const EFML_POST_IMPORT_MARKER = 'eml_imported';
 
 /**
  * Name of our own capability.
  */
-const EML_CAP_NAME = 'eml_manage_files';
+const EFML_CAP_NAME = 'eml_manage_files';
 
 /**
  * Options-list of transients.
  */
-const EML_TRANSIENT_LIST = 'eml_transients';
+const EFML_TRANSIENT_LIST = 'eml_transients';
+
+/**
+ * Name of our openssl hash.
+ */
+const EFML_HASH = 'eml_hash';
+
+/**
+ * Name of our sodium hash.
+ */
+const EFML_SODIUM_HASH = 'eml_sodium_hash';

@@ -14,6 +14,12 @@
         <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_tax_query"/>
         <!-- Exclude direkt db query warnings -->
         <exclude name="WordPress.DB.DirectDatabaseQuery"/>
+        <!-- Exclude base64-warnings for backwards-compatibility with older plugin-version, but it also disabled serialize-warning .. -->
+        <exclude name="WordPress.PHP.DiscouragedPHPFunctions"/>
+        <!-- Excluded in favour to match PSR-4-namings of classes. -->
+        <exclude name="WordPress.Files.FileName"/>
+        <!-- Exclude override of globals -->
+        <exclude name="WordPress.WP.GlobalVariablesOverride"/>
     </rule>
 
 </ruleset>

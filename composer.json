@@ -1,25 +1,36 @@
 {
     "name": "threadi/eml",
-    "version": "1.2.3",
+    "version": "2.0.0",
     "scripts": {
         "post-install-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra"
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs"
         ],
         "post-update-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra"
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs"
         ]
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "optimize-autoloader": true,
+        "classmap-authoritative": true,
+        "apcu-autoloader": true,
+        "prepend-autoloader": false,
+        "platform-check": false
+    },
+    "autoload": {
+        "psr-4": {
+            "ExternalFilesInMediaLibrary\\": "app/"
         }
     },
     "require-dev": {
         "wp-coding-standards/wpcs": "^3.1.0",
-        "pronamic/wp-documentor": "^1.3.2"
+        "pronamic/wp-documentor": "^1.3.2",
+        "automattic/vipwpcs": "^3.0"
     },
     "require": {
         "php": "^8.0",
-        "threadi/wp-easy-dialog": "^1.0.7"
+        "threadi/easy-dialog-for-wordpress": "^1.0.0"
     }
 }
