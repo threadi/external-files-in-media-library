@@ -78,6 +78,12 @@ class File extends Protocol_Base {
 					continue;
 				}
 
+				// check for duplicate.
+				if ( $this->check_for_duplicate( $file_path ) ) {
+					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error' );
+					continue;
+				}
+
 				/**
 				 * Run action just before the file check via file-protocol.
 				 *
@@ -116,6 +122,12 @@ class File extends Protocol_Base {
 			// finish the progress.
 			$progress ? $progress->finish() : '';
 		} else {
+			// check for duplicate.
+			if ( $this->check_for_duplicate( $this->get_url() ) ) {
+				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+				return array();
+			}
+
 			// add files to list in queue mode.
 			if ( $this->is_queue_mode() ) {
 				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );

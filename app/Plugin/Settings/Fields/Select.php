@@ -61,7 +61,7 @@ class Select extends Field_Base {
 		$field = $setting->get_field();
 
 		// get value.
-		$value = get_option( $setting->get_name(), '' );
+		$value = (string) get_option( $setting->get_name(), '' );
 
 		?>
 		<select id="<?php echo esc_attr( $setting->get_name() ); ?>" name="<?php echo esc_attr( $setting->get_name() ); ?>" class="eml-field-width" title="<?php echo esc_attr( $field->get_title() ); ?>">

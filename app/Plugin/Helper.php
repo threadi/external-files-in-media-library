@@ -294,7 +294,7 @@ class Helper {
 			return array();
 		}
 
-		// is list is empty, return empty list.
+		// bail if list is empty.
 		if ( empty( $list ) ) {
 			return array();
 		}
@@ -515,5 +515,14 @@ class Helper {
 			return 'https://de.wikipedia.org/wiki/Datenschutz-Grundverordnung';
 		}
 		return 'https://en.wikipedia.org/wiki/General_Data_Protection_Regulation';
+	}
+
+	/**
+	 * Return the media library URL.
+	 *
+	 * @return string
+	 */
+	public static function get_media_library_url(): string {
+		return get_admin_url() . 'upload.php';
 	}
 }

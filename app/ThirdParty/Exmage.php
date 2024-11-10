@@ -67,7 +67,7 @@ class Exmage {
 		}
 
 		// misc.
-		add_filter( 'admin_init', array( $this, 'show_hint' ) );
+		add_action( 'admin_init', array( $this, 'show_hint' ) );
 		add_action( 'admin_action_eml_migrate_exmage', array( $this, 'migrate_per_request' ) );
 		add_action(
 			'cli_init',

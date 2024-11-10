@@ -19,7 +19,7 @@ function efml_import_settings_file() {
         ]
       }
     }
-    eml_create_dialog( dialog_config );
+    efml_create_dialog( dialog_config );
     return;
   }
 
@@ -35,7 +35,7 @@ function efml_import_settings_file() {
     contentType: false,
     processData: false,
     success: function( dialog_config ){
-      eml_create_dialog( dialog_config );
+      efml_create_dialog( dialog_config );
     },
   });
 }

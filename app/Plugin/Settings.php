@@ -143,6 +143,10 @@ class Settings {
 		$permissions_tab = $settings_obj->add_tab( 'eml_permissions' );
 		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
 
+		// the audio tab.
+		$audio_tab = $settings_obj->add_tab( 'eml_audio' );
+		$audio_tab->set_title( __( 'Audio', 'external-files-in-media-library' ) );
+
 		// the images tab.
 		$images_tab = $settings_obj->add_tab( 'eml_images' );
 		$images_tab->set_title( __( 'Images', 'external-files-in-media-library' ) );
@@ -187,6 +191,12 @@ class Settings {
 		$permissions_tab_files->set_title( __( 'Permissions to add files', 'external-files-in-media-library' ) );
 		$permissions_tab_files->set_setting( $settings_obj );
 
+		// the audio section.
+		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio' );
+		$audio_tab_audios->set_title( __( 'Audio Settings', 'external-files-in-media-library' ) );
+		$audio_tab_audios->set_callback( array( $this, 'show_protocol_hint' ) );
+		$audio_tab_audios->set_setting( $settings_obj );
+
 		// the images section.
 		$images_tab_images = $images_tab->add_section( 'settings_section_images' );
 		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
@@ -214,10 +224,13 @@ class Settings {
 		 */
 		// set description for disabling the attachment pages.
 		$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
-		// TODO per filter über third-party anpassen.
-		if ( method_exists( 'WPSEO_Options', 'get' ) ) {
-			$description = __( 'This is handled by Yoast SEO.', 'external-files-in-media-library' );
-		}
+		/**
+		 * Filter the description to setting to disable the attachment pages.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param string $description The description.
+		 */
+		$description = apply_filters( 'eml_setting_description_attachment_pages', $description );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_disable_attachment_pages' );
@@ -228,7 +241,7 @@ class Settings {
 		$field = new Checkbox();
 		$field->set_title( __( 'Disable the attachment page for URL-files', 'external-files-in-media-library' ) );
 		$field->set_description( $description );
-		$field->set_readonly( method_exists( 'WPSEO_Options', 'get' ) );
+		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
 		// get possible mime types.
@@ -314,16 +327,20 @@ class Settings {
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
-		$users = array();
-		foreach ( get_users() as $user ) {
-			$users[ $user->ID ] = $user->display_name;
+		$users               = array();
+		$first_administrator = 0;
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'eml_settings' === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
+			foreach ( get_users() as $user ) {
+				$users[ $user->ID ] = $user->display_name;
+			}
+			$first_administrator = Helper::get_first_administrator_user();
 		}
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'integer' );
-		$setting->set_default( Helper::get_first_administrator_user() );
+		$setting->set_default( $first_administrator );
 		$field = new Select();
 		$field->set_title( __( 'User new files should be assigned to', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-files-in-media-library' ) );
@@ -345,6 +362,46 @@ class Settings {
 				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
 			)
 		);
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_mode' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
+		$field = new Select();
+		$field->set_title( __( 'Mode for audio handling', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how external audios are handled.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_proxy' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable proxy for audios', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This option is only available if audios are hosted external. If this option is disabled, external audios will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the audios locally.', 'external-files-in-media-library' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_proxy_max_age' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 );
+		$field = new Number();
+		$field->set_title( __( 'Max age for cached audio in proxy in hours', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how long audios, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -648,7 +705,7 @@ class Settings {
 		$log = new Logs();
 		$log->prepare_items();
 		?>
-		<div class="wrap">
+		<div class="wrap eml-log-table">
 			<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
 			<?php
 			$log->views();

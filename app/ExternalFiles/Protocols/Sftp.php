@@ -147,7 +147,7 @@ class Sftp extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error', 0 );
+					Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error', 0 );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -308,7 +308,7 @@ class Sftp extends Protocol_Base {
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'SSH/SFTP-Connection failed. Check the server-name %1$s and the given credentials. Error: <code>%2$s</code>', 'external-files-in-media-library' ), $connection_arguments['hostname'], wp_json_encode( $connection->errors ) ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'SSH/SFTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0 );
 			return false;
 		}
 

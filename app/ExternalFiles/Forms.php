@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Initialize the backend forms for external files.
@@ -76,7 +77,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_filter( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
 	}
 
 	/**
@@ -114,7 +115,7 @@ class Forms {
 		// add php-vars to our js-script.
 		wp_localize_script(
 			'eml-admin',
-			'emlJsVars',
+			'efmlJsVars',
 			array(
 				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
 				'urls_nonce'                    => wp_create_nonce( 'eml-urls-upload-nonce' ),
@@ -124,6 +125,8 @@ class Forms {
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
 				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
+				'add_file_url'                  => Helper::get_add_media_url(),
+				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
@@ -137,12 +140,14 @@ class Forms {
 				'text_no_urls'                  => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
 				'title_availability_refreshed'  => __( 'Availability refreshed', 'external-files-in-media-library' ),
 				'text_not_available'            => __( 'The file is NOT available.', 'external-files-in-media-library' ),
-				'text_is_available'             => __( 'The file is available.', 'external-files-in-media-library' ),
-				'title_hosting_changed'         => __( 'Hosting changed.', 'external-files-in-media-library' ),
+				'text_is_available'             => '<strong>' . __( 'The file is available.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is no problem to continue using the URL in your media library.', 'external-files-in-media-library' ),
+				'title_hosting_changed'         => __( 'Hosting changed', 'external-files-in-media-library' ),
 				'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
 				'txt_error'                     => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
-				'title_error'                   => __( 'An error occurred.', 'external-files-in-media-library' ),
+				'title_error'                   => __( 'An error occurred', 'external-files-in-media-library' ),
 				'info_timeout'                  => $info_timeout,
+				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
+				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -173,14 +178,10 @@ class Forms {
 				'id'        => 'add_eml_files',
 				'className' => 'eml',
 				'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
-				'texts'     => array(
-					'<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>',
-					'<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>',
-					'<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
-				),
+				'texts'     => $this->get_fields(),
 				'buttons'   => array(
 					array(
-						'action'  => 'eml_upload_files();',
+						'action'  => 'efml_upload_files();',
 						'variant' => 'primary',
 						'text'    => __( 'Add URLs', 'external-files-in-media-library' ),
 					),
@@ -199,7 +200,7 @@ class Forms {
 				// add link to settings for admin.
 				if ( current_user_can( 'manage_options' ) ) {
 					?>
-					<br><a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_html__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+					<br><a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_attr__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
 					<?php
 				}
 				?>
@@ -236,14 +237,10 @@ class Forms {
 			'id'        => 'add_eml_files',
 			'className' => 'eml',
 			'title'     => __( 'Add URL', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . '</label><input type="url" id="external_files" name="external_files" class="eml_add_external_files">',
-				'<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URL to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>',
-				'<details><summary>' . __( 'Add credentials to access these URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value=""></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value=""></div><p>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>',
-			),
+			'texts'     => $this->get_fields( true ),
 			'buttons'   => array(
 				array(
-					'action'  => 'eml_upload_files();',
+					'action'  => 'efml_upload_files();',
 					'variant' => 'primary',
 					'text'    => __( 'Add URL', 'external-files-in-media-library' ),
 				),
@@ -283,6 +280,12 @@ class Forms {
 		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
 		}
+
+		// get log object.
+		$log = Log::get_instance();
+
+		// log this event.
+		$log->create( __( 'AJAX-request to import URLs has been called.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// mark import as running.
 		update_option( 'eml_import_running', time() );
@@ -324,6 +327,9 @@ class Forms {
 
 		// if URLs are given, check them.
 		if ( ! empty( $url_array ) ) {
+			// log this event.
+			$log->create( __( 'URLs has been transferred via AJAX and will now be checked and imported.', 'external-files-in-media-library' ), '', 'info', 2 );
+
 			/**
 			 * Loop through them to add them to media library after filtering the URL list.
 			 *
@@ -349,6 +355,9 @@ class Forms {
 				// cleanup the JS-URL.
 				$url = str_replace( '&amp;', '&', $url );
 
+				// log this event.
+				$log->create( __( 'Try to import the URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
 				// update title for progress.
 				/* translators: %1$s will be replaced by the URL which is imported. */
 				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
@@ -362,6 +371,9 @@ class Forms {
 				// add URL to list of errors if add to queue was not used.
 				if ( ! $file_added && ! $add_to_queue ) {
 					$errors[] = $url;
+
+					// log this event.
+					$log->create( __( 'Error occurred during check of URL. The URL has not been added.', 'external-files-in-media-library' ), $url, 'info', 1 );
 				}
 			}
 		}
@@ -408,6 +420,9 @@ class Forms {
 		 */
 		do_action( 'eml_import_ajax_end', $url_array );
 
+		// log this event.
+		$log->create( __( 'End of AJAX-request to import URLs.', 'external-files-in-media-library' ), '', 'info', 2 );
+
 		// mark import as not running.
 		delete_option( 'eml_import_running' );
 
@@ -440,7 +455,13 @@ class Forms {
 			if ( ! empty( $errors ) ) {
 				$result .= '<p><strong>' . _n( 'The following error occurred:', 'The following error occurred:', count( $errors ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-error-list">';
 				foreach ( $errors as $error ) {
-					$result .= '<li><a href="' . esc_url( $error['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $error['url'] ) ) . '</a><br>' . wp_kses_post( $error['log'] ) . '</li>';
+					// if string is not a valid URL just show it.
+					if ( ! filter_var( $error['url'], FILTER_VALIDATE_URL ) ) {
+						$result .= '<li>' . esc_html( $error['url'] ) . '<br>' . wp_kses_post( $error['log'] ) . '</li>';
+					} else {
+						// otherwise link it.
+						$result .= '<li><a href="' . esc_url( $error['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $error['url'] ) ) . '</a><br>' . wp_kses_post( $error['log'] ) . '</li>';
+					}
 				}
 				$result .= '</ul>';
 			}
@@ -465,25 +486,67 @@ class Forms {
 				$result .= '</ul>';
 			}
 
-			// create dialog.
-			$dialog = array(
-				'detail' => array(
-					'className' => 'eml',
-					'title'     => __( 'Import has been run', 'external-files-in-media-library' ),
-					'texts'     => array(
-						/* translators: %1$d will be replaced by a number. */
-						'<p><strong>' . sprintf( _n( 'The import has checked %1$d URL with the following result:', 'The import has checked %1$d URLs with the following result:', $url_count, 'external-files-in-media-library' ), $url_count ) . '</strong></p>',
-						$result,
-					),
-					'buttons'   => array(
-						array(
-							'action'  => 'closeDialog();',
-							'variant' => 'primary',
-							'text'    => __( 'Finalized', 'external-files-in-media-library' ),
+			// show hint of no URLs has been imported.
+			if ( 0 === $url_count ) {
+				// create dialog.
+				$dialog = array(
+					'detail' => array(
+						'className' => 'eml',
+						'title'     => __( 'Import has been run', 'external-files-in-media-library' ),
+						'texts'     => array(
+							'<p><strong>' . __( 'No URLs has been imported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'They might have been added to the queue if you used this option.', 'external-files-in-media-library' ) . '</p>',
+							$result,
+						),
+						'buttons'   => array(
+							array(
+								'action'  => 'closeDialog();',
+								'variant' => 'primary',
+								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
+							),
+							array(
+								'action'  => 'location.href="' . Settings::get_instance()->get_url( 'eml_logs' ) . '";',
+								'variant' => 'secondary',
+								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
+							),
+							array(
+								'action'  => 'location.href="' . Settings::get_instance()->get_url( 'eml_queue_table' ) . '";',
+								'variant' => 'secondary',
+								'text'    => __( 'Go to queue', 'external-files-in-media-library' ),
+							),
 						),
 					),
-				),
-			);
+				);
+			} else {
+				// create dialog.
+				$dialog = array(
+					'detail' => array(
+						'className' => 'eml',
+						'title'     => __( 'Import has been run', 'external-files-in-media-library' ),
+						'texts'     => array(
+							/* translators: %1$d will be replaced by a number. */
+							'<p><strong>' . sprintf( _n( 'The import has checked %1$d URL with the following result:', 'The import has checked %1$d URLs with the following result:', $url_count, 'external-files-in-media-library' ), $url_count ) . '</strong></p>',
+							$result,
+						),
+						'buttons'   => array(
+							array(
+								'action'  => 'closeDialog();',
+								'variant' => 'primary',
+								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
+							),
+							array(
+								'action'  => 'location.href="' . Settings::get_instance()->get_url( 'eml_logs' ) . '";',
+								'variant' => 'secondary',
+								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
+							),
+							array(
+								'action'  => 'location.href="' . Helper::get_media_library_url() . '";',
+								'variant' => 'secondary',
+								'text'    => __( 'Go to media library', 'external-files-in-media-library' ),
+							),
+						),
+					),
+				);
+			}
 		}
 
 		// return import info.
@@ -587,10 +650,68 @@ class Forms {
 		// add this file in the array.
 		$files[] = array(
 			'url'       => $external_file_obj->get_url( true ),
-			'edit_link' => $external_file_obj->get_edit_url(),
+			'edit_link' => get_edit_post_link( $external_file_obj->get_id() ),
 		);
 
 		// update the list.
 		update_option( 'eml_import_files', $files );
+	}
+
+	/**
+	 * Return list of fields.
+	 *
+	 * @param bool $single True if the single fields should be returned.
+	 *
+	 * @return array
+	 */
+	private function get_fields( bool $single = false ): array {
+		// collect the fields.
+		$fields = array();
+
+		// use single fields.
+		if ( $single ) {
+			// add URL field.
+			$fields[] = '<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><input type="text" id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf">';
+
+			// add queue option if it is not disabled.
+			if ( 'eml_disable_check' !== get_option( 'eml_queue_interval' ) ) {
+				$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URL to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
+			}
+
+			// add credentials fields.
+			$fields[] = '<details><summary>' . __( 'Add credentials to access this URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
+
+			/**
+			 * Filter the fields for the dialog.
+			 *
+			 * @since 2.0.0 Available since 2.0.0.
+			 * @param array $fields List of fields.
+			 */
+			$fields = apply_filters( 'eml_import_fields', $fields );
+
+			return $fields;
+		}
+
+		// add URLs field.
+		$fields[] = '<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>';
+
+		// add queue option if it is not disabled.
+		if ( 'eml_disable_check' !== get_option( 'eml_queue_interval' ) ) {
+			$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
+		}
+
+		// add credentials fields.
+		$fields[] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
+
+		/**
+		 * Filter the fields for the dialog.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $fields List of fields.
+		 */
+		$fields = apply_filters( 'eml_import_fields', $fields );
+
+		// return the list of fields.
+		return $fields;
 	}
 }

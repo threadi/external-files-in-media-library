@@ -25,9 +25,10 @@ class Queue extends WP_List_Table {
 	 */
 	public function get_columns(): array {
 		return array(
-			'state' => __( 'State', 'external-files-in-media-library' ),
-			'date'  => __( 'Date', 'external-files-in-media-library' ),
-			'url'   => __( 'URL', 'external-files-in-media-library' ),
+			'options' => __( 'Options', 'external-files-in-media-library' ),
+			'state'   => __( 'State', 'external-files-in-media-library' ),
+			'date'    => __( 'Date', 'external-files-in-media-library' ),
+			'url'     => __( 'URL', 'external-files-in-media-library' ),
 		);
 	}
 
@@ -102,9 +103,10 @@ class Queue extends WP_List_Table {
 	 */
 	public function column_default( $item, $column_name ) {
 		return match ( $column_name ) {
+			'options' => $this->get_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
-			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . url_shorten( $item[ $column_name ], 50 ) . '</a>',
+			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . esc_url( $item[ $column_name ] ) . '</a>',
 			default => '',
 		};
 	}
@@ -275,5 +277,86 @@ class Queue extends WP_List_Table {
 		 * @param array $list List of filter.
 		 */
 		return apply_filters( 'eml_queue_table_filter', $list );
+	}
+
+	/**
+	 * Return list of options for a single entry.
+	 *
+	 * @param array $item The item data.
+	 *
+	 * @return string
+	 */
+	private function get_options( array $item ): string {
+		// collect the output.
+		$output = '';
+
+		// create delete-URL.
+		$url = add_query_arg(
+			array(
+				'action' => 'eml_queue_delete_entry',
+				'id'     => $item['id'],
+				'nonce'  => wp_create_nonce( 'eml-queue-delete-entry' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			'title'   => __( 'Delete queue entry', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'No', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add output for delete link.
+		$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
+
+		// create delete-URL.
+		$url = add_query_arg(
+			array(
+				'action' => 'eml_queue_process_entry',
+				'id'     => $item['id'],
+				'nonce'  => wp_create_nonce( 'eml-queue-process-entry' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			'title'   => __( 'Process queue entry', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Are you sure you want to process this queue entry now?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will be imported as external file. You may be want to import this URL through the automatic import of the queue.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'No', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add output for process now link.
+		$output .= '<a class="dashicons dashicons-controls-play easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Process entry', 'external-files-in-media-library' ) . '"></a>';
+
+		// return the list of options.
+		return $output;
 	}
 }

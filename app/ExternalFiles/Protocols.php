@@ -84,6 +84,7 @@ class Protocols {
 		// define variable for result.
 		$result = false;
 
+		// loop through the supported protocols and check which one is supporting the given URL.
 		foreach ( $this->get_protocols() as $protocol_name ) {
 			// bail if name is not a string.
 			if ( ! is_string( $protocol_name ) ) {
@@ -105,7 +106,7 @@ class Protocols {
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
-				Log::get_instance()->create( __( 'Your hosting does not match the requirements to import the given URL. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
+				Log::get_instance()->create( __( 'Your hosting does not match the requirements to import the given URL. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
 				continue;
 			}
 
@@ -116,6 +117,15 @@ class Protocols {
 
 			// set as return value.
 			$result = $obj;
+		}
+
+		// bail if no supported protocol could be found for this URL.
+		if ( ! $result ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Given URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
+
+			// return false in this case.
+			return false;
 		}
 
 		// return the resulting value.

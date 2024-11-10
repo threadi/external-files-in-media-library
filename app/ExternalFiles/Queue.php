@@ -69,6 +69,8 @@ class Queue {
 		add_action( 'admin_action_eml_queue_process', array( $this, 'process_queue_by_request' ) );
 		add_action( 'admin_action_eml_queue_clear', array( $this, 'clear_by_request' ) );
 		add_action( 'admin_action_eml_queue_clear_errors', array( $this, 'delete_errors_by_request' ) );
+		add_action( 'admin_action_eml_queue_delete_entry', array( $this, 'delete_entry_by_request' ) );
+		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
 	}
 
 	/**
@@ -158,8 +160,15 @@ class Queue {
 
 		// if new value is 'eml_disable_check' remove the schedule.
 		if ( 'eml_disable_check' === $value ) {
+			// log event.
+			Log::get_instance()->create( __( 'Queue schedule has been disabled.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+			// remove schedule.
 			$queue_schedule->delete();
 		} else {
+			// log event.
+			Log::get_instance()->create( __( 'Queue schedule interval has changed.', 'external-files-in-media-library' ), '', 'info', 2 );
+
 			// set the new interval.
 			$queue_schedule->set_interval( $value );
 
@@ -250,9 +259,6 @@ class Queue {
 	 * @return void
 	 */
 	public function process_queue(): void {
-		// get the files object.
-		$files_obj = Files::get_instance();
-
 		// get the queue.
 		$urls_to_import = $this->get_urls();
 
@@ -262,7 +268,7 @@ class Queue {
 
 		// log event.
 		/* translators: %1$d will be replaced by a number. */
-		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'success', 2 );
+		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
 
 		/**
 		 * Filter the list of URLs from queue before they are processed.
@@ -287,20 +293,7 @@ class Queue {
 				continue;
 			}
 
-			// set the login.
-			$files_obj->set_login( $url_data['login'] );
-
-			// set the password.
-			$files_obj->set_password( $url_data['password'] );
-
-			// import the URL.
-			if ( $files_obj->add_url( $url_data['url'] ) ) {
-				// remove URL from queue.
-				$this->remove_url( absint( $url_data['id'] ) );
-			} else {
-				// mark URL with state "error" to prevent usage.
-				$this->set_url_state( absint( $url_data['id'] ), 'error' );
-			}
+			$this->process_entry( $url_data['id'] );
 
 			// show progress.
 			$progress ? $progress->tick() : '';
@@ -316,6 +309,45 @@ class Queue {
 		 * @param array $urls_to_import List of URLs to import from queue which has been processed.
 		 */
 		do_action( 'eml_queue_after_process', $urls_to_import );
+
+		// log event.
+		/* translators: %1$d will be replaced by a number. */
+		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue ended.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
+	}
+
+	/**
+	 * Process single entry.
+	 *
+	 * @param int $id The ID to use.
+	 *
+	 * @return void
+	 */
+	private function process_entry( int $id ): void {
+		// get the entry.
+		$url_data = $this->get_url_by_id( $id );
+
+		// bail if no data could be loaded.
+		if ( empty( $url_data ) ) {
+			return;
+		}
+
+		// get the files object.
+		$files_obj = Files::get_instance();
+
+		// set the login.
+		$files_obj->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
+
+		// set the password.
+		$files_obj->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
+
+		// import the URL.
+		if ( $files_obj->add_url( $url_data['url'] ) ) {
+			// remove URL from queue.
+			$this->remove_url( absint( $url_data['id'] ) );
+		} else {
+			// mark URL with state "error" to prevent usage.
+			$this->set_url_state( absint( $url_data['id'] ), 'error' );
+		}
 	}
 
 	/**
@@ -338,6 +370,38 @@ class Queue {
 		$transient_obj->set_message( __( 'The queue has been processed.', 'external-files-in-media-library' ) );
 		$transient_obj->set_type( 'success' );
 		$transient_obj->save();
+
+		// forward user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
+	}
+
+	/**
+	 * Process single entry of queue by request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function process_queue_entry_by_request(): void {
+		// check the nonce.
+		check_admin_referer( 'eml-queue-process-entry', 'nonce' );
+
+		// get the ID from request.
+		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// delete the entry if id is given.
+		if ( $id > 0 ) {
+			// process it.
+			$this->process_entry( $id );
+
+			// show ok message.
+			$transients_obj = Transients::get_instance();
+			$transient_obj  = $transients_obj->add();
+			$transient_obj->set_name( 'eml_queue_processed' );
+			$transient_obj->set_message( '<strong>' . __( 'The entry has been processed.', 'external-files-in-media-library' ) . '</strong>' );
+			$transient_obj->set_type( 'success' );
+			$transient_obj->save();
+		}
 
 		// forward user.
 		wp_safe_redirect( wp_get_referer() );
@@ -462,6 +526,28 @@ class Queue {
 	}
 
 	/**
+	 * Return data of single ID in queue.
+	 *
+	 * @param int $id The ID.
+	 *
+	 * @return array
+	 */
+	private function get_url_by_id( int $id ): array {
+		global $wpdb;
+
+		// get the data of the single URL.
+		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A );
+
+		// if query resulted not in an array return an empty array.
+		if ( ! is_array( $result ) ) {
+			return array();
+		}
+
+		// return resulting array with the data.
+		return $result;
+	}
+
+	/**
 	 * Set entry in queue to given state.
 	 *
 	 * @param int    $id The ID to use.
@@ -531,7 +617,7 @@ class Queue {
 	 *
 	 * @return void
 	 */
-	private function db_error_handling( \mysqli_result|bool|int|null $result, string $url ) {
+	private function db_error_handling( \mysqli_result|bool|int|null $result, string $url ): void {
 		global $wpdb;
 
 		// bail if result is not false.
@@ -554,16 +640,55 @@ class Queue {
 		if ( ! class_exists( 'WP_List_Table' ) ) {
 			include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 		}
-		$log = new \ExternalFilesInMediaLibrary\Plugin\Tables\Queue();
-		$log->prepare_items();
+		$queue = new \ExternalFilesInMediaLibrary\Plugin\Tables\Queue();
+		$queue->prepare_items();
 		?>
-		<div class="wrap">
+		<div class="wrap eml-queue-table">
 			<h2><?php echo esc_html__( 'Queue', 'external-files-in-media-library' ); ?></h2>
 			<?php
-			$log->views();
-			$log->display();
+			$queue->views();
+			$queue->display();
 			?>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Uninstall the queue table.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		global $wpdb;
+		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->prefix . 'eml_queue' ) );
+	}
+
+	/**
+	 * Delete entry by request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function delete_entry_by_request(): void {
+		check_admin_referer( 'eml-queue-delete-entry', 'nonce' );
+
+		// get the ID from request.
+		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// delete the entry if id is given.
+		if ( $id > 0 ) {
+			$this->remove_url( $id );
+
+			// show ok message.
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_type( 'success' );
+			$transient_obj->set_name( 'eml_queue_entry_deleted' );
+			$transient_obj->set_message( '<strong>' . __( 'The queue entry has been deleted.', 'external-files-in-media-library' ) . '</strong>' );
+			$transient_obj->save();
+		}
+
+		// redirect the user.
+		wp_safe_redirect( wp_get_referer() );
+		exit;
 	}
 }

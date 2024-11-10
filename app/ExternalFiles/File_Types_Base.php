@@ -15,6 +15,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class File_Types_Base {
 	/**
+	 * Name of the file type.
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
+
+	/**
 	 * Define mime types this object is used for.
 	 *
 	 * @var array|string[]
@@ -116,6 +123,15 @@ class File_Types_Base {
 	public function set_metadata( array $file_data ): void {}
 
 	/**
+	 * Return the object name.
+	 *
+	 * @return string
+	 */
+	public function get_name(): string {
+		return $this->name;
+	}
+
+	/**
 	 * Return the configured size.
 	 *
 	 * @return array
@@ -133,5 +149,32 @@ class File_Types_Base {
 	 */
 	public function set_size( array $size ): void {
 		$this->size = $size;
+	}
+
+	/**
+	 * Return whether this file should be proxied.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_enabled(): bool {
+		return false;
+	}
+
+	/**
+	 * Return true if cache age has been reached its expiration.
+	 *
+	 * @return bool
+	 */
+	public function is_cache_expired(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether this file type has thumbs.
+	 *
+	 * @return bool
+	 */
+	public function has_thumbs(): bool {
+		return false;
 	}
 }

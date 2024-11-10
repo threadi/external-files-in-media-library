@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
  * Uninstall this plugin.
@@ -81,11 +82,11 @@ class Uninstall {
 		}
 
 		// delete files managed by this plugin, if option is enabled for it.
-		if ( get_option( 'eml_delete_on_deinstallation', false ) ) {
+		if ( 1 === absint( get_option( 'eml_delete_on_deinstallation' ) ) ) {
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
 				$external_files_obj->delete_file( $external_file_obj );
 			}
-		} elseif ( get_option( 'eml_switch_on_uninstallation', false ) ) {
+		} elseif ( 1 === absint( get_option( 'eml_switch_on_uninstallation' ) ) ) {
 			// switch hosting of files to local if option is enabled for it.
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
 				// bail if this is not an external file object.
@@ -102,6 +103,10 @@ class Uninstall {
 				$external_file_obj->switch_to_local();
 			}
 		}
+
+		// delete the queue-tables.
+		$files_obj = Queue::get_instance();
+		$files_obj->uninstall();
 
 		// delete options this plugin has used.
 		$options = array(

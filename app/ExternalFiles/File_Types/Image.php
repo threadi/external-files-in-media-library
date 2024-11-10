@@ -18,15 +18,24 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
  */
 class Image extends File_Types_Base {
 	/**
+	 * Name of the file type.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'Image';
+
+	/**
 	 * Define mime types this object is used for.
 	 *
 	 * @var array|string[]
 	 */
 	protected array $mime_types = array(
+		'image/avif',
 		'image/jpeg',
 		'image/jpg',
 		'image/png',
 		'image/gif',
+		'image/webp',
 	);
 
 	/**
@@ -83,5 +92,38 @@ class Image extends File_Types_Base {
 
 		// save the resulting image-data.
 		wp_update_attachment_metadata( $external_file_obj->get_id(), $image_meta );
+	}
+
+	/**
+	 * Return whether this file should be proxied.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_enabled(): bool {
+		return 1 === absint( get_option( 'eml_proxy' ) );
+	}
+
+	/**
+	 * Return true if cache age has been reached its expiration.
+	 *
+	 * @return bool
+	 */
+	public function is_cache_expired(): bool {
+		// bail if no proxy age is set.
+		if ( absint( get_option( 'eml_proxy_max_age' ) ) <= 0 ) {
+			return false;
+		}
+
+		// compare cache file date with max proxy age.
+		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_proxy_max_age' ) ) * 60 * 60 );
+	}
+
+	/**
+	 * Return whether this file type has thumbs.
+	 *
+	 * @return bool
+	 */
+	public function has_thumbs(): bool {
+		return true;
 	}
 }

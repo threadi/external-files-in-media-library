@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Yoast".
+ * File to handle support for plugin "Rank Math".
  *
  * @package external-files-in-media-library
  */
@@ -16,14 +16,14 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base;
 /**
  * Object to handle support for this plugin.
  */
-class Yoast {
+class RankMath {
 
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?Yoast
+	 * @var ?RankMath
 	 */
-	private static ?Yoast $instance = null;
+	private static ?RankMath $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -40,9 +40,9 @@ class Yoast {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return Yoast
+	 * @return RankMath
 	 */
-	public static function get_instance(): Yoast {
+	public static function get_instance(): RankMath {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -56,8 +56,8 @@ class Yoast {
 	 * @return void
 	 */
 	public function init(): void {
-		// bail if Yoast is not active.
-		if ( ! Helper::is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
+		// bail if Rank Math is not active.
+		if ( ! Helper::is_plugin_active( 'seo-by-rank-math/rank-math.php' ) ) {
 			return;
 		}
 
@@ -73,7 +73,7 @@ class Yoast {
 	 * @return bool
 	 */
 	public function do_not_touch_attachment_links(): bool {
-		return method_exists( 'WPSEO_Options', 'get' );
+		return false;
 	}
 
 	/**
@@ -82,7 +82,7 @@ class Yoast {
 	 * @return string
 	 */
 	public function change_description_for_attachment_pages_setting(): string {
-		return __( 'This is handled by Yoast SEO.', 'external-files-in-media-library' );
+		return __( 'This is handled by Rank Math.', 'external-files-in-media-library' );
 	}
 
 	/**

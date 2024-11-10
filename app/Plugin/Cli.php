@@ -25,8 +25,8 @@ class Cli {
 	/**
 	 * Import given URL(s) in the media library.
 	 *
-	 * <URLs>
-	 * : List of URLs to import in media library.
+	 * <URL>
+	 * : URL to import in media library.
 	 *
 	 * [--login=<value>]
 	 * : Set authentication login to use for any added URL.
@@ -37,7 +37,7 @@ class Cli {
 	 * [--queue]
 	 * : Adds the given URL(s) to the queue.
 	 *
-	 * @param array $urls Array of URLs which might be given as parameter on CLI-command.
+	 * @param array $urls Array with URL which might be given as parameter on CLI-command.
 	 * @param array $arguments List of parameter to use for the given URLs.
 	 *
 	 * @return void

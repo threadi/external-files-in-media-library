@@ -10,6 +10,7 @@
 namespace ExternalFilesInMediaLibrary\ThirdParty;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 
 defined( 'ABSPATH' ) || exit;
@@ -73,12 +74,12 @@ class Massedge {
 			// get the external file object.
 			$external_file_obj = Files::get_instance()->get_file( $params['attachment_id'] );
 
-			// check if the file is an external file, an image and if it is really external hosted.
+			// check if the file is an external file, could be proxied and if it is really external hosted.
 			if (
 				$external_file_obj
 				&& $external_file_obj->is_valid()
 				&& false === $external_file_obj->is_locally_saved()
-				&& $external_file_obj->is_image()
+				&& $external_file_obj->get_file_type_obj()->is_proxy_enabled()
 			) {
 				return array();
 			}

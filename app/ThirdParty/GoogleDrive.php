@@ -85,7 +85,7 @@ class GoogleDrive {
 			}
 		}
 
-		// bail on no match.
+		// bail on no match => GoogleDrive URL could be used.
 		if ( ! $match ) {
 			return false;
 		}

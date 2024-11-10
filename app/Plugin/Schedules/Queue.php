@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object for this schedule.
@@ -62,5 +61,14 @@ class Queue extends Schedules_Base {
 
 		// log event.
 		Log::get_instance()->create( __( 'Queue schedule ended.', 'external-files-in-media-library' ), '', 'success', 2 );
+	}
+
+	/**
+	 * Return whether this schedule should be enabled and active according to configuration.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		return 'eml_disable_check' !== get_option( $this->get_interval_option_name() );
 	}
 }

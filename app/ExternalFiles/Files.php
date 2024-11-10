@@ -29,13 +29,6 @@ class Files {
 	private static ?Files $instance = null;
 
 	/**
-	 * Log-object.
-	 *
-	 * @var Log
-	 */
-	private Log $log;
-
-	/**
 	 * The login.
 	 *
 	 * @var string
@@ -59,10 +52,7 @@ class Files {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-		// get log-object.
-		$this->log = Log::get_instance();
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
@@ -103,8 +93,8 @@ class Files {
 		add_filter( 'get_attached_file', array( $this, 'get_attached_file' ), 10, 2 );
 		add_filter( 'image_downsize', array( $this, 'image_downsize' ), 10, 3 );
 		add_action( 'import_end', array( $this, 'import_end' ), 10, 0 );
-		add_filter( 'redirect_canonical', array( $this, 'disable_attachment_page' ), 10, 0 );
-		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ), 10, 0 );
+		add_filter( 'redirect_canonical', array( $this, 'disable_attachment_page' ) );
+		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ) );
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'wp_calculate_image_srcset' ), 10, 5 );
 		add_filter( 'wp_import_post_meta', array( $this, 'set_import_marker_for_attachments' ), 10, 2 );
 		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
@@ -277,6 +267,9 @@ class Files {
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
 	public function add_url( string $url, bool $add_to_queue = false ): bool {
+		// get the log object.
+		$log = Log::get_instance();
+
 		$false = false;
 		/**
 		 * Filter the given URL against custom blacklists.
@@ -288,6 +281,10 @@ class Files {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'eml_blacklist', $false, $url ) ) {
+			// log this event.
+			$log->create( __( 'URL has matched a blacklist entry.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+			// do not import this URL.
 			return false;
 		}
 
@@ -305,7 +302,6 @@ class Files {
 		 * Do nothing if URL is using a not supported tcp protocol.
 		 */
 		if ( ! $protocol_handler_obj ) {
-			Log::get_instance()->create( __( 'Given URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -334,7 +330,10 @@ class Files {
 		 * Do nothing if check of URL resulted in empty file list if queue is not used.
 		 */
 		if ( empty( $files ) && ! $add_to_queue ) {
-			Log::get_instance()->create( __( 'No files found under given URL.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0 );
+			// log event.
+			$log->create( __( 'No files found under given URL.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
+
+			// do not import this URL.
 			return false;
 		}
 
@@ -342,6 +341,10 @@ class Files {
 		 * Do nothing if check of URL resulted in empty list if queue is used.
 		 */
 		if ( empty( $files ) && $add_to_queue ) {
+			// log this event.
+			$log->create( __( 'URL has been added to queue.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+			// do not import this URL.
 			return false;
 		}
 
@@ -384,7 +387,7 @@ class Files {
 			// bail if file is given, but has an error.
 			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
 				/* translators: %1$s will be replaced by an error-code. */
-				Log::get_instance()->create( sprintf( __( 'Given URL results in error during request: <pre>%1$s</pre>', 'external-files-in-media-library' ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+				$log->create( sprintf( __( 'Given URL results in error during request: <pre>%1$s</pre>', 'external-files-in-media-library' ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -436,17 +439,22 @@ class Files {
 			 * Save this file local if it is required.
 			 */
 			if ( false !== $file_data['local'] ) {
+				// log this event.
+				$log->create( __( 'URL will be saved local.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
+
 				// import file as image via WP-own functions.
-				$array = array(
+				$array         = array(
 					'name'     => $title,
 					'type'     => $file_data['mime-type'],
 					'tmp_name' => $file_data['tmp-file'],
 					'error'    => 0,
 					'size'     => $file_data['filesize'],
 				);
-
 				$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
 			} else {
+				// log this event.
+				$log->create( __( 'URL will be stay external, just save the reference in media library.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
+
 				/**
 				 * For all other files: simply create the attachment.
 				 */
@@ -456,7 +464,7 @@ class Files {
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
-				$this->log->create( sprintf( __( 'URL could not be saved because of this error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_json_encode( $attachment_id->errors['upload_error'][0] ) ), $file_data['url'], 'error', 0 );
+				$log->create( sprintf( __( 'URL could not be saved because of this error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_data['url'], 'error' );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -470,7 +478,8 @@ class Files {
 
 			// bail if object could not be loaded.
 			if ( ! $external_file_obj ) {
-				$this->log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_data['url'], 'error', 0 );
+				// log event.
+				$log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_data['url'], 'error' );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -488,7 +497,7 @@ class Files {
 			// set mime-type.
 			$external_file_obj->set_mime_type( $file_data['mime-type'] );
 
-			// set availability-status (true for 'is available', false if not).
+			// set availability-status (true is for 'is available', false if it is not).
 			$external_file_obj->set_availability( true );
 
 			// set filesize.
@@ -503,6 +512,9 @@ class Files {
 
 			// set meta-data for the file if mode is enabled for this.
 			if ( false === $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
+				// log event.
+				$log->create( __( 'Additional data are collected for this not local saved file.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
+
 				$file_type = File_Types::get_instance()->get_type_object_for_file_obj( $external_file_obj );
 				$file_type->set_metadata( $file_data );
 
@@ -511,7 +523,7 @@ class Files {
 			}
 
 			// log that URL has been added as file in media library.
-			$this->log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'], 'success', 0 );
+			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'], 'success', 0 );
 
 			/**
 			 * Run additional tasks after new external file has been added.
@@ -909,7 +921,7 @@ class Files {
 			}
 			if ( $protocol_handler->can_check_availability() ) {
 				?>
-				<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_html__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
+				<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_attr__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
 				<?php
 			}
 			?>
@@ -918,23 +930,23 @@ class Files {
 		<?php
 		if ( false !== $external_file_obj->is_locally_saved() ) {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+			if ( $external_file_obj->get_file_type_obj()->is_proxy_enabled() && $protocol_handler->can_change_hosting() ) {
 				?>
-					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
 			}
 		} else {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $external_file_obj->is_image() && $protocol_handler->can_change_hosting() ) {
+			if ( $external_file_obj->get_file_type_obj()->is_proxy_enabled() && $protocol_handler->can_change_hosting() ) {
 				?>
-					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_html__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
+					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
 			}
 		}
 		?>
 		</li>
 		<?php
-		if ( ( $external_file_obj->is_image() && get_option( 'eml_proxy' ) ) || ( $external_file_obj->is_video() && get_option( 'eml_video_proxy' ) ) ) {
+		if ( $external_file_obj->get_file_type_obj()->is_proxy_enabled() && get_option( 'eml_proxy' ) ) {
 			?>
 			<li>
 				<?php
@@ -955,12 +967,13 @@ class Files {
 		?>
 		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
 		<?php
-		if ( $external_file_obj->is_image() ) {
+		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
 			?>
 			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $this->get_thumbnail_reset_url( $external_file_obj ) ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
 			<?php
 		}
 		?>
+			<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Mime type:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( $external_file_obj->get_mime_type() ); ?></code></li>
 		</ul>
 		<?php
 	}
@@ -1112,13 +1125,14 @@ class Files {
 		if ( $external_file_obj->is_locally_saved() ) {
 			// switch to external and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_external() ) {
+				$result['message'] = __( 'Error during switch.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 
 			// create return message.
 			$result = array(
 				'state'   => 'success',
-				'message' => __( 'File is extern hosted.', 'external-files-in-media-library' ),
+				'message' => __( 'File is now extern hosted.', 'external-files-in-media-library' ),
 			);
 		} else {
 			/**
@@ -1127,6 +1141,7 @@ class Files {
 
 			// switch to local and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_local() ) {
+				$result['message'] = __( 'Error during switch.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 
@@ -1236,10 +1251,10 @@ class Files {
 			return $result;
 		}
 
-		// check if the file is an external file, an image and if it is really external hosted.
+		// check if the file is an external file, is supporting thumbs and if it is really external hosted.
 		if (
 			false === $external_file_obj->is_locally_saved()
-			&& $external_file_obj->is_image()
+			&& $external_file_obj->get_file_type_obj()->has_thumbs()
 		) {
 			// if requested size is a string, get its sizes.
 			if ( is_string( $size ) ) {
@@ -1376,17 +1391,19 @@ class Files {
 	/**
 	 * Disable attachment-pages for external files.
 	 *
-	 * @return void
+	 * @param string $redirect_url The redirect URL to use.
+	 *
+	 * @return string
 	 */
-	public function disable_attachment_page(): void {
+	public function disable_attachment_page( string $redirect_url ): string {
 		// bail if this is not an attachment page.
 		if ( false === is_attachment() ) {
-			return;
+			return $redirect_url;
 		}
 
 		// bail if setting is disabled.
 		if ( 1 !== absint( get_option( 'eml_disable_attachment_pages', 0 ) ) ) {
-			return;
+			return $redirect_url;
 		}
 
 		// get the external files.
@@ -1394,18 +1411,20 @@ class Files {
 
 		// bail if file could not be loaded.
 		if ( ! $external_file_obj ) {
-			return;
+			return $redirect_url;
 		}
 
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
-			return;
+			return $redirect_url;
 		}
 
 		// return 404 page.
 		global $wp_query;
 		$wp_query->set_404();
 		status_header( 404 );
+
+		return $redirect_url;
 	}
 
 	/**
@@ -1429,10 +1448,10 @@ class Files {
 			return $sources;
 		}
 
-		// bail with empty array if this is an image which is external hosted.
+		// bail with empty array if this file type supports thumbs and is external hosted.
 		if (
 			false === $external_file_obj->is_locally_saved()
-			&& $external_file_obj->is_image()
+			&& $external_file_obj->get_file_type_obj()->has_thumbs()
 		) {
 			// return empty array as we can not optimize external images.
 			return array();
@@ -1733,8 +1752,8 @@ class Files {
 	}
 
 	/**
-	 * Check the srcset metadata for external files. Remove 'file' entry if it is not an image as this results in
-	 * possible warnings via @media.php.
+	 * Check the srcset metadata for external files. Remove 'file' entry if file could not have thumbs
+	 * as this results in possible warnings via @media.php.
 	 *
 	 * @param array  $image_meta The meta data.
 	 * @param array  $size_array The size array.
@@ -1753,8 +1772,8 @@ class Files {
 			return $image_meta;
 		}
 
-		// bail if given file is an image.
-		if ( $external_file_obj->is_image() ) {
+		// bail if given file could have thumbs.
+		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
 			return $image_meta;
 		}
 

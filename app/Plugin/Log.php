@@ -90,7 +90,7 @@ class Log {
 		global $wpdb;
 
 		// log only if log-level for the new entry is higher or equal actual setting.
-		if ( ! ( $level >= $this->get_level() ) ) {
+		if ( $level > $this->get_level() ) {
 			return;
 		}
 

@@ -63,6 +63,9 @@ class Proxy {
 	 * @return void
 	 */
 	public function init(): void {
+		// misc.
+		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
+
 		// bail if proxy is not enabled, neither for images nor for videos.
 		if ( 0 === absint( get_option( 'eml_proxy', 0 ) ) && 0 === absint( get_option( 'eml_video_proxy', 0 ) ) ) {
 			return;
@@ -87,9 +90,6 @@ class Proxy {
 		 * Refresh rewrite-cache if requested.
 		 */
 		add_action( 'wp', array( $this, 'do_refresh' ) );
-
-		// misc.
-		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 	}
 
 	/**
@@ -142,17 +142,29 @@ class Proxy {
 			$title = $matches[1] . '.' . $matches[4];
 		}
 
+		// log this event.
+		/* translators: %1$s will be replaced by the detected filename. */
+		Log::get_instance()->create( sprintf( __( 'Proxy tries to load the filename %1$s.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
+
 		// get file object.
 		$external_file_obj = Files::get_instance()->get_file_by_title( $title );
 
 		// bail if no file object could be loaded or the loaded object is not valid.
 		if ( false === $external_file_obj || ( $external_file_obj && false === $external_file_obj->is_valid() ) ) {
+			// log this event.
+			/* translators: %1$s will be replaced by the detected filename. */
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
+
 			// fallback to 404.
 			return $template;
 		}
 
 		// if original file is not cached, do it now.
 		if ( ! $external_file_obj->is_cached() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Proxy will create cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+			// add it to cache.
 			$external_file_obj->add_to_cache();
 		}
 
@@ -161,6 +173,11 @@ class Proxy {
 
 		// bail if file does not exist.
 		if ( ! file_exists( $cached_file_path ) ) {
+			// log this event.
+			/* translators: %1$s will be replaced by the detected filename. */
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load cached file %1$s.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
+
+			// return the template.
 			return $template;
 		}
 
@@ -250,14 +267,14 @@ class Proxy {
 	 * @return void
 	 */
 	private function create_cache_directory( string $path ): void {
-		// bail if file exist.
+		// bail if path exist.
 		if ( file_exists( $path ) ) {
 			return;
 		}
 
 		// create directory and check response.
 		if ( false === wp_mkdir_p( $path ) ) {
-			Log::get_instance()->create( __( 'Error creating cache directory.', 'external-files-in-media-library' ), '', 'error', 0 );
+			Log::get_instance()->create( __( 'Proxy could not create cache directory.', 'external-files-in-media-library' ), '', 'error' );
 		}
 	}
 
@@ -298,6 +315,9 @@ class Proxy {
 				),
 			),
 		);
+
+		// log this event.
+		Log::get_instance()->create( __( 'Proxy cache has been reset via AJAX.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// response with dialog.
 		wp_send_json( $dialog );

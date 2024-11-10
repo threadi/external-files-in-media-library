@@ -108,7 +108,7 @@ class Transients {
 			$transients[ $transient ] = $transient_obj;
 		}
 
-		// return list as array.
+		// return the list of transients as array.
 		return $transients;
 	}
 

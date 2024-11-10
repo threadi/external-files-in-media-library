@@ -23,10 +23,6 @@ select.eml-field-width {
     z-index: 1;
 }
 
-body.settings_page_eml_settings h1 {
-	display: inline-block;
-}
-
 body.settings_page_eml_settings .review-hint-button:after {
 	color: #d4af37;
 	content: "\f155 \f155 \f155 \f155 \f155";
@@ -167,7 +163,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 
 .settings_page_eml_settings #date { width: 120px }
 
-.settings_page_eml_settings #url { width: 320px }
+.settings_page_eml_settings .eml-log-table #url { width: 320px }
 
 .settings_page_eml_settings .current {
 	color: #000;

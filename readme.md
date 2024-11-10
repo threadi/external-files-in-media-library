@@ -57,3 +57,11 @@ Run in main directory:
 ## Generate documentation
 
 `vendor/bin/wp-documentor parse classes --format=markdown --output=doc/hooks.md --prefix=eml`
+
+## Check for WordPress VIP Coding Standards
+
+Hint: this check runs against the VIP-GO-platform which is not our target for this plugin. Many warnings can be ignored.
+
+### Run
+
+`vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=WordPress-VIP-Go .`

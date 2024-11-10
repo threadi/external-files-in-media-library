@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
@@ -50,8 +51,11 @@ class Http extends Protocol_Base {
 	public function check_url( string $url ): bool {
 		// given string is not an url.
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid url.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+
+			// return that given string is not a valid URL.
 			return false;
 		}
 
@@ -126,7 +130,7 @@ class Http extends Protocol_Base {
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by its Mime-Type */
-				Log::get_instance()->create( sprintf( __( 'Given URL response with the not allowed mime-type %1$s.', 'external-files-in-media-library' ), $response_headers['content-type'] ), esc_url( $url ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given URL response with the not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0 );
 				return false;
 			}
 		}
@@ -241,7 +245,7 @@ class Http extends Protocol_Base {
 			// bail if temp file resulted in error.
 			if ( is_wp_error( $tmp_content_file ) ) {
 				/* translators: %1$s by the error in JSON-format */
-				Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error' );
 				return array();
 			}
 
@@ -253,7 +257,7 @@ class Http extends Protocol_Base {
 
 			// bail if saving has been failed.
 			if ( ! $content ) {
-				Log::get_instance()->create( __( 'The presumed directory URL could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'The presumed directory URL could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 				return array();
 			}
 
@@ -271,7 +275,7 @@ class Http extends Protocol_Base {
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
-				Log::get_instance()->create( __( 'The presumed directory URL does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'The presumed directory URL does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 				return array();
 			}
 
@@ -328,7 +332,7 @@ class Http extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error', 0 );
+					Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error' );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -376,19 +380,25 @@ class Http extends Protocol_Base {
 		} else {
 			// check if given file is a local file which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2 );
+				Log::get_instance()->create( __( 'Given URL already exist in media library as local file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2 );
 				return array();
 			}
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library as external file.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
+				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 				return array();
 			}
 
 			// add file to list in queue mode.
 			if ( $this->is_queue_mode() ) {
+				// log event.
+				Log::get_instance()->create( __( 'Given URL has been added to queue.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'info', 2 );
+
+				// add to queue.
 				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
+
+				// return empty array.
 				return array();
 			}
 
@@ -473,7 +483,7 @@ class Http extends Protocol_Base {
 		if ( is_wp_error( $results['tmp-file'] ) ) {
 			// file is available.
 			/* translators: %1$s by the error in JSON-format */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: <code>%1$s</code>', 'external-files-in-media-library' ), wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) ), esc_url( $this->get_url() ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
 
 			// return empty array as we got not the file.
 			return array();
@@ -588,11 +598,8 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// if setting enables local saving for images or videos, file should be saved local.
-		$result = (
-			( 'local' === get_option( 'eml_images_mode', 'external' ) && $external_file_obj->is_image() )
-			|| ( 'local' === get_option( 'eml_video_mode', 'external' ) && $external_file_obj->is_video() )
-		);
+		// if setting enables local, file should be saved local.
+		$result = ! $external_file_obj->is_locally_saved() && $external_file_obj->get_file_type_obj()->is_proxy_enabled();
 		/**
 		 * Filter if a http-file should be saved local or not.
 		 *

@@ -16,6 +16,12 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
  * Object to handle general files.
  */
 class File extends File_Types_Base {
+	/**
+	 * Name of the file type.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'File';
 
 	/**
 	 * Output of proxied file.

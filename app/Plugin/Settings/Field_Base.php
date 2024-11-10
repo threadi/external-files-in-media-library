@@ -51,6 +51,13 @@ class Field_Base {
 	private array $sanitize_callback = array();
 
 	/**
+	 * The setting this field belongs to.
+	 *
+	 * @var Setting|false
+	 */
+	private Setting|false $setting = false;
+
+	/**
 	 * Constructor.
 	 */
 	public function __construct() {}
@@ -118,7 +125,14 @@ class Field_Base {
 	 * @return bool
 	 */
 	public function is_readonly(): bool {
-		return $this->readonly;
+		/**
+		 * Filter the readonly setting for the actual setting.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param bool $readonly The actual value.
+		 * @param Field_Base $this The field object.
+		 */
+		return apply_filters( 'eml_setting_readonly', $this->readonly, $this );
 	}
 
 	/**
@@ -185,5 +199,25 @@ class Field_Base {
 	 */
 	public function get_type_name(): string {
 		return $this->type_name;
+	}
+
+	/**
+	 * Return the setting this field belongs to.
+	 *
+	 * @return Setting|false
+	 */
+	public function get_setting(): Setting|false {
+		return $this->setting;
+	}
+
+	/**
+	 * Set the setting this field belongs to.
+	 *
+	 * @param Setting $setting The setting.
+	 *
+	 * @return void
+	 */
+	public function set_setting( Setting $setting ): void {
+		$this->setting = $setting;
 	}
 }

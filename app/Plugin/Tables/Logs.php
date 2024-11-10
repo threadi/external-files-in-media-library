@@ -10,6 +10,8 @@ namespace ExternalFilesInMediaLibrary\Plugin\Tables;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_List_Table;
@@ -113,8 +115,8 @@ class Logs extends WP_List_Table {
 			'options' => $this->get_item_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
-			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . url_shorten( $item[ $column_name ], 50 ) . '</a>',
-			'log' => nl2br( $item[ $column_name ] ),
+			'url' => $this->get_url( $item[ $column_name ] ),
+			'log' => wp_kses_post( $item[ $column_name ] ),
 			default => '',
 		};
 	}
@@ -211,7 +213,7 @@ class Logs extends WP_List_Table {
 
 		// show filter for requested URL.
 		if ( ! is_null( $requested_url ) ) {
-			$list['url'] = '<span class="current">' . esc_html( url_shorten( $requested_url ) ) . '</span>';
+			$list['url'] = '<span class="current">' . esc_html( Helper::shorten_url( $requested_url ) ) . '</span>';
 		}
 
 		/**
@@ -270,7 +272,35 @@ class Logs extends WP_List_Table {
 			$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
 		}
 
+		// get the corresponding external file object.
+		if ( ! empty( $item['url'] ) ) {
+			$external_file_obj = Files::get_instance()->get_file_by_url( $item['url'] );
+			if ( $external_file_obj instanceof File ) {
+				// link to the attachment edit page.
+				$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( get_edit_post_link( $external_file_obj->get_id() ) ) . '" title="' . esc_attr__( 'Edit entry', 'external-files-in-media-library' ) . '"></a>';
+			}
+		}
+
 		// return the output.
 		return $output;
+	}
+
+	/**
+	 * Show URL:
+	 * - linked if it is a valid URL.
+	 * - otherwise just show it.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	private function get_url( string $url ): string {
+		// if string is not a valid URL just show it.
+		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			return esc_html( $url );
+		}
+
+		// return the linked, but shortened URL.
+		return '<a href="' . esc_url( $url ) . '" target="_blank">' . url_shorten( $url, 50 ) . '</a>';
 	}
 }

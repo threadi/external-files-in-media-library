@@ -3,52 +3,19 @@ jQuery(document).ready(function($) {
      * Add rating hint.
      */
     $('body.settings_page_eml_settings h1.wp-heading-inline').each(function() {
-      let button = document.createElement('a');
-      button.className = 'review-hint-button page-title-action';
-      button.href = emlJsVars.review_url;
-      button.innerHTML = emlJsVars.title_rate_us;
-      button.target = '_blank';
-      this.after(button);
+      let review_button = document.createElement('a');
+      review_button.className = 'review-hint-button page-title-action';
+      review_button.href = efmlJsVars.review_url;
+      review_button.innerHTML = efmlJsVars.title_rate_us;
+      review_button.target = '_blank';
+      this.after(review_button);
+
+      let add_file_button = document.createElement('a');
+      add_file_button.className = 'page-title-action';
+      add_file_button.href = efmlJsVars.add_file_url;
+      add_file_button.innerHTML = efmlJsVars.title_add_file;
+      this.after(add_file_button);
     })
-
-    /**
-     * Add AJAX-functionality to upload new URLs on Media > Add New
-     */
-    $('button.eml_add_external_upload').on('click', function(e) {
-        e.preventDefault();
-
-        // get field value.
-        let urls = $(this).parent().find('.eml_add_external_files').val();
-
-        // do nothing if list is empty.
-        if( urls.length === 0 ) {
-          return;
-        }
-
-        // get queue setting.
-        let add_to_queue = $(this).parent().find('#add_to_queue').is(':checked') ? 1 : 0;
-
-        // get the credentials (optional).
-        let login = $(this).parent().find('#eml_login').val();
-        let password = $(this).parent().find('#eml_password').val();
-
-        // send request.
-        jQuery.ajax({
-            url: emlJsVars.ajax_url,
-            type: 'post',
-            data: {
-                urls: urls,
-                login: login,
-                password: password,
-                add_to_queue: add_to_queue,
-                action: 'eml_add_external_urls',
-                nonce: emlJsVars.urls_nonce
-            },
-            error: function( jqXHR, textStatus, errorThrown ) {
-              eml_ajax_error_dialog( errorThrown )
-            },
-        });
-    });
 
     /**
      * Add AJAX-functionality to recheck the availability of a single file.
@@ -61,30 +28,30 @@ jQuery(document).ready(function($) {
 
         // send request
         jQuery.ajax({
-            url: emlJsVars.ajax_url,
+            url: efmlJsVars.ajax_url,
             type: 'post',
             data: {
                 id: id,
                 action: 'eml_check_availability',
-                nonce: emlJsVars.availability_nonce
+                nonce: efmlJsVars.availability_nonce
             },
             error: function( jqXHR, textStatus, errorThrown ) {
-              eml_ajax_error_dialog( errorThrown )
+              efml_ajax_error_dialog( errorThrown )
             },
             success: function (response) {
               let p = $("#eml_url_file_state");
               let dialog_config = {
                 detail: {
                   className: 'eml',
-                  title: emlJsVars.title_availability_refreshed,
+                  title: efmlJsVars.title_availability_refreshed,
                   texts: [
-                    '<p>' + emlJsVars.text_not_available + '</p>'
+                    '<p>' + efmlJsVars.text_not_available + '</p>'
                   ],
                   buttons: [
                     {
                       'action': 'closeDialog();',
                       'variant': 'primary',
-                      'text': emlJsVars.lbl_ok
+                      'text': efmlJsVars.lbl_ok
                     },
                   ]
                 }
@@ -94,9 +61,9 @@ jQuery(document).ready(function($) {
               }
               else {
                   p.html('<span class="dashicons dashicons-yes-alt"></span> ' + response.message);
-                  dialog_config.detail.texts[0] = '<p>' + emlJsVars.text_is_available + '</p>';
+                  dialog_config.detail.texts[0] = '<p>' + efmlJsVars.text_is_available + '</p>';
               }
-              eml_create_dialog( dialog_config );
+              efml_create_dialog( dialog_config );
             }
         });
     });
@@ -115,46 +82,59 @@ jQuery(document).ready(function($) {
 
         // send request
         jQuery.ajax({
-          url: emlJsVars.ajax_url,
+          url: efmlJsVars.ajax_url,
           type: 'post',
           data: {
             id: id,
             action: 'eml_switch_hosting',
-            nonce: emlJsVars.switch_hosting_nonce
+            nonce: efmlJsVars.switch_hosting_nonce
           },
           error: function( jqXHR, textStatus, errorThrown ) {
-            eml_ajax_error_dialog( errorThrown )
+            efml_ajax_error_dialog( errorThrown )
+          },
+          beforeSend: function() {
+            // show progress.
+            let dialog_config = {
+              detail: {
+                className: 'eml',
+                title: efmlJsVars.title_hosting_change_wait,
+                texts: [
+                  '<p>' + efmlJsVars.text_hosting_change_wait + '</p>'
+                ],
+              }
+            }
+            efml_create_dialog( dialog_config );
           },
           success: function (response) {
             let dialog_config = {
               detail: {
                 className: 'eml',
-                title: emlJsVars.title_hosting_changed,
+                title: efmlJsVars.title_hosting_changed,
                 texts: [
-                  '<p>' + emlJsVars.text_hosting_has_been_changed + '</p>'
+                  '<p>' + efmlJsVars.text_hosting_has_been_changed + '</p>'
                 ],
                 buttons: [
                   {
                     'action': 'location.reload();',
                     'variant': 'primary',
-                    'text': emlJsVars.lbl_ok
+                    'text': efmlJsVars.lbl_ok
                   },
                 ]
               }
             }
             obj.html(response.message);
-            eml_create_dialog( dialog_config );
+            efml_create_dialog( dialog_config );
           }
         });
     })
 
     // save to hide transient-messages via ajax-request
-    $('div[data-dismissible] button.notice-dismiss').on('click',
+    $('div.eml-transient[data-dismissible] button.notice-dismiss').on('click',
         function (event) {
             event.preventDefault();
             let $this = $(this);
             let attr_value, option_name, dismissible_length, data;
-            attr_value = $this.closest('div[data-dismissible]').attr('data-dismissible').split('-');
+            attr_value = $this.closest('div.eml-transient[data-dismissible]').attr('data-dismissible').split('-');
 
             // Remove the dismissible length from the attribute value and rejoin the array.
             dismissible_length = attr_value.pop();
@@ -163,12 +143,12 @@ jQuery(document).ready(function($) {
                 'action': 'dismiss_admin_notice',
                 'option_name': option_name,
                 'dismissible_length': dismissible_length,
-                'nonce': emlJsVars.dismiss_nonce
+                'nonce': efmlJsVars.dismiss_nonce
             };
 
             // run ajax request to save this setting
-            $.post(emlJsVars.ajax_url, data);
-            $this.closest('div[data-dismissible]').hide('slow');
+            $.post(efmlJsVars.ajax_url, data);
+            $this.closest('div.eml-transient[data-dismissible]').hide('slow');
         }
     );
 
@@ -187,7 +167,7 @@ jQuery(document).ready(function($) {
 /**
  * Handling for upload of URLs from textarea in dialog.
  */
-function eml_upload_files() {
+function efml_upload_files() {
   let urls = jQuery( '#external_files' ).val();
 
   // do nothing if list is empty.
@@ -195,20 +175,20 @@ function eml_upload_files() {
     let dialog_config = {
       detail: {
         className: 'eml',
-        title: emlJsVars.title_no_urls,
+        title: efmlJsVars.title_no_urls,
         texts: [
-          '<p>' + emlJsVars.text_no_urls + '</p>'
+          '<p>' + efmlJsVars.text_no_urls + '</p>'
         ],
         buttons: [
           {
             'action': 'edfw_open_dialog("add_eml_files");',
             'variant': 'primary',
-            'text': emlJsVars.lbl_ok
+            'text': efmlJsVars.lbl_ok
           },
         ]
       }
     }
-    eml_create_dialog( dialog_config );
+    efml_create_dialog( dialog_config );
     return;
   }
 
@@ -221,7 +201,7 @@ function eml_upload_files() {
 
   // send request.
   jQuery.ajax({
-    url: emlJsVars.ajax_url,
+    url: efmlJsVars.ajax_url,
     type: 'post',
     data: {
       urls: urls,
@@ -229,17 +209,17 @@ function eml_upload_files() {
       password: password,
       add_to_queue: add_to_queue,
       action: 'eml_add_external_urls',
-      nonce: emlJsVars.urls_nonce
+      nonce: efmlJsVars.urls_nonce
     },
     error: function( jqXHR, textStatus, errorThrown ) {
-      eml_ajax_error_dialog( errorThrown )
+      efml_ajax_error_dialog( errorThrown )
     },
     beforeSend: function() {
       // show progress.
       let dialog_config = {
         detail: {
           className: 'eml',
-          title: emlJsVars.title_import_progress,
+          title: efmlJsVars.title_import_progress,
           progressbar: {
             active: true,
             progress: 0,
@@ -248,10 +228,10 @@ function eml_upload_files() {
           },
         }
       }
-      eml_create_dialog( dialog_config );
+      efml_create_dialog( dialog_config );
 
       // get info about progress.
-      setTimeout(function() { eml_upload_files_get_info() }, emlJsVars.info_timeout);
+      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
     }
   });
 }
@@ -259,16 +239,16 @@ function eml_upload_files() {
 /**
  * Get info about running import of URLs.
  */
-function eml_upload_files_get_info() {
+function efml_upload_files_get_info() {
   jQuery.ajax( {
     type: "POST",
-    url: emlJsVars.ajax_url,
+    url: efmlJsVars.ajax_url,
     data: {
       'action': 'eml_get_external_urls_import_info',
-      'nonce': emlJsVars.get_import_info_nonce
+      'nonce': efmlJsVars.get_import_info_nonce
     },
     error: function( jqXHR, textStatus, errorThrown ) {
-      eml_ajax_error_dialog( errorThrown )
+      efml_ajax_error_dialog( errorThrown )
     },
     success: function (data) {
       let count = parseInt( data[0] );
@@ -288,11 +268,11 @@ function eml_upload_files_get_info() {
        */
       if ( running >= 1 ) {
         setTimeout( function () {
-          eml_upload_files_get_info()
-        }, emlJsVars.info_timeout );
+          efml_upload_files_get_info()
+        }, efmlJsVars.info_timeout );
       }
       else {
-        eml_create_dialog( dialog_config );
+        efml_create_dialog( dialog_config );
       }
     }
   } )
@@ -303,7 +283,7 @@ function eml_upload_files_get_info() {
  *
  * @param config
  */
-function eml_create_dialog( config ) {
+function efml_create_dialog( config ) {
   document.body.dispatchEvent(new CustomEvent("easy-dialog-for-wordpress", config));
 }
 
@@ -328,11 +308,11 @@ function efml_copy_to_clipboard( text ) {
 /**
  * Define dialog for AJAX-errors.
  */
-function eml_ajax_error_dialog( errortext, texts ) {
+function efml_ajax_error_dialog( errortext, texts ) {
   if( errortext === undefined || errortext.length === 0 ) {
     errortext = 'Request Timeout';
   }
-  let message = '<p>' + emlJsVars.txt_error + '</p>';
+  let message = '<p>' + efmlJsVars.txt_error + '</p>';
   message = message + '<ul>';
   if( texts && texts[errortext] ) {
     message = message + '<li>' + texts[errortext] + '</li>';
@@ -345,7 +325,7 @@ function eml_ajax_error_dialog( errortext, texts ) {
   // show dialog.
   let dialog_config = {
     detail: {
-      title: emlJsVars.title_error,
+      title: efmlJsVars.title_error,
       texts: [
         message
       ],
@@ -353,12 +333,12 @@ function eml_ajax_error_dialog( errortext, texts ) {
         {
           'action': 'location.reload();',
           'variant': 'primary',
-          'text': emlJsVars.lbl_ok
+          'text': efmlJsVars.lbl_ok
         }
       ]
     }
   }
-  eml_create_dialog( dialog_config );
+  efml_create_dialog( dialog_config );
 }
 
 /**
@@ -367,16 +347,16 @@ function eml_ajax_error_dialog( errortext, texts ) {
 function efml_reset_proxy() {
   jQuery.ajax( {
     type: "POST",
-    url: emlJsVars.ajax_url,
+    url: efmlJsVars.ajax_url,
     data: {
       'action': 'eml_reset_proxy',
-      'nonce': emlJsVars.reset_proxy_nonce
+      'nonce': efmlJsVars.reset_proxy_nonce
     },
     error: function( jqXHR, textStatus, errorThrown ) {
-      eml_ajax_error_dialog( errorThrown )
+      efml_ajax_error_dialog( errorThrown )
     },
     success: function (dialog_config) {
-      eml_create_dialog( dialog_config );
+      efml_create_dialog( dialog_config );
     }
   } )
 }

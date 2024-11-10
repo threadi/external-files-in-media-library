@@ -100,6 +100,9 @@ class Update {
 	 * @return void
 	 */
 	private function version200(): void {
+		// add option for version of this plugin.
+		add_option( 'efmlVersion', '', '', true );
+
 		// run the same tasks for all settings as if we activate the plugin.
 		Settings::get_instance()->activation();
 

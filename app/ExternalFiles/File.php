@@ -91,35 +91,29 @@ class File {
 	 * @return string
 	 */
 	public function get_url( bool $unproxied = false ): string {
-		// if external URL not known, get it now.
+		// if external URL not known in object, get it now.
 		if ( empty( $this->url ) ) {
 			$this->url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
 		}
 
-		// use local proxy if enabled, this is an image and if we are not in wp-admin.
-		if ( ! empty( $this->url ) && $this->is_image() && 1 === absint( get_option( 'eml_proxy', 0 ) ) && false === $unproxied ) {
-			if ( empty( get_option( 'permalink_structure', '' ) ) ) {
-				// return link for simple permalinks.
-				return trailingslashit( get_home_url() ) . '?' . Proxy::get_instance()->get_slug() . '=' . $this->get_title();
-			}
-
-			// return link for pretty permalinks.
-			return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+		// bail if proxy URL should not be used.
+		if ( $unproxied ) {
+			return $this->url;
 		}
 
-		// use local proxy if enabled, this is a video and if we are not in wp-admin.
-		if ( ! empty( $this->url ) && $this->is_video() && 1 === absint( get_option( 'eml_video_proxy', 0 ) ) && false === $unproxied ) {
-			if ( empty( get_option( 'permalink_structure', '' ) ) ) {
-				// return link for simple permalinks.
-				return trailingslashit( get_home_url() ) . '?' . Proxy::get_instance()->get_slug() . '=' . $this->get_title();
-			}
-
-			// return link for pretty permalinks.
-			return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+		// bail if file is not proxy compatible.
+		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
+			return $this->url;
 		}
 
-		// return normal URL.
-		return $this->url;
+		// if no permalink structure is set, generate a parameterized URL.
+		if ( empty( get_option( 'permalink_structure', '' ) ) ) {
+			// return link for simple permalinks.
+			return trailingslashit( get_home_url() ) . '?' . Proxy::get_instance()->get_slug() . '=' . $this->get_title();
+		}
+
+		// return link for pretty permalinks.
+		return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
 	}
 
 	/**
@@ -134,24 +128,6 @@ class File {
 
 		// set in object.
 		$this->url = $url;
-	}
-
-	/**
-	 * Get the edit-URL for this external file.
-	 *
-	 * @return string
-	 */
-	public function get_edit_url(): string {
-		if ( current_user_can( 'manage_options' ) ) {
-			return add_query_arg(
-				array(
-					'post'   => $this->get_id(),
-					'action' => 'edit',
-				),
-				admin_url( 'post.php' )
-			);
-		}
-		return '';
 	}
 
 	/**
@@ -256,12 +232,12 @@ class File {
 
 	/**
 	 * Return whether this object is valid.
-	 * It must have an url.
+	 * It must have an external URL.
 	 *
 	 * @return bool
 	 */
 	public function is_valid(): bool {
-		return ! empty( $this->get_url() );
+		return ! empty( $this->get_url( true ) );
 	}
 
 	/**
@@ -323,15 +299,6 @@ class File {
 	 *
 	 * @return bool
 	 */
-	public function is_image(): bool {
-		return Helper::is_image_by_mime_type( $this->get_mime_type() );
-	}
-
-	/**
-	 * Return whether this URL-file an image.
-	 *
-	 * @return bool
-	 */
 	public function is_video(): bool {
 		return Helper::is_video_by_mime_type( $this->get_mime_type() );
 	}
@@ -373,15 +340,8 @@ class File {
 			return false;
 		}
 
-		// check for images the age of the cached file and compare it with max age for cached files.
-		if ( $this->is_image() && filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_proxy_max_age', 24 ) ) * 60 * 60 ) ) {
-			// return false as file is to old and should be renewed.
-			return false;
-		}
-
-		// check for videos the age of the cached file and compare it with max age for cached files.
-		if ( $this->is_video() && filemtime( $cached_file ) < ( time() - absint( get_option( 'eml_video_proxy_max_age', 168 ) ) * 60 * 60 ) ) {
-			// return false as file is to old and should be renewed.
+		// check if cached file has reached its max age.
+		if ( $this->get_file_type_obj()->is_cache_expired() ) {
 			return false;
 		}
 
@@ -395,8 +355,8 @@ class File {
 	 * @return void
 	 */
 	public function add_to_cache(): void {
-		// bail if this is not an image or video.
-		if ( ! $this->is_image() && ! $this->is_video() ) {
+		// bail if file type should not be cached in proxy.
+		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
 			return;
 		}
 
@@ -459,11 +419,11 @@ class File {
 	 */
 	public function get_cache_file( array $size = array() ): string {
 		// get filename.
-		$filename = md5( $this->get_url() ) . '.' . $this->get_file_extension();
+		$filename = md5( $this->get_url( true ) ) . '.' . $this->get_file_extension();
 
 		// check size.
 		if ( ! empty( $size ) ) {
-			$filename = md5( $this->get_url() ) . '-' . $size[0] . 'x' . $size[1] . '.' . $this->get_file_extension();
+			$filename = md5( $this->get_url( true ) ) . '-' . $size[0] . 'x' . $size[1] . '.' . $this->get_file_extension();
 		}
 
 		// get path for cache directory.
@@ -692,8 +652,9 @@ class File {
 			$wp_filesystem->copy( $source, $file, true );
 		}
 
-		// add to cache.
-		$this->add_to_cache();
+		// clear cache.
+		$this->delete_cache();
+		$this->delete_thumbs();
 
 		// return true if switch was successfully.
 		return true;
@@ -725,13 +686,13 @@ class File {
 		wp_delete_attachment_files( $this->get_id(), wp_get_attachment_metadata( $this->get_id() ), get_post_meta( $this->get_id(), '_wp_attachment_backup_sizes', true ), get_attached_file( $this->get_id() ) );
 
 		// update attachment setting.
-		update_post_meta( $this->get_id(), '_wp_attached_file', $this->get_url() );
+		update_post_meta( $this->get_id(), '_wp_attached_file', $this->get_url( true ) );
 
 		// set setting to extern.
 		$this->set_is_local_saved( false );
 
-		// delete from cache.
-		$this->delete_cache();
+		// add to cache.
+		$this->add_to_cache();
 
 		// return true if switch was successfully.
 		return true;
@@ -791,5 +752,14 @@ class File {
 			// delete it.
 			$wp_filesystem->delete( $file );
 		}
+	}
+
+	/**
+	 * Return the file type object of this file.
+	 *
+	 * @return File_Types_Base
+	 */
+	public function get_file_type_obj(): File_Types_Base {
+		return File_Types::get_instance()->get_type_object_for_file_obj( $this );
 	}
 }

@@ -162,6 +162,7 @@ external files by this plugin.
 * Added support for file-URL (to import from local server)
 * Added support for credentials for each tcp-protocol
 * Added wrapper to support third party plugins or platforms, e.g. Imgur or Google Drive
+* Added support for Rank Math
 * Added warning about old PHP-versions
 * Added option to switch external files to local hosting during uninstallation of the plugin
 * Added WP CLI option to switch hosting of all files to local or external
@@ -174,7 +175,7 @@ external files by this plugin.
 * Added a handful help texts for WordPress-own help system
 * Added multiple new hooks
 * Added statistic about used files.
-* Added warning regarding the GPRD of the EU
+* Added warning regarding the GPRD of the EU (could be disabled)
 * Compatible with WordPress 6.7
 * External files which are not provided via SSL will be saved local if actual website is using SSL
 * Extended WP CLI support with documentation, progressbar, states and arguments

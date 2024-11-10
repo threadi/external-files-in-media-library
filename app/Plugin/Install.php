@@ -59,6 +59,9 @@ class Install {
 	public function activation(): void {
 		define( 'EFML_ACTIVATION_RUNNING', 1 );
 
+		// add option for version of this plugin.
+		add_option( 'efmlVersion', '', '', true );
+
 		// initialize Log-database-table.
 		Log::get_instance()->install();
 

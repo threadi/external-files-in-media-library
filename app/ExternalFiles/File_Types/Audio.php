@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle video files.
+ * File to handle audio files.
  *
  * @package external-files-in-media-library
  */
@@ -13,15 +13,15 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
 
 /**
- * Object to handle videos.
+ * Object to handle audios.
  */
-class Video extends File_Types_Base {
+class Audio extends File_Types_Base {
 	/**
 	 * Name of the file type.
 	 *
 	 * @var string
 	 */
-	protected string $name = 'Video';
+	protected string $name = 'Audio';
 
 	/**
 	 * Define mime types this object is used for.
@@ -29,12 +29,10 @@ class Video extends File_Types_Base {
 	 * @var array|string[]
 	 */
 	protected array $mime_types = array(
-		'video/mp4',
-		'video/x-msvideo',
-		'video/mpeg',
-		'video/ogg',
-		'video/webm',
-		'video/3gpp',
+		'audio/mpeg',
+		'audio/aac',
+		'audio/ogg',
+		'audio/webm',
 	);
 
 	/**
@@ -101,7 +99,7 @@ class Video extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 1 === absint( get_option( 'eml_video_proxy' ) );
+		return 1 === absint( get_option( 'eml_audio_proxy' ) );
 	}
 
 	/**
@@ -111,11 +109,11 @@ class Video extends File_Types_Base {
 	 */
 	public function is_cache_expired(): bool {
 		// bail if no proxy age is set.
-		if ( absint( get_option( 'eml_video_proxy_max_age' ) ) <= 0 ) {
+		if ( absint( get_option( 'eml_audio_proxy_max_age' ) ) <= 0 ) {
 			return false;
 		}
 
 		// compare cache file date with max proxy age.
-		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_video_proxy_max_age', 168 ) ) * 60 * 60 );
+		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_audio_proxy_max_age', 24 ) ) * 60 * 60 );
 	}
 }

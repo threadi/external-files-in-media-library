@@ -25,18 +25,23 @@ class File_Types {
 	private static ?File_Types $instance = null;
 
 	/**
+	 * List of files.
+	 *
+	 * @var array
+	 */
+	private array $files = array();
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -58,6 +63,7 @@ class File_Types {
 	 */
 	private function get_file_types(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Audio',
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File',
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image',
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Video',
@@ -89,10 +95,20 @@ class File_Types {
 			return new File_Types\File( $external_file_obj );
 		}
 
+		// use cached object.
+		if ( ! empty( $this->files[ $external_file_obj->get_id() ] ) ) {
+			return $this->files[ $external_file_obj->get_id() ];
+		}
+
 		// check each file type for compatibility with the given file.
 		foreach ( $this->get_file_types() as $file_type ) {
 			// bail if file type is not a string.
 			if ( ! is_string( $file_type ) ) {
+				continue;
+			}
+
+			// bail if object does not exist.
+			if ( ! class_exists( $file_type ) ) {
 				continue;
 			}
 
@@ -109,14 +125,27 @@ class File_Types {
 				continue;
 			}
 
+			// log this event.
+			/* translators: %1$s will be replaced by the type name (e.g. "Images"). */
+			Log::get_instance()->create( sprintf( __( 'File has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+			// add to the list.
+			$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
+
 			// return this object.
 			return $file_type_obj;
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj->get_url(), 'info', 2 );
+		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 1 );
+
+		// get object.
+		$file_type_obj = new File_Types\File( $external_file_obj );
+
+		// add to the list.
+		$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
 
 		// return the default file object if nothing matches.
-		return new File_Types\File( $external_file_obj );
+		return $file_type_obj;
 	}
 }
