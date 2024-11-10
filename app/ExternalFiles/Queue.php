@@ -312,7 +312,7 @@ class Queue {
 
 		// log event.
 		/* translators: %1$d will be replaced by a number. */
-		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue ended.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue ended.', 'Processing the import of %1$d URLs from queue ended.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
 	}
 
 	/**
@@ -627,7 +627,7 @@ class Queue {
 
 		// log this event.
 		/* translators: %1$s is replaced by an error-code. */
-		Log::get_instance()->create( sprintf( __( 'Database-Error: %1$s', 'external-files-in-media-library' ), wp_json_encode( $wpdb->last_error ) ), $url, 'error', 0 );
+		Log::get_instance()->create( sprintf( __( 'Database-Error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $wpdb->last_error ) . '</code>' ), $url, 'error', 0 );
 	}
 
 	/**

@@ -298,7 +298,7 @@ class Settings {
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
-				'title'       => __( 'Switch external files  to local hosting during uninstallation', 'external-files-in-media-library' ),
+				'title'       => __( 'Switch external files to local hosting during uninstallation', 'external-files-in-media-library' ),
 				'description' => __( 'If this option is enabled all external files will be saved local during uninstallation of this plugin.', 'external-files-in-media-library' ),
 			)
 		);

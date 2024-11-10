@@ -53,7 +53,7 @@ class Http extends Protocol_Base {
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid url.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
 
 			// return that given string is not a valid URL.
 			return false;

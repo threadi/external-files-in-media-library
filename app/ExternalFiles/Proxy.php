@@ -153,7 +153,7 @@ class Proxy {
 		if ( false === $external_file_obj || ( $external_file_obj && false === $external_file_obj->is_valid() ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Proxy could not load load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
 
 			// fallback to 404.
 			return $template;
