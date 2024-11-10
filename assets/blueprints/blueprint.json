@@ -22,6 +22,10 @@
             }
         },
         {
+            "step": "runPHP",
+            "code": "<?php\nrequire '/wordpress/wp-load.php';\n\nupdate_option( 'eml_allowed_roles', array( 'administrator' ) );\\ExternalFilesInMediaLibrary\\Plugin\\Helper::set_capabilities(get_option( 'eml_allowed_roles' ));"
+        },
+        {
             "step": "login",
             "username": "admin",
             "password": "password"
