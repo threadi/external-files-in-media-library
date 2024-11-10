@@ -116,6 +116,7 @@ class Uninstall {
 			'eml_import_title',
 			'eml_import_errors',
 			'eml_transients',
+			'efmlVersion',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );

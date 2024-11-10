@@ -195,3 +195,4 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 
 = 2.0.1 =
 * Small optimizations on texts for better translations
+* Fixed update handler for WordPress 6.7
