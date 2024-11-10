@@ -8,9 +8,9 @@ The plugin provides a number of WP CLI commands.
 
 ## Import
 
-`wp eml import [URLs] [--login=<login> --password=<password>]`
+`wp eml import [URL] [--login=<login> --password=<password>]`
 
-* You can specify any number of URLs whose protocols are supported by the plugin here.
+* You can specify a URL whose protocol are supported by the plugin.
 * The optional access data is used for each of these URLs.
 
 ## Delete
