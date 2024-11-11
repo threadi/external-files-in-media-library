@@ -49,17 +49,7 @@ class Update {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'plugins_loaded', array( $this, 'run' ) );
-	}
-
-	/**
-	 * Wrapper to run all version-specific updates, which are in this class.
-	 *
-	 * @return void
-	 */
-	public static function run_all_updates(): void {
-		$obj = self::get_instance();
-		$obj->version200();
+		add_action( 'init', array( $this, 'run' ) );
 	}
 
 	/**

@@ -679,7 +679,7 @@ class Forms {
 			}
 
 			// add credentials fields.
-			$fields[] = '<details><summary>' . __( 'Add credentials to access this URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
+			$fields[] = '<details><summary>' . __( 'Add credentials to access this URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
 			/**
 			 * Filter the fields for the dialog.

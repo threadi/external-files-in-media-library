@@ -387,7 +387,7 @@ class Files {
 			// bail if file is given, but has an error.
 			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
 				/* translators: %1$s will be replaced by an error-code. */
-				$log->create( sprintf( __( 'Given URL results in error during request: <pre>%1$s</pre>', 'external-files-in-media-library' ), wp_json_encode( $file_data['tmp-file'] ) ), esc_url( $url ), 'error', 0 );
+				$log->create( sprintf( __( 'Given URL results in error during request: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $file_data['tmp-file'] ) . '</code>' ), esc_url( $url ), 'error', 0 );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
