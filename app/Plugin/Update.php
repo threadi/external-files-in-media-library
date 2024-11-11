@@ -78,6 +78,7 @@ class Update {
 				define( 'EFML_UPDATE_RUNNING', 1 );
 			}
 			$this->version200();
+			$this->version201();
 
 			// save new plugin-version in DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -90,13 +91,36 @@ class Update {
 	 * @return void
 	 */
 	private function version200(): void {
-		// add option for version of this plugin.
-		add_option( 'efmlVersion', '', '', true );
+		if ( ! get_option( 'efmlVersion', false ) ) {
+			// add option for version of this plugin.
+			add_option( 'efmlVersion', '', '', true );
+		}
 
 		// run the same tasks for all settings as if we activate the plugin.
 		Settings::get_instance()->activation();
+	}
 
-		// hide GPRD-hint for old installations.
-		update_option( 'eml_disable_gprd_warning', 1 );
+	/**
+	 * To run on update to version 2.0.1 or newer.
+	 *
+	 * @return void
+	 */
+	private function version201(): void {
+		// get actual capabilities.
+		$caps = get_option( 'eml_allowed_roles' );
+
+		// check for array.
+		if ( ! is_array( $caps ) ) {
+			$caps = array();
+		}
+
+		// if list is empty, set the defaults.
+		if ( empty( $caps ) ) {
+			$caps = array( 'administrator', 'editor' );
+			update_option( 'eml_allowed_roles', $caps );
+		}
+
+		// set capabilities.
+		Helper::set_capabilities( $caps );
 	}
 }
