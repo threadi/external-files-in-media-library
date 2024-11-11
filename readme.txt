@@ -195,5 +195,7 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 
 = 2.0.1 =
 * Small optimizations on texts for better translations
+* GPRD-hint is now also shown for old installations if it is not disabled
 * Fixed update handler for WordPress 6.7
 * Fixed setting of capabilities for Playground
+* Fixed setting of capabilities on update
