@@ -29,7 +29,7 @@ Argument | Type | Description
 `$url` |  | 
 `$files` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 366](ExternalFiles/Files.php#L366-L369)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 367](ExternalFiles/Files.php#L367-L370)
 
 ### `eml_before_file_save`
 
@@ -47,7 +47,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 379](ExternalFiles/Files.php#L379-L385)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 380](ExternalFiles/Files.php#L380-L386)
 
 ### `eml_file_import_before_save`
 
@@ -65,7 +65,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 429](ExternalFiles/Files.php#L429-L436)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 430](ExternalFiles/Files.php#L430-L437)
 
 ### `eml_after_file_save`
 
@@ -84,7 +84,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 528](ExternalFiles/Files.php#L528-L535)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 529](ExternalFiles/Files.php#L529-L536)
 
 ### `eml_file_delete`
 
@@ -102,7 +102,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 567](ExternalFiles/Files.php#L567-L573)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 568](ExternalFiles/Files.php#L568-L574)
 
 ### `eml_sftp_directory_import_start`
 
@@ -1070,7 +1070,7 @@ Argument | Type | Description
 `$url` |  | 
 `$attachment_id` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 177](ExternalFiles/Files.php#L177-L177)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 178](ExternalFiles/Files.php#L178-L178)
 
 ### `eml_blacklist`
 
@@ -1089,7 +1089,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 274](ExternalFiles/Files.php#L274-L283)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 275](ExternalFiles/Files.php#L275-L284)
 
 ### `eml_file_import_user`
 
@@ -1108,7 +1108,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 356](ExternalFiles/Files.php#L356-L364)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 357](ExternalFiles/Files.php#L357-L365)
 
 ### `eml_file_import_title`
 
@@ -1128,7 +1128,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 399](ExternalFiles/Files.php#L399-L408)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 400](ExternalFiles/Files.php#L400-L409)
 
 ### `eml_file_import_attachment`
 
@@ -1138,7 +1138,7 @@ Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 399](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$post_array` | `string` | The attachment settings.
+`$post_array` | `array` | The attachment settings.
 `$file_data['url']` |  | 
 `$file_data` | `array` | List of file settings detected by importer.
 
@@ -1148,7 +1148,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 418](ExternalFiles/Files.php#L418-L427)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 419](ExternalFiles/Files.php#L419-L428)
 
 ### `eml_tcp_protocols`
 
@@ -1198,6 +1198,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
 `$file_path` |  | 
+`$response_headers` | `array` | The response header.
 
 **Changelog**
 
@@ -1205,7 +1206,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 266](ExternalFiles/Protocols/Sftp.php#L266-L274)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 271](ExternalFiles/Protocols/Sftp.php#L271-L280)
 
 ### `eml_external_file_infos`
 
@@ -1217,6 +1218,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
 `$file_path` |  | 
+`$response_headers` | `array` | The response header.
 
 **Changelog**
 
@@ -1224,7 +1226,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 203](ExternalFiles/Protocols/File.php#L203-L211)
+Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 208](ExternalFiles/Protocols/File.php#L208-L217)
 
 ### `eml_check_url`
 
@@ -1335,6 +1337,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
 `$url` | `string` | The requested external URL.
+`$response_headers` | `array` | The response header.
 
 **Changelog**
 
@@ -1342,7 +1345,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 492](ExternalFiles/Protocols/Http.php#L492-L502)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 501](ExternalFiles/Protocols/Http.php#L501-L512)
 
 ### `eml_http_ssl`
 
@@ -1353,7 +1356,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 589](ExternalFiles/Protocols/Http.php#L589-L589)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 599](ExternalFiles/Protocols/Http.php#L599-L599)
 
 ### `eml_http_save_local`
 
@@ -1372,7 +1375,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 603](ExternalFiles/Protocols/Http.php#L603-L610)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 613](ExternalFiles/Protocols/Http.php#L613-L620)
 
 ### `eml_http_ssl`
 
@@ -1383,7 +1386,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 641](ExternalFiles/Protocols/Http.php#L641-L641)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 651](ExternalFiles/Protocols/Http.php#L651-L651)
 
 ### `eml_http_save_local`
 
@@ -1402,7 +1405,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 647](ExternalFiles/Protocols/Http.php#L647-L654)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 657](ExternalFiles/Protocols/Http.php#L657-L664)
 
 ### `eml_http_header_args`
 
@@ -1420,7 +1423,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 678](ExternalFiles/Protocols/Http.php#L678-L684)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 688](ExternalFiles/Protocols/Http.php#L688-L694)
 
 ### `eml_http_states`
 
@@ -1439,7 +1442,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 710](ExternalFiles/Protocols/Http.php#L710-L716)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 720](ExternalFiles/Protocols/Http.php#L720-L726)
 
 ### `eml_check_url`
 
@@ -1470,6 +1473,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
 `$file_path` |  | 
+`$response_headers` | `array` | The response header.
 
 **Changelog**
 
@@ -1477,7 +1481,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 335](ExternalFiles/Protocols/Ftp.php#L335-L343)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 340](ExternalFiles/Protocols/Ftp.php#L340-L349)
 
 ### `eml_protocols`
 
