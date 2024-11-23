@@ -115,6 +115,7 @@ class Files {
 		add_action( 'eml_http_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
+		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -420,7 +421,7 @@ class Files {
 			 *
 			 * @since 2.0.0 Available since 2.0.0
 			 *
-			 * @param string $post_array     The attachment settings.
+			 * @param array $post_array     The attachment settings.
 			 * @param string $url       The requested external URL.
 			 * @param array  $file_data List of file settings detected by importer.
 			 */
@@ -1782,5 +1783,33 @@ class Files {
 
 		// return resulting meta.
 		return $image_meta;
+	}
+
+	/**
+	 * Add file date to post array to set the date of the external file.
+	 *
+	 * @param array  $post_array The attachment settings.
+	 * @param string $url        The requested external URL.
+	 * @param array  $file_data  List of file settings detected by importer.
+	 *
+	 * @return array
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_file_date( array $post_array, string $url, array $file_data ): array {
+		// bail if setting is disabled.
+		if ( 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
+			return $post_array;
+		}
+
+		// bail if no last-modified is given.
+		if ( empty( $file_data['last-modified'] ) ) {
+			return $post_array;
+		}
+
+		// add the last-modified date.
+		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', $file_data['last-modified'] );
+
+		// return the resulting array.
+		return $post_array;
 	}
 }

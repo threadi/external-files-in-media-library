@@ -220,12 +220,13 @@ class Sftp extends Protocol_Base {
 	private function get_url_info( string $file_path, WP_Filesystem_SSH2 $ssh_connection ): array {
 		// initialize the file infos array.
 		$results = array(
-			'title'     => basename( $file_path ),
-			'filesize'  => 0,
-			'mime-type' => '',
-			'tmp-file'  => '',
-			'local'     => true,
-			'url'       => $file_path,
+			'title'         => basename( $file_path ),
+			'filesize'      => 0,
+			'mime-type'     => '',
+			'tmp-file'      => '',
+			'local'         => true,
+			'url'           => $file_path,
+			'last-modified' => '',
 		);
 
 		// bail if file does not exist.
@@ -263,6 +264,10 @@ class Sftp extends Protocol_Base {
 		// get the size.
 		$results['filesize'] = wp_filesize( $temp_file );
 
+		// get the last modified date.
+		$results['last-modified'] = $ssh_connection->mtime( $file_path );
+
+		$response_headers = array();
 		/**
 		 * Filter the data of a single file during import.
 		 *
@@ -270,8 +275,9 @@ class Sftp extends Protocol_Base {
 		 *
 		 * @param array  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
+		 * @param array $response_headers The response header.
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $file_path );
+		return apply_filters( 'eml_external_file_infos', $results, $file_path, $response_headers );
 	}
 
 	/**
