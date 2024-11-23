@@ -306,6 +306,20 @@ class Settings {
 		$setting->set_default( 0 );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_use_file_dates' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Use external file dates', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used.', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
 		// get user roles.
 		$user_roles = array();
 		if ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) {

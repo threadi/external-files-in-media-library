@@ -6,7 +6,7 @@ Tested up to: 6.7
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 
 Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
 
@@ -199,3 +199,7 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 * Fixed update handler for WordPress 6.7
 * Fixed setting of capabilities for Playground
 * Fixed setting of capabilities on update
+
+= 2.0.2 =
+* Added option to use the external file date instead of the import date
+* Fixed hook documentations

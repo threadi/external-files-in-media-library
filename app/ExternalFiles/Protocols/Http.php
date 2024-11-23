@@ -449,11 +449,12 @@ class Http extends Protocol_Base {
 
 		// initialize basic array for file data.
 		$results = array(
-			'title'     => basename( $url ),
-			'filesize'  => 0,
-			'mime-type' => '',
-			'local'     => false,
-			'url'       => $url,
+			'title'         => basename( $url ),
+			'filesize'      => 0,
+			'mime-type'     => '',
+			'local'         => false,
+			'url'           => $url,
+			'last-modified' => '',
 		);
 
 		// set file size in result-array.
@@ -472,6 +473,14 @@ class Http extends Protocol_Base {
 
 			// set local to true, if requirements match.
 			$results['local'] = $this->url_should_be_saved_local( $url, $results['mime-type'] );
+		}
+
+		// set last modified, if given.
+		if ( ! empty( $response_headers['last-modified'] ) ) {
+			$last_modified = strtotime( $response_headers['last-modified'] );
+			if ( $last_modified ) {
+				$results['last-modified'] = $last_modified;
+			}
 		}
 
 		// download file as temporary file for further analyses.
@@ -496,10 +505,11 @@ class Http extends Protocol_Base {
 		 *
 		 * @param array  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
+		 * @param array $response_headers The response header.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $url );
+		return apply_filters( 'eml_external_file_infos', $results, $url, $response_headers );
 	}
 
 	/**
