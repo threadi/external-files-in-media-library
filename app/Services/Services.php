@@ -2,27 +2,27 @@
 /**
  * This file contains the handling of third party support we provide.
  *
- * This could be another WP-plugin we adapt.
+ * This could be an external file platform we adapt.
  *
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\ThirdParty;
+namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle third party support.
+ * Object to handle support for specific services.
  */
-class ThirdPartySupport {
+class Services {
 
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?ThirdPartySupport
+	 * @var ?Services
 	 */
-	private static ?ThirdPartySupport $instance = null;
+	private static ?Services $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -39,9 +39,9 @@ class ThirdPartySupport {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return ThirdPartySupport
+	 * @return Services
 	 */
-	public static function get_instance(): ThirdPartySupport {
+	public static function get_instance(): Services {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -55,7 +55,7 @@ class ThirdPartySupport {
 	 * @return void
 	 */
 	public function init(): void {
-		foreach ( $this->get_third_party_support() as $class_name ) {
+		foreach ( $this->get_services() as $class_name ) {
 			// bail if class does not exist.
 			if ( ! class_exists( $class_name ) ) {
 				continue;
@@ -68,27 +68,24 @@ class ThirdPartySupport {
 	}
 
 	/**
-	 * Return list of third party support we implement.
+	 * Return list of services support we implement.
 	 *
 	 * @return array
 	 */
-	private function get_third_party_support(): array {
+	private function get_services(): array {
 		$list = array(
-			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
-			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
-			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
-			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
-			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
-			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
-			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
+			'ExternalFilesInMediaLibrary\Services\Imgur',
+			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
+			'ExternalFilesInMediaLibrary\Services\Vimeo',
+			'ExternalFilesInMediaLibrary\Services\Youtube',
 		);
 
 		/**
 		 * Filter the list of third party support.
 		 *
-		 * @since 2.0.0 Available since 2.0.0.
+		 * @since 2.1.0 Available since 2.1.0.
 		 * @param array $list List of third party support.
 		 */
-		return apply_filters( 'eml_third_party_support', $list );
+		return apply_filters( 'eml_services_support', $list );
 	}
 }

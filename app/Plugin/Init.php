@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
+use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
 
 /**
@@ -65,6 +66,9 @@ class Init {
 
 		// initialize the settings.
 		Settings::get_instance()->init();
+
+		// enable services we support.
+		Services::get_instance()->init();
 
 		// enable third party support.
 		ThirdPartySupport::get_instance()->init();

@@ -229,6 +229,8 @@ class Protocol_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'eml_duplicate_check', $false, $url ) ) {
 			return false;

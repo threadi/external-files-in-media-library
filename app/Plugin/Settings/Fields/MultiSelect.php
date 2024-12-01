@@ -61,7 +61,7 @@ class MultiSelect extends Field_Base {
 		$field = $setting->get_field();
 
 		// get values.
-		$values = (array) get_option( $setting->get_name(), '' );
+		$values = (array) get_option( $setting->get_name(), array() );
 
 		?>
 		<select multiple="multiple" id="<?php echo esc_attr( $setting->get_name() ); ?>" name="<?php echo esc_attr( $setting->get_name() ); ?>[]" class="eml-field-width" title="<?php echo esc_attr( $field->get_title() ); ?>">

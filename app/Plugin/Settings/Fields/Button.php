@@ -83,7 +83,12 @@ class Button extends Field_Base {
 
 		// output.
 		?>
-		<a href="<?php echo esc_url( $this->get_button_url() ); ?>"<?php echo wp_kses_post( $this->get_custom_attributes() ); ?> class="button button-primary<?php echo esc_attr( $this->get_classes() ); ?>"><?php echo esc_html( $this->get_button_title() ); ?></a>
+		<a href="<?php echo esc_url( $this->get_button_url() ); ?>"<?php echo wp_kses_post( $this->get_custom_attributes() ); ?> class="button button-primary
+							<?php
+							echo esc_attr( $this->get_classes() );
+							echo ( $this->is_readonly() ? ' disabled' : '' );
+							?>
+		"><?php echo esc_html( $this->get_button_title() ); ?></a>
 		<?php
 
 		// show optional description for this checkbox.

@@ -6,7 +6,7 @@ Tested up to: 6.7
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Stable tag: 2.0.2
+Stable tag: 2.1.0
 
 Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
 
@@ -203,3 +203,13 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 = 2.0.2 =
 * Added option to use the external file date instead of the import date
 * Fixed hook documentations
+
+= 2.1.0 =
+* Added possibility to add YouTube- and Vimeo-videos as external files
+* Updated dependencies
+* Fixed potential error with import of YouTube videos
+* Fixed output of hint it file is not available
+
+= Known Issues =
+* Local saved Youtube-Video could not be embedded via Elementor
+* Youtube-Preview in Block Editor not working (but in frontend it does)

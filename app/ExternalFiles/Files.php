@@ -915,7 +915,7 @@ class Files {
 				<span id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
 					<?php
 					/* translators: %1$s will be replaced by the URL for the logs */
-					printf( esc_html__( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) );
+					echo wp_kses_post( sprintf( __( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) ) );
 					?>
 					</span>
 				<?php
