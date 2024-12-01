@@ -220,6 +220,15 @@ class Http extends Protocol_Base {
 			 */
 			$results = apply_filters( 'eml_filter_url_response', array(), $this->get_url() );
 			if ( ! empty( $results ) ) {
+				// bail if URL is already in media library.
+				if ( $this->check_for_duplicate( $this->get_url() ) ) {
+					Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error' );
+
+					// return empty array to prevent import of this URL.
+					return array();
+				}
+
+				// return the result as array for import this URL.
 				return array( $results );
 			}
 

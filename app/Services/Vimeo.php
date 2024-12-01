@@ -85,7 +85,7 @@ class Vimeo {
 			'mime-type' => 'video/mp4',
 			'local'     => false,
 			'url'       => $url,
-			'tmp-file' => ''
+			'tmp-file'  => '',
 		);
 	}
 
@@ -99,7 +99,7 @@ class Vimeo {
 	 */
 	public function prevent_proxied_url( bool $result, File $external_file_object ): bool {
 		// bail if file is not a Vimeo-video.
-		if( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
+		if ( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
 			return $result;
 		}
 
@@ -128,12 +128,12 @@ class Vimeo {
 	 */
 	public function render_video_block( string $block_content, array $block ): string {
 		// bail if this is not core/video.
-		if( 'core/video' !== $block['blockName'] ) {
+		if ( 'core/video' !== $block['blockName'] ) {
 			return $block_content;
 		}
 
 		// bail if id is not given.
-		if( empty( $block['attrs']['id'] ) ) {
+		if ( empty( $block['attrs']['id'] ) ) {
 			return $block_content;
 		}
 
@@ -141,7 +141,7 @@ class Vimeo {
 		$attachment_id = absint( $block['attrs']['id'] );
 
 		// bail if ID is not given.
-		if( 0 === $attachment_id ) {
+		if ( 0 === $attachment_id ) {
 			return $block_content;
 		}
 
@@ -149,12 +149,12 @@ class Vimeo {
 		$external_file_object = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if file is not an external file.
-		if( ! $external_file_object ) {
+		if ( ! $external_file_object ) {
 			return $block_content;
 		}
 
 		// bail if file is not a Vimeo file.
-		if( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
+		if ( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
 			return $block_content;
 		}
 
@@ -167,9 +167,12 @@ class Vimeo {
 
 		// get output.
 		ob_start();
-		?><figure><?php
+		?><figure>
+		<?php
 		require_once Templates::get_instance()->get_template( 'vimeo.php' );
-		?></figure><?php
+		?>
+		</figure>
+		<?php
 		$content = ob_get_contents();
 		ob_end_clean();
 
@@ -187,9 +190,9 @@ class Vimeo {
 	 */
 	private function get_embed_url( string $vimeo_url ): string {
 		// get the ID from given URL.
-		if( preg_match('/\/\/(www\.)?vimeo.com\/(\d+)($|\/)/', $vimeo_url,$matches ) ) {
+		if ( preg_match( '/\/\/(www\.)?vimeo.com\/(\d+)($|\/)/', $vimeo_url, $matches ) ) {
 			// bail if second match does not be the ID.
-			if( 0 === absint( $matches[2] ) ) {
+			if ( 0 === absint( $matches[2] ) ) {
 				return $vimeo_url;
 			}
 
@@ -214,12 +217,12 @@ class Vimeo {
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return $html;
 		}
 
 		// bail if this is not a Vimeo video.
-		if( ! $this->is_vimeo_video( $external_file_obj->get_url( true ) ) ) {
+		if ( ! $this->is_vimeo_video( $external_file_obj->get_url( true ) ) ) {
 			return $html;
 		}
 
@@ -240,19 +243,19 @@ class Vimeo {
 		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return '';
 		}
 
 		// get width.
 		$size_w = 560;
-		if( ! empty( $attributes['width'] ) ) {
+		if ( ! empty( $attributes['width'] ) ) {
 			$size_w = $attributes['width'];
 		}
 
 		// get height.
 		$size_h = 320;
-		if( ! empty( $attributes['height'] ) ) {
+		if ( ! empty( $attributes['height'] ) ) {
 			$size_h = $attributes['height'];
 		}
 

@@ -190,3 +190,4 @@ body.settings_page_eml_settings .copied:after {
 	z-index: 2;
 }
 
+.form-table .settings_page_eml_settings th { padding: 8px 10px }

@@ -111,7 +111,7 @@ class File {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $this ) ) {
+		if ( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $this ) ) {
 			return $this->url;
 		}
 

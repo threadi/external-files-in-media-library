@@ -10,4 +10,4 @@
  * @package external-files-in-media-library
  */
 
-?><iframe width="<?php echo absint($size_w); ?>" height="<?php echo absint( $size_h ); ?>" src="<?php echo esc_url( $url ); ?>" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+?><iframe width="<?php echo absint( $size_w ); ?>" height="<?php echo absint( $size_h ); ?>" src="<?php echo esc_url( $url ); ?>" title="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

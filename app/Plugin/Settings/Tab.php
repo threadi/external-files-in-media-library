@@ -148,40 +148,6 @@ class Tab {
 	}
 
 	/**
-	 * Add single setting to this tab.
-	 *
-	 * @param string|Setting $setting The settings object or its internal name.
-	 *
-	 * @return false|Setting
-	 */
-	public function add_setting( string|Setting $setting ): false|Setting {
-		// initialize the setting object value.
-		$setting_obj = false;
-
-		// if value is a string, create the tab object first.
-		if ( is_string( $setting ) ) {
-			$setting_obj = new Setting();
-			$setting_obj->set_name( $setting );
-		}
-
-		// if value is a Tab object, use it.
-		if ( $setting instanceof Setting ) {
-			$setting_obj = $setting;
-		}
-
-		// bail if $tab_obj is not set.
-		if ( ! $setting_obj instanceof Setting ) {
-			return false;
-		}
-
-		// add the setting to the list of settings of this tab.
-		$this->settings[] = $setting_obj;
-
-		// return the tab object.
-		return $setting_obj;
-	}
-
-	/**
 	 * Return list of setting-objects assigned to this tab.
 	 *
 	 * @return array
