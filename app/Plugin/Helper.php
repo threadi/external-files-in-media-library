@@ -307,11 +307,7 @@ class Helper {
 		 *
 		 *  ```
 		 *  add_filter( 'eml_get_mime_types', function( $list ) {
-		 *   $list['your/mime'] = array(
-		 *       'label' => 'Title of your mime',
-		 *       'ext' => 'yourmime'
-		 *   );
-		 *   return $list;
+		 *   $list[] = 'your/mime';
 		 *  } );
 		 *  ```
 		 *

@@ -101,6 +101,20 @@ class File {
 			return $this->url;
 		}
 
+		$true = true;
+		/**
+		 * Filter whether file should be proxied.
+		 *
+		 * @since 2.1.0 Available since 2.1.0.
+		 * @param bool $true False to disable proxy-URL.
+		 * @param File $this The external file object.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $this ) ) {
+			return $this->url;
+		}
+
 		// bail if file is not proxy compatible.
 		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
 			return $this->url;
@@ -211,8 +225,13 @@ class File {
 			$this->availability = false;
 		}
 
-		// return actual value.
-		return $this->availability;
+		/**
+		 * Filter and return the file availability.
+		 *
+		 * @param bool $availability The given availability.
+		 * @param File $this The file object.
+		 */
+		return apply_filters( 'eml_file_availability', $this->availability, $this );
 	}
 
 	/**
