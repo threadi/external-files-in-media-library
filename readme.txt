@@ -205,7 +205,8 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 * Fixed hook documentations
 
 = 2.1.0 =
-* Added possibility to add YouTube-videos as external files
+* Added possibility to add YouTube- and Vimeo-videos as external files
+* Updated dependencies
 * Fixed potential error with import of YouTube videos
 * Fixed output of hint it file is not available
 

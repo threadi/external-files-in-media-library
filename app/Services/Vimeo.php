@@ -1,15 +1,11 @@
 <?php
 /**
- * File to handle support for Youtube videos.
- *
- * TODO:
- * - auch in Elementor testen
- * - wenn die Ausgabe geht, dann Import von Kanälen per YouTube API ergänzen
+ * File to handle support for Vimeo videos.
  *
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\ThirdParty;
+namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
@@ -19,16 +15,16 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
 
 /**
- * Object to handle support for this plugin.
+ * Object to handle support for this video plattform.
  */
-class Youtube {
+class Vimeo {
 
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?Youtube
+	 * @var ?Vimeo
 	 */
-	private static ?Youtube $instance = null;
+	private static ?Vimeo $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -45,11 +41,11 @@ class Youtube {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return Youtube
+	 * @return Vimeo
 	 */
-	public static function get_instance(): Youtube {
+	public static function get_instance(): Vimeo {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new Youtube();
+			self::$instance = new self();
 		}
 
 		return self::$instance;
@@ -65,11 +61,11 @@ class Youtube {
 		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
-		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
+		add_shortcode( 'eml_vimeo', array( $this, 'render_video_shortcode' ) );
 	}
 
 	/**
-	 * Check if given URL during import is a YouTube video and set its data.
+	 * Check if given URL during import is a Vimeo video and set its data.
 	 *
 	 * @param array  $results The result as array for file import.
 	 * @param string $url The used URL.
@@ -77,8 +73,8 @@ class Youtube {
 	 * @return array
 	 */
 	public function get_video_data( array $results, string $url ): array {
-		// bail if this is not a YouTube-URL.
-		if ( ! $this->is_youtube_video( $url ) ) {
+		// bail if this is not a Vimeo-URL.
+		if ( ! $this->is_vimeo_video( $url ) ) {
 			return $results;
 		}
 
@@ -94,7 +90,7 @@ class Youtube {
 	}
 
 	/**
-	 * Prevent usage of proxied URL for YouTube URLs.
+	 * Prevent usage of proxied URL for Vimeo URLs.
 	 *
 	 * @param bool $result The result.
 	 * @param File $external_file_object The file object.
@@ -102,8 +98,8 @@ class Youtube {
 	 * @return bool
 	 */
 	public function prevent_proxied_url( bool $result, File $external_file_object ): bool {
-		// bail if file is not a YouTube-video.
-		if( ! $this->is_youtube_video( $external_file_object->get_url( true ) ) ) {
+		// bail if file is not a Vimeo-video.
+		if( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
 			return $result;
 		}
 
@@ -112,49 +108,18 @@ class Youtube {
 	}
 
 	/**
-	 * Check if given URL is a YouTube-video.
+	 * Check if given URL is a Vimeo-video.
 	 *
 	 * @param string $url The given URL.
 	 *
 	 * @return bool
 	 */
-	private function is_youtube_video( string $url ): bool {
-		return str_contains( $url, 'youtube.com' );
+	private function is_vimeo_video( string $url ): bool {
+		return str_contains( $url, 'vimeo.com' );
 	}
 
 	/**
-	 * Get embed URL for given YouTube URL.
-	 *
-	 * @source https://stackoverflow.com/questions/19050890/find-youtube-link-in-php-string-and-convert-it-into-embed-code
-	 * @param string $youtube_url The given YouTube-URL.
-	 *
-	 * @return string
-	 */
-	private function get_embed_url( string $youtube_url ): string {
-		// define the regex.
-		$short_url_regex = '/youtu.be\/([a-zA-Z0-9_-]+)\??/i';
-		$long_url_regex = '/youtube.com\/((?:embed)|(?:watch))((?:\?v\=)|(?:\/))([a-zA-Z0-9_-]+)/i';
-
-		$youtube_id = false;
-		if ( preg_match( $long_url_regex, $youtube_url, $matches ) ) {
-			$youtube_id = $matches[count($matches) - 1];
-		}
-
-		if ( preg_match( $short_url_regex, $youtube_url, $matches ) ) {
-			$youtube_id = $matches[count($matches) - 1];
-		}
-
-		// bail if YouTube ID could not be determined.
-		if( !$youtube_id ) {
-			return '';
-		}
-
-		// return the embed URL.
-		return 'https://www.youtube.com/embed/' . $youtube_id ;
-	}
-
-	/**
-	 * Render the Video block to show an external filed YouTube video.
+	 * Render the Video block to show an external filed Vimeo video.
 	 *
 	 * @param string $block_content The block content.
 	 * @param array  $block The block configuration.
@@ -188,8 +153,8 @@ class Youtube {
 			return $block_content;
 		}
 
-		// bail if file is not a YouTube file.
-		if( ! $this->is_youtube_video( $external_file_object->get_url( true ) ) ) {
+		// bail if file is not a Vimeo file.
+		if( ! $this->is_vimeo_video( $external_file_object->get_url( true ) ) ) {
 			return $block_content;
 		}
 
@@ -203,7 +168,7 @@ class Youtube {
 		// get output.
 		ob_start();
 		?><figure><?php
-		require_once Templates::get_instance()->get_template( 'youtube.php' );
+		require_once Templates::get_instance()->get_template( 'vimeo.php' );
 		?></figure><?php
 		$content = ob_get_contents();
 		ob_end_clean();
@@ -213,7 +178,31 @@ class Youtube {
 	}
 
 	/**
-	 * Change return value for Youtube-videos chosen from media library.
+	 * Get embed URL for given Vimeo URL.
+	 *
+	 * @source https://stackoverflow.com/questions/28563706/how-to-convert-vimeo-url-to-embed-without-letting-go-of-the-text-around-it
+	 * @param string $vimeo_url The given Vimeo-URL.
+	 *
+	 * @return string
+	 */
+	private function get_embed_url( string $vimeo_url ): string {
+		// get the ID from given URL.
+		if( preg_match('/\/\/(www\.)?vimeo.com\/(\d+)($|\/)/', $vimeo_url,$matches ) ) {
+			// bail if second match does not be the ID.
+			if( 0 === absint( $matches[2] ) ) {
+				return $vimeo_url;
+			}
+
+			// return the player URL.
+			return '//player.vimeo.com/video/' . absint( $matches[2] );
+		}
+
+		// return the original URL.
+		return $vimeo_url;
+	}
+
+	/**
+	 * Change return value for Vimeo-videos chosen from media library.
 	 *
 	 * @param string $html The output.
 	 * @param int    $attachment_id The attachment ID.
@@ -229,17 +218,17 @@ class Youtube {
 			return $html;
 		}
 
-		// bail if this is not a YouTube video.
-		if( ! $this->is_youtube_video( $external_file_obj->get_url( true ) ) ) {
+		// bail if this is not a Vimeo video.
+		if( ! $this->is_vimeo_video( $external_file_obj->get_url( true ) ) ) {
 			return $html;
 		}
 
-		// return the YouTube Shortcode.
-		return '[eml_youtube]' . $external_file_obj->get_url( true ) . '[/eml_youtube]';
+		// return the Vimeo Shortcode.
+		return '[eml_vimeo]' . $external_file_obj->get_url( true ) . '[/eml_vimeo]';
 	}
 
 	/**
-	 * Render the shortcode to output YouTube videos generated by our own plugin.
+	 * Render the shortcode to output Vimeo videos generated by our own plugin.
 	 *
 	 * @param array  $attributes List of attributes.
 	 * @param string $url The given URL.
@@ -256,18 +245,27 @@ class Youtube {
 		}
 
 		// get width.
-		$width = 560;
+		$size_w = 560;
 		if( ! empty( $attributes['width'] ) ) {
-			$width = $attributes['width'];
+			$size_w = $attributes['width'];
 		}
 
-		// get height:
-		$height = 315;
+		// get height.
+		$size_h = 320;
 		if( ! empty( $attributes['height'] ) ) {
-			$height = $attributes['height'];
+			$size_h = $attributes['height'];
 		}
 
-		// return the HTML-code to output a YouTube Video.
-		return '<iframe width="' . absint( $width ) . '" height="' . absint( $height ) . '" src="' . esc_url( $this->get_embed_url( $external_file_obj->get_url( true ) ) ) .  '" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+		// get URL.
+		$url = $external_file_obj->get_url( true );
+
+		// get the output of the template.
+		ob_start();
+		require_once Templates::get_instance()->get_template( 'vimeo.php' );
+		$video_html = ob_get_contents();
+		ob_end_clean();
+
+		// return the HTML-code to output a Vimeo Video.
+		return $video_html;
 	}
 }

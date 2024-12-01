@@ -5,7 +5,7 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\ThirdParty;
+namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
