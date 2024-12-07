@@ -2,15 +2,25 @@
 
 ## [Unreleased]
 
+### Added
+
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
 - Added more hooks
+
+### Changed
+
 - Introduced Services to platforms which host files (like Imgur or GoogleDrive)
+- Does not download files via http protocol which should not be hosted locally
 - Optimized updating or installing log- and queue-tables during plugin update
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
+
+### Fixed
+
 - Fixed potential error with import of YouTube videos
 - Fixed output of hint it file is not available
+- Fixed potential error if URL is already on media library
 
 ## [2.0.2] - 2024-11-23
 

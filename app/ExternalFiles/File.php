@@ -395,6 +395,9 @@ class File {
 			return;
 		}
 
+		// force the local check as we need the file for the cache.
+		$protocol_handler_obj->force_local_check();
+
 		/**
 		 * Get info about the external file.
 		 */
@@ -578,6 +581,9 @@ class File {
 
 		// prevent duplicate check for this file.
 		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ), 10, 2 );
+
+		// force the local check as we need the file local.
+		$protocol_handler_obj->force_local_check();
 
 		// get external file infos.
 		$file_data = $protocol_handler_obj->get_url_infos();

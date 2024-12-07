@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
@@ -222,7 +221,7 @@ class Http extends Protocol_Base {
 			if ( ! empty( $results ) ) {
 				// bail if URL is already in media library.
 				if ( $this->check_for_duplicate( $this->get_url() ) ) {
-					Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error' );
+					Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
 					// return empty array to prevent import of this URL.
 					return array();
@@ -464,6 +463,7 @@ class Http extends Protocol_Base {
 			'local'         => false,
 			'url'           => $url,
 			'last-modified' => '',
+			'tmp-file'      => ''
 		);
 
 		// set file size in result-array.
@@ -492,10 +492,23 @@ class Http extends Protocol_Base {
 			}
 		}
 
-		// download file as temporary file for further analyses.
-		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-		$results['tmp-file'] = download_url( $url );
-		remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+		// download file as temporary file for further analyses if it should be saved local or local check should be forced.
+		if( $results['local'] || $this->is_local_check_forced() ) {
+			// log event.
+			Log::get_instance()->create( __( 'File will be downloaded. This may take some time.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'info', 2 );
+
+			// set filter for the request.
+			add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+
+			// download the file.
+			$results['tmp-file'] = download_url( $url );
+
+			// remove the filter for the request,
+			remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+
+			// log event.
+			Log::get_instance()->create( __( 'File has been downloaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'info', 2 );
+		}
 
 		// bail if error occurred.
 		if ( is_wp_error( $results['tmp-file'] ) ) {

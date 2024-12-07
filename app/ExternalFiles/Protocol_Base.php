@@ -53,6 +53,13 @@ class Protocol_Base {
 	private bool $queue_mode = false;
 
 	/**
+	 * Marker to force local check of file.
+	 *
+	 * @var bool
+	 */
+	private bool $force_local_check = false;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 *
 	 * @param string $url The URL to use.
@@ -71,6 +78,24 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Set to force local check of this file.
+	 *
+	 * @return void
+	 */
+    public function force_local_check(): void {
+		$this->force_local_check = true;
+    }
+
+	/**
+	 * Return whether local check of the file is forced.
+	 *
+	 * @return bool
+	 */
+	protected function is_local_check_forced(): bool {
+		return $this->force_local_check;
+	}
+
+    /**
 	 * Return the tcp protocols of this protocol object.
 	 *
 	 * @return array

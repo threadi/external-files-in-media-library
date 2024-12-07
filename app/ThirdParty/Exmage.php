@@ -229,6 +229,9 @@ class Exmage {
 			// check and set availability.
 			$external_files_obj->set_availability( $protocol_handler->check_availability( $url ) );
 
+			// force local check of this file.
+			$protocol_handler->force_local_check();
+
 			// get the file infos.
 			$file_data = $protocol_handler->get_url_info( $url );
 
