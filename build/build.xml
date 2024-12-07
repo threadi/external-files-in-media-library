@@ -27,6 +27,12 @@
         <replace file="${src.dir}/${plugin.slug}-release.php">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
+
+        <delete file="${build.dir}/readme-release.php"/>
+        <copy file="${src.dir}/readme.txt" tofile="${src.dir}/readme-release.txt"/>
+        <replace file="${src.dir}/readme-release.txt">
+            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
+        </replace>
     </target>
 
     <!-- install composer -->
@@ -103,11 +109,13 @@
             <zipfileset dir="${src.dir}/vendor" includes="autoload.php" fullpath="${plugin.slug}/vendor/autoload.php" />
             <zipfileset dir="${src.dir}/vendor/composer" prefix="${plugin.slug}/vendor/composer" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
-            <zipfileset dir="${src.dir}" includes="uninstall.php,readme.txt,composer.json" prefix="${plugin.slug}" />
+            <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
+            <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
         </zip>
         <antcall target="autoloader-generation-dev" />
         <delete file="${src.dir}/${plugin.slug}-release.php"/>
+        <delete file="${src.dir}/readme-release.txt"/>
     </target>
 
     <target name="help">
