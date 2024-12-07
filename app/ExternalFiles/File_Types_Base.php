@@ -116,11 +116,9 @@ class File_Types_Base {
 	/**
 	 * Set meta-data for the file by given file data.
 	 *
-	 * @param array $file_data The file data.
-	 *
 	 * @return void
 	 */
-	public function set_metadata( array $file_data ): void {}
+	public function set_metadata(): void {}
 
 	/**
 	 * Return the object name.

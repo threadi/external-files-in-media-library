@@ -67,26 +67,50 @@ class Image extends File_Types_Base {
 	}
 
 	/**
-	 * Set meta-data for the file by given file data.
-	 *
-	 * @param array $file_data The file data.
+	 * Set meta-data for the file if it is hosted extern and with proxy.
 	 *
 	 * @return void
 	 */
-	public function set_metadata( array $file_data ): void {
+	public function set_metadata(): void {
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
+		// bail if file should be saved locally (then WP will handle this for us).
+		if( $external_file_obj->is_locally_saved() ) {
+			return;
+		}
+
+		// bail if proxy is not enabled for images.
+		if( ! $this->is_proxy_enabled() ) {
+			return;
+		}
+
+		// get the protocol handler for this file.
+		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
+
+		// bail if no handler found.
+		if( ! $protocol_handler ) {
+			return;
+		}
+
+		// get temporary file.
+		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ) );
+
+		// bail if no tmp file returned.
+		if( ! $tmp_file ) {
+			return;
+		}
+
 		// create the image meta data.
-		$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $external_file_obj->get_id() );
+		$image_meta = wp_create_image_subsizes( $tmp_file, $external_file_obj->get_id() );
 
 		// set file to our url.
-		$image_meta['file'] = $file_data['url'];
+		$image_meta['file'] = $external_file_obj->get_url( true );
 
 		// change file name for each size, if given.
 		if ( ! empty( $image_meta['sizes'] ) ) {
 			foreach ( $image_meta['sizes'] as $size_name => $size_data ) {
-				$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $file_data['title'], $size_data['width'], $size_data['height'], $external_file_obj->get_file_extension() );
+				$image_meta['sizes'][ $size_name ]['file'] = Helper::generate_sizes_filename( $external_file_obj->get_title(), $size_data['width'], $size_data['height'], $external_file_obj->get_file_extension() );
 			}
 		}
 

@@ -21,6 +21,7 @@
 - Fixed potential error with import of YouTube videos
 - Fixed output of hint it file is not available
 - Fixed potential error if URL is already on media library
+- Fixed partially wrong saving of meta-data on external media files
 
 ## [2.0.2] - 2024-11-23
 

@@ -385,18 +385,6 @@ class Files {
 			 */
 			do_action( 'eml_before_file_save', $file_data );
 
-			// bail if file is given, but has an error.
-			if ( ! empty( $file_data['tmp-file'] ) && is_wp_error( $file_data['tmp-file'] ) ) {
-				/* translators: %1$s will be replaced by an error-code. */
-				$log->create( sprintf( __( 'Given URL results in error during request: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $file_data['tmp-file'] ) . '</code>' ), esc_url( $url ), 'error', 0 );
-
-				// show progress.
-				$progress ? $progress->tick() : '';
-
-				// bail to next file.
-				continue;
-			}
-
 			/**
 			 * Filter the title for a single file during import.
 			 *
@@ -443,11 +431,14 @@ class Files {
 				// log this event.
 				$log->create( __( 'URL will be saved local.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 
+				// get temporary file.
+				$tmp_file = $this->get_temp_file( $file_data['url'] );
+
 				// import file as image via WP-own functions.
 				$array         = array(
 					'name'     => $title,
 					'type'     => $file_data['mime-type'],
-					'tmp_name' => $file_data['tmp-file'],
+					'tmp_name' => $tmp_file,
 					'error'    => 0,
 					'size'     => $file_data['filesize'],
 				);
@@ -511,17 +502,11 @@ class Files {
 			$external_file_obj->set_login( $this->get_login() );
 			$external_file_obj->set_password( $this->get_password() );
 
-			// set meta-data for the file if mode is enabled for this.
-			if ( false === $file_data['local'] && ! empty( $file_data['tmp-file'] ) ) {
-				// log event.
-				$log->create( __( 'Additional data are collected for this not local saved file.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
+			// save file-type-specific meta data.
+			$external_file_obj->set_metadata();
 
-				$file_type = File_Types::get_instance()->get_type_object_for_file_obj( $external_file_obj );
-				$file_type->set_metadata( $file_data );
-
-				// add file to local cache if it is an image.
-				$external_file_obj->add_to_cache();
-			}
+			// add file to local cache, if necessary.
+			$external_file_obj->add_to_cache();
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'], 'success', 0 );
@@ -534,9 +519,6 @@ class Files {
 			 * @param array $file_data The array with the file data.
 			 */
 			do_action( 'eml_after_file_save', $external_file_obj, $file_data );
-
-			// cleanup the temporary file.
-			$this->cleanup_temp_file( $file_data['tmp-file'] );
 
 			// show progress.
 			$progress ? $progress->tick() : '';
@@ -625,7 +607,7 @@ class Files {
 			}
 
 			// get the protocol handler for this URL.
-			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+			$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 			// bail if handler is false.
 			if ( ! $protocol_handler ) {
@@ -882,7 +864,7 @@ class Files {
 		}
 
 		// get protocol handler for this URL.
-		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if no protocol handler could be loaded.
 		if ( ! $protocol_handler ) {
@@ -1013,7 +995,7 @@ class Files {
 		}
 
 		// get protocol handler for this url.
-		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if protocol handler could not be loaded.
 		if ( ! $protocol_handler ) {
@@ -1691,33 +1673,6 @@ class Files {
 			// kill process.
 			exit;
 		}
-	}
-
-	/**
-	 * Cleanup temporary files.
-	 *
-	 * @param string $file The path to the file.
-	 *
-	 * @return void
-	 */
-	public function cleanup_temp_file( string $file ): void {
-		// bail if string is empty.
-		if ( empty( $file ) ) {
-			return;
-		}
-
-		// bail if file does not exist.
-		if ( ! file_exists( $file ) ) {
-			return;
-		}
-
-		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
-
-		// delete the temporary file.
-		$wp_filesystem->delete( $file );
 	}
 
 	/**

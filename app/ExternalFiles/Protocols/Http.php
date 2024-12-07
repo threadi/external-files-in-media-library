@@ -245,23 +245,14 @@ class Http extends Protocol_Base {
 			\WP_Filesystem();
 			global $wp_filesystem;
 
-			// save the content of the URL in a temporary file.
-			add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-			$tmp_content_file = download_url( $this->get_url() );
-			remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-
-			// bail if temp file resulted in error.
-			if ( is_wp_error( $tmp_content_file ) ) {
-				/* translators: %1$s by the error in JSON-format */
-				Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_content_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error' );
-				return array();
-			}
+			// get temp file.
+			$tmp_file = $this->get_temp_file( $this->get_url() );
 
 			// get the content.
-			$content = $wp_filesystem->get_contents( $tmp_content_file );
+			$content = $wp_filesystem->get_contents( $tmp_file );
 
 			// delete the temporary file.
-			Files::get_instance()->cleanup_temp_file( $tmp_content_file );
+			$this->cleanup_temp_file( $tmp_file );
 
 			// bail if saving has been failed.
 			if ( ! $content ) {
@@ -463,7 +454,6 @@ class Http extends Protocol_Base {
 			'local'         => false,
 			'url'           => $url,
 			'last-modified' => '',
-			'tmp-file'      => ''
 		);
 
 		// set file size in result-array.
@@ -490,34 +480,6 @@ class Http extends Protocol_Base {
 			if ( $last_modified ) {
 				$results['last-modified'] = $last_modified;
 			}
-		}
-
-		// download file as temporary file for further analyses if it should be saved local or local check should be forced.
-		if( $results['local'] || $this->is_local_check_forced() ) {
-			// log event.
-			Log::get_instance()->create( __( 'File will be downloaded. This may take some time.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'info', 2 );
-
-			// set filter for the request.
-			add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-
-			// download the file.
-			$results['tmp-file'] = download_url( $url );
-
-			// remove the filter for the request,
-			remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-
-			// log event.
-			Log::get_instance()->create( __( 'File has been downloaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'info', 2 );
-		}
-
-		// bail if error occurred.
-		if ( is_wp_error( $results['tmp-file'] ) ) {
-			// file is available.
-			/* translators: %1$s by the error in JSON-format */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $results['tmp-file'] ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
-
-			// return empty array as we got not the file.
-			return array();
 		}
 
 		/**
@@ -674,6 +636,7 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
+		// TODO should be file-type-specific.
 		// if setting enables local saving for images, file should be saved local.
 		$result = 'local' === get_option( 'eml_images_mode', 'external' ) && Helper::is_image_by_mime_type( $mime_type );
 		/**
@@ -767,7 +730,48 @@ class Http extends Protocol_Base {
 	 * @return bool
 	 */
 	private function is_local_file( string $url ): bool {
+		$false = false;
+		/**
+		 * Filter to prevent locale file check.
+		 *
+		 * @since 2.1.0 Available since 2.1.0.
+		 * @param bool $false Must be true to prevent check.
+		 * @param string $url The used URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( apply_filters( 'eml_locale_file_check', $false, $url ) ) {
+			return false;
+		}
+
 		$attachment_id = attachment_url_to_postid( $url );
 		return 0 !== $attachment_id;
+	}
+
+	/**
+	 * Get temp file from given URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url ): false|string {
+		// download file as temporary file.
+		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+		$tmp_file = download_url( $this->get_url() );
+		remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+
+		// bail if error occurred.
+		if ( is_wp_error( $tmp_file ) ) {
+			// file is available.
+			/* translators: %1$s by the error in JSON-format. */
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
+
+			// return empty array as we got not the file.
+			return false;
+		}
+
+		// return the temp file.
+		return $tmp_file;
 	}
 }

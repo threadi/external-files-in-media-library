@@ -199,12 +199,19 @@ class File {
 		);
 		wp_update_post( $query );
 
-		// Update the meta-field for mime_type.
+		// get the meta-data for this attachment.
 		$meta = wp_get_attachment_metadata( $this->get_id(), true );
-		if ( is_array( $meta ) ) {
-			$meta['mime_type'] = $mime_type;
-			wp_update_attachment_metadata( $this->get_id(), $meta );
+
+		// if no meta-data are set, create an array for them.
+		if( ! is_array( $meta ) ) {
+			$meta = array();
 		}
+
+		// set the mime type.
+		$meta['mime_type'] = $mime_type;
+
+		// save the updated meta-data.
+		wp_update_attachment_metadata( $this->get_id(), $meta );
 	}
 
 	/**
@@ -293,14 +300,21 @@ class File {
 	 * @return void
 	 */
 	public function set_filesize( int $file_size ): void {
-		// Update the thumbnail filename.
+		// get the meta-data for this attachment.
 		$meta = wp_get_attachment_metadata( $this->get_id(), true );
-		if ( is_array( $meta ) ) {
-			$meta['filesize'] = $file_size;
-			wp_update_attachment_metadata( $this->get_id(), $meta );
+
+		// if no meta-data are set, create an array for them.
+		if( ! is_array( $meta ) ) {
+			$meta = array();
 		}
 
-		// set in object.
+		// add the file size.
+		$meta['filesize'] = $file_size;
+
+		// update the meta data.
+		wp_update_attachment_metadata( $this->get_id(), $meta );
+
+		// set the file size in object.
 		$this->filesize = $file_size;
 	}
 
@@ -379,6 +393,11 @@ class File {
 			return;
 		}
 
+		// bail if file is locally saved.
+		if( $this->is_locally_saved() ) {
+			return;
+		}
+
 		global $wp_filesystem;
 		require_once ABSPATH . 'wp-admin/includes/file.php';
 		WP_Filesystem();
@@ -386,7 +405,7 @@ class File {
 		/**
 		 * Get the handler for this URL depending on its protocol.
 		 */
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		/**
 		 * Do nothing if URL is using a not supported tcp protocol.
@@ -394,9 +413,6 @@ class File {
 		if ( ! $protocol_handler_obj ) {
 			return;
 		}
-
-		// force the local check as we need the file for the cache.
-		$protocol_handler_obj->force_local_check();
 
 		/**
 		 * Get info about the external file.
@@ -414,8 +430,16 @@ class File {
 			return;
 		}
 
+		// get temp file.
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ));
+
+		// bail if temp file could not be loaded.
+		if( ! $tmp_file ) {
+			return;
+		}
+
 		// get the body.
-		$body = $wp_filesystem->get_contents( $file_data['tmp-file'] );
+		$body = $wp_filesystem->get_contents( $tmp_file );
 
 		// check mime-type of the binary-data and compare it with header-data.
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
@@ -423,6 +447,9 @@ class File {
 		if ( $binary_mime_type !== $file_data['mime-type'] ) {
 			return;
 		}
+
+		// delete the temporary file.
+		$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 		// set path incl. md5-filename and extension.
 		$path = $this->get_cache_file();
@@ -577,19 +604,23 @@ class File {
 		global $wp_filesystem;
 
 		// get the handler for this URL depending on its protocol.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+		$protocol_handler_obj = $this->get_protocol_handler_obj();
+
+		// bail if no protocol handler could be loaded.
+		if( ! $protocol_handler_obj ) {
+			return false;
+		}
 
 		// prevent duplicate check for this file.
-		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ), 10, 2 );
-
-		// force the local check as we need the file local.
-		$protocol_handler_obj->force_local_check();
+		add_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
+		add_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ), 10, 2 );
 
 		// get external file infos.
 		$file_data = $protocol_handler_obj->get_url_infos();
 
 		// remove prevent duplicate check for this file.
-		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check' ) );
+		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ) );
+		remove_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ) );
 
 		// bail if no file data could be loaded.
 		if ( empty( $file_data ) ) {
@@ -600,7 +631,7 @@ class File {
 		$array = array(
 			'name'     => $this->get_title(),
 			'type'     => $file_data[0]['mime-type'],
-			'tmp_name' => $file_data[0]['tmp-file'],
+			'tmp_name' => '',
 			'error'    => 0,
 			'size'     => $file_data[0]['filesize'],
 			'url'      => $this->get_url(),
@@ -621,6 +652,17 @@ class File {
 			'post_author' => $user_id,
 		);
 
+		// get temp file.
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url() );
+
+		// bail if no temp file could be loaded.
+		if( ! $tmp_file ) {
+			return false;
+		}
+
+		// set temp file for side load.
+		$array['tmp_name'] = $tmp_file;
+
 		// upload the external file.
 		$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
 
@@ -629,8 +671,16 @@ class File {
 			return false;
 		}
 
+		// get meta-data from original.
+		$meta_data = wp_get_attachment_metadata( $attachment_id );
+
+		// create array for meta-data if it is not one.
+		if( ! is_array( $meta_data ) ) {
+			$meta_data = array();
+		}
+
 		// copy the relevant settings of the new uploaded file to the original.
-		wp_update_attachment_metadata( $this->get_id(), wp_get_attachment_metadata( $attachment_id ) );
+		wp_update_attachment_metadata( $this->get_id(), $meta_data );
 
 		// get the new local url.
 		$local_url = wp_get_attachment_url( $attachment_id );
@@ -700,7 +750,7 @@ class File {
 		}
 
 		// get protocol object for this file.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_external_file( $this );
+		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		// bail if protocol does not support external hosting.
 		if ( $protocol_handler_obj->should_be_saved_local() ) {
@@ -724,19 +774,20 @@ class File {
 	}
 
 	/**
-	 * Prevent duplicate check.
+	 * Prevent check (for duplicate or local file).
 	 *
 	 * @param bool   $return_value The resulting value.
 	 * @param string $url The used URL.
 	 *
 	 * @return bool
 	 */
-	public function prevent_duplicate_check( bool $return_value, string $url ): bool {
+	public function prevent_checks( bool $return_value, string $url ): bool {
 		// bail if URL is not our URL.
 		if ( $url !== $this->get_url( true ) ) {
 			return $return_value;
 		}
 
+		// return true to prevent the check.
 		return true;
 	}
 
@@ -786,5 +837,23 @@ class File {
 	 */
 	public function get_file_type_obj(): File_Types_Base {
 		return File_Types::get_instance()->get_type_object_for_file_obj( $this );
+	}
+
+	/**
+	 * Set the file meta-data.
+	 *
+	 * @return void
+	 */
+	public function set_metadata(): void {
+		$this->get_file_type_obj()->set_metadata();
+	}
+
+	/**
+	 * Return the protocol handler of this file.
+	 *
+	 * @return Protocol_Base|false
+	 */
+	public function get_protocol_handler_obj(): Protocol_Base|false {
+		return Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 	}
 }

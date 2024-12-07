@@ -221,7 +221,7 @@ class Cli {
 				}
 
 				// get the protocol handler for this URL.
-				$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_file_obj );
+				$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 				// bail if handler is false.
 				if ( ! $protocol_handler ) {

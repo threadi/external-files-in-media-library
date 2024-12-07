@@ -237,32 +237,12 @@ class Sftp extends Protocol_Base {
 			return array();
 		}
 
-		// get the file contents.
-		$file_content = $ssh_connection->get_contents( $file_path );
-		if ( empty( $file_content ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL returns an empty file.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
-
-			// return empty array as we got not the file.
-			return array();
-		}
-
-		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
-
-		// save this file in a temporary directory.
-		$temp_file = wp_tempnam( $results['title'] );
-		if ( $wp_filesystem->put_contents( $temp_file, $file_content ) ) {
-			$results['tmp-file'] = $temp_file;
-		}
-
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the size.
-		$results['filesize'] = wp_filesize( $temp_file );
+		$results['filesize'] = $ssh_connection->size( $file_path );
 
 		// get the last modified date.
 		$results['last-modified'] = $ssh_connection->mtime( $file_path );
