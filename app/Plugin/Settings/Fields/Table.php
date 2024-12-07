@@ -62,7 +62,7 @@ class Table extends Field_Base {
 
 		// get values.
 		$values = get_option( $setting->get_name() );
-		if ( ! is_array( $values ) ) {
+		if ( ! is_array( $values ) || empty( $values[0] ) ) {
 			$values = array();
 		}
 
