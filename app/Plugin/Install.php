@@ -62,16 +62,16 @@ class Install {
 		// add option for version of this plugin.
 		add_option( 'efmlVersion', '', '', true );
 
-		// initialize Log-database-table.
+		// initialize database-table for logs.
 		Log::get_instance()->install();
 
 		// install settings.
 		Settings::get_instance()->activation();
 
 		// initialize the queue-handling.
-		$files_obj = Queue::get_instance();
-		$files_obj->install();
-		$files_obj->init_queue();
+		$queue_obj = Queue::get_instance();
+		$queue_obj->install();
+		$queue_obj->init_queue();
 		Settings\Settings::get_instance()->activation();
 
 		// flush rewrite rules.
