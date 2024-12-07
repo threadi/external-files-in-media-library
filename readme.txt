@@ -46,6 +46,10 @@ You find some documentations [here](https://github.com/threadi/external-files-in
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
+= Known Issues =
+* Local saved Youtube-Video could not be embedded via Elementor
+* Youtube-Preview in Block Editor not working (but in frontend it does)
+
 ---
 
 == Installation ==
@@ -206,10 +210,9 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 
 = 2.1.0 =
 * Added possibility to add YouTube- and Vimeo-videos as external files
+* Added possibility to import Youtube-Channel-Videos as external files via YouTube API
+* Added more hooks
+* Introduced Services to platforms which host files (like Imgur or GoogleDrive)
 * Updated dependencies
 * Fixed potential error with import of YouTube videos
 * Fixed output of hint it file is not available
-
-= Known Issues =
-* Local saved Youtube-Video could not be embedded via Elementor
-* Youtube-Preview in Block Editor not working (but in frontend it does)
