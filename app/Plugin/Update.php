@@ -8,6 +8,8 @@
 namespace ExternalFilesInMediaLibrary\Plugin;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -79,6 +81,7 @@ class Update {
 			}
 			$this->version200();
 			$this->version201();
+			$this->version210();
 
 			// save new plugin-version in DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -122,5 +125,18 @@ class Update {
 
 		// set capabilities.
 		Helper::set_capabilities( $caps );
+	}
+
+	/**
+	 * To run on update to version 2.1.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version210(): void {
+		// update database-table for logs.
+		Log::get_instance()->install();
+
+		// update database-table for queues.
+		Queue::get_instance()->install();
 	}
 }
