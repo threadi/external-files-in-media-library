@@ -231,7 +231,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 226](ExternalFiles/Protocols/Http.php#L226-L233)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 235](ExternalFiles/Protocols/Http.php#L235-L242)
 
 ### `eml_http_directory_import_files`
 
@@ -250,7 +250,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 292](ExternalFiles/Protocols/Http.php#L292-L300)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 301](ExternalFiles/Protocols/Http.php#L301-L309)
 
 ### `eml_http_directory_import_file_check`
 
@@ -268,7 +268,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 344](ExternalFiles/Protocols/Http.php#L344-L351)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 353](ExternalFiles/Protocols/Http.php#L353-L360)
 
 ### `eml_http_directory_import_file_before_to_list`
 
@@ -287,7 +287,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 364](ExternalFiles/Protocols/Http.php#L364-L372)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 373](ExternalFiles/Protocols/Http.php#L373-L381)
 
 ### `eml_ftp_directory_import_start`
 
@@ -511,6 +511,16 @@ Version | Description
 
 Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 187](Plugin/Schedules_Base.php#L187-L197)
 
+### `eml_set_template_directory`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$directory` |  | 
+
+Source: [app/Plugin/Templates.php](Plugin/Templates.php), [line 82](Plugin/Templates.php#L82-L82)
+
 ### `eml_log_table_filter`
 
 *Filter the list before output.*
@@ -604,11 +614,7 @@ To add files of type "your/mime" with file extension ".yourmime" use this exampl
 
 ```
 add_filter( 'eml_get_mime_types', function( $list ) {
- $list['your/mime'] = array(
-     'label' => 'Title of your mime',
-     'ext' => 'yourmime'
- );
- return $list;
+ $list[] = 'your/mime';
 } );
 ```
 
@@ -624,7 +630,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 302](Plugin/Helper.php#L302-L322)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 302](Plugin/Helper.php#L302-L318)
 
 ### `eml_help_tabs`
 
@@ -756,7 +762,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 192](Plugin/Settings/Tab.php#L192-L199)
+Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 158](Plugin/Settings/Tab.php#L158-L165)
 
 ### `eml_settings_tab_settings`
 
@@ -775,7 +781,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 250](Plugin/Settings/Tab.php#L250-L257)
+Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 216](Plugin/Settings/Tab.php#L216-L223)
 
 ### `eml_settings_tab_settings`
 
@@ -794,7 +800,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 337](Plugin/Settings/Tab.php#L337-L344)
+Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 303](Plugin/Settings/Tab.php#L303-L310)
 
 ### `eml_settings_tab_settings`
 
@@ -813,7 +819,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 366](Plugin/Settings/Tab.php#L366-L373)
+Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 332](Plugin/Settings/Tab.php#L332-L339)
 
 ### `eml_settings_tab_settings`
 
@@ -832,7 +838,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 401](Plugin/Settings/Tab.php#L401-L408)
+Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 367](Plugin/Settings/Tab.php#L367-L374)
 
 ### `eml_settings_export_filename`
 
@@ -1060,6 +1066,30 @@ Version | Description
 
 Source: [app/ExternalFiles/File_Types.php](ExternalFiles/File_Types.php), [line 72](ExternalFiles/File_Types.php#L72-L79)
 
+### `eml_file_prevent_proxied_url`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$true` |  | 
+`$this` |  | 
+
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 114](ExternalFiles/File.php#L114-L114)
+
+### `eml_file_availability`
+
+*Filter and return the file availability.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$this->availability` |  | 
+`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
+
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 228](ExternalFiles/File.php#L228-L234)
+
 ### `eml_attachment_link`
 
 **Arguments**
@@ -1186,7 +1216,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 226](ExternalFiles/Protocol_Base.php#L226-L233)
+Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 226](ExternalFiles/Protocol_Base.php#L226-L235)
 
 ### `eml_external_file_infos`
 
@@ -1325,7 +1355,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 264](ExternalFiles/Protocols/Http.php#L264-L274)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 273](ExternalFiles/Protocols/Http.php#L273-L283)
 
 ### `eml_external_file_infos`
 
@@ -1345,7 +1375,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 501](ExternalFiles/Protocols/Http.php#L501-L512)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 510](ExternalFiles/Protocols/Http.php#L510-L521)
 
 ### `eml_http_ssl`
 
@@ -1356,7 +1386,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 599](ExternalFiles/Protocols/Http.php#L599-L599)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 608](ExternalFiles/Protocols/Http.php#L608-L608)
 
 ### `eml_http_save_local`
 
@@ -1375,7 +1405,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 613](ExternalFiles/Protocols/Http.php#L613-L620)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 622](ExternalFiles/Protocols/Http.php#L622-L629)
 
 ### `eml_http_ssl`
 
@@ -1386,7 +1416,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 651](ExternalFiles/Protocols/Http.php#L651-L651)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 660](ExternalFiles/Protocols/Http.php#L660-L660)
 
 ### `eml_http_save_local`
 
@@ -1405,7 +1435,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 657](ExternalFiles/Protocols/Http.php#L657-L664)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 666](ExternalFiles/Protocols/Http.php#L666-L673)
 
 ### `eml_http_header_args`
 
@@ -1423,7 +1453,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 688](ExternalFiles/Protocols/Http.php#L688-L694)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 697](ExternalFiles/Protocols/Http.php#L697-L703)
 
 ### `eml_http_states`
 
@@ -1442,7 +1472,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 720](ExternalFiles/Protocols/Http.php#L720-L726)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 729](ExternalFiles/Protocols/Http.php#L729-L735)
 
 ### `eml_check_url`
 
@@ -1683,6 +1713,24 @@ Version | Description
 
 Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 248](ExternalFiles/Proxy.php#L248-L254)
 
+### `eml_services_support`
+
+*Filter the list of third party support.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array` | List of third party support.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`2.1.0` | Available since 2.1.0.
+
+Source: [app/Services/Services.php](Services/Services.php), [line 83](Services/Services.php#L83-L89)
+
 ### `eml_third_party_support`
 
 *Filter the list of third party support.*
@@ -1699,7 +1747,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 89](ThirdParty/ThirdPartySupport.php#L89-L95)
+Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 86](ThirdParty/ThirdPartySupport.php#L86-L92)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>
