@@ -42,6 +42,11 @@ class Audio extends File_Types_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			exit;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
@@ -88,6 +93,11 @@ class Audio extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_cache_expired(): bool {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return true;
+		}
+
 		// bail if no proxy age is set.
 		if ( absint( get_option( 'eml_audio_proxy_max_age' ) ) <= 0 ) {
 			return false;

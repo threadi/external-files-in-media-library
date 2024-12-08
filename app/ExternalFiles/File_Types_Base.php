@@ -38,17 +38,19 @@ class File_Types_Base {
 	/**
 	 * The external file object which is handled here.
 	 *
-	 * @var File
+	 * @var File|false
 	 */
-	protected File $external_file_obj;
+	protected File|false $external_file_obj = false;
 
 	/**
 	 * The contructor for this object.
 	 *
-	 * @param File $external_file_obj The external file as object.
+	 * @param File|false $external_file_obj The external file as object or false.
 	 */
-	public function __construct( File $external_file_obj ) {
-		$this->external_file_obj = $external_file_obj;
+	public function __construct( File|false $external_file_obj ) {
+		if ( $external_file_obj instanceof File ) {
+			$this->external_file_obj = $external_file_obj;
+		}
 	}
 
 	/**
@@ -57,6 +59,11 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	public function is_file_compatible(): bool {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return false;
+		}
+
 		// bail if list is empty.
 		if ( empty( $this->get_mime_types() ) ) {
 			return false;
@@ -88,9 +95,9 @@ class File_Types_Base {
 	/**
 	 * Return the external file object.
 	 *
-	 * @return File
+	 * @return File|false
 	 */
-	protected function get_file(): File {
+	protected function get_file(): File|false {
 		return $this->external_file_obj;
 	}
 
@@ -100,6 +107,11 @@ class File_Types_Base {
 	 * @return array|string[]
 	 */
 	private function get_mime_types(): array {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return array();
+		}
+
 		$mime_type         = $this->mime_types;
 		$external_file_obj = $this->get_file();
 

@@ -115,7 +115,7 @@ class File {
 			return $this->url;
 		}
 
-		// bail if file is not proxy compatible.
+		// bail if file type is not proxy compatible.
 		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
 			return $this->url;
 		}
@@ -203,7 +203,7 @@ class File {
 		$meta = wp_get_attachment_metadata( $this->get_id(), true );
 
 		// if no meta-data are set, create an array for them.
-		if( ! is_array( $meta ) ) {
+		if ( ! is_array( $meta ) ) {
 			$meta = array();
 		}
 
@@ -304,7 +304,7 @@ class File {
 		$meta = wp_get_attachment_metadata( $this->get_id(), true );
 
 		// if no meta-data are set, create an array for them.
-		if( ! is_array( $meta ) ) {
+		if ( ! is_array( $meta ) ) {
 			$meta = array();
 		}
 
@@ -365,6 +365,11 @@ class File {
 	 * @return bool
 	 */
 	public function is_cached(): bool {
+		// bail if file is not marked as cached in DB.
+		if ( empty( get_post_meta( $this->get_id(), 'eml_proxied', true ) ) ) {
+			return false;
+		}
+
 		// get path for cached file.
 		$cached_file = $this->get_cache_file();
 
@@ -394,7 +399,7 @@ class File {
 		}
 
 		// bail if file is locally saved.
-		if( $this->is_locally_saved() ) {
+		if ( $this->is_locally_saved() ) {
 			return;
 		}
 
@@ -431,10 +436,10 @@ class File {
 		}
 
 		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ));
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ) );
 
 		// bail if temp file could not be loaded.
-		if( ! $tmp_file ) {
+		if ( ! $tmp_file ) {
 			return;
 		}
 
@@ -456,6 +461,9 @@ class File {
 
 		// save the given content to the path.
 		$wp_filesystem->put_contents( $path, $body );
+
+		// save that file has been cached.
+		update_post_meta( $this->get_id(), 'eml_proxied', time() );
 	}
 
 	/**
@@ -513,6 +521,9 @@ class File {
 
 		// clear the cache.
 		wp_delete_file( $this->get_cache_file() );
+
+		// delete the marker.
+		delete_post_meta( $this->get_id(), 'eml_proxied' );
 	}
 
 	/**
@@ -607,7 +618,7 @@ class File {
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		// bail if no protocol handler could be loaded.
-		if( ! $protocol_handler_obj ) {
+		if ( ! $protocol_handler_obj ) {
 			return false;
 		}
 
@@ -656,7 +667,7 @@ class File {
 		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url() );
 
 		// bail if no temp file could be loaded.
-		if( ! $tmp_file ) {
+		if ( ! $tmp_file ) {
 			return false;
 		}
 
@@ -675,7 +686,7 @@ class File {
 		$meta_data = wp_get_attachment_metadata( $attachment_id );
 
 		// create array for meta-data if it is not one.
-		if( ! is_array( $meta_data ) ) {
+		if ( ! is_array( $meta_data ) ) {
 			$meta_data = array();
 		}
 
@@ -815,10 +826,13 @@ class File {
 			return;
 		}
 
+		// get proxy-object.
+		$proxy_obj = Proxy::get_instance();
+
 		// loop through the sizes.
 		foreach ( $image_meta_data['sizes'] as $size_data ) {
 			// get file path.
-			$file = Proxy::get_instance()->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'], $this->get_file_extension() );
+			$file = $proxy_obj->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'], $this->get_file_extension() );
 
 			// bail if file does not exist.
 			if ( ! $wp_filesystem->exists( $file ) ) {

@@ -235,7 +235,7 @@ class Files {
 			$external_file_obj = $this->get_file( $attachment_id );
 
 			// bail if object could not be loaded.
-			if ( ! $external_file_obj ) {
+			if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
 				continue;
 			}
 
@@ -658,7 +658,7 @@ class Files {
 			$external_file_obj = $this->get_file( $attachment_id );
 
 			// bail if object could not be loaded.
-			if ( ! $external_file_obj ) {
+			if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
 				continue;
 			}
 
@@ -833,13 +833,8 @@ class Files {
 		// get file by its ID.
 		$external_file_obj = $this->get_file( $post->ID );
 
-		// bail if the file is not an external file-URL.
-		if ( ! $external_file_obj ) {
-			return;
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return;
 		}
 
@@ -929,7 +924,7 @@ class Files {
 		?>
 		</li>
 		<?php
-		if ( $external_file_obj->get_file_type_obj()->is_proxy_enabled() && get_option( 'eml_proxy' ) ) {
+		if ( $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 			?>
 			<li>
 				<?php
@@ -988,8 +983,8 @@ class Files {
 		// get the single external file-object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if file could not be loaded.
-		if ( ! $external_file_obj ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}
@@ -1085,8 +1080,8 @@ class Files {
 		// get the file.
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if object could not be loaded.
-		if ( ! $external_file_obj ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			wp_send_json( $result );
 		}
 
@@ -1155,8 +1150,8 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post->ID );
 
-		// bail if file is not an external file.
-		if ( ! $external_file_obj ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $actions;
 		}
 
@@ -1192,13 +1187,8 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
-		// bail if file is not an external file.
-		if ( ! $external_file_obj ) {
-			return $file;
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $file;
 		}
 
@@ -1224,102 +1214,72 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
-		// bail if file is not an external file.
-		if ( ! $external_file_obj ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $result;
 		}
 
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if file type has no thumb support.
+		if ( ! $external_file_obj->get_file_type_obj()->has_thumbs() ) {
 			return $result;
 		}
 
-		// check if the file is an external file, is supporting thumbs and if it is really external hosted.
-		if (
-			false === $external_file_obj->is_locally_saved()
-			&& $external_file_obj->get_file_type_obj()->has_thumbs()
-		) {
-			// if requested size is a string, get its sizes.
-			if ( is_string( $size ) ) {
-				$size = array(
-					absint( get_option( $size . '_size_w' ) ),
-					absint( get_option( $size . '_size_h' ) ),
-				);
-			}
+		// if requested size is a string, get its sizes.
+		if ( is_string( $size ) ) {
+			$size = array(
+				absint( get_option( $size . '_size_w' ) ),
+				absint( get_option( $size . '_size_h' ) ),
+			);
+		}
 
-			// get image data.
-			$image_data = wp_get_attachment_metadata( $attachment_id );
+		// if file type has proxy not enabled we just return the original URL with requested sizes.
+		if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+			return array(
+				$external_file_obj->get_url( true ),
+				$size[0],
+				$size[1],
+			);
+		}
 
-			// if image data is fall, create the array manually.
-			if ( ! $image_data ) {
-				$image_data = array(
-					'sizes'  => array(),
-					'width'  => 0,
-					'height' => 0,
-				);
-			}
+		// bail if file is locally saved.
+		if ( $external_file_obj->is_locally_saved() ) {
+			return $result;
+		}
 
-			// bail if both sizes are 0.
-			if ( 0 === $size[0] && 0 === $size[1] ) {
-				// set return-array so that WP won't generate an image for it.
-				return array(
-					$external_file_obj->get_url(),
-					isset( $image_data['width'] ) ? $image_data['width'] : 0,
-					isset( $image_data['height'] ) ? $image_data['height'] : 0,
-					false,
-				);
-			}
+		// get image data.
+		$image_data = wp_get_attachment_metadata( $attachment_id );
 
-			// use already existing thumb.
-			if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && file_exists( $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'] ) ) {
-				// return the thumb.
-				return array(
-					trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $image_data['sizes'][ $size[0] . 'x' . $size[1] ]['file'],
-					$size[0],
-					$size[1],
-					false,
-				);
-			}
+		// if image data is fall, create the array manually.
+		if ( ! $image_data ) {
+			$image_data = array(
+				'sizes'  => array(),
+				'width'  => 0,
+				'height' => 0,
+			);
+		}
 
-			// get image editor as object.
-			$image_editor = wp_get_image_editor( $external_file_obj->get_cache_file() );
+		// bail if both sizes are 0.
+		if ( 0 === $size[0] && 0 === $size[1] ) {
+			// set return-array so that WP won't generate an image for it.
+			return array(
+				$external_file_obj->get_url(),
+				isset( $image_data['width'] ) ? $image_data['width'] : 0,
+				isset( $image_data['height'] ) ? $image_data['height'] : 0,
+				false,
+			);
+		}
 
-			// on error return the original image.
-			if ( is_wp_error( $image_editor ) ) {
-				// set return-array so that WP won't generate an image for it.
-				return array(
-					$external_file_obj->get_url(),
-					isset( $image_data['width'] ) ? $image_data['width'] : 0,
-					isset( $image_data['height'] ) ? $image_data['height'] : 0,
-					false,
-				);
-			}
+		// generate the filename for the thumb.
+		$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
-			/**
-			 * Generate the requested thumb and save it in metadata for the image.
-			 */
+		// public filename.
+		$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
-			// generate the filename for the thumb.
-			$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
-
-			// public filename.
-			$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
-
-			// resize the image.
-			$image_editor->resize( $size[0], $size[1], true );
-
-			// save the resized image and get its data.
-			$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
-
-			// remove the path from the resized image data.
-			unset( $new_image_data['path'] );
-
-			// replace the filename in the resized image data with the public filename we use in our proxy.
-			$new_image_data['file'] = $public_filename;
-
-			// update the meta data.
-			$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
-			wp_update_attachment_metadata( $attachment_id, $image_data );
+		// use already existing thumb.
+		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && file_exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
+			// log the event.
+			/* translators: %1$s will be replaced by the image sizes. */
+			Log::get_instance()->create( sprintf( __( 'Loading thumb from cache for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
 
 			// return the thumb.
 			return array(
@@ -1330,8 +1290,51 @@ class Files {
 			);
 		}
 
-		// return result.
-		return $result;
+		// get image editor as object.
+		$image_editor = wp_get_image_editor( $external_file_obj->get_cache_file() );
+
+		// on error return the original image.
+		if ( is_wp_error( $image_editor ) ) {
+			// set return-array so that WP won't generate an image for it.
+			return array(
+				$external_file_obj->get_url(),
+				isset( $image_data['width'] ) ? $image_data['width'] : 0,
+				isset( $image_data['height'] ) ? $image_data['height'] : 0,
+				false,
+			);
+		}
+
+		/**
+		 * Generate the requested thumb and save it in metadata for the image.
+		 */
+
+		// resize the image.
+		$image_editor->resize( $size[0], $size[1], true );
+
+		// save the resized image and get its data.
+		$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
+
+		// remove the path from the resized image data.
+		unset( $new_image_data['path'] );
+
+		// replace the filename in the resized image data with the public filename we use in our proxy.
+		$new_image_data['file'] = $public_filename;
+
+		// update the meta data.
+		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
+		wp_update_attachment_metadata( $attachment_id, $image_data );
+
+		// log the event.
+		/* translators: %1$s will be replaced by the image sizes. */
+		Log::get_instance()->create( sprintf( __( 'Generated new thumb for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
+
+		// return the thumb.
+		return array(
+			trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $public_filename,
+			$size[0],
+			$size[1],
+			false,
+		);
 	}
 
 	/**
@@ -1392,13 +1395,8 @@ class Files {
 		// get the external files.
 		$external_file_obj = $this->get_file( get_the_ID() );
 
-		// bail if file could not be loaded.
-		if ( ! $external_file_obj ) {
-			return $redirect_url;
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $redirect_url;
 		}
 
@@ -1427,7 +1425,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $sources;
 		}
 
@@ -1457,13 +1455,8 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if file could not be loaded.
-		if ( ! $external_file_obj ) {
-			return $data;
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $data;
 		}
 
@@ -1576,8 +1569,8 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
-		// bail if object could not be loaded.
-		if ( ! $external_file_obj ) {
+		// bail if this is not an external file.
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
@@ -1724,7 +1717,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! $external_file_obj ) {
+		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
 			return $image_meta;
 		}
 

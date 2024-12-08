@@ -70,7 +70,7 @@ class Protocol_Base {
 		return $this->url;
 	}
 
-    /**
+	/**
 	 * Return the tcp protocols of this protocol object.
 	 *
 	 * @return array
@@ -332,7 +332,7 @@ class Protocol_Base {
 	 */
 	public function get_temp_file( string $url ): false|string {
 		// bail if url is empty.
-		if( empty( $url ) ) {
+		if ( empty( $url ) ) {
 			return false;
 		}
 

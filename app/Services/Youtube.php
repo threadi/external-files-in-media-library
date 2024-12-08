@@ -674,7 +674,7 @@ class Youtube {
 		$channels = get_option( 'eml_youtube_channels' );
 
 		// bail if list is empty.
-		if ( empty( $channels ) || empty( $channels[0]) ) {
+		if ( empty( $channels ) || empty( $channels[0] ) ) {
 			return array();
 		}
 

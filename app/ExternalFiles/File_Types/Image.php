@@ -45,6 +45,11 @@ class Image extends File_Types_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			exit;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
@@ -72,16 +77,21 @@ class Image extends File_Types_Base {
 	 * @return void
 	 */
 	public function set_metadata(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
 		// bail if file should be saved locally (then WP will handle this for us).
-		if( $external_file_obj->is_locally_saved() ) {
+		if ( $external_file_obj->is_locally_saved() ) {
 			return;
 		}
 
 		// bail if proxy is not enabled for images.
-		if( ! $this->is_proxy_enabled() ) {
+		if ( ! $this->is_proxy_enabled() ) {
 			return;
 		}
 
@@ -89,7 +99,7 @@ class Image extends File_Types_Base {
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if no handler found.
-		if( ! $protocol_handler ) {
+		if ( ! $protocol_handler ) {
 			return;
 		}
 
@@ -97,7 +107,7 @@ class Image extends File_Types_Base {
 		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ) );
 
 		// bail if no tmp file returned.
-		if( ! $tmp_file ) {
+		if ( ! $tmp_file ) {
 			return;
 		}
 
@@ -133,6 +143,11 @@ class Image extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_cache_expired(): bool {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return false;
+		}
+
 		// bail if no proxy age is set.
 		if ( absint( get_option( 'eml_proxy_max_age' ) ) <= 0 ) {
 			return false;

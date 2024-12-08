@@ -15,6 +15,7 @@
 - Optimized updating or installing log- and queue-tables during plugin update
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
+- Reduced number of calls for external file thumbs
 
 ### Fixed
 
@@ -22,6 +23,7 @@
 - Fixed output of hint it file is not available
 - Fixed potential error if URL is already on media library
 - Fixed partially wrong saving of meta-data on external media files
+- Fixed wrong check for already existing thumbs of external files
 
 ## [2.0.2] - 2024-11-23
 

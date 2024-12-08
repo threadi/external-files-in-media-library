@@ -66,8 +66,8 @@ class Proxy {
 		// misc.
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 
-		// bail if proxy is not enabled, neither for images nor for videos.
-		if ( 0 === absint( get_option( 'eml_proxy', 0 ) ) && 0 === absint( get_option( 'eml_video_proxy', 0 ) ) ) {
+		// bail if no proxy is enabled.
+		if ( ! File_Types::get_instance()->is_any_proxy_enabled() ) {
 			return;
 		}
 
