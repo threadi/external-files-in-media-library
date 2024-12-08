@@ -165,7 +165,7 @@ jQuery(document).ready(function($) {
 });
 
 /**
- * Handling for upload of URLs from textarea in dialog.
+ * Handling for upload of URLs from textarea or input-field in dialog.
  */
 function efml_upload_files() {
   let urls = jQuery( '#external_files' ).val();
@@ -193,11 +193,28 @@ function efml_upload_files() {
   }
 
   // get the credentials (optional).
-  let login = jQuery('#eml_login').val();
-  let password = jQuery('#eml_password').val();
+  let login = '';
+  let password = '';
+  if( jQuery('#eml_use_credentials').is(':checked') ) {
+    login = jQuery( '#eml_login' ).val();
+    password = jQuery( '#eml_password' ).val();
+  }
 
-  // get queue setting.
-  let add_to_queue = jQuery('#add_to_queue').is(':checked') ? 1 : 0;
+  // collect values of additional fields.
+  let additional_fields = {};
+  jQuery('.easy-dialog-for-wordpress-text .eml-use-for-import').each(function() {
+    if( 'INPUT' === jQuery(this).prop('nodeName') ) {
+      if( 'checkbox' === jQuery(this).attr('type') && jQuery(this).prop('checked') === true ) {
+        additional_fields[jQuery(this).prop('name')] = 1;
+      }
+      if( 'text' === jQuery(this).attr('type') ) {
+        additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
+      }
+    }
+    if( 'TEXTAREA' === jQuery(this).prop('nodeName') ) {
+      additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
+    }
+  });
 
   // send request.
   jQuery.ajax({
@@ -207,7 +224,7 @@ function efml_upload_files() {
       urls: urls,
       login: login,
       password: password,
-      add_to_queue: add_to_queue,
+      additional_fields: additional_fields,
       action: 'eml_add_external_urls',
       nonce: efmlJsVars.urls_nonce
     },

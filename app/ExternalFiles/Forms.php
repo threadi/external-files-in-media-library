@@ -66,7 +66,7 @@ class Forms {
 		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
-		// our own actions.
+		// use our own actions.
 		add_action( 'eml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );
 		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
 		add_action( 'eml_http_directory_import_file_check', array( $this, 'set_import_file_check' ) );
@@ -311,8 +311,19 @@ class Forms {
 		$login    = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
-		// get the queue setting.
-		$add_to_queue = absint( filter_input( INPUT_POST, 'add_to_queue', FILTER_SANITIZE_NUMBER_INT ) );
+		// get additional fields.
+		$additional_fields = isset( $_POST[ 'additional_fields' ] ) ? array_map( 'sanitize_text_field', $_POST[ 'additional_fields' ] ) : array();
+
+		$false = false;
+		/**
+		 * Get the queue setting for the import.
+		 *
+		 * @since 2.1.0 Available since 2.1.0.
+		 * @param bool $false Set to true to import the files via queue.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		$add_to_queue = apply_filters( 'eml_import_add_to_queue', $false, $additional_fields );
 
 		// collect errors.
 		$errors = array();
@@ -322,8 +333,9 @@ class Forms {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array List of URLs to import.
+		 * @param array $additional_fields List of additional fields from form (since 2.1.0).
 		 */
-		do_action( 'eml_import_ajax_start', $url_array );
+		do_action( 'eml_import_ajax_start', $url_array, $additional_fields );
 
 		// if URLs are given, check them.
 		if ( ! empty( $url_array ) ) {
@@ -335,8 +347,9 @@ class Forms {
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array $url_array The list of URLs to add.
+			 * @param array $additional_fields List of additional fields from form (since 2.1.0).
 			 */
-			$url_array = apply_filters( 'eml_import_urls', $url_array );
+			$url_array = apply_filters( 'eml_import_urls', $url_array, $additional_fields );
 
 			// save count of URLs.
 			update_option( 'eml_import_url_max', count( $url_array ) );
@@ -362,6 +375,15 @@ class Forms {
 				/* translators: %1$s will be replaced by the URL which is imported. */
 				update_option( 'eml_import_title', sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
+				/**
+				 * Filter single URL before it will be added as external file.
+				 *
+				 * @since 2.1.0 Available since 2.1.0.
+				 * @param string $url The URL.
+				 * @param array $additional_fields List of additional fields from form.
+				 */
+				$url = apply_filters( 'eml_import_url_before', $url, $additional_fields );
+
 				// import file in media library if enqueue option is not set.
 				$file_added = $files_obj->add_url( $url, $add_to_queue );
 
@@ -375,11 +397,18 @@ class Forms {
 					// log this event.
 					$log->create( __( 'Error occurred during check of URL. The URL has not been added.', 'external-files-in-media-library' ), $url, 'info', 1 );
 				}
+				else {
+					/**
+					 * Run additional tasks for single URL after it has been successfully added as external file.
+					 *
+					 * @since 2.1.0 Available since 2.1.0.
+					 * @param string $url The URL.
+					 * @param array $additional_fields List of additional fields from form.
+					 */
+					do_action( 'eml_import_url_after', $url, $additional_fields );
+				}
 			}
 		}
-
-		// get log instance.
-		$log = Log::get_instance();
 
 		// collect the errors for response.
 		$errors_for_response = array();
@@ -671,47 +700,33 @@ class Forms {
 		// use single fields.
 		if ( $single ) {
 			// add URL field.
-			$fields[] = '<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><input type="text" id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf">';
-
-			// add queue option if it is not disabled.
-			if ( 'eml_disable_check' !== get_option( 'eml_queue_interval' ) ) {
-				$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URL to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
-			}
+			$fields[] = '<label for="external_files">' . esc_html__( 'Enter the URL of an external file you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><input type="url" id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf">';
 
 			// add credentials fields.
-			$fields[] = '<details><summary>' . __( 'Add credentials to access this URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
+			$fields[] = '<details><summary>' . __( 'Add credentials to access this URL', 'external-files-in-media-library' ) . '</summary><div><label for="eml_use_credentials"><input type="checkbox" name="eml_use_credentials" value="1" id="eml_use_credentials"> ' . esc_html__( 'Use below credentials to import the URL', 'external-files-in-media-library' ) . '</label></div><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
 			/**
-			 * Filter the fields for the dialog.
+			 * Filter the fields for the dialog. Additional fields must be marked with "eml-use-for-import" as class.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array $fields List of fields.
 			 */
-			$fields = apply_filters( 'eml_import_fields', $fields );
-
-			return $fields;
+			return apply_filters( 'eml_import_fields', $fields );
 		}
 
 		// add URLs field.
 		$fields[] = '<label for="external_files">' . esc_html__( 'Enter one URL per line for external files you want to insert in your library', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_support_url_for_urls() ) . '" target="_blank"><span class="dashicons dashicons-editor-help"></span></a></label><textarea id="external_files" name="external_files" class="eml_add_external_files" placeholder="https://example.com/file.pdf"></textarea>';
 
-		// add queue option if it is not disabled.
-		if ( 'eml_disable_check' !== get_option( 'eml_queue_interval' ) ) {
-			$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
-		}
-
 		// add credentials fields.
-		$fields[] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
+		$fields[] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="eml_use_credentials"><input type="checkbox" name="eml_use_credentials" value="1" id="eml_use_credentials"> ' . esc_html__( 'Use below credentials to import these URLs', 'external-files-in-media-library' ) . '</label></div><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="eml_login" name="text" value="" autocomplete="off"></div><div><label for="eml_password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="eml_password" name="text" value="" autocomplete="off"></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'files with credentials will be saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
 		/**
-		 * Filter the fields for the dialog.
+		 * Filter the fields for the dialog. Additional fields must be marked with "eml-use-for-import" as class.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
+		 *
 		 * @param array $fields List of fields.
 		 */
-		$fields = apply_filters( 'eml_import_fields', $fields );
-
-		// return the list of fields.
-		return $fields;
+		return apply_filters( 'eml_import_fields', $fields );
 	}
 }

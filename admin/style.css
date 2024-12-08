@@ -53,7 +53,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-bottom: 0.5em;
 }
 
-.eml .easy-dialog-for-wordpress-text input[type="url"] {
+.eml .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;
@@ -148,7 +148,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 
 .wp-list-table.media #external_files { width: 120px }
 
-.eml .easy-dialog-for-wordpress-text details {
+.eml .easy-dialog-for-wordpress-text:last-of-type {
 	margin-bottom: 1em;
 }
 
