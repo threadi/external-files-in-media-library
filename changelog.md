@@ -19,6 +19,7 @@
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
 - Reduced number of calls for external file thumbs
+- Small optimizations on WooCommerce support during import for products via CSV
 
 ### Fixed
 
