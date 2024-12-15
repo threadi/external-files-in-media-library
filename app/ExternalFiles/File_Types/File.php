@@ -30,6 +30,11 @@ class File extends File_Types_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			exit;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 

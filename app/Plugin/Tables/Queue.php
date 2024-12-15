@@ -112,7 +112,7 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
-	 * Add proccess-button on top of table.
+	 * Add process-button on top of table.
 	 *
 	 * @param string $which The position.
 	 * @return void

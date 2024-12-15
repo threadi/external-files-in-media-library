@@ -38,7 +38,7 @@ The plugin checks for you automatically on a regular basis whether the external 
 
 == Settings ==
 
-In the settings you can define whether image files are hosted locally in your hosting or externally.
+In the settings you can define whether your files are hosted locally in your hosting or externally.
 
 == Repository and documentation ==
 

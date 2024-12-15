@@ -8,6 +8,8 @@
 namespace ExternalFilesInMediaLibrary\Plugin;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 defined( 'ABSPATH' ) || exit;
@@ -138,5 +140,20 @@ class Update {
 
 		// update database-table for queues.
 		Queue::get_instance()->install();
+
+		// set proxy marker for all files where proxy is enabled.
+		foreach ( Files::get_instance()->get_files() as $external_file_obj ) {
+			if ( ! $external_file_obj instanceof File ) {
+				continue;
+			}
+
+			// bail if proxy is not enabled for this file.
+			if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+				continue;
+			}
+
+			// add the post meta for proxy time.
+			update_post_meta( $external_file_obj->get_id(), 'eml_proxied', time() );
+		}
 	}
 }

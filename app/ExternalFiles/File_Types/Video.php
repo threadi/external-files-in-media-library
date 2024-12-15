@@ -44,6 +44,11 @@ class Video extends File_Types_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			exit;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
@@ -76,26 +81,6 @@ class Video extends File_Types_Base {
 	}
 
 	/**
-	 * Set meta-data for the file by given file data.
-	 *
-	 * @param array $file_data The file data.
-	 *
-	 * @return void
-	 */
-	public function set_metadata( array $file_data ): void {
-		// get the file object.
-		$external_file_obj = $this->get_file();
-
-		// collect meta data.
-		$video_meta = array(
-			'filesize' => $file_data['filesize'],
-		);
-
-		// save the resulting image-data.
-		wp_update_attachment_metadata( $external_file_obj->get_id(), $video_meta );
-	}
-
-	/**
 	 * Return whether this file should be proxied.
 	 *
 	 * @return bool
@@ -110,6 +95,11 @@ class Video extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_cache_expired(): bool {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return true;
+		}
+
 		// bail if no proxy age is set.
 		if ( absint( get_option( 'eml_video_proxy_max_age' ) ) <= 0 ) {
 			return false;

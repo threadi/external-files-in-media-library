@@ -210,7 +210,7 @@ class Exmage {
 			$external_files_obj->set_url( $url );
 
 			// get the protocol handler for this file.
-			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_external_file( $external_files_obj );
+			$protocol_handler = $external_files_obj->get_protocol_handler_obj();
 
 			// bail if protocol is not supported.
 			if ( ! $protocol_handler ) {
@@ -229,17 +229,8 @@ class Exmage {
 			// check and set availability.
 			$external_files_obj->set_availability( $protocol_handler->check_availability( $url ) );
 
-			// get the file infos.
-			$file_data = $protocol_handler->get_url_info( $url );
-
-			// get the meta data.
-			$image_meta = wp_create_image_subsizes( $file_data['tmp-file'], $post_id );
-
-			// set file to our url.
-			$image_meta['file'] = $file_data['url'];
-
-			// save the resulting image-data.
-			wp_update_attachment_metadata( $post_id, $image_meta );
+			// set the meta-data for this file.
+			$external_files_obj->set_metadata();
 
 			// remove exmage marker from this item.
 			delete_post_meta( $post_id, '_exmage_external_url' );

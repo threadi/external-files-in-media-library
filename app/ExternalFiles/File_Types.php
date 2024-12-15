@@ -148,4 +148,38 @@ class File_Types {
 		// return the default file object if nothing matches.
 		return $file_type_obj;
 	}
+
+	/**
+	 * Return true if any proxy for any file is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_any_proxy_enabled(): bool {
+		// check each supported file type.
+		foreach ( $this->get_file_types() as $file_type ) {
+			// bail if file type is not a string.
+			if ( ! is_string( $file_type ) ) {
+				continue;
+			}
+
+			// bail if object does not exist.
+			if ( ! class_exists( $file_type ) ) {
+				continue;
+			}
+
+			// get the object.
+			$file_type_obj = new $file_type( false );
+
+			// bail if proxy for this file type is not enabled.
+			if ( ! $file_type_obj->is_proxy_enabled() ) {
+				continue;
+			}
+
+			// return true if proxy is enabled.
+			return true;
+		}
+
+		// return false if no proxy is enabled.
+		return false;
+	}
 }

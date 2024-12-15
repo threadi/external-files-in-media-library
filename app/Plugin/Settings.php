@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Value;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 
@@ -424,6 +425,7 @@ class Settings {
 		$setting->set_section( $images_tab_images );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
+		$setting->set_save_callback( array( $this, 'update_proxy_setting' ) );
 		$field = new Checkbox();
 		$field->set_title( __( 'Enable proxy for images', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ) );
@@ -548,28 +550,8 @@ class Settings {
 		$proxy_path_setting->set_save_callback( array( $this, 'save_proxy_path' ) );
 		$field = new Text();
 		$field->set_title( __( 'Proxy path', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This is the path on the filesystem of your WordPress relativ to the <i>wp-content</i> directory. If you change it, the new directory should not exist. All cached files will be copied.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is the path on the filesystem of your WordPress relativ to the <i>wp-content</i> directory. If you change it, the new directory should not exist. All cached files will be copied to the new path.', 'external-files-in-media-library' ) );
 		$proxy_path_setting->set_field( $field );
-
-		// create proxy reset dialog.
-		$dialog = array(
-			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
-			'texts'   => array(
-				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
-			),
-			'buttons' => array(
-				array(
-					'action'  => 'efml_reset_proxy();',
-					'variant' => 'primary',
-					'text'    => __( 'Reset now', 'external-files-in-media-library' ),
-				),
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'secondary',
-					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-				),
-			),
-		);
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_proxy_clear' );
@@ -580,7 +562,7 @@ class Settings {
 		$field->set_title( __( 'Reset proxy cache', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
+		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $this->get_proxy_reset_dialog() ) ) );
 		$setting->set_field( $field );
 
 		// add import/export settings.
@@ -857,5 +839,60 @@ class Settings {
 
 		// return the new value.
 		return $new_value;
+	}
+
+	/**
+	 * Check the change of proxy-setting.
+	 *
+	 * @param string $new_value The old value.
+	 * @param string $old_value The new value.
+	 *
+	 * @return int
+	 */
+	public function update_proxy_setting( string $new_value, string $old_value ): int {
+		// convert the values.
+		$new_value = absint( $new_value );
+		$old_value = absint( $old_value );
+
+		// bail if value has not been changed.
+		if ( $new_value === $old_value ) {
+			return $old_value;
+		}
+
+		// show hint to reset the proxy-cache.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'eml_proxy_changed' );
+		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $this->get_proxy_reset_dialog() ) ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
+		$transient_obj->set_type( 'success' );
+		$transient_obj->save();
+
+		// return the new value.
+		return $new_value;
+	}
+
+	/**
+	 * Return the proxy reset dialog configuration.
+	 *
+	 * @return array
+	 */
+	private function get_proxy_reset_dialog(): array {
+		return array(
+			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'efml_reset_proxy();',
+					'variant' => 'primary',
+					'text'    => __( 'Reset now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
 	}
 }

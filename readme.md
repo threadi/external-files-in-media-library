@@ -18,9 +18,16 @@ After checkout go through the following steps:
 
 ## Release
 
+### from local environment
+
 1. increase the version number in _build/build.properties_.
 2. execute the following command in _build/_: `ant build`
 3. after that you will finde in the release directory a zip file which could be used in WordPress to install it.
+
+### on GitHub
+
+1. Create a new tag with the new version number.
+2. The release zip will be created by GitHub action.
 
 ## Translations
 

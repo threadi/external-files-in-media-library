@@ -2,15 +2,34 @@
 
 ## [Unreleased]
 
+### Added
+
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
+- Added marker for proxied files
+- Added possibility to customize the handling of adding new URLs to media library with custom PHP
 - Added more hooks
+- Added GitHub action to build plugin releases
+
+### Changed
+
 - Introduced Services to platforms which host files (like Imgur or GoogleDrive)
+- Does not download files via http protocol which should not be hosted locally
 - Optimized updating or installing log- and queue-tables during plugin update
+- Optimized upload dialog regarding the credential usage if browser used autofill-functions
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
+- Reduced number of calls for external file thumbs
+- Small optimizations on WooCommerce support during import for products via CSV
+
+### Fixed
+
 - Fixed potential error with import of YouTube videos
 - Fixed output of hint it file is not available
+- Fixed potential error if URL is already on media library
+- Fixed partially wrong saving of meta-data on external media files
+- Fixed wrong check for already existing thumbs of external files
+- Fixed styling of single URL upload field
 
 ## [2.0.2] - 2024-11-23
 

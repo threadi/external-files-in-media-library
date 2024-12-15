@@ -71,6 +71,10 @@ class Queue {
 		add_action( 'admin_action_eml_queue_clear_errors', array( $this, 'delete_errors_by_request' ) );
 		add_action( 'admin_action_eml_queue_delete_entry', array( $this, 'delete_entry_by_request' ) );
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
+
+		// use our own hooks.
+		add_filter( 'eml_import_fields', array( $this, 'add_field_in_form' ) );
+		add_filter( 'eml_import_add_to_queue', array( $this, 'add_urls_to_queue' ), 10, 2 );
 	}
 
 	/**
@@ -690,5 +694,42 @@ class Queue {
 		// redirect the user.
 		wp_safe_redirect( wp_get_referer() );
 		exit;
+	}
+
+	/**
+	 * Add a checkbox to mark the fields to add them to queue.
+	 *
+	 * @param array $fields List of fields in form.
+	 *
+	 * @return array
+	 */
+	public function add_field_in_form( array $fields ): array {
+		// bail if queue is disabled.
+		if( 'eml_disable_check' === get_option( 'eml_queue_interval' ) ) {
+			return $fields;
+		}
+
+		// add the field to enable queue-upload.
+		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
+
+		// return the resulting fields.
+		return $fields;
+	}
+
+	/**
+	 * Add URLs for queue if the config "add_to_queue" from form request is set.
+	 *
+	 * @param bool  $return_value The return value to use (true to import queue).
+	 * @param array $config The config from form.
+	 *
+	 * @return bool
+	 */
+	public function add_urls_to_queue( bool $return_value, array $config ): bool {
+		if( empty( $config['add_to_queue'] ) ) {
+			return $return_value;
+		}
+
+		// return true if add to queue is set.
+		return 1 === absint( $config['add_to_queue'] );
 	}
 }

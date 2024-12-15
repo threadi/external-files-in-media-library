@@ -180,26 +180,12 @@ class File extends Protocol_Base {
 		\WP_Filesystem();
 		global $wp_filesystem;
 
-		// get the file contents.
-		$file_content = $wp_filesystem->get_contents( $file_path );
-		if ( empty( $file_content ) ) {
-			Log::get_instance()->create( __( 'File-URL returns an empty file.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
-
-			return array();
-		}
-
-		// save this file in a temporary directory.
-		$temp_file = wp_tempnam( $results['title'] );
-		if ( $wp_filesystem->put_contents( $temp_file, $file_content ) ) {
-			$results['tmp-file'] = $temp_file;
-		}
-
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the size.
-		$results['filesize'] = wp_filesize( $temp_file );
+		$results['filesize'] = $wp_filesystem->size( $file_path );
 
 		// get the last modified date.
 		$results['last-modified'] = $wp_filesystem->mtime( $file_path );

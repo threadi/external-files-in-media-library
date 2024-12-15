@@ -322,4 +322,48 @@ class Protocol_Base {
 	public function set_queue_mode( bool $add_to_queue ): void {
 		$this->queue_mode = $add_to_queue;
 	}
+
+	/**
+	 * Get temp file from given URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url ): false|string {
+		// bail if url is empty.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// return false in any other case.
+		return false;
+	}
+
+	/**
+	 * Cleanup temporary files.
+	 *
+	 * @param string $file The path to the file.
+	 *
+	 * @return void
+	 */
+	public function cleanup_temp_file( string $file ): void {
+		// bail if string is empty.
+		if ( empty( $file ) ) {
+			return;
+		}
+
+		// bail if file does not exist.
+		if ( ! file_exists( $file ) ) {
+			return;
+		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// delete the temporary file.
+		$wp_filesystem->delete( $file );
+	}
 }
