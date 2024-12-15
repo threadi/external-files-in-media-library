@@ -312,7 +312,7 @@ class Forms {
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get additional fields.
-		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', $_POST['additional_fields'] ) : array();
+		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['additional_fields'] ) ) : array();
 
 		$false = false;
 		/**
