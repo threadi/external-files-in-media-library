@@ -86,7 +86,7 @@ class WooCommerce {
 	 */
 	public function init_woocommerce(): void {
 		// get settings object.
-		$settings_obj             = Settings::get_instance();
+		$settings_obj = Settings::get_instance();
 
 		// add settings tab for WooCommerce.
 		$woocommerce_settings_tab = $settings_obj->add_tab( 'woocommerce' );

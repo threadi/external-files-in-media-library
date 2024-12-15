@@ -312,7 +312,7 @@ class Forms {
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get additional fields.
-		$additional_fields = isset( $_POST[ 'additional_fields' ] ) ? array_map( 'sanitize_text_field', $_POST[ 'additional_fields' ] ) : array();
+		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', $_POST['additional_fields'] ) : array();
 
 		$false = false;
 		/**
@@ -396,8 +396,7 @@ class Forms {
 
 					// log this event.
 					$log->create( __( 'Error occurred during check of URL. The URL has not been added.', 'external-files-in-media-library' ), $url, 'info', 1 );
-				}
-				else {
+				} else {
 					/**
 					 * Run additional tasks for single URL after it has been successfully added as external file.
 					 *
