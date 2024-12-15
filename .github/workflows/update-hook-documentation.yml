@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    name: Build release zip
+    name: Update Hook documentation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,9 +19,15 @@ jobs:
       - name: Generate hooks documentation file
         run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
 
-      - name: Update resources
-        uses: test-room-7/action-update-file@v1
+      - name: Update file
+        uses: tzkhan/pr-update-action@v2
         with:
-            file-path: docs/hooks.md
-            commit-msg: Update resources
-            github-token: ${{ secrets.GITHUB_TOKEN }}
+            repo-token: "${{ secrets.GITHUB_TOKEN }}"
+            base-branch-regex: '[a-z\d-_.\\/]+'
+            head-branch-regex: 'foo-\d+'
+            title-template: '[%headbranch%] '
+            body-template: |
+              Merging into '%basebranch%'
+              [Link to %headbranch%](https://url/to/browse/ticket/%headbranch%)
+            body-update-action: 'suffix'
+            body-uppercase-base-match: false
