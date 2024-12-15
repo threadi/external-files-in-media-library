@@ -705,7 +705,7 @@ class Queue {
 	 */
 	public function add_field_in_form( array $fields ): array {
 		// bail if queue is disabled.
-		if( 'eml_disable_check' === get_option( 'eml_queue_interval' ) ) {
+		if ( 'eml_disable_check' === get_option( 'eml_queue_interval' ) ) {
 			return $fields;
 		}
 
@@ -725,7 +725,7 @@ class Queue {
 	 * @return bool
 	 */
 	public function add_urls_to_queue( bool $return_value, array $config ): bool {
-		if( empty( $config['add_to_queue'] ) ) {
+		if ( empty( $config['add_to_queue'] ) ) {
 			return $return_value;
 		}
 
