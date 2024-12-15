@@ -1,0 +1,27 @@
+name: Update Hook documentation
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build release zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run package installs and builds
+        run: |
+          composer install
+          composer update
+
+      - name: Generate hooks documentation file
+        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
+
+      - name: Update resources
+        uses: test-room-7/action-update-file@v1
+        with:
+            file-path: docs/hooks.md
+            commit-msg: Update resources
+            github-token: ${{ secrets.GITHUB_TOKEN }}

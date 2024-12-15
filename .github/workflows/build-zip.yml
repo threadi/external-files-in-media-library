@@ -26,19 +26,13 @@ jobs:
           cd ../../../
 
       - name: Generate autoloader
-        run: composer dump-autoload -oa
+        run: composer dump-autoload -oa --no-dev
 
       - name: Run WordPress Coding Standard fixes
         run: vendor/bin/phpcbf --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .
 
       - name: Run WordPress Coding Standard checks
         run: vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .
-
-      - name: Generate hook documentation
-        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
-
-      - name: Generate autoloader
-        run: composer dump-autoload -oa --no-dev
 
       - name: Set version number 1
         uses: richardrigutins/replace-in-files@v2
@@ -64,7 +58,7 @@ jobs:
           rm readme.md
           rm ruleset.xml
           cd ..
-          zip -r -q ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/* -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/doc/*" "*/legacy-classes/Divi/.yarn/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig"
+          zip -r -q ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/* -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig"
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
