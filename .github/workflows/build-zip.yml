@@ -20,8 +20,10 @@ jobs:
         run: |
           composer install
           composer update
+          cd vendor/threadi/easy-dialog-for-wordpress/
           npm i
-          npm i concurrently
+          npm run build
+          cd ../../../
 
       - name: Generate autoloader
         run: composer dump-autoload -oa --no-dev
