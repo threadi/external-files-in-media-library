@@ -9,6 +9,7 @@
 - Added marker for proxied files
 - Added possibility to customize the handling of adding new URLs to media library with custom PHP
 - Added more hooks
+- Added GitHub action to build plugin releases
 
 ### Changed
 

@@ -1,0 +1,74 @@
+name: Build release zip
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build release zip
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup WP-CLI
+        uses: godaddy-wordpress/setup-wp-cli@1
+
+      - name: Run package installs and builds
+        run: |
+          composer install
+          composer update
+          npm i
+          npm i concurrently
+
+      - name: Generate autoloader
+        run: composer dump-autoload -oa --no-dev
+
+      - name: Run WordPress Coding Standard fixes
+        run: vendor/bin/phpcbf --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .
+
+      - name: Run WordPress Coding Standard checks
+        run: vendor/bin/phpcs --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .
+
+      - name: Generate hook documentation
+        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
+
+      - name: Set version number 1
+        uses: richardrigutins/replace-in-files@v2
+        with:
+          files: 'external-files-in-media-library.php'
+          search-text: '@@VersionNumber@@'
+          replacement-text: ${{ github.ref_name }}
+
+      - name: Set version number 3
+        uses: richardrigutins/replace-in-files@v2
+        with:
+          files: 'readme.txt'
+          search-text: '@@VersionNumber@@'
+          replacement-text: ${{ github.ref_name }}
+
+      - name: Create ZIP release
+        run: |
+          rm -fr build
+          rm -fr releases
+          rm -fr svn
+          rm -fr languages
+          rm changelog.md
+          rm readme.md
+          rm ruleset.xml
+          cd ..
+          zip -r -q ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/* -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/doc/*" "*/legacy-classes/Divi/.yarn/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig"
+          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
+          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
+          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
+          cp ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ${{ github.event.repository.name }}_${{ github.ref_name }}.zip
