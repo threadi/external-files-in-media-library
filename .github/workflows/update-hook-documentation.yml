@@ -20,14 +20,10 @@ jobs:
         run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
 
       - name: Update file
-        uses: tzkhan/pr-update-action@v2
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-            repo-token: "${{ secrets.GITHUB_TOKEN }}"
-            base-branch-regex: '[a-z\d-_.\\/]+'
-            head-branch-regex: 'foo-\d+'
-            title-template: '[%headbranch%] '
-            body-template: |
-              Merging into '%basebranch%'
-              [Link to %headbranch%](https://url/to/browse/ticket/%headbranch%)
-            body-update-action: 'suffix'
-            body-uppercase-base-match: false
+          commit_message: update hook documentation
+          branch: feature/updateHookDocumentation
+          create_branch: true
+          commit_options: '--no-verify --signoff'
+          file_pattern: docs/hooks.md
