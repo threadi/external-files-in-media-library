@@ -26,7 +26,7 @@ jobs:
           cd ../../../
 
       - name: Generate autoloader
-        run: composer dump-autoload -oa --no-dev
+        run: composer dump-autoload -oa
 
       - name: Run WordPress Coding Standard fixes
         run: vendor/bin/phpcbf --extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml .
@@ -36,6 +36,9 @@ jobs:
 
       - name: Generate hook documentation
         run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
+
+      - name: Generate autoloader
+        run: composer dump-autoload -oa --no-dev
 
       - name: Set version number 1
         uses: richardrigutins/replace-in-files@v2
