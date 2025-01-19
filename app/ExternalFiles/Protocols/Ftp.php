@@ -331,16 +331,8 @@ class Ftp extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = $ftp_connection->mtime( $file_path );
 
-		// TODO replace with get_temp_file().
-		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
-
-		// set the file as tmp-file for import.
-		$results['tmp-file'] = wp_tempnam();
-		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $ftp_connection->get_contents( $file_path ) );
+		// get the temp file.
+		$results['tmp-file'] = $this->get_temp_file( $file_path, $ftp_connection );
 
 		$response_headers = array();
 		/**
@@ -474,7 +466,7 @@ class Ftp extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
-		// bail if url is empty.
+		// bail if URL is empty.
 		if ( empty( $url ) ) {
 			return false;
 		}

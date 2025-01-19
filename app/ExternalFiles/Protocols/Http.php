@@ -789,7 +789,7 @@ class Http extends Protocol_Base {
 
 		// bail if error occurred.
 		if ( is_wp_error( $tmp_file ) ) {
-			// file is available.
+			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
 			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
 
