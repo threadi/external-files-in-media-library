@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Filesystem_Base;
 use WP_Query;
 
 /**
@@ -179,7 +180,7 @@ class Protocol_Base {
 	 *
 	 * @return string
 	 */
-	protected function get_login(): string {
+	public function get_login(): string {
 		return $this->login;
 	}
 
@@ -199,7 +200,7 @@ class Protocol_Base {
 	 *
 	 * @return string
 	 */
-	protected function get_password(): string {
+	public function get_password(): string {
 		return $this->password;
 	}
 
@@ -327,10 +328,11 @@ class Protocol_Base {
 	 * Get temp file from given URL.
 	 *
 	 * @param string $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
 		// bail if url is empty.
 		if ( empty( $url ) ) {
 			return false;
@@ -365,5 +367,16 @@ class Protocol_Base {
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );
+	}
+
+	/**
+	 * Return a valid connection on WP_Filesystem_Base.
+	 *
+	 * @param string $url The URL to use for the connection.
+	 *
+	 * @return false|WP_Filesystem_Base
+	 */
+	public function get_connection( string $url ): false|WP_Filesystem_Base {
+		return false;
 	}
 }

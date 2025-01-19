@@ -74,8 +74,10 @@ class Services {
 	 */
 	private function get_services(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
+			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 		);

@@ -1,6 +1,6 @@
 === External files in media library ===
 Contributors: threadi
-Tags: external files, media library, media
+Tags: external files, media library, media, embed
 Requires at least: 6.2
 Tested up to: 6.7
 Requires PHP: 8.0
@@ -12,7 +12,11 @@ Add external files to your media library to link or embed them in your website. 
 
 == Description ==
 
-Add one or more files under Media > "Add new media file". You can use the files in all places where the media library is used.
+Add one or more files with their URLs under Media > "Add new media file". You can use this way added external files in all places where the media library is used.
+
+Embed your files from Google Drive, YouTube, Vimeo, FTP, local paths or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more.
+
+Use an external data source for product images in your WooCommerce-based store.
 
 == Mass-Import ==
 
@@ -30,15 +34,11 @@ You can use the following TCP-protocols to import external files in your media l
 * `ssh://`
 * `file://`
 
-Some of them require credentials, for http it is optional.
+Some of them require credentials, for http(s) it is optional.
 
 == Checks ==
 
-The plugin checks for you automatically on a regular basis whether the external files you have stored are still available.
-
-== Settings ==
-
-In the settings you can define whether your files are hosted locally in your hosting or externally.
+The plugin checks for you automatically on a regular basis whether the external hosted files you have embedded are still available.
 
 == Repository and documentation ==
 
@@ -47,6 +47,7 @@ You find some documentations [here](https://github.com/threadi/external-files-in
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
 = Known Issues =
+
 * Local saved Youtube-Video could not be embedded via Elementor
 * Youtube-Preview in Block Editor not working (but in frontend it does)
 
@@ -61,11 +62,11 @@ The development repository is on [GitHub](https://github.com/threadi/external-fi
 
 = Can I prevent other WordPress-users from adding external files? =
 
-Yes, you can select under Settings > External files in Media Library which roles gets the ability to add external files.
+Yes, you can select under Settings > "External files in Media Library" which roles gets the ability to add external URLs as files.
 
 = Can I also embed password-protected external files? =
 
-Yes, but these files will included locally and not from the external URL.
+Yes, but these files are integrated locally and not from the external URL so that your visitors can access them without any problems.
 
 = Can I embed files from FTP? =
 
@@ -81,7 +82,7 @@ Yes, you can. Simply enter the absolute path with file-protocol, e.g.: `file:///
 
 = Can I import external product images for WooCommerce? =
 
-Yes, simply enable the setting under Settings > External files in Media Library > WooCommerce. Add your external URLs
+Yes, simply enable the setting under Settings > "External files in Media Library" > WooCommerce. Add your external URLs
 for images in the CSV you want to import as it is already possible with WooCommerce. They will be handled as
 external files by this plugin. This also allows you to use all protocols supported by the plugin for importing these files.
 

@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Filesystem_Base;
 use WP_Filesystem_FTPext;
 
 /**
@@ -39,6 +40,32 @@ class Ftp extends Protocol_Base {
 	 * @var array
 	 */
 	private array $ftp_connections = array();
+
+	/**
+	 * Initialize the object to handle FTP-connections.
+	 *
+	 * @param string $url The URL to use.
+	 */
+	public function __construct( string $url ) {
+		// typically this is not defined, so we set it up just in case.
+		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
+			define( 'FS_CONNECT_TIMEOUT', get_option( 'eml_timeout' ) );
+		}
+
+		// load necessary classes.
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+		}
+		if ( ! class_exists( 'WP_Filesystem_FTPext' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php';
+		}
+
+		// call parent constructor.
+		parent::__construct( $url );
+	}
 
 	/**
 	 * Check the given URL regarding its string.
@@ -115,33 +142,8 @@ class Ftp extends Protocol_Base {
 		// get the path.
 		$path = $parse_url['path'];
 
-		// typically this is not defined, so we set it up just in case.
-		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
-			define( 'FS_CONNECT_TIMEOUT', get_option( 'eml_timeout' ) );
-		}
-
-		// load necessary classes.
-		if ( ! function_exists( 'wp_tempnam' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-		}
-		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
-		}
-		if ( ! class_exists( 'WP_Filesystem_FTPext' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php';
-		}
-
-		// define ftp connection parameter.
-		$connection_arguments = array(
-			'port'            => $this->get_port_by_protocol( $parse_url['scheme'] ),
-			'hostname'        => $host,
-			'username'        => $this->get_login(),
-			'password'        => $this->get_password(),
-			'connection_type' => $parse_url['scheme'],
-		);
-
 		// connect via FTP.
-		$ftp_connection = $this->get_ftp_connection( $connection_arguments );
+		$ftp_connection = $this->get_connection( $this->get_url() );
 
 		// bail if connection failed.
 		if ( ! $ftp_connection ) {
@@ -281,8 +283,14 @@ class Ftp extends Protocol_Base {
 			$files[] = $results;
 		}
 
-		// return resulting list of file with its data.
-		return $files;
+		/**
+		 * Filter list of files during this import.
+		 *
+		 * @since 3.0.0 Available since 3.0.0
+		 * @param array $files List of files.
+		 * @param Protocol_Base $this The import object.
+		 */
+		return apply_filters( 'eml_external_files_infos', $files, $this );
 	}
 
 	/**
@@ -306,10 +314,8 @@ class Ftp extends Protocol_Base {
 		);
 
 		// get the file contents.
-		$file_content = $ftp_connection->get_contents( $file_path );
-		if ( empty( $file_content ) ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( __( 'FTP-path returns an empty file.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+		if ( ! $ftp_connection->is_readable( $file_path ) ) {
+			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
 			// return empty array as we got not the file.
 			return array();
@@ -324,6 +330,17 @@ class Ftp extends Protocol_Base {
 
 		// get the last modified date.
 		$results['last-modified'] = $ftp_connection->mtime( $file_path );
+
+		// TODO replace with get_temp_file().
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// set the file as tmp-file for import.
+		$results['tmp-file'] = wp_tempnam();
+		// and save the file there.
+		$wp_filesystem->put_contents( $results['tmp-file'], $ftp_connection->get_contents( $file_path ) );
 
 		$response_headers = array();
 		/**
@@ -368,11 +385,29 @@ class Ftp extends Protocol_Base {
 	/**
 	 * Get the FTP connection for given connection arguments.
 	 *
-	 * @param array $connection_arguments The arguments for the connection.
+	 * @param string $url The URL to use for the connection.
 	 *
-	 * @return false|WP_Filesystem_FTPext
+	 * @return false|WP_Filesystem_Base
 	 */
-	private function get_ftp_connection( array $connection_arguments ): false|WP_Filesystem_FTPext {
+	public function get_connection( string $url ): false|WP_Filesystem_Base {
+		// get the path from given URL.
+		$parse_url = wp_parse_url( $url );
+
+		// bail if validation is not resulting in an array.
+		if ( ! is_array( $parse_url ) ) {
+			Log::get_instance()->create( __( 'FTP-path looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			return false;
+		}
+
+		// define ftp connection parameter.
+		$connection_arguments = array(
+			'port'            => $this->get_port_by_protocol( $parse_url['scheme'] ),
+			'hostname'        => $parse_url['host'],
+			'username'        => $this->get_login(),
+			'password'        => $this->get_password(),
+			'connection_type' => $parse_url['scheme'],
+		);
+
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {
 			return false;
@@ -399,7 +434,7 @@ class Ftp extends Protocol_Base {
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error' );
 			return false;
 		}
 
@@ -428,5 +463,41 @@ class Ftp extends Protocol_Base {
 	 */
 	public function get_link(): string {
 		return basename( $this->get_url() );
+	}
+
+	/**
+	 * Get temp file from given FTP-file.
+	 *
+	 * @param string             $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
+		// bail if url is empty.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// remove protocol and domain from URL.
+		$url_info = wp_parse_url( $url );
+		$file_path = $url_info['path'];
+
+		// get file infos.
+		$file_info = pathinfo( $file_path );
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// set the file as tmp-file for import.
+		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
+
+		// and save the file there.
+		$wp_filesystem->put_contents( $tmp_file, $filesystem->get_contents( $file_path ) );
+
+		// return the path to the tmp file.
+		return $tmp_file;
 	}
 }

@@ -103,8 +103,13 @@ class Image extends File_Types_Base {
 			return;
 		}
 
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
 		// get temporary file.
-		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ) );
+		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ), $wp_filesystem );
 
 		// bail if no tmp file returned.
 		if ( ! $tmp_file ) {

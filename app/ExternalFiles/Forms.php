@@ -193,6 +193,14 @@ class Forms {
 				),
 			);
 
+			/**
+			 * Filter the add-dialog.
+			 *
+			 * @since 2.1.0 Available since 2.1.0.
+			 * @param array $dialog The dialog configuration.
+			 */
+			$dialog = apply_filters( 'eml_add_dialog', $dialog )
+
 			?>
 			<div class="eml_add_external_files_wrapper">
 				<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>

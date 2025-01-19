@@ -436,7 +436,7 @@ class File {
 		}
 
 		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ) );
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
 		// bail if temp file could not be loaded.
 		if ( ! $tmp_file ) {
@@ -664,7 +664,7 @@ class File {
 		);
 
 		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url() );
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url(), $wp_filesystem );
 
 		// bail if no temp file could be loaded.
 		if ( ! $tmp_file ) {

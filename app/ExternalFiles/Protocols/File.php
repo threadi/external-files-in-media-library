@@ -146,7 +146,14 @@ class File extends Protocol_Base {
 			$files[] = $results;
 		}
 
-		return $files;
+		/**
+		 * Filter list of files during this import.
+		 *
+		 * @since 3.0.0 Available since 3.0.0
+		 * @param array $files List of files.
+		 * @param Protocol_Base $this The import object.
+		 */
+		return apply_filters( 'eml_external_files_infos', $files, $this );
 	}
 
 	/**
@@ -189,6 +196,11 @@ class File extends Protocol_Base {
 
 		// get the last modified date.
 		$results['last-modified'] = $wp_filesystem->mtime( $file_path );
+
+		// set the file as tmp-file for import.
+		$results['tmp-file'] = wp_tempnam();
+		// and save the file there.
+		$wp_filesystem->put_contents( $results['tmp-file'], $wp_filesystem->get_contents( $file_path ) );
 
 		$response_headers = array();
 		/**

@@ -10,20 +10,48 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Table;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
-use ExternalFilesInMediaLibrary\Plugin\Transients;
+use WP_Error;
 
 /**
  * Object to handle support for this video plattform.
  */
-class Youtube {
+class Youtube extends Directory_Listing_Base {
+
+	/**
+	 * The object name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'youtube';
+
+	/**
+	 * The public label.
+	 *
+	 * @var string
+	 */
+	protected string $label = 'YouTube';
+
+	/**
+	 * Marker if login is required.
+	 *
+	 * @var bool
+	 */
+	protected bool $requires_simple_api = true;
+
+	/**
+	 * The API URL.
+	 *
+	 * @var string
+	 */
+	private string $api_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=';
 
 	/**
 	 * Instance of actual object.
@@ -63,164 +91,55 @@ class Youtube {
 	 * @return void
 	 */
 	public function init(): void {
-		// add settings.
-		add_action( 'init', array( $this, 'init_youtube' ), 25 );
-		add_action( 'admin_enqueue_scripts', array( $this, 'add_script' ) );
+		// set title for service.
+		$this->title = __( 'Choose video from a Youtube channel', 'external-files-in-media-library' );
 
-		// use our own hooks.
+		// add service.
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+
+		// use our own hooks to allow import of YouTube videos and channels.
 		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
 		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'eml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
+		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10 ,2 );
+		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
 
 		// change handling of media files.
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
 		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
-
-		// add AJAX-endpoints.
-		add_action( 'wp_ajax_eml_youtube_add_channel', array( $this, 'add_channel_by_ajax' ) );
-
-		// add action endpoints.
-		add_action( 'admin_action_eml_youtube_delete_channel', array( $this, 'delete_channel_by_request' ) );
-		add_action( 'admin_action_eml_youtube_import_channel', array( $this, 'import_channel_by_request' ) );
-
-		// add WP CLI.
-		add_action( 'cli_init', array( $this, 'add_cli' ) );
 	}
 
 	/**
-	 * Add YouTube settings.
+	 * Add this object to the list of listing objects.
 	 *
-	 * @return void
+	 * @param array $directory_listing_objects List of directory listing objects.
+	 *
+	 * @return array
 	 */
-	public function init_youtube(): void {
-		// get the settings object.
-		$settings_obj = Settings::get_instance();
-
-		// add Youtube tab in settings.
-		$youtube_tab = $settings_obj->add_tab( 'youtube' );
-		$youtube_tab->set_title( __( 'YouTube', 'external-files-in-media-library' ) );
-
-		// add section for settings in this tab.
-		$youtube_tab_api = $youtube_tab->add_section( 'section_youtube_api' );
-		$youtube_tab_api->set_title( __( 'API Credentials', 'external-files-in-media-library' ) );
-
-		// add field for API key.
-		$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
-		$setting->set_section( $youtube_tab_api );
-		$setting->set_type( 'string' );
-		$setting->set_help( __( 'Add the API key you want to use to get video data from YouTube channels. Get your API key <a href="https://developers.google.com/youtube/v3/getting-started" target="_blank">as described here (opens new window)</a>', 'external-files-in-media-library' ) );
-		$field = new Text();
-		$field->set_title( __( 'API key', 'external-files-in-media-library' ) );
-		$field->set_description( $setting->get_help() );
-		$setting->set_field( $field );
-
-		// add section for channels in this tab.
-		$youtube_tab_channels = $youtube_tab->add_section( 'section_youtube_channels' );
-		$youtube_tab_channels->set_title( __( 'Channels', 'external-files-in-media-library' ) );
-
-		// create dialog to add a channel.
-		$dialog = array(
-			'title'   => __( 'Add YouTube channel', 'external-files-in-media-library' ),
-			'texts'   => array(
-				'<p><strong>' . __( 'Add the channel ID you want to use to import videos:', 'external-files-in-media-library' ) . '</strong></p>',
-				'<input type="text" id="youtube_channel_id" name="youtube_channel_id">',
-			),
-			'buttons' => array(
-				array(
-					'action'  => 'efml_add_youtube_videos();',
-					'variant' => 'primary',
-					'text'    => __( 'Add', 'external-files-in-media-library' ),
-				),
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'secondary',
-					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_youtube_add_channel' );
-		$setting->set_section( $youtube_tab_channels );
-		$setting->set_autoload( false );
-		$setting->prevent_export( true );
-		$field = new Button();
-		$field->set_title( __( 'Add YouTube channel', 'external-files-in-media-library' ) );
-		$field->set_button_title( __( 'Add', 'external-files-in-media-library' ) );
-		$field->add_class( ! empty( get_option( 'eml_youtube_api_key' ) ) ? 'easy-dialog-for-wordpress' : '' );
-		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
-		$field->set_readonly( empty( get_option( 'eml_youtube_api_key' ) ) );
-		$setting->set_field( $field );
-
-		// define action list for entry in YouTube channel list.
-		$youtube_channel_list_actions = array(
-			array(
-				'url'  => add_query_arg(
-					array(
-						'action' => 'eml_youtube_delete_channel',
-						'nonce'  => wp_create_nonce( 'eml-youtube-delete-channel' ),
-					),
-					get_admin_url() . 'admin.php'
-				),
-				'icon' => '<span class="dashicons dashicons-trash" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></span>',
-			),
-		);
-		if ( ! empty( get_option( 'eml_youtube_api_key' ) ) ) {
-			$youtube_channel_list_actions[] = array(
-				'url'  => add_query_arg(
-					array(
-						'action' => 'eml_youtube_import_channel',
-						'nonce'  => wp_create_nonce( 'eml-youtube-import-channel' ),
-					),
-					get_admin_url() . 'admin.php'
-				),
-				'icon' => '<span class="dashicons dashicons-database-import" title="' . esc_attr__( 'Import videos on this channel', 'external-files-in-media-library' ) . '"></span>',
-			);
-		}
-
-		// show list of configured YouTube channels.
-		$setting = $settings_obj->add_setting( 'eml_youtube_channels' );
-		$setting->set_section( $youtube_tab_channels );
-		$setting->set_type( 'array' );
-		$field = new Table();
-		$field->set_title( __( 'Youtube channels', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This YouTube channels will be used to import video URLs in your media library.', 'external-files-in-media-library' ) );
-		$field->set_table_options( $youtube_channel_list_actions );
-		$field->set_readonly( empty( get_option( 'eml_youtube_api_key' ) ) );
-		$setting->set_field( $field );
+	public function add_directory_listing( array $directory_listing_objects ): array {
+		$directory_listing_objects[] = $this;
+		return $directory_listing_objects;
 	}
 
 	/**
-	 * Add import scripts.
+	 * Add option to import from local directory.
 	 *
-	 * @return void
+	 * @param array $fields List of import options.
+	 *
+	 * @return array
 	 */
-	public function add_script(): void {
-		// backend-JS.
-		wp_enqueue_script(
-			'eml-youtube-admin',
-			plugins_url( '/admin/youtube.js', EFML_PLUGIN ),
-			array( 'jquery' ),
-			filemtime( Helper::get_plugin_dir() . '/admin/youtube.js' ),
-			true
-		);
-
-		// add php-vars to our js-script.
-		wp_localize_script(
-			'eml-youtube-admin',
-			'efmlYoutubeJsVars',
-			array(
-				'ajax_url'          => admin_url( 'admin-ajax.php' ),
-				'add_channel_nonce' => wp_create_nonce( 'eml-add-youtube-channel' ),
-			)
-		);
+	public function add_option_for_local_import( array $fields ): array {
+		$fields[] = '<details><summary>' . __( 'Or add from YouTube channel', 'external-files-in-media-library' ) . '</summary><div><label for="eml_youtube"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from your YouTube channel', 'external-files-in-media-library' ) . '</a></label></div></details>';
+		return $fields;
 	}
 
 	/**
 	 * Check if given URL during import is a YouTube video and set its data.
 	 *
 	 * @param array  $results The result as array for file import.
-	 * @param string $url The used URL.
+	 * @param string $url     The used URL.
 	 *
 	 * @return array
 	 */
@@ -230,7 +149,23 @@ class Youtube {
 			return $results;
 		}
 
+		// check if given URL is a YouTube channel.
+		if( $this->is_youtube_channel( $url ) ) {
+			return $results;
+		}
+
 		// initialize basic array for file data.
+		return $this->get_basic_url_info_for_video( $url );
+	}
+
+	/**
+	 * Get the basic URL info for single YouTube-video URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return array
+	 */
+	private function get_basic_url_info_for_video( string $url ): array {
 		return array(
 			'title'     => basename( $url ),
 			'filesize'  => 1,
@@ -268,6 +203,17 @@ class Youtube {
 	 */
 	private function is_youtube_video( string $url ): bool {
 		return str_contains( $url, 'youtube.com' );
+	}
+
+	/**
+	 * Check if given URL is a YouTube-channel.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return bool
+	 */
+	private function is_youtube_channel( string $url ): bool {
+		return str_contains( $url, 'youtube.com' ) && str_contains( $url, '/channel/' );
 	}
 
 	/**
@@ -432,190 +378,21 @@ class Youtube {
 	}
 
 	/**
-	 * Add custom CLI functions for YouTube handling.
+	 * Return the directory listing structure.
 	 *
-	 * @return void
+	 * @param string $directory The requested directory.
+	 *
+	 * @return array
 	 */
-	public function add_cli(): void {
-		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Services\Cli\Youtube' );
-	}
-
-	/**
-	 * Add single channel to the list.
-	 *
-	 * @param string $channel_id The channel to add.
-	 *
-	 * @return void
-	 */
-	public function add_channel( string $channel_id ): void {
-		// get actual list.
-		$channels = $this->get_youtube_channels();
-
-		// add channel ID to the list.
-		$channels[] = $channel_id;
-
-		// save the list.
-		update_option( 'eml_youtube_channels', $channels );
-	}
-
-	/**
-	 * Add new channel via AJAX.
-	 *
-	 * @return void
-	 */
-	public function add_channel_by_ajax(): void {
-		// check referer.
-		check_ajax_referer( 'eml-add-youtube-channel', 'nonce' );
-
-		// create dialog for response.
-		$dialog = array(
-			'detail' => array(
-				'title'   => __( 'Error during adding YouTube channel', 'external-files-in-media-library' ),
-				'texts'   => array(
-					'<p><strong>' . __( 'The channel could not be added!', 'external-files-in-media-library' ) . '</strong></p>',
-				),
-				'buttons' => array(
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'primary',
-						'text'    => __( 'OK', 'external-files-in-media-library' ),
-					),
-				),
-			),
-		);
-
-		// get the channel ID from request.
-		$channel_id = filter_input( INPUT_POST, 'channel_id', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if no channel is given.
-		if ( empty( $channel_id ) ) {
-			wp_send_json( $dialog );
-		}
-
-		// add the channel to the list.
-		$this->add_channel( $channel_id );
-
-		// create return dialog.
-		$dialog['detail']['title']                = __( 'YouTube channel added', 'external-files-in-media-library' );
-		$dialog['detail']['texts'][0]             = '<p>' . __( 'The channel ID has been added to the list.', 'external-files-in-media-library' ) . '</p>';
-		$dialog['detail']['buttons'][0]['action'] = 'location.reload();';
-
-		// return the dialog.
-		wp_send_json( $dialog );
-	}
-
-	/**
-	 * Delete single channel from list.
-	 *
-	 * @param string $channel_id The channel to delete.
-	 *
-	 * @return void
-	 */
-	public function delete_channel( string $channel_id ): void {
-		// get actual list.
-		$channels = $this->get_youtube_channels();
-
-		// get index of searched entry.
-		$key = array_search( $channel_id, $channels, true );
-
-		// bail if no entry could be found.
-		if ( false === $key ) {
-			wp_safe_redirect( wp_get_referer() );
-			exit;
-		}
-
-		// delete the key.
-		unset( $channels[ $key ] );
-
-		// save the new list.
-		update_option( 'eml_youtube_channels', $channels );
-	}
-
-	/**
-	 * Delete the channel by request.
-	 *
-	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
-	 */
-	public function delete_channel_by_request(): void {
-		// check referer.
-		check_admin_referer( 'eml-youtube-delete-channel', 'nonce' );
-
-		// get channel ID from request.
-		$channel_id = filter_input( INPUT_GET, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if no channel is given.
-		if ( empty( $channel_id ) ) {
-			wp_safe_redirect( wp_get_referer() );
-			exit;
-		}
-
-		$this->delete_channel( $channel_id );
-
-		// redirect the user.
-		wp_safe_redirect( wp_get_referer() );
-		exit;
-	}
-
-	/**
-	 * Import videos of given channel by request.
-	 *
-	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
-	 */
-	public function import_channel_by_request(): void {
-		// check referer.
-		check_admin_referer( 'eml-youtube-import-channel', 'nonce' );
-
-		// get channel ID from request.
-		$channel_id = filter_input( INPUT_GET, 'item', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if no channel is given.
-		if ( empty( $channel_id ) ) {
-			wp_safe_redirect( wp_get_referer() );
-			exit;
-		}
-
-		// get transients object.
-		$transient_obj = Transients::get_instance()->add();
-		$transient_obj->set_name( 'eml_youtube_channel_import' );
-
-		// run the import.
-		if ( $this->import_videos_from_channel( $channel_id ) ) {
-			$transient_obj->set_type( 'success' );
-			$transient_obj->set_message( __( 'The videos of this YouTube channel has been imported. Take a look in the log for details.', 'external-files-in-media-library' ) );
-		} else {
-			$transient_obj->set_type( 'error' );
-			$transient_obj->set_message( __( 'The videos of the YouTube channel could <strong>not</strong> be imported. Take a look in the log for details.', 'external-files-in-media-library' ) );
-		}
-		$transient_obj->save();
-
-		// redirect the user.
-		wp_safe_redirect( wp_get_referer() );
-		exit;
-	}
-
-	/**
-	 * Import all videos from given YouTube channel in media library.
-	 *
-	 * @param string $channel_id The channel ID to use.
-	 *
-	 * @return bool
-	 */
-	public function import_videos_from_channel( string $channel_id ): bool {
+	public function get_directory_listing( string $directory ): array {
 		// set API key.
-		$api_key = get_option( 'eml_youtube_api_key' );
-
-		// bail if no API key is set.
-		if ( empty( $api_key ) ) {
-			return false;
-		}
+		$api_key = $this->get_api_key();
 
 		// set max results.
 		$max_results = 100;
 
 		// create URL to request.
-		$youtube_channel_search_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' . $channel_id . '&maxResults=' . $max_results . '&key=' . $api_key;
+		$youtube_channel_search_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' . $directory . '&maxResults=' . $max_results . '&key=' . $api_key;
 
 		// get WP Filesystem-handler.
 		require_once ABSPATH . '/wp-admin/includes/file.php';
@@ -627,7 +404,7 @@ class Youtube {
 
 		// bail if list is empty.
 		if ( empty( $video_list ) ) {
-			return false;
+			return array();
 		}
 
 		// decode the results to get an array.
@@ -635,18 +412,243 @@ class Youtube {
 
 		// bail if no pageInfo returned.
 		if ( empty( $video_list['pageInfo'] ) ) {
-			return false;
+			return array();
 		}
 
 		// bail if array is empty.
 		if ( 0 === absint( $video_list['pageInfo']['totalResults'] ) ) {
+			return array();
+		}
+
+		// collect the entries for the list.
+		$list = array();
+
+		// loop through the results to add each video URL.
+		foreach ( $video_list['items'] as $item ) {
+
+			// bail if videoId is missing.
+			if ( empty( $item['id']['videoId'] ) ) {
+				continue;
+			}
+
+			// create URL.
+			$url = 'https://www.youtube.com/watch?v=' . $item['id']['videoId'];
+
+			$thumbnail = '';
+
+			// collect the entry.
+			$entry = array(
+				'title' => $item['id']['videoId'],
+				'file' => $url,
+				'filesize' => 0,
+				'mime-type' => 'video/mp4',
+				'icon' => '<span class="dashicons dashicons-youtube"></span>',
+				'last-modified' => Helper::get_format_date_time( $item['snippet']['publishedAt'] ),
+				'preview' => $thumbnail
+			);
+
+			// add to the list.
+			$list[] = $entry;
+		}
+
+		// return true if import has been run.
+		return $list;
+	}
+
+	/**
+	 * Return the actions.
+	 *
+	 * @return array
+	 */
+	public function get_actions(): array {
+		return array(
+			array(
+				'action' => 'efml_import_file( file.file, login, password );',
+				'label' => __( 'Import', 'external-files-in-media-library' )
+			)
+		);
+	}
+
+	/**
+	 * Return global actions.
+	 *
+	 * @return array
+	 */
+	protected function get_global_actions(): array {
+		return array_merge( parent::get_global_actions(), array(
+				array(
+					'action' => 'efml_import_file( "https://www.youtube.com/channel/" + url, url, apiKey );',
+					'label' => __( 'Import all videos', 'external-files-in-media-library' )
+				),
+			)
+		);
+	}
+
+	/**
+	 * Check if login with given credentials is valid.
+	 *
+	 * @param string $directory The directory to check.
+	 *
+	 * @return bool
+	 */
+	public function do_login( string $directory ): bool {
+		// bail if no ID (as directory) is given.
+		if( empty( $directory ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'Channel ID missing for Youtube channel', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to login check.
 			return false;
 		}
 
-		// get external files object.
-		$external_files_obj = Files::get_instance();
+		// bail if no key is given.
+		if( empty( $this->get_api_key() ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'API Key missing for Youtube channel', 'external-files-in-media-library' ) );
 
-		// loop through the results to add each video URL.
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to login check.
+			return false;
+		}
+
+		// url to request.
+		$youtube_channel_search_url = $this->get_api_url() . $this->get_login() . '&maxResults=1&key=' . $this->get_api_key();
+
+		// send request to the URL.
+		$response = wp_safe_remote_get( $youtube_channel_search_url );
+
+		// get http status.
+		$http_status = absint( wp_remote_retrieve_response_code( $response ) );
+
+		// bail if status is not 200.
+		if( 200 !== $http_status ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'The given API credentials are wrong.', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to login check.
+			return false;
+		}
+
+		// return true if all is ok.
+		return true;
+	}
+
+	/**
+	 * Extend list of allowed HTTP-states for YouTube URLs.
+	 *
+	 * @param array  $list The list of allowed HTTP-states.
+	 * @param string $url The given URL.
+	 *
+	 * @return array
+	 */
+	public function allow_http_states( array $list, string $url ): array {
+		// bail if this is not a YouTube-URL.
+		if( ! $this->is_youtube_video( $url ) ) {
+			return $list;
+		}
+
+		// add 302 to the list.
+		$list[] = 302;
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Prevent check for content type.
+	 *
+	 * @param bool   $return_value The result (true for "check it", false for not).
+	 * @param string $url The given URL.
+	 *
+	 * @return bool
+	 */
+	public function do_not_check_content_type( bool $return_value, string $url ): bool {
+		// bail if this is not a YouTube-URL.
+		if( ! $this->is_youtube_video( $url ) ) {
+			return $return_value;
+		}
+
+		// prevent check for content type.
+		return false;
+	}
+
+	/**
+	 * Import videos from YouTube channel via import object.
+	 *
+	 * @param array $files The list of files to import.
+	 * @param Protocol_Base  $import_obj The import object.
+	 *
+	 * @return array
+	 */
+	public function import_videos_from_channel_by_import_obj( array $files, Protocol_Base $import_obj ): array {
+		// bail if import object is not HTTP.
+		if( ! $import_obj instanceof HTTP ) {
+			return $files;
+		}
+
+		// get the used URL.
+		$url = $import_obj->get_url();
+
+		// bail if this is not a YouTube-URL.
+		if( ! $this->is_youtube_video( $url ) ) {
+			return $files;
+		}
+
+		// bail if this is not a YouTube channel.
+		if( ! $this->is_youtube_channel( $url ) ) {
+			return $files;
+		}
+
+		// empty the list of files as we do not import the channel itself as file.
+		$files = array();
+
+		// get channel ID.
+		$channel_id = $import_obj->get_login();
+
+		// get API key.
+		$api_key = $import_obj->get_password();
+
+		// create URL to request.
+		$youtube_channel_search_url = $this->get_api_url() . $channel_id . '&maxResults=100&key=' . $api_key;
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		WP_Filesystem();
+		global $wp_filesystem;
+
+		// get the content from external URL.
+		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );
+
+		// bail if list is empty.
+		if ( empty( $video_list ) ) {
+			return array();
+		}
+
+		// decode the results to get an array.
+		$video_list = json_decode( $video_list, ARRAY_A );
+
+		// bail if no pageInfo returned.
+		if ( empty( $video_list['pageInfo'] ) ) {
+			return array();
+		}
+
+		// bail if array is empty.
+		if ( 0 === absint( $video_list['pageInfo']['totalResults'] ) ) {
+			return array();
+		}
+
+		// loop through the results to add each video URL to the resulting list.
 		foreach ( $video_list['items'] as $item ) {
 			// bail if videoId is missing.
 			if ( empty( $item['id']['videoId'] ) ) {
@@ -656,29 +658,28 @@ class Youtube {
 			// create URL.
 			$url = 'https://www.youtube.com/watch?v=' . $item['id']['videoId'];
 
-			// add this URL to the media library.
-			$external_files_obj->add_url( $url );
+			// add this file to the list to import.
+			$files[] = $this->get_basic_url_info_for_video( $url );
 		}
 
-		// return true if import has been run.
-		return true;
+		// return resulting list of files.
+		return $files;
 	}
 
 	/**
-	 * Return list of all configured YouTube channels.
+	 * Return the YouTube API URL to use for any requests.
 	 *
-	 * @return array
+	 * @return string
 	 */
-	public function get_youtube_channels(): array {
-		// get the configured YouTube channels.
-		$channels = get_option( 'eml_youtube_channels' );
+	private function get_api_url(): string {
+		$api_url = $this->api_url;
 
-		// bail if list is empty.
-		if ( empty( $channels ) || empty( $channels[0] ) ) {
-			return array();
-		}
-
-		// return list of channels.
-		return $channels;
+		/**
+		 * Filter the YouTube API URL to use.
+		 *
+		 * @since 3.0.0 Available since 3.0.0.
+		 * @param string $api_url The API URL.
+		 */
+		return apply_filters( 'eml_youtube_api_url', $api_url );
 	}
 }

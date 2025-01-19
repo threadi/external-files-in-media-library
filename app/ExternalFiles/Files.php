@@ -431,18 +431,27 @@ class Files {
 				// log this event.
 				$log->create( __( 'URL will be saved local.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 
-				// get temporary file.
-				$tmp_file = $this->get_temp_file( $file_data['url'] );
-
 				// import file as image via WP-own functions.
 				$array         = array(
 					'name'     => $title,
 					'type'     => $file_data['mime-type'],
-					'tmp_name' => $tmp_file,
+					'tmp_name' => $file_data['tmp-file'],
 					'error'    => 0,
 					'size'     => $file_data['filesize'],
 				);
 				$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
+
+				// delete the tmp file (if media_handle_sideload() does not have it already done).
+				if( file_exists( $file_data['tmp-file'] ) ) {
+					// get WP Filesystem-handler.
+					require_once ABSPATH . '/wp-admin/includes/file.php';
+					\WP_Filesystem();
+					global $wp_filesystem;
+					$wp_filesystem->delete( $file_data['tmp-file'] );
+
+					// log this event.
+					$log->create( __( 'Temp-file for import has been deleted.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
+				}
 			} else {
 				// log this event.
 				$log->create( __( 'URL will be stay external, just save the reference in media library.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
@@ -456,7 +465,7 @@ class Files {
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
-				$log->create( sprintf( __( 'URL could not be saved because of this error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_data['url'], 'error' );
+				$log->create( sprintf( __( 'URL could not be saved because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_data['url'], 'error' );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -794,11 +803,14 @@ class Files {
 	/**
 	 * Set the login.
 	 *
-	 * @param string $login The login.
+	 * @param string|null $login The login.
 	 *
 	 * @return void
 	 */
-	public function set_login( string $login ): void {
+	public function set_login( string|null $login ): void {
+		if( is_null( $login ) ) {
+			$login = '';
+		}
 		$this->login = $login;
 	}
 
@@ -814,11 +826,14 @@ class Files {
 	/**
 	 * Set the password.
 	 *
-	 * @param string $password The password.
+	 * @param string|null $password The password.
 	 *
 	 * @return void
 	 */
-	public function set_password( string $password ): void {
+	public function set_password( string|null $password ): void {
+		if( is_null( $password ) ) {
+			$password = '';
+		}
 		$this->password = $password;
 	}
 
