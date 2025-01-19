@@ -75,6 +75,7 @@ class Directory_Listing {
 		$directory_listing_obj->set_prefix( 'efml' );
 		$directory_listing_obj->set_nonce_name( $this->get_nonce_name() );
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
+		$directory_listing_obj->set_page_hook( 'media_page_efml_local_directories' );
 		$directory_listing_obj->init();
 	}
 

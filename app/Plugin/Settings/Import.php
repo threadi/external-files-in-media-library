@@ -65,9 +65,16 @@ class Import {
 	/**
 	 * Add import scripts.
 	 *
+	 * @param string $hook The used hook.
+	 *
 	 * @return void
 	 */
-	public function add_script(): void {
+	public function add_script( string $hook ): void {
+		// bail if page is used where we do not use it.
+		if( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings' ),true ) ) {
+			return;
+		}
+
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-import-admin',

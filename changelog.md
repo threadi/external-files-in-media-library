@@ -21,6 +21,7 @@
 - Optimized updating or installing log- and queue-tables during plugin update
 - Optimized upload dialog regarding the credential usage if browser used autofill-functions
 - Optimized FTP- and SFTP-handling for external files regarding its import
+- Embed our own CSS- and JS-files in backend only if necessary (speeds up loading time there)
 - Extended logging in debug mode
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository

@@ -2,7 +2,6 @@
 *.zip
 languages/*.json
 /vendor/
-!/vendor/threadi/easy-directory-listing-for-wordpress/
 /svn/
 /build/build.properties
 
