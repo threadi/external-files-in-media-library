@@ -191,3 +191,39 @@ body.settings_page_eml_settings .copied:after {
 }
 
 .form-table .settings_page_eml_settings th { padding: 8px 10px }
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services {
+	display: flex;
+	gap: 1em;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li {
+	border: 4px dashed #c3c4c7;
+	flex: 1 1 0;
+	font-size: 24px;
+	padding: 2em 1em;
+	text-align: center;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li a {
+	text-decoration: none;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before {
+	display: block;
+	font-family: dashicons, sans-serif;
+	font-size: 52px;
+	margin: 0 auto 42px;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before {
+	content: "\f163";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before {
+	content: "\f504";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-youtube a:before {
+	content: "\f19b";
+}

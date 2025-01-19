@@ -125,7 +125,7 @@ class Directory_Listing {
 			?>
 			<div class="wrap">
 				<h1><?php echo esc_html__( 'Choose protocol', 'external-files-in-media-library' ); ?></h1>
-				<ul>
+				<ul id="efml-directory-listing-services">
 					<?php
 						foreach( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 							// bail if this is not a base object.
@@ -133,7 +133,7 @@ class Directory_Listing {
 								continue;
 							}
 
-							?><li><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li><?php
+							?><li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li><?php
 						}
 					?>
 				</ul>
