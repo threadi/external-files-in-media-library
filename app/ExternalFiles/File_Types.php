@@ -89,14 +89,32 @@ class File_Types {
 	 * @return File_Types_Base
 	 */
 	public function get_type_object_for_file_obj( File $external_file_obj ): File_Types_Base {
+		// use cached object.
+		if ( ! empty( $this->files[ $external_file_obj->get_id() ] ) ) {
+			return $this->files[ $external_file_obj->get_id() ];
+		}
+
+		// get the file type object.
+		return $this->get_type_object_by_mime_type( $external_file_obj->get_mime_type(), $external_file_obj );
+	}
+
+	/**
+	 * Get the file type object by given URL and mime type.
+	 *
+	 * @param string     $mime_type The mime type.
+	 * @param false|File $external_file_obj The external file object or simply false.
+	 *
+	 * @return File_Types_Base
+	 */
+	public function get_type_object_by_mime_type( string $mime_type, false|File $external_file_obj = false ): File_Types_Base {
 		// bail with default file object if mime type is not given.
-		if ( empty( $external_file_obj->get_mime_type() ) ) {
+		if ( empty( $mime_type ) ) {
 			// return the default file object if nothing matches.
 			return new File_Types\File( $external_file_obj );
 		}
 
 		// use cached object.
-		if ( ! empty( $this->files[ $external_file_obj->get_id() ] ) ) {
+		if ( $external_file_obj && ! empty( $this->files[ $external_file_obj->get_id() ] ) ) {
 			return $this->files[ $external_file_obj->get_id() ];
 		}
 
@@ -120,6 +138,9 @@ class File_Types {
 				continue;
 			}
 
+			// set the mime type.
+			$file_type_obj->set_mime_type( $mime_type );
+
 			// bail if given file does not match.
 			if ( ! $file_type_obj->is_file_compatible() ) {
 				continue;
@@ -127,23 +148,27 @@ class File_Types {
 
 			// log this event.
 			/* translators: %1$s will be replaced by the type name (e.g. "Images"). */
-			Log::get_instance()->create( sprintf( __( 'File has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj->get_url( true ), 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'File has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 2 );
 
 			// add to the list.
-			$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
+			if( $external_file_obj ) {
+				$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
+			}
 
 			// return this object.
 			return $file_type_obj;
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 1 );
+		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 1 );
 
 		// get object.
 		$file_type_obj = new File_Types\File( $external_file_obj );
 
-		// add to the list.
-		$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
+		// add to the cache list.
+		if( $external_file_obj ) {
+			$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
+		}
 
 		// return the default file object if nothing matches.
 		return $file_type_obj;

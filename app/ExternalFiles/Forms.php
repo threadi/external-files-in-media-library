@@ -83,9 +83,16 @@ class Forms {
 	/**
 	 * Add CSS- and JS-files for backend.
 	 *
+	 * @param string $hook The used hook.
+	 *
 	 * @return void
 	 */
-	public function add_styles_and_js_admin(): void {
+	public function add_styles_and_js_admin( string $hook ): void {
+		// bail if page is used where we do not use it.
+		if( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
+			return;
+		}
+
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-admin',
@@ -105,7 +112,7 @@ class Forms {
 
 		$info_timeout = 200;
 		/**
-		 * Filter the info timeout for AJAX-info-request.
+		 * Filter the timeout for AJAX-info-request.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param int $info_timeout The timeout in ms (default 200ms).

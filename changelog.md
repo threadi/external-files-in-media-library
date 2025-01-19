@@ -17,9 +17,12 @@
 
 - Do not download files via http protocol which should not be hosted locally
 => speed up the import & reduce space usage
+- Optimized check if HTTP-file should be saved locally by file type
 - Optimized updating or installing log- and queue-tables during plugin update
 - Optimized upload dialog regarding the credential usage if browser used autofill-functions
 - Optimized FTP- and SFTP-handling for external files regarding its import
+- Embed our own CSS- and JS-files in backend only if necessary (speeds up loading time there)
+- Extended logging in debug mode
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
 - Reduced number of calls for external file thumbs
@@ -33,6 +36,7 @@
 - Fixed partially wrong saving of meta-data on external media files
 - Fixed wrong check for already existing thumbs of external files
 - Fixed styling of single URL upload field
+- Fixed logging of deleted URL with its proxied path
 
 ## [2.0.2] - 2024-11-23
 

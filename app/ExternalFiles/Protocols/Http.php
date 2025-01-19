@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
@@ -87,7 +88,7 @@ class Http extends Protocol_Base {
 
 		// request resulted in an error.
 		if ( is_wp_error( $response ) || empty( $response ) ) {
-			Log::get_instance()->create( __( 'Given URL is not available.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL is not available.', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', esc_url( $url ), 'error', 0 );
 			return false;
 		}
 
@@ -658,9 +659,11 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		// TODO should be file-type-specific.
-		// if setting enables local saving for images, file should be saved local.
-		$result = 'local' === get_option( 'eml_images_mode', 'external' ) && Helper::is_image_by_mime_type( $mime_type );
+		// get file type object for this URL by its mime type.
+		$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $mime_type );
+
+		// if setting enables local saving, file should be saved local.
+		$result = $file_type_obj->is_local();
 		/**
 		 * Filter if a http-file should be saved local or not.
 		 *
@@ -786,7 +789,7 @@ class Http extends Protocol_Base {
 
 		// bail if error occurred.
 		if ( is_wp_error( $tmp_file ) ) {
-			// file is available.
+			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
 			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
 

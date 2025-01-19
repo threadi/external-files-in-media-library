@@ -255,7 +255,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_allowed_mime_types' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'array' );
-		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) ); // TODO variabel machen per filter.
+		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */

@@ -131,7 +131,7 @@ class File {
 	}
 
 	/**
-	 * Set the external url.
+	 * Set the external URL.
 	 *
 	 * @param string $url  The URL for this attachment-file.
 	 * @return void
