@@ -134,6 +134,15 @@ class Image extends File_Types_Base {
 	}
 
 	/**
+	 * Return whether this file should be saved locally.
+	 *
+	 * @return bool
+	 */
+	public function is_local(): bool {
+		return 'local' === get_option( 'eml_images_mode' );
+	}
+
+	/**
 	 * Return whether this file should be proxied.
 	 *
 	 * @return bool

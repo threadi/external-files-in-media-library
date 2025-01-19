@@ -43,6 +43,13 @@ class File_Types_Base {
 	protected File|false $external_file_obj = false;
 
 	/**
+	 * The mime type.
+	 *
+	 * @var string
+	 */
+	private string $mime_type = '';
+
+	/**
 	 * The contructor for this object.
 	 *
 	 * @param File|false $external_file_obj The external file as object or false.
@@ -59,30 +66,35 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	public function is_file_compatible(): bool {
-		// bail if no file is set.
-		if ( ! $this->get_file() ) {
-			return false;
-		}
-
-		// bail if list is empty.
+		// bail if list of possible mime types in object is empty.
 		if ( empty( $this->get_mime_types() ) ) {
 			return false;
 		}
 
+		// get the mime type to check.
+		$mime_type = $this->get_mime_type();
+
 		// get the external file object.
 		$external_file_obj = $this->get_file();
 
+		// use the mime type from the external file object, if set.
+		if( $external_file_obj ) {
+			$mime_type = $external_file_obj->get_mime_type();
+		}
+
 		// check the mime types.
-		$result = in_array( $this->get_file()->get_mime_type(), $this->get_mime_types(), true );
+		$result = in_array( $mime_type, $this->get_mime_types(), true );
 
 		/**
 		 * Filter the result of file type compatibility check.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
+		 *
 		 * @param bool $result The result (true or false).
 		 * @param File $external_file_obj The external file object.
+		 * @param string $mime_type The used mime type (added in 3.0.0).
 		 */
-		return apply_filters( 'eml_file_type_compatibility_result', $result, $external_file_obj );
+		return apply_filters( 'eml_file_type_compatibility_result', $result, $external_file_obj, $mime_type );
 	}
 
 	/**
@@ -107,11 +119,6 @@ class File_Types_Base {
 	 * @return array|string[]
 	 */
 	private function get_mime_types(): array {
-		// bail if no file is set.
-		if ( ! $this->get_file() ) {
-			return array();
-		}
-
 		$mime_type         = $this->mime_types;
 		$external_file_obj = $this->get_file();
 
@@ -120,7 +127,7 @@ class File_Types_Base {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $mime_type List of mime types.
-		 * @param File $external_file_obj The file object.
+		 * @param File|false $external_file_obj The file object.
 		 */
 		return apply_filters( 'eml_file_type_supported_mime_types', $mime_type, $external_file_obj );
 	}
@@ -162,6 +169,15 @@ class File_Types_Base {
 	}
 
 	/**
+	 * Return whether this file should be saved locally.
+	 *
+	 * @return bool
+	 */
+	public function is_local(): bool {
+		return false;
+	}
+
+	/**
 	 * Return whether this file should be proxied.
 	 *
 	 * @return bool
@@ -186,5 +202,25 @@ class File_Types_Base {
 	 */
 	public function has_thumbs(): bool {
 		return false;
+	}
+
+	/**
+	 * Return the given mime type.
+	 *
+	 * @return string
+	 */
+	protected function get_mime_type(): string {
+		return $this->mime_type;
+	}
+
+	/**
+	 * Set the mime type of the file.
+	 *
+	 * @param string $mime_type The given mime type.
+	 *
+	 * @return void
+	 */
+	public function set_mime_type( string $mime_type ): void {
+		$this->mime_type = $mime_type;
 	}
 }

@@ -95,9 +95,9 @@ class Files {
 		add_action( 'import_end', array( $this, 'import_end' ), 10, 0 );
 		add_filter( 'redirect_canonical', array( $this, 'disable_attachment_page' ) );
 		add_filter( 'template_redirect', array( $this, 'disable_attachment_page' ) );
-		add_filter( 'wp_calculate_image_srcset', array( $this, 'wp_calculate_image_srcset' ), 10, 5 );
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'get_image_srcset' ), 10, 5 );
 		add_filter( 'wp_import_post_meta', array( $this, 'set_import_marker_for_attachments' ), 10, 2 );
-		add_filter( 'wp_get_attachment_metadata', array( $this, 'wp_get_attachment_metadata' ), 10, 2 );
+		add_filter( 'wp_get_attachment_metadata', array( $this, 'get_attachment_metadata' ), 10, 2 );
 		add_action( 'delete_attachment', array( $this, 'log_url_deletion' ), 10, 1 );
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
@@ -519,6 +519,7 @@ class Files {
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_data['url'], 'success', 0 );
+			$log->create( __( 'Using following settings to save this URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_data['url'], 'success', 2 );
 
 			/**
 			 * Run additional tasks after new external file has been added.
@@ -565,7 +566,7 @@ class Files {
 		do_action( 'eml_file_delete', $external_file_obj );
 
 		// log deletion.
-		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file_obj->get_url(), 'success', 1 );
+		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'success', 1 );
 	}
 
 	/**
@@ -1435,7 +1436,7 @@ class Files {
 	 * @return array
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function wp_calculate_image_srcset( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ): array {
+	public function get_image_srcset( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ): array {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
@@ -1466,7 +1467,7 @@ class Files {
 	 *
 	 * @return array
 	 */
-	public function wp_get_attachment_metadata( array $data, int $attachment_id ): array {
+	public function get_attachment_metadata( array $data, int $attachment_id ): array {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
