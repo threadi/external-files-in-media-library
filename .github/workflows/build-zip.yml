@@ -24,6 +24,10 @@ jobs:
           npm i
           npm run build
           cd ../../../
+          cd vendor/threadi/easy-directory-listing-for-wordpress/
+          npm i
+          npm run build
+          cd ../../../
 
       - name: Generate autoloader
         run: composer dump-autoload -oa --no-dev
@@ -62,6 +66,7 @@ jobs:
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
           zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
+          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/lib/*
           cp ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/
 
       - name: Create Release

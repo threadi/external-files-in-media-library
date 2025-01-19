@@ -77,6 +77,9 @@ class Admin {
 		// initialize the help system.
 		Help_System::get_instance()->init();
 
+		// initialize the directory listing support.
+		Directory_Listing::get_instance()->init();
+
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );

@@ -43,7 +43,7 @@ class Imgur {
 	 */
 	public static function get_instance(): Imgur {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new Imgur();
+			self::$instance = new self();
 		}
 
 		return self::$instance;

@@ -377,3 +377,60 @@ function efml_reset_proxy() {
     }
   } )
 }
+
+/**
+ * Import single URL.
+ *
+ * @param urls
+ * @param login
+ * @param password
+ * @param additional_fields
+ */
+function efml_import_url( urls, login, password, additional_fields ) {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      urls: urls,
+      login: login,
+      password: password,
+      additional_fields: additional_fields,
+      action: 'eml_add_external_urls',
+      nonce: efmlJsVars.urls_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_import_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Import single local file.
+ *
+ * @param file The file to import.
+ * @param login The login to use for import.
+ * @param passwort The password to use for import.
+ */
+function efml_import_file( file, login, passwort ) {
+  efml_import_url( file, login, passwort, [] );
+}

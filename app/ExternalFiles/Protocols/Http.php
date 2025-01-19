@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Filesystem_Base;
 
 /**
  * Object to handle different protocols.
@@ -246,7 +247,7 @@ class Http extends Protocol_Base {
 			global $wp_filesystem;
 
 			// get temp file.
-			$tmp_file = $this->get_temp_file( $this->get_url() );
+			$tmp_file = $this->get_temp_file( $this->get_url(), $wp_filesystem );
 
 			// bail if tmp file could not be loaded.
 			if ( ! $tmp_file ) {
@@ -418,8 +419,14 @@ class Http extends Protocol_Base {
 			$files[] = $file;
 		}
 
-		// return resulting list of files.
-		return $files;
+		/**
+		 * Filter list of files during this import.
+		 *
+		 * @since 3.0.0 Available since 3.0.0
+		 * @param array $files List of files.
+		 * @param HTTP $this The import object.
+		 */
+		return apply_filters( 'eml_external_files_infos', $files, $this );
 	}
 
 	/**
@@ -485,6 +492,16 @@ class Http extends Protocol_Base {
 			if ( $last_modified ) {
 				$results['last-modified'] = $last_modified;
 			}
+		}
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// if file should be saved local, load the temp file.
+		if( $results['local'] ) {
+			$results['tmp-file'] = $this->get_temp_file( $url, $wp_filesystem );
 		}
 
 		/**
@@ -757,10 +774,11 @@ class Http extends Protocol_Base {
 	 * Get temp file from given URL.
 	 *
 	 * @param string $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
 		// download file as temporary file.
 		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 		$tmp_file = download_url( $this->get_url() );

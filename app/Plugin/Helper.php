@@ -23,7 +23,16 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_plugin_dir(): string {
-		return plugin_dir_path( EFML_PLUGIN );
+		return trailingslashit( plugin_dir_path( EFML_PLUGIN ) );
+	}
+
+	/**
+	 * Get plugin URL of this plugin.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_url(): string {
+		return trailingslashit( plugin_dir_url( EFML_PLUGIN ) );
 	}
 
 	/**

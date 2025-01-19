@@ -4,19 +4,22 @@
 
 ### Added
 
+- Added Services to platforms which host files, usable for local host, FTP and YouTube atm
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
 - Added marker for proxied files
 - Added possibility to customize the handling of adding new URLs to media library with custom PHP
 - Added more hooks
 - Added GitHub action to build plugin releases
+- Added log for deleting temp file during import
 
 ### Changed
 
-- Introduced Services to platforms which host files (like Imgur or GoogleDrive)
-- Does not download files via http protocol which should not be hosted locally
+- Do not download files via http protocol which should not be hosted locally
+=> speed up the import & reduce space usage
 - Optimized updating or installing log- and queue-tables during plugin update
 - Optimized upload dialog regarding the credential usage if browser used autofill-functions
+- Optimized FTP- and SFTP-handling for external files regarding its import
 - Updated dependencies
 - Moved changelog from readme.txt in GitHub-repository
 - Reduced number of calls for external file thumbs

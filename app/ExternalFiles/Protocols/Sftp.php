@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Filesystem_Base;
 use WP_Filesystem_SSH2;
 
 /**
@@ -38,6 +39,27 @@ class Sftp extends Protocol_Base {
 	 * @var array
 	 */
 	private array $ssh_connections = array();
+
+	/**
+	 * Initialize the object to handle SFTP/SSH-connections.
+	 *
+	 * @param string $url The URL to use.
+	 */
+	public function __construct( string $url ) {
+		// load necessary classes.
+		if ( ! function_exists( 'wp_tempnam' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+		}
+		if ( ! class_exists( 'WP_Filesystem_SSH2' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ssh2.php';
+		}
+
+		// call parent constructor.
+		parent::__construct( $url );
+	}
 
 	/**
 	 * Check the availability of a given URL.
@@ -65,33 +87,11 @@ class Sftp extends Protocol_Base {
 			return array();
 		}
 
-		// get the host.
-		$host = $parse_url['host'];
-
 		// get the path.
 		$path = $parse_url['path'];
 
-		// load necessary classes.
-		if ( ! function_exists( 'wp_tempnam' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
-		}
-		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
-		}
-		if ( ! class_exists( 'WP_Filesystem_SSH2' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ssh2.php';
-		}
-
-		// define ssh/sftp connection parameter.
-		$connection_arguments = array(
-			'port'     => $this->get_port_by_protocol( $parse_url['scheme'] ),
-			'hostname' => $host,
-			'username' => $this->get_login(),
-			'password' => $this->get_password(),
-		);
-
 		// connect via SSH.
-		$ssh_connection = $this->get_ssh_connection( $connection_arguments );
+		$ssh_connection = $this->get_connection( $this->get_url() );
 
 		// bail if connection failed.
 		if ( ! $ssh_connection ) {
@@ -205,8 +205,14 @@ class Sftp extends Protocol_Base {
 			$files[] = $results;
 		}
 
-		// return resulting list of file with its data.
-		return $files;
+		/**
+		 * Filter list of files during this import.
+		 *
+		 * @since 3.0.0 Available since 3.0.0
+		 * @param array $files List of files.
+		 * @param Protocol_Base $this The import object.
+		 */
+		return apply_filters( 'eml_external_files_infos', $files, $this );
 	}
 
 	/**
@@ -231,7 +237,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if file does not exist.
 		if ( ! $ssh_connection->is_readable( $file_path ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'SFTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
 			// return empty array as we got not the file.
 			return array();
@@ -246,6 +252,16 @@ class Sftp extends Protocol_Base {
 
 		// get the last modified date.
 		$results['last-modified'] = $ssh_connection->mtime( $file_path );
+
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// set the file as tmp-file for import.
+		$results['tmp-file'] = wp_tempnam();
+		// and save the file there.
+		$wp_filesystem->put_contents( $results['tmp-file'], $ssh_connection->get_contents( $file_path ) );
 
 		$response_headers = array();
 		/**
@@ -263,11 +279,22 @@ class Sftp extends Protocol_Base {
 	/**
 	 * Get the SFTP connection for given connection arguments.
 	 *
-	 * @param array $connection_arguments The arguments for the connection.
+	 * @param string $url The URL to use for the connection.
 	 *
-	 * @return false|WP_Filesystem_SSH2
+	 * @return false|WP_Filesystem_Base
 	 */
-	private function get_ssh_connection( array $connection_arguments ): false|WP_Filesystem_SSH2 {
+	public function get_connection( string $url ): false|WP_Filesystem_Base {
+		// get the path from given URL.
+		$parse_url = wp_parse_url( $url );
+
+		// define ssh/sftp connection parameter.
+		$connection_arguments = array(
+			'port'     => $this->get_port_by_protocol( $parse_url['scheme'] ),
+			'hostname' => $parse_url['host'],
+			'username' => $this->get_login(),
+			'password' => $this->get_password(),
+		);
+
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {
 			return false;

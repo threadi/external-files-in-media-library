@@ -43,7 +43,7 @@ class GoogleDrive {
 	 */
 	public static function get_instance(): GoogleDrive {
 		if ( is_null( self::$instance ) ) {
-			self::$instance = new GoogleDrive();
+			self::$instance = new self();
 		}
 
 		return self::$instance;
