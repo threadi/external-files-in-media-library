@@ -340,11 +340,18 @@ class Forms {
 
 			// if term_data could be loaded, use them.
 			if( ! empty( $term_data ) ) {
+				// complete the URL.
 				foreach( $url_array as $i => $url ) {
-					if( $term_data['directory'] !== $url ) {
+					// get the path from given URL.
+					$parse_url = wp_parse_url( $url );
+
+					// only change the given URL if the URL part is a part and not a URL.
+					if( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[$i] = $term_data['directory'] . $url;
 					}
 				}
+
+				// get the credentials.
 				$login = $term_data['login'];
 				$password = $term_data['password'];
 			}
