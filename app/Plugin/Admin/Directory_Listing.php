@@ -106,11 +106,19 @@ class Directory_Listing {
 	/**
 	 * Return the URL where the directory view will be displayed.
 	 *
-	 * @param Directory_Listing_Base $obj The object to use.
+	 * @param Directory_Listing_Base|false $obj The object to use (or false for listing).
 	 *
 	 * @return string
 	 */
-	public function get_view_directory_url( Directory_Listing_Base $obj ): string {
+	public function get_view_directory_url( Directory_Listing_Base|false $obj ): string {
+		if( ! $obj ) {
+			return add_query_arg(
+				array(
+					'page' => $this->get_menu_slug()
+				),
+				get_admin_url() . 'upload.php'
+			);
+		}
 		return add_query_arg(
 			array(
 				'page' => $this->get_menu_slug(),

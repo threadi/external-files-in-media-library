@@ -50,7 +50,7 @@ class ThirdPartySupport {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

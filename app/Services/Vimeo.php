@@ -52,7 +52,7 @@ class Vimeo {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

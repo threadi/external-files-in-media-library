@@ -50,7 +50,7 @@ class Imgur {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

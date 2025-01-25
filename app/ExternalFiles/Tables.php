@@ -50,7 +50,7 @@ class Tables {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

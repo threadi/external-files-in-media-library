@@ -78,7 +78,7 @@ class Ftp extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */
