@@ -52,7 +52,7 @@ class PreventDirectAccess {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

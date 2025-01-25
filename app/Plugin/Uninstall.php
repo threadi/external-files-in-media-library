@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
@@ -127,6 +128,9 @@ class Uninstall {
 
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();
+
+		// cleanup directory archive.
+		Taxonomy::get_instance()->uninstall();
 
 		// delete Log-database-table.
 		Log::get_instance()->uninstall();

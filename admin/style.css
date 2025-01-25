@@ -227,3 +227,21 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-youtube a:before {
 	content: "\f19b";
 }
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-directory a:before {
+	content: "\f501";
+}
+
+.easy-dialog.eml button.settings {
+	position: relative;
+	top: 3px;
+	z-index: 1;
+}
+
+.easy-dialog.eml button.settings:after {
+	content: "\f111";
+	display: inline-block;
+	font-family: dashicons, sans-serif;
+	font-size: 20px;
+}
+

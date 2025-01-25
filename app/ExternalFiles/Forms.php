@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -89,7 +90,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
+		if( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
 			return;
 		}
 
@@ -200,6 +201,15 @@ class Forms {
 				),
 			);
 
+			// add link to settings for admin in dialog.
+			if ( current_user_can( 'manage_options' ) ) {
+				$dialog['buttons'][] = array(
+					'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+					'className' => 'settings',
+					'text'    => '',
+				);
+			}
+
 			/**
 			 * Filter the add-dialog.
 			 *
@@ -211,14 +221,6 @@ class Forms {
 			?>
 			<div class="eml_add_external_files_wrapper">
 				<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
-				<?php
-				// add link to settings for admin.
-				if ( current_user_can( 'manage_options' ) ) {
-					?>
-					<br><a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_attr__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
-					<?php
-				}
-				?>
 			</div>
 			<?php
 		} else {
@@ -267,17 +269,18 @@ class Forms {
 			),
 		);
 
+		// add link to settings for admin in dialog.
+		if ( current_user_can( 'manage_options' ) ) {
+			$dialog['buttons'][] = array(
+				'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+				'className' => 'settings',
+				'text'    => '',
+			);
+		}
+
 		?>
 		<div class="eml_add_external_files_wrapper">
 			<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external file', 'external-files-in-media-library' ); ?></a>
-			<?php
-			// add link to settings for admin.
-			if ( current_user_can( 'manage_options' ) ) {
-				?>
-				<a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
-				<?php
-			}
-			?>
 		</div>
 		<?php
 	}
@@ -328,6 +331,24 @@ class Forms {
 
 		// get additional fields.
 		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['additional_fields'] ) ) : array();
+
+		// get the term for credentials from Directory Listing Archive, if set.
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+		if( $term_id > 0 ) {
+			// get the term data.
+			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+			// if term_data could be loaded, use them.
+			if( ! empty( $term_data ) ) {
+				foreach( $url_array as $i => $url ) {
+					if( $term_data['directory'] !== $url ) {
+						$url_array[$i] = $term_data['directory'] . $url;
+					}
+				}
+				$login = $term_data['login'];
+				$password = $term_data['password'];
+			}
+		}
 
 		$false = false;
 		/**

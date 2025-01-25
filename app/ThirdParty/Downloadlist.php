@@ -50,7 +50,7 @@ class Downloadlist {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */

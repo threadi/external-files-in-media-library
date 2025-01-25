@@ -334,9 +334,9 @@ class Helper {
 	 */
 	public static function get_support_url_for_urls(): string {
 		if ( Languages::get_instance()->is_german_language() ) {
-			return 'https://github.com/threadi/external-files-in-media-library/docs/quickstart_de.md';
+			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/quickstart_de.md';
 		}
-		return 'https://github.com/threadi/external-files-in-media-library/docs/quickstart.md';
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/quickstart.md';
 	}
 
 	/**

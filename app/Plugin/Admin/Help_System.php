@@ -65,7 +65,7 @@ class Help_System {
 	 */
 	public function add_help( WP_Screen $screen ): void {
 		// bail if we are not in our settings screen OR not in the media upload screen.
-		if ( ! in_array( $screen->base, array( 'settings_page_eml_settings', 'upload', 'media' ), true ) ) {
+		if ( ! in_array( $screen->base, array( 'settings_page_eml_settings', 'upload', 'media', 'media_page_efml_local_directories' ), true ) ) {
 			return;
 		}
 

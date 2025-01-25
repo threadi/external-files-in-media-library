@@ -10,6 +10,8 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -50,11 +52,15 @@ class Services {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */
 	public function init(): void {
+		// use hook.
+		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
+
+		// initiate each supported service.
 		foreach ( $this->get_services() as $class_name ) {
 			// bail if class does not exist.
 			if ( ! class_exists( $class_name ) ) {
@@ -89,5 +95,34 @@ class Services {
 		 * @param array $list List of third party support.
 		 */
 		return apply_filters( 'eml_services_support', $list );
+	}
+
+	/**
+	 * Add help for the settings of this plugin.
+	 *
+	 * @param array $help_list List of help tabs.
+	 *
+	 * @return array
+	 */
+	public function add_help( array $help_list ): array {
+		$content  = '<h1>' . __( 'Get files from external directory', 'external-files-in-media-library' ) . '</h1>';
+		$content .= '<p>' . __( 'The plugin allows you to integrate files from external directories into your media library.', 'external-files-in-media-library' ) . '</p>';
+		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
+		/* translators: %1$s will be replaced by a URL. */
+		$content .= '<ol><li>' . sprintf( __( 'Go to Media > <a href="%1$s">Import from directory</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ) ) . '</li>';
+		$content .= '<li>' . __( 'Choose the service you want to use.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Enter your credentials to use the service for your external directory.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '<li>' . __( 'Choose the files you want to import in your media library.', 'external-files-in-media-library' ) . '</li>';
+		$content .= '</ol>';
+
+		// add help for the settings of this plugin.
+		$help_list[] = array(
+			'id'      => 'eml-directory',
+			'title'   => __( 'Using directories', 'external-files-in-media-library' ),
+			'content' => $content,
+		);
+
+		// return list of help.
+		return $help_list;
 	}
 }

@@ -86,7 +86,7 @@ class Youtube extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Initialize plugin.
+	 * Initialize this object.
 	 *
 	 * @return void
 	 */
@@ -463,7 +463,7 @@ class Youtube extends Directory_Listing_Base {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( file.file, login, password );',
+				'action' => 'efml_import_file( file.file, login, password, term );',
 				'label' => __( 'Import', 'external-files-in-media-library' )
 			)
 		);
@@ -477,7 +477,7 @@ class Youtube extends Directory_Listing_Base {
 	protected function get_global_actions(): array {
 		return array_merge( parent::get_global_actions(), array(
 				array(
-					'action' => 'efml_import_file( "https://www.youtube.com/channel/" + url, url, apiKey );',
+					'action' => 'efml_import_file( "https://www.youtube.com/channel/" + url, url, apiKey, config.term );',
 					'label' => __( 'Import all videos', 'external-files-in-media-library' )
 				),
 			)

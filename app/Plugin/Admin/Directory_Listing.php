@@ -27,6 +27,13 @@ class Directory_Listing {
 	private string $nonce_name = 'efml-directory-listing';
 
 	/**
+	 * The menu slug.
+	 *
+	 * @var string
+	 */
+	private string $menu_slug = 'efml_local_directories';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Directory_Listing
@@ -75,7 +82,8 @@ class Directory_Listing {
 		$directory_listing_obj->set_prefix( 'efml' );
 		$directory_listing_obj->set_nonce_name( $this->get_nonce_name() );
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
-		$directory_listing_obj->set_page_hook( 'media_page_efml_local_directories' );
+		$directory_listing_obj->set_page_hook( 'media_page_' . $this->get_menu_slug() );
+		$directory_listing_obj->set_menu_slug( $this->get_menu_slug() );
 		$directory_listing_obj->init();
 	}
 
@@ -90,7 +98,7 @@ class Directory_Listing {
 			__( 'Import from directories', 'external-files-in-media-library' ),
 			__( 'Import from directories', 'external-files-in-media-library' ),
 			'manage_options',
-			'efml_local_directories',
+			$this->get_menu_slug(),
 			array( $this, 'render_view_directory_page' )
 		);
 	}
@@ -98,14 +106,22 @@ class Directory_Listing {
 	/**
 	 * Return the URL where the directory view will be displayed.
 	 *
-	 * @param Directory_Listing_Base $obj The object to use.
+	 * @param Directory_Listing_Base|false $obj The object to use (or false for listing).
 	 *
 	 * @return string
 	 */
-	public function get_view_directory_url( Directory_Listing_Base $obj ): string {
+	public function get_view_directory_url( Directory_Listing_Base|false $obj ): string {
+		if( ! $obj ) {
+			return add_query_arg(
+				array(
+					'page' => $this->get_menu_slug()
+				),
+				get_admin_url() . 'upload.php'
+			);
+		}
 		return add_query_arg(
 			array(
-				'page' => 'efml_local_directories',
+				'page' => $this->get_menu_slug(),
 				'method' => $obj->get_name()
 			),
 			get_admin_url() . 'upload.php'
@@ -137,6 +153,7 @@ class Directory_Listing {
 							?><li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li><?php
 						}
 					?>
+					<li class="efml-directory"><a href="<?php echo esc_url( Directory_Listings::get_instance()->get_directory_archive_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -168,6 +185,12 @@ class Directory_Listing {
 		$config = $directory_listing_obj->get_config();
 		$config['nonce'] = wp_create_nonce( $this->get_nonce_name() );
 
+		// get directory to connect to from request.
+		$term = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
+		if( $term > 0 ) {
+			$config['term'] = $term;
+		}
+
 		// output.
 		?>
 		<div class="wrap">
@@ -187,16 +210,11 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Return additional global actions from our plugin.
+	 * Return the menu slug.
 	 *
-	 * @return array
+	 * @return string
 	 */
-	private function get_global_actions(): array {
-		return array(
-			array(
-				'action' => 'alert("ok");',
-				'label' => __( 'Import active directory', 'external-files-in-media-library' )
-			),
-		);
+	private function get_menu_slug(): string {
+		return $this->menu_slug;
 	}
 }
