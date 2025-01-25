@@ -5,6 +5,7 @@
 ### Added
 
 - Added Services to platforms which host files, usable for local host, FTP and YouTube atm
+- Added management for credentials of these external platforms
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
 - Added marker for proxied files

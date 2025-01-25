@@ -381,12 +381,13 @@ function efml_reset_proxy() {
 /**
  * Import single URL.
  *
- * @param urls
- * @param login
- * @param password
- * @param additional_fields
+ * @param urls The URLs to import.
+ * @param login The login to use for import.
+ * @param password The password to use for import.
+ * @param additional_fields Additional fields added by extensions.
+ * @param term The directory archive term which could be used.
  */
-function efml_import_url( urls, login, password, additional_fields ) {
+function efml_import_url( urls, login, password, additional_fields, term ) {
   // send request.
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
@@ -397,7 +398,8 @@ function efml_import_url( urls, login, password, additional_fields ) {
       password: password,
       additional_fields: additional_fields,
       action: 'eml_add_external_urls',
-      nonce: efmlJsVars.urls_nonce
+      nonce: efmlJsVars.urls_nonce,
+      term: term
     },
     error: function( jqXHR, textStatus, errorThrown ) {
       efml_ajax_error_dialog( errorThrown )
@@ -429,8 +431,9 @@ function efml_import_url( urls, login, password, additional_fields ) {
  *
  * @param file The file to import.
  * @param login The login to use for import.
- * @param passwort The password to use for import.
+ * @param password The password to use for import.
+ * @param term The directory archive term which could be used.
  */
-function efml_import_file( file, login, passwort ) {
-  efml_import_url( file, login, passwort, [] );
+function efml_import_file( file, login, password, term ) {
+  efml_import_url( file, login, password, [], term );
 }

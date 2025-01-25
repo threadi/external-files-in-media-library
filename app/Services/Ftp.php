@@ -260,7 +260,7 @@ class Ftp extends Directory_Listing_Base {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( url + file.file, login, password );',
+				'action' => 'efml_import_file( url + file.file, login, password, term );',
 				'label' => __( 'Import', 'external-files-in-media-library' )
 			)
 		);
@@ -274,7 +274,7 @@ class Ftp extends Directory_Listing_Base {
 	protected function get_global_actions(): array {
 		return array_merge( parent::get_global_actions(), array(
 			array(
-				'action' => 'efml_import_file( actualDirectoryPath, login, password );',
+				'action' => 'efml_import_file( actualDirectoryPath, login, password, config.term );',
 				'label' => __( 'Import active directory', 'external-files-in-media-library' )
 			),
 		)

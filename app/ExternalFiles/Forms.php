@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -89,7 +90,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
+		if( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
 			return;
 		}
 
@@ -330,6 +331,24 @@ class Forms {
 
 		// get additional fields.
 		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['additional_fields'] ) ) : array();
+
+		// get the term for credentials from Directory Listing Archive, if set.
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+		if( $term_id > 0 ) {
+			// get the term data.
+			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+			// if term_data could be loaded, use them.
+			if( ! empty( $term_data ) ) {
+				foreach( $url_array as $i => $url ) {
+					if( $term_data['directory'] !== $url ) {
+						$url_array[$i] = $term_data['directory'] . $url;
+					}
+				}
+				$login = $term_data['login'];
+				$password = $term_data['password'];
+			}
+		}
 
 		$false = false;
 		/**
