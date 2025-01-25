@@ -37,6 +37,7 @@
 - Fixed wrong check for already existing thumbs of external files
 - Fixed styling of single URL upload field
 - Fixed logging of deleted URL with its proxied path
+- Fixed wrong quick start documentation URL
 
 ## [2.0.2] - 2024-11-23
 
