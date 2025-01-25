@@ -200,6 +200,15 @@ class Forms {
 				),
 			);
 
+			// add link to settings for admin in dialog.
+			if ( current_user_can( 'manage_options' ) ) {
+				$dialog['buttons'][] = array(
+					'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+					'className' => 'settings',
+					'text'    => '',
+				);
+			}
+
 			/**
 			 * Filter the add-dialog.
 			 *
@@ -211,14 +220,6 @@ class Forms {
 			?>
 			<div class="eml_add_external_files_wrapper">
 				<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
-				<?php
-				// add link to settings for admin.
-				if ( current_user_can( 'manage_options' ) ) {
-					?>
-					<br><a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link" title="<?php echo esc_attr__( 'Settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
-					<?php
-				}
-				?>
 			</div>
 			<?php
 		} else {
@@ -267,17 +268,18 @@ class Forms {
 			),
 		);
 
+		// add link to settings for admin in dialog.
+		if ( current_user_can( 'manage_options' ) ) {
+			$dialog['buttons'][] = array(
+				'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+				'className' => 'settings',
+				'text'    => '',
+			);
+		}
+
 		?>
 		<div class="eml_add_external_files_wrapper">
 			<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( wp_json_encode( $dialog ) ); ?>"><?php echo esc_html__( 'Add external file', 'external-files-in-media-library' ); ?></a>
-			<?php
-			// add link to settings for admin.
-			if ( current_user_can( 'manage_options' ) ) {
-				?>
-				<a href="<?php echo esc_url( Helper::get_config_url() ); ?>" class="eml_settings_link"><span class="dashicons dashicons-admin-generic"></span></a>
-				<?php
-			}
-			?>
 		</div>
 		<?php
 	}
