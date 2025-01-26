@@ -175,10 +175,20 @@ class File extends Protocol_Base {
 			'last-modified' => '',
 		);
 
-		// bail if file does not exist.
-		if ( ! file_exists( $file_path ) ) {
+		$true = true;
+		/**
+		 * Filter the check if local file exist.
+		 *
+		 * @since 3.0.0 Available since 3.0.0.
+		 * @param bool $true True if filter should be used.
+		 * @param string $file_path The absolute file path.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( apply_filters( 'eml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
 			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
+			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
 

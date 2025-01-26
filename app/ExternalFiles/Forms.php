@@ -386,7 +386,7 @@ class Forms {
 			$log->create( __( 'URLs has been transferred via AJAX and will now be checked and imported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			/**
-			 * Loop through them to add them to media library after filtering the URL list.
+			 * Filter the URLs for use for this import.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array $url_array The list of URLs to add.
