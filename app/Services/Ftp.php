@@ -166,7 +166,7 @@ class Ftp extends Directory_Listing_Base {
 	/**
 	 * Get the directory recursively.
 	 *
-	 * @param array                $list           The list.
+	 * @param array                $list           The resulting list.
 	 * @param string               $parent_dir     The parent directory path.
 	 * @param array                $directory_list The directory to add.
 	 * @param WP_Filesystem_FTPext $ftp_connection The FTP-connection to use.

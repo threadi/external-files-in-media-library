@@ -195,6 +195,9 @@ body.settings_page_eml_settings .copied:after {
 body.media_page_efml_local_directories ul#efml-directory-listing-services {
 	display: flex;
 	gap: 1em;
+	flex-flow: row wrap;
+	align-content: space-between;
+	justify-content: space-between;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li {
@@ -203,6 +206,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li {
 	font-size: 24px;
 	padding: 2em 1em;
 	text-align: center;
+	min-width: 200px;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a {
@@ -230,6 +234,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-directory a:before {
 	content: "\f501";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before {
+	content: "\f498";
 }
 
 .easy-dialog.eml button.settings {

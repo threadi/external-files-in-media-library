@@ -4,7 +4,7 @@
 
 ### Added
 
-- Added Services to platforms which host files, usable for local host, FTP and YouTube atm
+- Added Services to platforms which host files, usable for local host, FTP, YouTube and ZIP-files atm
 - Added management for credentials of these external platforms
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
@@ -39,6 +39,18 @@
 - Fixed styling of single URL upload field
 - Fixed logging of deleted URL with its proxied path
 - Fixed wrong quick start documentation URL
+
+## [2.0.4] - 2025-01-26
+
+### Fixed
+
+- Fixed missing WooCommerce settings on activation
+
+## [2.0.3] - 2024-12-15
+
+### Optimized
+
+- Internal Test-release (not published on wordpress.org)
 
 ## [2.0.2] - 2024-11-23
 

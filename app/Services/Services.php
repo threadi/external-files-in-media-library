@@ -86,6 +86,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
+			'ExternalFilesInMediaLibrary\Services\Zip',
 		);
 
 		/**
