@@ -84,6 +84,7 @@ class Directory_Listing {
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
 		$directory_listing_obj->set_page_hook( 'media_page_' . $this->get_menu_slug() );
 		$directory_listing_obj->set_menu_slug( $this->get_menu_slug() );
+		$directory_listing_obj->set_translations( $this->get_translations() );
 		$directory_listing_obj->init();
 	}
 
@@ -111,18 +112,18 @@ class Directory_Listing {
 	 * @return string
 	 */
 	public function get_view_directory_url( Directory_Listing_Base|false $obj ): string {
-		if( ! $obj ) {
+		if ( ! $obj ) {
 			return add_query_arg(
 				array(
-					'page' => $this->get_menu_slug()
+					'page' => $this->get_menu_slug(),
 				),
 				get_admin_url() . 'upload.php'
 			);
 		}
 		return add_query_arg(
 			array(
-				'page' => $this->get_menu_slug(),
-				'method' => $obj->get_name()
+				'page'   => $this->get_menu_slug(),
+				'method' => $obj->get_name(),
 			),
 			get_admin_url() . 'upload.php'
 		);
@@ -138,20 +139,22 @@ class Directory_Listing {
 		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// show hint if method is not set.
-		if( is_null( $method ) ) {
+		if ( is_null( $method ) ) {
 			?>
 			<div class="wrap">
 				<h1><?php echo esc_html__( 'Choose protocol', 'external-files-in-media-library' ); ?></h1>
 				<ul id="efml-directory-listing-services">
 					<?php
-						foreach( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
-							// bail if this is not a base object.
-							if( ! $obj instanceof Directory_Listing_Base ) {
-								continue;
-							}
-
-							?><li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li><?php
+					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+						// bail if this is not a base object.
+						if ( ! $obj instanceof Directory_Listing_Base ) {
+							continue;
 						}
+
+						?>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
+							<?php
+					}
 					?>
 					<li class="efml-directory"><a href="<?php echo esc_url( Directory_Listings::get_instance()->get_directory_archive_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
@@ -162,14 +165,14 @@ class Directory_Listing {
 
 		// get the method object by its name.
 		$directory_listing_obj = false;
-		foreach( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 			// bail if this is not a base object.
-			if( ! $obj instanceof Directory_Listing_Base ) {
+			if ( ! $obj instanceof Directory_Listing_Base ) {
 				continue;
 			}
 
 			// bail if name does not match.
-			if( $method !== $obj->get_name() ) {
+			if ( $method !== $obj->get_name() ) {
 				continue;
 			}
 
@@ -177,17 +180,17 @@ class Directory_Listing {
 		}
 
 		// bail if no object could be loaded.
-		if( ! $directory_listing_obj ) {
+		if ( ! $directory_listing_obj ) {
 			return;
 		}
 
 		// set nonce on listing object configuration.
-		$config = $directory_listing_obj->get_config();
+		$config          = $directory_listing_obj->get_config();
 		$config['nonce'] = wp_create_nonce( $this->get_nonce_name() );
 
 		// get directory to connect to from request.
 		$term = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
-		if( $term > 0 ) {
+		if ( $term > 0 ) {
 			$config['term'] = $term;
 		}
 
@@ -216,5 +219,95 @@ class Directory_Listing {
 	 */
 	private function get_menu_slug(): string {
 		return $this->menu_slug;
+	}
+
+	/**
+	 * Return the translations for each text.
+	 *
+	 * @return array
+	 */
+	private function get_translations(): array {
+		return array(
+			'is_loading'        => __( 'Please wait, list is loading.', 'external-files-in-media-library' ),
+			'could_not_load'    => __( 'Directory could not be loaded.', 'external-files-in-media-library' ),
+			'reload'            => __( 'Reload', 'external-files-in-media-library' ),
+			'import_directory'  => __( 'Import this directory', 'external-files-in-media-library' ),
+			'actions'           => __( 'Actions', 'external-files-in-media-library' ),
+			'filename'          => __( 'Filename', 'external-files-in-media-library' ),
+			'filesize'          => __( 'Size', 'external-files-in-media-library' ),
+			'date'              => __( 'Date', 'external-files-in-media-library' ),
+			'config_missing'    => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
+			'nonce_missing'     => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
+			'empty_directory'   => __( 'Loaded an empty directory.', 'external-files-in-media-library' ),
+			'error_title'       => __( 'The following error occurred:', 'external-files-in-media-library' ),
+			'errors_title'      => __( 'The following errors occurred:', 'external-files-in-media-library' ),
+			'directory_archive' => array(
+				'connect_now'     => __( 'Connect now', 'external-files-in-media-library' ),
+				'labels'          => array(
+					'name'          => _x( 'Directory Credentials', 'taxonomy general name', 'external-files-in-media-library' ),
+					'singular_name' => _x( 'Directory Credential', 'taxonomy singular name', 'external-files-in-media-library' ),
+					'search_items'  => __( 'Search Directory Credential', 'external-files-in-media-library' ),
+					'edit_item'     => __( 'Edit Directory Credential', 'external-files-in-media-library' ),
+					'update_item'   => __( 'Update Directory Credential', 'external-files-in-media-library' ),
+					'menu_name'     => __( 'Directory Credentials', 'external-files-in-media-library' ),
+				),
+				'type'            => __( 'Type', 'external-files-in-media-library' ),
+				'connect'         => __( 'Connect', 'external-files-in-media-library' ),
+				'type_not_loaded' => __( 'Type could not be loaded!', 'external-files-in-media-library' ),
+				'login'           => __( 'Login', 'external-files-in-media-library' ),
+				'password'        => __( 'Password', 'external-files-in-media-library' ),
+				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
+			),
+			'form_file'         => array(
+				'title'       => __( 'Enter the path to a local ZIP-file', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a file path. */
+				'description' => sprintf( __( 'Enter the path to a ZIP file on your hosting. Must start with "file://%1$s" and end with ".zip".', 'external-files-in-media-library' ), ABSPATH ),
+				'url'         => array(
+					'label' => __( 'Path to the ZIP-file', 'external-files-in-media-library' ),
+				),
+				'button'      => array(
+					'label' => __( 'Use this file', 'external-files-in-media-library' ),
+				),
+			),
+			'form_api'          => array(
+				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
+				'url'              => array(
+					'label' => __( 'Channel-ID', 'external-files-in-media-library' ),
+				),
+				'key'              => array(
+					'label' => __( 'API Key', 'external-files-in-media-library' ),
+				),
+				'save_credentials' => array(
+					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
+				),
+				'button'           => array(
+					'label' => __( 'Show directory', 'external-files-in-media-library' ),
+				),
+			),
+			'form_login'        => array(
+				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
+				'url'              => array(
+					'label' => __( 'Server-IP or -name', 'external-files-in-media-library' ),
+				),
+				'login'            => array(
+					'label' => __( 'Login', 'external-files-in-media-library' ),
+				),
+				'password'         => array(
+					'label' => __( 'Password', 'external-files-in-media-library' ),
+				),
+				'save_credentials' => array(
+					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
+				),
+				'button'           => array(
+					'label' => __( 'Show directory', 'external-files-in-media-library' ),
+				),
+			),
+			'services'          => array(
+				'local' => array(
+					'label' => __( 'Local server directory', 'external-files-in-media-library' ),
+					'title' => __( 'Choose file from local server directory', 'external-files-in-media-library' ),
+				),
+			),
+		);
 	}
 }

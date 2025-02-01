@@ -55,14 +55,14 @@ class Ftp extends Directory_Listing_Base {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {	}
+	private function __construct() {    }
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {	}
+	private function __clone() {    }
 
 	/**
 	 * Return instance of this object as singleton.
@@ -124,7 +124,7 @@ class Ftp extends Directory_Listing_Base {
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
 		// bail if handler is not FTP.
-		if( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			return array();
 		}
 
@@ -136,12 +136,12 @@ class Ftp extends Directory_Listing_Base {
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
 
 		// bail if connection failed.
-		if( ! $ftp_connection ) {
+		if ( ! $ftp_connection ) {
 			return array();
 		}
 
 		// bail if connection is not an FTP-object.
-		if( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			return array();
 		}
 
@@ -155,7 +155,7 @@ class Ftp extends Directory_Listing_Base {
 		$directory_list = $ftp_connection->dirlist( $parent_dir );
 
 		// bail if list is empty.
-		if( empty( $directory_list ) ) {
+		if ( empty( $directory_list ) ) {
 			return array();
 		}
 
@@ -166,7 +166,7 @@ class Ftp extends Directory_Listing_Base {
 	/**
 	 * Get the directory recursively.
 	 *
-	 * @param array                $list           The resulting list.
+	 * @param array                $file_list           The resulting list.
 	 * @param string               $parent_dir     The parent directory path.
 	 * @param array                $directory_list The directory to add.
 	 * @param WP_Filesystem_FTPext $ftp_connection The FTP-connection to use.
@@ -174,42 +174,41 @@ class Ftp extends Directory_Listing_Base {
 	 *
 	 * @return array
 	 */
-	private function get_directory_recursively( array $list, string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
+	private function get_directory_recursively( array $file_list, string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
-		$upload_dir = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
-		$upload_url = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
+		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
+		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
 		// loop through the list, add each file to the list and loop through each subdirectory.
-		foreach( $directory_list as $item_name => $item_settings ) {
+		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
 			$item_path = $parent_dir . $item_name;
 
 			// collect the entry.
 			$entry = array(
-				'title' => $item_name
+				'title' => $item_name,
 			);
 
 			// if item is a directory, check its files.
-			if( $ftp_connection->is_dir( $item_path ) ) {
-				$subs = $this->get_directory_recursively( $list, $item_path, $directory_list, $ftp_connection, $directory );
-				$entry['dir'] = $item_path;
-				$entry['sub'] = $subs;
+			if ( $ftp_connection->is_dir( $item_path ) ) {
+				$subs           = $this->get_directory_recursively( $file_list, $item_path, $directory_list, $ftp_connection, $directory );
+				$entry['dir']   = $item_path;
+				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );
-			}
-			else {
+			} else {
 				// get content type of this file.
-				$mime_type            = wp_check_filetype( $item_name );
+				$mime_type = wp_check_filetype( $item_name );
 
 				// bail if file is not allowed.
-				if( empty( $mime_type['type'] ) ) {
+				if ( empty( $mime_type['type'] ) ) {
 					continue;
 				}
 
 				// define the thumb.
 				$thumbnail = '';
 
-				if( Init::get_instance()->is_preview_enabled() ) {
+				if ( Init::get_instance()->is_preview_enabled() ) {
 					// get protocol handler for this external file.
 					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_path );
 					if ( $protocol_handler ) {
@@ -236,20 +235,20 @@ class Ftp extends Directory_Listing_Base {
 				}
 
 				// add settings for entry.
-				$entry['file'] = $item_path;
-				$entry['filesize'] = absint( $item_settings['size'] );
-				$entry['mime-type'] = $mime_type['type'];
-				$entry['icon'] = '<span class="dashicons dashicons-media-default"></span>';
+				$entry['file']          = $item_path;
+				$entry['filesize']      = absint( $item_settings['size'] );
+				$entry['mime-type']     = $mime_type['type'];
+				$entry['icon']          = '<span class="dashicons dashicons-media-default"></span>';
 				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $item_settings['time'] ) );
-				$entry['preview'] = $thumbnail;
+				$entry['preview']       = $thumbnail;
 			}
 
 			// add the entry to the list.
-			$list[] = $entry;
+			$file_list[] = $entry;
 		}
 
 		// return resulting list.
-		return $list;
+		return $file_list;
 	}
 
 	/**
@@ -261,8 +260,8 @@ class Ftp extends Directory_Listing_Base {
 		return array(
 			array(
 				'action' => 'efml_import_file( url + file.file, login, password, term );',
-				'label' => __( 'Import', 'external-files-in-media-library' )
-			)
+				'label'  => __( 'Import', 'external-files-in-media-library' ),
+			),
 		);
 	}
 
@@ -272,12 +271,14 @@ class Ftp extends Directory_Listing_Base {
 	 * @return array
 	 */
 	protected function get_global_actions(): array {
-		return array_merge( parent::get_global_actions(), array(
+		return array_merge(
+			parent::get_global_actions(),
 			array(
-				'action' => 'efml_import_file( actualDirectoryPath, login, password, config.term );',
-				'label' => __( 'Import active directory', 'external-files-in-media-library' )
-			),
-		)
+				array(
+					'action' => 'efml_import_file( actualDirectoryPath, login, password, config.term );',
+					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
+				),
+			)
 		);
 	}
 
@@ -293,7 +294,7 @@ class Ftp extends Directory_Listing_Base {
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
 		// bail if handler is not FTP.
-		if( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'Given URL is not a FTP-path! Should be one if sftp:// or ftps://.', 'external-files-in-media-library' ) );
@@ -313,7 +314,7 @@ class Ftp extends Directory_Listing_Base {
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
 
 		// bail if connection failed.
-		if( ! $ftp_connection ) {
+		if ( ! $ftp_connection ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed!', 'external-files-in-media-library' ) );
@@ -326,7 +327,7 @@ class Ftp extends Directory_Listing_Base {
 		}
 
 		// bail if connection is not an FTP-object.
-		if( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed!', 'external-files-in-media-library' ) );

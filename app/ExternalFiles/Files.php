@@ -442,7 +442,7 @@ class Files {
 				$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
 
 				// delete the tmp file (if media_handle_sideload() does not have it already done).
-				if( file_exists( $file_data['tmp-file'] ) ) {
+				if ( file_exists( $file_data['tmp-file'] ) ) {
 					// get WP Filesystem-handler.
 					require_once ABSPATH . '/wp-admin/includes/file.php';
 					\WP_Filesystem();
@@ -809,7 +809,7 @@ class Files {
 	 * @return void
 	 */
 	public function set_login( string|null $login ): void {
-		if( is_null( $login ) ) {
+		if ( is_null( $login ) ) {
 			$login = '';
 		}
 		$this->login = $login;
@@ -832,7 +832,7 @@ class Files {
 	 * @return void
 	 */
 	public function set_password( string|null $password ): void {
-		if( is_null( $password ) ) {
+		if ( is_null( $password ) ) {
 			$password = '';
 		}
 		$this->password = $password;

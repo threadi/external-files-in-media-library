@@ -731,7 +731,7 @@ class Settings {
 	 * @return void
 	 */
 	public function activation(): void {
-		// TODO thirdparty und services einstellungen hierüber mit aktivieren
+		// TODO thirdparty und services einstellungen hierüber mit aktivieren.
 
 		// add all settings.
 		$this->add_settings();

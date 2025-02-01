@@ -327,7 +327,7 @@ class Protocol_Base {
 	/**
 	 * Get temp file from given URL.
 	 *
-	 * @param string $url The given URL.
+	 * @param string             $url The given URL.
 	 * @param WP_Filesystem_Base $filesystem The file system handler.
 	 *
 	 * @return bool|string
@@ -335,6 +335,11 @@ class Protocol_Base {
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
 		// bail if url is empty.
 		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// bail if no filesystem is given.
+		if ( empty( $filesystem ) ) {
 			return false;
 		}
 
@@ -377,6 +382,10 @@ class Protocol_Base {
 	 * @return false|WP_Filesystem_Base
 	 */
 	public function get_connection( string $url ): false|WP_Filesystem_Base {
+		if ( empty( $url ) ) {
+			return false;
+		}
+
 		return false;
 	}
 }

@@ -46,14 +46,14 @@ class Zip extends Directory_Listing_Base {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {	}
+	private function __construct() {    }
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {	}
+	private function __clone() {    }
 
 	/**
 	 * Return instance of this object as singleton.
@@ -75,7 +75,7 @@ class Zip extends Directory_Listing_Base {
 	 */
 	public function init(): void {
 		// bail if "ZipArchive" is not available.
-		if( ! class_exists( 'ZipArchive' ) ) {
+		if ( ! class_exists( 'ZipArchive' ) ) {
 			return;
 		}
 
@@ -106,7 +106,7 @@ class Zip extends Directory_Listing_Base {
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// bail if "ZipArchive" is not available.
-		if( ! class_exists( 'ZipArchive' ) ) {
+		if ( ! class_exists( 'ZipArchive' ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
@@ -118,11 +118,16 @@ class Zip extends Directory_Listing_Base {
 			return array();
 		}
 
+		// prepend the string with file:// if it does not start with it.
+		if ( ! str_starts_with( $directory, 'file://' ) ) {
+			$directory = 'file://' . $directory;
+		}
+
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
 		// bail if handler is not File.
-		if( ! $protocol_handler_obj instanceof Protocols\File ) {
+		if ( ! $protocol_handler_obj instanceof Protocols\File ) {
 			return array();
 		}
 
@@ -130,12 +135,12 @@ class Zip extends Directory_Listing_Base {
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if given string is not a valid URL.
-		if( empty( $parse_url ) ) {
+		if ( empty( $parse_url ) ) {
 			return array();
 		}
 
 		// bail if no path could be excluded.
-		if( empty( $parse_url['path'] ) ) {
+		if ( empty( $parse_url['path'] ) ) {
 			return array();
 		}
 
@@ -152,8 +157,8 @@ class Zip extends Directory_Listing_Base {
 		return array(
 			array(
 				'action' => 'efml_import_file( url + file.file, login, password );',
-				'label' => __( 'Import', 'external-files-in-media-library' )
-			)
+				'label'  => __( 'Import', 'external-files-in-media-library' ),
+			),
 		);
 	}
 
@@ -167,12 +172,12 @@ class Zip extends Directory_Listing_Base {
 	 */
 	public function is_file_in_zip_file( bool $return_value, string $file_path ): bool {
 		// bail if file path does not contain '.zip'.
-		if( ! str_contains( $file_path, '.zip' ) ) {
+		if ( ! str_contains( $file_path, '.zip' ) ) {
 			return $return_value;
 		}
 
 		// bail if file path does end with '.zip'.
-		if( str_ends_with( $file_path, '.zip' ) ) {
+		if ( str_ends_with( $file_path, '.zip' ) ) {
 			return $return_value;
 		}
 
@@ -185,24 +190,24 @@ class Zip extends Directory_Listing_Base {
 	 *
 	 * We save the unzipped file in tmp directory for import.
 	 *
-	 * @param array $results The result.
+	 * @param array  $results The result.
 	 * @param string $file_path The path to the file (should contain and not end with '.zip').
 	 *
 	 * @return array
 	 */
 	public function get_file_from_zip( array $results, string $file_path ): array {
 		// bail if file path does not contain '.zip'.
-		if( ! str_contains( $file_path, '.zip' ) ) {
+		if ( ! str_contains( $file_path, '.zip' ) ) {
 			return $results;
 		}
 
 		// bail if file path does end with '.zip'.
-		if( str_ends_with( $file_path, '.zip' ) ) {
+		if ( ! str_ends_with( $file_path, '.zip' ) ) {
 			return $results;
 		}
 
 		// bail if "ZipArchive" is not available.
-		if( ! class_exists( 'ZipArchive' ) ) {
+		if ( ! class_exists( 'ZipArchive' ) ) {
 			return array();
 		}
 
@@ -211,7 +216,7 @@ class Zip extends Directory_Listing_Base {
 		$zip_file = str_replace( 'file://', '', $zip_file );
 
 		// bail if file does not exist.
-		if( ! file_exists( $zip_file ) ) {
+		if ( ! file_exists( $zip_file ) ) {
 			// log event.
 			Log::get_instance()->create( __( 'ZIP-file to use for extracting a file does not exist.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
@@ -223,11 +228,11 @@ class Zip extends Directory_Listing_Base {
 		$file = substr( $file_path, strpos( $file_path, '.zip' ) + 5 );
 
 		// get the zip object.
-		$zip = new ZipArchive();
+		$zip    = new ZipArchive();
 		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
 
 		// bail if file could not be opened.
-		if( ! $opened ) {
+		if ( ! $opened ) {
 			// log event.
 			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
@@ -239,7 +244,7 @@ class Zip extends Directory_Listing_Base {
 		$file_content = $zip->getFromName( $file );
 
 		// bail if no file data could be loaded.
-		if( ! $file_content ) {
+		if ( ! $file_content ) {
 			// log event.
 			Log::get_instance()->create( __( 'No data of the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
@@ -266,5 +271,107 @@ class Zip extends Directory_Listing_Base {
 
 		// return resulting file infos.
 		return $results;
+	}
+
+	/**
+	 * Check if given directory is a valid ZIP-file.
+	 *
+	 * @param string $directory The directory to check.
+	 *
+	 * @return bool
+	 */
+	public function do_login( string $directory ): bool {
+		// bail if directory is not set.
+		if ( empty( $directory ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'No ZIP-file given!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+			return false;
+		}
+
+		// bail if file path does not contain '.zip'.
+		if ( ! str_contains( $directory, '.zip' ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'The given path does not end with ".zip"!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+			return false;
+		}
+
+		// bail if file path does end with '.zip'.
+		if ( ! str_ends_with( $directory, '.zip' ) ) {
+			// create error object.
+			$error = new WP_Error();
+			/* translators: %1$s will be replaced by a file path. */
+			$error->add( 'efml_service_zip', sprintf( __( 'The given path %1$s does not end with ".zip"!', 'external-files-in-media-library' ), $directory ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+
+			return false;
+		}
+
+		// bail if "ZipArchive" is not available.
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+			return false;
+		}
+
+		// get the path to the ZIP from path string.
+		$zip_file = substr( $directory, 0, strpos( $directory, '.zip' ) ) . '.zip';
+		$zip_file = str_replace( 'file://', '', $zip_file );
+
+		// bail if file does not exist.
+		if ( ! file_exists( $zip_file ) ) {
+			// create error object.
+			$error = new WP_Error();
+			/* translators: %1$s will be replaced by a file path. */
+			$error->add( 'efml_service_zip', sprintf( __( 'The given path %1$s does not exist on your server.', 'external-files-in-media-library' ), $zip_file ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+			return false;
+		}
+
+		// get the zip object.
+		$zip    = new ZipArchive();
+		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
+
+		// bail if file could not be opened.
+		if ( ! $opened ) {
+			// create error object.
+			$error = new WP_Error();
+			/* translators: %1$s will be replaced by a file path. */
+			$error->add( 'efml_service_zip', sprintf( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return empty array as we can not get infos about a file which does not exist.
+			return false;
+		}
+
+		// return true as given directory is a valid ZIP-file.
+		return true;
 	}
 }

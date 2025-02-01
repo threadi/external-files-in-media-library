@@ -253,3 +253,6 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	font-size: 20px;
 }
 
+body.media_page_efml_local_directories #easy-directory-listing-for-wordpress {
+	border: 4px dashed #c3c4c7;
+}

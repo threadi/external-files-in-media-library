@@ -75,14 +75,14 @@ class Local {
 	 * @noinspection PhpArrayAccessCanBeReplacedWithForeachValueInspection
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
-		foreach( $directory_listing_objects as $i => $obj ) {
-			if( ! $obj instanceof \easyDirectoryListingForWordPress\Listings\Local ) {
+		foreach ( $directory_listing_objects as $i => $obj ) {
+			if ( ! $obj instanceof \easyDirectoryListingForWordPress\Listings\Local ) {
 				continue;
 			}
 
 			// set actions for the local object.
-			$directory_listing_objects[$i]->set_actions( $this->get_actions() );
-			$directory_listing_objects[$i]->add_global_action( $this->get_global_actions() );
+			$directory_listing_objects[ $i ]->set_actions( $this->get_actions() );
+			$directory_listing_objects[ $i ]->add_global_action( $this->get_global_actions() );
 		}
 
 		// return resulting list of objects.
@@ -110,8 +110,8 @@ class Local {
 		return array(
 			array(
 				'action' => 'efml_import_file( "file://" + file.file);',
-				'label' => __( 'Import', 'external-files-in-media-library' )
-			)
+				'label'  => __( 'Import', 'external-files-in-media-library' ),
+			),
 		);
 	}
 
@@ -124,7 +124,7 @@ class Local {
 		return array(
 			array(
 				'action' => 'efml_import_file( "file://" + actualDirectoryPath + "/" );',
-				'label' => __( 'Import active directory', 'external-files-in-media-library' )
+				'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 			),
 		);
 	}

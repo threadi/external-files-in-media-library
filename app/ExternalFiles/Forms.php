@@ -90,7 +90,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ),true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ), true ) ) {
 			return;
 		}
 
@@ -204,9 +204,9 @@ class Forms {
 			// add link to settings for admin in dialog.
 			if ( current_user_can( 'manage_options' ) ) {
 				$dialog['buttons'][] = array(
-					'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+					'action'    => 'location.href="' . Helper::get_config_url() . '";',
 					'className' => 'settings',
-					'text'    => '',
+					'text'      => '',
 				);
 			}
 
@@ -272,9 +272,9 @@ class Forms {
 		// add link to settings for admin in dialog.
 		if ( current_user_can( 'manage_options' ) ) {
 			$dialog['buttons'][] = array(
-				'action'  => 'location.href="' .  Helper::get_config_url() . '";',
+				'action'    => 'location.href="' . Helper::get_config_url() . '";',
 				'className' => 'settings',
-				'text'    => '',
+				'text'      => '',
 			);
 		}
 
@@ -334,25 +334,25 @@ class Forms {
 
 		// get the term for credentials from Directory Listing Archive, if set.
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
-		if( $term_id > 0 ) {
+		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
 			// if term_data could be loaded, use them.
-			if( ! empty( $term_data ) ) {
+			if ( ! empty( $term_data ) ) {
 				// complete the URL.
-				foreach( $url_array as $i => $url ) {
+				foreach ( $url_array as $i => $url ) {
 					// get the path from given URL.
 					$parse_url = wp_parse_url( $url );
 
 					// only change the given URL if the URL part is a part and not a URL.
-					if( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
-						$url_array[$i] = $term_data['directory'] . $url;
+					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
+						$url_array[ $i ] = $term_data['directory'] . $url;
 					}
 				}
 
 				// get the credentials.
-				$login = $term_data['login'];
+				$login    = $term_data['login'];
 				$password = $term_data['password'];
 			}
 		}
