@@ -10,9 +10,9 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-
 defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 
 /**
  * Object to handle support for specific services.
@@ -49,6 +49,24 @@ class Services {
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Run activation tasks on each supported ThirdParty-plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		foreach ( $this->get_services() as $class_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $class_name ) ) {
+				continue;
+			}
+
+			// initiate object.
+			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj->activation();
+		}
 	}
 
 	/**

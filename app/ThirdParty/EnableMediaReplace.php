@@ -17,7 +17,7 @@ use WP_Post;
 /**
  * Object to handle support for this plugin.
  */
-class EnableMediaReplace {
+class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

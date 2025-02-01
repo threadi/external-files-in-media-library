@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
 /**
  * Object to handle support for this platform.
  */
-class GoogleDrive {
+class GoogleDrive implements Service {
 
 	/**
 	 * Instance of actual object.
@@ -48,6 +48,13 @@ class GoogleDrive {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

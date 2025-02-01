@@ -22,8 +22,7 @@ use WP_Image_Editor_Imagick;
 /**
  * Object to handle support for FTP-based directory listing.
  */
-class Ftp extends Directory_Listing_Base {
-
+class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -76,6 +75,13 @@ class Ftp extends Directory_Listing_Base {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

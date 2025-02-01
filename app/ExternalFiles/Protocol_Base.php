@@ -14,7 +14,7 @@ use WP_Filesystem_Base;
 use WP_Query;
 
 /**
- * Object to handle different protocols.
+ * Object to handle base functions for each protocol.
  */
 class Protocol_Base {
 

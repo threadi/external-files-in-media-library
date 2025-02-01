@@ -20,7 +20,7 @@ use ZipArchive;
 /**
  * Object to handle support of files from ZIP as directory listing.
  */
-class Zip extends Directory_Listing_Base {
+class Zip extends Directory_Listing_Base implements Service {
 
 	/**
 	 * The object name.
@@ -67,6 +67,13 @@ class Zip extends Directory_Listing_Base {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

@@ -59,7 +59,7 @@ class Forms {
 	 */
 	public function init(): void {
 		// add forms.
-		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ), PHP_INT_MAX );
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 		add_action( 'post-plupload-upload-ui', array( $this, 'add_multi_form' ), 10, 0 );
 		add_action( 'post-html-upload-ui', array( $this, 'add_single_form' ), 10, 0 );
 

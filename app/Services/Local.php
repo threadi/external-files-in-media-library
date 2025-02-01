@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 /**
  * Object to handle local import support.
  */
-class Local {
+class Local implements Service {
 
 	/**
 	 * The object name.
@@ -55,6 +55,13 @@ class Local {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

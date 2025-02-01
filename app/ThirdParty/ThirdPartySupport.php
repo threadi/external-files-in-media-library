@@ -50,6 +50,24 @@ class ThirdPartySupport {
 	}
 
 	/**
+	 * Run activation tasks on each supported ThirdParty-plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		foreach ( $this->get_third_party_support() as $class_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $class_name ) ) {
+				continue;
+			}
+
+			// initiate object.
+			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj->activation();
+		}
+	}
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void

@@ -17,7 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle support for this plugin.
  */
-class PreventDirectAccess {
+class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

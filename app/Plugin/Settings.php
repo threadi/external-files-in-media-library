@@ -19,6 +19,8 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Value;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
+use ExternalFilesInMediaLibrary\Services\Services;
+use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
 
 /**
  * Object which handles the settings of this plugin.
@@ -731,7 +733,11 @@ class Settings {
 	 * @return void
 	 */
 	public function activation(): void {
-		// TODO thirdparty und services einstellungen hierüber mit aktivieren.
+		// run activations on Services.
+		Services::get_instance()->activation();
+
+		// run activations on ThirdParty-support.
+		ThirdPartySupport::get_instance()->activation();
 
 		// add all settings.
 		$this->add_settings();
