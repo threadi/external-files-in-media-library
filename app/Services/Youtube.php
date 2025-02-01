@@ -102,7 +102,7 @@ class Youtube extends Directory_Listing_Base {
 		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
 		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'eml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
-		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10 ,2 );
+		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
 		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
 
 		// change handling of media files.
@@ -150,7 +150,7 @@ class Youtube extends Directory_Listing_Base {
 		}
 
 		// check if given URL is a YouTube channel.
-		if( $this->is_youtube_channel( $url ) ) {
+		if ( $this->is_youtube_channel( $url ) ) {
 			return $results;
 		}
 
@@ -438,13 +438,13 @@ class Youtube extends Directory_Listing_Base {
 
 			// collect the entry.
 			$entry = array(
-				'title' => $item['id']['videoId'],
-				'file' => $url,
-				'filesize' => 0,
-				'mime-type' => 'video/mp4',
-				'icon' => '<span class="dashicons dashicons-youtube"></span>',
+				'title'         => $item['id']['videoId'],
+				'file'          => $url,
+				'filesize'      => 0,
+				'mime-type'     => 'video/mp4',
+				'icon'          => '<span class="dashicons dashicons-youtube"></span>',
 				'last-modified' => Helper::get_format_date_time( $item['snippet']['publishedAt'] ),
-				'preview' => $thumbnail
+				'preview'       => $thumbnail,
 			);
 
 			// add to the list.
@@ -464,8 +464,8 @@ class Youtube extends Directory_Listing_Base {
 		return array(
 			array(
 				'action' => 'efml_import_file( file.file, login, password, term );',
-				'label' => __( 'Import', 'external-files-in-media-library' )
-			)
+				'label'  => __( 'Import', 'external-files-in-media-library' ),
+			),
 		);
 	}
 
@@ -475,10 +475,12 @@ class Youtube extends Directory_Listing_Base {
 	 * @return array
 	 */
 	protected function get_global_actions(): array {
-		return array_merge( parent::get_global_actions(), array(
+		return array_merge(
+			parent::get_global_actions(),
+			array(
 				array(
 					'action' => 'efml_import_file( "https://www.youtube.com/channel/" + url, url, apiKey, config.term );',
-					'label' => __( 'Import all videos', 'external-files-in-media-library' )
+					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
 				),
 			)
 		);
@@ -493,7 +495,7 @@ class Youtube extends Directory_Listing_Base {
 	 */
 	public function do_login( string $directory ): bool {
 		// bail if no ID (as directory) is given.
-		if( empty( $directory ) ) {
+		if ( empty( $directory ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_youtube', __( 'Channel ID missing for Youtube channel', 'external-files-in-media-library' ) );
@@ -506,7 +508,7 @@ class Youtube extends Directory_Listing_Base {
 		}
 
 		// bail if no key is given.
-		if( empty( $this->get_api_key() ) ) {
+		if ( empty( $this->get_api_key() ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_youtube', __( 'API Key missing for Youtube channel', 'external-files-in-media-library' ) );
@@ -528,7 +530,7 @@ class Youtube extends Directory_Listing_Base {
 		$http_status = absint( wp_remote_retrieve_response_code( $response ) );
 
 		// bail if status is not 200.
-		if( 200 !== $http_status ) {
+		if ( 200 !== $http_status ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_youtube', __( 'The given API credentials are wrong.', 'external-files-in-media-library' ) );
@@ -547,22 +549,22 @@ class Youtube extends Directory_Listing_Base {
 	/**
 	 * Extend list of allowed HTTP-states for YouTube URLs.
 	 *
-	 * @param array  $list The list of allowed HTTP-states.
+	 * @param array  $state_list The list of allowed HTTP-states.
 	 * @param string $url The given URL.
 	 *
 	 * @return array
 	 */
-	public function allow_http_states( array $list, string $url ): array {
+	public function allow_http_states( array $state_list, string $url ): array {
 		// bail if this is not a YouTube-URL.
-		if( ! $this->is_youtube_video( $url ) ) {
-			return $list;
+		if ( ! $this->is_youtube_video( $url ) ) {
+			return $state_list;
 		}
 
 		// add 302 to the list.
-		$list[] = 302;
+		$state_list[] = 302;
 
 		// return the list.
-		return $list;
+		return $state_list;
 	}
 
 	/**
@@ -575,7 +577,7 @@ class Youtube extends Directory_Listing_Base {
 	 */
 	public function do_not_check_content_type( bool $return_value, string $url ): bool {
 		// bail if this is not a YouTube-URL.
-		if( ! $this->is_youtube_video( $url ) ) {
+		if ( ! $this->is_youtube_video( $url ) ) {
 			return $return_value;
 		}
 
@@ -586,14 +588,14 @@ class Youtube extends Directory_Listing_Base {
 	/**
 	 * Import videos from YouTube channel via import object.
 	 *
-	 * @param array $files The list of files to import.
-	 * @param Protocol_Base  $import_obj The import object.
+	 * @param array         $files The list of files to import.
+	 * @param Protocol_Base $import_obj The import object.
 	 *
 	 * @return array
 	 */
 	public function import_videos_from_channel_by_import_obj( array $files, Protocol_Base $import_obj ): array {
 		// bail if import object is not HTTP.
-		if( ! $import_obj instanceof HTTP ) {
+		if ( ! $import_obj instanceof HTTP ) {
 			return $files;
 		}
 
@@ -601,12 +603,12 @@ class Youtube extends Directory_Listing_Base {
 		$url = $import_obj->get_url();
 
 		// bail if this is not a YouTube-URL.
-		if( ! $this->is_youtube_video( $url ) ) {
+		if ( ! $this->is_youtube_video( $url ) ) {
 			return $files;
 		}
 
 		// bail if this is not a YouTube channel.
-		if( ! $this->is_youtube_channel( $url ) ) {
+		if ( ! $this->is_youtube_channel( $url ) ) {
 			return $files;
 		}
 

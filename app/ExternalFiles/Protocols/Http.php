@@ -501,7 +501,7 @@ class Http extends Protocol_Base {
 		global $wp_filesystem;
 
 		// if file should be saved local, load the temp file.
-		if( $results['local'] ) {
+		if ( $results['local'] ) {
 			$results['tmp-file'] = $this->get_temp_file( $url, $wp_filesystem );
 		}
 
@@ -776,7 +776,7 @@ class Http extends Protocol_Base {
 	/**
 	 * Get temp file from given URL.
 	 *
-	 * @param string $url The given URL.
+	 * @param string             $url The given URL.
 	 * @param WP_Filesystem_Base $filesystem The file system handler.
 	 *
 	 * @return bool|string

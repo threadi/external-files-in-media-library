@@ -472,7 +472,7 @@ class Ftp extends Protocol_Base {
 		}
 
 		// remove protocol and domain from URL.
-		$url_info = wp_parse_url( $url );
+		$url_info  = wp_parse_url( $url );
 		$file_path = $url_info['path'];
 
 		// get file infos.

@@ -78,7 +78,7 @@ class File_Types_Base {
 		$external_file_obj = $this->get_file();
 
 		// use the mime type from the external file object, if set.
-		if( $external_file_obj ) {
+		if ( $external_file_obj ) {
 			$mime_type = $external_file_obj->get_mime_type();
 		}
 

@@ -71,7 +71,7 @@ class Import {
 	 */
 	public function add_script( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings' ),true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings' ), true ) ) {
 			return;
 		}
 

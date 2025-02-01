@@ -151,7 +151,7 @@ class File_Types {
 			Log::get_instance()->create( sprintf( __( 'File has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 2 );
 
 			// add to the list.
-			if( $external_file_obj ) {
+			if ( $external_file_obj ) {
 				$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
 			}
 
@@ -166,7 +166,7 @@ class File_Types {
 		$file_type_obj = new File_Types\File( $external_file_obj );
 
 		// add to the cache list.
-		if( $external_file_obj ) {
+		if ( $external_file_obj ) {
 			$this->files[ $external_file_obj->get_id() ] = $file_type_obj;
 		}
 
