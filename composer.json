@@ -32,7 +32,8 @@
     "require": {
         "php": "^8.0",
         "ext-zip": "*",
-        "threadi/easy-dialog-for-wordpress": "^1.0.0",
-        "threadi/easy-directory-listing-for-wordpress": "^2.0.0"
+        "ext-fileinfo": "*",
+        "threadi/easy-dialog-for-wordpress": "^1.0.1",
+        "threadi/easy-directory-listing-for-wordpress": "^2.1.2"
     }
 }

@@ -105,7 +105,7 @@ class File {
 		/**
 		 * Filter whether file should be proxied.
 		 *
-		 * @since 2.1.0 Available since 2.1.0.
+		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $true False to disable proxy-URL.
 		 * @param File $this The external file object.
 		 *
@@ -445,6 +445,11 @@ class File {
 
 		// get the body.
 		$body = $wp_filesystem->get_contents( $tmp_file );
+
+		// bail if finfo is not available.
+		if ( ! class_exists( 'finfo' ) ) {
+			return;
+		}
 
 		// check mime-type of the binary-data and compare it with header-data.
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );

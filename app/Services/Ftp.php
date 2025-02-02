@@ -126,6 +126,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return array
 	 */
 	public function get_directory_listing( string $directory ): array {
+		// prepend directory with ftp:// if that is not given.
+		if ( ! ( stripos( $directory, 'ftp://' ) >= 0 || stripos( $directory, 'ftps://' ) > 0 ) ) {
+			$directory = 'ftp://' . $directory;
+		}
+
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
@@ -166,13 +171,12 @@ class Ftp extends Directory_Listing_Base implements Service {
 		}
 
 		// collect the files and directories.
-		return $this->get_directory_recursively( array(), '/', $directory_list, $ftp_connection, $directory );
+		return $this->get_directory_recursively( trailingslashit( $parent_dir ), $directory_list, $ftp_connection, $directory );
 	}
 
 	/**
 	 * Get the directory recursively.
 	 *
-	 * @param array                $file_list           The resulting list.
 	 * @param string               $parent_dir     The parent directory path.
 	 * @param array                $directory_list The directory to add.
 	 * @param WP_Filesystem_FTPext $ftp_connection The FTP-connection to use.
@@ -180,7 +184,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 *
 	 * @return array
 	 */
-	private function get_directory_recursively( array $file_list, string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
+	private function get_directory_recursively( string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
+		$file_list = array();
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
@@ -198,7 +203,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 			// if item is a directory, check its files.
 			if ( $ftp_connection->is_dir( $item_path ) ) {
-				$subs           = $this->get_directory_recursively( $file_list, $item_path, $directory_list, $ftp_connection, $directory );
+				$subs           = $this->get_directory_recursively( trailingslashit( $item_path ), $ftp_connection->dirlist( trailingslashit( $item_path ) ), $ftp_connection, $directory );
 				$entry['dir']   = $item_path;
 				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );
@@ -296,6 +301,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
+		// prepend directory with ftp:// if that is not given.
+		if ( ! ( stripos( $directory, 'ftp://' ) >= 0 || stripos( $directory, 'ftps://' ) > 0 ) ) {
+			$directory = 'ftp://' . $directory;
+		}
+
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
@@ -323,7 +333,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $ftp_connection ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed!', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed! Check the log for details.', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -336,7 +346,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed!', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed! Reason:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $ftp_connection->errors ) . '</code>' );
 
 			// add it to the list.
 			$this->add_error( $error );

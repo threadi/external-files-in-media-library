@@ -154,7 +154,7 @@ class ZipArchiveBrowser {
 
 			// if item is a directory, check its files.
 			if ( ! isset( $item_settings['name'] ) ) {
-				$subs           = self::get_directory_recursively( $item_path . '/', $item_settings );
+				$subs           = self::get_directory_recursively( trailingslashit( $item_path ), $item_settings );
 				$entry['dir']   = $item_path;
 				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );

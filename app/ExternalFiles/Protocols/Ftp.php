@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the FTP support.
+ * File which handles the FTP- and FTPS-support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -21,7 +21,7 @@ use WP_Filesystem_Base;
 use WP_Filesystem_FTPext;
 
 /**
- * Object to handle different protocols.
+ * Object to handle FTP- and FTPS-support.
  */
 class Ftp extends Protocol_Base {
 	/**
@@ -425,8 +425,8 @@ class Ftp extends Protocol_Base {
 
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
-			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error' );
+			/* translators: %1$s will be replaced by the servername. */
+			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the servername %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), '<em>' . $connection_arguments['hostname'] . '</em>', '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error' );
 			return false;
 		}
 

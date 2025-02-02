@@ -97,14 +97,36 @@ Yes, there are many options on WP CLI, see [our documentation](https://github.co
 
 == Changelog ==
 
-## [2.0.2] - 2024-11-23
+= @@VersionNumber@@ =
 
-### Added
-
-- Added option to use the external file date instead of the import date
-
-### Fixed
-
-- Fixed hook documentations
+- Added Services to platforms which host files, usable for local host, FTP, YouTube and ZIP-files atm
+- Added management for credentials of these external platforms
+- Added possibility to add YouTube- and Vimeo-videos as external files
+- Added possibility to import Youtube-Channel-Videos as external files via YouTube API
+- Added marker for proxied files
+- Added possibility to customize the handling of adding new URLs to media library with custom PHP
+- Added more hooks
+- Added GitHub action to build plugin releases
+- Added log for deleting temp file during import
+- Do not download files via http protocol which should not be hosted locally => speed up the import & reduce space usage
+- Optimized check if HTTP-file should be saved locally by file type
+- Optimized updating or installing log- and queue-tables during plugin update
+- Optimized upload dialog regarding the credential usage if browser used autofill-functions
+- Optimized FTP- and SFTP-handling for external files regarding its import
+- Embed our own CSS- and JS-files in backend only if necessary (speeds up loading time there)
+- Extended logging in debug mode
+- Updated dependencies
+- Moved changelog from readme.txt in GitHub-repository
+- Reduced number of calls for external file thumbs
+- Small optimizations on WooCommerce support during import for products via CSV
+- Optimization of many texts
+- Fixed potential error with import of YouTube videos
+- Fixed output of hint it file is not available
+- Fixed potential error if URL is already on media library
+- Fixed partially wrong saving of meta-data on external media files
+- Fixed wrong check for already existing thumbs of external files
+- Fixed styling of single URL upload field
+- Fixed logging of deleted URL with its proxied path
+- Fixed wrong quick start documentation URL
 
 [older changes](https://github.com/threadi/external-files-in-media-library/changelog.md)

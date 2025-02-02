@@ -110,7 +110,7 @@ class Services {
 		/**
 		 * Filter the list of third party support.
 		 *
-		 * @since 2.1.0 Available since 2.1.0.
+		 * @since 3.0.0 Available since 3.0.0.
 		 * @param array $list List of third party support.
 		 */
 		return apply_filters( 'eml_services_support', $list );

@@ -16,7 +16,6 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Value;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -752,7 +751,7 @@ class Settings {
 	 * @return void
 	 */
 	public function show_protocol_hint(): void {
-		echo esc_html__( 'These settings only apply to files that are provided via http. Files from other protocols (such as ftp) are generally only saved locally without a proxy.', 'external-files-in-media-library' );
+		echo esc_html__( 'These settings only apply to files that are provided via http. Files from other protocols (such as FTP) are generally only saved locally without a proxy.', 'external-files-in-media-library' );
 	}
 
 	/**

@@ -53,6 +53,10 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-bottom: 0.5em;
 }
 
+.eml .easy-dialog-for-wordpress-text label.title {
+	font-weight: 600;
+}
+
 .eml .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
 	display: block;
 	margin-bottom: 0.5em;
@@ -255,4 +259,23 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 
 body.media_page_efml_local_directories #easy-directory-listing-for-wordpress {
 	border: 4px dashed #c3c4c7;
+}
+
+body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading {
+	text-align: center;
+}
+
+body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading:after {
+	background-image: url(/wp-content/plugins/external-files-in-media-library/gfx/loading.svg);
+	content: "";
+	display: block;
+	height: 80px;
+	width: 100px;
+	margin: 0 auto;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons-editor-help):not(.dashicons-admin-generic) {
+	margin-left: 1em;
 }

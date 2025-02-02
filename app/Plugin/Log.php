@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the log-model.
+ * This file contains the object which logs events.
  *
  * @package external-files-in-media-library
  */
@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Model for log.
+ * Object for logging events.
  */
 class Log {
 	/**

@@ -759,7 +759,7 @@ class Http extends Protocol_Base {
 		/**
 		 * Filter to prevent locale file check.
 		 *
-		 * @since 2.1.0 Available since 2.1.0.
+		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
 		 *

@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 02.02.2025
 
 ### Added
 
@@ -28,6 +28,7 @@
 - Moved changelog from readme.txt in GitHub-repository
 - Reduced number of calls for external file thumbs
 - Small optimizations on WooCommerce support during import for products via CSV
+- Optimization of many texts
 
 ### Fixed
 

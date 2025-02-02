@@ -952,6 +952,14 @@ class Files {
 				?>
 			</li>
 			<?php
+		} else {
+			?>
+			<li>
+				<?php
+					echo '<span class="dashicons dashicons-no-alt"></span> ' . esc_html__( 'Proxy is disabled for this file type.', 'external-files-in-media-library' );
+				?>
+			</li>
+			<?php
 		}
 		if ( $external_file_obj->has_credentials() ) {
 			?>

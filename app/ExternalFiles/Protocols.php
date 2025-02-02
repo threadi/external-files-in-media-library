@@ -106,7 +106,8 @@ class Protocols {
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
-				Log::get_instance()->create( __( 'Your hosting does not match the requirements to import the given URL. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
+				/* translators: %1$s will be replaced by a protocol name (like SFTP). */
+				Log::get_instance()->create( sprintf( __( 'The given URL is not compatible with the protocol %1$s. Further tests for other protocols will follow.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
 				continue;
 			}
 

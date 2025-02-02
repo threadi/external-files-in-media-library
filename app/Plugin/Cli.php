@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
@@ -67,6 +66,9 @@ class Cli {
 				// bail this URL.
 				continue;
 			}
+
+			// convert spaces in URL to HTML-coded spaces.
+			$url = str_replace( ' ', '%20', $url );
 
 			// bail if given string is not a URL.
 			if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
