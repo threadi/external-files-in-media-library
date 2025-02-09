@@ -10,15 +10,14 @@
 namespace ExternalFilesInMediaLibrary\ThirdParty;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-
 defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 
 /**
  * Object to handle support for this plugin.
  */
-class Massedge {
+class Massedge extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

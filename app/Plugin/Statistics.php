@@ -209,7 +209,7 @@ class Statistics {
 	}
 
 	/**
-	 * Add 1 to the file count.
+	 * Add the file size to the total.
 	 *
 	 * @param File $external_file_obj The external file as object.
 	 *
@@ -220,7 +220,7 @@ class Statistics {
 	}
 
 	/**
-	 * Sub 1 from the file count.
+	 * Subtract the file size from the total number.
 	 *
 	 * @param File $external_file_obj The external file as object.
 	 *

@@ -952,6 +952,14 @@ class Files {
 				?>
 			</li>
 			<?php
+		} else {
+			?>
+			<li>
+				<?php
+					echo '<span class="dashicons dashicons-no-alt"></span> ' . esc_html__( 'Proxy is disabled for this file type.', 'external-files-in-media-library' );
+				?>
+			</li>
+			<?php
 		}
 		if ( $external_file_obj->has_credentials() ) {
 			?>
@@ -1119,7 +1127,7 @@ class Files {
 		if ( $external_file_obj->is_locally_saved() ) {
 			// switch to external and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_external() ) {
-				$result['message'] = __( 'Error during switch.', 'external-files-in-media-library' );
+				$result['message'] = __( 'Error during switch to external hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 
@@ -1135,7 +1143,7 @@ class Files {
 
 			// switch to local and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_local() ) {
-				$result['message'] = __( 'Error during switch.', 'external-files-in-media-library' );
+				$result['message'] = __( 'Error during switch to local hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 

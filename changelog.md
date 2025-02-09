@@ -1,11 +1,12 @@
 # Changelog
 
-## [Unreleased]
+## [3.0.0] - 02.02.2025
 
 ### Added
 
 - Added Services to platforms which host files, usable for local host, FTP, YouTube and ZIP-files atm
 - Added management for credentials of these external platforms
+- Added possibility to import files from Google Drive as external files
 - Added possibility to add YouTube- and Vimeo-videos as external files
 - Added possibility to import Youtube-Channel-Videos as external files via YouTube API
 - Added marker for proxied files
@@ -28,6 +29,7 @@
 - Moved changelog from readme.txt in GitHub-repository
 - Reduced number of calls for external file thumbs
 - Small optimizations on WooCommerce support during import for products via CSV
+- Optimization of many texts
 
 ### Fixed
 

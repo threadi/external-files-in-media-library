@@ -297,10 +297,15 @@ class Logs extends WP_List_Table {
 	private function get_url( string $url ): string {
 		// if string is not a valid URL just show it.
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			return esc_html( $url );
+			return '<span title="' . esc_attr( $url ) . '">' . esc_html( url_shorten( $url, 50 ) ) . '</span>';
+		}
+
+		// if string starts with file:// show also only this path.
+		if ( str_starts_with( $url, 'file://' ) ) {
+			return '<span title="' . esc_attr( $url ) . '">' . esc_html( url_shorten( $url, 50 ) ) . '</span>';
 		}
 
 		// return the linked, but shortened URL.
-		return '<a href="' . esc_url( $url ) . '" target="_blank">' . url_shorten( $url, 50 ) . '</a>';
+		return '<a href="' . esc_url( $url ) . '" target="_blank" title="' . esc_attr( $url ) . '">' . url_shorten( $url, 50 ) . '</a>';
 	}
 }

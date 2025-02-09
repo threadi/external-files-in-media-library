@@ -6,7 +6,7 @@
  * @param int $size_h The height to use.
  * @param string $url The video-URL.
  *
- * @version: 2.1.0
+ * @version: 3.0.0
  * @package external-files-in-media-library
  */
 

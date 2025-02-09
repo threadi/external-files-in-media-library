@@ -190,7 +190,7 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given URL via http(s) incl. check of its content-type.
+	 * Return infos to each given URL.
 	 *
 	 * @return array List of files from the given URL with its infos.
 	 */
@@ -759,7 +759,7 @@ class Http extends Protocol_Base {
 		/**
 		 * Filter to prevent locale file check.
 		 *
-		 * @since 2.1.0 Available since 2.1.0.
+		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
 		 *

@@ -16,7 +16,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base;
 /**
  * Object to handle support for this plugin.
  */
-class Yoast {
+class Yoast extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

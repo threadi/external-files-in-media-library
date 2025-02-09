@@ -13,7 +13,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 use WP_Query;
@@ -21,7 +20,7 @@ use WP_Query;
 /**
  * Object to handle support for this plugin.
  */
-class Exmage {
+class Exmage extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

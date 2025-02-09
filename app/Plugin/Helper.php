@@ -530,4 +530,46 @@ class Helper {
 	public static function get_media_library_url(): string {
 		return get_admin_url() . 'upload.php';
 	}
+
+	/**
+	 * Return the plugin slug.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_slug(): string {
+		return plugin_basename( EFML_PLUGIN );
+	}
+
+	/**
+	 * Add new entry with its key on specific position in array.
+	 *
+	 * @param array|null $fields The array we want to change.
+	 * @param int        $position The position where the new array should be added.
+	 * @param array      $array_to_add The new array which should be added.
+	 *
+	 * @return array
+	 */
+	public static function add_array_in_array_on_position( array|null $fields, int $position, array $array_to_add ): array {
+		if ( is_null( $fields ) ) {
+			return array();
+		}
+		return array_slice( $fields, 0, $position, true ) + $array_to_add + array_slice( $fields, $position, null, true );
+	}
+
+	/**
+	 * Return 404 site with template.
+	 *
+	 * @return string
+	 */
+	public static function get_404_template(): string {
+		global $wp_query;
+
+		// set header.
+		$wp_query->set_404();
+		status_header( 404 );
+		nocache_headers();
+
+		// return the template.
+		return get_404_template();
+	}
 }

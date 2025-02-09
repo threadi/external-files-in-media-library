@@ -23,7 +23,7 @@ use WP_Error;
 /**
  * Object to handle support for this video plattform.
  */
-class Youtube extends Directory_Listing_Base {
+class Youtube extends Directory_Listing_Base implements Service {
 
 	/**
 	 * The object name.
@@ -40,7 +40,7 @@ class Youtube extends Directory_Listing_Base {
 	protected string $label = 'YouTube';
 
 	/**
-	 * Marker if login is required.
+	 * Marker if simple API login is required.
 	 *
 	 * @var bool
 	 */
@@ -84,6 +84,13 @@ class Youtube extends Directory_Listing_Base {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

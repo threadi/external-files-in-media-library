@@ -151,6 +151,16 @@ class Directory_Listing {
 							continue;
 						}
 
+						// show disabled listing object.
+						if ( $obj->is_disabled() ) {
+							// show enabled listing object.
+							?>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><br><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+							<?php
+							continue;
+						}
+
+						// show enabled listing object.
 						?>
 							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
 							<?php
@@ -238,11 +248,12 @@ class Directory_Listing {
 			'date'              => __( 'Date', 'external-files-in-media-library' ),
 			'config_missing'    => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
 			'nonce_missing'     => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
-			'empty_directory'   => __( 'Loaded an empty directory.', 'external-files-in-media-library' ),
+			'empty_directory'   => __( 'Loaded an empty directory. This could also mean that the files in the directory cannot be imported into WordPress, e.g. because they have a non-approved file type.', 'external-files-in-media-library' ),
 			'error_title'       => __( 'The following error occurred:', 'external-files-in-media-library' ),
 			'errors_title'      => __( 'The following errors occurred:', 'external-files-in-media-library' ),
+			'serverside_error'  => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
 			'directory_archive' => array(
-				'connect_now'     => __( 'Connect now', 'external-files-in-media-library' ),
+				'connect_now'     => __( 'Open now', 'external-files-in-media-library' ),
 				'labels'          => array(
 					'name'          => _x( 'Directory Credentials', 'taxonomy general name', 'external-files-in-media-library' ),
 					'singular_name' => _x( 'Directory Credential', 'taxonomy singular name', 'external-files-in-media-library' ),
@@ -250,6 +261,11 @@ class Directory_Listing {
 					'edit_item'     => __( 'Edit Directory Credential', 'external-files-in-media-library' ),
 					'update_item'   => __( 'Update Directory Credential', 'external-files-in-media-library' ),
 					'menu_name'     => __( 'Directory Credentials', 'external-files-in-media-library' ),
+					'back_to_items' => __( 'Back to Directory Credentials', 'external-files-in-media-library' ),
+				),
+				'messages'        => array(
+					'updated' => __( 'Directory Credential updated.', 'external-files-in-media-library' ),
+					'deleted' => __( 'Directory Credential deleted.', 'external-files-in-media-library' ),
 				),
 				'type'            => __( 'Type', 'external-files-in-media-library' ),
 				'connect'         => __( 'Connect', 'external-files-in-media-library' ),
@@ -287,7 +303,7 @@ class Directory_Listing {
 			'form_login'        => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
 				'url'              => array(
-					'label' => __( 'Server-IP or -name', 'external-files-in-media-library' ),
+					'label' => __( 'Server-IP or -name (starting with ftp:// or ftps://)', 'external-files-in-media-library' ),
 				),
 				'login'            => array(
 					'label' => __( 'Login', 'external-files-in-media-library' ),

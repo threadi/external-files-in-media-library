@@ -14,7 +14,7 @@ use WP_Filesystem_Base;
 use WP_Query;
 
 /**
- * Object to handle different protocols.
+ * Object to handle base functions for each protocol.
  */
 class Protocol_Base {
 
@@ -158,7 +158,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given URL.
+	 * Return infos to each given URL.
 	 *
 	 * @return array List of files with its infos.
 	 */

@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 /**
  * Object to handle support for this plugin.
  */
-class Downloadlist {
+class Downloadlist extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * Instance of actual object.

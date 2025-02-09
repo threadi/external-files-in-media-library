@@ -6,13 +6,12 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\Services\lib;
+namespace ExternalFilesInMediaLibrary\Services\Zip;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use Exception;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Error;
 use ZipArchive;
@@ -154,7 +153,7 @@ class ZipArchiveBrowser {
 
 			// if item is a directory, check its files.
 			if ( ! isset( $item_settings['name'] ) ) {
-				$subs           = self::get_directory_recursively( $item_path . '/', $item_settings );
+				$subs           = self::get_directory_recursively( trailingslashit( $item_path ), $item_settings );
 				$entry['dir']   = $item_path;
 				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );

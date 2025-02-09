@@ -17,7 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Templates;
 /**
  * Object to handle support for this video plattform.
  */
-class Vimeo {
+class Vimeo implements Service {
 
 	/**
 	 * Instance of actual object.
@@ -50,6 +50,13 @@ class Vimeo {
 
 		return self::$instance;
 	}
+
+	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
 
 	/**
 	 * Initialize this object.

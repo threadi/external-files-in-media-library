@@ -13,14 +13,14 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Services\lib\ZipArchiveBrowser;
+use ExternalFilesInMediaLibrary\Services\Zip\ZipArchiveBrowser;
 use WP_Error;
 use ZipArchive;
 
 /**
  * Object to handle support of files from ZIP as directory listing.
  */
-class Zip extends Directory_Listing_Base {
+class Zip extends Directory_Listing_Base implements Service {
 
 	/**
 	 * The object name.
@@ -69,20 +69,22 @@ class Zip extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Run during activation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {}
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void
 	 */
 	public function init(): void {
-		// bail if "ZipArchive" is not available.
-		if ( ! class_exists( 'ZipArchive' ) ) {
-			return;
-		}
-
 		$this->title = __( 'Choose file from a ZIP-File', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
-		add_filter( 'eml_external_file_infos', array( $this, 'get_file_from_zip' ), 10, 2 );
+		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 	}
 
 	/**
@@ -156,7 +158,7 @@ class Zip extends Directory_Listing_Base {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( url + file.file, login, password );',
+				'action' => 'efml_import_file( "file://" + url.replace("file://", "") + file.file, login, password );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
@@ -195,14 +197,9 @@ class Zip extends Directory_Listing_Base {
 	 *
 	 * @return array
 	 */
-	public function get_file_from_zip( array $results, string $file_path ): array {
+	public function get_file( array $results, string $file_path ): array {
 		// bail if file path does not contain '.zip'.
 		if ( ! str_contains( $file_path, '.zip' ) ) {
-			return $results;
-		}
-
-		// bail if file path does end with '.zip'.
-		if ( ! str_ends_with( $file_path, '.zip' ) ) {
 			return $results;
 		}
 
@@ -226,6 +223,11 @@ class Zip extends Directory_Listing_Base {
 
 		// get the path to the file in the ZIP (+4 for .zip and +1 for the starting "/").
 		$file = substr( $file_path, strpos( $file_path, '.zip' ) + 5 );
+
+		// bail if no file could be found. This is not an error, but used for direct ZIP-upload.
+		if ( empty( $file ) ) {
+			return $results;
+		}
 
 		// get the zip object.
 		$zip    = new ZipArchive();
@@ -373,5 +375,23 @@ class Zip extends Directory_Listing_Base {
 
 		// return true as given directory is a valid ZIP-file.
 		return true;
+	}
+
+	/**
+	 * Return whether this listing object is disabled.
+	 *
+	 * @return bool
+	 */
+	public function is_disabled(): bool {
+		return ! class_exists( 'ZipArchive' );
+	}
+
+	/**
+	 * Return the description for this listing object.
+	 *
+	 * @return string
+	 */
+	public function get_description(): string {
+		return __( 'PHP-Modul zip is missing!', 'external-files-in-media-library' );
 	}
 }

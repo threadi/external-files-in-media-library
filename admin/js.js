@@ -152,15 +152,37 @@ jQuery(document).ready(function($) {
         }
     );
 
-  /**
-   * Copy strings in clipboard.
-   */
-  $(".settings_page_eml_settings .copy-text-attr").on("click", function( e ) {
-    e.preventDefault();
-    $(this).removeClass("copied");
-    if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
-      $(this).addClass("copied");
-    }
+    /**
+     * Add event to enable/disable credential fields if
+     */
+    $('body').on( 'change', function() {
+      // check if class is set.
+      if( $(this).hasClass( 'easy-dialog-for-wordpress' ) ) {
+        $('#eml_use_credentials').off().on('click', function() {
+          // get fields.
+          let login = $('#eml_login');
+          let password = $('#eml_password');
+          if( $(this).is(':checked') ) {
+            login.removeAttr('readonly');
+            password.removeAttr('readonly');
+          }
+          else {
+            login.attr('readonly', 'readonly');
+            password.attr('readonly', 'readonly');
+          }
+        });
+      }
+    });
+
+    /**
+     * Copy strings in clipboard.
+     */
+    $(".settings_page_eml_settings .copy-text-attr").on("click", function( e ) {
+      e.preventDefault();
+      $(this).removeClass("copied");
+      if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
+        $(this).addClass("copied");
+      }
   });
 });
 

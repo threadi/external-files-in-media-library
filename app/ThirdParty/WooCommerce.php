@@ -19,8 +19,7 @@ use WC_Product;
 /**
  * Object to handle support for this plugin.
  */
-class WooCommerce {
-
+class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Instance of actual object.
 	 *
@@ -51,6 +50,15 @@ class WooCommerce {
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Tasks to run during plugin activation.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		$this->init_woocommerce();
 	}
 
 	/**

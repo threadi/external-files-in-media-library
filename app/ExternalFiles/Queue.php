@@ -710,7 +710,7 @@ class Queue {
 		}
 
 		// add the field to enable queue-upload.
-		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . '</label>';
+		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_general' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
 
 		// return the resulting fields.
 		return $fields;
