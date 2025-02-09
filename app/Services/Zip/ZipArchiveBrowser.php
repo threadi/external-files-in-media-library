@@ -6,13 +6,12 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\Services\lib;
+namespace ExternalFilesInMediaLibrary\Services\Zip;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use Exception;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Error;
 use ZipArchive;

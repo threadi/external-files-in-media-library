@@ -14,7 +14,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
 
 /**
- * Initialize the plugin, connect all together.
+ * Initialize the import support.
  */
 class Import {
 

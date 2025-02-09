@@ -40,7 +40,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	protected string $label = 'YouTube';
 
 	/**
-	 * Marker if login is required.
+	 * Marker if simple API login is required.
 	 *
 	 * @var bool
 	 */

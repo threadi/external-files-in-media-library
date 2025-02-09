@@ -86,13 +86,21 @@ class Protocols {
 
 		// loop through the supported protocols and check which one is supporting the given URL.
 		foreach ( $this->get_protocols() as $protocol_name ) {
+			// bail if result is already set.
+			if ( $result ) {
+				continue;
+			}
+
 			// bail if name is not a string.
 			if ( ! is_string( $protocol_name ) ) {
+				Log::get_instance()->create( __( 'Got faulty protocol:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $protocol_name ) . '</code>', esc_html( $url ), 'error', 2 );
 				continue;
 			}
 
 			// bail if name is not an existing class.
 			if ( ! class_exists( $protocol_name ) ) {
+				/* translators: %1$s will be replaced by a name. */
+				Log::get_instance()->create( sprintf( __( 'Protocol %1$s does not exist as object.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'error', 2 );
 				continue;
 			}
 
@@ -101,18 +109,22 @@ class Protocols {
 
 			// bail if protocol is not a Protocol_Base object.
 			if ( ! $obj instanceof Protocol_Base ) {
+				/* translators: %1$s will be replaced by a name. */
+				Log::get_instance()->create( sprintf( __( 'Protocol %1$s is not a Protocol_Base object.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'error', 2 );
 				continue;
 			}
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
 				/* translators: %1$s will be replaced by a protocol name (like SFTP). */
-				Log::get_instance()->create( sprintf( __( 'The given URL is not compatible with the protocol %1$s. Further tests for other protocols will follow.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
+				Log::get_instance()->create( sprintf( __( 'The protocol %1$s is not usable in this hosting.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
 				continue;
 			}
 
 			// bail if URL is not compatible with this URL.
 			if ( ! $obj->is_url_compatible() ) {
+				/* translators: %1$s will be replaced by a protocol name (like SFTP). */
+				Log::get_instance()->create( sprintf( __( 'The given URL is not compatible with the protocol %1$s. Further tests for other protocols will follow.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
 				continue;
 			}
 

@@ -14,7 +14,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
- * Initialize the plugin, connect all together.
+ * Initialize the export support.
  */
 class Export {
 
@@ -61,7 +61,7 @@ class Export {
 	}
 
 	/**
-	 * Add import settings.
+	 * Add export settings.
 	 *
 	 * @param Settings $settings_obj The settings object.
 	 *

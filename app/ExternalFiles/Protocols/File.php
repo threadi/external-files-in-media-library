@@ -32,7 +32,7 @@ class File extends Protocol_Base {
 	);
 
 	/**
-	 * Check the availability of a given URL.
+	 * Return infos to each given URL.
 	 *
 	 * @return array List of file-infos.
 	 */
@@ -62,7 +62,7 @@ class File extends Protocol_Base {
 
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */
-			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $file_list ) ) : '';
+			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $this->get_url() ), count( $file_list ) ) : '';
 
 			// loop through the directory.
 			foreach ( $file_list as $file ) {
@@ -80,7 +80,7 @@ class File extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_path ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error' );
+					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), $file_path, 'error' );
 					continue;
 				}
 
@@ -124,7 +124,7 @@ class File extends Protocol_Base {
 		} else {
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 				return array();
 			}
 
@@ -201,9 +201,6 @@ class File extends Protocol_Base {
 		$mime_type            = wp_check_filetype( $results['title'] );
 		$results['mime-type'] = $mime_type['type'];
 
-		// get the size.
-		$results['filesize'] = $wp_filesystem->size( $file_path );
-
 		// get the last modified date.
 		$results['last-modified'] = $wp_filesystem->mtime( $file_path );
 
@@ -211,6 +208,9 @@ class File extends Protocol_Base {
 		$results['tmp-file'] = wp_tempnam();
 		// and save the file there.
 		$wp_filesystem->put_contents( $results['tmp-file'], $wp_filesystem->get_contents( $file_path ) );
+
+		// get the size.
+		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );
 
 		$response_headers = array();
 		/**

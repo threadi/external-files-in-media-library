@@ -151,6 +151,16 @@ class Directory_Listing {
 							continue;
 						}
 
+						// show disabled listing object.
+						if ( $obj->is_disabled() ) {
+							// show enabled listing object.
+							?>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><br><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+							<?php
+							continue;
+						}
+
+						// show enabled listing object.
 						?>
 							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
 							<?php

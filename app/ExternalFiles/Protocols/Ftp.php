@@ -113,7 +113,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given URL.
+	 * Return infos to each given URL.
 	 *
 	 * @return array List of file-infos.
 	 */

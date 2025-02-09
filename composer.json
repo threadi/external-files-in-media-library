@@ -7,6 +7,12 @@
         ],
         "post-update-cmd": [
             "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs"
+        ],
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
+    },
+    "extra": {
+        "google/apiclient-services": [
+            "Drive"
         ]
     },
     "config": {
@@ -34,6 +40,7 @@
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^2.1.2"
+        "threadi/easy-directory-listing-for-wordpress": "^2.2.0",
+        "google/apiclient": "^2.18"
     }
 }

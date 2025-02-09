@@ -183,12 +183,12 @@ class Setting {
 	/**
 	 * Set the section this setting will be assigned to.
 	 *
-	 * @param Section $section The section this setting will be assigned to.
+	 * @param Section $section_obj The section this setting will be assigned to.
 	 *
 	 * @return void
 	 */
-	public function set_section( Section $section ): void {
-		$this->section = $section;
+	public function set_section( Section $section_obj ): void {
+		$this->section = $section_obj;
 	}
 
 	/**

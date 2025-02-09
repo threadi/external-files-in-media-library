@@ -44,3 +44,13 @@ const EFML_HASH = 'eml_hash';
  * Name of our sodium hash.
  */
 const EFML_SODIUM_HASH = 'eml_sodium_hash';
+
+/**
+ * URL of the Service URL for Google OAuth.
+ */
+const EFML_GOOGLE_OAUTH_SERVICE_URL = 'https://dev.thomaszwirner.de/google-oauth-service/';
+
+/**
+ * The Client ID for our OAuth app.
+ */
+const EFML_GOOGLE_OAUTH_CLIENT_ID = '127206403705-71hoajbdsl06vdvdveaqv51e53mcit09.apps.googleusercontent.com';

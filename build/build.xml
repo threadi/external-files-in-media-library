@@ -121,6 +121,7 @@
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" />
+            <zipfileset dir="${src.dir}/vendor/google" prefix="${plugin.slug}/vendor/google" />
             <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
