@@ -40,7 +40,7 @@
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^2.2.0",
+        "threadi/easy-directory-listing-for-wordpress": "^2.2.1",
         "google/apiclient": "^2.18"
     }
 }

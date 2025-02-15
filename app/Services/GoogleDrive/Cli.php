@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive;
 use Google\Service\Exception;
 use WP_User;
 use function ExtendBuilder\colibri_blog_posts_normal_item;
@@ -135,22 +136,19 @@ class Cli {
 				continue;
 			}
 
-			// get the client.
-			$client = new \Google\Client();
-			$client->setAccessToken( $access_token );
+			// get the client, which refreshes the token if necessary.
+			$client_obj = new Client( $access_token );
+			$client_obj->get_client( $user_id );
 
-			// refresh token if it has been expired.
-			if ( $client->isAccessTokenExpired() ) {
-				$client->fetchAccessTokenWithRefreshToken( $client->getAccessToken() );
-
-				// show hint if token has been refreshed.
+			// check if token has been refreshed.
+			if ( $client_obj->has_token_refreshed() ) {
 				/* translators: %1$s will be replaced by the username. */
 				$check_results[] = sprintf( __( 'Token has been refreshed for user %1$s.', 'external-files-in-media-library' ), $user->display_name );
+			} else {
+				// show hint if token has not been refreshed.
+				/* translators: %1$s will be replaced by the username. */
+				$check_results[] = sprintf( __( 'Token has not been refreshed for user %1$s.', 'external-files-in-media-library' ), $user->display_name );
 			}
-
-			// show hint if token has not been refreshed.
-			/* translators: %1$s will be replaced by the username. */
-			$check_results[] = sprintf( __( 'Token has not been refreshed for user %1$s.', 'external-files-in-media-library' ), $user->display_name );
 		}
 
 		// show results.

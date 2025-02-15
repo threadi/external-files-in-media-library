@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
@@ -155,5 +156,8 @@ class Update {
 			// add the post meta for proxy time.
 			update_post_meta( $external_file_obj->get_id(), 'eml_proxied', time() );
 		}
+
+		// flush rewrite rules.
+		Proxy::get_instance()->set_refresh();
 	}
 }

@@ -2,12 +2,6 @@
 /**
  * File to handle support for the Google Drive platform.
  *
- * TODO:
- * - Token automatisch erneuern: https://developers.google.com/identity/protocols/oauth2/native-app?hl=de#offline
- * => testen !!!
- * - API-Schlüssel für öffentliche Verwendung einrichten
- * - Google Auth Service als Plugin fertigstellen & bei thomaszwirner.de unterbringen
- *
  * @package external-files-in-media-library
  */
 
@@ -316,10 +310,11 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * Set the access token for the actual WordPress user.
 	 *
 	 * @param array $access_token The access token.
+	 * @param int   $user_id The user id (optional).
 	 *
 	 * @return void
 	 */
-	public function set_access_token( array $access_token ): void {
+	public function set_access_token( array $access_token, int $user_id = 0 ): void {
 		// get actual access token list.
 		$access_tokens = get_option( 'eml_google_drive_access_tokens', array() );
 
@@ -328,12 +323,20 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$access_tokens = array();
 		}
 
+		// get the user_id from session if it is not set.
+		if ( 0 === $user_id ) {
+			$user_id = wp_get_current_user()->ID;
+		}
+
+		// get the user object.
+		$user = get_user_by( 'id', $user_id );
+
 		// add this token.
-		$access_tokens[ wp_get_current_user()->ID ] = $access_token;
+		$access_tokens[ $user_id ] = $access_token;
 
 		// log event.
 		/* translators: %1$s will be replaced by the username. */
-		Log::get_instance()->create( sprintf( __( 'New Google OAuth token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . wp_get_current_user()->display_name . '</em>' ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'New Google OAuth token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 		// save the updated token list.
 		update_option( 'eml_google_drive_access_tokens', $access_tokens );
@@ -903,5 +906,81 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// otherwise return the new value.
 		return $new_value;
+	}
+
+	/**
+	 * Return the URL of our own service to refresh a token.
+	 *
+	 * @return string
+	 */
+	private function get_refresh_token_url(): string {
+		// set the refresh URI.
+		$refresh_uri = EFML_GOOGLE_OAUTH_REFRESH_URL;
+
+		/**
+		 * Filter the redirect URI to connect the Google OAuth Client.
+		 *
+		 * @since 3.0.0 Available since 3.0.0.
+		 * @param string $refresh_uri The redirect URI.
+		 */
+		return apply_filters( 'eml_google_drive_refresh_uri', $refresh_uri );
+	}
+
+	/**
+	 * Refresh token by requesting our own endpoint.
+	 *
+	 * @param \Google\Client $client The Google client object.
+	 *
+	 * @return array
+	 */
+	public function get_refreshed_token( \Google\Client $client ): array {
+		// create the URL.
+		$url = add_query_arg(
+			array(
+				'refresh_token' => $client->getRefreshToken(),
+			),
+			$this->get_refresh_token_url()
+		);
+
+		// request the new token.
+		$response = wp_safe_remote_get( $url );
+
+		// check the response.
+		if ( is_wp_error( $response ) ) {
+			// log possible error.
+			Log::get_instance()->create( __( 'Error on request to get refreshed token.', 'external-files-in-media-library' ), '', 'error' );
+		} elseif ( empty( $response ) ) {
+			// log im result is empty.
+			Log::get_instance()->create( __( 'Got empty response for refreshing the token.', 'external-files-in-media-library' ), '', 'error' );
+		} else {
+			// get the http status.
+			$http_status = $response['http_response']->get_status();
+
+			// bail if http status is not 200.
+			if ( 200 !== $http_status ) {
+				return array();
+			}
+
+			// get the body if the response.
+			$body = wp_remote_retrieve_body( $response );
+
+			// bail if body is empty.
+			if ( empty( $body ) ) {
+				return array();
+			}
+
+			// decode the response.
+			$access_token = json_decode( $body, ARRAY_A );
+
+			// bail if access token is empty.
+			if ( empty( $access_token ) ) {
+				return array();
+			}
+
+			// return the access token.
+			return $access_token;
+		}
+
+		return array();
 	}
 }
