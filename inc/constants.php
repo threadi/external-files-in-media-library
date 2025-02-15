@@ -48,14 +48,14 @@ const EFML_SODIUM_HASH = 'eml_sodium_hash';
 /**
  * URL of the service URL for Google OAuth.
  */
-const EFML_GOOGLE_OAUTH_SERVICE_URL = 'https://dev.thomaszwirner.de/google-oauth-service/';
+const EFML_GOOGLE_OAUTH_SERVICE_URL = 'https://www.thomaszwirner.de/google-oauth-service/';
 
 /**
  * URL to refresh as token.
  */
-const EFML_GOOGLE_OAUTH_REFRESH_URL = 'https://dev.thomaszwirner.de/google-refresh-service/';
+const EFML_GOOGLE_OAUTH_REFRESH_URL = 'https://www.thomaszwirner.de/google-refresh-service/';
 
 /**
  * The Client ID for our OAuth app.
  */
-const EFML_GOOGLE_OAUTH_CLIENT_ID = '127206403705-71hoajbdsl06vdvdveaqv51e53mcit09.apps.googleusercontent.com';
+const EFML_GOOGLE_OAUTH_CLIENT_ID = '319161798172-2oheqcov8cjl5kucbcqkae72pakaf35a.apps.googleusercontent.com';

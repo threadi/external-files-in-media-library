@@ -2,10 +2,6 @@
 /**
  * File to handle support for the Google Drive platform.
  *
- * TODO:
- * - API-Schlüssel für öffentliche Verwendung einrichten
- * - Google Auth Service als Plugin fertigstellen & bei thomaszwirner.de unterbringen
- *
  * @package external-files-in-media-library
  */
 
@@ -314,7 +310,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * Set the access token for the actual WordPress user.
 	 *
 	 * @param array $access_token The access token.
-	 * @param int   $user_id
+	 * @param int   $user_id The user id (optional).
 	 *
 	 * @return void
 	 */
@@ -328,7 +324,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// get the user_id from session if it is not set.
-		if( 0 === $user_id ) {
+		if ( 0 === $user_id ) {
 			$user_id = wp_get_current_user()->ID;
 		}
 
@@ -941,7 +937,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		// create the URL.
 		$url = add_query_arg(
 			array(
-				'refresh_token' => $client->getRefreshToken()
+				'refresh_token' => $client->getRefreshToken(),
 			),
 			$this->get_refresh_token_url()
 		);
@@ -952,7 +948,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		// check the response.
 		if ( is_wp_error( $response ) ) {
 			// log possible error.
-			Log::get_instance()->create( __( 'Error on request to get refreshed token.', 'external-files-in-media-library' ), '' , 'error' );
+			Log::get_instance()->create( __( 'Error on request to get refreshed token.', 'external-files-in-media-library' ), '', 'error' );
 		} elseif ( empty( $response ) ) {
 			// log im result is empty.
 			Log::get_instance()->create( __( 'Got empty response for refreshing the token.', 'external-files-in-media-library' ), '', 'error' );
@@ -961,7 +957,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$http_status = $response['http_response']->get_status();
 
 			// bail if http status is not 200.
-			if( 200 !== $http_status ) {
+			if ( 200 !== $http_status ) {
 				return array();
 			}
 
@@ -969,7 +965,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$body = wp_remote_retrieve_body( $response );
 
 			// bail if body is empty.
-			if( empty( $body ) ) {
+			if ( empty( $body ) ) {
 				return array();
 			}
 
@@ -977,7 +973,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$access_token = json_decode( $body, ARRAY_A );
 
 			// bail if access token is empty.
-			if( empty( $access_token ) ) {
+			if ( empty( $access_token ) ) {
 				return array();
 			}
 

@@ -90,6 +90,10 @@ external files by this plugin. This also allows you to use all protocols support
 
 Yes, there are many options on WP CLI, see [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
 
+= Google tells me that the app is not verified when I connect Google Drive - why? =
+
+According to Google guidelines, an app that is used to connect to the Google Drive API is only checked and confirmed once it has 100 active users. As long as less than 100 active users use this function via this plugin, you will always see this message. You can confirm it via “unsecure” and still complete the connection of your Google Drive with your WordPress website.
+
 == Screenshots ==
 
 1. Field to add external files in Media > Add New Media File.

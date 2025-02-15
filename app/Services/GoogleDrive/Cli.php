@@ -142,9 +142,9 @@ class Cli {
 
 			// check if token has been refreshed.
 			if ( $client_obj->has_token_refreshed() ) {
+				/* translators: %1$s will be replaced by the username. */
 				$check_results[] = sprintf( __( 'Token has been refreshed for user %1$s.', 'external-files-in-media-library' ), $user->display_name );
-			}
-			else {
+			} else {
 				// show hint if token has not been refreshed.
 				/* translators: %1$s will be replaced by the username. */
 				$check_results[] = sprintf( __( 'Token has not been refreshed for user %1$s.', 'external-files-in-media-library' ), $user->display_name );

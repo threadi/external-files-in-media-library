@@ -89,7 +89,7 @@ class Client {
 			$access_token = $google_drive_obj->get_refreshed_token( $client );
 
 			// bail if no access token could be loaded.
-			if( empty( $access_token ) ) {
+			if ( empty( $access_token ) ) {
 				// show error on CLI.
 				Helper::is_cli() ? \WP_CLI::error( wp_json_encode( $access_token ) ) : '';
 
