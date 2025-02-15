@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed some typos
+
 ## [3.0.0] - 15.02.2025
 
 ### Added

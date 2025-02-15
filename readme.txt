@@ -133,4 +133,4 @@ According to Google guidelines, an app that is used to connect to the Google Dri
 - Fixed logging of deleted URL with its proxied path
 - Fixed wrong quick start documentation URL
 
-[older changes](https://github.com/threadi/external-files-in-media-library/changelog.md)
+[older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

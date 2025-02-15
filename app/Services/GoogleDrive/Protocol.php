@@ -134,7 +134,7 @@ class Protocol extends Protocol_Base {
 			$file_data = $service->files->get( $file_id, array( 'fields' => 'createdTime,name' ) );
 		} catch ( Exception $e ) {
 			// log event.
-			Log::get_instance()->create( __( 'Google Drive client could download the requested file! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Google Drive client could not download the requested file! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() ), 'error' );
 
 			return array();
 		}
@@ -279,7 +279,7 @@ class Protocol extends Protocol_Base {
 				$response = $service->files->get( $file_obj->getId(), array( 'alt' => 'media' ) );
 			} catch ( Exception $e ) {
 				// log event.
-				Log::get_instance()->create( __( 'Google Drive client could download a requested file during mass-import! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
+				Log::get_instance()->create( __( 'Google Drive client could not download a requested file during mass-import! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
 
 				continue;
 			}
