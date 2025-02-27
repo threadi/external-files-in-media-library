@@ -69,7 +69,7 @@ class Section {
 		 * @param string $name The name.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_section_name', $name, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_section_name', $name, $this );
 	}
 
 	/**
@@ -98,7 +98,7 @@ class Section {
 		 * @param string $title The title.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_section_title', $title, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_section_title', $title, $this );
 	}
 
 	/**
@@ -127,7 +127,7 @@ class Section {
 		 * @param Settings $setting The settings.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_section_setting', $setting, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_section_setting', $setting, $this );
 	}
 
 	/**

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object to handle a checkbox for single setting.
@@ -61,7 +62,7 @@ class Checkbox extends Field_Base {
 			echo ( $field->is_readonly() ? ' disabled="disabled"' : '' );
 			echo ( 1 === absint( get_option( $setting->get_name(), 0 ) ) ? ' checked="checked"' : '' );
 			?>
-				class="eml-field-width"
+				class="<?php echo Settings::get_instance()->get_slug(); ?>-field-width"
 				title="<?php echo esc_attr( $field->get_title() ); ?>"
 		>
 		<?php

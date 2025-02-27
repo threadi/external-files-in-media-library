@@ -132,7 +132,7 @@ class Field_Base {
 		 * @param bool $readonly The actual value.
 		 * @param Field_Base $this The field object.
 		 */
-		return apply_filters( 'eml_setting_readonly', $this->readonly, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_setting_readonly', $this->readonly, $this );
 	}
 
 	/**

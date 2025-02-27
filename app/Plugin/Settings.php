@@ -128,6 +128,8 @@ class Settings {
 		 * Configure the basic settings object.
 		 */
 		$settings_obj = Settings\Settings::get_instance();
+		$settings_obj->set_slug( 'eml' );
+		$settings_obj->set_plugin_slug( EFML_PLUGIN );
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
@@ -581,8 +583,8 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add import/export settings.
-		Settings\Import::get_instance()->add_settings( $settings_obj );
-		Settings\Export::get_instance()->add_settings( $settings_obj );
+		Settings\Import::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
+		Settings\Export::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
 
 		// initialize this settings object.
 		$settings_obj->init();

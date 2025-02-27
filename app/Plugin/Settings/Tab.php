@@ -104,7 +104,7 @@ class Tab {
 		 * @param string $name The name.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_name', $name, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_name', $name, $this );
 	}
 
 	/**
@@ -133,7 +133,7 @@ class Tab {
 		 * @param string $title The title.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_title', $title, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_title', $title, $this );
 	}
 
 	/**
@@ -162,7 +162,7 @@ class Tab {
 		 * @param array $settings The settings.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_settings', $settings, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_settings', $settings, $this );
 	}
 
 	/**
@@ -220,7 +220,7 @@ class Tab {
 		 * @param array $sections The settings.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_settings', $sections, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_settings', $sections, $this );
 	}
 
 	/**
@@ -307,7 +307,7 @@ class Tab {
 		 * @param string $url The settings.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_settings', $url, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_settings', $url, $this );
 	}
 
 	/**
@@ -336,7 +336,7 @@ class Tab {
 		 * @param string $url_target The URL target.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_settings', $url_target, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_settings', $url_target, $this );
 	}
 
 	/**
@@ -371,7 +371,7 @@ class Tab {
 		 * @param string $tab_class The tab class.
 		 * @param Tab $this The tab-object.
 		 */
-		return apply_filters( 'eml_settings_tab_settings', $tab_class, $this );
+		return apply_filters( Settings::get_instance()->get_slug() . '_settings_tab_settings', $tab_class, $this );
 	}
 
 	/**

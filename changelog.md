@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Optimized
+
+- Optimized the settings objects for future independence from this plugin
+
 ### Fixed
 
 - Fixed some typos

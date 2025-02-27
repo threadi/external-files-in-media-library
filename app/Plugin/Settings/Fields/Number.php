@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object to handle a number field for single setting.
@@ -60,7 +61,7 @@ class Number extends Field_Base {
 			<?php
 			echo ( $field->is_readonly() ? ' disabled="disabled"' : '' );
 			?>
-				class="eml-field-width"
+				class="<?php echo Settings::get_instance()->get_slug(); ?>-field-width"
 				title="<?php echo esc_attr( $field->get_title() ); ?>"
 		>
 		<?php

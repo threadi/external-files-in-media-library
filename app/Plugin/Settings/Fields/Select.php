@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
+use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object to handle a select field for single setting.
@@ -64,7 +65,7 @@ class Select extends Field_Base {
 		$value = (string) get_option( $setting->get_name(), '' );
 
 		?>
-		<select id="<?php echo esc_attr( $setting->get_name() ); ?>" name="<?php echo esc_attr( $setting->get_name() ); ?>" class="eml-field-width" title="<?php echo esc_attr( $field->get_title() ); ?>">
+		<select id="<?php echo esc_attr( $setting->get_name() ); ?>" name="<?php echo esc_attr( $setting->get_name() ); ?>" class="<?php echo Settings::get_instance()->get_slug(); ?>-field-width" title="<?php echo esc_attr( $field->get_title() ); ?>">
 			<?php
 			foreach ( $this->get_options() as $key => $label ) {
 				?>
