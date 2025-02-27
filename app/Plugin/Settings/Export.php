@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle any export of settings.
+ * File to handle export of settings.
  *
  * @package external-files-in-media-library
  */
@@ -57,25 +57,23 @@ class Export {
 	 */
 	public function init(): void {
 		// use hooks.
-		add_action( 'admin_action_eml_setting_export', array( $this, 'run' ) );
+		add_action( 'admin_action_settings_export', array( $this, 'run' ) );
 	}
 
 	/**
 	 * Add export settings.
 	 *
 	 * @param Settings $settings_obj The settings object.
+	 * @param Section  $section The section where the export should be placed.
 	 *
 	 * @return void
 	 */
-	public function add_settings( Settings $settings_obj ): void {
-		// the import/export section in advanced.
-		$advanced_tab_importexport = $settings_obj->get_tab( 'eml_advanced' )->get_section( 'settings_section_advanced_importexport' );
-
+	public function add_settings( Settings $settings_obj, Section $section ): void {
 		// create export URL.
 		$export_url = add_query_arg(
 			array(
-				'action' => 'eml_setting_export',
-				'nonce'  => wp_create_nonce( 'eml-setting-export' ),
+				'action' => 'settings_export',
+				'nonce'  => wp_create_nonce( 'settings-export' ),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -102,8 +100,8 @@ class Export {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_export_settings' );
-		$setting->set_section( $advanced_tab_importexport );
+		$setting = $settings_obj->add_setting( 'export_settings' );
+		$setting->set_section( $section );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
 		$field = new Button();
@@ -123,7 +121,7 @@ class Export {
 	 */
 	public function run(): void {
 		// check referer.
-		check_admin_referer( 'eml-setting-export', 'nonce' );
+		check_admin_referer( 'settings-export', 'nonce' );
 
 		// get the settings as array.
 		$settings = Settings::get_instance()->get_settings();
@@ -133,7 +131,7 @@ class Export {
 			// show hint.
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_type( 'error' );
-			$transient_obj->set_name( 'eml_export_error' );
+			$transient_obj->set_name( 'settings_export_error' );
 			$transient_obj->set_message( '<strong>' . __( 'Export could not run!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'No settings could be loaded.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
 
@@ -162,7 +160,7 @@ class Export {
 		}
 
 		// create filename for JSON-download-file.
-		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_External_Files_in_Media_library_Settings.json';
+		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_settings.json';
 		/**
 		 * File the filename for JSON-download of all settings.
 		 *
@@ -170,7 +168,7 @@ class Export {
 		 *
 		 * @param string $filename The generated filename.
 		 */
-		$filename = apply_filters( 'eml_settings_export_filename', $filename );
+		$filename = apply_filters( Settings::get_instance()->get_slug() . '_settings_export_filename', $filename );
 
 		// set header for response as JSON-download.
 		header( 'Content-type: application/json' );

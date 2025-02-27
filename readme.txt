@@ -1,4 +1,4 @@
-=== External files in media library ===
+=== External files in Media Library ===
 Contributors: threadi
 Tags: external files, media library, media, embed
 Requires at least: 6.2
@@ -42,7 +42,7 @@ The plugin checks for you automatically on a regular basis whether the external 
 
 == Repository and documentation ==
 
-You find some documentations [here](https://github.com/threadi/external-files-in-media-library/docs/).
+You find some documentations [here](https://github.com/threadi/external-files-in-media-library/tree/master/docs).
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 

@@ -15,6 +15,20 @@ defined( 'ABSPATH' ) || exit;
  */
 class Settings {
 	/**
+	 * The slug.
+	 *
+	 * @var string
+	 */
+	private string $slug = '';
+
+	/**
+	 * The plugin slug.
+	 *
+	 * @var string
+	 */
+	private string $plugin_slug = '';
+
+	/**
 	 * List of tabs.
 	 *
 	 * @var array
@@ -134,6 +148,46 @@ class Settings {
 	}
 
 	/**
+	 * Return the slug used for these settings.
+	 *
+	 * @return string
+	 */
+	public function get_slug(): string {
+		return $this->slug;
+	}
+
+	/**
+	 * Set settings-slug. This is e.g. used for custom filters.
+	 *
+	 * @param string $slug The settings slug.
+	 *
+	 * @return void
+	 */
+	public function set_slug( string $slug ): void {
+		$this->slug = $slug;
+	}
+
+	/**
+	 * Return the plugin slug used for these settings.
+	 *
+	 * @return string
+	 */
+	public function get_plugin_slug(): string {
+		return $this->plugin_slug;
+	}
+
+	/**
+	 * Set the plugin slug.
+	 *
+	 * @param string $plugin_slug The given plugin slug.
+	 *
+	 * @return void
+	 */
+	public function set_plugin_slug( string $plugin_slug ): void {
+		$this->plugin_slug = $plugin_slug;
+	}
+
+	/**
 	 * Return list of tabs.
 	 *
 	 * @return array
@@ -148,7 +202,7 @@ class Settings {
 		 * @param array $tabs List of tabs.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_tabs', $tabs, $this );
+		return apply_filters( $this->get_slug() . '_settings_tabs', $tabs, $this );
 	}
 
 	/**
@@ -200,7 +254,7 @@ class Settings {
 		 * @param string $title The title.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_title', $title, $this );
+		return apply_filters( $this->get_slug() . '_settings_title', $title, $this );
 	}
 
 	/**
@@ -229,7 +283,7 @@ class Settings {
 		 * @param string $menu_title The menu title.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_title', $menu_title, $this );
+		return apply_filters( $this->get_slug() . '_settings_menu_title', $menu_title, $this );
 	}
 
 	/**
@@ -258,7 +312,7 @@ class Settings {
 		 * @param string $menu_slug The menu slug.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_menu_slug', $menu_slug, $this );
+		return apply_filters( $this->get_slug() . '_settings_menu_slug', $menu_slug, $this );
 	}
 
 	/**
@@ -624,7 +678,7 @@ class Settings {
 		 * @param string $menu_icon The menu icon.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_menu_icon', $menu_icon, $this );
+		return apply_filters( $this->get_slug() . '_settings_menu_icon', $menu_icon, $this );
 	}
 
 	/**
@@ -653,7 +707,7 @@ class Settings {
 		 * @param string $parent_menu_slug The parent menu slug.
 		 * @param Settings $this The settings-object.
 		 */
-		return apply_filters( 'eml_settings_parent_menu_slug', $parent_menu_slug, $this );
+		return apply_filters( $this->get_slug() . '_settings_parent_menu_slug', $parent_menu_slug, $this );
 	}
 
 	/**

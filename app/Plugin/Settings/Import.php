@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle any import of settings.
+ * File to handle import of settings.
  *
  * @package external-files-in-media-library
  */
@@ -57,9 +57,9 @@ class Import {
 	 */
 	public function init(): void {
 		// use hooks.
-		add_action( 'admin_action_eml_setting_import', array( $this, 'import_via_request' ) );
+		add_action( 'admin_action_settings_import', array( $this, 'import_via_request' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_script' ) );
-		add_action( 'wp_ajax_eml_settings_import_file', array( $this, 'import_via_ajax' ) );
+		add_action( 'wp_ajax_settings_import_file', array( $this, 'import_via_ajax' ) );
 	}
 
 	/**
@@ -71,14 +71,14 @@ class Import {
 	 */
 	public function add_script( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if ( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_eml_settings' ), true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'post.php', 'settings_page_' . Settings::get_instance()->get_slug() . '_settings' ), true ) ) {
 			return;
 		}
 
 		// backend-JS.
 		wp_enqueue_script(
-			'eml-import-admin',
-			plugins_url( '/admin/import.js', EFML_PLUGIN ),
+			'settings-import-admin',
+			plugins_url( '/admin/import.js', Settings::get_instance()->get_plugin_slug() ),
 			array( 'jquery' ),
 			filemtime( Helper::get_plugin_dir() . '/admin/import.js' ),
 			true
@@ -86,11 +86,11 @@ class Import {
 
 		// add php-vars to our js-script.
 		wp_localize_script(
-			'eml-import-admin',
-			'efmlImportJsVars',
+			'settings-import-admin',
+			'settingsImportJsVars',
 			array(
 				'ajax_url'                           => admin_url( 'admin-ajax.php' ),
-				'settings_import_file_nonce'         => wp_create_nonce( 'eml-import-settings' ),
+				'settings_import_file_nonce'         => wp_create_nonce( 'settings-import' ),
 				'title_settings_import_file_missing' => __( 'Required file missing', 'external-files-in-media-library' ),
 				'text_settings_import_file_missing'  => __( 'Please choose a JSON-file with settings of <i>External Files in Media Library</i> to import.', 'external-files-in-media-library' ),
 				'lbl_ok'                             => __( 'OK', 'external-files-in-media-library' ),
@@ -102,13 +102,11 @@ class Import {
 	 * Add import settings.
 	 *
 	 * @param Settings $settings_obj The settings object.
+	 * @param Section  $section The section where the import should be placed.
 	 *
 	 * @return void
 	 */
-	public function add_settings( Settings $settings_obj ): void {
-		// the import/export section in advanced.
-		$advanced_tab_importexport = $settings_obj->get_tab( 'eml_advanced' )->get_section( 'settings_section_advanced_importexport' );
-
+	public function add_settings( Settings $settings_obj, Section $section ): void {
 		// create import dialog.
 		$dialog = array(
 			'title'   => __( 'Import plugin settings', 'external-files-in-media-library' ),
@@ -118,7 +116,7 @@ class Import {
 			),
 			'buttons' => array(
 				array(
-					'action'  => 'efml_import_settings_file();',
+					'action'  => 'settings_import_file();',
 					'variant' => 'primary',
 					'text'    => __( 'Import now', 'external-files-in-media-library' ),
 				),
@@ -131,8 +129,8 @@ class Import {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_import_settings' );
-		$setting->set_section( $advanced_tab_importexport );
+		$setting = $settings_obj->add_setting( 'import_settings' );
+		$setting->set_section( $section );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
 		$field = new Button();
@@ -150,7 +148,7 @@ class Import {
 	 */
 	public function import_via_ajax(): void {
 		// check nonce.
-		check_ajax_referer( 'eml-import-settings', 'nonce' );
+		check_ajax_referer( 'settings-import', 'nonce' );
 
 		// create dialog for response.
 		$dialog = array(
@@ -221,7 +219,7 @@ class Import {
 		$settings_array = json_decode( $file_content, ARRAY_A );
 
 		// bail if JSON-code does not contain one of our settings.
-		if ( ! isset( $settings_array['eml_log_mode'] ) ) {
+		if ( ! isset( $settings_array[Settings::get_instance()->get_settings()[0]->get_name()] ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a valid JSON-file with settings for this plugin.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
@@ -231,7 +229,7 @@ class Import {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 */
-		do_action( 'eml_settings_import' );
+		do_action( Settings::get_instance()->get_slug() . '_settings_import' );
 
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
