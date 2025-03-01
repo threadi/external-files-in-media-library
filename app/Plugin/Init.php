@@ -88,6 +88,7 @@ class Init {
 
 		// misc.
 		add_action( 'cli_init', array( $this, 'cli' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'add_scripts' ) );
 	}
 
 	/**
@@ -99,5 +100,30 @@ class Init {
 	 */
 	public function cli(): void {
 		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Plugin\Cli' );
+	}
+
+	/**
+	 * Add Block Editor script.
+	 *
+	 * @return void
+	 */
+	public function add_scripts(): void {
+		// get the script path.
+		$script_path = Helper::get_plugin_url() . 'blocks/build/index.js';
+
+		// get the asset path.
+		$script_asset_path = Helper::get_plugin_dir() . 'blocks/build/index.asset.php';
+
+		// get the assets.
+		$script_asset = require $script_asset_path;
+
+		// enqueue the script.
+		wp_enqueue_script(
+			'efml-script',
+			$script_path,
+			$script_asset['dependencies'],
+			$script_asset['version'],
+			true
+		);
 	}
 }

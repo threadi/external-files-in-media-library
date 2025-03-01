@@ -1,0 +1,20 @@
+{
+	"name": "@threadi/external-files-in-media-library",
+	"version": "3.1.0",
+	"description": "Changes support for YouTube-videos in video block.",
+	"author": "threadi",
+	"license": "GPL-2.0-or-later",
+	"main": "blocks/build/index.js",
+	"scripts": {
+		"format": "wp-scripts format",
+		"lint:css": "wp-scripts lint-style",
+		"lint:js": "wp-scripts lint-js",
+		"start": "wp-scripts start blocks/src/index.js --output-path=blocks/build/",
+		"build": "wp-scripts build blocks/src/index.js --output-path=blocks/build/",
+		"packages-update": "wp-scripts packages-update"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^28.2.0",
+		"npm-pack-zip": "^1.3.0"
+	}
+}
