@@ -10,6 +10,7 @@
 ### Optimized
 
 - Optimized the settings objects for future independence from this plugin
+- Usage of external embedded YouTube URLs in Block Editor is now possible
 
 ### Fixed
 
