@@ -50,7 +50,7 @@
     <!-- generate documentation -->
     <target name="generate-documentation" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/wp-documentor">
-            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_"/>
+            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php" />
         </exec>
     </target>
 
@@ -70,10 +70,14 @@
     <target name="npm-build" depends="npm-install">
         <delete file="${log.dir}/npm-build1.txt"/>
         <delete file="${log.dir}/npm-build2.txt"/>
-        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
+        <delete file="${log.dir}/npm-build3.txt"/>
+        <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
             <arg line="run build"/>
         </exec>
-        <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build2.txt">
+        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build2.txt">
+            <arg line="run build"/>
+        </exec>
+        <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build3.txt">
             <arg line="run build"/>
         </exec>
     </target>
@@ -81,10 +85,10 @@
     <!-- check WCS compatibility -->
     <target name="check-wcs" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/phpcbf">
-            <arg line="--extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml ."/>
+            <arg line="--extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/* --standard=ruleset.xml ."/>
         </exec>
         <exec dir="${src.dir}" failonerror="true" executable="vendor/bin/phpcs">
-            <arg line="--extensions=php --ignore=*/vendor/*,*/svn/* --standard=ruleset.xml ."/>
+            <arg line="--extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/* --standard=ruleset.xml ."/>
         </exec>
     </target>
 
@@ -113,6 +117,7 @@
         <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
             <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
             <zipfileset dir="${src.dir}/app" prefix="${plugin.slug}/app" />
+            <zipfileset dir="${src.dir}/blocks/build/" prefix="${plugin.slug}/blocks/build/" />
             <zipfileset dir="${src.dir}/gfx" prefix="${plugin.slug}/gfx" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
             <zipfileset dir="${src.dir}/templates" prefix="${plugin.slug}/templates" />

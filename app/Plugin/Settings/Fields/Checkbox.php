@@ -62,7 +62,7 @@ class Checkbox extends Field_Base {
 			echo ( $field->is_readonly() ? ' disabled="disabled"' : '' );
 			echo ( 1 === absint( get_option( $setting->get_name(), 0 ) ) ? ' checked="checked"' : '' );
 			?>
-				class="<?php echo Settings::get_instance()->get_slug(); ?>-field-width"
+				class="<?php echo esc_attr( Settings::get_instance()->get_slug() ); ?>-field-width"
 				title="<?php echo esc_attr( $field->get_title() ); ?>"
 		>
 		<?php
