@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for image meta-data (like caption) for external hosted images
+- Added more hooks
+
 ### Optimized
 
 - Optimized the settings objects for future independence from this plugin

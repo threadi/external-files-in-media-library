@@ -115,4 +115,37 @@ class Audio extends File_Types_Base {
 		// compare cache file date with max proxy age.
 		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_audio_proxy_max_age', 24 ) ) * 60 * 60 );
 	}
+
+	/**
+	 * Set meta-data for the file if it is hosted extern and with proxy.
+	 *
+	 * @return void
+	 */
+	public function set_metadata(): void {
+		// bail if no file is set.
+		if ( ! $this->get_file() ) {
+			return;
+		}
+
+		// get the file object.
+		$external_file_obj = $this->get_file();
+
+		// bail if file should be saved locally (then WP will handle this for us).
+		if ( $external_file_obj->is_locally_saved() ) {
+			return;
+		}
+
+		// bail if proxy is not enabled for images.
+		if ( ! $this->is_proxy_enabled() ) {
+			return;
+		}
+
+		/**
+		 * Run additional tasks to add custom meta data on external hostet files.
+		 *
+		 * @since 3.1.0 Available since 3.1.0.
+		 * @param File $external_file_obj The external files object.
+		 */
+		do_action( 'eml_video_meta_data', $external_file_obj );
+	}
 }

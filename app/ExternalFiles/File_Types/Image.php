@@ -131,6 +131,24 @@ class Image extends File_Types_Base {
 
 		// save the resulting image-data.
 		wp_update_attachment_metadata( $external_file_obj->get_id(), $image_meta );
+
+		// if caption is set in image meta, use it.
+		if ( ! empty( trim( $image_meta["image_meta"]['caption'] ) ) ) {
+			$query = array(
+				'ID' => $external_file_obj->get_id(),
+				'post_excerpt' => $image_meta["image_meta"]['caption']
+			);
+			wp_update_post( $query );
+		}
+
+		/**
+		 * Run additional tasks to add custom meta data on external hostet files.
+		 *
+		 * @since 3.1.0 Available since 3.1.0.
+		 * @param File $external_file_obj The external files object.
+		 * @param array $image_meta The image meta data.
+		 */
+		do_action( 'eml_image_meta_data', $external_file_obj, $image_meta );
 	}
 
 	/**
