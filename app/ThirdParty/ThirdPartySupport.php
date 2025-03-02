@@ -98,6 +98,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',

@@ -204,28 +204,6 @@ class Helper {
 	}
 
 	/**
-	 * Return true if the given mime_type is an image-mime-type.
-	 *
-	 * @param string $mime_type The mime-type to check.
-	 *
-	 * @return bool
-	 */
-	public static function is_image_by_mime_type( string $mime_type ): bool {
-		return str_starts_with( $mime_type, 'image/' );
-	}
-
-	/**
-	 * Return true if the given mime_type is a video-mime-type.
-	 *
-	 * @param string $mime_type The mime-type to check.
-	 *
-	 * @return bool
-	 */
-	public static function is_video_by_mime_type( string $mime_type ): bool {
-		return str_starts_with( $mime_type, 'video/' );
-	}
-
-	/**
 	 * Get possible mime-types.
 	 *
 	 * These are the mime-types this plugin supports. Not the enabled mime-types!

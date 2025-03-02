@@ -46,11 +46,6 @@ You find some documentations [here](https://github.com/threadi/external-files-in
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
-= Known Issues =
-
-* Local saved Youtube-Video could not be embedded via Elementor
-* Youtube-Preview in Block Editor not working (but in frontend it does)
-
 ---
 
 == Installation ==

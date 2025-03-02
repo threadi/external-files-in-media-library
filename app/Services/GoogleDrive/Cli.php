@@ -26,6 +26,7 @@ class Cli {
 	 * Check the Google Drive connection for each saved access token.
 	 *
 	 * @return void
+	 * @noinspection PhpUnused
 	 */
 	public function google_drive_check_connection(): void {
 		// get access tokens.
@@ -81,7 +82,7 @@ class Cli {
 			} catch ( Exception $e ) {
 				// log event.
 				/* translators: %1$s will be replaced by the username. */
-				Log::get_instance()->create( sprintf( __( 'List of files could not be loaded from Google Drive for user %1$s. Error:', 'external-files-in-media-library' ), $user->display_name ), esc_url( $this->get_url() ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', 'error' );
+				Log::get_instance()->create( sprintf(__( 'List of files could not be loaded from Google Drive for user %1$s. Error:', 'external-files-in-media-library' ), $user->display_name ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', '', 'error' );
 
 				// do not continue with this user.
 				continue;

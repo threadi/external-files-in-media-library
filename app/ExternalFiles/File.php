@@ -328,15 +328,6 @@ class File {
 	}
 
 	/**
-	 * Return whether this URL-file an image.
-	 *
-	 * @return bool
-	 */
-	public function is_video(): bool {
-		return Helper::is_video_by_mime_type( $this->get_mime_type() );
-	}
-
-	/**
 	 * Return whether this URL-file is an image.
 	 *
 	 * @return bool
