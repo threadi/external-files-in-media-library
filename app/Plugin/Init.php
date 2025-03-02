@@ -10,9 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use Elementor\Element_Base;
-use Elementor\Widget_Video;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -91,8 +88,6 @@ class Init {
 
 		// misc.
 		add_action( 'cli_init', array( $this, 'cli' ) );
-		add_action( 'enqueue_block_editor_assets', array( $this, 'add_scripts' ) );
-		add_action( 'elementor/frontend/widget/before_render', array( $this, 'add_elementor_video' ) );
 	}
 
 	/**
@@ -104,69 +99,5 @@ class Init {
 	 */
 	public function cli(): void {
 		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Plugin\Cli' );
-	}
-
-	/**
-	 * Add Block Editor script.
-	 *
-	 * @return void
-	 */
-	public function add_scripts(): void {
-		// get the script path.
-		$script_path = Helper::get_plugin_url() . 'blocks/build/index.js';
-
-		// get the asset path.
-		$script_asset_path = Helper::get_plugin_dir() . 'blocks/build/index.asset.php';
-
-		// get the assets.
-		$script_asset = require $script_asset_path;
-
-		// enqueue the script.
-		wp_enqueue_script(
-			'efml-script',
-			$script_path,
-			$script_asset['dependencies'],
-			$script_asset['version'],
-			true
-		);
-	}
-
-	public function add_elementor_video( Element_Base $element ): void {
-		// bail if this is not the video widget.
-		if( ! $element instanceof Widget_Video ) {
-			return;
-		}
-
-		// get the settings.
-		$settings = $element->get_settings();
-
-		// bail if hostet URL is not set.
-		if( empty( $settings['hosted_url'] ) ) {
-			return;
-		}
-
-		// bail if not ID is given.
-		if( empty( $settings['hosted_url']['id'] ) ) {
-			return;
-		}
-
-		// get the attachment ID.
-		$attachment_id = $settings['hosted_url']['id'];
-
-		// get the external file object.
-		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
-
-		// bail if external file obj could not be loaded.
-		if( ! $external_file_obj ) {
-			return;
-		}
-
-		// remove the local hosted marker.
-		$element->set_settings( 'video_type', 'youtube' );
-		$element->delete_setting( 'hosted_url' );
-		$element->delete_setting( '__dynamic__' );
-
-		// set the YouTube URL.
-		$element->set_settings( 'youtube_url', $external_file_obj->get_url( true ) );
 	}
 }
