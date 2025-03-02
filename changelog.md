@@ -7,6 +7,7 @@
 - Added support for image meta-data (like caption) for external hosted images
 - Added more hooks
 - Added Third Party support for Block Editor and Elementor
+- Added link to support forum on our plugin in plugin list
 
 ### Optimized
 
