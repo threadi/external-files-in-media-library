@@ -22,13 +22,13 @@ Möglich zur Auswahl sind immer folgende Mime types:
 
 # Mime Type ergänzen
 
-Um einen Mime Type in der Liste zu ergänzen, musst Du folgenden PHP-Code in deinem Projekt hinterlegen:
+Um einen Mime Type in der Liste zu ergänzen, musst Du folgenden PHP-Code in Deinem Projekt hinterlegen:
 
 ```
 add_filter( 'eml_supported_mime_types', function( $list ) {
-$list['your/mime'] = array(
+  $list['your/mime'] = array(
       'label' => 'Title of your mime',
-      'ext' => 'yourmime'
+      'ext' => 'yourmimeextension'
   );
   return $list;
  } );

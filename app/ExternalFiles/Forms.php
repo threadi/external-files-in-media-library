@@ -223,10 +223,10 @@ class Forms {
 						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
 					),
 					array(
-						'action'  => 'window.open("' . Helper::get_plugin_support_url() . '", "_blank" )',
+						'action'    => 'window.open("' . Helper::get_plugin_support_url() . '", "_blank" )',
 						'className' => 'efml-help-button',
-						'variant' => 'secondary',
-						'text'    => __( 'Need help?', 'external-files-in-media-library' ),
+						'variant'   => 'secondary',
+						'text'      => __( 'Need help?', 'external-files-in-media-library' ),
 					),
 				),
 			);
@@ -297,10 +297,10 @@ class Forms {
 					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
 				),
 				array(
-					'action'  => 'window.open("' . Helper::get_plugin_support_url() . '", "_blank" )',
+					'action'    => 'window.open("' . Helper::get_plugin_support_url() . '", "_blank" )',
 					'className' => 'efml-help-button',
-					'variant' => 'secondary',
-					'text'    => __( 'Need help?', 'external-files-in-media-library' ),
+					'variant'   => 'secondary',
+					'text'      => __( 'Need help?', 'external-files-in-media-library' ),
 				),
 			),
 		);

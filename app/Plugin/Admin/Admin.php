@@ -214,7 +214,7 @@ class Admin {
 	 */
 	public function add_row_meta_links( array $links, string $file ): array {
 		// bail if this is not our plugin.
-		if( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $file !== EFML_PLUGIN ) {
+		if ( EFML_PLUGIN !== WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $file ) {
 			return $links;
 		}
 

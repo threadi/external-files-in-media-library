@@ -219,7 +219,7 @@ class Import {
 		$settings_array = json_decode( $file_content, ARRAY_A );
 
 		// bail if JSON-code does not contain one of our settings.
-		if ( ! isset( $settings_array[Settings::get_instance()->get_settings()[0]->get_name()] ) ) {
+		if ( ! isset( $settings_array[ Settings::get_instance()->get_settings()[0]->get_name() ] ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a valid JSON-file with settings for this plugin.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}

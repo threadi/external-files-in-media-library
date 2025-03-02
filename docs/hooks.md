@@ -5,19 +5,6 @@
 
 ## Actions
 
-### `eml_settings_import`
-
-*Run additional tasks before running the import of settings.*
-
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Import.php](Plugin/Settings/Import.php), [line 229](Plugin/Settings/Import.php#L229-L234)
-
 ### `eml_before_file_list`
 
 *Run action just before we go through the list of resulting files.*
@@ -363,6 +350,61 @@ Version | Description
 
 Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 242](ExternalFiles/Protocols/Ftp.php#L242-L250)
 
+### `eml_image_meta_data`
+
+*Run additional tasks to add custom meta data on external hostet files.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+`$image_meta` | `array` | The image meta data.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.1.0` | Available since 3.1.0.
+
+Source: [app/ExternalFiles/File_Types/Image.php](ExternalFiles/File_Types/Image.php), [line 144](ExternalFiles/File_Types/Image.php#L144-L151)
+
+### `eml_video_meta_data`
+
+*Run additional tasks to add custom meta data on external hostet files.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.1.0` | Available since 3.1.0.
+
+Source: [app/ExternalFiles/File_Types/Audio.php](ExternalFiles/File_Types/Audio.php), [line 143](ExternalFiles/File_Types/Audio.php#L143-L149)
+
+### `eml_video_meta_data`
+
+*Run additional tasks to add custom meta data on external hostet files.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.1.0` | Available since 3.1.0.
+
+Source: [app/ExternalFiles/File_Types/Video.php](ExternalFiles/File_Types/Video.php), [line 145](ExternalFiles/File_Types/Video.php#L145-L151)
+
 ### `eml_import_ajax_start`
 
 *Run additional tasks just before AJAX-related import of URLs is started.*
@@ -380,7 +422,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 398](ExternalFiles/Forms.php#L398-L405)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 410](ExternalFiles/Forms.php#L410-L417)
 
 ### `eml_import_url_after`
 
@@ -399,7 +441,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 467](ExternalFiles/Forms.php#L467-L474)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 479](ExternalFiles/Forms.php#L479-L486)
 
 ### `eml_import_ajax_end`
 
@@ -417,7 +459,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 513](ExternalFiles/Forms.php#L513-L519)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 525](ExternalFiles/Forms.php#L525-L531)
 
 ### `eml_queue_before_process`
 
@@ -577,24 +619,6 @@ Version | Description
 
 Source: [app/Plugin/Tables/Queue.php](Plugin/Tables/Queue.php), [line 273](Plugin/Tables/Queue.php#L273-L279)
 
-### `eml_setting_description_attachment_pages`
-
-*Filter the description to setting to disable the attachment pages.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$description` | `string` | The description.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings.php](Plugin/Settings.php), [line 229](Plugin/Settings.php#L229-L235)
-
 ### `eml_supported_mime_types`
 
 *Filter the possible mime types this plugin could support. This is the list used for the setting in backend.*
@@ -623,7 +647,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 270](Plugin/Helper.php#L270-L289)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 248](Plugin/Helper.php#L248-L267)
 
 ### `eml_get_mime_types`
 
@@ -650,7 +674,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 311](Plugin/Helper.php#L311-L327)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 289](Plugin/Helper.php#L289-L305)
 
 ### `eml_help_tabs`
 
@@ -670,346 +694,23 @@ Version | Description
 
 Source: [app/Plugin/Admin/Help_System.php](Plugin/Admin/Help_System.php), [line 112](Plugin/Admin/Help_System.php#L112-L118)
 
-### `eml_settings_section_name`
+### `eml_plugin_row_meta`
 
-*Filter the name of a section object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$name` | `string` | The name.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Section.php](Plugin/Settings/Section.php), [line 65](Plugin/Settings/Section.php#L65-L72)
-
-### `eml_settings_section_title`
-
-*Filter the title of a section object.*
+*Filter the links in row meta of our plugin in plugin list.*
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$title` | `string` | The title.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
+`$row_meta` | `array` | List of links.
 
 **Changelog**
 
 Version | Description
 ------- | -----------
-`2.0.0` | Available since 2.0.0.
+`3.1.0` | Available since 3.1.0.
 
-Source: [app/Plugin/Settings/Section.php](Plugin/Settings/Section.php), [line 94](Plugin/Settings/Section.php#L94-L101)
-
-### `eml_settings_section_setting`
-
-*Filter the settings of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$setting` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Section.php](Plugin/Settings/Section.php), [line 123](Plugin/Settings/Section.php#L123-L130)
-
-### `eml_settings_tab_name`
-
-*Filter the name of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$name` | `string` | The name.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 100](Plugin/Settings/Tab.php#L100-L107)
-
-### `eml_settings_tab_title`
-
-*Filter the title of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$title` | `string` | The title.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 129](Plugin/Settings/Tab.php#L129-L136)
-
-### `eml_settings_tab_settings`
-
-*Filter the settings of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$settings` | `array` | The settings.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 158](Plugin/Settings/Tab.php#L158-L165)
-
-### `eml_settings_tab_settings`
-
-*Filter the sections of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$sections` | `array` | The settings.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 216](Plugin/Settings/Tab.php#L216-L223)
-
-### `eml_settings_tab_settings`
-
-*Filter the URL of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The settings.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 303](Plugin/Settings/Tab.php#L303-L310)
-
-### `eml_settings_tab_settings`
-
-*Filter the URL target of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url_target` | `string` | The URL target.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 332](Plugin/Settings/Tab.php#L332-L339)
-
-### `eml_settings_tab_settings`
-
-*Filter the class of a tabs object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$tab_class` | `string` | The tab class.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Tab` | The tab-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Tab.php](Plugin/Settings/Tab.php), [line 367](Plugin/Settings/Tab.php#L367-L374)
-
-### `eml_settings_export_filename`
-
-*File the filename for JSON-download of all settings.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$filename` | `string` | The generated filename.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Export.php](Plugin/Settings/Export.php), [line 166](Plugin/Settings/Export.php#L166-L173)
-
-### `eml_setting_readonly`
-
-*Filter the readonly setting for the actual setting.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$this->readonly` |  | 
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Field_Base` | The field object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Field_Base.php](Plugin/Settings/Field_Base.php), [line 128](Plugin/Settings/Field_Base.php#L128-L135)
-
-### `eml_settings_tabs`
-
-*Filter the list of setting tabs.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$tabs` | `array` | List of tabs.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 144](Plugin/Settings/Settings.php#L144-L151)
-
-### `eml_settings_title`
-
-*Filter the title of settings object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$title` | `string` | The title.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 196](Plugin/Settings/Settings.php#L196-L203)
-
-### `eml_settings_title`
-
-*Filter the menu title of settings object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$menu_title` | `string` | The menu title.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 225](Plugin/Settings/Settings.php#L225-L232)
-
-### `eml_settings_menu_slug`
-
-*Filter the menu slug of settings object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$menu_slug` | `string` | The menu slug.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 254](Plugin/Settings/Settings.php#L254-L261)
-
-### `eml_settings_menu_icon`
-
-*Filter the menu slug of settings object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$menu_icon` | `string` | The menu icon.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 620](Plugin/Settings/Settings.php#L620-L627)
-
-### `eml_settings_parent_menu_slug`
-
-*Filter the menu slug of settings object.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$parent_menu_slug` | `string` | The parent menu slug.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Settings\Settings` | The settings-object.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/Plugin/Settings/Settings.php](Plugin/Settings/Settings.php), [line 649](Plugin/Settings/Settings.php#L649-L656)
+Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 226](Plugin/Admin/Admin.php#L226-L232)
 
 ### `eml_schedule_our_events`
 
@@ -1691,7 +1392,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 237](ExternalFiles/Forms.php#L237-L243)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 243](ExternalFiles/Forms.php#L243-L249)
 
 ### `eml_import_add_to_queue`
 
@@ -1710,7 +1411,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 385](ExternalFiles/Forms.php#L385-L393)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 397](ExternalFiles/Forms.php#L397-L405)
 
 ### `eml_import_urls`
 
@@ -1729,7 +1430,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 412](ExternalFiles/Forms.php#L412-L419)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 424](ExternalFiles/Forms.php#L424-L431)
 
 ### `eml_import_url_before`
 
@@ -1748,7 +1449,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 445](ExternalFiles/Forms.php#L445-L452)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 457](ExternalFiles/Forms.php#L457-L464)
 
 ### `eml_import_urls_errors`
 
@@ -1766,7 +1467,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 482](ExternalFiles/Forms.php#L482-L488)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 494](ExternalFiles/Forms.php#L494-L500)
 
 ### `eml_import_fields`
 
@@ -1784,7 +1485,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 781](ExternalFiles/Forms.php#L781-L787)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 793](ExternalFiles/Forms.php#L793-L799)
 
 ### `eml_import_fields`
 
@@ -1802,7 +1503,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 796](ExternalFiles/Forms.php#L796-L803)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 808](ExternalFiles/Forms.php#L808-L815)
 
 ### `eml_file_type_compatibility_result`
 
@@ -1877,7 +1578,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 225](ExternalFiles/Proxy.php#L225-L232)
+Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 224](ExternalFiles/Proxy.php#L224-L231)
 
 ### `eml_proxy_path`
 
@@ -1895,7 +1596,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 248](ExternalFiles/Proxy.php#L248-L254)
+Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 247](ExternalFiles/Proxy.php#L247-L253)
 
 ### `eml_services_support`
 
@@ -1914,6 +1615,150 @@ Version | Description
 `3.0.0` | Available since 3.0.0.
 
 Source: [app/Services/Services.php](Services/Services.php), [line 110](Services/Services.php#L110-L116)
+
+### `eml_google_drive_client_id`
+
+*Filter the Google OAuth Client ID for the app used to connect Google Drive.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$client_id` | `string` | The client ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 426](Services/GoogleDrive.php#L426-L432)
+
+### `eml_google_drive_real_redirect_uri`
+
+*Filter the real redirect URI to connect the Google OAuth Client.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$real_redirect_uri` | `string` | The real redirect URI.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 444](Services/GoogleDrive.php#L444-L450)
+
+### `eml_google_drive_state`
+
+*Filter the token to connect the Google OAuth Client.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$state` | `string` | The token.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 467](Services/GoogleDrive.php#L467-L473)
+
+### `eml_google_drive_redirect_uri`
+
+*Filter the redirect URI to connect the Google OAuth Client.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$redirect_uri` | `string` | The redirect URI.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 487](Services/GoogleDrive.php#L487-L493)
+
+### `eml_google_drive_connector_params`
+
+*Filter the params for Google OAuth request.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$params` | `array` | The list of params.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 518](Services/GoogleDrive.php#L518-L524)
+
+### `eml_google_drive_query_params`
+
+*Filter the query to get files from Google Drive.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$query` | `array` | The list of params.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 694](Services/GoogleDrive.php#L694-L700)
+
+### `eml_google_drive_files`
+
+*Filter the list of files we got from Google Drive.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$files` | `array` | List of files.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 727](Services/GoogleDrive.php#L727-L733)
+
+### `eml_google_drive_refresh_uri`
+
+*Filter the redirect URI to connect the Google OAuth Client.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$refresh_uri` | `string` | The redirect URI.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`3.0.0` | Available since 3.0.0.
+
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 920](Services/GoogleDrive.php#L920-L926)
 
 ### `eml_youtube_api_url`
 
@@ -1949,7 +1794,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 104](ThirdParty/ThirdPartySupport.php#L104-L110)
+Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 107](ThirdParty/ThirdPartySupport.php#L107-L113)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>

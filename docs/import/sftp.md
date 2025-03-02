@@ -10,7 +10,7 @@ The SFTP/SSH directory must be accessible for import with one of the following p
 
 Access data is always required. The import of anonymous FTP directories is not supported.
 
-The hosting must provide the PHP libraries _ssh2_connect_.
+The hosting must provide the PHP library _ssh2_connect_. If you have question about this contact your hosting support.
 
 ## Note
 

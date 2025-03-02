@@ -26,9 +26,9 @@ To add a mime type to the list, you need to add the following PHP code to your p
 
 ```
 add_filter( 'eml_supported_mime_types', function( $list ) {
-$list['your/mime'] = array(
+  $list['your/mime'] = array(
       'label' => 'Title of your mime',
-      'ext' => 'yourmime'
+      'ext' => 'yourmimeextension'
   );
   return $list;
  } );

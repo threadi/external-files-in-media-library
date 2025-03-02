@@ -11,7 +11,8 @@ The FTP directory must be accessible for the import with one of the following pr
 
 Access data is always required. The import of anonymous FTP directories is not supported.
 
-The hosting must provide the PHP libraries _ftp_connect_ or _ftp_ssl_connect_.
+The hosting must provide the PHP libraries _ftp_connect_ or _ftp_ssl_connect_. If you have question about this contact
+your hosting support.
 
 ## Note
 
