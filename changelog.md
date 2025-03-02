@@ -18,6 +18,7 @@
 
 ### Fixed
 
+- Fixed refreshing of permalinks (which as been run on every request until now)
 - Fixed some typos
 
 ## [3.0.0] - 15.02.2025

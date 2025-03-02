@@ -85,11 +85,6 @@ class Proxy {
 		 * Run proxy to show called file.
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
-
-		/**
-		 * Refresh rewrite-cache if requested.
-		 */
-		add_action( 'wp', array( $this, 'do_refresh' ) );
 	}
 
 	/**
@@ -211,7 +206,11 @@ class Proxy {
 	 * @noinspection PhpUnused
 	 */
 	public static function do_refresh(): void {
+		// flush the permalinks.
 		flush_rewrite_rules();
+
+		// delete marker.
+		Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->delete();
 	}
 
 	/**
