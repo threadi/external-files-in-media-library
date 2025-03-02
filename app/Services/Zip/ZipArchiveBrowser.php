@@ -84,7 +84,7 @@ class ZipArchiveBrowser {
 			// add it to the list.
 			$obj->add_error( $error );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
