@@ -1,20 +1,27 @@
 # Changelog
 
-## [Unreleased]
+## [3.1.0] - 02.03.2025
 
 ### Added
 
 - Added support for image meta-data (like caption) for external hosted images
 - Added more hooks
+- Added Third Party support for Block Editor and Elementor
+- Added link to support forum on our plugin in plugin list
+- Added link to support forum in add URLs dialog
 
 ### Optimized
 
 - Optimized the settings objects for future independence from this plugin
 - Usage of external embedded YouTube URLs in Block Editor is now possible
 - Choose your YouTube videos from local media library in Elementors Video widget
+- Remove some unused codes
 
 ### Fixed
 
+- Fixed refreshing of permalinks (which as been run on every request until now)
+- Fixed potential error on WP CLI function to add Google Drive connection
+- Fixed missing support for plugin PreventDirectAccess
 - Fixed some typos
 
 ## [3.0.0] - 15.02.2025

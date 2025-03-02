@@ -18,16 +18,20 @@ https://example-instrustry.com/file-trust.pdf`
 
 Then click on the button to add the files. Wait a moment until the response is displayed.
 
-# The URL requires access data?
+# The URL requires access credentials?
 
 Below the input field for the URLs, you can enter access data if the URLs require it. The login is supported for:
 
-* AuthBasic
+* AuthBasic via HTTP/HTTPS
 * FTP
 * SFTP
 * SSH
 
-_Not_ supported:
+There is also support for individual services that require their own authentication:
 
-* Logins to Google accounts such as Google Drive
-* Logins to web services
+* Google Drive
+
+And also for services without authorization:
+
+* Local directory
+* Content of ZIP-files

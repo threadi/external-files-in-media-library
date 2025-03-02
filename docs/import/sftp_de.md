@@ -10,7 +10,7 @@ Das SFTP/SSH-Verzeichnis muss für den Import mit einem der folgenden Protokolle
 
 Es sind immer Zugangsdaten erforderlich. Der Import von anonymen FTP-Verzeichnissen wird nicht unterstützt.
 
-Das Hosting muss die PHP-Bibliotheken _ssh2_connect_ bereitstellen.
+Das Hosting muss die PHP-Bibliothek _ssh2_connect_ bereitstellen. Bei Fragen dazu wende dich an den Support deines Hosters.
 
 ## Hinweis
 

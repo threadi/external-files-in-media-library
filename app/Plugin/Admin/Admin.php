@@ -90,6 +90,7 @@ class Admin {
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
+		add_filter( 'plugin_row_meta', array( $this, 'add_row_meta_links' ), 10, 2 );
 	}
 
 	/**
@@ -201,6 +202,37 @@ class Admin {
 
 		// return resulting list of links.
 		return $links;
+	}
+
+	/**
+	 * Add links in row meta.
+	 *
+	 * @param array  $links List of links.
+	 * @param string $file The requested plugin file name.
+	 *
+	 * @return array
+	 */
+	public function add_row_meta_links( array $links, string $file ): array {
+		// bail if this is not our plugin.
+		if ( EFML_PLUGIN !== WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $file ) {
+			return $links;
+		}
+
+		// add our custom links.
+		$row_meta = array(
+			'support' => '<a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank" title="' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '">' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '</a>',
+		);
+
+		/**
+		 * Filter the links in row meta of our plugin in plugin list.
+		 *
+		 * @since 3.1.0 Available since 3.1.0.
+		 * @param array $row_meta List of links.
+		 */
+		$row_meta = apply_filters( 'eml_plugin_row_meta', $row_meta );
+
+		// return the resulting list of links.
+		return array_merge( $links, $row_meta );
 	}
 
 	/**

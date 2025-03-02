@@ -133,10 +133,10 @@ class Image extends File_Types_Base {
 		wp_update_attachment_metadata( $external_file_obj->get_id(), $image_meta );
 
 		// if caption is set in image meta, use it.
-		if ( ! empty( trim( $image_meta["image_meta"]['caption'] ) ) ) {
+		if ( ! empty( trim( $image_meta['image_meta']['caption'] ) ) ) {
 			$query = array(
-				'ID' => $external_file_obj->get_id(),
-				'post_excerpt' => $image_meta["image_meta"]['caption']
+				'ID'           => $external_file_obj->get_id(),
+				'post_excerpt' => $image_meta['image_meta']['caption'],
 			);
 			wp_update_post( $query );
 		}

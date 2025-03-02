@@ -92,10 +92,13 @@ class ThirdPartySupport {
 	 */
 	private function get_third_party_support(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\ThirdParty\BlockEditor',
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
+			'ExternalFilesInMediaLibrary\ThirdParty\Elementor',
 			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',

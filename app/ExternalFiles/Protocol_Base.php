@@ -23,7 +23,7 @@ class Protocol_Base {
 	 *
 	 * @var string
 	 */
-	private string $url = '';
+	private string $url;
 
 	/**
 	 * List of supported tcp protocols with their ports.

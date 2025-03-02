@@ -706,7 +706,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			// log event.
 			Log::get_instance()->create( __( 'List of files could not be loaded from Google Drive. Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', '', 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 

@@ -88,7 +88,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Given URL does not contain a file ID from Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -96,7 +96,7 @@ class Protocol extends Protocol_Base {
 		if ( $this->check_for_duplicate( $this->get_url() ) ) {
 			Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -108,7 +108,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Access token missing to connect to Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -121,7 +121,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Google Drive client could not be initiated!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -218,7 +218,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Google Drive client could not be initiated!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -239,7 +239,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'List of files could not be loaded from Google Drive. Error:', 'external-files-in-media-library' ), esc_url( $this->get_url() ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', 'error' );
 
-			// return an empty list.
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
@@ -270,7 +270,7 @@ class Protocol extends Protocol_Base {
 			if ( $this->check_for_duplicate( $this->get_url() . $file_obj->getId() ) ) {
 				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
 
-				// return an empty list.
+				// return an empty list as we could not analyse the file.
 				return array();
 			}
 

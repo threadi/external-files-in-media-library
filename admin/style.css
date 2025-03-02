@@ -292,3 +292,7 @@ body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is
 body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons-editor-help):not(.dashicons-admin-generic) {
 	margin-left: 1em;
 }
+
+body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog button.efml-help-button {
+	float: right;
+}

@@ -18,16 +18,20 @@ https://example-instrustry.com/file-trust.pdf`
 
 Klicke anschließend auf den Button zum Hinzufügen der Dateien. Warte einen Moment bis die Rückmeldung angezeigt wird.
 
-# Die URL erfordern Zugangsdaten?
+# Die URL erfordert Zugangsdaten?
 
 Unterhalb des Eingabefeldes für die URLs kannst Du Zugangsdaten eintragen, wenn die URLs diese erfordern. Unterstützt wird das Login für:
 
-* AuthBasic
+* AuthBasic via HTTP/HTTPS
 * FTP
 * SFTP
 * SSH
 
-_Nicht_ unterstützt werden:
+Zusätzlich gibt es auch Unterstützung für einzelne Dienste, die eine eigene Authentifizierung erfordern:
 
-* Anmeldungen an Google-Konten wie Google Drive
-* Anmeldungen an Web-Diensten
+* Google Drive
+
+Und auch für Dienste ohne Authentifizierung:
+
+* Local directory
+* Content of ZIP-files
