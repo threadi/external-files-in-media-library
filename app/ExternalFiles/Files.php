@@ -209,7 +209,7 @@ class Files {
 	public function get_files(): array {
 		$query  = array(
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				array(
 					'key'     => EFML_POST_META_URL,
@@ -637,7 +637,7 @@ class Files {
 	public function get_imported_external_files(): array {
 		$query  = array(
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				'relation' => 'AND',
 				array(
@@ -696,7 +696,7 @@ class Files {
 		// query for the post with the given URL.
 		$query  = array(
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				array(
 					'key'     => EFML_POST_META_URL,
@@ -743,7 +743,7 @@ class Files {
 		$query  = array(
 			'title'          => $title,
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				array(
 					'key'     => EFML_POST_META_URL,
@@ -1375,7 +1375,7 @@ class Files {
 		// get all imported external files attachments.
 		$query  = array(
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				array(
 					'key'   => EFML_POST_IMPORT_MARKER,
