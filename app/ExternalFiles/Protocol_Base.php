@@ -240,7 +240,7 @@ class Protocol_Base {
 		// query for file with same URL.
 		$query   = array(
 			'post_type'      => 'attachment',
-			'post_status'    => 'inherit',
+			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
 				array(
 					'key'     => EFML_POST_META_URL,

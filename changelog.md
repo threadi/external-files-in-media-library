@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Added support for trashed media files
+
 ## [3.1.0] - 02.03.2025
 
 ### Added
