@@ -2,7 +2,7 @@
 Contributors: threadi
 Tags: external files, media library, media, embed
 Requires at least: 6.2
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 8.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -98,18 +98,12 @@ According to Google guidelines, an app that is used to connect to the Google Dri
 
 = @@VersionNumber@@ =
 
-- Added support for image meta-data (like caption) for external hosted images
-- Added more hooks
-- Added Third Party support for Block Editor and Elementor
-- Added link to support forum on our plugin in plugin list
-- Added link to support forum in add URLs dialog
-- Optimized the settings objects for future independence from this plugin
-- Usage of external embedded YouTube URLs in Block Editor is now possible
-- Choose your YouTube videos from local media library in Elementors Video widget
-- Remove some unused codes
-- Fixed refreshing of permalinks (which as been run on every request until now)
-- Fixed potential error on WP CLI function to add Google Drive connection
-- Fixed missing support for plugin PreventDirectAccess
-- Fixed some typos
+- Added support for trashed media files
+- Optimized check if a mime type is allowed
+- Extended hook documentation
+- Updated compatibility with WordPress 6.8
+- Small style optimizations in directory listings
+- Some text updates
+- Removed not necessary check if GoogleDrive is usable in hosting
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

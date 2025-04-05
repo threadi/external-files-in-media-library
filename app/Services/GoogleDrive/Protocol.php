@@ -25,12 +25,6 @@ class Protocol extends Protocol_Base {
 	 * @return bool
 	 */
 	public function is_available(): bool {
-		// bail if this is not a Google Drive URL.
-		if ( ! str_starts_with( $this->get_url(), GoogleDrive::get_instance()->get_url_mark() ) ) {
-			return false;
-		}
-
-		// return true to use this protocol.
 		return true;
 	}
 
@@ -205,7 +199,7 @@ class Protocol extends Protocol_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Access token missing to connect to Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
-			// return an empty list.
+			// return an empty list and to nothing more.
 			return array();
 		}
 

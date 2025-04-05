@@ -215,25 +215,20 @@ class File {
 	}
 
 	/**
-	 * Get the availability of this file.
-	 *
-	 * This also checks if the files mime-type is allowed.
+	 * Return whether this file is available.
 	 *
 	 * @return bool
 	 */
-	public function get_availability(): bool {
+	public function is_available(): bool {
 		// get value from DB.
 		if ( empty( $this->availability ) ) {
 			$this->availability = get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
 		}
 
-		// if mime-type of file is not allowed, set availability to false.
-		if ( ! in_array( $this->get_mime_type(), Helper::get_allowed_mime_types(), true ) ) {
-			$this->availability = false;
-		}
-
 		/**
 		 * Filter and return the file availability.
+		 *
+		 * @since 1.0.0 Available since 1.0.0.
 		 *
 		 * @param bool $availability The given availability.
 		 * @param File $this The file object.
@@ -254,6 +249,15 @@ class File {
 
 		// set in object.
 		$this->availability = $availability;
+	}
+
+	/**
+	 * Return whether the mime type of this file is allowed (true) or not (false).
+	 *
+	 * @return bool
+	 */
+	public function is_mime_type_allowed(): bool {
+		return in_array( $this->get_mime_type(), Helper::get_allowed_mime_types(), true );
 	}
 
 	/**
