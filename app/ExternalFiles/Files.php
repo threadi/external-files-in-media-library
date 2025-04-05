@@ -137,8 +137,8 @@ class Files {
 			return $url;
 		}
 
-		// return the original URL if this URL-file is not valid or not available.
-		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
+		// return the original URL if this URL-file is not valid or not available or is using a not allowed mime type.
+		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
 			return $url;
 		}
 
@@ -898,7 +898,7 @@ class Files {
 		<ul class="misc-pub-external-file">
 		<li>
 			<?php
-			if ( $external_file_obj->get_availability() ) {
+			if ( $external_file_obj->is_available() ) {
 				?>
 				<span id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></span>
 				<?php
@@ -1026,7 +1026,7 @@ class Files {
 		$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
 
 		// return result depending on availability-value.
-		if ( $external_file_obj->get_availability() ) {
+		if ( $external_file_obj->is_available() ) {
 			$result = array(
 				'state'   => 'success',
 				'message' => __( 'File-URL is available.', 'external-files-in-media-library' ),
@@ -1184,15 +1184,32 @@ class Files {
 			return $actions;
 		}
 
-		// if file is not available, show hint as action.
-		if ( false === $external_file_obj->get_availability() ) {
+		// if file is not available, show hint.
+		if ( false === $external_file_obj->is_available() ) {
 			// remove actions if file is not available.
-			unset( $actions['edit'] );
-			unset( $actions['copy'] );
-			unset( $actions['download'] );
+			if ( ! empty( $actions['edit'] ) ) {
+				unset( $actions['edit'] ); }
+			if ( ! empty( $actions['copy'] ) ) {
+				unset( $actions['copy'] ); }
+			if ( ! empty( $actions['download'] ) ) {
+				unset( $actions['download'] ); }
 
 			// add custom hint.
-			$actions['eml-hint'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-Type not allowed', 'external-files-in-media-library' ) . '</a>';
+			$actions['eml-hint-availability'] = __( 'URL-File is NOT available', 'external-files-in-media-library' );
+		}
+
+		// if file is using a not allowed mime type, show hint as action.
+		if ( false === $external_file_obj->is_mime_type_allowed() ) {
+			// remove actions if file mime type is not allowed.
+			if ( ! empty( $actions['edit'] ) ) {
+				unset( $actions['edit'] ); }
+			if ( ! empty( $actions['copy'] ) ) {
+				unset( $actions['copy'] ); }
+			if ( ! empty( $actions['download'] ) ) {
+				unset( $actions['download'] ); }
+
+			// add custom hint.
+			$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
 		}
 
 		// return resulting list of actions.
@@ -1216,8 +1233,8 @@ class Files {
 			return $file;
 		}
 
-		// return nothing to prevent output as file is not valid.
-		if ( false === $external_file_obj->get_availability() ) {
+		// return nothing to prevent output as file is not available or is using a not allowed mime type.
+		if ( false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
 			return '';
 		}
 

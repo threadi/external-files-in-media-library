@@ -220,7 +220,7 @@ class Admin {
 
 		// add our custom links.
 		$row_meta = array(
-			'support' => '<a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank" title="' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '">' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '</a>',
+			'support' => '<a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank" title="' . esc_attr__( 'Support Forum', 'external-files-in-media-library' ) . '">' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '</a>',
 		);
 
 		/**

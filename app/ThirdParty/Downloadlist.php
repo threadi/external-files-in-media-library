@@ -85,8 +85,8 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 			return $rel_attribute;
 		}
 
-		// return the original URL if this URL-file is not valid or not available.
-		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->get_availability() ) {
+		// return the original URL if this URL-file is not valid or not available or a not allowed mime type.
+		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
 			return $rel_attribute;
 		}
 

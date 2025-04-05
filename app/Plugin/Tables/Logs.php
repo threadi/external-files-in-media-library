@@ -277,7 +277,7 @@ class Logs extends WP_List_Table {
 			$external_file_obj = Files::get_instance()->get_file_by_url( $item['url'] );
 			if ( $external_file_obj instanceof File ) {
 				// link to the attachment edit page.
-				$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( get_edit_post_link( $external_file_obj->get_id() ) ) . '" title="' . esc_attr__( 'Edit entry', 'external-files-in-media-library' ) . '"></a>';
+				$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( get_edit_post_link( $external_file_obj->get_id() ) ) . '" title="' . esc_attr__( 'Edit this file', 'external-files-in-media-library' ) . '"></a>';
 			}
 		}
 

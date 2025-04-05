@@ -131,7 +131,7 @@ class Http extends Protocol_Base {
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
 			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 				/* translators: %1$s will be replaced by its Mime-Type */
-				Log::get_instance()->create( sprintf( __( 'Given URL response with the not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0 );
+				Log::get_instance()->create( sprintf( __( 'Given URL response with the disallowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0 );
 				return false;
 			}
 		}
@@ -149,7 +149,7 @@ class Http extends Protocol_Base {
 		 */
 		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
 			// file is available.
-			Log::get_instance()->create( __( 'Given URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2 );
+			Log::get_instance()->create( __( 'The specified URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2 );
 
 			// return true as file is available.
 			return true;

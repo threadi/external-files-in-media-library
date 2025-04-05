@@ -214,7 +214,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li {
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:not(.connect) {
-	line-height: 1;
+	line-height: 1.4;
 	text-decoration: none;
 }
 

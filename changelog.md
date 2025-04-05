@@ -1,10 +1,22 @@
 # Changelog
 
-## [Unreleased]
+## [3.1.1]
 
 ### Added
 
 - Added support for trashed media files
+
+### Optimized
+
+- Optimized check if a mime type is allowed
+- Extended hook documentation
+- Updated compatibility with WordPress 6.8
+- Small style optimizations in directory listings
+- Some text updates
+
+### Removed
+
+- Removed not necessary check if GoogleDrive is usable in hosting
 
 ## [3.1.0] - 02.03.2025
 
