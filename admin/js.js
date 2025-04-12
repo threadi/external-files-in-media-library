@@ -401,21 +401,21 @@ function efml_reset_proxy() {
 }
 
 /**
- * Import single URL.
+ * Start import of single URL.
  *
- * @param urls The URLs to import.
+ * @param url The URLs to import.
  * @param login The login to use for import.
  * @param password The password to use for import.
  * @param additional_fields Additional fields added by extensions.
  * @param term The directory archive term which could be used.
  */
-function efml_import_url( urls, login, password, additional_fields, term ) {
+function efml_import_url( url, login, password, additional_fields, term ) {
   // send request.
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
     type: 'post',
     data: {
-      urls: urls,
+      urls: url,
       login: login,
       password: password,
       additional_fields: additional_fields,
@@ -446,16 +446,4 @@ function efml_import_url( urls, login, password, additional_fields, term ) {
       setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
     }
   });
-}
-
-/**
- * Import single local file.
- *
- * @param file The file to import.
- * @param login The login to use for import.
- * @param password The password to use for import.
- * @param term The directory archive term which could be used.
- */
-function efml_import_file( file, login, password, term ) {
-  efml_import_url( file, login, password, [], term );
 }

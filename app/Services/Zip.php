@@ -158,7 +158,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( "file://" + url.replace("file://", "") + file.file, login, password );',
+				'action' => 'efml_import_url( "file://" + url.replace("file://", "") + file.file, login, password );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);

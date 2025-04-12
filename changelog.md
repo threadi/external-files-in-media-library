@@ -1,4 +1,15 @@
-# Changelog
+**# Changelog
+
+## [Unreleased]
+
+### Added
+
+- New option for import local files from chosen directory via queue (for very large directories)
+
+### Changed
+
+- Optimized styling of list of directory services
+- Optimized handling of import through directory services
 
 ## [3.1.1]
 
@@ -6,7 +17,7 @@
 
 - Added support for trashed media files
 
-### Optimized
+### Changed
 
 - Optimized check if a mime type is allowed
 - Extended hook documentation
@@ -28,7 +39,7 @@
 - Added link to support forum on our plugin in plugin list
 - Added link to support forum in add URLs dialog
 
-### Optimized
+### Changed
 
 - Optimized the settings objects for future independence from this plugin
 - Usage of external embedded YouTube URLs in Block Editor is now possible
@@ -92,7 +103,7 @@
 
 ## [2.0.3] - 2024-12-15
 
-### Optimized
+### Changed
 
 - Internal Test-release (not published on wordpress.org)
 
