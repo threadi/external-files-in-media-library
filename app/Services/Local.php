@@ -116,7 +116,7 @@ class Local implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( "file://" + file.file);',
+				'action' => 'efml_import_url( "file://" + file.file);',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
@@ -130,8 +130,12 @@ class Local implements Service {
 	public function get_global_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( "file://" + actualDirectoryPath + "/" );',
-				'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
+				'action' => 'efml_import_url( "file://" + actualDirectoryPath + "/" );',
+				'label'  => __( 'Import active directory now', 'external-files-in-media-library' ),
+			),
+			array(
+				'action' => 'let config = { "add_to_queue": 1 };efml_import_url( "file://" + actualDirectoryPath + "/", "", "", config );',
+				'label'  => __( 'Import active directory via queue', 'external-files-in-media-library' ),
 			),
 		);
 	}

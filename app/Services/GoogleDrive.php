@@ -808,7 +808,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_file( "' . $this->get_url_mark() . '" + file.file, login, password, term );',
+				'action' => 'efml_import_url( "' . $this->get_url_mark() . '" + file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
