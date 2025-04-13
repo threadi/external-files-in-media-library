@@ -73,6 +73,7 @@ class Directory_Listing {
 	public function init(): void {
 		// add the page in backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
+		add_action( 'init', array( $this, 'register_directory_listing' ) );
 
 		// initialize the serverside tasks object for directory listing.
 		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
@@ -84,7 +85,6 @@ class Directory_Listing {
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
 		$directory_listing_obj->set_page_hook( 'media_page_' . $this->get_menu_slug() );
 		$directory_listing_obj->set_menu_slug( $this->get_menu_slug() );
-		$directory_listing_obj->set_translations( $this->get_translations() );
 		$directory_listing_obj->init();
 	}
 
@@ -102,6 +102,18 @@ class Directory_Listing {
 			$this->get_menu_slug(),
 			array( $this, 'render_view_directory_page' )
 		);
+	}
+
+	/**
+	 * Register directory listing as object.
+	 *
+	 * @return void
+	 */
+	public function register_directory_listing(): void {
+		// initialize the serverside tasks object for directory listing.
+		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
+		$directory_listing_obj = \easyDirectoryListingForWordPress\Init::get_instance();
+		$directory_listing_obj->set_translations( $this->get_translations() );
 	}
 
 	/**

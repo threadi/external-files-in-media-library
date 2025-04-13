@@ -166,7 +166,7 @@ class Admin {
 		$transients_obj = Transients::get_instance();
 
 		// bail if PHP >= 8.1 is used.
-		if ( version_compare( PHP_VERSION, '8.1', '>' ) ) {
+		if ( PHP_VERSION_ID > 80100 ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
 		}

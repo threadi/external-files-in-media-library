@@ -77,7 +77,15 @@ class Services {
 	public function init(): void {
 		// use hook.
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
+		add_action( 'init', array( $this, 'init_services' ) );
+	}
 
+	/**
+	 * Initialize all services.
+	 *
+	 * @return void
+	 */
+	public function init_services(): void {
 		// initiate each supported service.
 		foreach ( $this->get_services() as $class_name ) {
 			// bail if class does not exist.
@@ -87,6 +95,13 @@ class Services {
 
 			// initiate object.
 			$obj = call_user_func( $class_name . '::get_instance' );
+
+			// bail if object is not of type Service.
+			if( ! $obj instanceof Service ) {
+				continue;
+			}
+
+			// initialize this object.
 			$obj->init();
 		}
 	}

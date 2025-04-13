@@ -313,7 +313,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Given URL is not a FTP-path! Should be one if sftp:// or ftps://.', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Given URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
