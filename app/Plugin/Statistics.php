@@ -281,7 +281,7 @@ class Statistics {
 			}
 
 			++$file_count;
-			$file_size = $file_size + $file->get_filesize();
+			$file_size += $file->get_filesize();
 		}
 
 		// save the new values.

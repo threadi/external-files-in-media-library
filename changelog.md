@@ -1,4 +1,4 @@
-**# Changelog
+# Changelog
 
 ## [Unreleased]
 
@@ -10,6 +10,12 @@
 
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
+- Code optimizations for better speed
+
+### Fixed
+
+- Fixed to early loading of translations
+- Fixed typos
 
 ## [3.1.1]
 
@@ -105,7 +111,7 @@
 
 ### Changed
 
-- Internal Test-release (not published on wordpress.org)
+- Internal Test-release (not published on wp.org)
 
 ## [2.0.2] - 2024-11-23
 

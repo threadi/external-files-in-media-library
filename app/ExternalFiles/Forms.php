@@ -195,7 +195,7 @@ class Forms {
 			return;
 		}
 
-		// bail if get_current_screen() is not available (like for Divi).
+		// bail if "get_current_screen()" is not available (like for Divi).
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return;
 		}

@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use Elementor\Element_Base;
 use Elementor\Widget_Video;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle support for this plugin.

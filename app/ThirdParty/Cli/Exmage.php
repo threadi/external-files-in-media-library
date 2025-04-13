@@ -20,6 +20,7 @@ class Exmage {
 	 * Migrate files from Exmage to our plugin.
 	 *
 	 * @return void
+	 * @noinspection PhpUnused
 	 */
 	public function migrate_exmage(): void {
 		\ExternalFilesInMediaLibrary\ThirdParty\Exmage::get_instance()->migrate();

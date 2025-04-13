@@ -180,11 +180,7 @@ class Vimeo implements Service {
 		?>
 		</figure>
 		<?php
-		$content = ob_get_contents();
-		ob_end_clean();
-
-		// return resulting output.
-		return $content;
+		return ob_get_clean();
 	}
 
 	/**
@@ -272,10 +268,6 @@ class Vimeo implements Service {
 		// get the output of the template.
 		ob_start();
 		require_once Templates::get_instance()->get_template( 'vimeo.php' );
-		$video_html = ob_get_contents();
-		ob_end_clean();
-
-		// return the HTML-code to output a Vimeo Video.
-		return $video_html;
+		return ob_get_clean();
 	}
 }
