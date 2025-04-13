@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Role;
 use WP_User_Query;
 
 /**
@@ -82,6 +83,11 @@ class Helper {
 		foreach ( wp_roles()->roles as $slug => $role ) {
 			// get the role-object.
 			$role_obj = get_role( $slug );
+
+			// bail if role object could not be loaded.
+			if( ! $role_obj instanceof WP_Role ) {
+				continue;
+			}
 
 			// check if given role is in list of on-install supported roles.
 			if ( in_array( $slug, $user_roles, true ) ) {

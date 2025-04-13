@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Services\GoogleDrive;
 use Google\Service\Exception;
 use WP_User;
 use function ExtendBuilder\colibri_blog_posts_normal_item;

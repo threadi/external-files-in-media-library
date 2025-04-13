@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
 use Google\Service\Exception;
+use JsonException;
 
 /**
  * Object to handle support for this platform.
@@ -567,6 +568,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @param string $template The requested template.
 	 *
 	 * @return string
+	 * @throws JsonException
 	 */
 	public function check_for_oauth_return_url( string $template ): string {
 		// bail if slug is not used.
@@ -587,7 +589,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		if ( ! $access_token_string ) {
 			return Helper::get_404_template();
 		}
-		$access_token = json_decode( $access_token_string, ARRAY_A );
+		$access_token = json_decode( $access_token_string, ARRAY_A, 512, JSON_THROW_ON_ERROR );
 
 		// bail if access token is not an array.
 		if ( ! is_array( $access_token ) ) {
@@ -932,6 +934,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @param \Google\Client $client The Google client object.
 	 *
 	 * @return array
+	 * @throws JsonException
 	 */
 	public function get_refreshed_token( \Google\Client $client ): array {
 		// create the URL.
@@ -970,7 +973,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			}
 
 			// decode the response.
-			$access_token = json_decode( $body, ARRAY_A );
+			$access_token = json_decode( $body, ARRAY_A, 512, JSON_THROW_ON_ERROR );
 
 			// bail if access token is empty.
 			if ( empty( $access_token ) ) {

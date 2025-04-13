@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
+use JsonException;
 use WP_Error;
 
 /**
@@ -309,11 +310,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		?>
 		</figure>
 		<?php
-		$content = ob_get_contents();
-		ob_end_clean();
-
-		// return resulting output.
-		return $content;
+		return ob_get_clean();
 	}
 
 	/**
@@ -377,11 +374,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		// get the output of the template.
 		ob_start();
 		require_once Templates::get_instance()->get_template( 'youtube.php' );
-		$video_html = ob_get_contents();
-		ob_end_clean();
-
-		// return the HTML-code to output a YouTube Video.
-		return $video_html;
+		return ob_get_clean();
 	}
 
 	/**
@@ -390,6 +383,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 * @param string $directory The requested directory.
 	 *
 	 * @return array
+	 * @throws JsonException
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// set API key.
@@ -415,7 +409,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// decode the results to get an array.
-		$video_list = json_decode( $video_list, ARRAY_A );
+		$video_list = json_decode( $video_list, ARRAY_A, 512, JSON_THROW_ON_ERROR );
 
 		// bail if no pageInfo returned.
 		if ( empty( $video_list['pageInfo'] ) ) {
@@ -595,10 +589,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 	/**
 	 * Import videos from YouTube channel via import object.
 	 *
-	 * @param array         $files The list of files to import.
+	 * @param array         $files      The list of files to import.
 	 * @param Protocol_Base $import_obj The import object.
 	 *
 	 * @return array
+	 * @throws JsonException
 	 */
 	public function import_videos_from_channel_by_import_obj( array $files, Protocol_Base $import_obj ): array {
 		// bail if import object is not HTTP.
@@ -645,7 +640,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// decode the results to get an array.
-		$video_list = json_decode( $video_list, ARRAY_A );
+		$video_list = json_decode( $video_list, ARRAY_A, 512, JSON_THROW_ON_ERROR );
 
 		// bail if no pageInfo returned.
 		if ( empty( $video_list['pageInfo'] ) ) {

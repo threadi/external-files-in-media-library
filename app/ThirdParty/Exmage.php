@@ -136,7 +136,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	 * @return array
 	 */
 	public function get_files(): array {
-		// get all exmage files.
+		// get all Exmage files.
 		$query   = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
@@ -150,6 +150,11 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			'fields'         => 'ids',
 		);
 		$results = new WP_Query( $query );
+
+		// bail on no results.
+		if( 0 === $results->post_count ) {
+			return array();
+		}
 
 		// return resulting list.
 		return $results->get_posts();

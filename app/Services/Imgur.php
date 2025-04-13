@@ -159,7 +159,7 @@ class Imgur implements Service {
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'Given Imgur-URL could not be used as external embed image in websites.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
+		Log::get_instance()->create( __( 'Given Imgur-URL could not be used as external embed image in websites.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
 
 		// return result to prevent any further import.
 		return true;

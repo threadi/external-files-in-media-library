@@ -198,7 +198,6 @@ class Transients {
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function dismiss_transient_via_ajax(): void {
 		// check nonce.
@@ -221,7 +220,7 @@ class Transients {
 		// remove transient.
 		self::get_instance()->get_transient_by_name( $option_name )->delete();
 
-		// return nothing.
-		wp_die();
+		// return ok-message.
+		wp_send_json_success();
 	}
 }
