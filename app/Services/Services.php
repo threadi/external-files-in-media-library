@@ -97,7 +97,7 @@ class Services {
 			$obj = call_user_func( $class_name . '::get_instance' );
 
 			// bail if object is not of type Service.
-			if( ! $obj instanceof Service ) {
+			if ( ! $obj instanceof Service ) {
 				continue;
 			}
 

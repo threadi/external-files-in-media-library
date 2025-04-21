@@ -62,7 +62,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	 * Set the rel-attribute for external files.
 	 *
 	 * @param string $rel_attribute The rel-value.
-	 * @param array  $file The file-attributes.
+	 * @param array<string,string>  $file The file-attributes.
 	 *
 	 * @return string
 	 */
@@ -78,7 +78,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// check if this is an external file.
-		$external_file_obj = Files::get_instance()->get_file( $file['id'] );
+		$external_file_obj = Files::get_instance()->get_file( (int) $file['id'] );
 
 		// quick return the given $url if file is not a URL-file.
 		if ( false === $external_file_obj ) {

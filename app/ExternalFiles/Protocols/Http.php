@@ -611,7 +611,7 @@ class Http extends Protocol_Base {
 		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
 		// bail if object could not be loaded.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj instanceof File ) {
 			return false;
 		}
 

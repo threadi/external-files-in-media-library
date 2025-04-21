@@ -204,7 +204,7 @@ class Files {
 	/**
 	 * Get all external files in media library as external_file-object-array.
 	 *
-	 * @return array
+	 * @return array<File>
 	 */
 	public function get_files(): array {
 		$query  = array(

@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
+use WP_User;
 
 /**
  * Object which handles the settings of this plugin.
@@ -364,6 +365,12 @@ class Settings {
 		$first_administrator = 0;
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'eml_settings' === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			foreach ( get_users() as $user ) {
+				// bail if user is not WP_User.
+				if( ! $user instanceof WP_User ) {
+					continue;
+				}
+
+				// add to the list.
 				$users[ $user->ID ] = $user->display_name;
 			}
 			$first_administrator = Helper::get_first_administrator_user();

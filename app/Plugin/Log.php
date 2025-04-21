@@ -34,13 +34,16 @@ class Log {
 	private function __clone() {}
 
 	/**
-	 * Return the instance of this Singleton object.
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Log
 	 */
 	public static function get_instance(): Log {
-		if ( ! static::$instance instanceof static ) {
-			static::$instance = new static();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
 		}
-		return static::$instance;
+
+		return self::$instance;
 	}
 
 	/**
@@ -113,7 +116,7 @@ class Log {
 	 * @param string $url The URL to filter for, get only last entry (optional).
 	 * @param string $state The requested state (optional).
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function get_logs( string $url = '', string $state = '' ): array {
 		global $wpdb;
@@ -122,9 +125,12 @@ class Log {
 				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
 			}
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
-		} elseif ( ! empty( $state ) ) {
+		}
+
+		if ( ! empty( $state ) ) {
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
 		}
+
 		return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
 	}
 
@@ -159,7 +165,7 @@ class Log {
 	 * @return int
 	 */
 	private function get_level(): int {
-		return get_option( 'eml_log_mode', 0 );
+		return absint( get_option( 'eml_log_mode', 0 ) );
 	}
 
 	/**

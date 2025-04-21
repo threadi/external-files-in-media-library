@@ -8,6 +8,8 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+
 defined( 'ABSPATH' ) || exit;
 
 /**

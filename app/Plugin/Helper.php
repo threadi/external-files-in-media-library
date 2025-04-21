@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use WP_Role;
+use WP_User;
 use WP_User_Query;
 
 /**
@@ -85,7 +86,7 @@ class Helper {
 			$role_obj = get_role( $slug );
 
 			// bail if role object could not be loaded.
-			if( ! $role_obj instanceof WP_Role ) {
+			if ( ! $role_obj instanceof WP_Role ) {
 				continue;
 			}
 
@@ -217,7 +218,7 @@ class Helper {
 	 * We do not use @get_allowed_mime_types() as there might be much more mime-types as our plugin
 	 * could support.
 	 *
-	 * @return array
+	 * @return array<string,array<string,string>>
 	 */
 	public static function get_possible_mime_types(): array {
 		$mime_types = array(
@@ -268,7 +269,7 @@ class Helper {
 		 *
 		 * @since 1.0.0 Available since 1.0.0.
 		 *
-		 * @param array $mime_types List of supported mime types.
+		 * @param array<string,array<string,string>> $mime_types List of supported mime types.
 		 */
 		return apply_filters( 'eml_supported_mime_types', $mime_types );
 	}
@@ -364,7 +365,7 @@ class Helper {
 		$user_obj = get_user_by( 'ID', $user_id );
 
 		// Fallback: search for an administrator.
-		if ( false === $user_obj ) {
+		if ( ! $user_obj instanceof WP_User ) {
 			return self::get_first_administrator_user();
 		}
 

@@ -256,7 +256,7 @@ class Statistics {
 		$referer = wp_get_referer();
 
 		// if referer is false, set empty string.
-		if( ! $referer ) {
+		if ( ! $referer ) {
 			$referer = '';
 		}
 

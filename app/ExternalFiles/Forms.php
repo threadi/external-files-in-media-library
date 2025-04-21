@@ -11,9 +11,9 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Initialize the backend forms for external files.

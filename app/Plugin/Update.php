@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
+use function ElementorDeps\DI\string;
 
 /**
  * Helper-function for updates of this plugin.
@@ -39,13 +40,16 @@ class Update {
 	private function __clone() { }
 
 	/**
-	 * Return the instance of this Singleton object.
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Update
 	 */
 	public static function get_instance(): Update {
-		if ( ! static::$instance instanceof static ) {
-			static::$instance = new static();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
 		}
-		return static::$instance;
+
+		return self::$instance;
 	}
 
 	/**
@@ -68,6 +72,11 @@ class Update {
 
 		// get db-version (version which was last installed).
 		$db_plugin_version = get_option( 'efmlVersion', '1.0.0' );
+
+		// bail if version is not a string.
+		if( ! is_string( $db_plugin_version ) ) {
+			return;
+		}
 
 		// compare version if we are not in development-mode.
 		if (
@@ -144,10 +153,6 @@ class Update {
 
 		// set proxy marker for all files where proxy is enabled.
 		foreach ( Files::get_instance()->get_files() as $external_file_obj ) {
-			if ( ! $external_file_obj instanceof File ) {
-				continue;
-			}
-
 			// bail if proxy is not enabled for this file.
 			if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				continue;

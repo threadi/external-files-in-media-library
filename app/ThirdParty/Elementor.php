@@ -78,18 +78,24 @@ class Elementor extends ThirdParty_Base implements ThirdParty {
 		// get the settings.
 		$settings = $element->get_settings();
 
+		// bail if settings is not an array.
+		if( ! is_array( $settings ) ) {
+			return;
+		}
+
 		// bail if hostet URL is not set.
 		if ( empty( $settings['hosted_url'] ) ) {
 			return;
 		}
 
 		// bail if not ID is given.
+		// @phpstan-ignore offsetAccess.nonOffsetAccessible
 		if ( empty( $settings['hosted_url']['id'] ) ) {
 			return;
 		}
 
 		// get the attachment ID.
-		$attachment_id = $settings['hosted_url']['id'];
+		$attachment_id = absint( $settings['hosted_url']['id'] );
 
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );

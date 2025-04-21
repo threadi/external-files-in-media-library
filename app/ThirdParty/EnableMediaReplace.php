@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Post;
@@ -78,7 +79,7 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if the file is not an external file-URL.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj instanceof File ) {
 			return;
 		}
 
@@ -95,17 +96,17 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Remove actions from this plugin in row listing.
 	 *
-	 * @param array   $actions List if actions.
+	 * @param array<string,string>   $actions List if actions.
 	 * @param WP_Post $post The post as object.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function remove_row_actions( array $actions, WP_Post $post ): array {
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if file is not an external file.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj instanceof File ) {
 			return $actions;
 		}
 

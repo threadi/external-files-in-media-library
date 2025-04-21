@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object for this schedule.

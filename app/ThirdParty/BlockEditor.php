@@ -75,11 +75,28 @@ class BlockEditor extends ThirdParty_Base implements ThirdParty {
 		// get the assets.
 		$script_asset = require $script_asset_path;
 
+		// bail if assets are not an array.
+		if( ! is_array( $script_asset ) ) {
+			return;
+		}
+
+		// bail if dependencies is not an array.
+		if( ! is_array( $script_asset['dependencies']) ) {
+			return;
+		}
+
+		// bail if version is not a string.
+		if( ! is_string( $script_asset['version'] ) ) {
+			return;
+		}
+
 		// enqueue the script.
 		wp_enqueue_script(
 			'efml-script',
 			$script_path,
+			// @phpstan-ignore argument.type
 			$script_asset['dependencies'],
+			// @phpstan-ignore argument.type
 			$script_asset['version'],
 			true
 		);
