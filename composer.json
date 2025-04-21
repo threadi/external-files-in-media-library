@@ -3,17 +3,30 @@
     "version": "3.0.0",
     "scripts": {
         "post-install-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs"
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs",
+            "\"vendor/bin/mozart\" compose",
+            "composer dump-autoload"
         ],
         "post-update-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs"
+            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs",
+            "\"vendor/bin/mozart\" compose",
+            "composer dump-autoload"
         ],
         "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
     },
     "extra": {
         "google/apiclient-services": [
             "Drive"
-        ]
+        ],
+        "mozart": {
+            "dep_namespace": "ExternalFilesInMediaLibrary\\Dependencies\\",
+            "dep_directory": "/app/Dependencies/",
+            "classmap_directory": "/libs/classes/dependencies/",
+            "classmap_prefix": "ExternalFilesInMediaLibrary",
+            "packages": [
+                "threadi/easy-settings-for-wordpress"
+            ]
+        }
     },
     "config": {
         "allow-plugins": {
@@ -45,6 +58,8 @@
         "ext-fileinfo": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "^2.2.1",
-        "google/apiclient": "^2.18"
+        "threadi/easy-settings-for-wordpress": "^1.1",
+        "google/apiclient": "^2.18",
+        "coenjacobs/mozart": "^0.7.1"
     }
 }

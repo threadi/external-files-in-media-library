@@ -11,13 +11,13 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
 use Google\Service\Exception;
 use JsonException;

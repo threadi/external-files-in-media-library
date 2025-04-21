@@ -10,13 +10,14 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Text;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Setting;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
@@ -127,7 +128,7 @@ class Settings {
 		/**
 		 * Configure the basic settings object.
 		 */
-		$settings_obj = Settings\Settings::get_instance();
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
 		$settings_obj->set_slug( 'eml' );
 		$settings_obj->set_plugin_slug( EFML_PLUGIN );
 		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
@@ -535,9 +536,9 @@ class Settings {
 		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
 		$field->set_options(
 			array(
-				'0' => __( 'normal', 'external-files-in-media-library' ),
-				'1' => __( 'log warnings', 'external-files-in-media-library' ),
-				'2' => __( 'log all', 'external-files-in-media-library' ),
+				__( 'normal', 'external-files-in-media-library' ),
+				__( 'log warnings', 'external-files-in-media-library' ),
+				__( 'log all', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_field( $field );
@@ -583,8 +584,8 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add import/export settings.
-		Settings\Import::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
-		Settings\Export::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
+		Import::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
+		Export::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
 
 		// initialize this settings object.
 		$settings_obj->init();
@@ -744,7 +745,7 @@ class Settings {
 		$this->add_settings();
 
 		// run the installation of them.
-		Settings\Settings::get_instance()->activation();
+		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
 	}
 
 	/**
@@ -769,9 +770,9 @@ class Settings {
 		$content .= '<p>' . sprintf( __( 'You can adjust the behavior of the plugin to your own requirements in many places via <a href="%1$s">the settings</a>. The possible settings are described in more detail below.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ) . '</p>';
 
 		// get help texts from each setting, which have one.
-		foreach ( Settings\Settings::get_instance()->get_settings() as $settings_obj ) {
+		foreach ( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_settings() as $settings_obj ) {
 			// bail if setting is not a Setting object.
-			if ( ! $settings_obj instanceof Setting ) {
+			if ( ! $settings_obj instanceof \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting ) {
 				continue;
 			}
 

@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-
 /**
  * Object to handle local import support.
  */

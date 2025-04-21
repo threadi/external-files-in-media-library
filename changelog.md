@@ -4,13 +4,14 @@
 
 ### Added
 
+- Added wrapper for all settings of this plugin for easier management in the future
 - New option for import local files from chosen directory via queue (for very large directories)
 
 ### Changed
 
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
-- Code optimizations for better speed
+- Multiple code optimizations
 
 ### Fixed
 

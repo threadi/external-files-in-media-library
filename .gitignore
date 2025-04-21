@@ -4,4 +4,4 @@ languages/*.json
 /vendor/
 /svn/
 /build/build.properties
-
+/app/Dependencies

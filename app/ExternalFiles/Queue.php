@@ -10,12 +10,12 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**

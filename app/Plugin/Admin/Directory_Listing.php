@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -76,8 +77,7 @@ class Directory_Listing {
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
 
 		// initialize the serverside tasks object for directory listing.
-		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
-		$directory_listing_obj = \easyDirectoryListingForWordPress\Init::get_instance();
+		$directory_listing_obj = Init::get_instance();
 		$directory_listing_obj->set_path( Helper::get_plugin_dir() );
 		$directory_listing_obj->set_url( Helper::get_plugin_url() );
 		$directory_listing_obj->set_prefix( 'efml' );
@@ -111,8 +111,7 @@ class Directory_Listing {
 	 */
 	public function register_directory_listing(): void {
 		// initialize the serverside tasks object for directory listing.
-		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
-		$directory_listing_obj = \easyDirectoryListingForWordPress\Init::get_instance();
+		$directory_listing_obj = Init::get_instance();
 		$directory_listing_obj->set_translations( $this->get_translations() );
 	}
 

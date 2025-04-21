@@ -10,10 +10,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object to handle statistics.
@@ -78,7 +77,7 @@ class Statistics {
 	 */
 	public function init_statistics(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
 
 		// add tab.
 		$tab = $settings_obj->add_tab( 'eml_statistics' );
