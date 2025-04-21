@@ -17,7 +17,7 @@
 - Fixed to early loading of translations
 - Fixed typos
 
-## [3.1.1]
+## [3.1.1] - 2025-04-05
 
 ### Added
 
@@ -35,7 +35,7 @@
 
 - Removed not necessary check if GoogleDrive is usable in hosting
 
-## [3.1.0] - 02.03.2025
+## [3.1.0] - 2025-03-02
 
 ### Added
 
@@ -59,7 +59,7 @@
 - Fixed missing support for plugin PreventDirectAccess
 - Fixed some typos
 
-## [3.0.0] - 15.02.2025
+## [3.0.0] - 2025-02-15
 
 ### Added
 

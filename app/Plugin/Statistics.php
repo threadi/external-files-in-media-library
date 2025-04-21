@@ -253,6 +253,14 @@ class Statistics {
 		// get all files.
 		$files = Files::get_instance()->get_files();
 
+		// get referer.
+		$referer = wp_get_referer();
+
+		// if referer is false, set empty string.
+		if( ! $referer ) {
+			$referer = '';
+		}
+
 		// if no files could be loaded, set all settings to 0.
 		if ( empty( $files ) ) {
 			$this->set_file_count( 0 );
@@ -267,7 +275,7 @@ class Statistics {
 			$transient_obj->save();
 
 			// forward user.
-			wp_safe_redirect( wp_get_referer() );
+			wp_safe_redirect( $referer );
 			exit;
 		}
 
@@ -297,7 +305,7 @@ class Statistics {
 		$transient_obj->save();
 
 		// forward user.
-		wp_safe_redirect( wp_get_referer() );
+		wp_safe_redirect( $referer );
 		exit;
 	}
 }
