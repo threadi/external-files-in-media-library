@@ -65,7 +65,7 @@ class Log {
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // @phpstan-ignore requireOnce.fileNotFound
 		dbDelta( $sql );
 	}
 

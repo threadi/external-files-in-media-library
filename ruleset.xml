@@ -4,9 +4,23 @@
     <description>External Files for Media Library Coding Standards</description>
 
     <!--
-    Included via WordPress-Extra.
-    <rule ref="WordPress-Core"/>
+        Only scan files with .php extension.
     -->
+    <arg name="extensions" value="php" />
+
+    <!--
+        Directories to exclude.
+    -->
+    <exclude-pattern>*/attributes/*</exclude-pattern>
+    <exclude-pattern>*/blocks/*</exclude-pattern>
+    <exclude-pattern>*/example/*</exclude-pattern>
+    <exclude-pattern>*/css/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/svn/*</exclude-pattern>
+    <exclude-pattern>*/app/Dependencies/*</exclude-pattern>
+
+    <!-- Use additional rulesets -->
     <rule ref="WordPress-Docs"/>
     <rule ref="WordPress-Extra"/>
     <rule ref="WordPress">

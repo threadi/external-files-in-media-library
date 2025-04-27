@@ -28,7 +28,7 @@ class Protocol_Base {
 	/**
 	 * List of supported tcp protocols with their ports.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array();
 
@@ -160,7 +160,7 @@ class Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of files with its infos.
+	 * @return array<int,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		return array();
@@ -332,7 +332,7 @@ class Protocol_Base {
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
 		// bail if url is empty.
 		if ( empty( $url ) ) {
 			return false;
@@ -366,9 +366,7 @@ class Protocol_Base {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );
@@ -387,5 +385,16 @@ class Protocol_Base {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get infos from single given URL.
+	 *
+	 * @param string             $url The URL to check.
+	 *
+	 * @return array
+	 */
+	public function get_url_info( string $url ): array {
+		return array();
 	}
 }

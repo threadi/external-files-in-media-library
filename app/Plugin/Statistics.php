@@ -247,6 +247,7 @@ class Statistics {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function recalc_files_by_request(): void {
+		// check nonce.
 		check_admin_referer( 'eml-recalc-files', 'nonce' );
 
 		// get all files.
@@ -282,11 +283,6 @@ class Statistics {
 		$file_count = 0;
 		$file_size  = 0;
 		foreach ( $files as $file ) {
-			// bail if this is not a File object.
-			if ( ! $file instanceof File ) {
-				continue;
-			}
-
 			++$file_count;
 			$file_size += $file->get_filesize();
 		}

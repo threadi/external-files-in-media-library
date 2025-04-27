@@ -57,14 +57,29 @@ class Services {
 	 * @return void
 	 */
 	public function activation(): void {
-		foreach ( $this->get_services() as $class_name ) {
+		foreach ( $this->get_services() as $service_class_name ) {
 			// bail if class does not exist.
-			if ( ! class_exists( $class_name ) ) {
+			if ( ! class_exists( $service_class_name ) ) {
+				continue;
+			}
+
+			// get class name with method.
+			$class_name = $service_class_name . '::get_instance';
+
+			// bail if it is not callable.
+			if( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
 			// initiate object.
-			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj = $class_name();
+
+			// bail if object is not a service object.
+			if( ! $obj instanceof Service ) {
+				continue;
+			}
+
+			// run its activation.
 			$obj->activation();
 		}
 	}
@@ -87,17 +102,25 @@ class Services {
 	 */
 	public function init_services(): void {
 		// initiate each supported service.
-		foreach ( $this->get_services() as $class_name ) {
+		foreach ( $this->get_services() as $service_class_name ) {
 			// bail if class does not exist.
-			if ( ! class_exists( $class_name ) ) {
+			if ( ! class_exists( $service_class_name ) ) {
+				continue;
+			}
+
+			// get class name with method.
+			$class_name = $service_class_name . '::get_instance';
+
+			// bail if it is not callable.
+			if( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
 			// initiate object.
-			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj = $class_name();
 
-			// bail if object is not of type Service.
-			if ( ! $obj instanceof Service ) {
+			// bail if object is not a service object.
+			if( ! $obj instanceof Service ) {
 				continue;
 			}
 
@@ -109,7 +132,7 @@ class Services {
 	/**
 	 * Return list of services support we implement.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_services(): array {
 		$list = array(
@@ -134,9 +157,9 @@ class Services {
 	/**
 	 * Add help for the settings of this plugin.
 	 *
-	 * @param array $help_list List of help tabs.
+	 * @param array<array<string>> $help_list List of help tabs.
 	 *
-	 * @return array
+	 * @return array<array<string>>
 	 */
 	public function add_help( array $help_list ): array {
 		$content  = '<h1>' . __( 'Get files from external directory', 'external-files-in-media-library' ) . '</h1>';

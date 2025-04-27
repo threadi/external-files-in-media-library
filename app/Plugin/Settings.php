@@ -861,9 +861,7 @@ class Settings {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// move all files from old to new directory.
 		$wp_filesystem->move( $old_value_path, $new_value_path );

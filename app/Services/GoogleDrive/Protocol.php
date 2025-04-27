@@ -142,9 +142,7 @@ class Protocol extends Protocol_Base {
 		);
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
@@ -287,9 +285,7 @@ class Protocol extends Protocol_Base {
 			);
 
 			// get WP Filesystem-handler.
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			\WP_Filesystem();
-			global $wp_filesystem;
+			$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 			// set the file as tmp-file for import.
 			$entry['tmp-file'] = wp_tempnam();

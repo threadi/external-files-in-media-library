@@ -77,11 +77,6 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 		// output the custom css.
 		echo '<style>';
 		foreach ( $external_files as $external_file ) {
-			// bail if this is not a File object.
-			if ( ! $external_file instanceof File ) {
-				continue;
-			}
-
 			// hide the column of this plugin in the table.
 			?>
 			#pda-v3-column_<?php echo absint( $external_file->get_id() ); ?> { display: none; }

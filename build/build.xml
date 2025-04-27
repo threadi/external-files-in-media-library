@@ -85,10 +85,10 @@
     <!-- check WCS compatibility -->
     <target name="check-wcs" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/phpcbf">
-            <arg line="--extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml ."/>
+            <arg line="--standard=ruleset.xml ."/>
         </exec>
         <exec dir="${src.dir}" failonerror="true" executable="vendor/bin/phpcs">
-            <arg line="--extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml ."/>
+            <arg line="--standard=ruleset.xml ."/>
         </exec>
     </target>
 

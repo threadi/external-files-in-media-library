@@ -152,7 +152,7 @@ class Admin {
 			'easy-dialog-for-wordpress',
 			$admin_css,
 			array( 'wp-components' ),
-			filemtime( $admin_css_path )
+			(string) filemtime( $admin_css_path )
 		);
 	}
 
@@ -189,9 +189,9 @@ class Admin {
 	/**
 	 * Add link to settings in plugin list.
 	 *
-	 * @param array $links List of links.
+	 * @param array<string> $links List of links.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function add_setting_link( array $links ): array {
 		// add link to settings.
@@ -207,10 +207,10 @@ class Admin {
 	/**
 	 * Add links in row meta.
 	 *
-	 * @param array  $links List of links.
+	 * @param array<string>  $links List of links.
 	 * @param string $file The requested plugin file name.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function add_row_meta_links( array $links, string $file ): array {
 		// bail if this is not our plugin.

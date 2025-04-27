@@ -93,7 +93,15 @@ class File {
 	public function get_url( bool $unproxied = false ): string {
 		// if external URL not known in object, get it now.
 		if ( empty( $this->url ) ) {
-			$this->url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
+			$url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
+
+			// bail if returned value is not a string.
+			if( ! is_string( $url ) ) {
+				return '';
+			}
+
+			// set the url.
+			$this->url = $url;
 		}
 
 		// bail if proxy URL should not be used.
@@ -102,16 +110,17 @@ class File {
 		}
 
 		$true = true;
+		$instance = $this;
 		/**
 		 * Filter whether file should be proxied.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $true False to disable proxy-URL.
-		 * @param File $this The external file object.
+		 * @param File $instance The external file object.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $this ) ) {
+		if ( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $instance ) ) {
 			return $this->url;
 		}
 
@@ -182,7 +191,16 @@ class File {
 	 * @return string
 	 */
 	public function get_mime_type(): string {
-		return get_post_mime_type( $this->get_id() );
+		// get the mime type setting of this post.
+		$mime_type = get_post_mime_type( $this->get_id() );
+
+		// bail if returned value is not a string.
+		if( ! is_string( $mime_type ) ) {
+			return '';
+		}
+
+		// return the mime type.
+		return $mime_type;
 	}
 
 	/**
@@ -222,18 +240,19 @@ class File {
 	public function is_available(): bool {
 		// get value from DB.
 		if ( empty( $this->availability ) ) {
-			$this->availability = get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
+			$this->availability = (bool) get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
 		}
 
+		$instance = $this;
 		/**
 		 * Filter and return the file availability.
 		 *
 		 * @since 1.0.0 Available since 1.0.0.
 		 *
 		 * @param bool $availability The given availability.
-		 * @param File $this The file object.
+		 * @param File $instance The file object.
 		 */
-		return apply_filters( 'eml_file_availability', $this->availability, $this );
+		return apply_filters( 'eml_file_availability', $this->availability, $instance );
 	}
 
 	/**
@@ -328,7 +347,16 @@ class File {
 	 * @return string
 	 */
 	public function get_attachment_url(): string {
-		return (string) get_post_meta( $this->get_id(), '_wp_attached_file', true );
+		// get the value from DB.
+		$attachment_url = get_post_meta( $this->get_id(), '_wp_attached_file', true );
+
+		// bail if value is not a string.
+		if( ! is_string( $attachment_url ) ) {
+			return '';
+		}
+
+		// return the attachment URL.
+		return $attachment_url;
 	}
 
 	/**
@@ -398,10 +426,6 @@ class File {
 			return;
 		}
 
-		global $wp_filesystem;
-		require_once ABSPATH . 'wp-admin/includes/file.php';
-		WP_Filesystem();
-
 		/**
 		 * Get the handler for this URL depending on its protocol.
 		 */
@@ -413,6 +437,11 @@ class File {
 		if ( ! $protocol_handler_obj ) {
 			return;
 		}
+
+		/**
+		 * Get used WP Filesystem handler.
+		 */
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		/**
 		 * Get info about the external file.
@@ -440,6 +469,11 @@ class File {
 
 		// get the body.
 		$body = $wp_filesystem->get_contents( $tmp_file );
+
+		// bail if no contents returned.
+		if( ! $body ) {
+			return;
+		}
 
 		// bail if finfo is not available.
 		if ( ! class_exists( 'finfo' ) ) {
@@ -470,7 +504,7 @@ class File {
 	 * Return the cache-filename for this file.
 	 * It does also contain the path.
 	 *
-	 * @param array $size The requested size.
+	 * @param array<int,int> $size The requested size.
 	 *
 	 * @return string
 	 */
@@ -566,7 +600,13 @@ class File {
 	 * @return string
 	 */
 	public function get_login(): string {
-		$login = (string) get_post_meta( $this->get_id(), 'eml_login', true );
+		// get the login for this file.
+		$login = get_post_meta( $this->get_id(), 'eml_login', true );
+
+		// bail if no string returned.
+		if( ! is_string( $login ) ) {
+			return '';
+		}
 
 		// bail if string is empty.
 		if ( empty( $login ) ) {
@@ -583,7 +623,13 @@ class File {
 	 * @return string
 	 */
 	public function get_password(): string {
-		$password = (string) get_post_meta( $this->get_id(), 'eml_password', true );
+		// get the password for this file.
+		$password = get_post_meta( $this->get_id(), 'eml_password', true );
+
+		// bail if no string returned.
+		if( ! is_string( $password ) ) {
+			return '';
+		}
 
 		// bail if string is empty.
 		if ( empty( $password ) ) {
@@ -610,9 +656,7 @@ class File {
 	 */
 	public function switch_to_local(): bool {
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the handler for this URL depending on its protocol.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
@@ -643,7 +687,7 @@ class File {
 			'name'     => $this->get_title(),
 			'type'     => $file_data[0]['mime-type'],
 			'tmp_name' => '',
-			'error'    => 0,
+			'error'    => '0',
 			'size'     => $file_data[0]['filesize'],
 			'url'      => $this->get_url(),
 		);
@@ -703,6 +747,13 @@ class File {
 
 		// remove base_url from local_url.
 		$upload_dir = wp_get_upload_dir();
+
+		// bail if baseurl is not a string.
+		if( ! is_string( $upload_dir['baseurl'] ) ) {
+			return false;
+		}
+
+		// get the local URL.
 		$local_url  = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
 
 		// update attachment setting.
@@ -714,11 +765,27 @@ class File {
 		// get the file path of the original.
 		$file = get_attached_file( $this->get_id() );
 
+		// bail if file is not a string.
+		if( ! is_string( $file ) ) {
+			return false;
+		}
+
 		// secure the attached thumbnail files of this file.
 		$files     = array( $file );
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 		if ( ! empty( $meta_data['sizes'] ) ) {
 			foreach ( $meta_data['sizes'] as $meta_file ) {
+				// bail if meta_file is not an array.
+				if( ! is_array( $meta_file ) ) {
+					continue;
+				}
+
+				// bail if file is not a string.
+				if( ! is_string( $meta_file['file'] ) ) {
+					continue;
+				}
+
+				// add the file to the list.
 				$files[] = trailingslashit( dirname( $file ) ) . $meta_file['file'];
 			}
 		}
@@ -763,13 +830,42 @@ class File {
 		// get protocol object for this file.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
+		// bail if protocol handler could not be loaded.
+		if( ! $protocol_handler_obj ) {
+			return false;
+		}
+
 		// bail if protocol does not support external hosting.
 		if ( $protocol_handler_obj->should_be_saved_local() ) {
 			return false;
 		}
 
+		// get the meta data.
+		$meta_data = wp_get_attachment_metadata( $this->get_id() );
+
+		// bail if meta-data could not be loaded.
+		if( ! $meta_data ) {
+			$meta_data = array();
+		}
+
+		// get sizes.
+		$sizes = get_post_meta( $this->get_id(), '_wp_attachment_backup_sizes', true );
+
+		// bail if sizes is not an array.
+		if( ! is_array( $sizes ) ) {
+			$sizes = array();
+		}
+
+		// get attached file.
+		$file = get_attached_file( $this->get_id() );
+
+		// bail if file is not a string.
+		if( ! is_string( $file ) ) {
+			return false;
+		}
+
 		// get all files for this attachment and delete them local.
-		wp_delete_attachment_files( $this->get_id(), wp_get_attachment_metadata( $this->get_id() ), get_post_meta( $this->get_id(), '_wp_attachment_backup_sizes', true ), get_attached_file( $this->get_id() ) );
+		wp_delete_attachment_files( $this->get_id(), $meta_data, $sizes, $file );
 
 		// update attachment setting.
 		update_post_meta( $this->get_id(), '_wp_attached_file', $this->get_url( true ) );
@@ -814,9 +910,7 @@ class File {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = Helper::get_wp_filesystem( 'local' );
 
 		// get the image meta data.
 		$image_meta_data = wp_get_attachment_metadata( $this->get_id(), true );
@@ -831,8 +925,13 @@ class File {
 
 		// loop through the sizes.
 		foreach ( $image_meta_data['sizes'] as $size_data ) {
+			// bail if size_data is not an array.
+			if( ! is_array( $size_data ) ) {
+				continue;
+			}
+
 			// get file path.
-			$file = $proxy_obj->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), $size_data['width'], $size_data['height'], $this->get_file_extension() );
+			$file = $proxy_obj->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), absint( $size_data['width'] ), absint( $size_data['height'] ), $this->get_file_extension() );
 
 			// bail if file does not exist.
 			if ( ! $wp_filesystem->exists( $file ) ) {

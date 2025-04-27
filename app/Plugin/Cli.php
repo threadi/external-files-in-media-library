@@ -36,8 +36,8 @@ class Cli {
 	 * [--queue]
 	 * : Adds the given URL(s) to the queue.
 	 *
-	 * @param array $urls Array with URL which might be given as parameter on CLI-command.
-	 * @param array $arguments List of parameter to use for the given URLs.
+	 * @param array<string,string> $urls Array with URL which might be given as parameter on CLI-command.
+	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
 	 *
 	 * @return void
 	 */
@@ -111,7 +111,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to delete from in media library. If nothing is given all external files are deleted.
 	 *
-	 * @param array $urls List of URLs.
+	 * @param array<string> $urls List of URLs.
 	 *
 	 * @return void
 	 */
@@ -145,7 +145,6 @@ class Cli {
 		if ( empty( $files_to_delete ) ) {
 			$logs->create( __( 'No files found to delete.', 'external-files-in-media-library' ), '', 'success', 2 );
 			\WP_CLI::error( __( 'There are no external URLs to delete.', 'external-files-in-media-library' ) );
-			return;
 		}
 
 		// show progress.
@@ -153,11 +152,6 @@ class Cli {
 
 		// loop through the files and delete them.
 		foreach ( $files_to_delete as $external_file_obj ) {
-			// bail if this is not an external file object.
-			if ( ! $external_file_obj instanceof File ) {
-				continue;
-			}
-
 			// delete the file.
 			$external_files_obj->delete_file( $external_file_obj );
 
@@ -198,7 +192,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to check. They must exist in media library.
 	 *
-	 * @param array $urls List of URLs.
+	 * @param array<string> $urls List of URLs.
 	 *
 	 * @return void
 	 */
@@ -277,7 +271,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs for switch.
 	 *
-	 * @param array $urls List of URLs.
+	 * @param array<string> $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
@@ -326,7 +320,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs for switch.
 	 *
-	 * @param array $urls List of URLs.
+	 * @param array<string> $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused

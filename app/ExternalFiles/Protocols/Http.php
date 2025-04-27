@@ -25,7 +25,7 @@ class Http extends Protocol_Base {
 	/**
 	 * List of supported tcp protocols.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array(
 		'http'  => 80,
@@ -35,7 +35,7 @@ class Http extends Protocol_Base {
 	/**
 	 * List of http head requests.
 	 *
-	 * @var array
+	 * @var array<string,mixed>
 	 */
 	private array $http_heads = array();
 
@@ -54,7 +54,7 @@ class Http extends Protocol_Base {
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error' );
 
 			// return that given string is not a valid URL.
 			return false;
@@ -87,15 +87,15 @@ class Http extends Protocol_Base {
 		$response = wp_remote_head( $url, $this->get_header_args() );
 
 		// request resulted in an error.
-		if ( is_wp_error( $response ) || empty( $response ) ) {
-			Log::get_instance()->create( __( 'Given URL is not available.', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', esc_url( $url ), 'error', 0 );
+		if ( is_wp_error( $response ) ) {
+			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', esc_url( $url ), 'error' );
 			return false;
 		}
 
 		// URL returns not compatible HTTP-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			/* translators: %1$d will be replaced by the HTTP-Status. */
-			Log::get_instance()->create( sprintf( __( 'Given URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Given URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error' );
 			return false;
 		}
 
@@ -112,7 +112,7 @@ class Http extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type_existence', $true, $url ) ) {
-			Log::get_instance()->create( __( 'Given URL response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL response without Content-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
 			return false;
 		}
 
@@ -128,12 +128,10 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) ) {
-			if ( false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
-				/* translators: %1$s will be replaced by its Mime-Type */
-				Log::get_instance()->create( sprintf( __( 'Given URL response with the disallowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0 );
-				return false;
-			}
+		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
+			/* translators: %1$s will be replaced by its Mime-Type */
+			Log::get_instance()->create( sprintf( __( 'Given URL response with the disallowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error' );
+			return false;
 		}
 
 		$return = true;
@@ -166,7 +164,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @param string $url The given URL.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function get_http_head( string $url ): array {
 		// bail if result is known.
@@ -192,7 +190,7 @@ class Http extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of files from the given URL with its infos.
+	 * @return array<int,array<string>> List of files from the given URL with its infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -243,15 +241,13 @@ class Http extends Protocol_Base {
 			do_action( 'eml_http_directory_import_start', $this->get_url() );
 
 			// get WP Filesystem-handler.
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			\WP_Filesystem();
-			global $wp_filesystem;
+			$wp_filesystem = Helper::get_wp_filesystem();
 
 			// get temp file.
 			$tmp_file = $this->get_temp_file( $this->get_url(), $wp_filesystem );
 
 			// bail if tmp file could not be loaded.
-			if ( ! $tmp_file ) {
+			if ( ! is_string( $tmp_file ) ) {
 				return array();
 			}
 
@@ -267,17 +263,21 @@ class Http extends Protocol_Base {
 				return array();
 			}
 
+			// get the URL.
+			$url = $this->get_url();
+
 			/**
 			 * Filter the content with regex via HTTP-protocol.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 *
-			 * @param array $results The results.
+			 * @param array<string> $results The results.
 			 * @param string $content The content to parse.
+			 * @param string $url The used URL.
 			 *
 			 * @paaram string $url The URL used.
 			 */
-			$matches = apply_filters( 'eml_http_directory_regex', array(), $content, $this->get_url() );
+			$matches = apply_filters( 'eml_http_directory_regex', array(), $content, $url );
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
@@ -287,7 +287,7 @@ class Http extends Protocol_Base {
 
 			// add files to list in queue mode.
 			if ( $this->is_queue_mode() ) {
-				Queue::get_instance()->add_urls( $matches[1], $this->get_login(), $this->get_password() );
+				Queue::get_instance()->add_urls( array( $matches[1] ), $this->get_login(), $this->get_password() );
 				return array();
 			}
 
@@ -301,7 +301,7 @@ class Http extends Protocol_Base {
 			 * @since 2.0.0 Available since 2.0.0.
 			 *
 			 * @param string $url   The URL to import.
-			 * @param array $matches List of matches (the URLs).
+			 * @param array<string> $matches List of matches (the URLs).
 			 */
 			do_action( 'eml_http_directory_import_files', $this->get_url(), $matches[1] );
 
@@ -320,7 +320,7 @@ class Http extends Protocol_Base {
 				$file_url = $url;
 				if ( false === str_starts_with( $url, 'http' ) ) {
 					$file_url_parts = wp_parse_url( $this->get_url() . $url );
-					if ( is_array( $file_url_parts ) ) {
+					if ( is_array( $file_url_parts ) && isset( $file_url_parts['host'], $file_url_parts['scheme'], $file_url_parts['path'] ) ) {
 						$file_url = $file_url_parts['scheme'] . '://' . $file_url_parts['host'] . str_replace( '//', '/', $file_url_parts['path'] );
 					}
 				}
@@ -420,14 +420,15 @@ class Http extends Protocol_Base {
 			$files[] = $file;
 		}
 
+		$instance = $this;
 		/**
 		 * Filter list of files during this import.
 		 *
 		 * @since 3.0.0 Available since 3.0.0
 		 * @param array $files List of files.
-		 * @param HTTP $this The import object.
+		 * @param HTTP $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $this );
+		return apply_filters( 'eml_external_files_infos', $files, $instance );
 	}
 
 	/**
@@ -496,9 +497,7 @@ class Http extends Protocol_Base {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// if file should be saved local, load the temp file.
 		if ( $results['local'] ) {
@@ -611,7 +610,7 @@ class Http extends Protocol_Base {
 		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
 		// bail if object could not be loaded.
-		if ( ! $external_file_obj instanceof File ) {
+		if ( ! $external_file_obj instanceof \ExternalFilesInMediaLibrary\ExternalFiles\File ) {
 			return false;
 		}
 
@@ -709,9 +708,9 @@ class Http extends Protocol_Base {
 	 *
 	 * Custom solution for https://core.trac.wordpress.org/ticket/40153
 	 *
-	 * @param array $parsed_args The header arguments.
+	 * @param array<string,array<string,mixed>> $parsed_args The header arguments.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function set_download_url_header( array $parsed_args ): array {
 		return array_merge( $parsed_args, $this->get_header_args() );
@@ -722,7 +721,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @param string $url The used URL.
 	 *
-	 * @return array
+	 * @return array<integer>
 	 */
 	private function get_allowed_http_states( string $url ): array {
 		$list = array( 200 );
@@ -731,7 +730,7 @@ class Http extends Protocol_Base {
 		 * Filter the list of allowed http states.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $list List of http states.
+		 * @param array<integer> $list List of http states.
 		 */
 		return apply_filters( 'eml_http_states', $list, $url );
 	}
@@ -774,14 +773,14 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Get temp file from given URL.
+	 * Return temp file for the given URL.
 	 *
 	 * @param string             $url The given URL.
 	 * @param WP_Filesystem_Base $filesystem The file system handler.
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
 		// download file as temporary file.
 		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 		$tmp_file = download_url( $this->get_url() );
@@ -791,7 +790,7 @@ class Http extends Protocol_Base {
 		if ( is_wp_error( $tmp_file ) ) {
 			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0 );
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error' );
 
 			// return empty array as we got not the file.
 			return false;

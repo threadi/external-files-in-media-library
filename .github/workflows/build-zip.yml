@@ -35,10 +35,10 @@ jobs:
         run: composer dump-autoload -oa --no-dev
 
       - name: Run WordPress Coding Standard fixes
-        run: vendor/bin/phpcbf --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml .
+        run: vendor/bin/phpcbf --standard=ruleset.xml .
 
       - name: Run WordPress Coding Standard checks
-        run: vendor/bin/phpcs --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml .
+        run: vendor/bin/phpcs --standard=ruleset.xml .
 
       - name: Set version number 1
         uses: richardrigutins/replace-in-files@v2

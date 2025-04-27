@@ -23,19 +23,19 @@ class ZipArchiveBrowser {
 	/**
 	 * List of files.
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	private static array $files = array();
 
 	/**
 	 * Add a directory.
 	 *
-	 * @param array $files The base directory.
-	 * @param array $parts The parts to add.
+	 * @param array<string,array|string> $files The base directory.
+	 * @param array<int,string> $parts The parts to add.
 	 *
 	 * @return void
 	 */
-	private static function add_directory( array &$files, array $parts ): void {
+	private static function add_directory( array &$files, array $parts ): void { // @phpstan-ignore missingType.iterableValue
 		// get the directory name from first entry of the parts array.
 		$dir = array_shift( $parts );
 
@@ -53,9 +53,9 @@ class ZipArchiveBrowser {
 	/**
 	 * Add a directory.
 	 *
-	 * @param array $files The base directory.
-	 * @param array $parts The parts to add.
-	 * @param array $file_stat List of file stats.
+	 * @param array<array|string> $files The base directory.
+	 * @param array<int,string> $parts The parts to add.
+	 * @param array<string> $file_stat List of file stats.
 	 *
 	 * @return void
 	 */
@@ -73,7 +73,7 @@ class ZipArchiveBrowser {
 	 * @param Directory_Listing_Base $obj The directory listing object used for this listing.
 	 * @param string                 $zip_file The ZIP file to use.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public static function get_contents( Directory_Listing_Base $obj, string $zip_file ): array {
 		if ( ! file_exists( $zip_file ) ) {
@@ -137,7 +137,7 @@ class ZipArchiveBrowser {
 	 * @param string $parent_dir     The parent directory path.
 	 * @param array  $directory_list The list we want to add to the resulting list.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private static function get_directory_recursively( string $parent_dir, array $directory_list ): array {
 		$file_list = array();

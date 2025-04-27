@@ -10,6 +10,11 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Error;
+use WP_Filesystem_Base;
+use WP_Filesystem_Direct;
+use WP_Filesystem_FTPext;
+use WP_Query;
 use WP_Role;
 use WP_User;
 use WP_User_Query;
@@ -44,8 +49,17 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_format_date_time( string $date ): string {
+		// get the date from gmt date.
 		$dt = get_date_from_gmt( $date );
-		return date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), strtotime( $dt ) );
+
+		// get the date format.
+		$date_format = self::get_as_string( get_option( 'date_format' ) );
+
+		// get the time format.
+		$time_format = self::get_as_string( get_option( 'time_format' ) );
+
+		// return the formatted datetime string.
+		return date_i18n( $date_format . ' ' . $time_format, strtotime( $dt ) );
 	}
 
 	/**
@@ -71,7 +85,7 @@ class Helper {
 	/**
 	 * Set capability for our own plugin on given roles.
 	 *
-	 * @param array $user_roles List of allowed user-roles.
+	 * @param array<string> $user_roles List of allowed user-roles.
 	 *
 	 * @return void
 	 */
@@ -107,9 +121,7 @@ class Helper {
 	 * @return int
 	 */
 	public static function get_first_administrator_user(): int {
-		$user_id = 0;
-
-		// get first admin-user.
+		// get the first user with administrator role.
 		$query   = array(
 			'role'   => 'administrator',
 			'number' => 1,
@@ -118,19 +130,24 @@ class Helper {
 
 		// bail on no results.
 		if ( 0 === $results->get_total() ) {
-			return $user_id;
+			return 0;
 		}
 
 		// get the results.
 		$roles = $results->get_results();
 
+		// bail if no results returned.
+		if ( empty( $roles ) ) {
+			return 0;
+		}
+
 		// bail if first entry does not exist.
-		if ( empty( $roles[0] ) ) {
-			return $user_id;
+		if( empty( $roles[0] ) ) {
+			return 0;
 		}
 
 		// return the ID of the first entry.
-		return $roles[0]->ID;
+		return absint( $roles[0]->ID );
 	}
 
 	/**
@@ -163,9 +180,7 @@ class Helper {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = self::get_wp_filesystem( 'local' );
 		$wp_filesystem->delete( $dir );
 	}
 
@@ -277,7 +292,7 @@ class Helper {
 	/**
 	 * Return allowed content types.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public static function get_allowed_mime_types(): array {
 		// get the list from settings.
@@ -307,7 +322,7 @@ class Helper {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array $list List of mime types.
+		 * @param array<string> $list List of mime types.
 		 */
 		return apply_filters( 'eml_get_mime_types', $list );
 	}
@@ -549,6 +564,11 @@ class Helper {
 	public static function get_404_template(): string {
 		global $wp_query;
 
+		// bail if wp_query is not WP_Query.
+		if( ! $wp_query instanceof WP_Query ) {
+			return '';
+		}
+
 		// set header.
 		$wp_query->set_404();
 		status_header( 404 );
@@ -556,5 +576,105 @@ class Helper {
 
 		// return the template.
 		return get_404_template();
+	}
+
+	/**
+	 * Return the WP Filesystem object.
+	 *
+	 * @param string $type The type to force.
+	 *
+	 * @return WP_Filesystem_Base
+	 */
+	public static function get_wp_filesystem( string $type = '' ): WP_Filesystem_Base {
+		// get WP Filesystem-handler for local files if requested.
+		if ( ! empty( $type ) ) {
+			switch( $type ) {
+				case 'direct':
+					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
+					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
+
+					return new WP_Filesystem_Direct( false );
+				case 'ftp':
+					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
+					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php'; // @phpstan-ignore requireOnce.fileNotFound
+
+					return new WP_Filesystem_FTPext( false );
+			}
+		}
+
+		// get global WP Filesystem handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// bail if wp_filesystem is not of "WP_Filesystem_Base".
+		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
+			return new WP_Filesystem_Direct( false );
+		}
+
+		// return local object on any error.
+		if ( $wp_filesystem->errors instanceof WP_Error && $wp_filesystem->errors->has_errors() ) {
+			// embed the local directory object.
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
+
+			return new WP_Filesystem_Direct( false );
+		}
+
+		// return the requested filesystem object.
+		return $wp_filesystem;
+	}
+
+	/**
+	 * Return a value as string, if it is a string.
+	 *
+	 * @param mixed $value The value to check.
+	 *
+	 * @return string
+	 */
+	public static function get_as_string( mixed $value ): string {
+		// bail if $value is not a string.
+		if( ! is_string( $value ) ) {
+			return '';
+		}
+
+		// simply return the now checked string value.
+		return $value;
+	}
+
+	/**
+	 * Return a DB result list as array with unique datatype format.
+	 *
+	 * @param mixed $results The results from $wpdb->get_results().
+	 *
+	 * @return array<int,array<string>>
+	 */
+	public static function get_db_results( mixed $results ): array {
+		// bail if results are not an array.
+		if( ! is_array( $results ) ) {
+			return array();
+		}
+
+		// return the resulting array.
+		return $results;
+	}
+
+	/**
+	 * Return a DB single result as array with string as datatype.
+	 *
+	 * @param mixed $results The results from $wpdb->get_row().
+	 *
+	 * @return array<string>
+	 */
+	public static function get_db_result( mixed $results ): array {
+		// bail if results are not an array.
+		if( ! is_array( $results ) ) {
+			return array();
+		}
+
+		// return the resulting array.
+		return $results;
 	}
 }

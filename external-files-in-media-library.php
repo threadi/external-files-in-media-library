@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // do nothing if PHP-version is not 8.0 or newer.
-if ( PHP_VERSION_ID < 80000 ) {
+if ( PHP_VERSION_ID < 80000 ) { // @phpstan-ignore if.alwaysFalse,smaller.alwaysFalse
 	return;
 }
 

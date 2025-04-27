@@ -35,7 +35,7 @@ class Queue extends WP_List_Table {
 	/**
 	 * Get the table data
 	 *
-	 * @return array<string>
+	 * @return array<int,array<string>>
 	 */
 	private function table_data(): array {
 		// get state filter.
@@ -77,7 +77,7 @@ class Queue extends WP_List_Table {
 	/**
 	 * Define which columns are hidden
 	 *
-	 * @return array<string, array<string, bool>>
+	 * @return array<string,array<string,bool>>
 	 */
 	public function get_hidden_columns(): array {
 		return array();
@@ -86,7 +86,7 @@ class Queue extends WP_List_Table {
 	/**
 	 * Define the sortable columns
 	 *
-	 * @return array<string, array<string, bool>>
+	 * @return array<string,array<int,string|false>>
 	 */
 	public function get_sortable_columns(): array {
 		return array( 'date' => array( 'date', false ) );
@@ -151,8 +151,14 @@ class Queue extends WP_List_Table {
 				),
 			);
 
+			// format the dialog configuration.
+			$dialog = wp_json_encode( $process_dialog );
+			if( ! $dialog ) {
+				$dialog = '';
+			}
+
 			?>
-			<a href="<?php echo esc_url( $process_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( wp_json_encode( $process_dialog ) ); ?>"><?php echo esc_html__( 'Process queue', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $process_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Process queue', 'external-files-in-media-library' ); ?></a>
 			<?php
 
 			// define clear-URL.
@@ -185,8 +191,14 @@ class Queue extends WP_List_Table {
 				),
 			);
 
+			// format the dialog configuration.
+			$dialog = wp_json_encode( $clear_dialog );
+			if( ! $dialog ) {
+				$dialog = '';
+			}
+
 			?>
-			<a href="<?php echo esc_url( $clear_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( wp_json_encode( $clear_dialog ) ); ?>"><?php echo esc_html__( 'Clear queue', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $clear_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Clear queue', 'external-files-in-media-library' ); ?></a>
 			<?php
 
 			// get all error entries.
@@ -222,8 +234,14 @@ class Queue extends WP_List_Table {
 				),
 			);
 
+			// format the dialog configuration.
+			$dialog = wp_json_encode( $clear_errors_dialog );
+			if( ! $dialog ) {
+				$dialog = '';
+			}
+
 			?>
-			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $errors ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( wp_json_encode( $clear_errors_dialog ) ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $errors ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
 			<?php
 		}
 	}
@@ -320,8 +338,14 @@ class Queue extends WP_List_Table {
 			),
 		);
 
+		// format the dialog configuration.
+		$dialog = wp_json_encode( $dialog );
+		if( ! $dialog ) {
+			$dialog = '';
+		}
+
 		// add output for delete link.
-		$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
+		$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( $dialog ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
 
 		// create delete-URL.
 		$url = add_query_arg(
@@ -353,8 +377,14 @@ class Queue extends WP_List_Table {
 			),
 		);
 
+		// format the dialog configuration.
+		$dialog = wp_json_encode( $dialog );
+		if( ! $dialog ) {
+			$dialog = '';
+		}
+
 		// add output for process now link.
-		$output .= '<a class="dashicons dashicons-controls-play easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Process entry', 'external-files-in-media-library' ) . '"></a>';
+		$output .= '<a class="dashicons dashicons-controls-play easy-dialog-for-wordpress" data-dialog="' . esc_attr( $dialog ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Process entry', 'external-files-in-media-library' ) . '"></a>';
 
 		// return the list of options.
 		return $output;

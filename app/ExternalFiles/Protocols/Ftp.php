@@ -27,7 +27,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * List of supported tcp protocols.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array(
 		'ftp'  => 21,
@@ -37,7 +37,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * List of FTP-connections in this object.
 	 *
-	 * @var array
+	 * @var array<WP_Filesystem_FTPext>
 	 */
 	private array $ftp_connections = array();
 
@@ -54,13 +54,13 @@ class Ftp extends Protocol_Base {
 
 		// load necessary classes.
 		if ( ! function_exists( 'wp_tempnam' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 		if ( ! class_exists( 'WP_Filesystem_FTPext' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php';
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 
 		// call parent constructor.
@@ -115,7 +115,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of file-infos.
+	 * @return array<int,array<string>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -226,7 +226,7 @@ class Ftp extends Protocol_Base {
 				do_action( 'eml_ftp_directory_import_file_check', $file_url );
 
 				// get the file data.
-				$results = $this->get_url_info( $file_path, $ftp_connection );
+				$results = $this->get_url_info( $file_path );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -283,25 +283,28 @@ class Ftp extends Protocol_Base {
 			$files[] = $results;
 		}
 
+		$instance = $this;
 		/**
 		 * Filter list of files during this import.
 		 *
 		 * @since 3.0.0 Available since 3.0.0
 		 * @param array $files List of files.
-		 * @param Protocol_Base $this The import object.
+		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $this );
+		return apply_filters( 'eml_external_files_infos', $files, $instance );
 	}
 
 	/**
 	 * Get infos from single given URL.
 	 *
-	 * @param string               $file_path The FTP path.
-	 * @param WP_Filesystem_FTPext $ftp_connection The FTP connection object.
+	 * @param string $url The FTP path.
 	 *
 	 * @return array
 	 */
-	private function get_url_info( string $file_path, WP_Filesystem_FTPext $ftp_connection ): array {
+	public function get_url_info( string $url ): array {
+		// use file path as name for this in this protocol handler.
+		$file_path = $url;
+
 		// initialize the file infos array.
 		$results = array(
 			'title'         => basename( $file_path ),
@@ -312,6 +315,10 @@ class Ftp extends Protocol_Base {
 			'url'           => $file_path,
 			'last-modified' => '',
 		);
+
+		// get the FTP connection handler.
+		// TODO check if we do not open double connection in one rush.
+		$ftp_connection = $this->get_connection( $url );
 
 		// get the file contents.
 		if ( ! $ftp_connection->is_readable( $file_path ) ) {
@@ -465,7 +472,7 @@ class Ftp extends Protocol_Base {
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
 		// bail if URL is empty.
 		if ( empty( $url ) ) {
 			return false;
@@ -479,9 +486,7 @@ class Ftp extends Protocol_Base {
 		$file_info = pathinfo( $file_path );
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );

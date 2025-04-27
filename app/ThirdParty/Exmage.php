@@ -261,13 +261,6 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 				continue;
 			}
 
-			// bail if protocol handler does not support get_url_info (which should never happen as Exmage only support http).
-			if ( ! method_exists( $protocol_handler, 'get_url_info' ) ) {
-				// show progress.
-				$progress ? $progress->tick() : '';
-				continue;
-			}
-
 			// check and set availability.
 			$external_files_obj->set_availability( $protocol_handler->check_availability( $url ) );
 

@@ -396,9 +396,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$youtube_channel_search_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' . $directory . '&maxResults=' . $max_results . '&key=' . $api_key;
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// get the content from external URL.
 		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );
@@ -627,9 +625,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$youtube_channel_search_url = $this->get_api_url() . $channel_id . '&maxResults=100&key=' . $api_key;
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// get the content from external URL.
 		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );

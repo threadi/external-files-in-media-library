@@ -59,11 +59,11 @@ Run in main directory:
 
 ### Run
 
-`vendor/bin/phpcs --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml .`
+`vendor/bin/phpcs --standard=ruleset.xml .`
 
 ### Repair
 
-`vendor/bin/phpcbf --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/app/Dependencies/* --standard=ruleset.xml .`
+`vendor/bin/phpcbf --standard=ruleset.xml .`
 
 ## Generate documentation
 
