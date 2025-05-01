@@ -71,10 +71,10 @@ class Imgur implements Service {
 	/**
 	 * Add allowed http state for Imgur.
 	 *
-	 * @param array  $http_states List of HTTP-states.
-	 * @param string $url The used URL.
+	 * @param array<int> $http_states List of HTTP-states.
+	 * @param string     $url The used URL.
 	 *
-	 * @return array
+	 * @return array<int>
 	 */
 	public function add_http_state( array $http_states, string $url ): array {
 		// bail if this is not an imgur-URL.

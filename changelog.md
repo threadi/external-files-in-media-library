@@ -16,6 +16,9 @@
 ### Fixed
 
 - Fixed to early loading of translations
+- Fixed error on GoogleDrive import which would break if a duplicate is detected
+- Fixed potential error of sodium encryption is used and failed
+- Fixed faulty check for existing schedules
 - Fixed typos
 
 ## [3.1.1] - 2025-04-05

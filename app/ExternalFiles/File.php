@@ -96,7 +96,7 @@ class File {
 			$url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
 
 			// bail if returned value is not a string.
-			if( ! is_string( $url ) ) {
+			if ( ! is_string( $url ) ) {
 				return '';
 			}
 
@@ -109,7 +109,7 @@ class File {
 			return $this->url;
 		}
 
-		$true = true;
+		$true     = true;
 		$instance = $this;
 		/**
 		 * Filter whether file should be proxied.
@@ -195,7 +195,7 @@ class File {
 		$mime_type = get_post_mime_type( $this->get_id() );
 
 		// bail if returned value is not a string.
-		if( ! is_string( $mime_type ) ) {
+		if ( ! is_string( $mime_type ) ) {
 			return '';
 		}
 
@@ -351,7 +351,7 @@ class File {
 		$attachment_url = get_post_meta( $this->get_id(), '_wp_attached_file', true );
 
 		// bail if value is not a string.
-		if( ! is_string( $attachment_url ) ) {
+		if ( ! is_string( $attachment_url ) ) {
 			return '';
 		}
 
@@ -463,7 +463,7 @@ class File {
 		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
 		// bail if temp file could not be loaded.
-		if ( ! $tmp_file ) {
+		if ( ! is_string( $tmp_file ) ) {
 			return;
 		}
 
@@ -471,7 +471,7 @@ class File {
 		$body = $wp_filesystem->get_contents( $tmp_file );
 
 		// bail if no contents returned.
-		if( ! $body ) {
+		if ( ! $body ) {
 			return;
 		}
 
@@ -604,7 +604,7 @@ class File {
 		$login = get_post_meta( $this->get_id(), 'eml_login', true );
 
 		// bail if no string returned.
-		if( ! is_string( $login ) ) {
+		if ( ! is_string( $login ) ) {
 			return '';
 		}
 
@@ -627,7 +627,7 @@ class File {
 		$password = get_post_meta( $this->get_id(), 'eml_password', true );
 
 		// bail if no string returned.
-		if( ! is_string( $password ) ) {
+		if ( ! is_string( $password ) ) {
 			return '';
 		}
 
@@ -711,7 +711,7 @@ class File {
 		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url(), $wp_filesystem );
 
 		// bail if no temp file could be loaded.
-		if ( ! $tmp_file ) {
+		if ( ! is_string( $tmp_file ) ) {
 			return false;
 		}
 
@@ -749,12 +749,12 @@ class File {
 		$upload_dir = wp_get_upload_dir();
 
 		// bail if baseurl is not a string.
-		if( ! is_string( $upload_dir['baseurl'] ) ) {
+		if ( ! is_string( $upload_dir['baseurl'] ) ) {
 			return false;
 		}
 
 		// get the local URL.
-		$local_url  = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
 
 		// update attachment setting.
 		update_post_meta( $this->get_id(), '_wp_attached_file', $local_url );
@@ -766,7 +766,7 @@ class File {
 		$file = get_attached_file( $this->get_id() );
 
 		// bail if file is not a string.
-		if( ! is_string( $file ) ) {
+		if ( ! is_string( $file ) ) {
 			return false;
 		}
 
@@ -776,12 +776,12 @@ class File {
 		if ( ! empty( $meta_data['sizes'] ) ) {
 			foreach ( $meta_data['sizes'] as $meta_file ) {
 				// bail if meta_file is not an array.
-				if( ! is_array( $meta_file ) ) {
+				if ( ! is_array( $meta_file ) ) {
 					continue;
 				}
 
 				// bail if file is not a string.
-				if( ! is_string( $meta_file['file'] ) ) {
+				if ( ! is_string( $meta_file['file'] ) ) {
 					continue;
 				}
 
@@ -831,7 +831,7 @@ class File {
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		// bail if protocol handler could not be loaded.
-		if( ! $protocol_handler_obj ) {
+		if ( ! $protocol_handler_obj ) {
 			return false;
 		}
 
@@ -844,7 +844,7 @@ class File {
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 
 		// bail if meta-data could not be loaded.
-		if( ! $meta_data ) {
+		if ( ! $meta_data ) {
 			$meta_data = array();
 		}
 
@@ -852,7 +852,7 @@ class File {
 		$sizes = get_post_meta( $this->get_id(), '_wp_attachment_backup_sizes', true );
 
 		// bail if sizes is not an array.
-		if( ! is_array( $sizes ) ) {
+		if ( ! is_array( $sizes ) ) {
 			$sizes = array();
 		}
 
@@ -860,7 +860,7 @@ class File {
 		$file = get_attached_file( $this->get_id() );
 
 		// bail if file is not a string.
-		if( ! is_string( $file ) ) {
+		if ( ! is_string( $file ) ) {
 			return false;
 		}
 
@@ -926,7 +926,7 @@ class File {
 		// loop through the sizes.
 		foreach ( $image_meta_data['sizes'] as $size_data ) {
 			// bail if size_data is not an array.
-			if( ! is_array( $size_data ) ) {
+			if ( ! is_array( $size_data ) ) {
 				continue;
 			}
 

@@ -27,7 +27,6 @@ class File extends File_Types_Base {
 	 * Output of proxied file.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
 		// bail if no file is set.

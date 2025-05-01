@@ -190,7 +190,7 @@ class Http extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string>> List of files from the given URL with its infos.
+	 * @return array<int,array<string,mixed>> List of files from the given URL with its infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -271,7 +271,7 @@ class Http extends Protocol_Base {
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 *
-			 * @param array<string> $results The results.
+			 * @param array<int,array<string>> $results The results.
 			 * @param string $content The content to parse.
 			 * @param string $url The used URL.
 			 *
@@ -436,7 +436,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @param string $url The URL to check.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
 		if ( false === $this->check_url( $url ) ) {
@@ -509,9 +509,9 @@ class Http extends Protocol_Base {
 		 *
 		 * @since        1.1.0 Available since 1.1.0
 		 *
-		 * @param array  $results List of detected file settings.
+		 * @param array<string,mixed>  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
-		 * @param array $response_headers The response header.
+		 * @param array<string,mixed> $response_headers The response header.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
@@ -523,7 +523,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @source WordPress-Importer
 	 *
-	 * @param array $disposition_header The disposition header-list.
+	 * @param array<string> $disposition_header The disposition header-list.
 	 *
 	 * @return ?string
 	 * @noinspection DuplicatedCode
@@ -676,7 +676,7 @@ class Http extends Protocol_Base {
 	/**
 	 * Create http header for each request.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function get_header_args(): array {
 		// define basic header.
@@ -688,17 +688,16 @@ class Http extends Protocol_Base {
 
 		// add credentials if set.
 		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
-			if ( ! empty( $args['headers']['Authorization'] ) ) {
-				$args['headers'] = array();
-			}
-			$args['headers']['Authorization'] = 'Basic ' . base64_encode( $this->get_login() . ':' . $this->get_password() );
+			$args['headers'] = array(
+				'Authorization' => 'Basic ' . base64_encode( $this->get_login() . ':' . $this->get_password() ),
+			);
 		}
 
 		/**
 		 * Filter the resulting header.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $args List of headers.
+		 * @param array<string,mixed> $args List of headers.
 		 */
 		return apply_filters( 'eml_http_header_args', $args );
 	}
@@ -731,6 +730,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<integer> $list List of http states.
+		 * @param string $url The requested URL.
 		 */
 		return apply_filters( 'eml_http_states', $list, $url );
 	}
@@ -788,9 +788,15 @@ class Http extends Protocol_Base {
 
 		// bail if error occurred.
 		if ( is_wp_error( $tmp_file ) ) {
+			// secure the file.
+			$file_json = wp_json_encode( $tmp_file );
+			if ( ! $file_json ) {
+				$file_json = '';
+			}
+
 			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( wp_json_encode( $tmp_file ) ) . '</code>' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( $file_json ) . '</code>' ), esc_url( $this->get_url() ), 'error' );
 
 			// return empty array as we got not the file.
 			return false;

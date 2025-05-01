@@ -10,10 +10,8 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
-use WP_Filesystem_FTPext;
 use WP_Query;
 use WP_Role;
 use WP_User;
@@ -142,7 +140,7 @@ class Helper {
 		}
 
 		// bail if first entry does not exist.
-		if( empty( $roles[0] ) ) {
+		if ( empty( $roles[0] ) ) {
 			return 0;
 		}
 
@@ -420,7 +418,7 @@ class Helper {
 		$file_path_info = pathinfo( $filename );
 
 		// bail if path info is not an array.
-		if ( ! is_array( $file_path_info ) ) {
+		if ( ! is_array( $file_path_info ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return $filename;
 		}
 
@@ -436,7 +434,7 @@ class Helper {
 	/**
 	 * Return the possible intervals as array.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public static function get_intervals(): array {
 		// collect the list.
@@ -543,11 +541,11 @@ class Helper {
 	/**
 	 * Add new entry with its key on specific position in array.
 	 *
-	 * @param array|null $fields The array we want to change.
-	 * @param int        $position The position where the new array should be added.
-	 * @param array      $array_to_add The new array which should be added.
+	 * @param array<int,mixed>|null $fields The array we want to change.
+	 * @param int                   $position The position where the new array should be added.
+	 * @param array<int,mixed>      $array_to_add The new array which should be added.
 	 *
-	 * @return array
+	 * @return array<int,mixed>
 	 */
 	public static function add_array_in_array_on_position( array|null $fields, int $position, array $array_to_add ): array {
 		if ( is_null( $fields ) ) {
@@ -565,7 +563,7 @@ class Helper {
 		global $wp_query;
 
 		// bail if wp_query is not WP_Query.
-		if( ! $wp_query instanceof WP_Query ) {
+		if ( ! $wp_query instanceof WP_Query ) {
 			return '';
 		}
 
@@ -587,19 +585,11 @@ class Helper {
 	 */
 	public static function get_wp_filesystem( string $type = '' ): WP_Filesystem_Base {
 		// get WP Filesystem-handler for local files if requested.
-		if ( ! empty( $type ) ) {
-			switch( $type ) {
-				case 'direct':
-					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
-					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
+		if ( ! empty( $type ) && 'direct' === $type ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
 
-					return new WP_Filesystem_Direct( false );
-				case 'ftp':
-					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
-					require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpext.php'; // @phpstan-ignore requireOnce.fileNotFound
-
-					return new WP_Filesystem_FTPext( false );
-			}
+			return new WP_Filesystem_Direct( false );
 		}
 
 		// get global WP Filesystem handler.
@@ -615,7 +605,7 @@ class Helper {
 		}
 
 		// return local object on any error.
-		if ( $wp_filesystem->errors instanceof WP_Error && $wp_filesystem->errors->has_errors() ) {
+		if ( $wp_filesystem->errors->has_errors() ) {
 			// embed the local directory object.
 			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
 			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
@@ -636,7 +626,7 @@ class Helper {
 	 */
 	public static function get_as_string( mixed $value ): string {
 		// bail if $value is not a string.
-		if( ! is_string( $value ) ) {
+		if ( ! is_string( $value ) ) {
 			return '';
 		}
 
@@ -653,7 +643,7 @@ class Helper {
 	 */
 	public static function get_db_results( mixed $results ): array {
 		// bail if results are not an array.
-		if( ! is_array( $results ) ) {
+		if ( ! is_array( $results ) ) {
 			return array();
 		}
 
@@ -670,7 +660,7 @@ class Helper {
 	 */
 	public static function get_db_result( mixed $results ): array {
 		// bail if results are not an array.
-		if( ! is_array( $results ) ) {
+		if ( ! is_array( $results ) ) {
 			return array();
 		}
 

@@ -115,7 +115,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string>> List of file-infos.
+	 * @return array<int,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -135,6 +135,14 @@ class Ftp extends Protocol_Base {
 			Log::get_instance()->create( __( 'FTP-path looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 			return array();
 		}
+
+		// bail if scheme, path and host could not be read.
+		if ( ! isset( $parse_url['scheme'], $parse_url['host'], $parse_url['path'] ) ) {
+			return array();
+		}
+
+		// get the scheme.
+		$scheme = $parse_url['scheme'];
 
 		// get the host.
 		$host = $parse_url['host'];
@@ -171,15 +179,18 @@ class Ftp extends Protocol_Base {
 				return array();
 			}
 
-			// convert the dirlist-array to a file_list array with complete URLs as value for queuing.
-			$file_list_new = array();
-			foreach ( $file_list as $filename => $settings ) {
-				$file_list_new[] = $this->get_url() . $filename;
-			}
-
 			// add files to list in queue mode.
 			if ( $this->is_queue_mode() ) {
+				// convert the dirlist-array to a file_list array with complete URLs as value for queuing.
+				$file_list_new = array();
+				foreach ( $file_list as $filename => $settings ) {
+					$file_list_new[] = $this->get_url() . $filename;
+				}
+
+				// add the list to queue.
 				Queue::get_instance()->add_urls( $file_list_new, $this->get_login(), $this->get_password() );
+
+				// return empty array to prevent any further processing.
 				return array();
 			}
 
@@ -189,7 +200,7 @@ class Ftp extends Protocol_Base {
 			 * @since 2.0.0 Available since 2.0.0.
 			 *
 			 * @param string $url   The URL to import.
-			 * @param array $file_list List of files.
+			 * @param array<string,mixed> $file_list List of files.
 			 */
 			do_action( 'eml_ftp_directory_import_files', $this->get_url(), $file_list );
 
@@ -200,7 +211,7 @@ class Ftp extends Protocol_Base {
 			// loop through the matches.
 			foreach ( $file_list as $filename => $settings ) {
 				// get the file path on FTP.
-				$file_path = $path . $filename;
+				$file_path = $scheme . '://' . $host . $path . $filename;
 
 				// get URL.
 				$file_url = $this->get_url() . $filename;
@@ -245,9 +256,9 @@ class Ftp extends Protocol_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 *
 				 * @param string $file_url   The URL to import.
-				 * @param array $file_list_new List of files to process.
+				 * @param array $file_list List of files to process.
 				 */
-				do_action( 'eml_ftp_directory_import_file_before_to_list', $file_url, $file_list_new );
+				do_action( 'eml_ftp_directory_import_file_before_to_list', $file_url, $file_list );
 
 				// add file to the list.
 				$files[] = $results;
@@ -264,12 +275,12 @@ class Ftp extends Protocol_Base {
 
 			// add files to list in queue mode.
 			if ( $this->is_queue_mode() ) {
-				Queue::get_instance()->add_urls( array( $path ), $this->get_login(), $this->get_password() );
+				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
 				return array();
 			}
 
 			// add file to the list.
-			$results = $this->get_url_info( $path, $ftp_connection );
+			$results = $this->get_url_info( $this->get_url() );
 
 			// bail if results are empty.
 			if ( empty( $results ) ) {
@@ -299,7 +310,7 @@ class Ftp extends Protocol_Base {
 	 *
 	 * @param string $url The FTP path.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
 		// use file path as name for this in this protocol handler.
@@ -317,12 +328,19 @@ class Ftp extends Protocol_Base {
 		);
 
 		// get the FTP connection handler.
-		// TODO check if we do not open double connection in one rush.
 		$ftp_connection = $this->get_connection( $url );
+
+		// bail if connection is not available.
+		if ( ! $ftp_connection ) {
+			Log::get_instance()->create( __( 'Could not get FTP-connection.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+
+			// return empty array as we got not the file.
+			return array();
+		}
 
 		// get the file contents.
 		if ( ! $ftp_connection->is_readable( $file_path ) ) {
-			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we got not the file.
 			return array();
@@ -394,7 +412,13 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'FTP-path looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			return false;
+		}
+
+		// bail if scheme and host could not be loaded.
+		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 			return false;
 		}
 
@@ -422,9 +446,15 @@ class Ftp extends Protocol_Base {
 			return false;
 		}
 
+		// get connection arguments as JSON.
+		$connection_arguments_json = wp_json_encode( $connection_arguments );
+		if ( ! $connection_arguments_json ) {
+			$connection_arguments_json = '';
+		}
+
 		// check if connection is already in cache.
-		if ( ! empty( $this->ftp_connections[ md5( wp_json_encode( $connection_arguments ) ) ] ) ) {
-			return $this->ftp_connections[ md5( wp_json_encode( $connection_arguments ) ) ];
+		if ( ! empty( $this->ftp_connections[ md5( $connection_arguments_json ) ] ) ) {
+			return $this->ftp_connections[ md5( $connection_arguments_json ) ];
 		}
 
 		// get the connection.
@@ -438,7 +468,7 @@ class Ftp extends Protocol_Base {
 		}
 
 		// add connection to the list.
-		$this->ftp_connections[ md5( wp_json_encode( $connection_arguments ) ) ] = $connection;
+		$this->ftp_connections[ md5( $connection_arguments_json ) ] = $connection;
 
 		// return the connection object.
 		return $connection;
@@ -479,20 +509,40 @@ class Ftp extends Protocol_Base {
 		}
 
 		// remove protocol and domain from URL.
-		$url_info  = wp_parse_url( $url );
+		$url_info = wp_parse_url( $url );
+
+		// bail if path could not be loaded.
+		if ( ! isset( $url_info['path'] ) ) {
+			return false;
+		}
+
+		// get the file path.
 		$file_path = $url_info['path'];
 
 		// get file infos.
 		$file_info = pathinfo( $file_path );
 
+		// bail if extension could not be loaded.
+		if ( ! isset( $file_info['extension'] ) ) {
+			return false;
+		}
+
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
 
+		// get content of the file.
+		$content = $filesystem->get_contents( $file_path );
+
+		// bail if no content could be loaded.
+		if ( ! $content ) {
+			return false;
+		}
+
 		// and save the file there.
-		$wp_filesystem->put_contents( $tmp_file, $filesystem->get_contents( $file_path ) );
+		$wp_filesystem->put_contents( $tmp_file, $content );
 
 		// return the path to the tmp file.
 		return $tmp_file;

@@ -31,7 +31,7 @@ class OpenSsl extends Crypt_Base {
 
 		// initially generate a hash if it is empty.
 		if ( empty( $this->get_hash() ) ) {
-			$hash = hash( 'sha256', wp_rand() );
+			$hash = hash( 'sha256', (string) wp_rand() );
 			$this->set_hash( $hash );
 			update_option( EFML_HASH, $this->get_hash() );
 		}
@@ -47,11 +47,17 @@ class OpenSsl extends Crypt_Base {
 	 * @return string
 	 */
 	public function encrypt( string $plain_text ): string {
-		$cipher         = 'AES-128-CBC';
-		$iv_length      = openssl_cipher_iv_length( $cipher );
+		$cipher    = 'AES-128-CBC';
+		$iv_length = openssl_cipher_iv_length( $cipher );
+		if ( ! $iv_length ) {
+			return '';
+		}
 		$iv             = openssl_random_pseudo_bytes( $iv_length );
 		$ciphertext_raw = openssl_encrypt( $plain_text, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
-		$hmac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
+		if ( ! $ciphertext_raw ) {
+			return '';
+		}
+		$hmac = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
 		return base64_encode( base64_encode( $iv ) . ':' . base64_encode( $hmac . $ciphertext_raw ) );
 	}
 
@@ -65,7 +71,10 @@ class OpenSsl extends Crypt_Base {
 	public function decrypt( string $encrypted_text ): string {
 		$cipher    = 'AES-128-CBC';
 		$iv_length = openssl_cipher_iv_length( $cipher );
-		$c         = base64_decode( $encrypted_text );
+		if ( ! $iv_length ) {
+			return '';
+		}
+		$c = base64_decode( $encrypted_text );
 		if ( str_contains( $c, ':' ) ) {
 			$c_exploded     = explode( ':', $c );
 			$iv             = base64_decode( $c_exploded[0] );
@@ -80,7 +89,7 @@ class OpenSsl extends Crypt_Base {
 		}
 		$original_plaintext = openssl_decrypt( $ciphertext_raw, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
 		$calc_mac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
-		if ( $hmac && hash_equals( $hmac, $calc_mac ) ) {
+		if ( $original_plaintext && $hmac && hash_equals( $hmac, $calc_mac ) ) {
 			return $original_plaintext;
 		}
 		return '';

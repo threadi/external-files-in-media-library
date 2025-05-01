@@ -38,7 +38,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Get the table data
 	 *
-	 * @return array<string>
+	 * @return array<int,array<string,mixed>>
 	 */
 	private function table_data(): array {
 		// get state filter.
@@ -104,8 +104,8 @@ class Logs extends WP_List_Table {
 	/**
 	 * Define what data to show on each column of the table
 	 *
-	 * @param  array<string>  $item        Data for single column.
-	 * @param  String $column_name - Current iterated column name.
+	 * @param  array<string> $item        Data for single column.
+	 * @param  String        $column_name - Current iterated column name.
 	 *
 	 * @return string
 	 */
@@ -160,7 +160,7 @@ class Logs extends WP_List_Table {
 
 			// format the dialog configuration.
 			$dialog = wp_json_encode( $empty_dialog );
-			if( ! $dialog ) {
+			if ( ! $dialog ) {
 				$dialog = '';
 			}
 
@@ -275,7 +275,7 @@ class Logs extends WP_List_Table {
 
 			// format the dialog configuration.
 			$dialog = wp_json_encode( $dialog );
-			if( ! $dialog ) {
+			if ( ! $dialog ) {
 				$dialog = '';
 			}
 
@@ -291,7 +291,7 @@ class Logs extends WP_List_Table {
 				$edit_url = get_edit_post_link( $external_file_obj->get_id() );
 
 				// only add if edit_url is set.
-				if( is_string( $edit_url ) ) {
+				if ( is_string( $edit_url ) ) {
 					// link to the attachment edit page.
 					$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( $edit_url ) . '" title="' . esc_attr__( 'Edit this file', 'external-files-in-media-library' ) . '"></a>';
 				}

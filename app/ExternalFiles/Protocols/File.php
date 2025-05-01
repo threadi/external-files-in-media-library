@@ -25,7 +25,7 @@ class File extends Protocol_Base {
 	/**
 	 * List of supported tcp protocols.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array(
 		'file' => -1,
@@ -34,7 +34,7 @@ class File extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string>> List of file-infos.
+	 * @return array<int,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -111,7 +111,7 @@ class File extends Protocol_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 *
 				 * @param string $file_path   The filepath to import.
-				 * @param array $file_list List of files.
+				 * @param array<int,mixed> $file_list List of files.
 				 */
 				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
@@ -162,7 +162,7 @@ class File extends Protocol_Base {
 	 *
 	 * @param string $url The file path.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
 		// use file path as name for this in this protocol handler.
@@ -206,10 +206,16 @@ class File extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = $wp_filesystem->mtime( $file_path );
 
+		// get the file content.
+		$content = $wp_filesystem->get_contents( $file_path );
+		if ( ! $content ) {
+			return array();
+		}
+
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
 		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $wp_filesystem->get_contents( $file_path ) );
+		$wp_filesystem->put_contents( $results['tmp-file'], $content );
 
 		// get the size.
 		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );

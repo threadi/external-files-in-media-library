@@ -147,7 +147,7 @@ class Files {
 			$upload_dir = wp_get_upload_dir();
 
 			// bail if baseurl is not a string.
-			if( ! is_string( $upload_dir['baseurl'] ) ) {
+			if ( ! is_string( $upload_dir['baseurl'] ) ) {
 				return $url;
 			}
 
@@ -242,7 +242,7 @@ class Files {
 		// loop through them.
 		foreach ( $result->get_posts() as $attachment_id ) {
 			// bail if attachment_id is not an ID.
-			if( ! is_int( $attachment_id ) ) {
+			if ( ! is_int( $attachment_id ) ) {
 				continue;
 			}
 
@@ -402,7 +402,7 @@ class Files {
 
 			// get the title and url as string.
 			$title = Helper::get_as_string( $file_data['title'] );
-			$url = Helper::get_as_string( $file_data['url'] );
+			$url   = Helper::get_as_string( $file_data['url'] );
 
 			/**
 			 * Filter the title for a single file during import.
@@ -519,7 +519,7 @@ class Files {
 			$external_file_obj->set_availability( true );
 
 			// set filesize.
-			$external_file_obj->set_filesize( Helper::get_as_string($file_data['filesize'] ) );
+			$external_file_obj->set_filesize( absint( $file_data['filesize'] ) );
 
 			// mark if this file is an external file locally saved.
 			$external_file_obj->set_is_local_saved( (bool) $file_data['local'] );
@@ -677,7 +677,7 @@ class Files {
 		// loop through the results.
 		foreach ( $result->get_posts() as $attachment_id ) {
 			// bail if attachment_id is not an integer.
-			if( ! is_int( $attachment_id ) ) {
+			if ( ! is_int( $attachment_id ) ) {
 				continue;
 			}
 
@@ -732,7 +732,7 @@ class Files {
 		}
 
 		// bail if first result is not an int.
-		if( ! is_int( $result->posts[0] ) ) {
+		if ( ! is_int( $result->posts[0] ) ) {
 			return false;
 		}
 
@@ -782,8 +782,11 @@ class Files {
 			return false;
 		}
 
-		// get the external file object.
-		$external_file_obj = $this->get_file( $result->posts[0] );
+		// get the first entry.
+		$attachment_id = absint( $result->posts[0] );
+
+		// get the external file object for this attachment.
+		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if object could not be loaded or is not valid.
 		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
@@ -1024,15 +1027,24 @@ class Files {
 		if ( 0 === $attachment_id ) {
 			// send response as JSON.
 			wp_send_json( $result );
+			wp_die();
 		}
 
 		// get the single external file-object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( false === $external_file_obj ) {
 			// send response as JSON.
 			wp_send_json( $result );
+			wp_die();
+		}
+
+		// bail if file is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
+			// send response as JSON.
+			wp_send_json( $result );
+			wp_die();
 		}
 
 		// get protocol handler for this url.
@@ -1042,6 +1054,7 @@ class Files {
 		if ( ! $protocol_handler ) {
 			// send response as JSON.
 			wp_send_json( $result );
+			wp_die();
 		}
 
 		// check and save its availability.
@@ -1056,6 +1069,7 @@ class Files {
 
 			// send response as JSON.
 			wp_send_json( $result );
+			wp_die();
 		}
 
 		// return error if file is not available.
@@ -1073,9 +1087,9 @@ class Files {
 	 * URL-decode the file-title if it is used in admin (via AJAX).
 	 * Also sanitize the filename for full compatibility with requirements (incl. file extension).
 	 *
-	 * @param string $title The title to optimize.
-	 * @param string $url The used URL.
-	 * @param array  $file_data The file data.
+	 * @param string              $title The title to optimize.
+	 * @param string              $url The used URL.
+	 * @param array<string,mixed> $file_data The file data.
 	 *
 	 * @return string
 	 * @noinspection PhpUnusedParameterInspection
@@ -1121,6 +1135,7 @@ class Files {
 		// bail if id is not given.
 		if ( 0 === $attachment_id ) {
 			wp_send_json( $result );
+			wp_die();
 		}
 
 		// get the file.
@@ -1128,20 +1143,16 @@ class Files {
 
 		// bail if this is not an external file.
 		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
-			wp_send_json( $result );
-		}
-
-		// get the external URL.
-		$url = $external_file_obj->get_url( true );
-
-		// bail if file is not an external file.
-		if ( ! $external_file_obj->is_valid() ) {
 			$result = array(
 				'state'   => 'error',
 				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
 			);
 			wp_send_json( $result );
+			wp_die();
 		}
+
+		// get the external URL.
+		$url = $external_file_obj->get_url( true );
 
 		/**
 		 * Switch from local to external.
@@ -1151,6 +1162,7 @@ class Files {
 			if ( ! $external_file_obj->switch_to_external() ) {
 				$result['message'] = __( 'Error during switch to external hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
+				wp_die();
 			}
 
 			// create return message.
@@ -1167,6 +1179,7 @@ class Files {
 			if ( ! $external_file_obj->switch_to_local() ) {
 				$result['message'] = __( 'Error during switch to local hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
+				wp_die();
 			}
 
 			// create return message.
@@ -1187,8 +1200,8 @@ class Files {
 	/**
 	 * Change media row actions for URL-files.
 	 *
-	 * @param array<string,string>   $actions List of action.
-	 * @param WP_Post $post The Post.
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Post              $post The Post.
 	 *
 	 * @return array<string,string>
 	 */
@@ -1198,11 +1211,6 @@ class Files {
 
 		// bail if this is not an external file.
 		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
-			return $actions;
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
 			return $actions;
 		}
 
@@ -1267,11 +1275,11 @@ class Files {
 	/**
 	 * Prevent image downsizing for external hosted images.
 	 *
-	 * @param array|bool   $result        The resulting array with image-data.
-	 * @param int|string   $attachment_id The attachment ID.
-	 * @param array|string $size               The requested size.
+	 * @param bool|array<int,mixed> $result        The resulting array with image-data.
+	 * @param int|string            $attachment_id The attachment ID.
+	 * @param array<int>|string     $size               The requested size.
 	 *
-	 * @return bool|array<string|int>
+	 * @return bool|array<int,mixed>
 	 */
 	public function image_downsize( array|bool $result, int|string $attachment_id, array|string $size ): bool|array {
 		// get the external file object.
@@ -1310,7 +1318,7 @@ class Files {
 		}
 
 		// get image data.
-		$image_data = wp_get_attachment_metadata( $attachment_id );
+		$image_data = wp_get_attachment_metadata( absint( $attachment_id ) );
 
 		// if image data is fall, create the array manually.
 		if ( ! $image_data ) {
@@ -1326,8 +1334,8 @@ class Files {
 			// set return-array so that WP won't generate an image for it.
 			return array(
 				$external_file_obj->get_url(),
-				isset( $image_data['width'] ) ? $image_data['width'] : 0,
-				isset( $image_data['height'] ) ? $image_data['height'] : 0,
+				absint( $image_data['width'] ),
+				absint( $image_data['height'] ),
 				false,
 			);
 		}
@@ -1347,8 +1355,8 @@ class Files {
 			// return the thumb.
 			return array(
 				trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $public_filename,
-				$size[0],
-				$size[1],
+				absint( $size[0] ),
+				absint( $size[1] ),
 				false,
 			);
 		}
@@ -1361,8 +1369,8 @@ class Files {
 			// set return-array so that WP won't generate an image for it.
 			return array(
 				$external_file_obj->get_url(),
-				isset( $image_data['width'] ) ? $image_data['width'] : 0,
-				isset( $image_data['height'] ) ? $image_data['height'] : 0,
+				absint( $image_data['width'] ),
+				absint( $image_data['height'] ),
 				false,
 			);
 		}
@@ -1372,10 +1380,20 @@ class Files {
 		 */
 
 		// resize the image.
-		$image_editor->resize( $size[0], $size[1], true );
+		$image_editor->resize( absint( $size[0] ), absint( $size[1] ), true );
 
 		// save the resized image and get its data.
 		$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
+
+		// bail on error.
+		if ( is_wp_error( $new_image_data ) ) {
+			return array(
+				$external_file_obj->get_url(),
+				absint( $image_data['width'] ),
+				absint( $image_data['height'] ),
+				false,
+			);
+		}
 
 		// remove the path from the resized image data.
 		unset( $new_image_data['path'] );
@@ -1385,7 +1403,7 @@ class Files {
 
 		// update the meta data.
 		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
-		wp_update_attachment_metadata( $attachment_id, $image_data );
+		wp_update_attachment_metadata( absint( $attachment_id ), $image_data );
 
 		// log the event.
 		/* translators: %1$s will be replaced by the image sizes. */
@@ -1433,6 +1451,10 @@ class Files {
 
 		// delete the import marker for each of these files.
 		foreach ( $result->get_posts() as $attachment_id ) {
+			// get the ID.
+			$attachment_id = absint( $attachment_id );
+
+			// delete the entry.
 			delete_post_meta( $attachment_id, EFML_POST_IMPORT_MARKER );
 		}
 	}
@@ -1455,8 +1477,16 @@ class Files {
 			return $redirect_url;
 		}
 
+		// get actual ID.
+		$post_id = get_the_ID();
+
+		// bail if no post ID is given.
+		if ( ! $post_id ) {
+			return $redirect_url;
+		}
+
 		// get the external files.
-		$external_file_obj = $this->get_file( get_the_ID() );
+		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
 		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
@@ -1474,11 +1504,11 @@ class Files {
 	/**
 	 * Change the URL in srcset-attribute for each attachment.
 	 *
-	 * @param array<string>  $sources Array with srcset-data if the image.
-	 * @param array<string>  $size_array Array with sizes for images.
-	 * @param string $image_src The src of the image.
-	 * @param array<string>  $image_meta The image meta-data.
-	 * @param int    $attachment_id The attachment-ID.
+	 * @param array<string> $sources Array with srcset-data if the image.
+	 * @param array<string> $size_array Array with sizes for images.
+	 * @param string        $image_src The src of the image.
+	 * @param array<string> $image_meta The image meta-data.
+	 * @param int           $attachment_id The attachment-ID.
 	 *
 	 * @return array<string>
 	 * @noinspection PhpUnusedParameterInspection
@@ -1510,7 +1540,7 @@ class Files {
 	 * to change the link-target if attachment-pages are disabled via attachment_link-hook.
 	 *
 	 * @param array<string,string> $data The image-data.
-	 * @param int   $attachment_id The attachment-ID.
+	 * @param int                  $attachment_id The attachment-ID.
 	 *
 	 * @return array<string,string>
 	 */
@@ -1524,7 +1554,7 @@ class Files {
 		}
 
 		// set permalink as file.
-		$data['file'] = get_permalink( $attachment_id );
+		$data['file'] = (string) get_permalink( $attachment_id );
 
 		// return resulting data array.
 		return $data;
@@ -1534,7 +1564,7 @@ class Files {
 	 * Set the import-marker for all attachments.
 	 *
 	 * @param array<int,array<string,mixed>> $post_meta The attachment-meta.
-	 * @param int   $post_id The attachment-ID.
+	 * @param int                            $post_id The attachment-ID.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -1557,9 +1587,9 @@ class Files {
 	/**
 	 * Set the file title.
 	 *
-	 * @param string $title The title.
-	 * @param string $url   The used URL.
-	 * @param array<string,array<string,mixed>>  $file_data The file data.
+	 * @param string              $title The title.
+	 * @param string              $url   The used URL.
+	 * @param array<string,mixed> $file_data The file data.
 	 *
 	 * @return string
 	 */
@@ -1584,7 +1614,7 @@ class Files {
 		$title = basename( $url_info['path'] );
 
 		// add file extension if we support the mime-type and if the title does not have any atm.
-		if ( empty( pathinfo( $title, PATHINFO_EXTENSION ) ) && ! empty( $mime_types[ $file_data['mime-type'] ] ) ) {
+		if ( ! empty( $mime_types[ $file_data['mime-type'] ] ) && empty( pathinfo( $title, PATHINFO_EXTENSION ) ) ) {
 			$title .= '.' . $mime_types[ $file_data['mime-type'] ]['ext'];
 		}
 
@@ -1651,10 +1681,10 @@ class Files {
 	/**
 	 * Parse the content by HTML-links to get their href-values.
 	 *
-	 * @param array<string,mixed>  $matches The matches.
-	 * @param string $content The content to parse.
+	 * @param array<int,array<string>> $matches The matches.
+	 * @param string                   $content The content to parse.
 	 *
-	 * @return array<string,mixed>
+	 * @return array<int,array<string>>
 	 */
 	public function use_link_regex( array $matches, string $content ): array {
 		// parse all links in the given content to get their URLs.
@@ -1695,8 +1725,8 @@ class Files {
 	 * As soon as the assumed maximum value is reached, all other URLs in the run are placed
 	 * in the queue and the import is aborted by killing the PHP process.
 	 *
-	 * @param string $url The actual processed file URL.
-	 * @param array  $file_list List of files to process.
+	 * @param string           $url The actual processed file URL.
+	 * @param array<int,mixed> $file_list List of files to process.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
@@ -1767,12 +1797,12 @@ class Files {
 	 * Check the srcset metadata for external files. Remove 'file' entry if file could not have thumbs
 	 * as this results in possible warnings via @media.php.
 	 *
-	 * @param array  $image_meta The meta data.
-	 * @param array  $size_array The size array.
-	 * @param string $image_src The src.
-	 * @param int    $attachment_id The attachment id.
+	 * @param array<string,mixed> $image_meta The meta data.
+	 * @param array<string,mixed> $size_array The size array.
+	 * @param string              $image_src The src.
+	 * @param int                 $attachment_id The attachment id.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function check_srcset_meta( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
@@ -1799,11 +1829,11 @@ class Files {
 	/**
 	 * Add file date to post array to set the date of the external file.
 	 *
-	 * @param array  $post_array The attachment settings.
-	 * @param string $url        The requested external URL.
-	 * @param array  $file_data  List of file settings detected by importer.
+	 * @param array<string,mixed> $post_array The attachment settings.
+	 * @param string              $url        The requested external URL.
+	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_file_date( array $post_array, string $url, array $file_data ): array {

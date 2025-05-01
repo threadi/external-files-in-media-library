@@ -96,8 +96,8 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Remove actions from this plugin in row listing.
 	 *
-	 * @param array<string,string>   $actions List if actions.
-	 * @param WP_Post $post The post as object.
+	 * @param array<string,string> $actions List if actions.
+	 * @param WP_Post              $post The post as object.
 	 *
 	 * @return array<string,string>
 	 */

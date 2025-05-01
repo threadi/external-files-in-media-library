@@ -76,17 +76,17 @@ class BlockEditor extends ThirdParty_Base implements ThirdParty {
 		$script_asset = require $script_asset_path;
 
 		// bail if assets are not an array.
-		if( ! is_array( $script_asset ) ) {
+		if ( ! is_array( $script_asset ) ) {
 			return;
 		}
 
 		// bail if dependencies is not an array.
-		if( ! is_array( $script_asset['dependencies']) ) {
+		if ( ! is_array( $script_asset['dependencies'] ) ) {
 			return;
 		}
 
 		// bail if version is not a string.
-		if( ! is_string( $script_asset['version'] ) ) {
+		if ( ! is_string( $script_asset['version'] ) ) {
 			return;
 		}
 

@@ -207,8 +207,8 @@ class Admin {
 	/**
 	 * Add links in row meta.
 	 *
-	 * @param array<string>  $links List of links.
-	 * @param string $file The requested plugin file name.
+	 * @param array<string> $links List of links.
+	 * @param string        $file The requested plugin file name.
 	 *
 	 * @return array<string>
 	 */

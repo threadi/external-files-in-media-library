@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Exception;
 use ExternalFilesInMediaLibrary\Plugin\Crypt_Base;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use SodiumException;
 
@@ -88,13 +89,17 @@ class Sodium extends Crypt_Base {
 			// split into the parts after converting from base64- to binary-string.
 			$parts = explode( ':', sodium_base642bin( $encrypted_text, $this->get_coding_id() ) );
 
-			// bail if array is empty or does not have 2 entries.
-			if ( empty( $parts ) || count( $parts ) !== 2 ) {
+			// bail if array does not have 2 entries.
+			if ( count( $parts ) !== 2 ) {
 				return '';
 			}
 
 			// return decrypted text.
-			return sodium_crypto_aead_aes256gcm_decrypt( $parts[1], '', $parts[0], $this->get_hash() );
+			$decrypt = sodium_crypto_aead_aes256gcm_decrypt( $parts[1], '', $parts[0], $this->get_hash() );
+			if ( ! $decrypt ) {
+				return '';
+			}
+			return $decrypt;
 		} catch ( Exception $e ) {
 			// log this event.
 			/* translators: %1$s will nbe replaced by our support-URL. */

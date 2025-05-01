@@ -91,7 +91,7 @@ class Queue {
 		$general_tab_main = $settings_obj->get_section( 'settings_section_main' );
 
 		// bail if section could not be loaded.
-		if( ! $general_tab_main ) {
+		if ( ! $general_tab_main ) {
 			return;
 		}
 
@@ -201,8 +201,8 @@ class Queue {
 	public function install(): void {
 		global $wpdb;
 
-		// bail if $wpdb is not
-		if( ! $wpdb instanceof wpdb ) {
+		// bail if $wpdb is not.
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
@@ -227,17 +227,17 @@ class Queue {
 	/**
 	 * Add list of URLs to the queue.
 	 *
-	 * @param array<string>  $urls List of URLs.
-	 * @param string $login The login to use.
-	 * @param string $password The password to use.
+	 * @param array<string|int,mixed> $urls List of URLs.
+	 * @param string                  $login The login to use.
+	 * @param string                  $password The password to use.
 	 *
 	 * @return void
 	 */
 	public function add_urls( array $urls, string $login = '', string $password = '' ): void {
 		global $wpdb;
 
-		// bail if $wpdb is not
-		if( ! $wpdb instanceof wpdb ) {
+		// bail if $wpdb is not.
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
@@ -442,12 +442,12 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
 		// truncate the content of the table.
-		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', Helper::get_as_string( $wpdb->prefix ) . 'eml_queue' ) );
+		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->prefix . 'eml_queue' ) );
 	}
 
 	/**
@@ -515,7 +515,7 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return array();
 		}
 
@@ -523,21 +523,21 @@ class Queue {
 			// run query to unlimited list.
 			if ( $unlimited ) {
 				// return all URLs for requested state.
-				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . Helper::get_as_string( $wpdb->prefix ) . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 			}
 
 			// return limited URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . Helper::get_as_string( $wpdb->prefix ) . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
 		// run query to unlimited list.
 		if ( $unlimited ) {
 			// return all URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . Helper::get_as_string( $wpdb->prefix ) . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
 		// get limited URLs for requested state.
-		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . Helper::get_as_string( $wpdb->prefix ) . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -551,12 +551,12 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return array();
 		}
 
 		// return the data of the single URL.
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . Helper::get_as_string( $wpdb->prefix ) . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -570,7 +570,7 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return array();
 		}
 
@@ -590,7 +590,7 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
@@ -611,10 +611,10 @@ class Queue {
 				'id' => $id,
 			),
 			array(
-				'%s'
+				'%s',
 			),
 			array(
-				'%d'
+				'%d',
 			)
 		);
 
@@ -633,7 +633,7 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
@@ -651,7 +651,7 @@ class Queue {
 				'id' => $id,
 			),
 			array(
-				'%d'
+				'%d',
 			)
 		);
 
@@ -671,7 +671,7 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
@@ -717,12 +717,12 @@ class Queue {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
-		if( ! $wpdb instanceof wpdb ) {
+		if ( ! $wpdb instanceof wpdb ) {
 			return;
 		}
 
 		// remove the table.
-		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', Helper::get_as_string( $wpdb->prefix ) . 'eml_queue' ) );
+		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->prefix . 'eml_queue' ) );
 	}
 
 	/**
@@ -777,7 +777,7 @@ class Queue {
 	/**
 	 * Add URLs for queue if the config "add_to_queue" from form request is set.
 	 *
-	 * @param bool  $return_value The return value to use (true to import queue).
+	 * @param bool          $return_value The return value to use (true to import queue).
 	 * @param array<string> $config The config from form.
 	 *
 	 * @return bool

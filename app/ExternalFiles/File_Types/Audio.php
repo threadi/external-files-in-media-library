@@ -142,7 +142,7 @@ class Audio extends File_Types_Base {
 		 * Run additional tasks to add custom meta data on external hostet files.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
-		 * @param File $external_file_obj The external files object.
+		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 */
 		do_action( 'eml_video_meta_data', $external_file_obj );
 	}

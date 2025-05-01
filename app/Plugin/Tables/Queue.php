@@ -95,8 +95,8 @@ class Queue extends WP_List_Table {
 	/**
 	 * Define what data to show on each column of the table
 	 *
-	 * @param  array<string, string>  $item        Data for single column.
-	 * @param  string $column_name - Current iterated column name.
+	 * @param  array<string, string> $item        Data for single column.
+	 * @param  string                $column_name - Current iterated column name.
 	 *
 	 * @return string
 	 * @noinspection PhpMissingReturnTypeInspection
@@ -153,7 +153,7 @@ class Queue extends WP_List_Table {
 
 			// format the dialog configuration.
 			$dialog = wp_json_encode( $process_dialog );
-			if( ! $dialog ) {
+			if ( ! $dialog ) {
 				$dialog = '';
 			}
 
@@ -193,7 +193,7 @@ class Queue extends WP_List_Table {
 
 			// format the dialog configuration.
 			$dialog = wp_json_encode( $clear_dialog );
-			if( ! $dialog ) {
+			if ( ! $dialog ) {
 				$dialog = '';
 			}
 
@@ -236,7 +236,7 @@ class Queue extends WP_List_Table {
 
 			// format the dialog configuration.
 			$dialog = wp_json_encode( $clear_errors_dialog );
-			if( ! $dialog ) {
+			if ( ! $dialog ) {
 				$dialog = '';
 			}
 
@@ -340,7 +340,7 @@ class Queue extends WP_List_Table {
 
 		// format the dialog configuration.
 		$dialog = wp_json_encode( $dialog );
-		if( ! $dialog ) {
+		if ( ! $dialog ) {
 			$dialog = '';
 		}
 
@@ -379,7 +379,7 @@ class Queue extends WP_List_Table {
 
 		// format the dialog configuration.
 		$dialog = wp_json_encode( $dialog );
-		if( ! $dialog ) {
+		if ( ! $dialog ) {
 			$dialog = '';
 		}
 

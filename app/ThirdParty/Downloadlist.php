@@ -61,8 +61,8 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Set the rel-attribute for external files.
 	 *
-	 * @param string $rel_attribute The rel-value.
-	 * @param array<string,string>  $file The file-attributes.
+	 * @param string               $rel_attribute The rel-value.
+	 * @param array<string,string> $file The file-attributes.
 	 *
 	 * @return string
 	 */

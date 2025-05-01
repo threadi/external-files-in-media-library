@@ -65,7 +65,7 @@ class Massedge extends ThirdParty_Base implements ThirdParty {
 	 * Prevent usage of external hosted attachments by the export via https://wordpress.org/plugins/export-media-library/
 	 *
 	 * @param array<mixed> $value The values.
-	 * @param array<int> $params The params.
+	 * @param array<int>   $params The params.
 	 *
 	 * @return array<mixed>
 	 */

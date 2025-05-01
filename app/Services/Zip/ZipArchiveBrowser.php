@@ -30,12 +30,12 @@ class ZipArchiveBrowser {
 	/**
 	 * Add a directory.
 	 *
-	 * @param array<string,array|string> $files The base directory.
-	 * @param array<int,string> $parts The parts to add.
+	 * @param array<string,mixed> $files The base directory.
+	 * @param array<int,string>   $parts The parts to add.
 	 *
 	 * @return void
 	 */
-	private static function add_directory( array &$files, array $parts ): void { // @phpstan-ignore missingType.iterableValue
+	private static function add_directory( array &$files, array $parts ): void {
 		// get the directory name from first entry of the parts array.
 		$dir = array_shift( $parts );
 
@@ -53,9 +53,9 @@ class ZipArchiveBrowser {
 	/**
 	 * Add a directory.
 	 *
-	 * @param array<array|string> $files The base directory.
-	 * @param array<int,string> $parts The parts to add.
-	 * @param array<string> $file_stat List of file stats.
+	 * @param array<string|int,mixed>  $files The base directory.
+	 * @param array<int,string>        $parts The parts to add.
+	 * @param array<string,int|string> $file_stat List of file stats.
 	 *
 	 * @return void
 	 */
@@ -73,7 +73,7 @@ class ZipArchiveBrowser {
 	 * @param Directory_Listing_Base $obj The directory listing object used for this listing.
 	 * @param string                 $zip_file The ZIP file to use.
 	 *
-	 * @return array<string>
+	 * @return array<int,mixed>
 	 */
 	public static function get_contents( Directory_Listing_Base $obj, string $zip_file ): array {
 		if ( ! file_exists( $zip_file ) ) {
@@ -110,11 +110,24 @@ class ZipArchiveBrowser {
 
 		// loop through the files and create the list.
 		for ( $i = 0; $i < $file_count; $i++ ) {
+			// get the name.
+			$name = $zip->getNameIndex( $i );
+
+			// bail if name could not be read.
+			if ( ! is_string( $name ) ) {
+				continue;
+			}
+
 			// get parts of the path.
-			$parts = explode( DIRECTORY_SEPARATOR, $zip->getNameIndex( $i ) );
+			$parts = explode( DIRECTORY_SEPARATOR, $name );
 
 			// get entry data.
 			$file_stat = $zip->statIndex( $i );
+
+			// bail if file_stat could not be read.
+			if ( ! is_array( $file_stat ) ) {
+				continue;
+			}
 
 			// if we have multiple parts, it is a file.
 			if ( end( $parts ) ) {
@@ -134,10 +147,10 @@ class ZipArchiveBrowser {
 	/**
 	 * Get the directory recursively.
 	 *
-	 * @param string $parent_dir     The parent directory path.
-	 * @param array  $directory_list The list we want to add to the resulting list.
+	 * @param string              $parent_dir     The parent directory path.
+	 * @param array<string,mixed> $directory_list The list we want to add to the resulting list.
 	 *
-	 * @return array<string>
+	 * @return array<int,mixed>
 	 */
 	private static function get_directory_recursively( string $parent_dir, array $directory_list ): array {
 		$file_list = array();

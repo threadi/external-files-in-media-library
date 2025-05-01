@@ -65,7 +65,7 @@ class ThirdPartySupport {
 			$class_name .= '::get_instance';
 
 			// bail if it is not callable.
-			if( ! is_callable( $class_name ) ) {
+			if ( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
@@ -73,7 +73,7 @@ class ThirdPartySupport {
 			$obj = $class_name();
 
 			// bail if object is not a third party object.
-			if( ! $obj instanceof ThirdParty_Base ) {
+			if ( ! $obj instanceof ThirdParty_Base ) {
 				continue;
 			}
 
@@ -98,7 +98,7 @@ class ThirdPartySupport {
 			$class_name .= '::get_instance';
 
 			// bail if it is not callable.
-			if( ! is_callable( $class_name ) ) {
+			if ( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
@@ -106,7 +106,7 @@ class ThirdPartySupport {
 			$obj = $class_name();
 
 			// bail if object is not a third party object.
-			if( ! $obj instanceof ThirdParty_Base ) {
+			if ( ! $obj instanceof ThirdParty_Base ) {
 				continue;
 			}
 

@@ -102,7 +102,7 @@ class Transients {
 		// loop through the list and create the corresponding transient-objects.
 		foreach ( $transients_from_db as $transient ) {
 			// bail if transients it not a string.
-			if( ! is_string( $transient ) ) {
+			if ( ! is_string( $transient ) ) {
 				continue;
 			}
 
@@ -213,7 +213,7 @@ class Transients {
 		$dismissible_length = isset( $_POST['dismissible_length'] ) ? sanitize_text_field( wp_unslash( $_POST['dismissible_length'] ) ) : 14;
 
 		// bail if option_name is not a string.
-		if( ! is_string( $option_name ) ) {
+		if ( ! is_string( $option_name ) ) {
 			return;
 		}
 

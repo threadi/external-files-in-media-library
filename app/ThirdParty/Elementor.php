@@ -79,7 +79,7 @@ class Elementor extends ThirdParty_Base implements ThirdParty {
 		$settings = $element->get_settings();
 
 		// bail if settings is not an array.
-		if( ! is_array( $settings ) ) {
+		if ( ! is_array( $settings ) ) {
 			return;
 		}
 
@@ -89,8 +89,7 @@ class Elementor extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// bail if not ID is given.
-		// @phpstan-ignore offsetAccess.nonOffsetAccessible
-		if ( empty( $settings['hosted_url']['id'] ) ) {
+		if ( empty( $settings['hosted_url']['id'] ) ) { // @phpstan-ignore offsetAccess.nonOffsetAccessible
 			return;
 		}
 

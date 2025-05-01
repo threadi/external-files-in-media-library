@@ -74,7 +74,7 @@ class Update {
 		$db_plugin_version = get_option( 'efmlVersion', '1.0.0' );
 
 		// bail if version is not a string.
-		if( ! is_string( $db_plugin_version ) ) {
+		if ( ! is_string( $db_plugin_version ) ) {
 			return;
 		}
 

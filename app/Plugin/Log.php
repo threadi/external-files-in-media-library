@@ -116,7 +116,7 @@ class Log {
 	 * @param string $url The URL to filter for, get only last entry (optional).
 	 * @param string $state The requested state (optional).
 	 *
-	 * @return array<string>
+	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_logs( string $url = '', string $state = '' ): array {
 		global $wpdb;

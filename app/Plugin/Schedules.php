@@ -37,10 +37,11 @@ class Schedules {
 	 * Return the instance of this Singleton object.
 	 */
 	public static function get_instance(): Schedules {
-		if ( ! static::$instance instanceof static ) {
-			static::$instance = new static();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new static();
 		}
-		return static::$instance;
+
+		return self::$instance;
 	}
 
 	/**
@@ -85,7 +86,7 @@ class Schedules {
 	/**
 	 * Get our own active events from WP-list.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_events(): array {
 		// get our own events from events list in WordPress.
@@ -97,7 +98,7 @@ class Schedules {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array $our_events List of our own events in WP-cron.
+		 * @param array<string,array<string,mixed>> $our_events List of our own events in WP-cron.
 		 */
 		return apply_filters( 'eml_schedule_our_events', $our_events );
 	}
@@ -109,9 +110,9 @@ class Schedules {
 	 *
 	 * Does only run in wp-admin, not frontend.
 	 *
-	 * @param array $our_events List of our own events.
+	 * @param array<string,array<string,mixed>> $our_events List of our own events.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	public function check_events( array $our_events ): array {
 		// bail if check should be disabled.
@@ -152,7 +153,7 @@ class Schedules {
 
 				// log this event.
 				/* translators: %1$s will be replaced by the event name. */
-				Log::get_instance()->create( sprintf( __( 'Missing cron event <i>%1$s</i> automatically re-installed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 2 );
+				Log::get_instance()->create( sprintf( __( 'Missing cron event <i>%1$s</i> automatically re-installed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 'info', 2 );
 
 				// re-run the check for WP-cron-events.
 				$our_events = $this->get_wp_events();
@@ -164,7 +165,7 @@ class Schedules {
 
 				// log this event.
 				/* translators: %1$s will be replaced by the event name. */
-				Log::get_instance()->create( sprintf( __( 'Not enabled cron event <i>%1$s</i> automatically removed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 2 );
+				Log::get_instance()->create( sprintf( __( 'Not enabled cron event <i>%1$s</i> automatically removed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 'info', 2 );
 
 				// re-run the check for WP-cron-events.
 				$our_events = $this->get_wp_events();
@@ -217,7 +218,7 @@ class Schedules {
 	/**
 	 * Return list of all schedule-object-names.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function get_schedule_object_names(): array {
 		// list of schedules: free version supports only one import-schedule.
@@ -233,7 +234,7 @@ class Schedules {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array $list_of_schedules List of additional schedules.
+		 * @param array<string> $list_of_schedules List of additional schedules.
 		 */
 		return apply_filters( 'eml_schedules', $list_of_schedules );
 	}
@@ -263,7 +264,7 @@ class Schedules {
 	/**
 	 * Get our own events from WP-cron-event-list.
 	 *
-	 * @return array
+	 * @return array<string,array<string,mixed>>
 	 */
 	private function get_wp_events(): array {
 		$our_events = array();
@@ -301,6 +302,11 @@ class Schedules {
 	public function add_schedule_to_list( object|bool $event ): object|bool {
 		// bail if event is not an object.
 		if ( ! is_object( $event ) ) {
+			return $event;
+		}
+
+		// bail if hook entity does not exist.
+		if ( ! isset( $event->hook ) ) {
 			return $event;
 		}
 

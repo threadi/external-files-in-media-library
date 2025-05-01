@@ -64,7 +64,7 @@ class Sftp extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string>> List of file-infos.
+	 * @return array<int,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -88,7 +88,7 @@ class Sftp extends Protocol_Base {
 		}
 
 		// bail if path does not exist in array.
-		if( ! isset( $parse_url['path'] ) ) {
+		if ( ! isset( $parse_url['path'] ) ) {
 			return array();
 		}
 
@@ -226,7 +226,7 @@ class Sftp extends Protocol_Base {
 	 *
 	 * @param string $url The SSH/SFTP path.
 	 *
-	 * @return array<string,string>
+	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
 		// use file path as name for this in this protocol handler.
@@ -247,7 +247,7 @@ class Sftp extends Protocol_Base {
 		$ssh_connection = $this->get_connection( $url );
 
 		// bail if connection failed.
-		if( ! $ssh_connection ) {
+		if ( ! $ssh_connection ) {
 			Log::get_instance()->create( __( 'SFTP-Connection failed.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we got not the file.
@@ -276,7 +276,7 @@ class Sftp extends Protocol_Base {
 		$file_content = $ssh_connection->get_contents( $file_path );
 
 		// bail if file content could not be read.
-		if( ! $file_content ) {
+		if ( ! $file_content ) {
 			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we got not the file.
@@ -316,7 +316,7 @@ class Sftp extends Protocol_Base {
 		$parse_url = wp_parse_url( $url );
 
 		// bail if scheme or host could not be read.
-		if( ! isset( $parse_url['scheme'] ) || ! isset( $parse_url['host'] ) ) {
+		if ( ! isset( $parse_url['scheme'] ) || ! isset( $parse_url['host'] ) ) {
 			return false;
 		}
 
@@ -347,7 +347,7 @@ class Sftp extends Protocol_Base {
 		$connection_arguments_json = wp_json_encode( $connection_arguments );
 
 		// bail if JSON could not be generated.
-		if( ! $connection_arguments_json ) {
+		if ( ! $connection_arguments_json ) {
 			return false;
 		}
 

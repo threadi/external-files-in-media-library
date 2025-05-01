@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Zip\ZipArchiveBrowser;
 use WP_Error;
@@ -90,9 +91,9 @@ class Zip extends Directory_Listing_Base implements Service {
 	/**
 	 * Add this object to the list of listing objects.
 	 *
-	 * @param array $directory_listing_objects List of directory listing objects.
+	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *
-	 * @return array
+	 * @return array<Directory_Listing_Base>
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		$directory_listing_objects[] = $this;
@@ -104,7 +105,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array
+	 * @return array<int,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// bail if "ZipArchive" is not available.
@@ -153,7 +154,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	/**
 	 * Return the actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	public function get_actions(): array {
 		return array(
@@ -192,10 +193,10 @@ class Zip extends Directory_Listing_Base implements Service {
 	 *
 	 * We save the unzipped file in tmp directory for import.
 	 *
-	 * @param array  $results The result.
-	 * @param string $file_path The path to the file (should contain and not end with '.zip').
+	 * @param array<string,string> $results The result.
+	 * @param string               $file_path The path to the file (should contain and not end with '.zip').
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function get_file( array $results, string $file_path ): array {
 		// bail if file path does not contain '.zip'.
@@ -209,7 +210,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		}
 
 		// get the path to the ZIP from path string.
-		$zip_file = substr( $file_path, 0, strpos( $file_path, '.zip' ) ) . '.zip';
+		$zip_file = substr( $file_path, 0, absint( strpos( $file_path, '.zip' ) ) ) . '.zip';
 		$zip_file = str_replace( 'file://', '', $zip_file );
 
 		// bail if file does not exist.
@@ -257,8 +258,13 @@ class Zip extends Directory_Listing_Base implements Service {
 		// get file infos.
 		$file_info = pathinfo( $file );
 
+		// bail if extension could not be read.
+		if ( ! isset( $file_info['extension'] ) ) {
+			return array();
+		}
+
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
@@ -336,7 +342,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		}
 
 		// get the path to the ZIP from path string.
-		$zip_file = substr( $directory, 0, strpos( $directory, '.zip' ) ) . '.zip';
+		$zip_file = substr( $directory, 0, absint( strpos( $directory, '.zip' ) ) ) . '.zip';
 		$zip_file = str_replace( 'file://', '', $zip_file );
 
 		// bail if file does not exist.

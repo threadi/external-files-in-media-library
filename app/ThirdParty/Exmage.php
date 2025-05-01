@@ -128,7 +128,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 		$dialog = wp_json_encode( $dialog );
 
 		// bail if preparation does not worked.
-		if( ! $dialog ) {
+		if ( ! $dialog ) {
 			return;
 		}
 
@@ -168,8 +168,8 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 
 		// create the resulting list to create a clean return array.
 		$return_array = array();
-		foreach( $results->get_posts() as $post_id ) {
-			if( $post_id instanceof WP_Post ) {
+		foreach ( $results->get_posts() as $post_id ) {
+			if ( $post_id instanceof WP_Post ) {
 				$post_id = $post_id->ID;
 			}
 			$return_array[] = $post_id;
@@ -234,7 +234,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			}
 
 			// bail if URL is not a string.
-			if( ! is_string( $url ) ) {
+			if ( ! is_string( $url ) ) {
 				// show progress.
 				$progress ? $progress->tick() : '';
 				continue;
@@ -244,7 +244,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			$external_files_obj = Files::get_instance()->get_file( $post_id );
 
 			// bail if file could not be loaded.
-			if( ! $external_files_obj instanceof File ) {
+			if ( ! $external_files_obj instanceof File ) {
 				continue;
 			}
 

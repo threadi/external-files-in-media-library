@@ -34,6 +34,7 @@
         <exclude name="WordPress.Files.FileName"/>
         <!-- Exclude override of globals -->
         <exclude name="WordPress.WP.GlobalVariablesOverride"/>
+        <exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
     </rule>
 
 </ruleset>

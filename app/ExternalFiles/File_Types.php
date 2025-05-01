@@ -27,7 +27,7 @@ class File_Types {
 	/**
 	 * List of files.
 	 *
-	 * @var array
+	 * @var array<int,File_Types_Base>
 	 */
 	private array $files = array();
 
@@ -59,7 +59,7 @@ class File_Types {
 	/**
 	 * Return list of supported file types.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_file_types(): array {
 		$list = array(
@@ -74,7 +74,7 @@ class File_Types {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array $list List of file type handler.
+		 * @param array<string> $list List of file type handler.
 		 */
 		return apply_filters( 'eml_file_types', $list );
 	}
@@ -120,11 +120,6 @@ class File_Types {
 
 		// check each file type for compatibility with the given file.
 		foreach ( $this->get_file_types() as $file_type ) {
-			// bail if file type is not a string.
-			if ( ! is_string( $file_type ) ) {
-				continue;
-			}
-
 			// bail if object does not exist.
 			if ( ! class_exists( $file_type ) ) {
 				continue;
@@ -182,11 +177,6 @@ class File_Types {
 	public function is_any_proxy_enabled(): bool {
 		// check each supported file type.
 		foreach ( $this->get_file_types() as $file_type ) {
-			// bail if file type is not a string.
-			if ( ! is_string( $file_type ) ) {
-				continue;
-			}
-
 			// bail if object does not exist.
 			if ( ! class_exists( $file_type ) ) {
 				continue;
@@ -194,6 +184,11 @@ class File_Types {
 
 			// get the object.
 			$file_type_obj = new $file_type( false );
+
+			// bail if object is not a file type base object.
+			if ( ! $file_type_obj instanceof File_Types_Base ) {
+				continue;
+			}
 
 			// bail if proxy for this file type is not enabled.
 			if ( ! $file_type_obj->is_proxy_enabled() ) {

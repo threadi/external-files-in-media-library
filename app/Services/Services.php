@@ -67,7 +67,7 @@ class Services {
 			$class_name = $service_class_name . '::get_instance';
 
 			// bail if it is not callable.
-			if( ! is_callable( $class_name ) ) {
+			if ( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
@@ -75,7 +75,7 @@ class Services {
 			$obj = $class_name();
 
 			// bail if object is not a service object.
-			if( ! $obj instanceof Service ) {
+			if ( ! $obj instanceof Service ) {
 				continue;
 			}
 
@@ -112,7 +112,7 @@ class Services {
 			$class_name = $service_class_name . '::get_instance';
 
 			// bail if it is not callable.
-			if( ! is_callable( $class_name ) ) {
+			if ( ! is_callable( $class_name ) ) {
 				continue;
 			}
 
@@ -120,7 +120,7 @@ class Services {
 			$obj = $class_name();
 
 			// bail if object is not a service object.
-			if( ! $obj instanceof Service ) {
+			if ( ! $obj instanceof Service ) {
 				continue;
 			}
 

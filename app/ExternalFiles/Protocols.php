@@ -52,7 +52,7 @@ class Protocols {
 	/**
 	 * Return list of supported protocols.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_protocols(): array {
 		$list = array(
@@ -66,7 +66,7 @@ class Protocols {
 		 * Filter the list of available protocols.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $list List of protocol handler.
+		 * @param array<string> $list List of protocol handler.
 		 */
 		return apply_filters( 'eml_protocols', $list );
 	}
@@ -88,12 +88,6 @@ class Protocols {
 		foreach ( $this->get_protocols() as $protocol_name ) {
 			// bail if result is already set.
 			if ( $result ) {
-				continue;
-			}
-
-			// bail if name is not a string.
-			if ( ! is_string( $protocol_name ) ) {
-				Log::get_instance()->create( __( 'Got faulty protocol:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $protocol_name ) . '</code>', esc_html( $url ), 'error', 2 );
 				continue;
 			}
 
@@ -154,11 +148,6 @@ class Protocols {
 	 */
 	public function get_protocol_object_for_external_file( File $external_file ): Protocol_Base|false {
 		foreach ( $this->get_protocols() as $protocol_name ) {
-			// bail if name is not a string.
-			if ( ! is_string( $protocol_name ) ) {
-				continue;
-			}
-
 			// bail if class does not exist.
 			if ( ! class_exists( $protocol_name ) ) {
 				continue;

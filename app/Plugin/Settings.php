@@ -366,7 +366,7 @@ class Settings {
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'eml_settings' === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			foreach ( get_users() as $user ) {
 				// bail if user is not WP_User.
-				if( ! $user instanceof WP_User ) {
+				if ( ! $user instanceof WP_User ) {
 					continue;
 				}
 
@@ -551,7 +551,7 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add the import/export section in advanced.
-		$advanced_tab_importexport = $settings_obj->get_tab( 'eml_advanced' )->add_section( 'settings_section_advanced_importexport' );
+		$advanced_tab_importexport = $advanced_tab->add_section( 'settings_section_advanced_importexport' );
 		$advanced_tab_importexport->set_title( __( 'Export & Import settings', 'external-files-in-media-library' ) );
 		$advanced_tab_importexport->set_setting( $settings_obj );
 
@@ -587,7 +587,7 @@ class Settings {
 		$field->set_title( __( 'Reset proxy cache', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $this->get_proxy_reset_dialog() ) ) );
+		$field->set_custom_attributes( array( 'data-dialog' => $this->get_proxy_reset_dialog() ) );
 		$setting->set_field( $field );
 
 		// add import/export settings.
@@ -639,6 +639,11 @@ class Settings {
 	 * @return string
 	 */
 	public function update_interval_setting( string|null $value ): string {
+		// check if value is null.
+		if ( is_null( $value ) ) {
+			$value = '';
+		}
+
 		// get check files-schedule-object.
 		$check_files_schedule = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files();
 
@@ -660,12 +665,17 @@ class Settings {
 	/**
 	 * Validate allowed mime-types.
 	 *
-	 * @param ?array $values List of mime-types to check.
+	 * @param ?array<string> $values List of mime-types to check.
 	 *
-	 * @return       ?array
+	 * @return       array<string>
 	 * @noinspection PhpUnused
 	 */
-	public function validate_allowed_mime_types( ?array $values ): ?array {
+	public function validate_allowed_mime_types( ?array $values ): array {
+		// check if value is null.
+		if ( is_null( $values ) ) {
+			$values = array();
+		}
+
 		// get the possible mime-types.
 		$mime_types = Helper::get_possible_mime_types();
 
@@ -696,12 +706,13 @@ class Settings {
 	/**
 	 * Set capabilities after saving settings.
 	 *
-	 * @param array|null $values The setting.
+	 * @param array<string>|null $values The setting.
 	 *
-	 * @return array
+	 * @return array<string>
 	 * @noinspection PhpUnused
 	 */
 	public function set_capabilities( ?array $values ): array {
+		// check if value is not an array.
 		if ( ! is_array( $values ) ) {
 			$values = array();
 		}
@@ -721,7 +732,7 @@ class Settings {
 	public function show_logs(): void {
 		// if WP_List_Table is not loaded automatically, we need to load it.
 		if ( ! class_exists( 'WP_List_Table' ) ) {
-			include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+			include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php'; // @phpstan-ignore includeOnce.fileNotFound
 		}
 		$log = new Logs();
 		$log->prepare_items();
@@ -767,9 +778,9 @@ class Settings {
 	/**
 	 * Add help for the settings of this plugin.
 	 *
-	 * @param array $help_list List of help tabs.
+	 * @param array<array<string,string>> $help_list List of help tabs.
 	 *
-	 * @return array
+	 * @return array<array<string,string>>
 	 */
 	public function add_help( array $help_list ): array {
 		$content = '<h1>' . __( 'Settings for External Files in Media Library', 'external-files-in-media-library' ) . '</h1>';
@@ -788,8 +799,16 @@ class Settings {
 				continue;
 			}
 
+			// get the field.
+			$field = $settings_obj->get_field();
+
+			// bail if field could not be found.
+			if ( ! $field ) {
+				continue;
+			}
+
 			// add this setting to the help page.
-			$content .= '<h3>' . $settings_obj->get_field()->get_title() . '</h3>' . $settings_obj->get_help();
+			$content .= '<h3>' . $field->get_title() . '</h3>' . $settings_obj->get_help();
 		}
 
 		// add help for the settings of this plugin.
@@ -891,7 +910,7 @@ class Settings {
 		// show hint to reset the proxy-cache.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( 'eml_proxy_changed' );
-		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $this->get_proxy_reset_dialog() ) ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
+		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( $this->get_proxy_reset_dialog() ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
 		$transient_obj->set_type( 'success' );
 		$transient_obj->save();
 
@@ -902,10 +921,10 @@ class Settings {
 	/**
 	 * Return the proxy reset dialog configuration.
 	 *
-	 * @return array
+	 * @return string
 	 */
-	private function get_proxy_reset_dialog(): array {
-		return array(
+	private function get_proxy_reset_dialog(): string {
+		$dialog_config = array(
 			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
 			'texts'   => array(
 				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
@@ -923,5 +942,10 @@ class Settings {
 				),
 			),
 		);
+		$dialog        = wp_json_encode( $dialog_config );
+		if ( ! $dialog ) {
+			return '';
+		}
+		return $dialog;
 	}
 }

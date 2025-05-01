@@ -210,7 +210,6 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 
 		// loop through the list.
 		foreach ( $data['raw_gallery_image_ids'] as $index => $url ) {
-			/** @var string $url */
 			// add the image and bail if it was not successfully.
 			if ( ! Files::get_instance()->add_url( $url ) ) {
 				continue;

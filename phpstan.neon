@@ -11,6 +11,9 @@ parameters:
     - "#Call to an undefined method(.*)tick#"
     - "#Call to an undefined method(.*)finish#"
     - "#wp_safe_redirect#"
+    - "#WP_CONTENT_DIR#"
+    - "#ARRAY_A#"
+    - "#WP_PLUGIN_DIR#"
   paths:
     - app
     - external-files-in-media-library.php

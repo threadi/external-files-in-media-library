@@ -99,9 +99,9 @@ class Proxy {
 	/**
 	 * Whitelist the proxy-slug parameter in query-vars.
 	 *
-	 * @param array $query_vars The query-vars of the actual request.
+	 * @param array<string> $query_vars The query-vars of the actual request.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function set_query_vars( array $query_vars ): array {
 		$query_vars[] = $this->get_slug();
@@ -145,7 +145,7 @@ class Proxy {
 		$external_file_obj = Files::get_instance()->get_file_by_title( $title );
 
 		// bail if no file object could be loaded or the loaded object is not valid.
-		if ( false === $external_file_obj || ( $external_file_obj && false === $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
@@ -292,6 +292,7 @@ class Proxy {
 	 * @return void
 	 */
 	public function reset_via_ajax(): void {
+		// check referer.
 		check_ajax_referer( 'eml-reset-proxy-nonce', 'nonce' );
 
 		// reset by deleting the directory.

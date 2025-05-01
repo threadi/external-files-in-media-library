@@ -97,9 +97,9 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Add this object to the list of listing objects.
 	 *
-	 * @param array $directory_listing_objects List of directory listing objects.
+	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *
-	 * @return array
+	 * @return array<Directory_Listing_Base>
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		$directory_listing_objects[] = $this;
@@ -109,9 +109,9 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array $fields List of import options.
+	 * @param array<int,string> $fields List of import options.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	public function add_option_for_local_import( array $fields ): array {
 		$fields[] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
@@ -123,11 +123,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array
+	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// prepend directory with ftp:// if that is not given.
-		if ( ! ( stripos( $directory, 'ftp://' ) >= 0 || stripos( $directory, 'ftps://' ) > 0 ) ) {
+		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
 			$directory = 'ftp://' . $directory;
 		}
 
@@ -159,8 +159,14 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get the staring directory.
 		$parse_url = wp_parse_url( $directory );
 
-		// get parent_dir path.
-		$parent_dir = trailingslashit( $parse_url['path'] );
+		// set parent dir.
+		$parent_dir = '.';
+
+		// bail if path could not be read.
+		if ( isset( $parse_url['path'] ) ) {
+			// get parent_dir path.
+			$parent_dir = trailingslashit( $parse_url['path'] );
+		}
 
 		// get list of directory.
 		$directory_list = $ftp_connection->dirlist( $parent_dir );
@@ -178,11 +184,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * Get the directory recursively.
 	 *
 	 * @param string               $parent_dir     The parent directory path.
-	 * @param array                $directory_list The directory to add.
+	 * @param array<string,mixed>  $directory_list The directory to add.
 	 * @param WP_Filesystem_FTPext $ftp_connection The FTP-connection to use.
 	 * @param string               $directory      The FTP-URL used.
 	 *
-	 * @return array
+	 * @return array<int,array<string,mixed>>
 	 */
 	private function get_directory_recursively( string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
 		$file_list = array();
@@ -203,7 +209,16 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 			// if item is a directory, check its files.
 			if ( $ftp_connection->is_dir( $item_path ) ) {
-				$subs           = $this->get_directory_recursively( trailingslashit( $item_path ), $ftp_connection->dirlist( trailingslashit( $item_path ) ), $ftp_connection, $directory );
+				// get the list.
+				$subdirectory_list = $ftp_connection->dirlist( trailingslashit( $item_path ) );
+
+				// bail if list could not be loaded.
+				if ( ! $subdirectory_list ) {
+					continue;
+				}
+
+				// get the subs.
+				$subs           = $this->get_directory_recursively( trailingslashit( $item_path ), $subdirectory_list, $ftp_connection, $directory );
 				$entry['dir']   = $item_path;
 				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );
@@ -225,6 +240,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 					if ( $protocol_handler ) {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
+
+						// bail if filename could not be read.
+						if ( ! is_string( $filename ) ) {
+							continue;
+						}
 
 						// get image editor object of the file to get a thumb of it.
 						$editor = wp_get_image_editor( $filename );
@@ -265,7 +285,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Return the actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	public function get_actions(): array {
 		return array(
@@ -279,7 +299,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Return global actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	protected function get_global_actions(): array {
 		return array_merge(
@@ -302,7 +322,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// prepend directory with ftp:// if that is not given.
-		if ( ! ( stripos( $directory, 'ftp://' ) >= 0 || stripos( $directory, 'ftps://' ) > 0 ) ) {
+		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
 			$directory = 'ftp://' . $directory;
 		}
 

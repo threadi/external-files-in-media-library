@@ -215,11 +215,19 @@ class Directory_Listing {
 			$config['term'] = $term;
 		}
 
+		// prepare config.
+		$config_json = wp_json_encode( $config );
+
+		// bail if config failed.
+		if ( ! $config_json ) {
+			return;
+		}
+
 		// output.
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
-			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>"></div>
+			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
 		</div>
 		<?php
 	}
@@ -245,7 +253,7 @@ class Directory_Listing {
 	/**
 	 * Return the translations for each text.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function get_translations(): array {
 		return array(

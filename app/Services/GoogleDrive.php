@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
 use Google\Service\Exception;
 use JsonException;
+use WP_User;
 
 /**
  * Object to handle support for this platform.
@@ -213,7 +214,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			// get the creation date from token.
 			if ( ! empty( $access_token['created'] ) ) {
 				/* translators: %1$s will be replaced by a date and time. */
-				$field->set_description( sprintf( __( 'Created at %1$s', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $access_token['created'] ) ) ) . '<br><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . __( 'View and import files', 'external-files-in-media-library' ) . '</a>' );
+				$field->set_description( sprintf( __( 'Created at %1$s', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i', absint( $access_token['created'] ) ) ) ) . '<br><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . __( 'View and import files', 'external-files-in-media-library' ) . '</a>' );
 			}
 		}
 		$field->add_class( 'easy-dialog-for-wordpress' );
@@ -253,9 +254,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Add our own protocol.
 	 *
-	 * @param array $protocols List of protocols.
+	 * @param array<string> $protocols List of protocols.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function add_protocol( array $protocols ): array {
 		// only add the protocol if access_token for actual user is set.
@@ -282,7 +283,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Return access token for actual WordPress user.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function get_access_token(): array {
 		// get all access tokens.
@@ -293,25 +294,33 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
+		// get current user.
+		$user = wp_get_current_user();
+
+		// bail if user is not available.
+		if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+			return array();
+		}
+
 		// bail if no token for actual user is set.
-		if ( empty( $access_tokens[ wp_get_current_user()->ID ] ) ) {
+		if ( empty( $access_tokens[ $user->ID ] ) ) {
 			return array();
 		}
 
 		// bail if access token is not an array.
-		if ( ! is_array( $access_tokens[ wp_get_current_user()->ID ] ) ) {
+		if ( ! is_array( $access_tokens[ $user->ID ] ) ) {
 			return array();
 		}
 
 		// return the access token for this user.
-		return $access_tokens[ wp_get_current_user()->ID ];
+		return $access_tokens[ $user->ID ];
 	}
 
 	/**
 	 * Set the access token for the actual WordPress user.
 	 *
-	 * @param array $access_token The access token.
-	 * @param int   $user_id The user id (optional).
+	 * @param array<string,string> $access_token The access token.
+	 * @param int                  $user_id The user id (optional).
 	 *
 	 * @return void
 	 */
@@ -326,11 +335,19 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// get the user_id from session if it is not set.
 		if ( 0 === $user_id ) {
-			$user_id = wp_get_current_user()->ID;
+			// get the user.
+			$user = wp_get_current_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return;
+			}
+			$user_id = $user->ID;
+		} else {
+			// get the user object.
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+				return;
+			}
 		}
-
-		// get the user object.
-		$user = get_user_by( 'id', $user_id );
 
 		// add this token.
 		$access_tokens[ $user_id ] = $access_token;
@@ -367,9 +384,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Add our OAuth slug to the allowed vars.
 	 *
-	 * @param array $query_vars List of vars.
+	 * @param array<int,string> $query_vars List of vars.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	public function set_query_vars( array $query_vars ): array {
 		$query_vars[] = $this->get_oauth_slug();
@@ -462,8 +479,16 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	private function get_state(): string {
+		// get the crypt method.
+		$crypt_method = Crypt::get_instance()->get_method();
+
+		// bail if crypt method could not be read.
+		if ( ! $crypt_method ) {
+			return '';
+		}
+
 		// set the state.
-		$state = Helper::get_plugin_slug() . ':' . base64_encode( Crypt::get_instance()->get_method()->get_hash() ) . ':' . base64_encode( $this->get_real_redirect_uri() );
+		$state = Helper::get_plugin_slug() . ':' . base64_encode( $crypt_method->get_hash() ) . ':' . base64_encode( $this->get_real_redirect_uri() );
 
 		/**
 		 * Filter the token to connect the Google OAuth Client.
@@ -568,7 +593,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @param string $template The requested template.
 	 *
 	 * @return string
-	 * @throws JsonException
+	 * @throws JsonException Could throw exception.
 	 */
 	public function check_for_oauth_return_url( string $template ): string {
 		// bail if slug is not used.
@@ -589,7 +614,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		if ( ! $access_token_string ) {
 			return Helper::get_404_template();
 		}
-		$access_token = json_decode( $access_token_string, ARRAY_A, 512, JSON_THROW_ON_ERROR );
+		$access_token = json_decode( $access_token_string, true, 512, JSON_THROW_ON_ERROR );
 
 		// bail if access token is not an array.
 		if ( ! is_array( $access_token ) ) {
@@ -636,9 +661,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Add this object to the list of listing objects.
 	 *
-	 * @param array $directory_listing_objects List of directory listing objects.
+	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *
-	 * @return array
+	 * @return array<Directory_Listing_Base>
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		$directory_listing_objects[] = $this;
@@ -648,9 +673,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array $fields List of import options.
+	 * @param array<int,string> $fields List of import options.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	public function add_option_for_local_import( array $fields ): array {
 		// bail if no token is set.
@@ -670,7 +695,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The given directory.
 	 *
-	 * @return array
+	 * @return array<int,mixed>
 	 * @throws Exception Could be thrown an exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
@@ -765,7 +790,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$entry['filesize']      = absint( $file_obj->getSize() );
 			$entry['mime-type']     = $mime_type;
 			$entry['icon']          = '<img src="' . esc_url( $file_obj->getIconLink() ) . '" alt="">';
-			$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', strtotime( $file_obj->getCreatedTime() ) ) );
+			$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_obj->getCreatedTime() ) ) ) );
 			$entry['preview']       = $thumbnail;
 
 			// get directory-data for this file and add file in the directory.
@@ -805,7 +830,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Return the actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	public function get_actions(): array {
 		return array(
@@ -819,7 +844,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Return global actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	protected function get_global_actions(): array {
 		return array_merge(
@@ -867,9 +892,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Set query params depending on plugin settings.
 	 *
-	 * @param array $query The list of query params.
+	 * @param array<string,mixed> $query The list of query params.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function set_query_params( array $query ): array {
 		// collect settings for q.
@@ -895,10 +920,10 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	/**
 	 * Preserve the tokens value.
 	 *
-	 * @param array|null $new_value The new value.
-	 * @param array      $old_value The old value.
+	 * @param array<string,mixed>|null $new_value The new value.
+	 * @param array<string,mixed>      $old_value The old value.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function preserve_tokens_value( array|null $new_value, array $old_value ): array {
 		// if new value is null use the old value.
@@ -933,8 +958,8 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @param \Google\Client $client The Google client object.
 	 *
-	 * @return array
-	 * @throws JsonException
+	 * @return array<string,mixed>
+	 * @throws JsonException Could throw exception.
 	 */
 	public function get_refreshed_token( \Google\Client $client ): array {
 		// create the URL.
@@ -952,9 +977,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		if ( is_wp_error( $response ) ) {
 			// log possible error.
 			Log::get_instance()->create( __( 'Error on request to get refreshed token.', 'external-files-in-media-library' ), '', 'error' );
-		} elseif ( empty( $response ) ) {
-			// log im result is empty.
-			Log::get_instance()->create( __( 'Got empty response for refreshing the token.', 'external-files-in-media-library' ), '', 'error' );
 		} else {
 			// get the http status.
 			$http_status = $response['http_response']->get_status();
@@ -973,7 +995,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			}
 
 			// decode the response.
-			$access_token = json_decode( $body, ARRAY_A, 512, JSON_THROW_ON_ERROR );
+			$access_token = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 
 			// bail if access token is empty.
 			if ( empty( $access_token ) ) {
