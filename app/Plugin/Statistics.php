@@ -10,10 +10,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Button;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 
 /**
  * Object to handle statistics.
@@ -78,7 +77,7 @@ class Statistics {
 	 */
 	public function init_statistics(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
 
 		// add tab.
 		$tab = $settings_obj->add_tab( 'eml_statistics' );
@@ -248,10 +247,19 @@ class Statistics {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function recalc_files_by_request(): void {
+		// check nonce.
 		check_admin_referer( 'eml-recalc-files', 'nonce' );
 
 		// get all files.
 		$files = Files::get_instance()->get_files();
+
+		// get referer.
+		$referer = wp_get_referer();
+
+		// if referer is false, set empty string.
+		if ( ! $referer ) {
+			$referer = '';
+		}
 
 		// if no files could be loaded, set all settings to 0.
 		if ( empty( $files ) ) {
@@ -267,7 +275,7 @@ class Statistics {
 			$transient_obj->save();
 
 			// forward user.
-			wp_safe_redirect( wp_get_referer() );
+			wp_safe_redirect( $referer );
 			exit;
 		}
 
@@ -275,11 +283,6 @@ class Statistics {
 		$file_count = 0;
 		$file_size  = 0;
 		foreach ( $files as $file ) {
-			// bail if this is not a File object.
-			if ( ! $file instanceof File ) {
-				continue;
-			}
-
 			++$file_count;
 			$file_size += $file->get_filesize();
 		}
@@ -297,7 +300,7 @@ class Statistics {
 		$transient_obj->save();
 
 		// forward user.
-		wp_safe_redirect( wp_get_referer() );
+		wp_safe_redirect( $referer );
 		exit;
 	}
 }

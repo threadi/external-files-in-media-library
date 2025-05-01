@@ -4,20 +4,24 @@
 
 ### Added
 
+- Added wrapper for all settings of this plugin for easier management in the future
 - New option for import local files from chosen directory via queue (for very large directories)
 
 ### Changed
 
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
-- Code optimizations for better speed
+- Multiple code optimizations
 
 ### Fixed
 
 - Fixed to early loading of translations
+- Fixed error on GoogleDrive import which would break if a duplicate is detected
+- Fixed potential error of sodium encryption is used and failed
+- Fixed faulty check for existing schedules
 - Fixed typos
 
-## [3.1.1]
+## [3.1.1] - 2025-04-05
 
 ### Added
 
@@ -35,7 +39,7 @@
 
 - Removed not necessary check if GoogleDrive is usable in hosting
 
-## [3.1.0] - 02.03.2025
+## [3.1.0] - 2025-03-02
 
 ### Added
 
@@ -59,7 +63,7 @@
 - Fixed missing support for plugin PreventDirectAccess
 - Fixed some typos
 
-## [3.0.0] - 15.02.2025
+## [3.0.0] - 2025-02-15
 
 ### Added
 

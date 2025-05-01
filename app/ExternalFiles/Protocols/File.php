@@ -25,7 +25,7 @@ class File extends Protocol_Base {
 	/**
 	 * List of supported tcp protocols.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array(
 		'file' => -1,
@@ -34,7 +34,7 @@ class File extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of file-infos.
+	 * @return array<int,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -111,7 +111,7 @@ class File extends Protocol_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 *
 				 * @param string $file_path   The filepath to import.
-				 * @param array $file_list List of files.
+				 * @param array<int,mixed> $file_list List of files.
 				 */
 				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
@@ -146,24 +146,28 @@ class File extends Protocol_Base {
 			$files[] = $results;
 		}
 
+		$instance = $this;
 		/**
 		 * Filter list of files during this import.
 		 *
 		 * @since 3.0.0 Available since 3.0.0
 		 * @param array $files List of files.
-		 * @param Protocol_Base $this The import object.
+		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $this );
+		return apply_filters( 'eml_external_files_infos', $files, $instance );
 	}
 
 	/**
 	 * Get infos from single given URL.
 	 *
-	 * @param string $file_path The file path.
+	 * @param string $url The file path.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
-	private function get_url_info( string $file_path ): array {
+	public function get_url_info( string $url ): array {
+		// use file path as name for this in this protocol handler.
+		$file_path = $url;
+
 		// initialize the file infos array.
 		$results = array(
 			'title'         => basename( $file_path ),
@@ -193,9 +197,7 @@ class File extends Protocol_Base {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );
@@ -204,10 +206,16 @@ class File extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = $wp_filesystem->mtime( $file_path );
 
+		// get the file content.
+		$content = $wp_filesystem->get_contents( $file_path );
+		if ( ! $content ) {
+			return array();
+		}
+
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
 		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $wp_filesystem->get_contents( $file_path ) );
+		$wp_filesystem->put_contents( $results['tmp-file'], $content );
 
 		// get the size.
 		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );

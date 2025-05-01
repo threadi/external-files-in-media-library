@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
 use Google\Service\Exception;
+use JsonException;
 
 /**
  * Object to handle different protocols.
@@ -63,7 +64,7 @@ class Protocol extends Protocol_Base {
 	/**
 	 * Check the availability of a given URL.
 	 *
-	 * @return array List of files with its infos.
+	 * @return array<int,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		// get the Google Drive object.
@@ -142,9 +143,7 @@ class Protocol extends Protocol_Base {
 		);
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
@@ -185,7 +184,8 @@ class Protocol extends Protocol_Base {
 	/**
 	 * Import all files from Google Drive.
 	 *
-	 * @return array
+	 * @return array<int,array<string,mixed>>
+	 * @throws JsonException Could throw exception.
 	 */
 	private function import_all_files(): array {
 		// get the Google Drive object.
@@ -264,8 +264,7 @@ class Protocol extends Protocol_Base {
 			if ( $this->check_for_duplicate( $this->get_url() . $file_obj->getId() ) ) {
 				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
 
-				// return an empty list as we could not analyse the file.
-				return array();
+				continue;
 			}
 
 			// get the file.
@@ -287,9 +286,7 @@ class Protocol extends Protocol_Base {
 			);
 
 			// get WP Filesystem-handler.
-			require_once ABSPATH . '/wp-admin/includes/file.php';
-			\WP_Filesystem();
-			global $wp_filesystem;
+			$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 			// set the file as tmp-file for import.
 			$entry['tmp-file'] = wp_tempnam();

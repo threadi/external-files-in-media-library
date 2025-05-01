@@ -71,7 +71,7 @@ class Install {
 		$queue_obj = Queue::get_instance();
 		$queue_obj->install();
 		$queue_obj->init_queue();
-		Settings\Settings::get_instance()->activation();
+		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();

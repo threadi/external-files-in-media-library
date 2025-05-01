@@ -88,7 +88,7 @@ class Transients {
 	/**
 	 * Get all known transients as objects.
 	 *
-	 * @return array
+	 * @return array<string,Transient>
 	 */
 	public function get_transients(): array {
 		$transients = array();
@@ -101,6 +101,11 @@ class Transients {
 
 		// loop through the list and create the corresponding transient-objects.
 		foreach ( $transients_from_db as $transient ) {
+			// bail if transients it not a string.
+			if ( ! is_string( $transient ) ) {
+				continue;
+			}
+
 			// create the object from setting.
 			$transient_obj = new Transient( $transient );
 
@@ -206,6 +211,11 @@ class Transients {
 		// get values.
 		$option_name        = isset( $_POST['option_name'] ) ? sanitize_text_field( wp_unslash( $_POST['option_name'] ) ) : false;
 		$dismissible_length = isset( $_POST['dismissible_length'] ) ? sanitize_text_field( wp_unslash( $_POST['dismissible_length'] ) ) : 14;
+
+		// bail if option_name is not a string.
+		if ( ! is_string( $option_name ) ) {
+			return;
+		}
 
 		if ( 'forever' !== $dismissible_length ) {
 			// if $dismissible_length is not an integer default to 14.

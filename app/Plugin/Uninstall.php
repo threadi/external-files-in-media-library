@@ -90,11 +90,6 @@ class Uninstall {
 		} elseif ( 1 === absint( get_option( 'eml_switch_on_uninstallation' ) ) ) {
 			// switch hosting of files to local if option is enabled for it.
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
-				// bail if this is not an external file object.
-				if ( ! $external_file_obj instanceof File ) {
-					continue;
-				}
-
 				// bail if file is already local hosted.
 				if ( $external_file_obj->is_locally_saved() ) {
 					continue;
@@ -124,7 +119,7 @@ class Uninstall {
 		}
 
 		// clean managed settings.
-		Settings\Settings::get_instance()->delete_settings();
+		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
 
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();

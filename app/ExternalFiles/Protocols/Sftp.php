@@ -27,7 +27,7 @@ class Sftp extends Protocol_Base {
 	/**
 	 * List of supported tcp protocols.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array(
 		'sftp' => 22,
@@ -36,7 +36,7 @@ class Sftp extends Protocol_Base {
 	/**
 	 * List of SSH connections.
 	 *
-	 * @var array
+	 * @var array<WP_Filesystem_SSH2>
 	 */
 	private array $ssh_connections = array();
 
@@ -48,13 +48,13 @@ class Sftp extends Protocol_Base {
 	public function __construct( string $url ) {
 		// load necessary classes.
 		if ( ! function_exists( 'wp_tempnam' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
+			require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 		if ( ! class_exists( 'WP_Filesystem_Base' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 		if ( ! class_exists( 'WP_Filesystem_SSH2' ) ) {
-			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ssh2.php';
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ssh2.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
 
 		// call parent constructor.
@@ -64,7 +64,7 @@ class Sftp extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of file-infos.
+	 * @return array<int,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.
@@ -84,6 +84,11 @@ class Sftp extends Protocol_Base {
 		if ( ! is_array( $parse_url ) ) {
 			Log::get_instance()->create( __( 'SFTP-URL looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
+			return array();
+		}
+
+		// bail if path does not exist in array.
+		if ( ! isset( $parse_url['path'] ) ) {
 			return array();
 		}
 
@@ -157,7 +162,7 @@ class Sftp extends Protocol_Base {
 				}
 
 				// get the file data.
-				$results = $this->get_url_info( $file_path, $ssh_connection );
+				$results = $this->get_url_info( $file_path );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -194,7 +199,7 @@ class Sftp extends Protocol_Base {
 			}
 
 			// add file to the list.
-			$results = $this->get_url_info( $path, $ssh_connection );
+			$results = $this->get_url_info( $path );
 
 			// bail if results are empty.
 			if ( empty( $results ) ) {
@@ -205,29 +210,32 @@ class Sftp extends Protocol_Base {
 			$files[] = $results;
 		}
 
+		$instance = $this;
 		/**
 		 * Filter list of files during this import.
 		 *
 		 * @since 3.0.0 Available since 3.0.0
 		 * @param array $files List of files.
-		 * @param Protocol_Base $this The import object.
+		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $this );
+		return apply_filters( 'eml_external_files_infos', $files, $instance );
 	}
 
 	/**
 	 * Get infos from single given URL.
 	 *
-	 * @param string             $file_path The SSH/SFTP path.
-	 * @param WP_Filesystem_SSH2 $ssh_connection The SSH/SFTP connection object.
+	 * @param string $url The SSH/SFTP path.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
-	private function get_url_info( string $file_path, WP_Filesystem_SSH2 $ssh_connection ): array {
+	public function get_url_info( string $url ): array {
+		// use file path as name for this in this protocol handler.
+		$file_path = $url;
+
 		// initialize the file infos array.
 		$results = array(
 			'title'         => basename( $file_path ),
-			'filesize'      => 0,
+			'filesize'      => '0',
 			'mime-type'     => '',
 			'tmp-file'      => '',
 			'local'         => true,
@@ -235,9 +243,20 @@ class Sftp extends Protocol_Base {
 			'last-modified' => '',
 		);
 
+		// get the FTP connection handler.
+		$ssh_connection = $this->get_connection( $url );
+
+		// bail if connection failed.
+		if ( ! $ssh_connection ) {
+			Log::get_instance()->create( __( 'SFTP-Connection failed.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+
+			// return empty array as we got not the file.
+			return array();
+		}
+
 		// bail if file does not exist.
 		if ( ! $ssh_connection->is_readable( $file_path ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'SFTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we got not the file.
 			return array();
@@ -253,15 +272,24 @@ class Sftp extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = $ssh_connection->mtime( $file_path );
 
+		// get the contents of the file.
+		$file_content = $ssh_connection->get_contents( $file_path );
+
+		// bail if file content could not be read.
+		if ( ! $file_content ) {
+			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+
+			// return empty array as we got not the file.
+			return array();
+		}
+
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
 		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $ssh_connection->get_contents( $file_path ) );
+		$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
 
 		$response_headers = array();
 		/**
@@ -287,6 +315,11 @@ class Sftp extends Protocol_Base {
 		// get the path from given URL.
 		$parse_url = wp_parse_url( $url );
 
+		// bail if scheme or host could not be read.
+		if ( ! isset( $parse_url['scheme'] ) || ! isset( $parse_url['host'] ) ) {
+			return false;
+		}
+
 		// define ssh/sftp connection parameter.
 		$connection_arguments = array(
 			'port'     => $this->get_port_by_protocol( $parse_url['scheme'] ),
@@ -310,9 +343,17 @@ class Sftp extends Protocol_Base {
 			return false;
 		}
 
+		// get JSON content of the arguments.
+		$connection_arguments_json = wp_json_encode( $connection_arguments );
+
+		// bail if JSON could not be generated.
+		if ( ! $connection_arguments_json ) {
+			return false;
+		}
+
 		// check if connection is already in cache.
-		if ( ! empty( $this->ssh_connections[ md5( wp_json_encode( $connection_arguments ) ) ] ) ) {
-			return $this->ssh_connections[ md5( wp_json_encode( $connection_arguments ) ) ];
+		if ( ! empty( $this->ssh_connections[ md5( $connection_arguments_json ) ] ) ) {
+			return $this->ssh_connections[ md5( $connection_arguments_json ) ];
 		}
 
 		// get the connection.
@@ -326,7 +367,7 @@ class Sftp extends Protocol_Base {
 		}
 
 		// add connection to the list.
-		$this->ssh_connections[ md5( wp_json_encode( $connection_arguments ) ) ] = $connection;
+		$this->ssh_connections[ md5( $connection_arguments_json ) ] = $connection;
 
 		// return the connection object.
 		return $connection;

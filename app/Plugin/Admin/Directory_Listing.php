@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -76,8 +77,7 @@ class Directory_Listing {
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
 
 		// initialize the serverside tasks object for directory listing.
-		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
-		$directory_listing_obj = \easyDirectoryListingForWordPress\Init::get_instance();
+		$directory_listing_obj = Init::get_instance();
 		$directory_listing_obj->set_path( Helper::get_plugin_dir() );
 		$directory_listing_obj->set_url( Helper::get_plugin_url() );
 		$directory_listing_obj->set_prefix( 'efml' );
@@ -111,8 +111,7 @@ class Directory_Listing {
 	 */
 	public function register_directory_listing(): void {
 		// initialize the serverside tasks object for directory listing.
-		require_once Helper::get_plugin_dir() . 'vendor/threadi/easy-directory-listing-for-wordpress/lib/Init.php';
-		$directory_listing_obj = \easyDirectoryListingForWordPress\Init::get_instance();
+		$directory_listing_obj = Init::get_instance();
 		$directory_listing_obj->set_translations( $this->get_translations() );
 	}
 
@@ -216,11 +215,19 @@ class Directory_Listing {
 			$config['term'] = $term;
 		}
 
+		// prepare config.
+		$config_json = wp_json_encode( $config );
+
+		// bail if config failed.
+		if ( ! $config_json ) {
+			return;
+		}
+
 		// output.
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
-			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( wp_json_encode( $config ) ); ?>"></div>
+			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
 		</div>
 		<?php
 	}
@@ -246,7 +253,7 @@ class Directory_Listing {
 	/**
 	 * Return the translations for each text.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function get_translations(): array {
 		return array(

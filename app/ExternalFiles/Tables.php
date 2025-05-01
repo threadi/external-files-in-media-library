@@ -67,13 +67,6 @@ class Tables {
 	 * @return void
 	 */
 	public function add_media_filter(): void {
-		// check nonce.
-		if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-restrict-manage-posts' ) ) {
-			// redirect user back.
-			wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
-			exit;
-		}
-
 		// bail if get_current_screen() is not available.
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return;
@@ -81,12 +74,12 @@ class Tables {
 
 		// only for upload-screen.
 		$scr = get_current_screen();
-		if ( 'upload' !== $scr->base ) {
+		if ( is_null( $scr ) || 'upload' !== $scr->base ) {
 			return;
 		}
 
 		// get value from request.
-		$request_value = isset( $_GET['admin_filter_media_external_files'] ) ? sanitize_text_field( wp_unslash( $_GET['admin_filter_media_external_files'] ) ) : '';
+		$request_value = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// define possible options.
 		$options = array(
@@ -125,19 +118,15 @@ class Tables {
 			return;
 		}
 
-		// check nonce.
-		if ( isset( $_REQUEST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_REQUEST['nonce'] ) ), 'eml-filter-posts' ) ) {
-			// redirect user back.
-			wp_safe_redirect( isset( $_SERVER['HTTP_REFERER'] ) ? wp_unslash( $_SERVER['HTTP_REFERER'] ) : '' );
-			exit;
-		}
+		// get filter value.
+		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if filter is not set.
-		if ( ! isset( $_GET['admin_filter_media_external_files'] ) ) {
+		if ( is_null( $filter ) ) {
 			return;
 		}
 
-		if ( 'external' === $_GET['admin_filter_media_external_files'] ) {
+		if ( 'external' === $filter ) {
 			$query->set(
 				'meta_query',
 				array(
@@ -148,7 +137,7 @@ class Tables {
 				)
 			);
 		}
-		if ( 'non-external' === $_GET['admin_filter_media_external_files'] ) {
+		if ( 'non-external' === $filter ) {
 			$query->set(
 				'meta_query',
 				array(
@@ -164,9 +153,9 @@ class Tables {
 	/**
 	 * Add column to mark external files in media table.
 	 *
-	 * @param array $columns List of columns in media table.
+	 * @param array<string,string> $columns List of columns in media table.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function add_media_columns( array $columns ): array {
 		$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );

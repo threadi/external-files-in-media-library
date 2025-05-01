@@ -40,11 +40,11 @@ class Help_System {
 	 * Return the instance of this Singleton object.
 	 */
 	public static function get_instance(): Help_System {
-		if ( ! static::$instance instanceof static ) {
-			static::$instance = new static();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new static();
 		}
 
-		return static::$instance;
+		return self::$instance;
 	}
 
 	/**
@@ -104,7 +104,7 @@ class Help_System {
 	/**
 	 * Return the list of help tabs.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	private function get_help_tabs(): array {
 		$list = array();
@@ -113,7 +113,7 @@ class Help_System {
 		 * Filter the list of help tabs with its contents.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $list List of help tabs.
+		 * @param array<string,mixed> $list List of help tabs.
 		 */
 		return apply_filters( 'eml_help_tabs', $list );
 	}

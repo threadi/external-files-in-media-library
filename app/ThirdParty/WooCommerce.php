@@ -10,10 +10,10 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use WC_Product;
 
 /**
@@ -121,9 +121,9 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Import product image step 1.
 	 *
-	 * @param array $data The import data.
+	 * @param array<string, int|string> $data The import data.
 	 *
-	 * @return array
+	 * @return array<string, int|string>
 	 */
 	public function import_product_image( array $data ): array {
 		// bail if no main image is given.
@@ -132,18 +132,18 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// log event.
-		Log::get_instance()->create( __( 'Trying to import main image of WooCommerce product as external image.', 'external-files-in-media-library' ), $data['raw_image_id'], 'info', 2 );
+		Log::get_instance()->create( __( 'Trying to import main image of WooCommerce product as external image.', 'external-files-in-media-library' ), (string) $data['raw_image_id'], 'info', 2 );
 
 		// get the files object.
 		$external_files_obj = Files::get_instance();
 
 		// add the image and bail if it was not successfully.
-		if ( ! $external_files_obj->add_url( $data['raw_image_id'] ) ) {
+		if ( ! $external_files_obj->add_url( (string) $data['raw_image_id'] ) ) {
 			return $data;
 		}
 
 		// get the external file object for the given main image.
-		$external_file_obj = $external_files_obj->get_file_by_url( $data['raw_image_id'] );
+		$external_file_obj = $external_files_obj->get_file_by_url( (string) $data['raw_image_id'] );
 
 		// bail if file for the URL does not exist.
 		if ( ! $external_file_obj ) {
@@ -151,7 +151,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// log event.
-		Log::get_instance()->create( __( 'WooCommerce Product main image has been imported as external file.', 'external-files-in-media-library' ), $data['raw_image_id'], 'info', 2 );
+		Log::get_instance()->create( __( 'WooCommerce Product main image has been imported as external file.', 'external-files-in-media-library' ), (string) $data['raw_image_id'], 'info', 2 );
 
 		// remove raw_image_id to prevent usage through WooCommerce.
 		unset( $data['raw_image_id'] );
@@ -166,8 +166,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Import product image step 2.
 	 *
-	 * @param WC_Product $product The product object.
-	 * @param array      $data The import data.
+	 * @param WC_Product                $product The product object.
+	 * @param array<string, int|string> $data The import data.
 	 *
 	 * @return void
 	 */
@@ -177,7 +177,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// log event.
+		// log this event.
 		Log::get_instance()->create( __( 'Save external image file as WooCommerce Product main image.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// set the given main image on product.
@@ -187,9 +187,9 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Import product gallery images step 1.
 	 *
-	 * @param array $data The import data.
+	 * @param array<string, mixed> $data The import data.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public function import_product_gallery_images( array $data ): array {
 		// bail if no gallery images are given.
@@ -202,7 +202,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return $data;
 		}
 
-		// log event.
+		// log this event.
 		Log::get_instance()->create( __( 'Trying to save WooCommerce product gallery images as external files.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// collect all images.
@@ -235,7 +235,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return $data;
 		}
 
-		// log event.
+		// log this event.
 		Log::get_instance()->create( __( 'WooCommerce product gallery images has been saved as external files.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// add custom column which we use later to assign the media files to the product.
@@ -248,8 +248,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Import product gallery images step 2.
 	 *
-	 * @param WC_Product $product The product object.
-	 * @param array      $data The import data.
+	 * @param WC_Product                $product The product object.
+	 * @param array<string, int|string> $data The import data.
 	 *
 	 * @return void
 	 */
@@ -259,7 +259,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// log event.
+		// log this event.
 		Log::get_instance()->create( __( 'WooCommerce product gallery images will be saved as external files on the product.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// add them to the product as gallery.

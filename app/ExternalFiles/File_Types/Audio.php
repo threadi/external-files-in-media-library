@@ -69,9 +69,7 @@ class Audio extends File_Types_Base {
 		header( 'Content-Length: ' . $external_file_obj->get_filesize() );
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// return file content via WP filesystem.
 		echo $wp_filesystem->get_contents( $external_file_obj->get_cache_file() ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -144,7 +142,7 @@ class Audio extends File_Types_Base {
 		 * Run additional tasks to add custom meta data on external hostet files.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
-		 * @param File $external_file_obj The external files object.
+		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 */
 		do_action( 'eml_video_meta_data', $external_file_obj );
 	}

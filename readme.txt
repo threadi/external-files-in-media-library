@@ -40,11 +40,16 @@ Some of them require credentials, for http(s) it is optional.
 
 The plugin checks for you automatically on a regular basis whether the external hosted files you have embedded are still available.
 
-== Repository and documentation ==
+== Repository, documentation and reliability ==
 
 You find some documentations [here](https://github.com/threadi/external-files-in-media-library/tree/master/docs).
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
+
+Each release of this plugin will only be published if it fulfills the following conditions:
+
+* PHPStan check for possible bugs
+* Compliance with WordPress coding standards
 
 ---
 

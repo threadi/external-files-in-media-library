@@ -10,13 +10,14 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Number;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Fields\Select;
-use ExternalFilesInMediaLibrary\Plugin\Settings\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
+use wpdb;
 
 /**
  * Controller for queue tasks.
@@ -89,6 +90,11 @@ class Queue {
 		// add interval setting on main tab.
 		$general_tab_main = $settings_obj->get_section( 'settings_section_main' );
 
+		// bail if section could not be loaded.
+		if ( ! $general_tab_main ) {
+			return;
+		}
+
 		// create interval setting.
 		$setting = $settings_obj->add_setting( 'eml_queue_interval' );
 		$setting->set_section( $general_tab_main );
@@ -159,6 +165,9 @@ class Queue {
 	 * @return string
 	 */
 	public function update_interval_setting( string|null $value ): string {
+		// if null is given, use a string.
+		$value = Helper::get_as_string( $value );
+
 		// get queue-schedule-object.
 		$queue_schedule = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();
 
@@ -191,6 +200,13 @@ class Queue {
 	 */
 	public function install(): void {
 		global $wpdb;
+
+		// bail if $wpdb is not.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
+
+		// set collate.
 		$charset_collate = $wpdb->get_charset_collate();
 
 		// table for the queue.
@@ -204,21 +220,26 @@ class Queue {
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // @phpstan-ignore requireOnce.fileNotFound
 		dbDelta( $sql );
 	}
 
 	/**
 	 * Add list of URLs to the queue.
 	 *
-	 * @param array  $urls List of URLs.
-	 * @param string $login The login to use.
-	 * @param string $password The password to use.
+	 * @param array<string|int,mixed> $urls List of URLs.
+	 * @param string                  $login The login to use.
+	 * @param string                  $password The password to use.
 	 *
 	 * @return void
 	 */
 	public function add_urls( array $urls, string $login = '', string $password = '' ): void {
 		global $wpdb;
+
+		// bail if $wpdb is not.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
 
 		// bail if list is empty.
 		if ( empty( $urls ) ) {
@@ -297,7 +318,7 @@ class Queue {
 				continue;
 			}
 
-			$this->process_entry( $url_data['id'] );
+			$this->process_entry( absint( $url_data['id'] ) );
 
 			// show progress.
 			$progress ? $progress->tick() : '';
@@ -419,6 +440,13 @@ class Queue {
 	 */
 	public function clear(): void {
 		global $wpdb;
+
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
+
+		// truncate the content of the table.
 		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->prefix . 'eml_queue' ) );
 	}
 
@@ -459,7 +487,7 @@ class Queue {
 		// get the error entries.
 		foreach ( $this->get_urls( 'error' ) as $url_data ) {
 			// delete them.
-			$this->remove_url( $url_data['id'] );
+			$this->remove_url( absint( $url_data['id'] ) );
 		}
 
 		// show ok message.
@@ -481,30 +509,35 @@ class Queue {
 	 * @param string $state The requested state (new or error).
 	 * @param bool   $unlimited Whether to call unlimited list (true) or not (false).
 	 *
-	 * @return array
+	 * @return array<int,array<string>>
 	 */
 	public function get_urls( string $state = 'new', bool $unlimited = false ): array {
 		global $wpdb;
+
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return array();
+		}
 
 		if ( empty( $state ) ) {
 			// run query to unlimited list.
 			if ( $unlimited ) {
 				// return all URLs for requested state.
-				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
+				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 			}
 
 			// return limited URLs for requested state.
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A );
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
 		// run query to unlimited list.
 		if ( $unlimited ) {
 			// return all URLs for requested state.
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
-		// return limited URLs for requested state.
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A );
+		// get limited URLs for requested state.
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -512,21 +545,18 @@ class Queue {
 	 *
 	 * @param string $url The requested URL.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_url( string $url ): array {
 		global $wpdb;
 
-		// get the data of the single URL.
-		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A );
-
-		// if query resulted not in an array return an empty array.
-		if ( ! is_array( $result ) ) {
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
 			return array();
 		}
 
-		// return resulting array with the data.
-		return $result;
+		// return the data of the single URL.
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -534,21 +564,18 @@ class Queue {
 	 *
 	 * @param int $id The ID.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_url_by_id( int $id ): array {
 		global $wpdb;
 
-		// get the data of the single URL.
-		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A );
-
-		// if query resulted not in an array return an empty array.
-		if ( ! is_array( $result ) ) {
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
 			return array();
 		}
 
-		// return resulting array with the data.
-		return $result;
+		// return the data of the single URL.
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -561,6 +588,11 @@ class Queue {
 	 */
 	private function set_url_state( int $id, string $state ): void {
 		global $wpdb;
+
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
 
 		// get the URL from queue for given ID.
 		$url      = '';
@@ -577,6 +609,12 @@ class Queue {
 			),
 			array(
 				'id' => $id,
+			),
+			array(
+				'%s',
+			),
+			array(
+				'%d',
 			)
 		);
 
@@ -594,6 +632,11 @@ class Queue {
 	private function remove_url( int $id ): void {
 		global $wpdb;
 
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
+
 		// get the URL from queue for given ID.
 		$url      = '';
 		$url_data = $this->get_url( $url );
@@ -606,6 +649,9 @@ class Queue {
 			$wpdb->prefix . 'eml_queue',
 			array(
 				'id' => $id,
+			),
+			array(
+				'%d',
 			)
 		);
 
@@ -623,6 +669,11 @@ class Queue {
 	 */
 	private function db_error_handling( \mysqli_result|bool|int|null $result, string $url ): void {
 		global $wpdb;
+
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
 
 		// bail if result is not false.
 		if ( false !== $result ) {
@@ -642,7 +693,7 @@ class Queue {
 	public function show_queue(): void {
 		// if WP_List_Table is not loaded automatically, we need to load it.
 		if ( ! class_exists( 'WP_List_Table' ) ) {
-			include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+			include_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php'; // @phpstan-ignore includeOnce.fileNotFound
 		}
 		$queue = new \ExternalFilesInMediaLibrary\Plugin\Tables\Queue();
 		$queue->prepare_items();
@@ -664,6 +715,13 @@ class Queue {
 	 */
 	public function uninstall(): void {
 		global $wpdb;
+
+		// bail if $wpdb is not wpdb.
+		if ( ! $wpdb instanceof wpdb ) {
+			return;
+		}
+
+		// remove the table.
 		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->prefix . 'eml_queue' ) );
 	}
 
@@ -699,9 +757,9 @@ class Queue {
 	/**
 	 * Add a checkbox to mark the fields to add them to queue.
 	 *
-	 * @param array $fields List of fields in form.
+	 * @param array<int,string> $fields List of fields in form.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	public function add_field_in_form( array $fields ): array {
 		// bail if queue is disabled.
@@ -710,7 +768,7 @@ class Queue {
 		}
 
 		// add the field to enable queue-upload.
-		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_general' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_url() ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
 
 		// return the resulting fields.
 		return $fields;
@@ -719,8 +777,8 @@ class Queue {
 	/**
 	 * Add URLs for queue if the config "add_to_queue" from form request is set.
 	 *
-	 * @param bool  $return_value The return value to use (true to import queue).
-	 * @param array $config The config from form.
+	 * @param bool          $return_value The return value to use (true to import queue).
+	 * @param array<string> $config The config from form.
 	 *
 	 * @return bool
 	 */

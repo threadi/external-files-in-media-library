@@ -61,8 +61,23 @@ class ThirdPartySupport {
 				continue;
 			}
 
+			// extend the class name to match callable.
+			$class_name .= '::get_instance';
+
+			// bail if it is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
 			// initiate object.
-			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj = $class_name();
+
+			// bail if object is not a third party object.
+			if ( ! $obj instanceof ThirdParty_Base ) {
+				continue;
+			}
+
+			// activate this object.
 			$obj->activation();
 		}
 	}
@@ -79,8 +94,23 @@ class ThirdPartySupport {
 				continue;
 			}
 
+			// extend the class name to match callable.
+			$class_name .= '::get_instance';
+
+			// bail if it is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
 			// initiate object.
-			$obj = call_user_func( $class_name . '::get_instance' );
+			$obj = $class_name();
+
+			// bail if object is not a third party object.
+			if ( ! $obj instanceof ThirdParty_Base ) {
+				continue;
+			}
+
+			// initialize this object.
 			$obj->init();
 		}
 	}
@@ -88,7 +118,7 @@ class ThirdPartySupport {
 	/**
 	 * Return list of third party support we implement.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_third_party_support(): array {
 		$list = array(
@@ -108,7 +138,7 @@ class ThirdPartySupport {
 		 * Filter the list of third party support.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $list List of third party support.
+		 * @param array<string> $list List of third party support.
 		 */
 		return apply_filters( 'eml_third_party_support', $list );
 	}

@@ -15,6 +15,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
+use JsonException;
 
 /**
  * Handle Google Client as object.
@@ -26,7 +27,7 @@ class Client {
 	/**
 	 * The access token.
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
 	private array $access_token;
 
@@ -40,7 +41,7 @@ class Client {
 	/**
 	 * Initialize this object.
 	 *
-	 * @param array $access_token The access token to use.
+	 * @param array<string> $access_token The access token to use.
 	 */
 	public function __construct( array $access_token ) {
 		$this->access_token = $access_token;
@@ -49,7 +50,7 @@ class Client {
 	/**
 	 * Return the access token (which is an array).
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_access_token(): array {
 		return $this->access_token;
@@ -61,6 +62,7 @@ class Client {
 	 * @param int $user_id The WordPress user ID (optional).
 	 *
 	 * @return \Google\Client|false
+	 * @throws JsonException Could throw exception.
 	 */
 	public function get_client( int $user_id = 0 ): \Google\Client|false {
 		// get Google Drive object.
@@ -88,10 +90,16 @@ class Client {
 			// get new token via our own endpoint.
 			$access_token = $google_drive_obj->get_refreshed_token( $client );
 
+			// get access token as JSON for logging.
+			$access_token_json = wp_json_encode( $access_token );
+			if ( ! $access_token_json ) {
+				$access_token_json = '';
+			}
+
 			// bail if no access token could be loaded.
 			if ( empty( $access_token ) ) {
 				// show error on CLI.
-				Helper::is_cli() ? \WP_CLI::error( wp_json_encode( $access_token ) ) : '';
+				Helper::is_cli() ? \WP_CLI::error( $access_token_json ) : '';
 
 				// log event.
 				Log::get_instance()->create( __( 'Got empty response for requested new Google OAuth token!', 'external-files-in-media-library' ), '', 'error' );
@@ -106,7 +114,7 @@ class Client {
 				$google_drive_obj->delete_access_token();
 
 				// show error on CLI.
-				Helper::is_cli() ? \WP_CLI::error( wp_json_encode( $access_token ) ) : '';
+				Helper::is_cli() ? \WP_CLI::error( $access_token_json ) : '';
 
 				// log event.
 				Log::get_instance()->create( __( 'Got error from Google for requested new OAuth token:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $access_token ) . '</code>', '', 'error' );

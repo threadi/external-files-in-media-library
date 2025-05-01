@@ -31,7 +31,7 @@ class File_Types_Base {
 	/**
 	 * The size (e.g. for images).
 	 *
-	 * @var array
+	 * @var array<int>
 	 */
 	private array $size = array();
 
@@ -71,16 +71,16 @@ class File_Types_Base {
 			return false;
 		}
 
-		// get the mime type to check.
-		$mime_type = $this->get_mime_type();
-
 		// get the external file object.
 		$external_file_obj = $this->get_file();
 
-		// use the mime type from the external file object, if set.
-		if ( $external_file_obj ) {
-			$mime_type = $external_file_obj->get_mime_type();
+		// bail if external file could not be loaded.
+		if ( ! $external_file_obj ) {
+			return false;
 		}
+
+		// use the mime type from the external file object.
+		$mime_type = $external_file_obj->get_mime_type();
 
 		// check the mime types.
 		$result = in_array( $mime_type, $this->get_mime_types(), true );
@@ -151,7 +151,7 @@ class File_Types_Base {
 	/**
 	 * Return the configured size.
 	 *
-	 * @return array
+	 * @return array<int>
 	 */
 	protected function get_size(): array {
 		return $this->size;
@@ -160,7 +160,7 @@ class File_Types_Base {
 	/**
 	 * Set the size to use.
 	 *
-	 * @param array $size The size as array (0 => width, 1 => height).
+	 * @param array<int> $size The size as array (0 => width, 1 => height).
 	 *
 	 * @return void
 	 */

@@ -27,7 +27,6 @@ class File extends File_Types_Base {
 	 * Output of proxied file.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
 		// bail if no file is set.
@@ -42,9 +41,7 @@ class File extends File_Types_Base {
 		$cached_file = $external_file_obj->get_cache_file( $this->get_size() );
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// return header.
 		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );

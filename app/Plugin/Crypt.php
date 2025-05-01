@@ -50,11 +50,11 @@ class Crypt {
 	 * Return the instance of this Singleton object.
 	 */
 	public static function get_instance(): Crypt {
-		if ( ! static::$instance instanceof static ) {
-			static::$instance = new static();
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new static();
 		}
 
-		return static::$instance;
+		return self::$instance;
 	}
 
 	/**
@@ -110,7 +110,7 @@ class Crypt {
 	/**
 	 * Return list of supported methods.
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	private function get_available_methods(): array {
 		$methods = array(
@@ -122,7 +122,7 @@ class Crypt {
 		 * Filter the available crypt-methods.
 		 *
 		 * @since 1.0.0 Available since 1.0.0.
-		 * @param array $methods List of methods.
+		 * @param array<string> $methods List of methods.
 		 */
 		return apply_filters( 'eml_crypt_methods', $methods );
 	}
@@ -147,7 +147,16 @@ class Crypt {
 	 */
 	private function get_method_by_name( string $method ): false|Crypt_Base {
 		foreach ( $this->get_available_methods() as $method_class_name ) {
-			$obj = call_user_func( $method_class_name . '::get_instance' );
+			// get function name.
+			$class_name = $method_class_name . '::get_instance';
+
+			// bail if class is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
+			// get object.
+			$obj = $class_name();
 
 			// bail if object is not Crypt_Base.
 			if ( ! $obj instanceof Crypt_Base ) {

@@ -23,7 +23,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Override the parent columns method. Defines the columns to use in your listing table
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function get_columns(): array {
 		return array(
@@ -38,7 +38,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Get the table data
 	 *
-	 * @return array
+	 * @return array<int,array<string,mixed>>
 	 */
 	private function table_data(): array {
 		// get state filter.
@@ -86,7 +86,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Define which columns are hidden
 	 *
-	 * @return array
+	 * @return array<string>
 	 */
 	public function get_hidden_columns(): array {
 		return array();
@@ -95,7 +95,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Define the sortable columns
 	 *
-	 * @return array
+	 * @return array<string, array<int, string|false>>
 	 */
 	public function get_sortable_columns(): array {
 		return array( 'date' => array( 'date', false ) );
@@ -104,13 +104,12 @@ class Logs extends WP_List_Table {
 	/**
 	 * Define what data to show on each column of the table
 	 *
-	 * @param  array  $item        Data for single column.
-	 * @param  String $column_name - Current iterated column name.
+	 * @param  array<string> $item        Data for single column.
+	 * @param  String        $column_name - Current iterated column name.
 	 *
 	 * @return string
-	 * @noinspection PhpMissingReturnTypeInspection
 	 */
-	public function column_default( $item, $column_name ) {
+	public function column_default( $item, $column_name ): string {
 		return match ( $column_name ) {
 			'options' => $this->get_item_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
@@ -159,8 +158,14 @@ class Logs extends WP_List_Table {
 				),
 			);
 
+			// format the dialog configuration.
+			$dialog = wp_json_encode( $empty_dialog );
+			if ( ! $dialog ) {
+				$dialog = '';
+			}
+
 			?>
-			<a href="<?php echo esc_url( $empty_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( wp_json_encode( $empty_dialog ) ); ?>"><?php echo esc_html__( 'Empty the log', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $empty_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $this->items ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Empty the log', 'external-files-in-media-library' ); ?></a>
 			<?php
 		}
 	}
@@ -190,7 +195,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Define filter for log table.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	protected function get_views(): array {
 		// get main URL without filter.
@@ -228,7 +233,7 @@ class Logs extends WP_List_Table {
 	/**
 	 * Show options on entry depending on its entities.
 	 *
-	 * @param array $item The item.
+	 * @param array<string> $item The item.
 	 *
 	 * @return string
 	 */
@@ -268,16 +273,28 @@ class Logs extends WP_List_Table {
 				),
 			);
 
+			// format the dialog configuration.
+			$dialog = wp_json_encode( $dialog );
+			if ( ! $dialog ) {
+				$dialog = '';
+			}
+
 			// add output.
-			$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
+			$output .= '<a class="dashicons dashicons-trash easy-dialog-for-wordpress" data-dialog="' . esc_attr( $dialog ) . '" href="' . esc_url( $url ) . '" title="' . esc_attr__( 'Delete entry', 'external-files-in-media-library' ) . '"></a>';
 		}
 
 		// get the corresponding external file object.
 		if ( ! empty( $item['url'] ) ) {
 			$external_file_obj = Files::get_instance()->get_file_by_url( $item['url'] );
 			if ( $external_file_obj instanceof File ) {
-				// link to the attachment edit page.
-				$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( get_edit_post_link( $external_file_obj->get_id() ) ) . '" title="' . esc_attr__( 'Edit this file', 'external-files-in-media-library' ) . '"></a>';
+				// get the edit URL.
+				$edit_url = get_edit_post_link( $external_file_obj->get_id() );
+
+				// only add if edit_url is set.
+				if ( is_string( $edit_url ) ) {
+					// link to the attachment edit page.
+					$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( $edit_url ) . '" title="' . esc_attr__( 'Edit this file', 'external-files-in-media-library' ) . '"></a>';
+				}
 			}
 		}
 

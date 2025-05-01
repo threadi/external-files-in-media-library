@@ -12,9 +12,11 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
+use WP_Post;
 use WP_Query;
 
 /**
@@ -122,10 +124,18 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			),
 		);
 
+		// prepare dialog for attribute.
+		$dialog = wp_json_encode( $dialog );
+
+		// bail if preparation does not worked.
+		if ( ! $dialog ) {
+			return;
+		}
+
 		// create hint.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( 'eml_exmage_migrate' );
-		$transient_obj->set_message( __( '<strong>We detected that you are using Exmage - great!</strong> Click on the following button to migrate the Exmage-files.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( $url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( wp_json_encode( $dialog ) ) . '">' . __( 'Migrate now', 'external-files-in-media-library' ) . '</a>' );
+		$transient_obj->set_message( __( '<strong>We detected that you are using Exmage - great!</strong> Click on the following button to migrate the Exmage-files.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( $url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( $dialog ) . '">' . __( 'Migrate now', 'external-files-in-media-library' ) . '</a>' );
 		$transient_obj->set_dismissible_days( 30 );
 		$transient_obj->save();
 	}
@@ -133,7 +143,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return list of all exmage files.
 	 *
-	 * @return array
+	 * @return array<int>
 	 */
 	public function get_files(): array {
 		// get all Exmage files.
@@ -152,12 +162,19 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 		$results = new WP_Query( $query );
 
 		// bail on no results.
-		if( 0 === $results->post_count ) {
+		if ( 0 === $results->post_count ) {
 			return array();
 		}
 
-		// return resulting list.
-		return $results->get_posts();
+		// create the resulting list to create a clean return array.
+		$return_array = array();
+		foreach ( $results->get_posts() as $post_id ) {
+			if ( $post_id instanceof WP_Post ) {
+				$post_id = $post_id->ID;
+			}
+			$return_array[] = $post_id;
+		}
+		return $return_array;
 	}
 
 	/**
@@ -173,8 +190,16 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 		// run the migration.
 		$this->migrate();
 
+		// get referer.
+		$referer = wp_get_referer();
+
+		// if referer is false, set empty string.
+		if ( ! $referer ) {
+			$referer = '';
+		}
+
 		// redirect user back.
-		wp_safe_redirect( wp_get_referer() );
+		wp_safe_redirect( $referer );
 		exit;
 	}
 
@@ -184,6 +209,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function migrate(): void {
+		// get the files.
 		$posts = $this->get_files();
 
 		// bail if no results found.
@@ -207,8 +233,20 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 				continue;
 			}
 
+			// bail if URL is not a string.
+			if ( ! is_string( $url ) ) {
+				// show progress.
+				$progress ? $progress->tick() : '';
+				continue;
+			}
+
 			// get external files object for this post.
 			$external_files_obj = Files::get_instance()->get_file( $post_id );
+
+			// bail if file could not be loaded.
+			if ( ! $external_files_obj instanceof File ) {
+				continue;
+			}
 
 			// set the URL.
 			$external_files_obj->set_url( $url );
@@ -218,13 +256,6 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 
 			// bail if protocol is not supported.
 			if ( ! $protocol_handler ) {
-				// show progress.
-				$progress ? $progress->tick() : '';
-				continue;
-			}
-
-			// bail if protocol handler does not support get_url_info (which should never happen as Exmage only support http).
-			if ( ! method_exists( $protocol_handler, 'get_url_info' ) ) {
 				// show progress.
 				$progress ? $progress->tick() : '';
 				continue;

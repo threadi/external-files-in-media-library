@@ -4,6 +4,7 @@
  *
  * @source https://wordpress.org/plugins/export-media-library/
  *
+ * @noinspection PhpPluralMixedCanBeReplacedWithArrayInspection
  * @package external-files-in-media-library
  */
 
@@ -63,26 +64,31 @@ class Massedge extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Prevent usage of external hosted attachments by the export via https://wordpress.org/plugins/export-media-library/
 	 *
-	 * @param array $value The values.
-	 * @param array $params The params.
+	 * @param array<mixed> $value The values.
+	 * @param array<int>   $params The params.
 	 *
-	 * @return array
+	 * @return array<mixed>
 	 */
 	public function prevent_external_attachment_in_export( array $value, array $params ): array {
-		if ( isset( $params['attachment_id'] ) ) {
-			// get the external file object.
-			$external_file_obj = Files::get_instance()->get_file( $params['attachment_id'] );
-
-			// check if the file is an external file, could be proxied and if it is really external hosted.
-			if (
-				$external_file_obj
-				&& $external_file_obj->is_valid()
-				&& false === $external_file_obj->is_locally_saved()
-				&& $external_file_obj->get_file_type_obj()->is_proxy_enabled()
-			) {
-				return array();
-			}
+		// bail if no attachment ID is given.
+		if ( ! isset( $params['attachment_id'] ) ) {
+			return $value;
 		}
+
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $params['attachment_id'] );
+
+		// check if the file is an external file, could be proxied and if it is really external hosted.
+		if (
+			$external_file_obj
+			&& $external_file_obj->is_valid()
+			&& false === $external_file_obj->is_locally_saved()
+			&& $external_file_obj->get_file_type_obj()->is_proxy_enabled()
+		) {
+			return array();
+		}
+
+		// return the given value.
 		return $value;
 	}
 }

@@ -8,9 +8,10 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
-defined( 'ABSPATH' ) || exit;
-
+use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+
+defined( 'ABSPATH' ) || exit;
 
 /**
  * Object to handle local import support.
@@ -76,10 +77,9 @@ class Local implements Service {
 	/**
 	 * Update the local service with our custom action for each file.
 	 *
-	 * @param array $directory_listing_objects List of directory listing objects.
+	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *
-	 * @return array
-	 * @noinspection PhpArrayAccessCanBeReplacedWithForeachValueInspection
+	 * @return array<Directory_Listing_Base>
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		foreach ( $directory_listing_objects as $i => $obj ) {
@@ -99,9 +99,9 @@ class Local implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array $fields List of import options.
+	 * @param array<int,string> $fields List of import options.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	public function add_option_for_local_import( array $fields ): array {
 		$fields[] = '<details><summary>' . __( 'Or add from local server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_local"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( \easyDirectoryListingForWordPress\Listings\Local::get_instance() ) . '" class="button button-secondary">' . esc_html__( 'Add from local server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
@@ -111,7 +111,7 @@ class Local implements Service {
 	/**
 	 * Return the actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	public function get_actions(): array {
 		return array(
@@ -125,7 +125,7 @@ class Local implements Service {
 	/**
 	 * Return global actions.
 	 *
-	 * @return array
+	 * @return array<int,array<string,string>>
 	 */
 	public function get_global_actions(): array {
 		return array(

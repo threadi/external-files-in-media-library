@@ -28,7 +28,7 @@ class Protocol_Base {
 	/**
 	 * List of supported tcp protocols with their ports.
 	 *
-	 * @var array
+	 * @var array<string,int>
 	 */
 	protected array $tcp_protocols = array();
 
@@ -74,18 +74,20 @@ class Protocol_Base {
 	/**
 	 * Return the tcp protocols of this protocol object.
 	 *
-	 * @return array
+	 * @return array<string,int>
 	 */
 	private function get_tcp_protocols(): array {
 		$tcp_protocols = $this->tcp_protocols;
 
+		$instance = $this;
 		/**
 		 * Filter the tcp protocols.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $tcp_protocols List of tcp protocol of this object (e.g. 'http').
+		 * @param array<string,int> $tcp_protocols List of tcp protocol of this object (e.g. 'http').
+		 * @param Protocol_Base $instance The actual object.
 		 */
-		return apply_filters( 'eml_tcp_protocols', $tcp_protocols, $this );
+		return apply_filters( 'eml_tcp_protocols', $tcp_protocols, $instance );
 	}
 
 	/**
@@ -160,7 +162,7 @@ class Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array List of files with its infos.
+	 * @return array<int,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		return array();
@@ -332,14 +334,14 @@ class Protocol_Base {
 	 *
 	 * @return bool|string
 	 */
-	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): false|string {
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
 		// bail if url is empty.
 		if ( empty( $url ) ) {
 			return false;
 		}
 
 		// bail if no filesystem is given.
-		if ( empty( $filesystem ) ) {
+		if ( empty( $filesystem ) ) { // @phpstan-ignore empty.variable
 			return false;
 		}
 
@@ -366,9 +368,7 @@ class Protocol_Base {
 		}
 
 		// get WP Filesystem-handler.
-		require_once ABSPATH . '/wp-admin/includes/file.php';
-		\WP_Filesystem();
-		global $wp_filesystem;
+		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );
@@ -387,5 +387,19 @@ class Protocol_Base {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get infos from single given URL.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_url_info( string $url ): array {
+		if ( empty( $url ) ) {
+			return array();
+		}
+		return array();
 	}
 }
