@@ -160,7 +160,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$parse_url = wp_parse_url( $directory );
 
 		// set parent dir.
-		$parent_dir = '.';
+		$parent_dir = '/';
 
 		// bail if path could not be read.
 		if ( isset( $parse_url['path'] ) ) {
@@ -177,7 +177,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		}
 
 		// collect the files and directories.
-		return $this->get_directory_recursively( trailingslashit( $parent_dir ), $directory_list, $ftp_connection, $directory );
+		return $this->get_directory_recursively( $parent_dir, $directory_list, $ftp_connection, $directory );
 	}
 
 	/**
