@@ -97,7 +97,7 @@ class Queue {
 		$setting = $settings_obj->add_setting( 'eml_queue_interval' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'string' );
-		$setting->set_default( 'hourly' );
+		$setting->set_default( 'efml_hourly' );
 		$field = new Select();
 		$field->set_title( __( 'Set interval for queue processing', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which the queue for new URLs will be processed.', 'external-files-in-media-library' ) );

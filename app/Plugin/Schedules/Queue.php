@@ -37,7 +37,7 @@ class Queue extends Schedules_Base {
 	 *
 	 * @var string
 	 */
-	protected string $default_interval = 'hourly';
+	protected string $default_interval = 'efml_hourly';
 
 	/**
 	 * Initialize this schedule.

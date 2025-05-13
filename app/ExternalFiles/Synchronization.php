@@ -131,7 +131,7 @@ class Synchronization {
 		$setting = $settings_obj->add_setting( 'eml_sync_interval' );
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'string' );
-		$setting->set_default( 'hourly' );
+		$setting->set_default( 'efml_hourly' );
 		$field = new Select();
 		$field->set_title( __( 'Interval for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which the synchronization for new external directories will be processed. This setting can be changed on each external directory.', 'external-files-in-media-library' ) );
@@ -253,6 +253,9 @@ class Synchronization {
 
 		// get actual interval.
 		$term_interval = $sync_schedule_obj ? $sync_schedule_obj->get_interval() : get_term_meta( $term_id, 'interval', true );
+		if( empty( $term_interval ) ) {
+			$term_interval = get_option( 'eml_sync_interval' );
+		}
 
 		// create the interval field.
 		$form = '<div><label for="interval">' . __( 'Choose interval:', 'external-files-in-media-library' ) . '</label><select id="interval">';
@@ -987,7 +990,7 @@ class Synchronization {
 		// get the interval to set.
 		$interval = get_term_meta( $term_id, 'interval', true );
 		if ( empty( $interval ) ) {
-			$interval = 'hourly';
+			$interval = 'efml_hourly';
 		}
 
 		// get the schedule object.

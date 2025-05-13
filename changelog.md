@@ -8,7 +8,8 @@
 - Added support for the plugins CatFolders, Filebird and Folderly to import files in specific folders of this plugins
 - Added support for the plugin Enhanced Media Library to add imported files to their categories
 - Added wrapper for all settings of this plugin for easier management in the future
-- New option for import local files from chosen directory via queue (for very large directories)
+- Added custom intervals for any cron event this plugin delivers
+- Added option for import local files from chosen directory via queue (for very large directories)
 
 ### Changed
 

@@ -88,6 +88,7 @@ class Init {
 
 		// misc.
 		add_action( 'cli_init', array( $this, 'cli' ) );
+		add_filter( 'cron_schedules', array( $this, 'add_cron_intervals' ) );
 	}
 
 	/**
@@ -95,9 +96,66 @@ class Init {
 	 *
 	 * @return void
 	 * @noinspection PhpFullyQualifiedNameUsageInspection
-	 * @noinspection PhpUndefinedClassInspection
+	 * @noinspection ClassConstantCanBeUsedInspection
 	 */
 	public function cli(): void {
 		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Plugin\Cli' );
+	}
+
+	/**
+	 * Add some custom cron-intervals.
+	 *
+	 * @param array<string, array<string, int|string>> $intervals List of intervals.
+	 *
+	 * @return array<string, array<string, int|string>>
+	 */
+	public function add_cron_intervals( array $intervals ): array {
+		$intervals['efml_10minutely'] = array(
+			'interval' => 60 * 10,
+			'display'  => __( 'every 10 Minutes', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_20minutely'] = array(
+			'interval' => 60 * 20,
+			'display'  => __( 'every 20 Minutes', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_30minutely'] = array(
+			'interval' => 60 * 30,
+			'display'  => __( 'every 30 Minutes', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_hourly']    = array(
+			'interval' => 60 * 60,
+			'display'  => __( 'every hour', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_2hourly']    = array(
+			'interval' => 60 * 60 * 2,
+			'display'  => __( 'every 2 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_3hourly']    = array(
+			'interval' => 60 * 60 * 3,
+			'display'  => __( 'every 3 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_4hourly']    = array(
+			'interval' => 60 * 60 * 4,
+			'display'  => __( 'every 4 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_6hourly']    = array(
+			'interval' => 60 * 60 * 6,
+			'display'  => __( 'every 6 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_12hourly']    = array(
+			'interval' => 60 * 60 * 12,
+			'display'  => __( 'every 12 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_24hourly']    = array(
+			'interval' => 60 * 60 * 24,
+			'display'  => __( 'every 24 hours', 'external-files-in-media-library' ),
+		);
+		$intervals['efml_weekly']    = array(
+			'interval' => 60 * 60 * 24 * 7,
+			'display'  => __( 'every week', 'external-files-in-media-library' ),
+		);
+
+		// return resulting list of additional intervals.
+		return $intervals;
 	}
 }
