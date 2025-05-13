@@ -70,7 +70,7 @@ class Synchronization {
 		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
 
 		// bail if synchronization support is not enabled.
-		if( 1 !== absint( get_option( 'eml_sync' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return;
 		}
 
@@ -94,7 +94,7 @@ class Synchronization {
 		add_action( 'pre_delete_term', array( $this, 'delete_synced_files' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'delete_schedule' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'add_style' ) );
-		add_action( 'eml_schedules', array( $this, 'add_schedule_obj' ) );
+		add_filter( 'eml_schedules', array( $this, 'add_schedule_obj' ) );
 	}
 
 	/**
@@ -246,26 +246,37 @@ class Synchronization {
 		$term_interval = $sync_schedule_obj ? $sync_schedule_obj->get_interval() : get_term_meta( $term_id, 'interval', true );
 
 		// create the interval field.
-		$interval = '<div><label for="interval">' . __( 'Choose interval:', 'external-files-in-media-library' ) . '</label><select id="interval">';
-		foreach( Helper::get_intervals() as $name => $label ) {
+		$form = '<div><label for="interval">' . __( 'Choose interval:', 'external-files-in-media-library' ) . '</label><select id="interval">';
+		foreach ( Helper::get_intervals() as $name => $label ) {
 			// bail if this is the disabled entry.
-			if( 'eml_disable_check' === $name ) {
+			if ( 'eml_disable_check' === $name ) {
 				continue;
 			}
 
 			// add the entry.
-			$interval .= '<option value="' . $name . '"' . ( $term_interval === $name ? ' selected' : '' ) . '>' . $label . '</option>';
+			$form .= '<option value="' . $name . '"' . ( $term_interval === $name ? ' selected' : '' ) . '>' . $label . '</option>';
 		}
-		$interval .= '</select><input type="hidden" id="term_id" value="' . absint( $term_id ) . '"></div>';
+		$form .= '</select><input type="hidden" id="term_id" value="' . absint( $term_id ) . '"></div>';
+
+		/**
+		 * Filter the form to configure this external directory.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param string $form The form HTML-code.
+		 * @param int $term_id The term ID.
+		 */
+		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
 
 		// create dialog for sync config.
 		$dialog_sync_config = array(
-			'title'   => sprintf( __( 'Set interval for %1$s', 'external-files-in-media-library' ), $listing_obj->get_label() ),
-			'texts'   => array(
+			'className' => 'eml-sync-config',
+			/* translators: %1$s will be replaced by a name. */
+			'title'     => sprintf( __( 'Set interval for %1$s', 'external-files-in-media-library' ), $listing_obj->get_label() ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Configure interval which will be used to automatically synchronize this external directory with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
-				$interval
+				$form,
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_sync_save_config("' . $listing_obj->get_name() . '", ' . $term_id . ');',
 					'variant' => 'primary',
@@ -281,7 +292,7 @@ class Synchronization {
 
 		// define actions.
 		$actions = array(
-			'<div class="eml-switch-toggle"><input id="state-on-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id) . '" value="1" type="radio"' . ( $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-on-' . absint( $term_id ) . '" class="green">' . __( 'On', 'external-files-in-media-library' ) . '</label><input id="state-off-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id) . '" value="0"' . ( ! $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-off-' . absint( $term_id ) . '" class="red">' . __( 'Off', 'external-files-in-media-library' ) . '</label></div>',
+			'<div class="eml-switch-toggle"><input id="state-on-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id ) . '" value="1" type="radio"' . ( $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-on-' . absint( $term_id ) . '" class="green">' . __( 'On', 'external-files-in-media-library' ) . '</label><input id="state-off-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id ) . '" value="0"' . ( ! $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-off-' . absint( $term_id ) . '" class="red">' . __( 'Off', 'external-files-in-media-library' ) . '</label></div>',
 			'<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog_sync_now ) ) . '">' . __( 'Now', 'external-files-in-media-library' ) . '</a>',
 			'<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog_sync_config ) ) . '">' . __( 'Configure', 'external-files-in-media-library' ) . '</a>',
 		);
@@ -295,11 +306,12 @@ class Synchronization {
 	 *
 	 * @param string                 $url                   The URL to sync.
 	 * @param Directory_Listing_Base $directory_listing_obj The directory listing base object we use.
-	 * @param array<string,mixed>                  $term_data The term data.
+	 * @param array<string,mixed>    $term_data             The term data.
+	 * @param int                    $term_id               The used term ID.
 	 *
 	 * @return void
 	 */
-	public function sync( string $url, Directory_Listing_Base $directory_listing_obj, array $term_data ): void {
+	public function sync( string $url, Directory_Listing_Base $directory_listing_obj, array $term_data, int $term_id ): void {
 		// remove the update marker on all existing synced files for this URL.
 		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
 			delete_post_meta( $post_id, 'eml_synced' );
@@ -321,6 +333,16 @@ class Synchronization {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
 
+		/**
+		 * Allow to add additional tasks before sync is running.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param string $url The used URL.
+		 * @param array<string,string> $term_data The term data.
+		 * @param int $term_id The used term ID.
+		 */
+		do_action( 'efml_before_sync', $url, $term_data, $term_id );
+
 		// get the files object.
 		$files = Files::get_instance();
 
@@ -338,7 +360,7 @@ class Synchronization {
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info' );
 
 		// delete unused files, if enabled.
-		if( 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
+		if ( 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
 			// get again all files from given source URL but which does not have the update marker.
 			$query  = array(
 				'post_type'      => 'attachment',
@@ -444,7 +466,7 @@ class Synchronization {
 		update_option( 'eml_sync_title', __( 'Sync of files starting ..', 'external-files-in-media-library' ) );
 
 		// run the synchronization.
-		$this->sync( $url, $directory_listing_obj, $term_data );
+		$this->sync( $url, $directory_listing_obj, $term_data, $term_id );
 
 		// mark sync as not running.
 		delete_option( 'eml_sync_running' );
@@ -618,7 +640,9 @@ class Synchronization {
 		}
 
 		// show info about sync time.
-		?><span class="dashicons dashicons-clock" title="<?php echo esc_attr( __( 'Last synchronized:', 'external-files-in-media-library' ) . ' ' .Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?>"></span><?php
+		?>
+		<span class="dashicons dashicons-clock" title="<?php echo esc_attr( __( 'Last synchronized:', 'external-files-in-media-library' ) . ' ' . Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?>"></span>
+		<?php
 	}
 
 	/**
@@ -632,7 +656,7 @@ class Synchronization {
 		global $pagenow;
 
 		// bail if we are not in post.php.
-		if( 'post.php' !== $pagenow ) {
+		if ( 'post.php' !== $pagenow ) {
 			return $classes;
 		}
 
@@ -640,7 +664,7 @@ class Synchronization {
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if post id is not given.
-		if( 0 === $post_id ) {
+		if ( 0 === $post_id ) {
 			return $classes;
 		}
 
@@ -662,8 +686,8 @@ class Synchronization {
 	/**
 	 * Remove the delete action for synced files.
 	 *
-	 * @param array<string,string>   $actions List of actions.
-	 * @param WP_Post $post The post object of the file.
+	 * @param array<string,string> $actions List of actions.
+	 * @param WP_Post              $post The post object of the file.
 	 *
 	 * @return array<string,string>
 	 */
@@ -677,7 +701,7 @@ class Synchronization {
 		}
 
 		// bail if delete action does not exist.
-		if( ! isset( $actions['delete'] ) ) {
+		if ( ! isset( $actions['delete'] ) ) {
 			return $actions;
 		}
 
@@ -698,7 +722,7 @@ class Synchronization {
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
 		// bail if this is running during an archive term deletion.
-		if( ! is_null( filter_input( INPUT_POST, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) || ! is_null( filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) ) {
+		if ( ! is_null( filter_input( INPUT_POST, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) || ! is_null( filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) ) {
 			return $delete;
 		}
 
@@ -724,20 +748,20 @@ class Synchronization {
 	 */
 	public function delete_synced_files( int $term_id, string $taxonomy ): void {
 		// bail if this is not our archive taxonomy.
-		if( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
+		if ( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
 			return;
 		}
 
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
-			return ;
+		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+			return;
 		}
 
 		// get the term.
 		$term = get_term( $term_id, $taxonomy );
 
 		// bail if term could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 
@@ -747,11 +771,16 @@ class Synchronization {
 		// get the listing object by this name.
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
+		// bail if listing object could not be found.
+		if ( ! $listing_obj ) {
+			return;
+		}
+
 		// get the URL.
 		$url = $listing_obj->get_url( $term->name );
 
 		// remove all synced files from this URL.
-		foreach( $this->get_synced_files_by_url( $url ) as $post_id ) {
+		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
 			wp_delete_attachment( $post_id, true );
 		}
 	}
@@ -764,9 +793,9 @@ class Synchronization {
 	 *
 	 * @return void
 	 */
-	public function delete_schedule( int $term_id, string $taxonomy): void {
+	public function delete_schedule( int $term_id, string $taxonomy ): void {
 		// bail if this is not our archive taxonomy.
-		if( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
+		if ( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
 			return;
 		}
 
@@ -774,7 +803,7 @@ class Synchronization {
 		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
 		// bail if none has been found.
-		if( ! $sync_schedule_obj ) {
+		if ( ! $sync_schedule_obj ) {
 			return;
 		}
 
@@ -791,8 +820,17 @@ class Synchronization {
 	 */
 	private function get_schedule_by_term_id( int $term_id ): Schedules\Synchronization|false {
 		// get all schedules.
-		foreach( _get_cron_array() as $event ) {
-			if( ! str_starts_with( array_key_first( $event ), 'eml_sync' ) ) {
+		foreach ( _get_cron_array() as $event ) {
+			// get first entry key.
+			$key = array_key_first( $event );
+
+			// bail if key is not a string.
+			if ( ! is_string( $key ) ) {
+				continue;
+			}
+
+			// bail if key starts not with "eml_sync".
+			if ( ! str_starts_with( $key, 'eml_sync' ) ) {
 				continue;
 			}
 
@@ -800,12 +838,12 @@ class Synchronization {
 			$array = current( $event['eml_sync'] );
 
 			// bail if no term_id is set.
-			if( ! isset( $array['args']['term_id'] ) ) {
+			if ( ! isset( $array['args']['term_id'] ) ) {
 				continue;
 			}
 
 			// bail if term_id does not match.
-			if( $term_id !== $array['args']['term_id'] ) {
+			if ( $term_id !== $array['args']['term_id'] ) {
 				continue;
 			}
 
@@ -854,13 +892,13 @@ class Synchronization {
 		);
 		$result = new WP_Query( $query );
 
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
 			return array();
 		}
 
 		// get list of IDs.
 		$list = array();
-		foreach( $result->get_posts() as $post_id ) {
+		foreach ( $result->get_posts() as $post_id ) {
 			$list[] = absint( $post_id );
 		}
 		return $list;
@@ -903,7 +941,7 @@ class Synchronization {
 	 */
 	public function added_new_directory( int $term_id ): void {
 		// bail if this is not enabled.
-		if( 1 !== absint( get_option( 'eml_sync_set_automatic' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync_set_automatic' ) ) ) {
 			return;
 		}
 
@@ -921,7 +959,7 @@ class Synchronization {
 	private function add_schedule( int $term_id ): void {
 		// get the interval to set.
 		$interval = get_term_meta( $term_id, 'interval', true );
-		if( empty( $interval ) ) {
+		if ( empty( $interval ) ) {
 			$interval = 'hourly';
 		}
 
@@ -929,7 +967,12 @@ class Synchronization {
 		$schedule_obj = new Schedules\Synchronization();
 
 		// set the arguments.
-		$schedule_obj->set_args( array( 'term_id' => $term_id, 'method' => get_term_meta( $term_id, 'type', true ) ) );
+		$schedule_obj->set_args(
+			array(
+				'term_id' => $term_id,
+				'method'  => (string) get_term_meta( $term_id, 'type', true ),
+			)
+		);
 
 		// set the interval.
 		$schedule_obj->set_interval( $interval );
@@ -996,28 +1039,25 @@ class Synchronization {
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if term ID is not given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			wp_send_json_error();
-			return;
 		}
 
 		// get the new state.
 		$state = filter_input( INPUT_POST, 'state', FILTER_SANITIZE_NUMBER_INT );
 
 		// bail if state is not given.
-		if( is_null( $state ) ) {
+		if ( is_null( $state ) ) {
 			wp_send_json_error();
-			return;
 		}
 
 		// set new state.
-		if( 1 === absint( $state ) ) {
+		if ( 1 === absint( $state ) ) {
 			$this->add_schedule( $term_id );
-		}
-		else {
+		} else {
 			// get the schedule object.
 			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
-			if( $schedule_obj instanceof Schedules_Base ) {
+			if ( $schedule_obj instanceof Schedules_Base ) {
 				$schedule_obj->delete();
 			}
 		}
@@ -1035,35 +1075,43 @@ class Synchronization {
 		// check referer.
 		check_ajax_referer( 'eml-sync-save-config-nonce', 'nonce' );
 
-		// get term ID.
-		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+		// get the fields.
+		$fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fields'] ) ) : array();
 
-		// bail if term ID is not given.
-		if( 0 === $term_id ) {
+		// bail if term ID or interval is not given.
+		if ( empty( $fields['interval'] ) || 0 === absint( $fields['term_id'] ) ) {
 			wp_send_json_error();
-			return;
 		}
 
+		// get the term ID.
+		$term_id = absint( $fields['term_id'] );
+
 		// get the interval.
-		$interval = filter_input( INPUT_POST, 'interval', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$interval = $fields['interval'];
 
 		// check if the given interval exists.
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $interval ] ) ) {
 			wp_send_json_error();
-			return;
 		}
 
 		// save this interval on term as setting.
 		update_term_meta( $term_id, 'interval', $interval );
 
+		/**
+		 * Run additional tasks during saving a new sync configuration.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param array $fields List of fields.
+		 */
+		do_action( 'efml_sync_save_config', $fields );
+
 		// get the sync schedule object for this term_id.
 		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
 		// bail if no schedule found.
-		if( ! $sync_schedule_obj ) {
+		if ( ! $sync_schedule_obj ) {
 			wp_send_json_error();
-			return;
 		}
 
 		// set the new interval.

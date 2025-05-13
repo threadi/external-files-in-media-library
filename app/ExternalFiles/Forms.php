@@ -186,8 +186,8 @@ class Forms {
 				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
 				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
-				'title_sync_config_saved' => __( 'Configuration saved', 'external-files-in-media-library' ),
-				'text_sync_config_saved' => __( 'The new interval has been saved.', 'external-files-in-media-library' )
+				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
+				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
 			)
 		);
 	}

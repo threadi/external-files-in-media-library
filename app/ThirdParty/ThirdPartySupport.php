@@ -123,6 +123,7 @@ class ThirdPartySupport {
 	private function get_third_party_support(): array {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ThirdParty\BlockEditor',
+			'ExternalFilesInMediaLibrary\ThirdParty\CatFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
 			'ExternalFilesInMediaLibrary\ThirdParty\Elementor',
 			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',

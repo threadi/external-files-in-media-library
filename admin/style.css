@@ -332,4 +332,5 @@ body.eml-file-synced #delete-action { display: none }
 	display: inline-block;
 	font-weight: bold;
 	margin-right: 0.6em;
+	min-width: 180px;
 }

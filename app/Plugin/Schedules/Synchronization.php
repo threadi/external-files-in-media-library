@@ -65,8 +65,8 @@ class Synchronization extends Schedules_Base {
 		$directory_listing_obj = Services::get_instance()->get_service_by_name( $args['method'] );
 
 		// bail if listing object could not be found.
-		if( ! $directory_listing_obj ) {
-			Log::get_instance()->create( __( 'Synchronization listing object unknown:', 'external-files-in-media-library' ) . ' <code>' . $args['method'] .'</code>', '', 'error' );
+		if ( ! $directory_listing_obj ) {
+			Log::get_instance()->create( __( 'Synchronization listing object unknown:', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
 			return;
 		}
 
@@ -75,7 +75,7 @@ class Synchronization extends Schedules_Base {
 
 		// bail if term_data could not be loaded.
 		if ( empty( $term_data ) ) {
-			Log::get_instance()->create( __( 'To synchronize external directory does not have any configuration.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] .'</code>', '', 'error' );
+			Log::get_instance()->create( __( 'To synchronize external directory does not have any configuration.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
 			return;
 		}
 
@@ -83,7 +83,7 @@ class Synchronization extends Schedules_Base {
 		$url = $directory_listing_obj->get_url( $term_data['directory'] );
 
 		// run the synchronization.
-		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, $directory_listing_obj, $term_data );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, $directory_listing_obj, $term_data, $args['term_id'] );
 
 		// log event.
 		Log::get_instance()->create( __( 'Synchronization schedule ended.', 'external-files-in-media-library' ), '', 'success', 2 );

@@ -698,14 +698,14 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_interval_by_time( int $interval ): string {
-		foreach( wp_get_schedules() as $name => $schedule ) {
+		foreach ( wp_get_schedules() as $name => $schedule ) {
 			// bail if interval does not match.
-			if( $interval !== $schedule['interval'] ) {
+			if ( $interval !== $schedule['interval'] ) {
 				continue;
 			}
 
 			// return the name of this schedule.
-			return $name;
+			return (string) $name;
 		}
 
 		// return empty string if none has been found.

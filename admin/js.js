@@ -253,6 +253,9 @@ function efml_upload_files() {
         additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
       }
     }
+    if( 'SELECT' === jQuery(this).prop('nodeName') ) {
+      additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
+    }
     if( 'TEXTAREA' === jQuery(this).prop('nodeName') ) {
       additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
     }
@@ -551,15 +554,24 @@ function efml_sync_get_info() {
   });
 }
 
+/**
+ * Update the synchronization config for single external directory.
+ */
 function efml_sync_save_config() {
+  // get fields from the form.
+  let fields = {};
+  jQuery(".eml-sync-config select").each(function(){
+    fields[jQuery(this).attr('id')] = jQuery(this).val();
+  });
+  fields['term_id'] = jQuery('#term_id').val();
+
   // send request.
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
     type: 'post',
     data: {
       action: 'efml_sync_save_config',
-      interval: jQuery("#interval").val(),
-      term_id: jQuery("#term_id").val(),
+      fields: fields,
       nonce: efmlJsVars.sync_save_config_nonce,
     },
     error: function( jqXHR, textStatus, errorThrown ) {
