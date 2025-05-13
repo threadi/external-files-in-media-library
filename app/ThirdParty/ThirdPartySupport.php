@@ -128,6 +128,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Elementor',
 			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
+			'ExternalFilesInMediaLibrary\ThirdParty\Filebird',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',

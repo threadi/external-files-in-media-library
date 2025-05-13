@@ -5,7 +5,7 @@
 ### Added
 
 - Added option to synchronize directories with files on every supported protocol
-- Added support for plugin CatFolders to import files in specific folders of this plugin
+- Added support for the plugins CatFolders and Filebird to import files in specific folders of this plugins
 - Added wrapper for all settings of this plugin for easier management in the future
 - New option for import local files from chosen directory via queue (for very large directories)
 

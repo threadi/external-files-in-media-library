@@ -79,7 +79,7 @@ class Import extends Directory_Listing_Base {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->label = __( 'Use a URL', 'external-files-in-media-library' );
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_action( 'eml_file_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_action( 'eml_ftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
@@ -87,6 +87,15 @@ class Import extends Directory_Listing_Base {
 		add_action( 'eml_sftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ), 10, 3 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
+	}
+
+	/**
+	 * Initialize additional tasks for wp-admin.
+	 *
+	 * @return void
+	 */
+	public function admin_init(): void {
+		$this->label = __( 'Use a URL', 'external-files-in-media-library' );
 	}
 
 	/**
