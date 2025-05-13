@@ -180,6 +180,15 @@ class Synchronization {
 	}
 
 	/**
+	 * Run during plugin activation.
+	 *
+	 * @return void
+	 */
+	public function activation(): void {
+		$this->init_synchronize();
+	}
+
+	/**
 	 * Add column to handle synchronization.
 	 *
 	 * @param array<string,string> $columns The columns.

@@ -166,7 +166,7 @@ class Admin {
 		$transients_obj = Transients::get_instance();
 
 		// use this after 2025-10-01.
-		if( time() < 1759269600 ) {
+		if ( time() < 1759269600 ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
 		}
@@ -180,7 +180,7 @@ class Admin {
 		// bail if WordPress is in developer mode.
 		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
-			//return;
+			return;
 		}
 
 		// show hint for old PHP-version.
