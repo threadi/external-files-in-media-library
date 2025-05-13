@@ -858,6 +858,10 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
+				array(
+					'action' => 'efml_save_as_directory( "google-drive", actualDirectoryPath, "", "", "" );',
+					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
+				),
 			)
 		);
 	}
