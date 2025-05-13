@@ -446,7 +446,7 @@ class Helper {
 
 		// loop through all possible intervals from WordPress and add them to the list.
 		foreach ( wp_get_schedules() as $name => $interval ) {
-			$true = str_starts_with( $name, 'efml_' );
+			$true = str_starts_with( (string) $name, 'efml_' );
 			/**
 			 * Disable all schedules, not only our own.
 			 *
@@ -455,12 +455,12 @@ class Helper {
 			 * @param string $name The name of the schedule.
 			 * @param array<string,mixed> $interval The schedule configuration.
 			 */
-			if( ! apply_filters( 'efml_own_cron_schedules', $true, $name, $interval ) ) {
+			if ( ! apply_filters( 'efml_own_cron_schedules', $true, (string) $name, $interval ) ) {
 				continue;
 			}
 
 			// add the schedule to the list.
-			$values[ $name ] = $interval['display'];
+			$values[ (string) $name ] = $interval['display'];
 		}
 
 		// return the resulting list.
@@ -735,7 +735,7 @@ class Helper {
 	 */
 	public static function map_old_to_new_interval( string $old_interval_name ): string {
 		$new_interval_name = 'efml_hourly';
-		switch( $old_interval_name ) {
+		switch ( $old_interval_name ) {
 			case 'daily':
 				$new_interval_name = 'efml_24hourly';
 				break;

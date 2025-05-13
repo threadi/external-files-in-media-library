@@ -253,7 +253,7 @@ class Synchronization {
 
 		// get actual interval.
 		$term_interval = $sync_schedule_obj ? $sync_schedule_obj->get_interval() : get_term_meta( $term_id, 'interval', true );
-		if( empty( $term_interval ) ) {
+		if ( empty( $term_interval ) ) {
 			$term_interval = get_option( 'eml_sync_interval' );
 		}
 
