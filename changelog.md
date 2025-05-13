@@ -30,6 +30,7 @@
 - Fixed faulty check for existing schedules
 - Fixed missing check for duplicate YouTube videos during import of them
 - Fixed preview of files in FTP service (which also prevents the usage of FTP-files as service)
+- Fixed wrong "Go to logs" URL if import failed
 - Fixed typos
 
 ## [3.1.1] - 2025-04-05

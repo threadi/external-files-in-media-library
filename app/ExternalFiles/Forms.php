@@ -639,7 +639,7 @@ class Forms {
 								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
 							),
 							array(
-								'action'  => 'location.href="' . Settings::get_instance()->get_url() . '";',
+								'action'  => 'location.href="' . Helper::get_log_url() . '";',
 								'variant' => 'secondary',
 								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
 							),
@@ -664,7 +664,7 @@ class Forms {
 								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
 							),
 							array(
-								'action'  => 'location.href="' . Settings::get_instance()->get_url() . '";',
+								'action'  => 'location.href="' . Helper::get_log_url() . '";',
 								'variant' => 'secondary',
 								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
 							),
