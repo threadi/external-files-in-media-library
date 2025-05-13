@@ -355,16 +355,16 @@ class Queue {
 		}
 
 		// get the files object.
-		$files_obj = Files::get_instance();
+		$import = Import::get_instance();
 
 		// set the login.
-		$files_obj->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
+		$import->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
 
 		// set the password.
-		$files_obj->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
+		$import->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
 
 		// import the URL.
-		if ( $files_obj->add_url( $url_data['url'] ) ) {
+		if ( $import->add_url( $url_data['url'] ) ) {
 			// remove URL from queue.
 			$this->remove_url( absint( $url_data['id'] ) );
 		} else {

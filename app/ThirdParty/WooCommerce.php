@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WC_Product;
@@ -134,16 +135,16 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// log event.
 		Log::get_instance()->create( __( 'Trying to import main image of WooCommerce product as external image.', 'external-files-in-media-library' ), (string) $data['raw_image_id'], 'info', 2 );
 
-		// get the files object.
-		$external_files_obj = Files::get_instance();
+		// get the import object.
+		$import = Import::get_instance();
 
 		// add the image and bail if it was not successfully.
-		if ( ! $external_files_obj->add_url( (string) $data['raw_image_id'] ) ) {
+		if ( ! $import->add_url( (string) $data['raw_image_id'] ) ) {
 			return $data;
 		}
 
 		// get the external file object for the given main image.
-		$external_file_obj = $external_files_obj->get_file_by_url( (string) $data['raw_image_id'] );
+		$external_file_obj = Files::get_instance()->get_file_by_url( (string) $data['raw_image_id'] );
 
 		// bail if file for the URL does not exist.
 		if ( ! $external_file_obj ) {
@@ -211,7 +212,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// loop through the list.
 		foreach ( $data['raw_gallery_image_ids'] as $index => $url ) {
 			// add the image and bail if it was not successfully.
-			if ( ! Files::get_instance()->add_url( $url ) ) {
+			if ( ! Import::get_instance()->add_url( $url ) ) {
 				continue;
 			}
 

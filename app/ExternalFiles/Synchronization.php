@@ -343,18 +343,18 @@ class Synchronization {
 		 */
 		do_action( 'efml_before_sync', $url, $term_data, $term_id );
 
-		// get the files object.
-		$files = Files::get_instance();
+		// get the import object.
+		$import = Import::get_instance();
 
 		// add the credentials.
-		$files->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
-		$files->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
+		$import->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
+		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info' );
 
 		// and run the import of this directory.
-		$files->add_url( $url );
+		$import->add_url( $url );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info' );

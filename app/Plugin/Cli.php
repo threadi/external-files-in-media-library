@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
@@ -45,10 +46,10 @@ class Cli {
 		// array for the list of results.
 		$results = array();
 
-		// get the files object.
-		$external_files_obj = Files::get_instance();
-		$external_files_obj->set_login( ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '' );
-		$external_files_obj->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
+		// get the import object.
+		$import = Import::get_instance();
+		$import->set_login( ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '' );
+		$import->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
 
 		// get the queue settings.
 		$add_to_queue = ! empty( $arguments['queue'] );
@@ -83,7 +84,7 @@ class Cli {
 			}
 
 			// try to add this URL as single file.
-			if ( $external_files_obj->add_url( $url, $add_to_queue ) ) {
+			if ( $import->add_url( $url, $add_to_queue ) ) {
 				/* translators: %1$s will be replaced by URL. */
 				$results[] = sprintf( __( '%1$s has been saved in media library.', 'external-files-in-media-library' ), $url );
 			} elseif ( $add_to_queue ) {

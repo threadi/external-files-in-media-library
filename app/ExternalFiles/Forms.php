@@ -377,8 +377,8 @@ class Forms {
 		// set initial title.
 		update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
-		// get files-object.
-		$files_obj = Files::get_instance();
+		// get import-object.
+		$import = Import::get_instance();
 
 		// get the URLs from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
@@ -456,8 +456,8 @@ class Forms {
 		update_option( 'eml_import_url_max', count( $url_array ) );
 
 		// add the credentials.
-		$files_obj->set_login( $login );
-		$files_obj->set_password( $password );
+		$import->set_login( $login );
+		$import->set_password( $password );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -486,7 +486,7 @@ class Forms {
 			$url = apply_filters( 'eml_import_url_before', $url, $additional_fields );
 
 			// import file in media library if enqueue option is not set.
-			$file_added = $files_obj->add_url( $url, $add_to_queue );
+			$file_added = $import->add_url( $url, $add_to_queue );
 
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );

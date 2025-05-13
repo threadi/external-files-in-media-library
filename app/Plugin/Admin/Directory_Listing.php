@@ -97,8 +97,8 @@ class Directory_Listing {
 	public function add_view_directory_page(): void {
 		add_submenu_page(
 			'upload.php',
-			__( 'Import from directories', 'external-files-in-media-library' ),
-			__( 'Import from directories', 'external-files-in-media-library' ),
+			__( 'Add external files', 'external-files-in-media-library' ),
+			__( 'Add external files', 'external-files-in-media-library' ),
 			'manage_options',
 			$this->get_menu_slug(),
 			array( $this, 'render_view_directory_page' )
@@ -154,7 +154,7 @@ class Directory_Listing {
 		if ( is_null( $method ) ) {
 			?>
 			<div class="wrap">
-				<h1><?php echo esc_html__( 'Choose protocol', 'external-files-in-media-library' ); ?></h1>
+				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
@@ -172,9 +172,15 @@ class Directory_Listing {
 							continue;
 						}
 
+						// get the URL.
+						$url = $obj->get_view_url();
+						if ( empty( $url ) ) {
+							$url = $this->get_view_directory_url( $obj );
+						}
+
 						// show enabled listing object.
 						?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
 							<?php
 					}
 					?>

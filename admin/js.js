@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
     /**
      * Add rating hint.
      */
-    $('body.settings_page_eml_settings h1.wp-heading-inline').each(function() {
+    $('body.settings_page_eml_settings h1.wp-heading-inline, body.media_page_efml_local_directories h1.wp-heading-inline').each(function() {
       let review_button = document.createElement('a');
       review_button.className = 'review-hint-button page-title-action';
       review_button.href = efmlJsVars.review_url;

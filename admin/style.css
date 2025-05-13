@@ -23,7 +23,7 @@ select.eml-field-width {
     z-index: 1;
 }
 
-body.settings_page_eml_settings .review-hint-button:after {
+body.settings_page_eml_settings .review-hint-button:after, body.media_page_efml_local_directories .review-hint-button:after {
 	color: #d4af37;
 	content: "\f155 \f155 \f155 \f155 \f155";
 	display: inline-block;
@@ -228,6 +228,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a:b
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before {
 	content: "\f163";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before {
+	content: "\f317";
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before {
