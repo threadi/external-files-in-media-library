@@ -202,12 +202,12 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if URL could not be parsed.
-		if( ! is_array( $parse_url ) ) {
+		if ( ! is_array( $parse_url ) ) {
 			return array();
 		}
 
 		// bail if scheme or host is not given.
-		if( empty( $parse_url['scheme'] ) || empty( $parse_url['host'] ) ) {
+		if ( empty( $parse_url['scheme'] ) || empty( $parse_url['host'] ) ) {
 			return array();
 		}
 

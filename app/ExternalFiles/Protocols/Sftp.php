@@ -82,7 +82,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL looks not like an URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'SFTP-URL looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
 
 			return array();
 		}

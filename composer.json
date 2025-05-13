@@ -1,6 +1,6 @@
 {
     "name": "threadi/eml",
-    "version": "3.2.0",
+    "version": "4.0.0",
     "scripts": {
         "post-install-cmd": [
             "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs",
@@ -59,7 +59,7 @@
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^2.3.0",
+        "threadi/easy-directory-listing-for-wordpress": "^2.4.0",
         "threadi/easy-settings-for-wordpress": "^1.2.1",
         "google/apiclient": "^2.18"
     }

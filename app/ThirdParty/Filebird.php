@@ -225,8 +225,8 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Save external file to a configured folder after import.
 	 *
-	 * @param string $url The used URL.
-	 * @param array  $fields The used fields.
+	 * @param string              $url The used URL.
+	 * @param array<string,mixed> $fields The used fields.
 	 *
 	 * @return void
 	 */

@@ -15,6 +15,7 @@ parameters:
     - "#ARRAY_A#"
     - "#WP_PLUGIN_DIR#"
     - "#CatFolders#"
+    - "#FileBird#"
   paths:
     - app
     - external-files-in-media-library.php

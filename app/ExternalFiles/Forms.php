@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Screen;
@@ -91,7 +92,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ), true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php' ), true ) ) {
 			// backend-JS.
 			wp_enqueue_script(
 				'eml-admin',
@@ -164,6 +165,7 @@ class Forms {
 				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'add_file_url'                  => Helper::get_add_media_url(),
+				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
@@ -189,6 +191,7 @@ class Forms {
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
 				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
+				'title_add_source'              => __( 'Add Directory Archive', 'external-files-in-media-library' ),
 			)
 		);
 	}

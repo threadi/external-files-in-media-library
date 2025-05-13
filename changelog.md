@@ -17,10 +17,12 @@
 - Moved import tasks from general Files in own object Import which is now also a directory listing object
 - Multiple code optimizations
 - Extended support for YouTube channel imports
+- Renamed Directory Credentials to Directory Archive
 - More hooks
 
 ### Fixed
 
+- Fixed error on import on any files from local hosting
 - Fixed to early loading of translations
 - Fixed error on GoogleDrive import which would break if a duplicate is detected
 - Fixed potential error of sodium encryption is used and failed

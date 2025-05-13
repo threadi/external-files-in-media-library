@@ -693,7 +693,7 @@ class Synchronization {
 	 */
 	public function remove_delete_action( array $actions, WP_Post $post ): array {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
 			return $actions;
 		}
 
@@ -727,7 +727,7 @@ class Synchronization {
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
 			return $delete;
 		}
 
@@ -924,7 +924,7 @@ class Synchronization {
 	 */
 	public function add_style(): void {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
 			return;
 		}
 

@@ -96,7 +96,12 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function add_category_selection( string $form, int $term_id ): string {
 		// get the categories.
-		$terms = get_terms( array( 'taxonomy' => 'folderly_attachment', 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'folderly_attachment',
+				'hide_empty' => false,
+			)
+		);
 
 		// bail on any error.
 		if ( ! is_array( $terms ) ) {
@@ -104,13 +109,13 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// bail if list is empty.
-		if( empty( $terms ) ) {
+		if ( empty( $terms ) ) {
 			return $form;
 		}
 
 		// get the actual setting.
 		$assigned_categories = get_term_meta( $term_id, 'folderly_categories', true );
-		if( ! is_array( $assigned_categories ) ) {
+		if ( ! is_array( $assigned_categories ) ) {
 			$assigned_categories = array();
 		}
 
@@ -124,13 +129,18 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return the HTML-code for a category selection.
 	 *
-	 * @param array $mark The categories to mark in the selection.
+	 * @param array<int,mixed> $mark The categories to mark in the selection.
 	 *
 	 * @return string
 	 */
 	private function get_category_selection( array $mark ): string {
 		// get the categories.
-		$terms = get_terms( array( 'taxonomy' => 'folderly_attachment', 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'folderly_attachment',
+				'hide_empty' => false,
+			)
+		);
 
 		// bail on any error.
 		if ( ! is_array( $terms ) ) {
@@ -138,14 +148,14 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// bail if list is empty.
-		if( empty( $terms ) ) {
+		if ( empty( $terms ) ) {
 			return '';
 		}
 
 		// create the HTML-code.
 		$form = '';
 		foreach ( $terms as $term ) {
-			$form .= '<label for="folderly_category_'. absint( $term->term_id ) .'"><input type="checkbox" id="folderly_category_'. absint( $term->term_id ) .'" class="eml-use-for-import eml-multi" name="folderly_categories" value="'. absint( $term->term_id ) .'"' . ( isset( $mark[$term->term_id] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+			$form .= '<label for="folderly_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="folderly_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="folderly_categories" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
 		}
 
 		// return the resulting HTML-code.
@@ -160,6 +170,11 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function save_sync_settings( array $fields ): void {
+		// check for nonce.
+		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
+			return;
+		}
+
 		// bail if term ID not given.
 		if ( 0 === absint( $fields['term_id'] ) ) {
 			return;
@@ -221,7 +236,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// assign the file to the categories.
-		foreach( $categories as $cat_id => $enabled ) {
+		foreach ( $categories as $cat_id => $enabled ) {
 			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
 		}
 	}
@@ -234,6 +249,11 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function save_url_in_categories( string $url ): void {
+		// check for nonce.
+		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
+			return;
+		}
+
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
@@ -246,7 +266,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		$folderly_categories = isset( $_POST['additional_fields']['folderly_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['additional_fields']['folderly_categories'] ) ) : array();
 
 		// assign the file to the categories.
-		foreach( $folderly_categories as $cat_id => $enabled ) {
+		foreach ( $folderly_categories as $cat_id => $enabled ) {
 			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
 		}
 	}

@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
+use Google\Service\Drive\DriveFile;
 use Google\Service\Exception;
 use JsonException;
 use WP_User;
@@ -97,7 +98,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// use hooks.
 		add_action( 'init', array( $this, 'init_google_drive' ), 20 );
-		add_filter( 'query_vars', array( $this, 'set_query_vars' ), 10, 1 );
+		add_filter( 'query_vars', array( $this, 'set_query_vars' ) );
 		add_action( 'admin_action_eml_google_drive_init', array( $this, 'initiate_connection' ) );
 		add_action( 'admin_action_eml_google_drive_disconnect', array( $this, 'disconnect' ) );
 		add_filter( 'template_include', array( $this, 'check_for_oauth_return_url' ), 10, 1 );
@@ -697,6 +698,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @return array<int,mixed>
 	 * @throws Exception Could be thrown an exception.
+	 * @throws JsonException Could be thrown an exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// get the client.
@@ -755,17 +757,12 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		 * Filter the list of files we got from Google Drive.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
-		 * @param array $files List of files.
+		 * @param array<DriveFile> $files List of files.
 		 */
 		$files = apply_filters( 'eml_google_drive_files', $files );
 
 		// loop through the files and add them to the list.
 		foreach ( $files as $file_obj ) {
-			// bail if this is not a file object.
-			if ( ! $file_obj instanceof \Google\Service\Drive\DriveFile ) {
-				continue;
-			}
-
 			// collect the entry.
 			$entry = array(
 				'title' => $file_obj->getName(),
@@ -797,6 +794,11 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			if ( $file_obj->getParents() ) {
 				// loop through all parent folders and add the file to each of them.
 				foreach ( $file_obj->getParents() as $parent_folder_id ) {
+					// if specific folder is set, show only this.
+					if ( $directory !== $parent_folder_id && $directory !== $this->get_directory() ) {
+						continue;
+					}
+
 					// add file to already existing folder.
 					if ( ! empty( $folders[ $parent_folder_id ] ) ) {
 						$folders[ $parent_folder_id ]['sub'][] = $entry;
