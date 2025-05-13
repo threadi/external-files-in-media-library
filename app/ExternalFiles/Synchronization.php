@@ -692,6 +692,11 @@ class Synchronization {
 	 * @return array<string,string>
 	 */
 	public function remove_delete_action( array $actions, WP_Post $post ): array {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+			return $actions;
+		}
+
 		// get sync marker.
 		$sync_marker = absint( get_post_meta( $post->ID, 'eml_synced_time', true ) );
 
@@ -721,6 +726,11 @@ class Synchronization {
 	 * @return WP_Post|false|null
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+			return $delete;
+		}
+
 		// bail if this is running during an archive term deletion.
 		if ( ! is_null( filter_input( INPUT_POST, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) || ! is_null( filter_input( INPUT_GET, 'tag_ID', FILTER_SANITIZE_NUMBER_INT ) ) ) {
 			return $delete;
@@ -775,6 +785,9 @@ class Synchronization {
 		if ( ! $listing_obj ) {
 			return;
 		}
+
+		// remove the prevent-deletion for this moment.
+		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), 10 );
 
 		// get the URL.
 		$url = $listing_obj->get_url( $term->name );
@@ -910,6 +923,11 @@ class Synchronization {
 	 * @return void
 	 */
 	public function add_style(): void {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
+			return;
+		}
+
 		// get external files as list.
 		$external_files = Files::get_instance()->get_files();
 
