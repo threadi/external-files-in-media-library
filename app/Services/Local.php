@@ -137,6 +137,10 @@ class Local implements Service {
 				'action' => 'let config = { "add_to_queue": 1 };efml_import_url( "file://" + actualDirectoryPath + "/", "", "", config );',
 				'label'  => __( 'Import active directory via queue', 'external-files-in-media-library' ),
 			),
+			array(
+				'action' => 'efml_save_as_directory( "local", "file://" + actualDirectoryPath + "/", "", "", "" );',
+				'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
+			),
 		);
 	}
 }

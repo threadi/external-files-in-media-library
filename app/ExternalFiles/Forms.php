@@ -161,6 +161,7 @@ class Forms {
 				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
 				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
 				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'add_file_url'                  => Helper::get_add_media_url(),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),

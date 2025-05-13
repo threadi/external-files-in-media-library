@@ -501,6 +501,10 @@ class Youtube extends Directory_Listing_Base implements Service {
 					'action' => 'efml_import_url( "' . $this->get_channel_url() . '" + url, url, apiKey, [], config.term );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
 				),
+				array(
+					'action' => 'efml_save_as_directory( "youtube", actualDirectoryPath, url, "", apiKey );',
+					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
+				),
 			)
 		);
 	}

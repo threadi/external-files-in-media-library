@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Post;
@@ -90,6 +91,7 @@ class Files {
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
@@ -1340,5 +1342,90 @@ class Files {
 
 		// return the resulting array.
 		return $post_array;
+	}
+
+	/**
+	 * Add archive via AJAX-request.
+	 *
+	 * @return void
+	 */
+	public function add_archive_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
+
+		// get the type.
+		$type = filter_input( INPUT_POST, 'type', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get the URL.
+		$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if type or URL is not given.
+		if( is_null( $type ) || is_null( $url ) ) {
+			wp_send_json(
+				array( 'detail' =>
+			       array(
+						'title'     => __( 'Error', 'external-files-in-media-library' ),
+						'texts'     => array( '<p>' . __( 'The directory could not be saved as a directory archive.', 'external-files-in-media-library' ) . '</p>' ),
+						'buttons'   => array(
+							array(
+								'action'  => 'closeDialog();',
+								'variant' => 'primary',
+								'text'    => __( 'OK', 'external-files-in-media-library' ),
+							),
+						),
+					)
+				)
+			);
+		}
+
+		// get the login.
+		$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if( is_null( $login ) ) {
+			$login = '';
+		}
+
+		// get the password.
+		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if( is_null( $password ) ) {
+			$password = '';
+		}
+
+		// get the API key.
+		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if( is_null( $api_key ) ) {
+			$api_key = '';
+		}
+
+		// add the archive.
+		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
+
+		// get URL for directory archive.
+		$url = add_query_arg(
+			array(
+				'taxonomy' => Taxonomy::get_instance()->get_name()
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
+
+		// return OK.
+		wp_send_json(
+			array( 'detail' =>
+				array(
+					'title'     => __( 'Directory Archive saved', 'external-files-in-media-library' ),
+					'texts'     => array(
+						'<p><strong>' . __( 'The directory has been saved as archive.', 'external-files-in-media-library' ) . '</strong></p>',
+						/* translators: %1$s will be replaced by a URL. */
+						'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in the directory archive</a>.', 'external-files-in-media-library' ), $url ) . '</p>',
+					),
+					'buttons'   => array(
+						array(
+							'action'  => 'closeDialog();',
+							'variant' => 'primary',
+							'text'    => __( 'OK', 'external-files-in-media-library' ),
+						),
+					),
+				)
+			)
+		);
 	}
 }

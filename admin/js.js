@@ -482,6 +482,7 @@ function efml_import_url( url, login, password, additional_fields, term ) {
 /**
  * Start sync of entries from given directory.
  *
+ * @param method
  * @param term_id
  */
 function efml_sync_from_directory( method, term_id ) {
@@ -610,6 +611,37 @@ function efml_sync_save_config() {
           ]
         }
       }
+      efml_create_dialog( dialog_config );
+    }
+  });
+}
+
+/**
+ * Save a directory as directory archive.
+ *
+ * @param type The used type.
+ * @param url The URL of the directory.
+ * @param login The login (optional).
+ * @param password The password (optional).
+ * @param api_key The API Key (optional).
+ */
+function efml_save_as_directory( type, url, login, password, api_key ) {
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: {
+      action: 'efml_add_archive',
+      type: type,
+      url: url,
+      login: login,
+      password: password,
+      api_key: api_key,
+      nonce: efmlJsVars.add_archive_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function ( dialog_config ) {
       efml_create_dialog( dialog_config );
     }
   });
