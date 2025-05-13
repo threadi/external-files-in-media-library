@@ -1,0 +1,265 @@
+<?php
+/**
+ * File to handle support for plugin "Folderly".
+ *
+ * @package external-files-in-media-library
+ */
+
+namespace ExternalFilesInMediaLibrary\ThirdParty;
+
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
+
+/**
+ * Object to handle support for this plugin.
+ */
+class Folderly extends ThirdParty_Base implements ThirdParty {
+
+	/**
+	 * The term ID used in a sync.
+	 *
+	 * @var int
+	 */
+	private int $term_id = 0;
+
+	/**
+	 * Instance of actual object.
+	 *
+	 * @var ?Folderly
+	 */
+	private static ?Folderly $instance = null;
+
+	/**
+	 * Constructor, not used as this a Singleton object.
+	 */
+	private function __construct() {}
+
+	/**
+	 * Prevent cloning of this object.
+	 *
+	 * @return void
+	 */
+	private function __clone() {}
+
+	/**
+	 * Return instance of this object as singleton.
+	 *
+	 * @return Folderly
+	 */
+	public static function get_instance(): Folderly {
+		if ( is_null( self::$instance ) ) {
+			self::$instance = new self();
+		}
+
+		return self::$instance;
+	}
+
+	/**
+	 * Initialize this object.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		// bail if plugin is not enabled.
+		if ( ! Helper::is_plugin_active( 'folderly/folderly.php' ) ) {
+			return;
+		}
+
+		// add hooks.
+		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
+		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
+		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
+		add_filter( 'eml_import_fields', array( $this, 'add_option_for_folder_import' ) );
+		add_action( 'eml_import_url_after', array( $this, 'save_url_in_categories' ) );
+	}
+
+	/**
+	 * Return the term ID used in a sync.
+	 *
+	 * @return int
+	 */
+	private function get_term_id(): int {
+		return $this->term_id;
+	}
+
+	/**
+	 * Add category selection to external directory synchronization form.
+	 *
+	 * @param string $form The HTML-code of the form.
+	 * @param int    $term_id The term ID.
+	 *
+	 * @return string
+	 */
+	public function add_category_selection( string $form, int $term_id ): string {
+		// get the categories.
+		$terms = get_terms( array( 'taxonomy' => 'folderly_attachment', 'hide_empty' => false ) );
+
+		// bail on any error.
+		if ( ! is_array( $terms ) ) {
+			return $form;
+		}
+
+		// bail if list is empty.
+		if( empty( $terms ) ) {
+			return $form;
+		}
+
+		// get the actual setting.
+		$assigned_categories = get_term_meta( $term_id, 'folderly_categories', true );
+		if( ! is_array( $assigned_categories ) ) {
+			$assigned_categories = array();
+		}
+
+		// add the HTML-code.
+		$form .= '<div><label for="folderly_categories">' . __( 'Choose categories:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
+
+		// return the resulting html-code for the form.
+		return $form;
+	}
+
+	/**
+	 * Return the HTML-code for a category selection.
+	 *
+	 * @param array $mark The categories to mark in the selection.
+	 *
+	 * @return string
+	 */
+	private function get_category_selection( array $mark ): string {
+		// get the categories.
+		$terms = get_terms( array( 'taxonomy' => 'folderly_attachment', 'hide_empty' => false ) );
+
+		// bail on any error.
+		if ( ! is_array( $terms ) ) {
+			return '';
+		}
+
+		// bail if list is empty.
+		if( empty( $terms ) ) {
+			return '';
+		}
+
+		// create the HTML-code.
+		$form = '';
+		foreach ( $terms as $term ) {
+			$form .= '<label for="folderly_category_'. absint( $term->term_id ) .'"><input type="checkbox" id="folderly_category_'. absint( $term->term_id ) .'" class="eml-use-for-import eml-multi" name="folderly_categories" value="'. absint( $term->term_id ) .'"' . ( isset( $mark[$term->term_id] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+		}
+
+		// return the resulting HTML-code.
+		return $form;
+	}
+
+	/**
+	 * Save the custom sync configuration for an external directory.
+	 *
+	 * @param array<string,string> $fields List of fields.
+	 *
+	 * @return void
+	 */
+	public function save_sync_settings( array $fields ): void {
+		// bail if term ID not given.
+		if ( 0 === absint( $fields['term_id'] ) ) {
+			return;
+		}
+
+		// get the term ID.
+		$term_id = absint( $fields['term_id'] );
+
+		// get our fields from request.
+		$folderly_categories = isset( $_POST['fields']['folderly_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folderly_categories'] ) ) : array();
+
+		// if folderly_categories is empty, just remove the setting.
+		if ( empty( $folderly_categories ) ) {
+			delete_term_meta( $term_id, 'folderly_categories' );
+			return;
+		}
+
+		// save the setting.
+		update_term_meta( $term_id, 'folderly_categories', $folderly_categories );
+	}
+
+	/**
+	 * Add action to assign files to eml categories before sync is running.
+	 *
+	 * @param string               $url The used URL.
+	 * @param array<string,string> $term_data The term data.
+	 * @param int                  $term_id The term ID.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
+		// save term ID in object.
+		$this->term_id = $term_id;
+
+		// add hooks.
+		add_action( 'eml_after_file_save', array( $this, 'move_file_to_categories' ) );
+	}
+
+	/**
+	 * Move external file to a configured category after sync.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function move_file_to_categories( File $external_file_obj ): void {
+		// bail if term ID is missing.
+		if ( 0 === $this->get_term_id() ) {
+			return;
+		}
+
+		// get the folder setting from this term ID.
+		$categories = get_term_meta( $this->get_term_id(), 'folderly_categories', true );
+
+		// bail if no categories are set.
+		if ( empty( $categories ) ) {
+			return;
+		}
+
+		// assign the file to the categories.
+		foreach( $categories as $cat_id => $enabled ) {
+			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
+		}
+	}
+
+	/**
+	 * Save external file to a configured categories after import.
+	 *
+	 * @param string $url The used URL.
+	 *
+	 * @return void
+	 */
+	public function save_url_in_categories( string $url ): void {
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
+
+		// bail if external file could not be loaded.
+		if ( ! $external_file_obj ) {
+			return;
+		}
+
+		// get our fields from request.
+		$folderly_categories = isset( $_POST['additional_fields']['folderly_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['additional_fields']['folderly_categories'] ) ) : array();
+
+		// assign the file to the categories.
+		foreach( $folderly_categories as $cat_id => $enabled ) {
+			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
+		}
+	}
+
+	/**
+	 * Add option to import in categories.
+	 *
+	 * @param array<int,string> $fields List of import options.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_option_for_folder_import( array $fields ): array {
+		$fields[] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		return $fields;
+	}
+}

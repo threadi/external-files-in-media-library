@@ -12,15 +12,21 @@ Add external files to your media library to link or embed them in your website. 
 
 == Description ==
 
-Add one or more files with their URLs under Media > "Add new media file". You can use this way added external files in all places where the media library is used.
+Add one or more files with their URLs under Media > “Add new media file”. In this way, you can add external files in all places where the media library is used.
 
 Embed your files from Google Drive, YouTube, Vimeo, FTP, local paths or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more.
 
+Automatically synchronize the external files with your media library.
+
+== Support for other plugins ==
+
 Use an external data source for product images in your WooCommerce-based store.
+
+Sort your external files in folder of CatFolders, Filebird and Folderly or assign them into categories from Enhanced Media Library.
 
 == Mass-Import ==
 
-You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it.
+You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it. For very large directories there is also an automatically processed queue.
 
 == TCP Protocols ==
 
@@ -49,7 +55,7 @@ The development repository is on [GitHub](https://github.com/threadi/external-fi
 Each release of this plugin will only be published if it fulfills the following conditions:
 
 * PHPStan check for possible bugs
-* Compliance with WordPress coding standards
+* Compliance with WordPress Coding Standards
 
 ---
 

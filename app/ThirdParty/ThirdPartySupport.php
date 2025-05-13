@@ -130,6 +130,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\EnhancedMediaLibrary',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\Filebird',
+			'ExternalFilesInMediaLibrary\ThirdParty\Folderly',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
