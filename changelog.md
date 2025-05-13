@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added option to synchronize directories with files on every supported protocol
 - Added wrapper for all settings of this plugin for easier management in the future
 - New option for import local files from chosen directory via queue (for very large directories)
 
@@ -12,6 +13,8 @@
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
 - Multiple code optimizations
+- Extended support for YouTube channel imports
+- More hooks
 
 ### Fixed
 
@@ -19,6 +22,8 @@
 - Fixed error on GoogleDrive import which would break if a duplicate is detected
 - Fixed potential error of sodium encryption is used and failed
 - Fixed faulty check for existing schedules
+- Fixed missing check for duplicate YouTube videos during import of them
+- Fixed preview of files in FTP service (which also prevents the usage of FTP-files as service)
 - Fixed typos
 
 ## [3.1.1] - 2025-04-05

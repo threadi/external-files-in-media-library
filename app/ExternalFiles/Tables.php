@@ -181,6 +181,11 @@ class Tables {
 			} else {
 				echo '<span class="dashicons dashicons-yes"></span>';
 			}
+
+			/**
+			 * Run additional tasks for show more infos here.
+			 */
+			do_action( 'eml_table_column_content', $attachment_id );
 		}
 	}
 }

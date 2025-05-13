@@ -297,3 +297,39 @@ body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons
 body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog button.efml-help-button {
 	float: right;
 }
+
+body.eml-file-synced #delete-action { display: none }
+
+.eml-switch-toggle {
+	display: inline-block;
+	background: #aaa;
+}
+.eml-switch-toggle input {
+	position: absolute;
+	opacity: 0;
+	z-index: 1;
+}
+.eml-switch-toggle input + label {
+	padding: 5px 8px;
+	float:left;
+	color: #fff;
+	cursor: pointer;
+}
+
+.eml-switch-toggle input:checked + .red {
+	background:  red;
+}
+
+.eml-switch-toggle input:checked + .green {
+	background:  green;
+}
+
+.easy-dialog-for-wordpress-text > div {
+	margin: 1em 0;
+}
+
+.easy-dialog-for-wordpress-text > div label {
+	display: inline-block;
+	font-weight: bold;
+	margin-right: 0.6em;
+}

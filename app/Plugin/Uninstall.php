@@ -85,7 +85,7 @@ class Uninstall {
 		// delete files managed by this plugin, if option is enabled for it.
 		if ( 1 === absint( get_option( 'eml_delete_on_deinstallation' ) ) ) {
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
-				$external_files_obj->delete_file( $external_file_obj );
+				$external_file_obj->delete();
 			}
 		} elseif ( 1 === absint( get_option( 'eml_switch_on_uninstallation' ) ) ) {
 			// switch hosting of files to local if option is enabled for it.
@@ -111,6 +111,11 @@ class Uninstall {
 			'eml_import_running',
 			'eml_import_title',
 			'eml_import_errors',
+			'eml_sync_url_count',
+			'eml_sync_url_max',
+			'eml_sync_running',
+			'eml_sync_title',
+			'eml_sync_errors',
 			'eml_transients',
 			'efmlVersion',
 		);

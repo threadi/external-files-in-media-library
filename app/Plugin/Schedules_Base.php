@@ -107,7 +107,7 @@ class Schedules_Base {
 	 * @return void
 	 */
 	public function install(): void {
-		if ( ! wp_next_scheduled( $this->get_name() ) ) {
+		if ( ! wp_next_scheduled( $this->get_name(), $this->get_args() ) ) {
 			wp_schedule_event( time(), $this->get_interval(), $this->get_name(), $this->get_args(), true );
 		}
 	}

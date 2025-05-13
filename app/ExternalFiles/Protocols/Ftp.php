@@ -160,6 +160,7 @@ class Ftp extends Protocol_Base {
 
 		// if FTP-path is a directory, import all files from there.
 		if ( $ftp_connection->is_dir( $path ) ) {
+			$url = $this->get_url();
 			/**
 			 * Run action on beginning of presumed directory import via FTP-protocol.
 			 *
@@ -167,7 +168,7 @@ class Ftp extends Protocol_Base {
 			 *
 			 * @param string $url   The URL to import.
 			 */
-			do_action( 'eml_ftp_directory_import_start', $this->get_url() );
+			do_action( 'eml_ftp_directory_import_start', $url );
 
 			// get the files from FTP directory as list.
 			$file_list = $ftp_connection->dirlist( $path );
@@ -211,10 +212,10 @@ class Ftp extends Protocol_Base {
 			// loop through the matches.
 			foreach ( $file_list as $filename => $settings ) {
 				// get the file path on FTP.
-				$file_path = $scheme . '://' . $host . $path . $filename;
+				$file_path = $scheme . '://' . $host . trailingslashit( $path ) . $filename;
 
 				// get URL.
-				$file_url = $this->get_url() . $filename;
+				$file_url = trailingslashit( $this->get_url() ) . $filename;
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
@@ -505,6 +506,18 @@ class Ftp extends Protocol_Base {
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
 		// bail if URL is empty.
 		if ( empty( $url ) ) {
+			return false;
+		}
+
+		$true = true;
+		/**
+		 * Filter whether the given URL should be saved as local temp file.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param bool $true Should be false to prevent the temp generation.
+		 * @param string $url The given URL.
+		 */
+		if ( ! apply_filters( 'eml_save_temp_file', $true, $url ) ) {
 			return false;
 		}
 

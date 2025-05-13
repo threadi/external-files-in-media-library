@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
 use WP_Query;
@@ -666,5 +667,48 @@ class Helper {
 
 		// return the resulting array.
 		return $results;
+	}
+
+	/**
+	 * Create JSON from given array.
+	 *
+	 * @param array<string|int,mixed>|WP_Error $source The source array.
+	 * @param int                              $flag Flags to use for this JSON.
+	 *
+	 * @return string
+	 */
+	public static function get_json( array|WP_Error $source, int $flag = 0 ): string {
+		// create JSON.
+		$json = wp_json_encode( $source, $flag );
+
+		// bail if creating the JSON failed.
+		if ( ! $json ) {
+			return '';
+		}
+
+		// return resulting JSON-string.
+		return $json;
+	}
+
+	/**
+	 * Get the name for a given interval in seconds.
+	 *
+	 * @param int $interval The interval in seconds.
+	 *
+	 * @return string
+	 */
+	public static function get_interval_by_time( int $interval ): string {
+		foreach( wp_get_schedules() as $name => $schedule ) {
+			// bail if interval does not match.
+			if( $interval !== $schedule['interval'] ) {
+				continue;
+			}
+
+			// return the name of this schedule.
+			return $name;
+		}
+
+		// return empty string if none has been found.
+		return '';
 	}
 }

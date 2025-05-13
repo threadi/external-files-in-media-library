@@ -157,6 +157,10 @@ class Forms {
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
 				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
+				'sync_nonce'                    => wp_create_nonce( 'eml-sync-nonce' ),
+				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
+				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
+				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'add_file_url'                  => Helper::get_add_media_url(),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
@@ -181,6 +185,9 @@ class Forms {
 				'info_timeout'                  => $info_timeout,
 				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
 				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
+				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'title_sync_config_saved' => __( 'Configuration saved', 'external-files-in-media-library' ),
+				'text_sync_config_saved' => __( 'The new interval has been saved.', 'external-files-in-media-library' )
 			)
 		);
 	}
@@ -349,7 +356,6 @@ class Forms {
 		// check capability.
 		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
-			wp_die();
 		}
 
 		// get log object.

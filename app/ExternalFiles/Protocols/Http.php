@@ -781,6 +781,18 @@ class Http extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		$true = true;
+		/**
+		 * Filter whether the given URL should be saved as local temp file.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param bool $true Should be false to prevent the temp generation.
+		 * @param string $url The given URL.
+		 */
+		if ( ! apply_filters( 'eml_save_temp_file', $true, $url ) ) {
+			return false;
+		}
+
 		// download file as temporary file.
 		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 		$tmp_file = download_url( $this->get_url() );

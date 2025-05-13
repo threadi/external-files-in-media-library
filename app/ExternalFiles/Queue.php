@@ -21,8 +21,6 @@ use wpdb;
 
 /**
  * Controller for queue tasks.
- *
- * @noinspection PhpUnused
  */
 class Queue {
 	/**

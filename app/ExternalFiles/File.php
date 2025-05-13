@@ -899,6 +899,19 @@ class File {
 	}
 
 	/**
+	 * Delete this external file.
+	 *
+	 * @return void
+	 */
+	public function delete(): void {
+		// delete thumbs.
+		$this->delete_thumbs();
+
+		// delete the file entry itself.
+		wp_delete_attachment( $this->get_id(), true );
+	}
+
+	/**
 	 * Delete thumbs of this file.
 	 *
 	 * @return void

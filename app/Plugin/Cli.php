@@ -153,7 +153,7 @@ class Cli {
 		// loop through the files and delete them.
 		foreach ( $files_to_delete as $external_file_obj ) {
 			// delete the file.
-			$external_files_obj->delete_file( $external_file_obj );
+			$external_file_obj->delete();
 
 			// show progress.
 			$progress->tick();

@@ -143,7 +143,7 @@ class File_Types {
 
 			// log this event.
 			/* translators: %1$s will be replaced by the type name (e.g. "Images"). */
-			Log::get_instance()->create( sprintf( __( 'File has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'File under this URL has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 2 );
 
 			// add to the list.
 			if ( $external_file_obj ) {

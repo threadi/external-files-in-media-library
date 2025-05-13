@@ -183,7 +183,27 @@ jQuery(document).ready(function($) {
       if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
         $(this).addClass("copied");
       }
-  });
+    });
+
+    /**
+     * Save sync changes via toggle.
+     */
+    $('.eml-switch-toggle input').on("change", function() {
+      // send request.
+      jQuery.ajax( {
+        url: efmlJsVars.ajax_url,
+        type: 'post',
+        data: {
+          term_id: $( this ).data( 'term-id' ),
+          state: $( this ).val(),
+          action: 'efml_change_sync_state',
+          nonce: efmlJsVars.sync_state_nonce
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          efml_ajax_error_dialog( errorThrown )
+        },
+      });
+    });
 });
 
 /**
@@ -444,6 +464,125 @@ function efml_import_url( url, login, password, additional_fields, term ) {
 
       // get info about progress.
       setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Start sync of entries from given directory.
+ *
+ * @param term_id
+ */
+function efml_sync_from_directory( method, term_id ) {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      action: 'efml_sync_from_directory',
+      method: method,
+      term_id: term_id,
+      nonce: efmlJsVars.sync_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_sync_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { efml_sync_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Get info about running sync of files.
+ */
+function efml_sync_get_info() {
+  jQuery.ajax( {
+    type: "POST",
+    url: efmlJsVars.ajax_url,
+    data: {
+      'action': 'efml_get_sync_info',
+      'nonce': efmlJsVars.get_info_sync_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (data) {
+      let count = parseInt( data[0] );
+      let max = parseInt( data[1] );
+      let running = parseInt( data[2] );
+      let status = data[3];
+      let dialog_config = data[4];
+
+      // show progress.
+      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
+      jQuery( '#progress_status' ).html( status );
+
+      /**
+       * If import is still running, get next info in xy ms.
+       * If import is not running and error occurred, show the error.
+       * If import is not running and no error occurred, show ok-message.
+       */
+      if ( running >= 1 ) {
+        setTimeout( function () {
+          efml_sync_get_info()
+        }, efmlJsVars.info_timeout );
+      }
+      else {
+        efml_create_dialog( dialog_config );
+      }
+    }
+  });
+}
+
+function efml_sync_save_config() {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      action: 'efml_sync_save_config',
+      interval: jQuery("#interval").val(),
+      term_id: jQuery("#term_id").val(),
+      nonce: efmlJsVars.sync_save_config_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (response) {
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_sync_config_saved,
+          texts: [
+            '<p>' + efmlJsVars.text_sync_config_saved + '</p>'
+          ],
+          buttons: [
+            {
+              'action': 'location.reload();',
+              'variant': 'primary',
+              'text': efmlJsVars.lbl_ok
+            },
+          ]
+        }
+      }
+      efml_create_dialog( dialog_config );
     }
   });
 }

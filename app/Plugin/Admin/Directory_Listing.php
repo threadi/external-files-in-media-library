@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
  * Initialize the directory listing support.
@@ -185,20 +186,7 @@ class Directory_Listing {
 		}
 
 		// get the method object by its name.
-		$directory_listing_obj = false;
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
-			// bail if this is not a base object.
-			if ( ! $obj instanceof Directory_Listing_Base ) {
-				continue;
-			}
-
-			// bail if name does not match.
-			if ( $method !== $obj->get_name() ) {
-				continue;
-			}
-
-			$directory_listing_obj = $obj;
-		}
+		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
 
 		// bail if no object could be loaded.
 		if ( ! $directory_listing_obj ) {
@@ -294,7 +282,7 @@ class Directory_Listing {
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
 			'form_file'         => array(
-				'title'       => __( 'Enter the path to a local ZIP-file', 'external-files-in-media-library' ),
+				'title'       => __( 'Enter the path to a ZIP-file', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a file path. */
 				'description' => sprintf( __( 'Enter the path to a ZIP file on your hosting. Must start with "file://%1$s" and end with ".zip".', 'external-files-in-media-library' ), ABSPATH ),
 				'url'         => array(

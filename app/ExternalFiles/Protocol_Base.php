@@ -224,7 +224,7 @@ class Protocol_Base {
 	 *
 	 * @return bool
 	 */
-	protected function check_for_duplicate( string $url ): bool {
+	public function check_for_duplicate( string $url ): bool {
 		$false = false;
 		/**
 		 * Filter to prevent duplicate check.

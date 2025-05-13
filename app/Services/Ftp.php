@@ -236,8 +236,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 				if ( Init::get_instance()->is_preview_enabled() ) {
 					// get protocol handler for this external file.
-					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_path );
-					if ( $protocol_handler ) {
+					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_name );
+					if ( $protocol_handler instanceof Protocols\Ftp ) {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
