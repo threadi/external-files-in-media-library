@@ -333,8 +333,16 @@ body.eml-file-synced #delete-action { display: none }
 }
 
 .easy-dialog-for-wordpress-text > div label {
+	cursor: pointer;
 	display: inline-block;
 	font-weight: bold;
 	margin-right: 0.6em;
+	margin-bottom: 0.4em;
 	min-width: 180px;
+}
+
+.easy-dialog-for-wordpress-text > div label:has(input[type="checkbox"]) {
+	display: block;
+	font-weight: normal;
+	margin: 0 0 0.4em;
 }

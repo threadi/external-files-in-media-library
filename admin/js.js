@@ -247,7 +247,15 @@ function efml_upload_files() {
   jQuery('.easy-dialog-for-wordpress-text .eml-use-for-import').each(function() {
     if( 'INPUT' === jQuery(this).prop('nodeName') ) {
       if( 'checkbox' === jQuery(this).attr('type') && jQuery(this).prop('checked') === true ) {
-        additional_fields[jQuery(this).prop('name')] = 1;
+        if( jQuery(this).hasClass('eml-multi') ) {
+          if (!additional_fields[jQuery( this ).prop( 'name' )]) {
+            additional_fields[jQuery( this ).prop( 'name' )] = {};
+          }
+          additional_fields[jQuery( this ).prop( 'name' )][jQuery( this ).val()] = 1;
+        }
+        else {
+          additional_fields[jQuery( this ).prop( 'name' )] = 1;
+        }
       }
       if( 'text' === jQuery(this).attr('type') ) {
         additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
@@ -560,8 +568,16 @@ function efml_sync_get_info() {
 function efml_sync_save_config() {
   // get fields from the form.
   let fields = {};
-  jQuery(".eml-sync-config select").each(function(){
+  jQuery('.eml-sync-config select').each(function(){
     fields[jQuery(this).attr('id')] = jQuery(this).val();
+  });
+  jQuery('.eml-sync-config input[type="checkbox"]').each(function(){
+    if( jQuery(this).is(':checked') ) {
+      if( ! fields[jQuery( this ).attr( 'name' )] ) {
+        fields[jQuery( this ).attr( 'name' )] = {};
+      }
+      fields[jQuery( this ).attr( 'name' )][jQuery( this ).val()] = 1;
+    }
   });
   fields['term_id'] = jQuery('#term_id').val();
 

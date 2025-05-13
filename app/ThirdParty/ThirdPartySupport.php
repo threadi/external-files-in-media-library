@@ -127,6 +127,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
 			'ExternalFilesInMediaLibrary\ThirdParty\Elementor',
 			'ExternalFilesInMediaLibrary\ThirdParty\EnableMediaReplace',
+			'ExternalFilesInMediaLibrary\ThirdParty\EnhancedMediaLibrary',
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\Filebird',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
