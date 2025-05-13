@@ -12,6 +12,7 @@
 
 ### Changed
 
+- PHP 8.1 is now minimum requirement
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
 - Moved import tasks from general Files in own object Import which is now also a directory listing object

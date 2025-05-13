@@ -157,7 +157,7 @@ class Admin {
 	}
 
 	/**
-	 * Check if website is using a valid SSL and show warning if not.
+	 * Check if website is using PHP 8.1 or older and warn about it.
 	 *
 	 * @return void
 	 */
@@ -165,8 +165,14 @@ class Admin {
 		// get transients object.
 		$transients_obj = Transients::get_instance();
 
-		// bail if PHP >= 8.1 is used.
-		if ( PHP_VERSION_ID > 80100 ) {
+		// use this after 2025-10-01.
+		if( time() < 1759269600 ) {
+			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
+			return;
+		}
+
+		// bail if PHP >= 8.2 is used.
+		if ( PHP_VERSION_ID > 80200 ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
 		}
@@ -174,7 +180,7 @@ class Admin {
 		// bail if WordPress is in developer mode.
 		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
-			return;
+			//return;
 		}
 
 		// show hint for old PHP-version.
@@ -182,7 +188,7 @@ class Admin {
 		$transient_obj->set_type( 'error' );
 		$transient_obj->set_name( 'eml_php_hint' );
 		$transient_obj->set_dismissible_days( 90 );
-		$transient_obj->set_message( '<strong>' . __( 'Your website is using an outdated PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.0 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">are outdated</a> since December 2023. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
+		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">will be outdated</a> after December 2025. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
 		$transient_obj->save();
 	}
 
