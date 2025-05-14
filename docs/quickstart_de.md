@@ -1,6 +1,6 @@
 # Schnellstart
 
-Um externe Dateien in deine Medienbibliothek zu importieren, musst du in das Eingabefeld die URLs der Dateien eintragen.
+Um externe Dateien in deine Mediathek zu importieren, musst du in das Eingabefeld die URLs der Dateien eintragen.
 
 ## Voraussetzungen
 
