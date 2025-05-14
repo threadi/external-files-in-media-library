@@ -160,7 +160,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$parse_url = wp_parse_url( $directory );
 
 		// set parent dir.
-		$parent_dir = '.';
+		$parent_dir = '/';
 
 		// bail if path could not be read.
 		if ( isset( $parse_url['path'] ) ) {
@@ -177,7 +177,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		}
 
 		// collect the files and directories.
-		return $this->get_directory_recursively( trailingslashit( $parent_dir ), $directory_list, $ftp_connection, $directory );
+		return $this->get_directory_recursively( $parent_dir, $directory_list, $ftp_connection, $directory );
 	}
 
 	/**
@@ -192,10 +192,24 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	private function get_directory_recursively( string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
 		$file_list = array();
+
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
+
+		// get the protocol and the domain.
+		$parse_url = wp_parse_url( $directory );
+
+		// bail if URL could not be parsed.
+		if ( ! is_array( $parse_url ) ) {
+			return array();
+		}
+
+		// bail if scheme or host is not given.
+		if ( empty( $parse_url['scheme'] ) || empty( $parse_url['host'] ) ) {
+			return array();
+		}
 
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
@@ -219,7 +233,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 				// get the subs.
 				$subs           = $this->get_directory_recursively( trailingslashit( $item_path ), $subdirectory_list, $ftp_connection, $directory );
-				$entry['dir']   = $item_path;
+				$entry['dir']   = $parse_url['scheme'] . '://' . $parse_url['host'] . $item_path;
 				$entry['sub']   = $subs;
 				$entry['count'] = count( $subs );
 			} else {
@@ -236,8 +250,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 				if ( Init::get_instance()->is_preview_enabled() ) {
 					// get protocol handler for this external file.
-					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_path );
-					if ( $protocol_handler ) {
+					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_name );
+					if ( $protocol_handler instanceof Protocols\Ftp ) {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
@@ -308,6 +322,10 @@ class Ftp extends Directory_Listing_Base implements Service {
 				array(
 					'action' => 'efml_import_url( actualDirectoryPath, login, password, [], config.term );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
+				),
+				array(
+					'action' => 'efml_save_as_directory( "ftp", actualDirectoryPath, login, password, "" );',
+					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
 				),
 			)
 		);

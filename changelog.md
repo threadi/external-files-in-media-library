@@ -4,21 +4,37 @@
 
 ### Added
 
+- Added option to synchronize directories with files on every supported protocol
+- Added support for the plugins CatFolders, Filebird and Folderly to import files in specific folders of this plugins
+- Added support for the plugin Enhanced Media Library to add imported files to their categories
 - Added wrapper for all settings of this plugin for easier management in the future
-- New option for import local files from chosen directory via queue (for very large directories)
+- Added custom intervals for any cron event this plugin delivers
+- Added option for import local files from chosen directory via queue (for very large directories)
+- Added support to add external SVG files
 
 ### Changed
 
+- PHP 8.1 is now minimum requirement
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
+- Moved import tasks from general Files in own object Import which is now also a directory listing object
 - Multiple code optimizations
+- Extended support for YouTube channel imports
+- Extended help for using Imgur images
+- Renamed Directory Credentials to Directory Archive
+- Optimized hint if PHP-module zip is missing for the ZIP service
+- More hooks
 
 ### Fixed
 
+- Fixed error on import on any files from local hosting
 - Fixed to early loading of translations
 - Fixed error on GoogleDrive import which would break if a duplicate is detected
 - Fixed potential error of sodium encryption is used and failed
 - Fixed faulty check for existing schedules
+- Fixed missing check for duplicate YouTube videos during import of them
+- Fixed preview of files in FTP service (which also prevents the usage of FTP-files as service)
+- Fixed wrong "Go to logs" URL if import failed
 - Fixed typos
 
 ## [3.1.1] - 2025-04-05

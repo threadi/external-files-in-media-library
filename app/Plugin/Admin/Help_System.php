@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Screen;
 
@@ -65,7 +66,7 @@ class Help_System {
 	 */
 	public function add_help( WP_Screen $screen ): void {
 		// bail if we are not in our settings screen OR not in the media upload screen.
-		if ( ! in_array( $screen->base, array( 'settings_page_eml_settings', 'upload', 'media', 'media_page_efml_local_directories' ), true ) ) {
+		if ( ! in_array( $screen->base, array( 'settings_page_eml_settings', 'upload', 'media', 'media_page_efml_local_directories' ), true ) && 'edit-' . Taxonomy::get_instance()->get_name() !== $screen->id ) {
 			return;
 		}
 

@@ -55,6 +55,13 @@ class Youtube extends Directory_Listing_Base implements Service {
 	private string $api_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=';
 
 	/**
+	 * The YouTube channel URL.
+	 *
+	 * @var string
+	 */
+	private string $channel_url = 'https://www.youtube.com/channel/';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Youtube
@@ -112,6 +119,8 @@ class Youtube extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
 		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
 		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
+		add_filter( 'eml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
+		add_filter( 'eml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
 
 		// change handling of media files.
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
@@ -489,8 +498,12 @@ class Youtube extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( "https://www.youtube.com/channel/" + url, url, apiKey, [], config.term );',
+					'action' => 'efml_import_url( "' . $this->get_channel_url() . '" + url, url, apiKey, [], config.term );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
+				),
+				array(
+					'action' => 'efml_save_as_directory( "youtube", actualDirectoryPath, url, "", apiKey );',
+					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
 				),
 			)
 		);
@@ -613,11 +626,6 @@ class Youtube extends Directory_Listing_Base implements Service {
 		// get the used URL.
 		$url = $import_obj->get_url();
 
-		// bail if this is not a YouTube-URL.
-		if ( ! $this->is_youtube_video( $url ) ) {
-			return $files;
-		}
-
 		// bail if this is not a YouTube channel.
 		if ( ! $this->is_youtube_channel( $url ) ) {
 			return $files;
@@ -669,6 +677,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 			// create URL.
 			$url = 'https://www.youtube.com/watch?v=' . $item['id']['videoId'];
 
+			// bail on duplicate.
+			if ( $import_obj->check_for_duplicate( $url ) ) {
+				continue;
+			}
+
 			// add this file to the list to import.
 			$files[] = $this->get_basic_url_info_for_video( $url );
 		}
@@ -678,7 +691,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	}
 
 	/**
-	 * Return the YouTube API URL to use for any requests.
+	 * Return the YouTube API URL to use for requests.
 	 *
 	 * @return string
 	 */
@@ -692,5 +705,91 @@ class Youtube extends Directory_Listing_Base implements Service {
 		 * @param string $api_url The API URL.
 		 */
 		return apply_filters( 'eml_youtube_api_url', $api_url );
+	}
+
+	/**
+	 * Return the YouTube channel URL to use for requests.
+	 *
+	 * @return string
+	 */
+	private function get_channel_url(): string {
+		$channel_url = $this->channel_url;
+
+		/**
+		 * Filter the YouTube channel URL to use.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param string $channel_url The API URL.
+		 */
+		return apply_filters( 'eml_youtube_channel_url', $channel_url );
+	}
+
+	/**
+	 * Return the URL. Possibility to complete it depending on listing method.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	public function get_url( string $url ): string {
+		return $this->get_channel_url() . $url;
+	}
+
+	/**
+	 * Return the login from entry config.
+	 *
+	 * @param array<string,mixed> $config The entry config.
+	 *
+	 * @return string
+	 */
+	public function get_login_from_archive_entry( array $config ): string {
+		return $config['directory'];
+	}
+
+	/**
+	 * Return the password from entry config.
+	 *
+	 * @param array<string,mixed> $config The entry config.
+	 *
+	 * @return string
+	 */
+	public function get_password_from_archive_entry( array $config ): string {
+		return $config['api_key'];
+	}
+
+	/**
+	 * Prevent local saving of YouTube URLs.
+	 *
+	 * @param bool   $result The result.
+	 * @param string $url The given URL.
+	 *
+	 * @return bool
+	 */
+	public function do_not_save_local( bool $result, string $url ): bool {
+		// bail if given URL is not a YouTube URL.
+		if ( ! $this->is_youtube_video( $url ) ) {
+			return $result;
+		}
+
+		// return false to prevent local usage.
+		return false;
+	}
+
+	/**
+	 * Prevent saving of YouTube video as temp file.
+	 *
+	 * @param bool   $result The result.
+	 * @param string $url The given URL.
+	 *
+	 * @return bool
+	 */
+	public function do_not_save_as_temp_file( bool $result, string $url ): bool {
+		// bail if given URL is not a YouTube URL.
+		if ( ! $this->is_youtube_video( $url ) ) {
+			return $result;
+		}
+
+		// return false to prevent local usage.
+		return false;
 	}
 }

@@ -58,7 +58,7 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function init(): void {
-		// bail if Yoast is not active.
+		// bail if Enable Media Replacer is not active.
 		if ( ! Helper::is_plugin_active( 'enable-media-replace/enable-media-replace.php' ) ) {
 			return;
 		}

@@ -52,7 +52,7 @@ class Schedules_Base {
 	/**
 	 * Arguments for the schedule-event.
 	 *
-	 * @var list<mixed>
+	 * @var array<string,mixed>
 	 */
 	private array $args = array();
 
@@ -107,8 +107,8 @@ class Schedules_Base {
 	 * @return void
 	 */
 	public function install(): void {
-		if ( ! wp_next_scheduled( $this->get_name() ) ) {
-			wp_schedule_event( time(), $this->get_interval(), $this->get_name(), $this->get_args(), true );
+		if ( ! wp_next_scheduled( $this->get_name(), $this->get_args() ) ) { // @phpstan-ignore argument.type
+			wp_schedule_event( time(), $this->get_interval(), $this->get_name(), $this->get_args(), true ); // @phpstan-ignore argument.type
 		}
 	}
 
@@ -118,7 +118,7 @@ class Schedules_Base {
 	 * @return void
 	 */
 	public function delete(): void {
-		wp_clear_scheduled_hook( $this->get_name(), $this->get_args() );
+		wp_clear_scheduled_hook( $this->get_name(), $this->get_args() ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -127,7 +127,7 @@ class Schedules_Base {
 	 * @return false|object
 	 */
 	public function get_event(): false|object {
-		return wp_get_scheduled_event( $this->get_name(), $this->get_args() );
+		return wp_get_scheduled_event( $this->get_name(), $this->get_args() ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -143,7 +143,7 @@ class Schedules_Base {
 	/**
 	 * Return the arguments for the schedule-event.
 	 *
-	 * @return list<mixed>
+	 * @return array<string,mixed>
 	 */
 	public function get_args(): array {
 		return $this->args;
@@ -152,7 +152,7 @@ class Schedules_Base {
 	/**
 	 * Set the arguments for the schedule-event.
 	 *
-	 * @param list<mixed> $args The args to set for the hook-event of this schedule.
+	 * @param array<string,mixed> $args The args to set for the hook-event of this schedule.
 	 *
 	 * @return void
 	 */

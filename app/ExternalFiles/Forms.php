@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Screen;
@@ -91,7 +92,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories' ), true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php' ), true ) ) {
 			// backend-JS.
 			wp_enqueue_script(
 				'eml-admin',
@@ -157,8 +158,14 @@ class Forms {
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
 				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
+				'sync_nonce'                    => wp_create_nonce( 'eml-sync-nonce' ),
+				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
+				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
+				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'add_file_url'                  => Helper::get_add_media_url(),
+				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
@@ -181,6 +188,10 @@ class Forms {
 				'info_timeout'                  => $info_timeout,
 				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
 				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
+				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
+				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
+				'title_add_source'              => __( 'Add Directory Archive', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -349,7 +360,6 @@ class Forms {
 		// check capability.
 		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
-			wp_die();
 		}
 
 		// get log object.
@@ -371,8 +381,8 @@ class Forms {
 		// set initial title.
 		update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
-		// get files-object.
-		$files_obj = Files::get_instance();
+		// get import-object.
+		$import = Import::get_instance();
 
 		// get the URLs from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
@@ -450,8 +460,8 @@ class Forms {
 		update_option( 'eml_import_url_max', count( $url_array ) );
 
 		// add the credentials.
-		$files_obj->set_login( $login );
-		$files_obj->set_password( $password );
+		$import->set_login( $login );
+		$import->set_password( $password );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -480,7 +490,7 @@ class Forms {
 			$url = apply_filters( 'eml_import_url_before', $url, $additional_fields );
 
 			// import file in media library if enqueue option is not set.
-			$file_added = $files_obj->add_url( $url, $add_to_queue );
+			$file_added = $import->add_url( $url, $add_to_queue );
 
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
@@ -629,7 +639,7 @@ class Forms {
 								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
 							),
 							array(
-								'action'  => 'location.href="' . Settings::get_instance()->get_url() . '";',
+								'action'  => 'location.href="' . Helper::get_log_url() . '";',
 								'variant' => 'secondary',
 								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
 							),
@@ -654,7 +664,7 @@ class Forms {
 								'text'    => __( 'Finalized', 'external-files-in-media-library' ),
 							),
 							array(
-								'action'  => 'location.href="' . Settings::get_instance()->get_url() . '";',
+								'action'  => 'location.href="' . Helper::get_log_url() . '";',
 								'variant' => 'secondary',
 								'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
 							),

@@ -3,7 +3,7 @@
  * Plugin Name:       External files in Media Library
  * Description:       Enables the Media Library to use external files.
  * Requires at least: 6.2
- * Requires PHP:      8.0
+ * Requires PHP:      8.1
  * Version:           @@VersionNumber@@
  * Author:            Thomas Zwirner
  * Author URI:        https://www.thomaszwirner.de
@@ -19,8 +19,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// do nothing if PHP-version is not 8.0 or newer.
-if ( PHP_VERSION_ID < 80000 ) { // @phpstan-ignore if.alwaysFalse,smaller.alwaysFalse
+// do nothing if PHP-version is not 8.1 or newer.
+if ( PHP_VERSION_ID < 80100 ) { // @phpstan-ignore if.alwaysFalse,smaller.alwaysFalse
 	return;
 }
 

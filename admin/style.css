@@ -23,7 +23,7 @@ select.eml-field-width {
     z-index: 1;
 }
 
-body.settings_page_eml_settings .review-hint-button:after {
+body.settings_page_eml_settings .review-hint-button:after, body.media_page_efml_local_directories .review-hint-button:after, body.taxonomy-edlfw_archive .review-hint-button:after {
 	color: #d4af37;
 	content: "\f155 \f155 \f155 \f155 \f155";
 	display: inline-block;
@@ -215,8 +215,15 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li {
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:not(.connect) {
+	box-shadow: none;
 	line-height: 1.4;
 	text-decoration: none;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li span:nth-of-type(2) {
+	display: inline-block;
+	font-size: 16px;
+	margin-top: 24px;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li span:before {
@@ -228,6 +235,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a:b
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before {
 	content: "\f163";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before {
+	content: "\f317";
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before {
@@ -242,7 +253,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f501";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip span:first-child:before {
 	content: "\f498";
 }
 
@@ -297,3 +308,50 @@ body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons
 body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog button.efml-help-button {
 	float: right;
 }
+
+body.eml-file-synced #delete-action { display: none }
+
+.eml-switch-toggle {
+	display: inline-block;
+	background: #aaa;
+}
+.eml-switch-toggle input {
+	position: absolute;
+	opacity: 0;
+	z-index: 1;
+}
+.eml-switch-toggle input + label {
+	padding: 5px 8px;
+	float:left;
+	color: #fff;
+	cursor: pointer;
+}
+
+.eml-switch-toggle input:checked + .red {
+	background:  red;
+}
+
+.eml-switch-toggle input:checked + .green {
+	background:  green;
+}
+
+.easy-dialog-for-wordpress-text > div {
+	margin: 1em 0;
+}
+
+.easy-dialog-for-wordpress-text > div label {
+	cursor: pointer;
+	display: inline-block;
+	font-weight: bold;
+	margin-right: 0.6em;
+	margin-bottom: 0.4em;
+	min-width: 180px;
+}
+
+.easy-dialog-for-wordpress-text > div label:has(input[type="checkbox"]) {
+	display: block;
+	font-weight: normal;
+	margin: 0 0 0.4em;
+}
+
+body.taxonomy-edlfw_archive .search-box { display: none }

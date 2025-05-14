@@ -18,6 +18,9 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Num
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
+use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
@@ -645,7 +648,7 @@ class Settings {
 		}
 
 		// get check files-schedule-object.
-		$check_files_schedule = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files();
+		$check_files_schedule = new Check_Files();
 
 		// if new value is 'eml_disable_check' remove the schedule.
 		if ( 'eml_disable_check' === $value ) {
@@ -759,7 +762,10 @@ class Settings {
 		// run activations on ThirdParty-support.
 		ThirdPartySupport::get_instance()->activation();
 
-		// add all settings.
+		// run activation of Synchronization support.
+		Synchronization::get_instance()->activation();
+
+		// add all plugin specific settings.
 		$this->add_settings();
 
 		// run the installation of them.
@@ -790,7 +796,7 @@ class Settings {
 		// get help texts from each setting, which have one.
 		foreach ( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_settings() as $settings_obj ) {
 			// bail if setting is not a Setting object.
-			if ( ! $settings_obj instanceof \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting ) {
+			if ( ! $settings_obj instanceof Setting ) {
 				continue;
 			}
 
@@ -880,7 +886,7 @@ class Settings {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// move all files from old to new directory.
 		$wp_filesystem->move( $old_value_path, $new_value_path );
@@ -899,12 +905,12 @@ class Settings {
 	 */
 	public function update_proxy_setting( string $new_value, string $old_value ): int {
 		// convert the values.
-		$new_value = absint( $new_value );
-		$old_value = absint( $old_value );
+		$new_value_int = absint( $new_value );
+		$old_value_int = absint( $old_value );
 
 		// bail if value has not been changed.
-		if ( $new_value === $old_value ) {
-			return $old_value;
+		if ( $new_value_int === $old_value_int ) {
+			return $old_value_int;
 		}
 
 		// show hint to reset the proxy-cache.
@@ -915,7 +921,7 @@ class Settings {
 		$transient_obj->save();
 
 		// return the new value.
-		return $new_value;
+		return $new_value_int;
 	}
 
 	/**

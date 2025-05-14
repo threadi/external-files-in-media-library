@@ -10,11 +10,10 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
-use function ElementorDeps\DI\string;
+use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 
 /**
  * Helper-function for updates of this plugin.
@@ -94,6 +93,7 @@ class Update {
 			$this->version200();
 			$this->version201();
 			$this->version300();
+			$this->version400();
 
 			// save new plugin-version in DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -164,5 +164,30 @@ class Update {
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();
+	}
+
+	/**
+	 * To run on update to version 4.0.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version400(): void {
+		// update the interval name for file check.
+		$file_check_event_obj = new Check_Files();
+
+		// set the new interval.
+		$file_check_event_obj->set_interval( Helper::map_old_to_new_interval( $file_check_event_obj->get_interval() ) );
+
+		// reinstall the event.
+		$file_check_event_obj->reset();
+
+		// update the interval name for queue.
+		$queue_event_obj = new Schedules\Queue();
+
+		// set the new interval.
+		$queue_event_obj->set_interval( Helper::map_old_to_new_interval( $queue_event_obj->get_interval() ) );
+
+		// reinstall the event.
+		$queue_event_obj->reset();
 	}
 }

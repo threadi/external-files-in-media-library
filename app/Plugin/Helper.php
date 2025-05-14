@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
 use WP_Query;
@@ -247,6 +248,10 @@ class Helper {
 				'label' => __( 'PNG', 'external-files-in-media-library' ),
 				'ext'   => 'png',
 			),
+			'image/svg+xml' => array(
+				'label' => __( 'SVG', 'external-files-in-media-library' ),
+				'ext'   => 'svg',
+			),
 			'image/webp'      => array(
 				'label' => __( 'WEBP', 'external-files-in-media-library' ),
 				'ext'   => 'webp',
@@ -445,7 +450,21 @@ class Helper {
 
 		// loop through all possible intervals from WordPress and add them to the list.
 		foreach ( wp_get_schedules() as $name => $interval ) {
-			$values[ $name ] = $interval['display'];
+			$true = str_starts_with( (string) $name, 'efml_' );
+			/**
+			 * Disable all schedules, not only our own.
+			 *
+			 * @since 4.0.0 Available since 4.0.0.
+			 * @param bool $true Set to "false", to use all schedules.
+			 * @param string $name The name of the schedule.
+			 * @param array<string,mixed> $interval The schedule configuration.
+			 */
+			if ( ! apply_filters( 'efml_own_cron_schedules', $true, (string) $name, $interval ) ) {
+				continue;
+			}
+
+			// add the schedule to the list.
+			$values[ (string) $name ] = $interval['display'];
 		}
 
 		// return the resulting list.
@@ -666,5 +685,71 @@ class Helper {
 
 		// return the resulting array.
 		return $results;
+	}
+
+	/**
+	 * Create JSON from given array.
+	 *
+	 * @param array<string|int,mixed>|WP_Error $source The source array.
+	 * @param int                              $flag Flags to use for this JSON.
+	 *
+	 * @return string
+	 */
+	public static function get_json( array|WP_Error $source, int $flag = 0 ): string {
+		// create JSON.
+		$json = wp_json_encode( $source, $flag );
+
+		// bail if creating the JSON failed.
+		if ( ! $json ) {
+			return '';
+		}
+
+		// return resulting JSON-string.
+		return $json;
+	}
+
+	/**
+	 * Get the name for a given interval in seconds.
+	 *
+	 * @param int $interval The interval in seconds.
+	 *
+	 * @return string
+	 */
+	public static function get_interval_by_time( int $interval ): string {
+		foreach ( wp_get_schedules() as $name => $schedule ) {
+			// bail if interval does not match.
+			if ( $interval !== $schedule['interval'] ) {
+				continue;
+			}
+
+			// return the name of this schedule.
+			return (string) $name;
+		}
+
+		// return empty string if none has been found.
+		return '';
+	}
+
+	/**
+	 * Map the old interval name to the new.
+	 *
+	 * @param string $old_interval_name The old interval name.
+	 *
+	 * @return string
+	 */
+	public static function map_old_to_new_interval( string $old_interval_name ): string {
+		$new_interval_name = 'efml_hourly';
+		switch ( $old_interval_name ) {
+			case 'daily':
+				$new_interval_name = 'efml_24hourly';
+				break;
+			case 'twicedaily':
+				$new_interval_name = 'efml_12hourly';
+				break;
+			case 'weekly':
+				$new_interval_name = 'efml_weekly';
+				break;
+		}
+		return $new_interval_name;
 	}
 }

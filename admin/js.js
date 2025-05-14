@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
     /**
      * Add rating hint.
      */
-    $('body.settings_page_eml_settings h1.wp-heading-inline').each(function() {
+    $('body.settings_page_eml_settings h1.wp-heading-inline, body.media_page_efml_local_directories h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
       let review_button = document.createElement('a');
       review_button.className = 'review-hint-button page-title-action';
       review_button.href = efmlJsVars.review_url;
@@ -15,7 +15,18 @@ jQuery(document).ready(function($) {
       add_file_button.href = efmlJsVars.add_file_url;
       add_file_button.innerHTML = efmlJsVars.title_add_file;
       this.after(add_file_button);
-    })
+    });
+
+    /**
+     * Add link to overview over possible external sources.
+     */
+    $('body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
+      let add_directory_listing_button = document.createElement( 'a' );
+      add_directory_listing_button.className = 'page-title-action';
+      add_directory_listing_button.href = efmlJsVars.directory_listing_url;
+      add_directory_listing_button.innerHTML = efmlJsVars.title_add_source;
+      this.after( add_directory_listing_button );
+    });
 
     /**
      * Add AJAX-functionality to recheck the availability of a single file.
@@ -183,7 +194,34 @@ jQuery(document).ready(function($) {
       if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
         $(this).addClass("copied");
       }
-  });
+    });
+
+    /**
+     * Save sync changes via toggle.
+     */
+    $('.eml-switch-toggle input').on("change", function() {
+      // send request.
+      jQuery.ajax( {
+        url: efmlJsVars.ajax_url,
+        type: 'post',
+        data: {
+          term_id: $( this ).data( 'term-id' ),
+          state: $( this ).val(),
+          action: 'efml_change_sync_state',
+          nonce: efmlJsVars.sync_state_nonce
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+          efml_ajax_error_dialog( errorThrown )
+        },
+      });
+    });
+
+    /**
+     * Prevent editing of archive terms.
+     */
+    $('body.taxonomy-edlfw_archive #edittag input').each( function() {
+        $(this).attr('readonly', true);
+    });
 });
 
 /**
@@ -227,11 +265,22 @@ function efml_upload_files() {
   jQuery('.easy-dialog-for-wordpress-text .eml-use-for-import').each(function() {
     if( 'INPUT' === jQuery(this).prop('nodeName') ) {
       if( 'checkbox' === jQuery(this).attr('type') && jQuery(this).prop('checked') === true ) {
-        additional_fields[jQuery(this).prop('name')] = 1;
+        if( jQuery(this).hasClass('eml-multi') ) {
+          if (!additional_fields[jQuery( this ).prop( 'name' )]) {
+            additional_fields[jQuery( this ).prop( 'name' )] = {};
+          }
+          additional_fields[jQuery( this ).prop( 'name' )][jQuery( this ).val()] = 1;
+        }
+        else {
+          additional_fields[jQuery( this ).prop( 'name' )] = 1;
+        }
       }
       if( 'text' === jQuery(this).attr('type') ) {
         additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
       }
+    }
+    if( 'SELECT' === jQuery(this).prop('nodeName') ) {
+      additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
     }
     if( 'TEXTAREA' === jQuery(this).prop('nodeName') ) {
       additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
@@ -444,6 +493,174 @@ function efml_import_url( url, login, password, additional_fields, term ) {
 
       // get info about progress.
       setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Start sync of entries from given directory.
+ *
+ * @param method
+ * @param term_id
+ */
+function efml_sync_from_directory( method, term_id ) {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      action: 'efml_sync_from_directory',
+      method: method,
+      term_id: term_id,
+      nonce: efmlJsVars.sync_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_sync_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { efml_sync_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Get info about running sync of files.
+ */
+function efml_sync_get_info() {
+  jQuery.ajax( {
+    type: "POST",
+    url: efmlJsVars.ajax_url,
+    data: {
+      'action': 'efml_get_sync_info',
+      'nonce': efmlJsVars.get_info_sync_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (data) {
+      let count = parseInt( data[0] );
+      let max = parseInt( data[1] );
+      let running = parseInt( data[2] );
+      let status = data[3];
+      let dialog_config = data[4];
+
+      // show progress.
+      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
+      jQuery( '#progress_status' ).html( status );
+
+      /**
+       * If import is still running, get next info in xy ms.
+       * If import is not running and error occurred, show the error.
+       * If import is not running and no error occurred, show ok-message.
+       */
+      if ( running >= 1 ) {
+        setTimeout( function () {
+          efml_sync_get_info()
+        }, efmlJsVars.info_timeout );
+      }
+      else {
+        efml_create_dialog( dialog_config );
+      }
+    }
+  });
+}
+
+/**
+ * Update the synchronization config for single external directory.
+ */
+function efml_sync_save_config() {
+  // get fields from the form.
+  let fields = {};
+  jQuery('.eml-sync-config select').each(function(){
+    fields[jQuery(this).attr('id')] = jQuery(this).val();
+  });
+  jQuery('.eml-sync-config input[type="checkbox"]').each(function(){
+    if( jQuery(this).is(':checked') ) {
+      if( ! fields[jQuery( this ).attr( 'name' )] ) {
+        fields[jQuery( this ).attr( 'name' )] = {};
+      }
+      fields[jQuery( this ).attr( 'name' )][jQuery( this ).val()] = 1;
+    }
+  });
+  fields['term_id'] = jQuery('#term_id').val();
+
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'post',
+    data: {
+      action: 'efml_sync_save_config',
+      fields: fields,
+      nonce: efmlJsVars.sync_save_config_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (response) {
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_sync_config_saved,
+          texts: [
+            '<p>' + efmlJsVars.text_sync_config_saved + '</p>'
+          ],
+          buttons: [
+            {
+              'action': 'location.reload();',
+              'variant': 'primary',
+              'text': efmlJsVars.lbl_ok
+            },
+          ]
+        }
+      }
+      efml_create_dialog( dialog_config );
+    }
+  });
+}
+
+/**
+ * Save a directory as directory archive.
+ *
+ * @param type The used type.
+ * @param url The URL of the directory.
+ * @param login The login (optional).
+ * @param password The password (optional).
+ * @param api_key The API Key (optional).
+ */
+function efml_save_as_directory( type, url, login, password, api_key ) {
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: {
+      action: 'efml_add_archive',
+      type: type,
+      url: url,
+      login: login,
+      password: password,
+      api_key: api_key,
+      nonce: efmlJsVars.add_archive_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function ( dialog_config ) {
+      efml_create_dialog( dialog_config );
     }
   });
 }

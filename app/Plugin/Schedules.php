@@ -88,7 +88,7 @@ class Schedules {
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
-	private function get_events(): array {
+	public function get_events(): array {
 		// get our own events from events list in WordPress.
 		$our_events = $this->get_wp_events();
 

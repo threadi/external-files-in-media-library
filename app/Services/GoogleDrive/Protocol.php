@@ -65,6 +65,7 @@ class Protocol extends Protocol_Base {
 	 * Check the availability of a given URL.
 	 *
 	 * @return array<int,array<string,mixed>> List of files with its infos.
+	 * @throws JsonException Could throw exception.
 	 */
 	public function get_url_infos(): array {
 		// get the Google Drive object.

@@ -38,7 +38,7 @@ class Check_Files extends Schedules_Base {
 	 *
 	 * @var string
 	 */
-	protected string $default_interval = 'daily';
+	protected string $default_interval = 'efml_24hourly';
 
 	/**
 	 * Initialize this schedule.

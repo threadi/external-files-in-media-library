@@ -21,8 +21,6 @@ use wpdb;
 
 /**
  * Controller for queue tasks.
- *
- * @noinspection PhpUnused
  */
 class Queue {
 	/**
@@ -99,7 +97,7 @@ class Queue {
 		$setting = $settings_obj->add_setting( 'eml_queue_interval' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'string' );
-		$setting->set_default( 'hourly' );
+		$setting->set_default( 'efml_hourly' );
 		$field = new Select();
 		$field->set_title( __( 'Set interval for queue processing', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which the queue for new URLs will be processed.', 'external-files-in-media-library' ) );
@@ -357,16 +355,16 @@ class Queue {
 		}
 
 		// get the files object.
-		$files_obj = Files::get_instance();
+		$import = Import::get_instance();
 
 		// set the login.
-		$files_obj->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
+		$import->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
 
 		// set the password.
-		$files_obj->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
+		$import->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
 
 		// import the URL.
-		if ( $files_obj->add_url( $url_data['url'] ) ) {
+		if ( $import->add_url( $url_data['url'] ) ) {
 			// remove URL from queue.
 			$this->remove_url( absint( $url_data['id'] ) );
 		} else {

@@ -12,6 +12,8 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 
 /**
@@ -149,7 +151,7 @@ class Services {
 		 * Filter the list of third party support.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
-		 * @param array $list List of third party support.
+		 * @param array<string> $list List of third party support.
 		 */
 		return apply_filters( 'eml_services_support', $list );
 	}
@@ -181,5 +183,32 @@ class Services {
 
 		// return list of help.
 		return $help_list;
+	}
+
+	/**
+	 * Get service by its name.
+	 *
+	 * @param string $method The name of the method.
+	 *
+	 * @return Directory_Listing_Base|false
+	 */
+	public function get_service_by_name( string $method ): Directory_Listing_Base|false {
+		$directory_listing_obj = false;
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+			// bail if this is not a base object.
+			if ( ! $obj instanceof Directory_Listing_Base ) {
+				continue;
+			}
+
+			// bail if name does not match.
+			if ( $method !== $obj->get_name() ) {
+				continue;
+			}
+
+			$directory_listing_obj = $obj;
+		}
+
+		// return resulting object.
+		return $directory_listing_obj;
 	}
 }

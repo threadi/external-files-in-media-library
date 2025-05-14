@@ -13,7 +13,9 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
  * Initialize the directory listing support.
@@ -76,6 +78,12 @@ class Directory_Listing {
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
 
+		// misc.
+		add_filter( 'get_edit_term_link', array( $this, 'prevent_edit_of_archive_terms' ), 10, 3 );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_edit_action_for_archive_terms' ) );
+		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
+		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 30 );
+
 		// initialize the serverside tasks object for directory listing.
 		$directory_listing_obj = Init::get_instance();
 		$directory_listing_obj->set_path( Helper::get_plugin_dir() );
@@ -96,11 +104,12 @@ class Directory_Listing {
 	public function add_view_directory_page(): void {
 		add_submenu_page(
 			'upload.php',
-			__( 'Import from directories', 'external-files-in-media-library' ),
-			__( 'Import from directories', 'external-files-in-media-library' ),
+			__( 'Add external files', 'external-files-in-media-library' ),
+			__( 'Add external files', 'external-files-in-media-library' ),
 			'manage_options',
 			$this->get_menu_slug(),
-			array( $this, 'render_view_directory_page' )
+			array( $this, 'render_view_directory_page' ),
+			2
 		);
 	}
 
@@ -153,7 +162,7 @@ class Directory_Listing {
 		if ( is_null( $method ) ) {
 			?>
 			<div class="wrap">
-				<h1><?php echo esc_html__( 'Choose protocol', 'external-files-in-media-library' ); ?></h1>
+				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
@@ -171,13 +180,20 @@ class Directory_Listing {
 							continue;
 						}
 
+						// get the URL.
+						$url = $obj->get_view_url();
+						if ( empty( $url ) ) {
+							$url = $this->get_view_directory_url( $obj );
+						}
+
 						// show enabled listing object.
 						?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $this->get_view_directory_url( $obj ) ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
 							<?php
 					}
+
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( Directory_Listings::get_instance()->get_directory_archive_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -185,20 +201,7 @@ class Directory_Listing {
 		}
 
 		// get the method object by its name.
-		$directory_listing_obj = false;
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
-			// bail if this is not a base object.
-			if ( ! $obj instanceof Directory_Listing_Base ) {
-				continue;
-			}
-
-			// bail if name does not match.
-			if ( $method !== $obj->get_name() ) {
-				continue;
-			}
-
-			$directory_listing_obj = $obj;
-		}
+		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
 
 		// bail if no object could be loaded.
 		if ( ! $directory_listing_obj ) {
@@ -210,9 +213,21 @@ class Directory_Listing {
 		$config['nonce'] = wp_create_nonce( $this->get_nonce_name() );
 
 		// get directory to connect to from request.
-		$term = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
-		if ( $term > 0 ) {
-			$config['term'] = $term;
+		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
+		if ( $term_id > 0 ) {
+			// set term in config.
+			$config['term'] = $term_id;
+
+			// get the term name (= URL).
+			$url = get_term_field( 'name', $term_id, Taxonomy::get_instance()->get_name() );
+
+			// bail if URL is not a string.
+			if ( ! is_string( $url ) ) {
+				return;
+			}
+
+			// update the directory to load.
+			$config['directory'] = $url;
 		}
 
 		// prepare config.
@@ -274,17 +289,19 @@ class Directory_Listing {
 			'directory_archive' => array(
 				'connect_now'     => __( 'Open now', 'external-files-in-media-library' ),
 				'labels'          => array(
-					'name'          => _x( 'Directory Credentials', 'taxonomy general name', 'external-files-in-media-library' ),
-					'singular_name' => _x( 'Directory Credential', 'taxonomy singular name', 'external-files-in-media-library' ),
-					'search_items'  => __( 'Search Directory Credential', 'external-files-in-media-library' ),
-					'edit_item'     => __( 'Edit Directory Credential', 'external-files-in-media-library' ),
-					'update_item'   => __( 'Update Directory Credential', 'external-files-in-media-library' ),
-					'menu_name'     => __( 'Directory Credentials', 'external-files-in-media-library' ),
-					'back_to_items' => __( 'Back to Directory Credentials', 'external-files-in-media-library' ),
+					'name'          => _x( 'Directory Archives', 'taxonomy general name', 'external-files-in-media-library' ),
+					'singular_name' => _x( 'Directory Archive', 'taxonomy singular name', 'external-files-in-media-library' ),
+					'search_items'  => __( 'Search Directory Archive', 'external-files-in-media-library' ),
+					'edit_item'     => __( 'Edit Directory Archive', 'external-files-in-media-library' ),
+					'update_item'   => __( 'Update Directory Archive', 'external-files-in-media-library' ),
+					'menu_name'     => __( 'Directory Archives', 'external-files-in-media-library' ),
+					'back_to_items' => __( 'Back to Directory Archives', 'external-files-in-media-library' ),
+					/* translators: %1$s will be replaced by a URL. */
+					'not_found'     => sprintf( __( 'No Directory Archives found. <a href="%1$s">Add them</a> from your external files sources.', 'external-files-in-media-library' ), $this->get_view_directory_url( false ) ),
 				),
 				'messages'        => array(
-					'updated' => __( 'Directory Credential updated.', 'external-files-in-media-library' ),
-					'deleted' => __( 'Directory Credential deleted.', 'external-files-in-media-library' ),
+					'updated' => __( 'Directory Archive updated.', 'external-files-in-media-library' ),
+					'deleted' => __( 'Directory Archive deleted.', 'external-files-in-media-library' ),
 				),
 				'type'            => __( 'Type', 'external-files-in-media-library' ),
 				'connect'         => __( 'Connect', 'external-files-in-media-library' ),
@@ -294,7 +311,7 @@ class Directory_Listing {
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
 			'form_file'         => array(
-				'title'       => __( 'Enter the path to a local ZIP-file', 'external-files-in-media-library' ),
+				'title'       => __( 'Enter the path to a ZIP-file', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a file path. */
 				'description' => sprintf( __( 'Enter the path to a ZIP file on your hosting. Must start with "file://%1$s" and end with ".zip".', 'external-files-in-media-library' ), ABSPATH ),
 				'url'         => array(
@@ -343,6 +360,99 @@ class Directory_Listing {
 					'title' => __( 'Choose file from local server directory', 'external-files-in-media-library' ),
 				),
 			),
+		);
+	}
+
+	/**
+	 * Prevent edit of archive terms.
+	 *
+	 * @param string $location The generated URL for edit the term.
+	 * @param int    $term_id The term ID.
+	 * @param string $taxonomy The used taxonomy.
+	 *
+	 * @return string
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function prevent_edit_of_archive_terms( string $location, int $term_id, string $taxonomy ): string {
+		// bail if this is not our archive taxonomy.
+		if ( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
+			return $location;
+		}
+
+		// return empty string to prevent the link usage.
+		return '';
+	}
+
+	/**
+	 * Remove the edit action for archive terms.
+	 *
+	 * @param array<string,string> $actions List of actions.
+	 *
+	 * @return array<string,string>
+	 */
+	public function remove_edit_action_for_archive_terms( array $actions ): array {
+		// bail if edit option is not set.
+		if ( ! isset( $actions['edit'] ) ) {
+			return $actions;
+		}
+
+		// remove the edit entry.
+		unset( $actions['edit'] );
+
+		// bail if "inline hide-if-no-js" option is not set.
+		if ( ! isset( $actions['inline hide-if-no-js'] ) ) {
+			return $actions;
+		}
+
+		// remove the "inline hide-if-no-js" entry.
+		unset( $actions['inline hide-if-no-js'] );
+
+		// return resulting list of actions.
+		return $actions;
+	}
+
+	/**
+	 * Show taxonomy for archives in media menu.
+	 *
+	 * @return void
+	 */
+	public function show_taxonomy_in_media_menu(): void {
+		register_taxonomy_for_object_type( Taxonomy::get_instance()->get_name(), 'attachment' );
+	}
+
+	/**
+	 * Add help for the settings of this plugin.
+	 *
+	 * @param array<array<string,string>> $help_list List of help tabs.
+	 *
+	 * @return array<array<string,string>>
+	 */
+	public function add_help( array $help_list ): array {
+		$content  = '<h1>' . __( 'Directory Archives', 'external-files-in-media-library' ) . '</h1>';
+		$content .= '<p>' . __( 'With directory archives, you can easily save your frequently used connections to external directories and reuse them at any time. Whats more, you can also use them to automatically synchronize the files with your media library.', 'external-files-in-media-library' ) . '</p>';
+
+		// add help for the settings of this plugin.
+		$help_list[] = array(
+			'id'      => 'eml-directory-archives',
+			'title'   => __( 'Directory Archives', 'external-files-in-media-library' ),
+			'content' => $content,
+		);
+
+		// return list of help.
+		return $help_list;
+	}
+
+	/**
+	 * Return the URL to the directory listings in backend.
+	 *
+	 * @return string
+	 */
+	public function get_url(): string {
+		return add_query_arg(
+			array(
+				'post_type' => 'attachment',
+			),
+			Directory_Listings::get_instance()->get_directory_archive_url()
 		);
 	}
 }
