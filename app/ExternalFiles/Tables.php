@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use WP_Query;
 
 /**
@@ -80,6 +81,9 @@ class Tables {
 
 		// get value from request.
 		$request_value = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if( is_null( $request_value ) ) {
+			$request_value = '';
+		}
 
 		// define possible options.
 		$options = array(
@@ -87,13 +91,22 @@ class Tables {
 			'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
 			'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
 		);
+
+		/**
+		 * Filter the possible options.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param array<string,string> $options The list of possible options.
+		 */
+		$options = apply_filters( 'efml_filter_options', $options );
+
 		?>
 		<!--suppress HtmlFormInputWithoutLabel -->
 		<select name="admin_filter_media_external_files">
 			<?php
 			foreach ( $options as $value => $label ) {
 				?>
-				<option value="<?php echo esc_attr( $value ); ?>"<?php echo $request_value === $value ? ' selected="selected"' : ''; ?>><?php echo esc_html( $label ); ?></option>
+				<option value="<?php echo esc_attr( $value ); ?>"<?php echo $request_value === (string) $value ? ' selected="selected"' : ''; ?>><?php echo esc_html( $label ); ?></option>
 				<?php
 			}
 			?>
@@ -126,6 +139,7 @@ class Tables {
 			return;
 		}
 
+		// filter to any external file.
 		if ( 'external' === $filter ) {
 			$query->set(
 				'meta_query',
@@ -137,6 +151,8 @@ class Tables {
 				)
 			);
 		}
+
+		// filter for any non-external file.
 		if ( 'non-external' === $filter ) {
 			$query->set(
 				'meta_query',
@@ -148,6 +164,14 @@ class Tables {
 				)
 			);
 		}
+
+		/**
+		 * Filter the query.
+		 *
+		 * @since 4.0.0 Available 4.0.0.
+		 * @param WP_Query $query The WP_Query object.
+		 */
+		do_action_ref_array( 'efml_filter_query', array( &$query ) );
 	}
 
 	/**

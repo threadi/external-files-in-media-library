@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
@@ -75,11 +76,14 @@ class Synchronization {
 		}
 
 		// use our own hooks.
-		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column' ) );
-		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content' ), 10, 3 );
+		add_filter( 'efml_directory_listing_columns', array( $this, 'add_columns' ) );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_synchronization' ), 10, 3 );
 		add_action( 'eml_show_file_info', array( $this, 'show_sync_info' ) );
 		add_action( 'eml_table_column_content', array( $this, 'show_sync_info_in_table' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'added_new_directory' ) );
+		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
+		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
 
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
@@ -189,19 +193,80 @@ class Synchronization {
 	}
 
 	/**
-	 * Add column to handle synchronization.
+	 * Add columns to handle synchronization.
 	 *
 	 * @param array<string,string> $columns The columns.
 	 *
 	 * @return array<string,string>
 	 */
-	public function add_column( array $columns ): array {
+	public function add_columns( array $columns ): array {
+		$columns['synced_files'] = __( 'Synchronized files', 'external-files-in-media-library' );
 		$columns['synchronization'] = __( 'Synchronization', 'external-files-in-media-library' );
 		return $columns;
 	}
 
 	/**
-	 * Add the content for our custom columns.
+	 * Add the content for synced files.
+	 *
+	 * @param string $content
+	 * @param string $column_name
+	 * @param int    $term_id
+	 *
+	 * @return string
+	 */
+	public function add_column_content_files( string $content, string $column_name, int $term_id ): string {
+		// bail if this is not the "synchronization" column.
+		if ( 'synced_files' !== $column_name ) {
+			return $content;
+		}
+
+		// get all files which are assigned to this term_id.
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => array( 'inherit', 'trash' ),
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+				array(
+					'key'     => 'eml_synced',
+					'compare' => 'EXISTS',
+				),
+			),
+			'tax_query' => array(
+				array(
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field' => 'term_id',
+					'terms' => $term_id
+				)
+			),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+
+		// bail on no results.
+		if( 0 === $result->found_posts ) {
+			return '0';
+		}
+
+		// create URL.
+		$url = add_query_arg(
+			array(
+				'mode' => 'list',
+				'admin_filter_media_external_files' => $term_id
+			),
+			get_admin_url() . 'upload.php'
+		);
+
+		// show count and link it to the media library.
+		return '<a href="' . esc_url( $url ) . '">' . absint( $result->found_posts) . '</a>';
+	}
+
+	/**
+	 * Add the content for sync options.
 	 *
 	 * @param string $content The content.
 	 * @param string $column_name The column name.
@@ -209,7 +274,7 @@ class Synchronization {
 	 *
 	 * @return string
 	 */
-	public function add_column_content( string $content, string $column_name, int $term_id ): string {
+	public function add_column_content_synchronization( string $content, string $column_name, int $term_id ): string {
 		// bail if this is not the "synchronization" column.
 		if ( 'synchronization' !== $column_name ) {
 			return $content;
@@ -384,13 +449,16 @@ class Synchronization {
 						'compare' => 'EXISTS',
 					),
 					array(
-						'key'   => 'eml_synced_from_url',
-						'value' => $url,
-					),
-					array(
 						'key'     => 'eml_synced',
 						'compare' => 'NOT EXISTS',
 					),
+				),
+				'tax_query' => array(
+					array(
+						'taxonomy' => Taxonomy::get_instance()->get_name(),
+						'field' => 'name',
+						'terms' => $url
+					)
 				),
 				'posts_per_page' => - 1,
 				'fields'         => 'ids',
@@ -580,7 +648,17 @@ class Synchronization {
 	public function mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced', 1 );
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced_time', time() );
-		update_post_meta( $external_file_obj->get_id(), 'eml_synced_from_url', $url );
+
+		// get the term by the URL.
+		$term = get_term_by( 'name', $url, Taxonomy::get_instance()->get_name() );
+
+		// bail if term is not found.
+		if( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		// assign the file to this archive.
+		wp_set_object_terms( $external_file_obj->get_id(), $term->term_id, Taxonomy::get_instance()->get_name() );
 	}
 
 	/**
@@ -599,8 +677,26 @@ class Synchronization {
 			return;
 		}
 
+		// get the assigned archive term.
+		$terms = wp_get_object_terms( $extern_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
+
+		// bail if result is not an array.
+		if( ! is_array( $terms ) ) {
+			return;
+		}
+
+		// bail if none has been found.
+		if( empty( $terms ) ) {
+			return;
+		}
+
+		// get first result.
+		$term = $terms[0];
+
 		// show info about sync time.
-		?><li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
+		?>
+		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
+		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?> <a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
 		<?php
 	}
 
@@ -651,9 +747,29 @@ class Synchronization {
 			return;
 		}
 
+		// get the assigned archive term.
+		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
+
+		// bail if result is not an array.
+		if( ! is_array( $terms ) ) {
+			return;
+		}
+
+		// bail if none has been found.
+		if( empty( $terms ) ) {
+			return;
+		}
+
+		// get first result.
+		$term = $terms[0];
+
+		// create the title-attribute.
+		/* translators: %1$s will be replaced by a date-time, %2$s by a URL. */
+		$title = sprintf( __( 'Last synchronized at %1$s from %2$s', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ), $term->name );
+
 		// show info about sync time.
 		?>
-		<span class="dashicons dashicons-clock" title="<?php echo esc_attr( __( 'Last synchronized:', 'external-files-in-media-library' ) . ' ' . Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?>"></span>
+		<span class="dashicons dashicons-clock" title="<?php echo esc_attr(  $title ); ?>"></span>
 		<?php
 	}
 
@@ -761,7 +877,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Delete all synced files from media library if an archive term is deleted.
+	 * Delete all synced files from media library if the assigned archive term is deleted.
 	 *
 	 * @param int    $term_id The term ID to delete.
 	 * @param string $taxonomy The taxonomy.
@@ -907,10 +1023,13 @@ class Synchronization {
 					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
 				),
+			),
+			'tax_query' => array(
 				array(
-					'key'   => 'eml_synced_from_url',
-					'value' => $url,
-				),
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field' => 'name',
+					'terms' => $url
+				)
 			),
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
@@ -1152,5 +1271,63 @@ class Synchronization {
 
 		// send ok.
 		wp_send_json_success();
+	}
+
+	/**
+	 * Add filter options for media library listing.
+	 *
+	 * @param array<string,string> $options The options.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_filter_options( array $options ): array {
+		// get all directory archives.
+		$terms = get_terms( array( 'taxonomy' => Taxonomy::get_instance()->get_name(), 'hide_empty' => false ) );
+
+		// add them to the options list.
+		if( is_array( $terms ) ) {
+			foreach( $terms as $term ) {
+				$options[ (string) $term->term_id ] = $term->name;
+			}
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Use the filter options.
+	 *
+	 * @param WP_Query $query The WP_Query object.
+	 *
+	 * @return void
+	 */
+	public function use_filter_options( WP_Query $query ): void {
+		// get filter value.
+		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if filter is not set.
+		if ( is_null( $filter ) ) {
+			return;
+		}
+
+		// get the term of the given URL.
+		$term = get_term_by( 'term_id', $filter, Taxonomy::get_instance()->get_name() );
+
+		// bail if no term could be found.
+		if( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		// extend the filter.
+		$query->set(
+			'tax_query',
+			array(
+				array(
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field' => 'term_id',
+					'terms' => $filter
+				)
+			)
+		);
 	}
 }

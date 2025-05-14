@@ -1402,14 +1402,6 @@ class Files {
 		// add the archive.
 		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
 
-		// create archive URL.
-		$url = add_query_arg(
-			array(
-				'post_type' => 'attachment',
-			),
-			Directory_Listings::get_instance()->get_directory_archive_url()
-		);
-
 		// return OK.
 		wp_send_json(
 			array(
@@ -1419,7 +1411,7 @@ class Files {
 													'texts'   => array(
 														'<p><strong>' . __( 'The directory has been saved as archive.', 'external-files-in-media-library' ) . '</strong></p>',
 														/* translators: %1$s will be replaced by a URL. */
-														'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in the directory archive</a>.', 'external-files-in-media-library' ), $url ) . '</p>',
+														'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in the directory archive</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_url() ) . '</p>',
 													),
 													'buttons' => array(
 														array(

@@ -192,16 +192,8 @@ class Directory_Listing {
 							<?php
 					}
 
-					// create archive URL.
-					$url = add_query_arg(
-						array(
-							'post_type' => 'attachment',
-						),
-						Directory_Listings::get_instance()->get_directory_archive_url()
-					);
-
 			?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -448,5 +440,19 @@ class Directory_Listing {
 
 		// return list of help.
 		return $help_list;
+	}
+
+	/**
+	 * Return the URL to the directory listings in backend.
+	 *
+	 * @return string
+	 */
+	public function get_url(): string {
+		return add_query_arg(
+			array(
+				'post_type' => 'attachment',
+			),
+			Directory_Listings::get_instance()->get_directory_archive_url()
+		);
 	}
 }
