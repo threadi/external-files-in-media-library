@@ -248,6 +248,10 @@ class Helper {
 				'label' => __( 'PNG', 'external-files-in-media-library' ),
 				'ext'   => 'png',
 			),
+			'image/svg+xml' => array(
+				'label' => __( 'SVG', 'external-files-in-media-library' ),
+				'ext'   => 'svg',
+			),
 			'image/webp'      => array(
 				'label' => __( 'WEBP', 'external-files-in-media-library' ),
 				'ext'   => 'webp',

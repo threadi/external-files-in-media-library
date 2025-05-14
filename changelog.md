@@ -10,6 +10,7 @@
 - Added wrapper for all settings of this plugin for easier management in the future
 - Added custom intervals for any cron event this plugin delivers
 - Added option for import local files from chosen directory via queue (for very large directories)
+- Added support to add external SVG files
 
 ### Changed
 
