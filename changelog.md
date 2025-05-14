@@ -21,6 +21,7 @@
 - Extended support for YouTube channel imports
 - Extended help for using Imgur images
 - Renamed Directory Credentials to Directory Archive
+- Optimized hint if PHP-module zip is missing for the ZIP service
 - More hooks
 
 ### Fixed

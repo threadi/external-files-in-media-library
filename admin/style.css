@@ -220,6 +220,12 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a:n
 	text-decoration: none;
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li span:nth-of-type(2) {
+	display: inline-block;
+	font-size: 16px;
+	margin-top: 24px;
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li span:before {
 	display: block;
 	font-family: dashicons, sans-serif;
@@ -247,7 +253,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f501";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip span:first-child:before {
 	content: "\f498";
 }
 
