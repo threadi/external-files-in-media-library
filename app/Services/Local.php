@@ -116,7 +116,7 @@ class Local implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_url( url + file.file, "", "", [], term );',
+				'action' => 'efml_import_url( file.file, "", "", [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
