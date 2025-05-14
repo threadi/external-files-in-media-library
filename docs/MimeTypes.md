@@ -15,6 +15,7 @@ The following mime types are always available for selection:
 * GIF
 * JPEG
 * PNG
+* SVG
 * WebP
 * PDF
 * ZIP

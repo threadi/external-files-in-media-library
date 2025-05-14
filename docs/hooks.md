@@ -5,74 +5,6 @@
 
 ## Actions
 
-### `eml_before_file_list`
-
-*Run action just before we go through the list of resulting files.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` |  | 
-`$files` |  | 
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 367](ExternalFiles/Files.php#L367-L370)
-
-### `eml_before_file_save`
-
-*Run additional tasks before new external file will be added.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$file_data` | `array` | The array with the file data.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 380](ExternalFiles/Files.php#L380-L386)
-
-### `eml_file_import_before_save`
-
-*Run action just before the file is saved in database.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$file_data['url']` |  | 
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 418](ExternalFiles/Files.php#L418-L425)
-
-### `eml_after_file_save`
-
-*Run additional tasks after new external file has been added.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The object of the external file.
-`$file_data` | `array` | The array with the file data.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 524](ExternalFiles/Files.php#L524-L531)
-
 ### `eml_file_delete`
 
 *Run additional tasks for URL deletion.*
@@ -89,7 +21,25 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 560](ExternalFiles/Files.php#L560-L566)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 269](ExternalFiles/Files.php#L269-L275)
+
+### `eml_show_file_info`
+
+*Add additional infos about this file.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The external file object.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`4.0.0` | Available since 4.0.0.
+
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 631](ExternalFiles/Files.php#L631-L637)
 
 ### `eml_sftp_directory_import_start`
 
@@ -107,7 +57,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 103](ExternalFiles/Protocols/Sftp.php#L103-L110)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 108](ExternalFiles/Protocols/Sftp.php#L108-L115)
 
 ### `eml_sftp_directory_import_files`
 
@@ -126,7 +76,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 126](ExternalFiles/Protocols/Sftp.php#L126-L134)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 131](ExternalFiles/Protocols/Sftp.php#L131-L139)
 
 ### `eml_sftp_directory_import_file_before_to_list`
 
@@ -145,7 +95,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 173](ExternalFiles/Protocols/Sftp.php#L173-L181)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 178](ExternalFiles/Protocols/Sftp.php#L178-L186)
 
 ### `eml_file_directory_import_start`
 
@@ -192,7 +142,7 @@ Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$file_path` | `string` | The filepath to import.
-`$file_list` | `array` | List of files.
+`$file_list` | `array<int,mixed>` | List of files.
 
 **Changelog**
 
@@ -218,7 +168,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 236](ExternalFiles/Protocols/Http.php#L236-L243)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 234](ExternalFiles/Protocols/Http.php#L234-L241)
 
 ### `eml_http_directory_import_files`
 
@@ -284,7 +234,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_url()` |  | 
+`$url` | `string` | The URL to import.
 
 **Changelog**
 
@@ -292,7 +242,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 155](ExternalFiles/Protocols/Ftp.php#L155-L162)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 164](ExternalFiles/Protocols/Ftp.php#L164-L171)
 
 ### `eml_ftp_directory_import_files`
 
@@ -303,7 +253,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 Argument | Type | Description
 -------- | ---- | -----------
 `$this->get_url()` |  | 
-`$file_list` | `array` | List of files.
+`$file_list` | `array<string,mixed>` | List of files.
 
 **Changelog**
 
@@ -311,7 +261,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 186](ExternalFiles/Protocols/Ftp.php#L186-L194)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 198](ExternalFiles/Protocols/Ftp.php#L198-L206)
 
 ### `eml_ftp_directory_import_file_check`
 
@@ -329,7 +279,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 219](ExternalFiles/Protocols/Ftp.php#L219-L226)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 231](ExternalFiles/Protocols/Ftp.php#L231-L238)
 
 ### `eml_ftp_directory_import_file_before_to_list`
 
@@ -340,7 +290,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 Argument | Type | Description
 -------- | ---- | -----------
 `$file_url` | `string` | The URL to import.
-`$file_list_new` | `array` | List of files to process.
+`$file_list` | `array` | List of files to process.
 
 **Changelog**
 
@@ -348,7 +298,19 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 242](ExternalFiles/Protocols/Ftp.php#L242-L250)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 254](ExternalFiles/Protocols/Ftp.php#L254-L262)
+
+### `eml_table_column_content`
+
+*Run additional tasks for show more infos here.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$attachment_id` |  | 
+
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 185](ExternalFiles/Tables.php#L185-L188)
 
 ### `eml_image_meta_data`
 
@@ -358,7 +320,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The external files object.
 `$image_meta` | `array` | The image meta data.
 
 **Changelog**
@@ -367,7 +329,7 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/ExternalFiles/File_Types/Image.php](ExternalFiles/File_Types/Image.php), [line 144](ExternalFiles/File_Types/Image.php#L144-L151)
+Source: [app/ExternalFiles/File_Types/Image.php](ExternalFiles/File_Types/Image.php), [line 140](ExternalFiles/File_Types/Image.php#L140-L147)
 
 ### `eml_video_meta_data`
 
@@ -377,7 +339,7 @@ Source: [app/ExternalFiles/File_Types/Image.php](ExternalFiles/File_Types/Image.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The external files object.
 
 **Changelog**
 
@@ -385,7 +347,7 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/ExternalFiles/File_Types/Audio.php](ExternalFiles/File_Types/Audio.php), [line 143](ExternalFiles/File_Types/Audio.php#L143-L149)
+Source: [app/ExternalFiles/File_Types/Audio.php](ExternalFiles/File_Types/Audio.php), [line 141](ExternalFiles/File_Types/Audio.php#L141-L147)
 
 ### `eml_video_meta_data`
 
@@ -395,7 +357,7 @@ Source: [app/ExternalFiles/File_Types/Audio.php](ExternalFiles/File_Types/Audio.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File` | The external files object.
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The external files object.
 
 **Changelog**
 
@@ -403,7 +365,7 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/ExternalFiles/File_Types/Video.php](ExternalFiles/File_Types/Video.php), [line 145](ExternalFiles/File_Types/Video.php#L145-L151)
+Source: [app/ExternalFiles/File_Types/Video.php](ExternalFiles/File_Types/Video.php), [line 143](ExternalFiles/File_Types/Video.php#L143-L149)
 
 ### `eml_import_ajax_start`
 
@@ -422,7 +384,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 410](ExternalFiles/Forms.php#L410-L417)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 438](ExternalFiles/Forms.php#L438-L445)
 
 ### `eml_import_url_after`
 
@@ -441,7 +403,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 479](ExternalFiles/Forms.php#L479-L486)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 505](ExternalFiles/Forms.php#L505-L512)
 
 ### `eml_import_ajax_end`
 
@@ -459,7 +421,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 525](ExternalFiles/Forms.php#L525-L531)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 550](ExternalFiles/Forms.php#L550-L556)
 
 ### `eml_queue_before_process`
 
@@ -477,7 +439,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 285](ExternalFiles/Queue.php#L285-L291)
+Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 304](ExternalFiles/Queue.php#L304-L310)
 
 ### `eml_queue_after_process`
 
@@ -495,7 +457,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 309](ExternalFiles/Queue.php#L309-L315)
+Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 328](ExternalFiles/Queue.php#L328-L334)
 
 ## Filters
 
@@ -515,7 +477,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Languages.php](Plugin/Languages.php), [line 76](Plugin/Languages.php#L76-L83)
+Source: [app/Plugin/Languages.php](Plugin/Languages.php), [line 77](Plugin/Languages.php#L77-L84)
 
 ### `eml_crypt_methods`
 
@@ -525,7 +487,7 @@ Source: [app/Plugin/Languages.php](Plugin/Languages.php), [line 76](Plugin/Langu
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$methods` | `array` | List of methods.
+`$methods` | `string[]` | List of methods.
 
 **Changelog**
 
@@ -544,7 +506,7 @@ Source: [app/Plugin/Crypt.php](Plugin/Crypt.php), [line 121](Plugin/Crypt.php#L1
 Argument | Type | Description
 -------- | ---- | -----------
 `$interval` | `string` | The interval.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Schedules_Base` | The schedule-object.
+`$instance` | `\ExternalFilesInMediaLibrary\Plugin\Schedules_Base` | The schedule-object.
 
 **Changelog**
 
@@ -552,7 +514,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 75](Plugin/Schedules_Base.php#L75-L82)
+Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 76](Plugin/Schedules_Base.php#L76-L83)
 
 ### `eml_schedule_enabling`
 
@@ -563,7 +525,7 @@ Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 75](Pl
 Argument | Type | Description
 -------- | ---- | -----------
 `$false` | `bool` | True if this object should NOT be enabled.
-`$this` | `\ExternalFilesInMediaLibrary\Plugin\Schedules_Base` | Actual object.
+`$instance` | `\ExternalFilesInMediaLibrary\Plugin\Schedules_Base` | Actual object.
 
 **Changelog**
 
@@ -571,7 +533,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 187](Plugin/Schedules_Base.php#L187-L197)
+Source: [app/Plugin/Schedules_Base.php](Plugin/Schedules_Base.php), [line 189](Plugin/Schedules_Base.php#L189-L199)
 
 ### `eml_set_template_directory`
 
@@ -599,7 +561,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 219](Plugin/Tables/Logs.php#L219-L225)
+Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 224](Plugin/Tables/Logs.php#L224-L230)
 
 ### `eml_queue_table_filter`
 
@@ -609,7 +571,7 @@ Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 219](Plugin/
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of filter.
+`$list` | `array<string,string>` | List of filter.
 
 **Changelog**
 
@@ -617,7 +579,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Tables/Queue.php](Plugin/Tables/Queue.php), [line 273](Plugin/Tables/Queue.php#L273-L279)
+Source: [app/Plugin/Tables/Queue.php](Plugin/Tables/Queue.php), [line 291](Plugin/Tables/Queue.php#L291-L297)
 
 ### `eml_supported_mime_types`
 
@@ -639,7 +601,7 @@ add_filter( 'eml_supported_mime_types', function( $list ) {
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$mime_types` | `array` | List of supported mime types.
+`$mime_types` | `array<string,array<string,string>>` | List of supported mime types.
 
 **Changelog**
 
@@ -647,7 +609,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 248](Plugin/Helper.php#L248-L267)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 269](Plugin/Helper.php#L269-L288)
 
 ### `eml_get_mime_types`
 
@@ -666,7 +628,7 @@ add_filter( 'eml_get_mime_types', function( $list ) {
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of mime types.
+`$list` | `string[]` | List of mime types.
 
 **Changelog**
 
@@ -674,7 +636,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 289](Plugin/Helper.php#L289-L305)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 310](Plugin/Helper.php#L310-L326)
 
 ### `eml_help_tabs`
 
@@ -684,7 +646,7 @@ Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 289](Plugin/Helper.php
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of help tabs.
+`$list` | `array<string,mixed>` | List of help tabs.
 
 **Changelog**
 
@@ -692,7 +654,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Admin/Help_System.php](Plugin/Admin/Help_System.php), [line 112](Plugin/Admin/Help_System.php#L112-L118)
+Source: [app/Plugin/Admin/Help_System.php](Plugin/Admin/Help_System.php), [line 113](Plugin/Admin/Help_System.php#L113-L119)
 
 ### `eml_plugin_row_meta`
 
@@ -710,7 +672,7 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 226](Plugin/Admin/Admin.php#L226-L232)
+Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 232](Plugin/Admin/Admin.php#L232-L238)
 
 ### `eml_schedule_our_events`
 
@@ -721,7 +683,7 @@ e.g. to check if all which are enabled in setting are active.*
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$our_events` | `array` | List of our own events in WP-cron.
+`$our_events` | `array<string,array<string,mixed>>` | List of our own events in WP-cron.
 
 **Changelog**
 
@@ -729,7 +691,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 94](Plugin/Schedules.php#L94-L102)
+Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 95](Plugin/Schedules.php#L95-L103)
 
 ### `eml_disable_cron_check`
 
@@ -747,7 +709,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 119](Plugin/Schedules.php#L119-L127)
+Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 120](Plugin/Schedules.php#L120-L128)
 
 ### `eml_schedules`
 
@@ -759,7 +721,7 @@ This must be objects based on ExternalFilesInMediaLibrary\Plugin\Schedules_Base.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list_of_schedules` | `array` | List of additional schedules.
+`$list_of_schedules` | `string[]` | List of additional schedules.
 
 **Changelog**
 
@@ -767,7 +729,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 229](Plugin/Schedules.php#L229-L238)
+Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 230](Plugin/Schedules.php#L230-L239)
 
 ### `eml_file_types`
 
@@ -777,7 +739,7 @@ Source: [app/Plugin/Schedules.php](Plugin/Schedules.php), [line 229](Plugin/Sche
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of file type handler.
+`$list` | `string[]` | List of file type handler.
 
 **Changelog**
 
@@ -794,9 +756,9 @@ Source: [app/ExternalFiles/File_Types.php](ExternalFiles/File_Types.php), [line 
 Argument | Type | Description
 -------- | ---- | -----------
 `$true` |  | 
-`$this` |  | 
+`$instance` |  | 
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 114](ExternalFiles/File.php#L114-L114)
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 123](ExternalFiles/File.php#L123-L123)
 
 ### `eml_file_availability`
 
@@ -807,9 +769,15 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 114](Externa
 Argument | Type | Description
 -------- | ---- | -----------
 `$this->availability` |  | 
-`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 235](ExternalFiles/File.php#L235-L241)
+**Changelog**
+
+Version | Description
+------- | -----------
+`1.0.0` | Available since 1.0.0.
+
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 247](ExternalFiles/File.php#L247-L255)
 
 ### `eml_attachment_link`
 
@@ -821,85 +789,7 @@ Argument | Type | Description
 `$url` |  | 
 `$attachment_id` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 178](ExternalFiles/Files.php#L178-L178)
-
-### `eml_blacklist`
-
-*Filter the given URL against custom blacklists.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | Return true if blacklist matches.
-`$url` | `string` | The given URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0.
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 275](ExternalFiles/Files.php#L275-L284)
-
-### `eml_file_import_user`
-
-*Filter the user_id for a single file during import.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$user_id` | `int` | The title generated by importer.
-`$url` | `string` | The requested external URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`1.1.0` | Available since 1.1.0
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 357](ExternalFiles/Files.php#L357-L365)
-
-### `eml_file_import_title`
-
-*Filter the title for a single file during import.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$file_data['title']` |  | 
-`$file_data['url']` |  | 
-`$file_data` | `array` | List of file settings detected by importer.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`1.1.0` | Available since 1.1.0
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 388](ExternalFiles/Files.php#L388-L397)
-
-### `eml_file_import_attachment`
-
-*Filter the attachment settings*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$post_array` | `array` | The attachment settings.
-`$file_data['url']` |  | 
-`$file_data` | `array` | List of file settings detected by importer.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`2.0.0` | Available since 2.0.0
-
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 407](ExternalFiles/Files.php#L407-L416)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 171](ExternalFiles/Files.php#L171-L171)
 
 ### `eml_tcp_protocols`
 
@@ -909,8 +799,8 @@ Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 407](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$tcp_protocols` | `array` | List of tcp protocol of this object (e.g. 'http').
-`$this` |  | 
+`$tcp_protocols` | `array<string,int>` | List of tcp protocol of this object (e.g. 'http').
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The actual object.
 
 **Changelog**
 
@@ -918,7 +808,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 82](ExternalFiles/Protocol_Base.php#L82-L88)
+Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 83](ExternalFiles/Protocol_Base.php#L83-L90)
 
 ### `eml_duplicate_check`
 
@@ -937,7 +827,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 227](ExternalFiles/Protocol_Base.php#L227-L236)
+Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 229](ExternalFiles/Protocol_Base.php#L229-L238)
 
 ### `eml_external_files_infos`
 
@@ -948,7 +838,7 @@ Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), 
 Argument | Type | Description
 -------- | ---- | -----------
 `$files` | `array` | List of files.
-`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
 
 **Changelog**
 
@@ -956,7 +846,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 208](ExternalFiles/Protocols/Sftp.php#L208-L215)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 214](ExternalFiles/Protocols/Sftp.php#L214-L221)
 
 ### `eml_external_file_infos`
 
@@ -976,7 +866,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 267](ExternalFiles/Protocols/Sftp.php#L267-L276)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 295](ExternalFiles/Protocols/Sftp.php#L295-L304)
 
 ### `eml_external_files_infos`
 
@@ -987,7 +877,7 @@ Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$files` | `array` | List of files.
-`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
 
 **Changelog**
 
@@ -995,7 +885,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 149](ExternalFiles/Protocols/File.php#L149-L156)
+Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 150](ExternalFiles/Protocols/File.php#L150-L157)
 
 ### `eml_file_check_existence`
 
@@ -1006,7 +896,7 @@ Argument | Type | Description
 `$true` |  | 
 `$file_path` |  | 
 
-Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 188](ExternalFiles/Protocols/File.php#L188-L188)
+Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 192](ExternalFiles/Protocols/File.php#L192-L192)
 
 ### `eml_external_file_infos`
 
@@ -1026,7 +916,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 216](ExternalFiles/Protocols/File.php#L216-L225)
+Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 224](ExternalFiles/Protocols/File.php#L224-L233)
 
 ### `eml_check_url`
 
@@ -1086,7 +976,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 140](ExternalFiles/Protocols/Http.php#L140-L150)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 138](ExternalFiles/Protocols/Http.php#L138-L148)
 
 ### `eml_filter_url_response`
 
@@ -1105,7 +995,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 215](ExternalFiles/Protocols/Http.php#L215-L222)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 213](ExternalFiles/Protocols/Http.php#L213-L220)
 
 ### `eml_http_directory_regex`
 
@@ -1117,7 +1007,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `array()` |  | 
 `$content` | `string` | The content to parse.
-`$this->get_url()` |  | 
+`$url` | `string` | The used URL.
 
 **Changelog**
 
@@ -1125,7 +1015,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 270](ExternalFiles/Protocols/Http.php#L270-L280)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 269](ExternalFiles/Protocols/Http.php#L269-L280)
 
 ### `eml_external_files_infos`
 
@@ -1136,7 +1026,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$files` | `array` | List of files.
-`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocols\HTTP` | The import object.
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocols\HTTP` | The import object.
 
 **Changelog**
 
@@ -1144,7 +1034,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 423](ExternalFiles/Protocols/Http.php#L423-L430)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 424](ExternalFiles/Protocols/Http.php#L424-L431)
 
 ### `eml_external_file_infos`
 
@@ -1154,9 +1044,9 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$results` | `array` | List of detected file settings.
+`$results` | `array<string,mixed>` | List of detected file settings.
 `$url` | `string` | The requested external URL.
-`$response_headers` | `array` | The response header.
+`$response_headers` | `array<string,mixed>` | The response header.
 
 **Changelog**
 
@@ -1164,7 +1054,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 508](ExternalFiles/Protocols/Http.php#L508-L519)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 507](ExternalFiles/Protocols/Http.php#L507-L518)
 
 ### `eml_http_ssl`
 
@@ -1175,7 +1065,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 606](ExternalFiles/Protocols/Http.php#L606-L606)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 605](ExternalFiles/Protocols/Http.php#L605-L605)
 
 ### `eml_http_save_local`
 
@@ -1194,7 +1084,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 620](ExternalFiles/Protocols/Http.php#L620-L627)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 619](ExternalFiles/Protocols/Http.php#L619-L626)
 
 ### `eml_http_ssl`
 
@@ -1205,7 +1095,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 658](ExternalFiles/Protocols/Http.php#L658-L658)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 657](ExternalFiles/Protocols/Http.php#L657-L657)
 
 ### `eml_http_save_local`
 
@@ -1224,7 +1114,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 667](ExternalFiles/Protocols/Http.php#L667-L674)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 666](ExternalFiles/Protocols/Http.php#L666-L673)
 
 ### `eml_http_header_args`
 
@@ -1234,7 +1124,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$args` | `array` | List of headers.
+`$args` | `array<string,mixed>` | List of headers.
 
 **Changelog**
 
@@ -1242,7 +1132,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 698](ExternalFiles/Protocols/Http.php#L698-L704)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 696](ExternalFiles/Protocols/Http.php#L696-L702)
 
 ### `eml_http_states`
 
@@ -1252,8 +1142,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of http states.
-`$url` |  | 
+`$list` | `int[]` | List of http states.
+`$url` | `string` | The requested URL.
 
 **Changelog**
 
@@ -1261,7 +1151,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 730](ExternalFiles/Protocols/Http.php#L730-L736)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 728](ExternalFiles/Protocols/Http.php#L728-L735)
 
 ### `eml_locale_file_check`
 
@@ -1280,7 +1170,18 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 759](ExternalFiles/Protocols/Http.php#L759-L768)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 758](ExternalFiles/Protocols/Http.php#L758-L767)
+
+### `eml_save_temp_file`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$true` |  | 
+`$url` |  | 
+
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 792](ExternalFiles/Protocols/Http.php#L792-L792)
 
 ### `eml_check_url`
 
@@ -1310,7 +1211,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 Argument | Type | Description
 -------- | ---- | -----------
 `$files` | `array` | List of files.
-`$this` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
+`$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The import object.
 
 **Changelog**
 
@@ -1318,7 +1219,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 286](ExternalFiles/Protocols/Ftp.php#L286-L293)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 299](ExternalFiles/Protocols/Ftp.php#L299-L306)
 
 ### `eml_external_file_infos`
 
@@ -1338,7 +1239,18 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 338](ExternalFiles/Protocols/Ftp.php#L338-L347)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 364](ExternalFiles/Protocols/Ftp.php#L364-L373)
+
+### `eml_save_temp_file`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$true` |  | 
+`$url` |  | 
+
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 520](ExternalFiles/Protocols/Ftp.php#L520-L520)
 
 ### `eml_protocols`
 
@@ -1348,7 +1260,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of protocol handler.
+`$list` | `string[]` | List of protocol handler.
 
 **Changelog**
 
@@ -1374,7 +1286,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 139](ExternalFiles/Forms.php#L139-L145)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 141](ExternalFiles/Forms.php#L141-L147)
 
 ### `eml_add_dialog`
 
@@ -1392,7 +1304,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 243](ExternalFiles/Forms.php#L243-L249)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 260](ExternalFiles/Forms.php#L260-L266)
 
 ### `eml_import_add_to_queue`
 
@@ -1403,7 +1315,7 @@ Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 243](Exter
 Argument | Type | Description
 -------- | ---- | -----------
 `$false` | `bool` | Set to true to import the files via queue.
-`$additional_fields` |  | 
+`$additional_fields` | `array<string,mixed>` | Additional fields.
 
 **Changelog**
 
@@ -1411,7 +1323,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 397](ExternalFiles/Forms.php#L397-L405)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 424](ExternalFiles/Forms.php#L424-L433)
 
 ### `eml_import_urls`
 
@@ -1430,7 +1342,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 424](ExternalFiles/Forms.php#L424-L431)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 450](ExternalFiles/Forms.php#L450-L457)
 
 ### `eml_import_url_before`
 
@@ -1449,7 +1361,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 457](ExternalFiles/Forms.php#L457-L464)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 483](ExternalFiles/Forms.php#L483-L490)
 
 ### `eml_import_urls_errors`
 
@@ -1467,7 +1379,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 494](ExternalFiles/Forms.php#L494-L500)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 519](ExternalFiles/Forms.php#L519-L525)
 
 ### `eml_import_fields`
 
@@ -1485,7 +1397,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 793](ExternalFiles/Forms.php#L793-L799)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 818](ExternalFiles/Forms.php#L818-L824)
 
 ### `eml_import_fields`
 
@@ -1503,7 +1415,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 808](ExternalFiles/Forms.php#L808-L815)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 833](ExternalFiles/Forms.php#L833-L840)
 
 ### `eml_file_type_compatibility_result`
 
@@ -1560,7 +1472,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 277](ExternalFiles/Queue.php#L277-L283)
+Source: [app/ExternalFiles/Queue.php](ExternalFiles/Queue.php), [line 296](ExternalFiles/Queue.php#L296-L302)
 
 ### `eml_proxy_slug`
 
@@ -1606,7 +1518,7 @@ Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 247](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of third party support.
+`$list` | `string[]` | List of third party support.
 
 **Changelog**
 
@@ -1614,7 +1526,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/Services.php](Services/Services.php), [line 110](Services/Services.php#L110-L116)
+Source: [app/Services/Services.php](Services/Services.php), [line 150](Services/Services.php#L150-L156)
 
 ### `eml_google_drive_client_id`
 
@@ -1632,7 +1544,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 426](Services/GoogleDrive.php#L426-L432)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 445](Services/GoogleDrive.php#L445-L451)
 
 ### `eml_google_drive_real_redirect_uri`
 
@@ -1650,7 +1562,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 444](Services/GoogleDrive.php#L444-L450)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 463](Services/GoogleDrive.php#L463-L469)
 
 ### `eml_google_drive_state`
 
@@ -1668,7 +1580,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 467](Services/GoogleDrive.php#L467-L473)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 494](Services/GoogleDrive.php#L494-L500)
 
 ### `eml_google_drive_redirect_uri`
 
@@ -1686,7 +1598,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 487](Services/GoogleDrive.php#L487-L493)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 514](Services/GoogleDrive.php#L514-L520)
 
 ### `eml_google_drive_connector_params`
 
@@ -1704,7 +1616,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 518](Services/GoogleDrive.php#L518-L524)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 545](Services/GoogleDrive.php#L545-L551)
 
 ### `eml_google_drive_query_params`
 
@@ -1722,7 +1634,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 694](Services/GoogleDrive.php#L694-L700)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 723](Services/GoogleDrive.php#L723-L729)
 
 ### `eml_google_drive_files`
 
@@ -1732,7 +1644,7 @@ Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 694](Ser
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$files` | `array` | List of files.
+`$files` | `\Google\Service\Drive\DriveFile[]` | List of files.
 
 **Changelog**
 
@@ -1740,7 +1652,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 727](Services/GoogleDrive.php#L727-L733)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 756](Services/GoogleDrive.php#L756-L762)
 
 ### `eml_google_drive_refresh_uri`
 
@@ -1758,7 +1670,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 920](Services/GoogleDrive.php#L920-L926)
+Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 953](Services/GoogleDrive.php#L953-L959)
 
 ### `eml_youtube_api_url`
 
@@ -1776,7 +1688,25 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/Youtube.php](Services/Youtube.php), [line 686](Services/Youtube.php#L686-L692)
+Source: [app/Services/Youtube.php](Services/Youtube.php), [line 701](Services/Youtube.php#L701-L707)
+
+### `eml_youtube_channel_url`
+
+*Filter the YouTube channel URL to use.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$channel_url` | `string` | The API URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`4.0.0` | Available since 4.0.0.
+
+Source: [app/Services/Youtube.php](Services/Youtube.php), [line 718](Services/Youtube.php#L718-L724)
 
 ### `eml_third_party_support`
 
@@ -1786,7 +1716,7 @@ Source: [app/Services/Youtube.php](Services/Youtube.php), [line 686](Services/Yo
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array` | List of third party support.
+`$list` | `string[]` | List of third party support.
 
 **Changelog**
 
@@ -1794,7 +1724,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 107](ThirdParty/ThirdPartySupport.php#L107-L113)
+Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 141](ThirdParty/ThirdPartySupport.php#L141-L147)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>

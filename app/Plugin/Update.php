@@ -172,20 +172,38 @@ class Update {
 	 * @return void
 	 */
 	private function version400(): void {
-		// update the interval name for file check.
+		/**
+		 * Update the interval name for file check.
+		 */
+		// get the file check schedule object.
 		$file_check_event_obj = new Check_Files();
 
+		// get the new interval name.
+		$interval_name = Helper::map_old_to_new_interval( $file_check_event_obj->get_interval() );
+
+		// save it in setting.
+		update_option( 'eml_check_interval', $interval_name );
+
 		// set the new interval.
-		$file_check_event_obj->set_interval( Helper::map_old_to_new_interval( $file_check_event_obj->get_interval() ) );
+		$file_check_event_obj->set_interval( $interval_name );
 
 		// reinstall the event.
 		$file_check_event_obj->reset();
 
-		// update the interval name for queue.
+		/**
+		 * Update the interval name for queue.
+		 */
+		// get the queue schedule object.
 		$queue_event_obj = new Schedules\Queue();
 
+		// get the new interval name.
+		$interval_name = Helper::map_old_to_new_interval( $queue_event_obj->get_interval() );
+
+		// save it in setting.
+		update_option( 'eml_queue_interval', $interval_name );
+
 		// set the new interval.
-		$queue_event_obj->set_interval( Helper::map_old_to_new_interval( $queue_event_obj->get_interval() ) );
+		$queue_event_obj->set_interval( $interval_name );
 
 		// reinstall the event.
 		$queue_event_obj->reset();
