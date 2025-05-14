@@ -81,7 +81,7 @@ class Tables {
 
 		// get value from request.
 		$request_value = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if( is_null( $request_value ) ) {
+		if ( is_null( $request_value ) ) {
 			$request_value = '';
 		}
 

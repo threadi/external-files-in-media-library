@@ -192,7 +192,7 @@ class Directory_Listing {
 							<?php
 					}
 
-			?>
+					?>
 					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>

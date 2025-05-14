@@ -1265,7 +1265,7 @@ class Files {
 		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
 		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
 		/* translators: %1$s will be replaced by a URL. */
-		$content .= '<ol><li>' . sprintf( __( 'Go to Media > <a href="%1$s">New file</a>.', 'external-files-in-media-library' ), esc_url( add_query_arg( array(), get_admin_url() . 'media-new.php' ) ) ) . '</li>';
+		$content .= '<ol><li>' . sprintf( __( 'Go to Media > <a href="%1$s">Add Media File</a>.', 'external-files-in-media-library' ), esc_url( add_query_arg( array(), get_admin_url() . 'media-new.php' ) ) ) . '</li>';
 		$content .= '<li>' . __( 'Click on the button "Add external files".', 'external-files-in-media-library' ) . '</li>';
 		$content .= '<li>' . __( 'Paste the URLs you want to add in the field in the new dialog.', 'external-files-in-media-library' ) . '</li>';
 		$content .= '<li>' . __( 'Optionally add credentials below the field.', 'external-files-in-media-library' ) . '</li>';

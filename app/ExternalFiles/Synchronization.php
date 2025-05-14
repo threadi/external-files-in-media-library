@@ -200,7 +200,7 @@ class Synchronization {
 	 * @return array<string,string>
 	 */
 	public function add_columns( array $columns ): array {
-		$columns['synced_files'] = __( 'Synchronized files', 'external-files-in-media-library' );
+		$columns['synced_files']    = __( 'Synchronized files', 'external-files-in-media-library' );
 		$columns['synchronization'] = __( 'Synchronization', 'external-files-in-media-library' );
 		return $columns;
 	}
@@ -208,9 +208,9 @@ class Synchronization {
 	/**
 	 * Add the content for synced files.
 	 *
-	 * @param string $content
-	 * @param string $column_name
-	 * @param int    $term_id
+	 * @param string $content The content.
+	 * @param string $column_name The column name.
+	 * @param int    $term_id The used term entry ID.
 	 *
 	 * @return string
 	 */
@@ -235,12 +235,12 @@ class Synchronization {
 					'compare' => 'EXISTS',
 				),
 			),
-			'tax_query' => array(
+			'tax_query'      => array(
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field' => 'term_id',
-					'terms' => $term_id
-				)
+					'field'    => 'term_id',
+					'terms'    => $term_id,
+				),
 			),
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
@@ -248,21 +248,21 @@ class Synchronization {
 		$result = new WP_Query( $query );
 
 		// bail on no results.
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
 			return '0';
 		}
 
 		// create URL.
 		$url = add_query_arg(
 			array(
-				'mode' => 'list',
-				'admin_filter_media_external_files' => $term_id
+				'mode'                              => 'list',
+				'admin_filter_media_external_files' => $term_id,
 			),
 			get_admin_url() . 'upload.php'
 		);
 
 		// show count and link it to the media library.
-		return '<a href="' . esc_url( $url ) . '">' . absint( $result->found_posts) . '</a>';
+		return '<a href="' . esc_url( $url ) . '">' . absint( $result->found_posts ) . '</a>';
 	}
 
 	/**
@@ -453,12 +453,12 @@ class Synchronization {
 						'compare' => 'NOT EXISTS',
 					),
 				),
-				'tax_query' => array(
+				'tax_query'      => array(
 					array(
 						'taxonomy' => Taxonomy::get_instance()->get_name(),
-						'field' => 'name',
-						'terms' => $url
-					)
+						'field'    => 'name',
+						'terms'    => $url,
+					),
 				),
 				'posts_per_page' => - 1,
 				'fields'         => 'ids',
@@ -653,7 +653,7 @@ class Synchronization {
 		$term = get_term_by( 'name', $url, Taxonomy::get_instance()->get_name() );
 
 		// bail if term is not found.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 
@@ -681,12 +681,12 @@ class Synchronization {
 		$terms = wp_get_object_terms( $extern_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
 
 		// bail if result is not an array.
-		if( ! is_array( $terms ) ) {
+		if ( ! is_array( $terms ) ) {
 			return;
 		}
 
 		// bail if none has been found.
-		if( empty( $terms ) ) {
+		if ( empty( $terms ) ) {
 			return;
 		}
 
@@ -751,12 +751,12 @@ class Synchronization {
 		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
 
 		// bail if result is not an array.
-		if( ! is_array( $terms ) ) {
+		if ( ! is_array( $terms ) ) {
 			return;
 		}
 
 		// bail if none has been found.
-		if( empty( $terms ) ) {
+		if ( empty( $terms ) ) {
 			return;
 		}
 
@@ -769,7 +769,7 @@ class Synchronization {
 
 		// show info about sync time.
 		?>
-		<span class="dashicons dashicons-clock" title="<?php echo esc_attr(  $title ); ?>"></span>
+		<span class="dashicons dashicons-clock" title="<?php echo esc_attr( $title ); ?>"></span>
 		<?php
 	}
 
@@ -1024,12 +1024,12 @@ class Synchronization {
 					'compare' => 'EXISTS',
 				),
 			),
-			'tax_query' => array(
+			'tax_query'      => array(
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field' => 'name',
-					'terms' => $url
-				)
+					'field'    => 'name',
+					'terms'    => $url,
+				),
 			),
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
@@ -1276,17 +1276,22 @@ class Synchronization {
 	/**
 	 * Add filter options for media library listing.
 	 *
-	 * @param array<string,string> $options The options.
+	 * @param array<int|string,string> $options The options.
 	 *
-	 * @return array<string,string>
+	 * @return array<int|string,string>
 	 */
 	public function add_filter_options( array $options ): array {
 		// get all directory archives.
-		$terms = get_terms( array( 'taxonomy' => Taxonomy::get_instance()->get_name(), 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
 
 		// add them to the options list.
-		if( is_array( $terms ) ) {
-			foreach( $terms as $term ) {
+		if ( is_array( $terms ) ) {
+			foreach ( $terms as $term ) {
 				$options[ (string) $term->term_id ] = $term->name;
 			}
 		}
@@ -1314,7 +1319,7 @@ class Synchronization {
 		$term = get_term_by( 'term_id', $filter, Taxonomy::get_instance()->get_name() );
 
 		// bail if no term could be found.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 
@@ -1324,9 +1329,9 @@ class Synchronization {
 			array(
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field' => 'term_id',
-					'terms' => $filter
-				)
+					'field'    => 'term_id',
+					'terms'    => $filter,
+				),
 			)
 		);
 	}

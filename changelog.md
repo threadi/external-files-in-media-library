@@ -19,6 +19,7 @@
 - Moved import tasks from general Files in own object Import which is now also a directory listing object
 - Multiple code optimizations
 - Extended support for YouTube channel imports
+- Extended help for using Imgur images
 - Renamed Directory Credentials to Directory Archive
 - More hooks
 
