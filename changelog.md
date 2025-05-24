@@ -8,7 +8,9 @@
 
 ### Changed
 
+- Show processed file URLs during synchronization
 - Small optimizations on multiple codes
+- Using fallback to default interval for each of our events if setting of not available
 - Updated some unfavorable text descriptions
 - Updated dependencies
 

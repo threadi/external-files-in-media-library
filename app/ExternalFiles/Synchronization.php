@@ -224,7 +224,7 @@ class Synchronization {
 		}
 
 		// get the files which are assigned to this term.
-		$files = $this->get_files_by_term( $term_id );
+		$files = $this->get_synced_files_by_term( $term_id );
 
 		// bail on no results.
 		if ( empty( $files ) ) {
@@ -413,7 +413,7 @@ class Synchronization {
 			delete_post_meta( $post_id, 'eml_synced' );
 		}
 
-		// enable synchronization: disable duplicate check.
+		// disable duplicate check during synchronisation.
 		add_filter( 'eml_duplicate_check', array( $this, 'disable_duplicate_check' ) );
 
 		// and get the post_id of the existing file to update it.
@@ -428,6 +428,9 @@ class Synchronization {
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
+
+		// update the sync title on each file.
+		add_action( 'eml_file_import_before_save', array( $this, 'update_sync_title' ) );
 
 		/**
 		 * Allow to add additional tasks before sync is running.
@@ -592,11 +595,12 @@ class Synchronization {
 				'className' => 'eml',
 				'title'     => __( 'Synchronization has been executed', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<p><strong>' . __( 'The files are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p><strong>' . __( 'The files in this directory archive are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p>' . __( 'You can now use them on your website.', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
 					array(
-						'action'  => 'closeDialog();',
+						'action'  => 'location.reload();',
 						'variant' => 'primary',
 						'text'    => __( 'OK', 'external-files-in-media-library' ),
 					),
@@ -1318,7 +1322,7 @@ class Synchronization {
 		}
 
 		// get all files which are assigned to this term.
-		$files = $this->get_files_by_term( $term_id );
+		$files = $this->get_synced_files_by_term( $term_id );
 
 		// bail if no files could be found.
 		if( empty( $files ) ) {
@@ -1407,7 +1411,7 @@ class Synchronization {
 	 *
 	 * @return array<int,int>
 	 */
-	private function get_files_by_term( int $term_id ): array {
+	private function get_synced_files_by_term( int $term_id ): array {
 		// get all files which are assigned to this term_id.
 		$query  = array(
 			'post_type'      => 'attachment',
@@ -1451,5 +1455,16 @@ class Synchronization {
 
 		// return the resulting list of files.
 		return $list;
+	}
+
+	/**
+	 * Update the synchronization title.
+	 *
+	 * @param string $url The actual processed URL.
+	 *
+	 * @return void
+	 */
+	public function update_sync_title( string $url ): void {
+		update_option( 'eml_sync_title', sprintf( __( 'Synchronize URL %1$s ..', 'external-files-in-media-library' ), $url ) );
 	}
 }
