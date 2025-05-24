@@ -302,10 +302,15 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return array<int,array<string,string>>
 	 */
 	public function get_actions(): array {
+		// get list of allowed mime types.
+		$mimetypes = implode( ',', array_keys( Helper::get_possible_mime_types() ) );
+
 		return array(
 			array(
 				'action' => 'efml_import_url( url + file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
+				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint' => __( 'Not supported mime type', 'external-files-in-media-library' )
 			),
 		);
 	}

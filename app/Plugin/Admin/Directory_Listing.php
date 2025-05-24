@@ -241,7 +241,7 @@ class Directory_Listing {
 		// output.
 		?>
 		<div class="wrap">
-			<h1><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
+			<h1 class="wp-heading-inline"><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
 			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
 		</div>
 		<?php
