@@ -118,7 +118,6 @@ class Http extends Protocol_Base {
 
 		// request does not have a valid content-type.
 		$response_headers = $response_headers_obj->getAll();
-		$true             = true;
 		/**
 		 * Filter for check of file content type during availability check.
 		 *
@@ -788,6 +787,8 @@ class Http extends Protocol_Base {
 		 * @since 4.0.0 Available since 4.0.0.
 		 * @param bool $true Should be false to prevent the temp generation.
 		 * @param string $url The given URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( ! apply_filters( 'eml_save_temp_file', $true, $url ) ) {
 			return false;

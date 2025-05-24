@@ -81,7 +81,7 @@ class Ftp extends Protocol_Base {
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $url ) ) {
 			// log event.
-			Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
 			// return false as URL is a duplicate.
 			return false;
@@ -123,7 +123,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if no credentials are set.
 		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
-			Log::get_instance()->create( __( 'Missing credentials for import from FTP-path.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'Missing credentials for import from FTP-path.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 			return array();
 		}
 
@@ -132,7 +132,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 			return array();
 		}
 
@@ -174,7 +174,7 @@ class Ftp extends Protocol_Base {
 			$file_list = $ftp_connection->dirlist( $path );
 			if ( empty( $file_list ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+				Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 				// exit the process.
 				return array();
@@ -516,6 +516,8 @@ class Ftp extends Protocol_Base {
 		 * @since 4.0.0 Available since 4.0.0.
 		 * @param bool $true Should be false to prevent the temp generation.
 		 * @param string $url The given URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( ! apply_filters( 'eml_save_temp_file', $true, $url ) ) {
 			return false;

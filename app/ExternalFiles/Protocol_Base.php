@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Filesystem_Base;
 use WP_Query;
 
@@ -368,7 +369,7 @@ class Protocol_Base {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );

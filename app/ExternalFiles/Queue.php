@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
+use mysqli_result;
 use wpdb;
 
 /**
@@ -253,7 +254,7 @@ class Queue {
 
 			// bail if given URL is already in queue.
 			if ( ! empty( $this->get_url( $url ) ) ) {
-				Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'info', 0 );
+				Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'info' );
 				continue;
 			}
 
@@ -660,12 +661,12 @@ class Queue {
 	/**
 	 * Handling of any DB-errors in this object.
 	 *
-	 * @param \mysqli_result|bool|int|null $result The result.
-	 * @param string                       $url The URL.
+	 * @param mysqli_result|bool|int|null $result The result.
+	 * @param string                      $url The URL.
 	 *
 	 * @return void
 	 */
-	private function db_error_handling( \mysqli_result|bool|int|null $result, string $url ): void {
+	private function db_error_handling( mysqli_result|bool|int|null $result, string $url ): void {
 		global $wpdb;
 
 		// bail if $wpdb is not wpdb.
@@ -680,7 +681,7 @@ class Queue {
 
 		// log this event.
 		/* translators: %1$s is replaced by an error-code. */
-		Log::get_instance()->create( sprintf( __( 'Database-Error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $wpdb->last_error ) . '</code>' ), $url, 'error', 0 );
+		Log::get_instance()->create( sprintf( __( 'Database-Error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $wpdb->last_error ) . '</code>' ), $url, 'error' );
 	}
 
 	/**
@@ -766,7 +767,7 @@ class Queue {
 		}
 
 		// add the field to enable queue-upload.
-		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_url() ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Settings::get_instance()->get_url() ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
 
 		// return the resulting fields.
 		return $fields;

@@ -915,7 +915,7 @@ class Synchronization {
 		}
 
 		// remove the prevent-deletion for this moment.
-		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), 10 );
+		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
 		// get the URL.
 		$url = $listing_obj->get_url( $term->name );

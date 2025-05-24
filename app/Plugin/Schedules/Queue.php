@@ -44,7 +44,7 @@ class Queue extends Schedules_Base {
 	 */
 	public function __construct() {
 		// get interval from settings.
-		$this->interval = get_option( $this->get_interval_option_name() );
+		$this->interval = get_option( $this->get_interval_option_name(), $this->get_default_interval() );
 	}
 
 	/**

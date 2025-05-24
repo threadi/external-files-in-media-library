@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Google\Service\Exception;
+use JsonException;
 use WP_User;
 
 /**
@@ -25,6 +26,7 @@ class Cli {
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
+	 * @throws JsonException Could Throw exception.
 	 */
 	public function google_drive_check_connection(): void {
 		// get access tokens.
@@ -110,6 +112,7 @@ class Cli {
 	 * Refresh the token to access Google Drive, if set and if necessary.
 	 *
 	 * @return void
+	 * @throws JsonException Could Throw exception.
 	 */
 	public function google_drive_refresh_token(): void {
 		// get access token.
