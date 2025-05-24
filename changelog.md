@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added option to delete synchronized files of single directory archive with one click
+
 ### Changed
 
 - Small optimizations on multiple codes

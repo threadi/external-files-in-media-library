@@ -91,6 +91,9 @@ class Synchronization {
 		add_action( 'wp_ajax_efml_change_sync_state', array( $this, 'sync_state_change_via_ajax' ) );
 		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'sync_config_save_via_ajax' ) );
 
+		// add admin actions.
+		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request') );
+
 		// misc.
 		add_filter( 'admin_body_class', array( $this, 'add_sync_marker_on_edit_page' ) );
 		add_filter( 'media_row_actions', array( $this, 'remove_delete_action' ), 10, 2 );
@@ -220,39 +223,15 @@ class Synchronization {
 			return $content;
 		}
 
-		// get all files which are assigned to this term_id.
-		$query  = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
-				'relation' => 'AND',
-				array(
-					'key'     => EFML_POST_META_URL,
-					'compare' => 'EXISTS',
-				),
-				array(
-					'key'     => 'eml_synced',
-					'compare' => 'EXISTS',
-				),
-			),
-			'tax_query'      => array(
-				array(
-					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field'    => 'term_id',
-					'terms'    => $term_id,
-				),
-			),
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		);
-		$result = new WP_Query( $query );
+		// get the files which are assigned to this term.
+		$files = $this->get_files_by_term( $term_id );
 
 		// bail on no results.
-		if ( 0 === $result->found_posts ) {
+		if ( empty( $files ) ) {
 			return '0';
 		}
 
-		// create URL.
+		// create URL to show the list.
 		$url = add_query_arg(
 			array(
 				'mode'                              => 'list',
@@ -261,8 +240,48 @@ class Synchronization {
 			get_admin_url() . 'upload.php'
 		);
 
-		// show count and link it to the media library.
-		return '<a href="' . esc_url( $url ) . '">' . absint( $result->found_posts ) . '</a>';
+		// create URL to delete them.
+		$url_delete = add_query_arg(
+			array(
+				'action' => 'efml_delete_synced_files',
+				'nonce'  => wp_create_nonce( 'efml-deleted-synced-files' ),
+				'term'   => $term_id
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog for delete link.
+		$dialog = array(
+			'title'   => __( 'Delete synchronized files?', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Do you really want to delete this synchronized files?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'The files will be deleted in your media library. The original files on the source will stay untouched.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'If the files are used on the website, they are no longer visible and usable on the website.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url_delete . '"',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, delete them', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// prepare dialog for attribute.
+		$dialog = wp_json_encode( $dialog );
+
+		// bail if preparation does not worked.
+		if ( ! $dialog ) {
+			return '';
+		}
+
+		// show count and link it to the media library and option to delete all of them.
+		return '<a href="' . esc_url( $url ) . '">' . absint( count( $files ) ) . '</a> | <a href="' . esc_url( $url_delete ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( $dialog ) . '">' . esc_html__( 'Delete', 'external-files-in-media-library' ) . '</a>';
 	}
 
 	/**
@@ -1274,6 +1293,51 @@ class Synchronization {
 	}
 
 	/**
+	 * Delete synced files via request.
+	 *
+	 * @return void
+	 */
+	public function delete_synced_file_via_request(): void {
+		// check referer.
+		check_admin_referer( 'efml-deleted-synced-files', 'nonce' );
+
+		// get the term ID from request.
+		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// get referer.
+		$referer = wp_get_referer();
+
+		// if referer is false, set empty string.
+		if ( ! $referer ) {
+			$referer = '';
+		}
+
+		// bail if no term is given.
+		if( 0 === $term_id ) {
+			wp_safe_redirect( $referer );
+		}
+
+		// get all files which are assigned to this term.
+		$files = $this->get_files_by_term( $term_id );
+
+		// bail if no files could be found.
+		if( empty( $files ) ) {
+			wp_safe_redirect( $referer );
+		}
+
+		// remove the prevent-deletion for this moment.
+		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
+
+		// loop through the files and delete them.
+		foreach( $files as $post_id ) {
+			wp_delete_attachment( $post_id, true );
+		}
+
+		// return the user.
+		wp_safe_redirect( $referer );
+	}
+
+	/**
 	 * Add filter options for media library listing.
 	 *
 	 * @param array<int|string,string> $options The options.
@@ -1330,9 +1394,62 @@ class Synchronization {
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
 					'field'    => 'term_id',
-					'terms'    => $filter,
+					'terms'    => $term->term_id,
 				),
 			)
 		);
+	}
+
+	/**
+	 * Return list of all files which are assigned to a given term.
+	 *
+	 * @param int $term_id The term to filter.
+	 *
+	 * @return array<int,int>
+	 */
+	private function get_files_by_term( int $term_id ): array {
+		// get all files which are assigned to this term_id.
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => array( 'inherit', 'trash' ),
+			'meta_query'     => array(
+				'relation' => 'AND',
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+				array(
+					'key'     => 'eml_synced',
+					'compare' => 'EXISTS',
+				),
+			),
+			'tax_query'      => array(
+				array(
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field'    => 'term_id',
+					'terms'    => $term_id,
+				),
+			),
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+
+		// bail on no results.
+		if( 0 === $result->found_posts ) {
+			return array();
+		}
+
+		// fill the list.
+		$list = array();
+		foreach( $result->get_posts() as $post_id ) {
+			$post_id = absint( $post_id );
+
+			// add to the list.
+			$list[] = $post_id;
+		}
+
+		// return the resulting list of files.
+		return $list;
 	}
 }
