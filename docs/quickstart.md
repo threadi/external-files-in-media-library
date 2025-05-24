@@ -11,10 +11,11 @@ To import external files into your media library, you must enter the URLs of the
 
 `https://example.com/file.pdf`
 
-**You can also specify multiple files, even from different URLs:**
+**You can also specify multiple URLs (one per line), even from different domains:**
 
-`https://example.com/file.pdf
-https://example-instrustry.com/file-trust.pdf`
+`https://example.com/file.pdf`
+
+`https://example-instrustry.com/file-trust.pdf`
 
 Then click on the button to add the files. Wait a moment until the response is displayed.
 

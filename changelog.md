@@ -12,6 +12,8 @@
 - Hide import button for unsupported files in directory archive
 - Small optimizations on multiple codes
 - Using fallback to default interval for each of our events if setting of not available
+- Show hide and rating on directory archive listing
+- Optimized documentation
 - Updated some unfavorable text descriptions
 - Updated dependencies
 

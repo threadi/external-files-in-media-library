@@ -11,10 +11,11 @@ Um externe Dateien in deine Mediathek zu importieren, musst du in das Eingabefel
 
 `https://example.com/file.pdf`
 
-**Du kannst auch mehrere Dateien angeben, auch von unterschiedlichen URLs:**
+**Du kannst auch mehrere externe URLs angeben (eine pro Zeile), auch von unterschiedlichen Domains:**
 
-`https://example.com/file.pdf
-https://example-instrustry.com/file-trust.pdf`
+```https://example.com/file.pdf```
+
+```https://example-instrustry.com/file-trust.pdf```
 
 Klicke anschließend auf den Button zum Hinzufügen der Dateien. Warte einen Moment bis die Rückmeldung angezeigt wird.
 
