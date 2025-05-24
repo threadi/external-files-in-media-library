@@ -8,6 +8,10 @@
 - Updated some unfavorable text descriptions
 - Updated dependencies
 
+### Fixed
+
+- Wrong usage of import URLs from directory archives if they are using a path after the domain
+
 ## [4.0.0] - 2025-05-14
 
 ### Added

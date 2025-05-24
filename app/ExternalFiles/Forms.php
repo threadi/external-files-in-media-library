@@ -403,6 +403,9 @@ class Forms {
 
 			// if term_data could be loaded, use them.
 			if ( ! empty( $term_data ) ) {
+				// get the domain part of the directory.
+				$term_directory_url = wp_parse_url( $term_data['directory'] );
+
 				// complete the URL.
 				foreach ( $url_array as $i => $url ) {
 					// get the path from given URL.
@@ -411,6 +414,9 @@ class Forms {
 					// only change the given URL if the URL part is a part and not a URL.
 					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[ $i ] = $term_data['directory'] . $url;
+						if( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
+							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
+						}
 					}
 				}
 
