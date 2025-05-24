@@ -190,14 +190,14 @@ class File extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'eml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
-			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0 );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );

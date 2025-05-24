@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
+use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Google\Service\Exception;
 use JsonException;
@@ -427,7 +428,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'Given GoogleDrive-URL could not be used as external file in websites.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0 );
+		Log::get_instance()->create( __( 'Given GoogleDrive-URL could not be used as external file in websites.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
 
 		// return result to prevent any further import.
 		return true;
@@ -653,7 +654,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @return void
 	 * @noinspection PhpFullyQualifiedNameUsageInspection
-	 * @noinspection PhpUndefinedClassInspection
 	 */
 	public function cli(): void {
 		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Services\GoogleDrive\Cli' );
@@ -711,7 +711,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// connect to Google Drive.
-		$service = new \Google\Service\Drive( $client );
+		$service = new Drive( $client );
 
 		// collect the request query.
 		$query = array(

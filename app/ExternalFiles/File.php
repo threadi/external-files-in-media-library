@@ -218,12 +218,7 @@ class File {
 		wp_update_post( $query );
 
 		// get the meta-data for this attachment.
-		$meta = wp_get_attachment_metadata( $this->get_id(), true );
-
-		// if no meta-data are set, create an array for them.
-		if ( ! is_array( $meta ) ) {
-			$meta = array();
-		}
+		$meta = (array) wp_get_attachment_metadata( $this->get_id(), true );
 
 		// set the mime type.
 		$meta['mime_type'] = $mime_type;
@@ -324,12 +319,7 @@ class File {
 	 */
 	public function set_filesize( int $file_size ): void {
 		// get the meta-data for this attachment.
-		$meta = wp_get_attachment_metadata( $this->get_id(), true );
-
-		// if no meta-data are set, create an array for them.
-		if ( ! is_array( $meta ) ) {
-			$meta = array();
-		}
+		$meta = (array) wp_get_attachment_metadata( $this->get_id(), true );
 
 		// add the file size.
 		$meta['filesize'] = $file_size;

@@ -57,7 +57,7 @@ class Image extends File_Types_Base {
 		$cached_file = $external_file_obj->get_cache_file( $this->get_size() );
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// return header.
 		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
@@ -102,7 +102,7 @@ class Image extends File_Types_Base {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get temporary file.
 		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ), $wp_filesystem );

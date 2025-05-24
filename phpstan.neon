@@ -16,6 +16,8 @@ parameters:
     - "#WP_PLUGIN_DIR#"
     - "#CatFolders#"
     - "#FileBird#"
+  earlyTerminatingFunctionCalls:
+    - wp_send_json
   paths:
     - app
     - external-files-in-media-library.php

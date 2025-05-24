@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Queue;

@@ -468,7 +468,7 @@ class Import extends Directory_Listing_Base {
 		$runtime = microtime( true ) - $this->get_import_start_time();
 
 		// cancel process if runtime is nearly reached.
-		if ( (float) $runtime >= $max_execution_time ) {
+		if ( $runtime >= $max_execution_time ) {
 			// add files to queue.
 			Queue::get_instance()->add_urls( $file_list, $this->get_login(), $this->get_password() );
 

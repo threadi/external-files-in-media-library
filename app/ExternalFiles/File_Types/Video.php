@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle videos.
@@ -71,7 +72,7 @@ class Video extends File_Types_Base {
 		header( 'Content-Length: ' . $external_file_obj->get_filesize() );
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// return file content via WP filesystem.
 		echo $wp_filesystem->get_contents( $external_file_obj->get_cache_file() ); // phpcs:ignore WordPress.Security.EscapeOutput

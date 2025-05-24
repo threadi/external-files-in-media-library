@@ -11,8 +11,11 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
+use Google\Service\Drive;
+use Google\Service\Drive\DriveFile;
 use Google\Service\Exception;
 use JsonException;
 
@@ -122,7 +125,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// connect to Google Drive.
-		$service = new \Google\Service\Drive( $client );
+		$service = new Drive( $client );
 
 		// get the file.
 		try {
@@ -144,7 +147,7 @@ class Protocol extends Protocol_Base {
 		);
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
@@ -218,7 +221,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// connect to Google Drive.
-		$service = new \Google\Service\Drive( $client );
+		$service = new Drive( $client );
 
 		// collect the request query.
 		$query = array(
@@ -252,7 +255,7 @@ class Protocol extends Protocol_Base {
 		// loop through the files and add them to the list.
 		foreach ( $files as $file_obj ) {
 			// bail if this is not a file object.
-			if ( ! $file_obj instanceof \Google\Service\Drive\DriveFile ) {
+			if ( ! $file_obj instanceof DriveFile ) {
 				continue;
 			}
 
@@ -287,7 +290,7 @@ class Protocol extends Protocol_Base {
 			);
 
 			// get WP Filesystem-handler.
-			$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+			$wp_filesystem = Helper::get_wp_filesystem();
 
 			// set the file as tmp-file for import.
 			$entry['tmp-file'] = wp_tempnam();

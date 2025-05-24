@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Small optimizations on multiple codes
+- Updated some unfavorable text descriptions
+- Updated dependencies
+
 ## [4.0.0] - 2025-05-14
 
 ### Added

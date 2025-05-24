@@ -8,10 +8,10 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Object to handle local import support.
@@ -80,6 +80,7 @@ class Local implements Service {
 	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *
 	 * @return array<Directory_Listing_Base>
+	 * @noinspection PhpArrayAccessCanBeReplacedWithForeachValueInspection
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		foreach ( $directory_listing_objects as $i => $obj ) {

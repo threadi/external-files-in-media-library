@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -915,8 +914,8 @@ class Files {
 		// get image data.
 		$image_data = wp_get_attachment_metadata( absint( $attachment_id ) );
 
-		// if image data is fall, create the array manually.
-		if ( ! $image_data ) {
+		// if image data is false, create the array manually.
+		if ( false === $image_data ) {
 			$image_data = array(
 				'sizes'  => array(),
 				'width'  => 0,
@@ -995,6 +994,16 @@ class Files {
 
 		// replace the filename in the resized image data with the public filename we use in our proxy.
 		$new_image_data['file'] = $public_filename;
+
+		// bail if image data is not an array.
+		if ( ! is_array( $image_data ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			return array(
+				$external_file_obj->get_url(),
+				0,
+				0,
+				false,
+			);
+		}
 
 		// update the meta data.
 		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;

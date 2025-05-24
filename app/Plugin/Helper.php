@@ -184,16 +184,7 @@ class Helper {
 	}
 
 	/**
-	 * Return the hook-documentation-URL.
-	 *
-	 * @return string
-	 */
-	public static function get_hook_url(): string {
-		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/hooks.md';
-	}
-
-	/**
-	 * Get real content type from string.
+	 * Return real content type from string.
 	 *
 	 * @param string $content_type The content type string.
 	 *
@@ -201,7 +192,7 @@ class Helper {
 	 */
 	public static function get_content_type_from_string( string $content_type ): string {
 		// read the mime type without charset.
-		preg_match_all( '/^(.*);(.*)$/mi', $content_type, $matches );
+		preg_match_all( '/^(.*);(.*)$/m', $content_type, $matches );
 
 		// get it.
 		if ( ! empty( $matches[1] ) ) {
