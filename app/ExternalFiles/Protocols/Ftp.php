@@ -328,6 +328,14 @@ class Ftp extends Protocol_Base {
 			'last-modified' => '',
 		);
 
+		// parse this URL.
+		$parse_url = wp_parse_url( $file_path );
+
+		// bail if no path could be loaded.
+		if( ! $parse_url['path'] ) {
+			return array();
+		}
+
 		// get the FTP connection handler.
 		$ftp_connection = $this->get_connection( $url );
 
@@ -340,7 +348,7 @@ class Ftp extends Protocol_Base {
 		}
 
 		// get the file contents.
-		if ( ! $ftp_connection->is_readable( $file_path ) ) {
+		if ( ! $ftp_connection->is_readable( $parse_url['path'] ) ) {
 			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
 
 			// return empty array as we got not the file.
@@ -352,13 +360,13 @@ class Ftp extends Protocol_Base {
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the size.
-		$results['filesize'] = $ftp_connection->size( $file_path );
+		$results['filesize'] = absint( $ftp_connection->size( $parse_url['path'] ) );
 
 		// get the last modified date.
-		$results['last-modified'] = $ftp_connection->mtime( $file_path );
+		$results['last-modified'] = absint( $ftp_connection->mtime( $parse_url['path'] ) );
 
 		// get the temp file.
-		$results['tmp-file'] = $this->get_temp_file( $file_path, $ftp_connection );
+		$results['tmp-file'] = $this->get_temp_file( $parse_url['path'], $ftp_connection );
 
 		$response_headers = array();
 		/**

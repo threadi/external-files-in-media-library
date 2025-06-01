@@ -4,22 +4,35 @@
 
 ### Added
 
+- Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added option to delete synchronized files of single directory archive with one click
+- Added file type specific icons in directory listings
+- Added option for use the date of external files in add-dialog
+- Added option to really import files in media library (this disabled all external files functions for these files)
+- Added Taskfile as third way to build plugin release
+- Added check for PHP strict usage on every release with PHPStan
 
 ### Changed
 
-- Show processed file URLs during synchronization
+- Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive
 - Small optimizations on multiple codes
 - Using fallback to default interval for each of our events if setting of not available
 - Show hide and rating on directory archive listing
-- Optimized documentation
+- Directory reload no shows the progress
+- Optimized ZIP service
 - Updated some unfavorable text descriptions
 - Updated dependencies
+- Active folder in directory listing is now marked
+- Optimized styling of directory listings
+- Standardize the usage of timestamp as last-modified date for each service and protocol
+- Multiple new hooks
+- Extended documentation in GitHub for all services we provide
 
 ### Fixed
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
+- Fixed wrong link to queue list in settings
 
 ## [4.0.0] - 2025-05-14
 

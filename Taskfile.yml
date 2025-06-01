@@ -1,0 +1,64 @@
+version: '3'
+
+tasks:
+  default:
+    - task: prepare
+
+  build_dialog:
+    dir: vendor/threadi/easy-dialog-for-wordpress/
+    cmds:
+      - npm i
+      - npm run build
+
+  build_directory:
+    dir: vendor/threadi/easy-directory-listing-for-wordpress/
+    cmds:
+      - npm i
+      - npm run build
+
+  prepare:
+    cmds:
+      - composer install
+      - composer update
+      - npm i
+      - npm run build
+      - task: build_dialog
+      - task: build_directory
+
+  check:
+    cmds:
+      - vendor/bin/phpstan analyse
+      - vendor/bin/phpcbf --standard=ruleset.xml .
+      - vendor/bin/phpcs --standard=ruleset.xml .
+
+  build_zip:
+    dir: ../
+    cmds:
+      - zip -rq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "*/.editorconfig" "*/build/*" "*/releases/*" "*/svn/*" "*/languages/*" "*/changelog.md" "*/readme.md" "*/ruleset.xml" "*/assets/*" "*/external-files-in-media-library-dev.php" "*/readme-dev.txt" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*"
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/autoload.php
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/composer/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/google/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ralouphie/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/symfony/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/monolog/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/psr/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/guzzlehttp/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/phpseclib/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/build/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/lib/*
+
+  release:
+    cmds:
+      - task: prepare
+      - composer dump-autoload -oa --no-dev
+      - task: check
+      - cp external-files-in-media-library.php external-files-in-media-library-dev.php
+      - sed -i -e 's/@@VersionNumber@@/{{.CLI_ARGS}}/g' external-files-in-media-library.php
+      - cp readme.txt readme-dev.txt
+      - sed -i -e 's/@@VersionNumber@@/{{.CLI_ARGS}}/g' readme.txt
+      - rm -f releases/external-files-in-media-library_{{.CLI_ARGS}}.zip
+      - task: build_zip
+      - cp external-files-in-media-library-dev.php external-files-in-media-library.php
+      - cp readme-dev.txt readme.txt
+      - rm readme-dev.txt external-files-in-media-library-dev.php
+      - echo 'Release file generated'

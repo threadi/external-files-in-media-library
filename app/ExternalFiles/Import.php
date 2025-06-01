@@ -302,7 +302,7 @@ class Import extends Directory_Listing_Base {
 				// log this event.
 				$log->create( __( 'The URL is saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
 
-				// import file as image via WP-own functions, if ID is not already set.
+							// import file as image via WP-own functions, if ID is not already set.
 				if ( empty( $post_array['ID'] ) ) {
 					$array         = array(
 						'name'     => $title,
@@ -354,6 +354,40 @@ class Import extends Directory_Listing_Base {
 			if ( ! $external_file_obj ) {
 				// log event.
 				$log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_url, 'error' );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// bail to next file.
+				continue;
+			}
+
+			// do not handle this file as external file it the option for it is enabled.
+			$no_external_object = 1 === absint( get_option( 'eml_directory_listing_real_import' ) );
+			/**
+			 * Filter whether we import no external files.
+			 *
+			 * Return to true if we only import files in media db without external links.
+			 *
+			 * @since 4.0.0 Available since 4.0.0.
+			 * @param bool $no_external_object The marker.
+			 * @param string $url The used URL.
+			 * @param array $file_data The file data.
+			 * @param File $external_file_obj The resulting external file (without any configuration yet).
+			 */
+			if( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
+				/**
+				 * Run additional tasks after new external file has been added.
+				 *
+				 * @since 2.0.0 Available since 2.0.0.
+				 * @param File $external_file_obj The object of the external file.
+				 * @param array $file_data The array with the file data.
+				 * @param string $url The source URL.
+				 */
+				do_action( 'eml_after_file_save', $external_file_obj, $file_data, $url );
+
+				// log event.
+				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success' );
 
 				// show progress.
 				$progress ? $progress->tick() : '';

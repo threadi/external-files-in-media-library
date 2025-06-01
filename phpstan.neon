@@ -16,6 +16,7 @@ parameters:
     - "#WP_PLUGIN_DIR#"
     - "#CatFolders#"
     - "#FileBird#"
+    - "#WP_REST_Request#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

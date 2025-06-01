@@ -330,6 +330,20 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_directory_listing_real_import' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Really import each file', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. There will be no "external files".', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_preview' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(

@@ -121,6 +121,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
 		add_filter( 'eml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
 		add_filter( 'eml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
+		add_filter( 'eml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
 
 		// change handling of media files.
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
@@ -401,7 +402,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array<int,mixed>
+	 * @return array<int|string,mixed>
 	 * @throws JsonException Could throw exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
@@ -439,7 +440,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// collect the entries for the list.
-		$list = array();
+		$listing = array(
+			'title' => basename( $directory ),
+			'files' => array(),
+			'dirs'  => array(),
+		);
 
 		// loop through the results to add each video URL.
 		foreach ( $video_list['items'] as $item ) {
@@ -462,16 +467,16 @@ class Youtube extends Directory_Listing_Base implements Service {
 				'filesize'      => 0,
 				'mime-type'     => 'video/mp4',
 				'icon'          => '<span class="dashicons dashicons-youtube"></span>',
-				'last-modified' => Helper::get_format_date_time( $item['snippet']['publishedAt'] ),
+				'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $item['snippet']['publishedAt'] ) ) ) ),
 				'preview'       => $thumbnail,
 			);
 
-			// add to the list.
-			$list[] = $entry;
+			// add the entry to the list.
+			$listing['files'][] = $entry;
 		}
 
 		// return true if import has been run.
-		return $list;
+		return $listing;
 	}
 
 	/**
@@ -644,7 +649,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$youtube_channel_search_url = $this->get_api_url() . $channel_id . '&maxResults=100&key=' . $api_key;
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the content from external URL.
 		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );
@@ -790,6 +795,24 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// return false to prevent local usage.
+		return false;
+	}
+
+	/**
+	 * Prevent local save of YouTube videos during import.
+	 *
+	 * @param bool   $no_external_object The marker.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function prevent_local_save_during_import( bool $no_external_object, string $url ): bool {
+		// bail if used URL is not from YouTube.
+		if( ! $this->is_youtube_video( $url ) ) {
+			return $no_external_object;
+		}
+
+		// import YouTube videos local.
 		return false;
 	}
 }

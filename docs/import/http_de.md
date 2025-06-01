@@ -1,6 +1,6 @@
 # Import von HTTP
 
-Hier wird beschrieben wie Du Dateien von einer HTTP-URL importieren kannst.
+Hier wird beschrieben wie du Dateien von einer HTTP-URL importieren kannst.
 
 ## Voraussetzungen
 
@@ -9,7 +9,7 @@ Die URL muss unter einem der folgenden Protokolle erreichbar sein:
 * `http://`
 * `https://`
 
-Die Datei muss eines der zulässigen Formate haben. Diese kannst Du in den Plugin-Einstellungen festlegen.
+Die Datei muss eines der zulässigen Formate haben. Diese kannst du in den Plugin-Einstellungen festlegen.
 
 Das Hosting muss die WordPress-Funktionen wp_remote_* unterstützen (z.B. mit curl oder alternativen Bibliotheken).
 

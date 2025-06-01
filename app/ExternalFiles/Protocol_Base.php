@@ -403,4 +403,26 @@ class Protocol_Base {
 		}
 		return array();
 	}
+
+	/**
+	 * Check whether given content type is one where multiple files could be.
+	 *
+	 * @param string $mime_type The given content type.
+	 * @param string $url       The used URL.
+	 *
+	 * @return bool
+	 */
+	protected function is_content_type_for_multiple_files( string $mime_type, string $url ): bool {
+		$false = 'text/html' === $mime_type;
+		/**
+		 * Filter whether the given mime type could provide multiple files.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 *
+		 * @param bool   $false     Set to true for URL with multiple files.
+		 * @param string $mime_type The given mime type.
+		 * @param string $url       The used URL.
+		 */
+		return apply_filters( 'eml_mime_type_for_multiple_files', $false, $mime_type, $url );
+	}
 }

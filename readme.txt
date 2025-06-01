@@ -24,6 +24,10 @@ Use an external data source for product images in your WooCommerce-based store.
 
 Sort your external files in folder of CatFolders, Filebird and Folderly or assign them into categories from Enhanced Media Library.
 
+== REST API ==
+
+You can manage your external files with REST API requests as documented [here](https://github.com/threadi/external-files-in-media-library/tree/master/docs/rest.md).
+
 == Mass-Import ==
 
 You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it. For very large directories there is also an automatically processed queue.

@@ -167,7 +167,7 @@ class Tables {
 		/**
 		 * Filter the query.
 		 *
-		 * @since 4.0.0 Available 4.0.0.
+		 * @since 4.0.0 Available since 4.0.0.
 		 * @param WP_Query $query The WP_Query object.
 		 */
 		do_action_ref_array( 'efml_filter_query', array( &$query ) );

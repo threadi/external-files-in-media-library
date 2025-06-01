@@ -80,7 +80,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
 	}
 
 	/**
@@ -381,9 +381,6 @@ class Forms {
 		// set initial title.
 		update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
-		// get import-object.
-		$import = Import::get_instance();
-
 		// get the URLs from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$url_array = explode( "\n", $urls );
@@ -391,6 +388,7 @@ class Forms {
 		// get the credentials.
 		$login    = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_key  = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get additional fields.
 		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['additional_fields'] ) ) : array();
@@ -414,7 +412,7 @@ class Forms {
 					// only change the given URL if the URL part is a part and not a URL.
 					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[ $i ] = $term_data['directory'] . $url;
-						if( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
+						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
 							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
 						}
 					}
@@ -423,6 +421,7 @@ class Forms {
 				// get the credentials.
 				$login    = $term_data['login'];
 				$password = $term_data['password'];
+				$api_key  = $term_data['api_key'];
 			}
 		}
 
@@ -465,9 +464,13 @@ class Forms {
 		// save count of URLs.
 		update_option( 'eml_import_url_max', count( $url_array ) );
 
+		// get import-object.
+		$import_obj = Import::get_instance();
+
 		// add the credentials.
-		$import->set_login( $login );
-		$import->set_password( $password );
+		$import_obj->set_login( $login );
+		$import_obj->set_password( $password );
+		$import_obj->set_api_key( (string) $api_key );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -496,7 +499,7 @@ class Forms {
 			$url = apply_filters( 'eml_import_url_before', $url, $additional_fields );
 
 			// import file in media library if enqueue option is not set.
-			$file_added = $import->add_url( $url, $add_to_queue );
+			$file_added = $import_obj->add_url( $url, $add_to_queue );
 
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
@@ -622,7 +625,13 @@ class Forms {
 			if ( ! empty( $successfully_imported_urls ) ) {
 				$result .= '<p><strong>' . _n( 'The following URL have been saved successfully:', 'The following URLs has been saved successfully:', count( $successfully_imported_urls ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-success-list">';
 				foreach ( $successfully_imported_urls as $url ) {
-					$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					$url_to_use = esc_url( $url['url'] );
+					if( empty( $url_to_use ) ) {
+						$result .= '<li><span title="' . esc_attr( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</span> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					}
+					else {
+						$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank" title="' . esc_url( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					}
 				}
 				$result .= '</ul>';
 			}
@@ -779,11 +788,14 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File $external_file_obj The file object.
+	 * @param File   $external_file_obj The file object.
+	 * @param array<string,mixed>  $file_data
+	 * @param string $url The used URL.
 	 *
 	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_imported_url_to_list( File $external_file_obj ): void {
+	public function add_imported_url_to_list( File $external_file_obj, array $file_data, string $url ): void {
 		// get actual list.
 		$files = get_option( 'eml_import_files' );
 
@@ -794,7 +806,7 @@ class Forms {
 
 		// add this file in the array.
 		$files[] = array(
-			'url'       => $external_file_obj->get_url( true ),
+			'url'       => $url,
 			'edit_link' => get_edit_post_link( $external_file_obj->get_id() ),
 		);
 

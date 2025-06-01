@@ -60,7 +60,7 @@
         "ext-fileinfo": "*",
         "ext-mysqli": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^2.4.1",
+        "threadi/easy-directory-listing-for-wordpress": "^3.0.0",
         "threadi/easy-settings-for-wordpress": "^1.2.1",
         "google/apiclient": "^2.18"
     }

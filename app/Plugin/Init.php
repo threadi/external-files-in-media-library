@@ -61,14 +61,14 @@ class Init {
 		// update handling.
 		Update::get_instance()->init();
 
+		// enable services we support.
+		Services::get_instance()->init();
+
 		// initialize the admin-support.
 		Admin::get_instance()->init();
 
 		// initialize the settings.
 		Settings::get_instance()->init();
-
-		// enable services we support.
-		Services::get_instance()->init();
 
 		// enable third party support.
 		ThirdPartySupport::get_instance()->init();
