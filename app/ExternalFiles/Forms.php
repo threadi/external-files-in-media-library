@@ -412,7 +412,7 @@ class Forms {
 					// only change the given URL if the URL part is a part and not a URL.
 					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[ $i ] = $term_data['directory'] . $url;
-						if( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
+						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
 							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
 						}
 					}

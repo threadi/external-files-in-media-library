@@ -85,7 +85,7 @@ class Local implements Service {
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		// bail if this has already been run.
-		if( defined( 'EML_LOCAL_UPDATED' ) ) {
+		if ( defined( 'EML_LOCAL_UPDATED' ) ) {
 			return $directory_listing_objects;
 		}
 
@@ -131,8 +131,8 @@ class Local implements Service {
 			array(
 				'action' => 'efml_import_url( file.file, "", "", [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
-				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
+				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
 			),
 		);
 	}

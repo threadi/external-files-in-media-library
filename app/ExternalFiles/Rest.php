@@ -115,9 +115,9 @@ class Rest {
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
-		if( empty( $params['url'] ) ) {
+		if ( empty( $params['url'] ) ) {
 			return array(
-				'result' => 'error'
+				'result' => 'error',
 			);
 		}
 
@@ -125,24 +125,24 @@ class Rest {
 		$import_obj = Import::get_instance();
 
 		// add login, if set.
-		if( isset( $params['login'] ) ) {
+		if ( isset( $params['login'] ) ) {
 			$import_obj->set_login( $params['login'] );
 		}
 		// add password, if set.
-		if( isset( $params['password'] ) ) {
+		if ( isset( $params['password'] ) ) {
 			$import_obj->set_password( $params['password'] );
 		}
 
 		// add the given URL and return success if it was successfully.
-		if( $import_obj->add_url( $params['url'] ) ) {
+		if ( $import_obj->add_url( $params['url'] ) ) {
 			return array(
-				'result' => 'success'
+				'result' => 'success',
 			);
 		}
 
 		// return error.
 		return array(
-			'result' => 'error'
+			'result' => 'error',
 		);
 	}
 
@@ -160,9 +160,9 @@ class Rest {
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
-		if( empty( $params['url'] ) ) {
+		if ( empty( $params['url'] ) ) {
 			return array(
-				'result' => 'error'
+				'result' => 'error',
 			);
 		}
 
@@ -170,9 +170,9 @@ class Rest {
 		$external_file_obj = Files::get_instance()->get_file_by_url( $params['url'] );
 
 		// bail if no external file could be found for the given URL.
-		if( ! $external_file_obj ) {
+		if ( ! $external_file_obj ) {
 			return array(
-				'result' => 'error'
+				'result' => 'error',
 			);
 		}
 
@@ -181,7 +181,7 @@ class Rest {
 
 		// return success.
 		return array(
-			'result' => 'success'
+			'result' => 'success',
 		);
 	}
 
@@ -201,7 +201,7 @@ class Rest {
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
 			return array(
-				'result' => 'error'
+				'result' => 'error',
 			);
 		}
 
@@ -211,13 +211,13 @@ class Rest {
 		// bail if no external file could be found for the given URL.
 		if ( ! $external_file_obj ) {
 			return array(
-				'result' => 'error'
+				'result' => 'error',
 			);
 		}
 
 		// return success.
 		return array(
-			'result' => 'success'
+			'result' => 'success',
 		);
 	}
 }

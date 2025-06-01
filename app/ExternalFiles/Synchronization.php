@@ -92,7 +92,7 @@ class Synchronization {
 		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'sync_config_save_via_ajax' ) );
 
 		// add admin actions.
-		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request') );
+		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
 
 		// misc.
 		add_filter( 'admin_body_class', array( $this, 'add_sync_marker_on_edit_page' ) );
@@ -245,7 +245,7 @@ class Synchronization {
 			array(
 				'action' => 'efml_delete_synced_files',
 				'nonce'  => wp_create_nonce( 'efml-deleted-synced-files' ),
-				'term'   => $term_id
+				'term'   => $term_id,
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -1317,7 +1317,7 @@ class Synchronization {
 		}
 
 		// bail if no term is given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			wp_safe_redirect( $referer );
 		}
 
@@ -1325,7 +1325,7 @@ class Synchronization {
 		$files = $this->get_synced_files_by_term( $term_id );
 
 		// bail if no files could be found.
-		if( empty( $files ) ) {
+		if ( empty( $files ) ) {
 			wp_safe_redirect( $referer );
 		}
 
@@ -1333,7 +1333,7 @@ class Synchronization {
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
 		// loop through the files and delete them.
-		foreach( $files as $post_id ) {
+		foreach ( $files as $post_id ) {
 			wp_delete_attachment( $post_id, true );
 		}
 
@@ -1440,13 +1440,13 @@ class Synchronization {
 		$result = new WP_Query( $query );
 
 		// bail on no results.
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
 			return array();
 		}
 
 		// fill the list.
 		$list = array();
-		foreach( $result->get_posts() as $post_id ) {
+		foreach ( $result->get_posts() as $post_id ) {
 			$post_id = absint( $post_id );
 
 			// add to the list.
@@ -1465,6 +1465,7 @@ class Synchronization {
 	 * @return void
 	 */
 	public function update_sync_title( string $url ): void {
+		/* translators: %1$s will be replaced by a URL. */
 		update_option( 'eml_sync_title', sprintf( __( 'Synchronize URL %1$s ..', 'external-files-in-media-library' ), $url ) );
 	}
 }

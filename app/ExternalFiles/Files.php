@@ -547,12 +547,11 @@ class Files {
 		<p>
 			<?php echo esc_html__( 'External URL of this file:', 'external-files-in-media-library' ); ?><br>
 			<?php
-			if( ! empty( esc_url( $url ) ) ) {
+			if ( ! empty( esc_url( $url ) ) ) {
 				?>
 					<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
 				<?php
-			}
-			else {
+			} else {
 				echo esc_html( $url );
 			}
 			?>
@@ -1427,10 +1426,10 @@ class Files {
 			// get the term.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
-			if( ! empty( $term_data ) ) {
-				$login = $term_data['login'];
+			if ( ! empty( $term_data ) ) {
+				$login    = $term_data['login'];
 				$password = $term_data['password'];
-				$api_key = $term_data['api_key'];
+				$api_key  = $term_data['api_key'];
 			}
 		}
 

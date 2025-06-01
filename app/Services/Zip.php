@@ -223,7 +223,7 @@ class Zip extends Directory_Listing_Base implements Service {
 			);
 
 			// if array contains more than 1 entry this file is in a directory.
-			if( end( $parts ) ) {
+			if ( end( $parts ) ) {
 				// get content type of this file.
 				$mime_type = wp_check_filetype( $file_stat['name'] );
 
@@ -242,19 +242,19 @@ class Zip extends Directory_Listing_Base implements Service {
 			}
 
 			// if array contains more than 1 entry this file is in a directory.
-			if( count( $parts ) > 1 ) {
-				$the_keys = array_keys($parts);
-				$last_key = end($the_keys);
+			if ( count( $parts ) > 1 ) {
+				$the_keys = array_keys( $parts );
+				$last_key = end( $the_keys );
 				$last_dir = '';
 				$dir_path = '';
-				foreach( $parts as $key => $dir ) {
+				foreach ( $parts as $key => $dir ) {
 					// bail if dir is empty.
-					if( empty( $dir ) ) {
+					if ( empty( $dir ) ) {
 						continue;
 					}
 
 					// bail for last entry (which is a file).
-					if( $key === $last_key ) {
+					if ( $key === $last_key ) {
 						// add the file to the last iterated directory.
 						$folders[ $last_dir ]['files'][] = $entry;
 						continue;
@@ -265,27 +265,26 @@ class Zip extends Directory_Listing_Base implements Service {
 
 					// add the directory if it does not exist atm in the list.
 					$index = $parse_url['scheme'] . $zip_file . '/' . trailingslashit( $dir_path );
-					if( ! isset( $folders[ $index ] ) ) {
+					if ( ! isset( $folders[ $index ] ) ) {
 						// add the directory to the list.
 						$folders[ $index ] = array(
 							'title' => $dir,
 							'files' => array(),
-							'dirs' => array()
+							'dirs'  => array(),
 						);
 
 						// add the directory to the list.
 						$listing['dirs'][ $index ] = array(
 							'title' => $dir,
 							'files' => array(),
-							'dirs' => array()
+							'dirs'  => array(),
 						);
 					}
 
 					// mark this dir as last dir for file path.
 					$last_dir = $index;
 				}
-			}
-			else {
+			} else {
 				// simply add the entry to the list if no directory data exist.
 				$listing['files'][] = $entry;
 			}
@@ -295,7 +294,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		$zip->close();
 
 		// return the resulting list.
-		return array_merge( array( 'completed' => true ), array( $parse_url['scheme'] . $zip_file => $listing ), $folders);
+		return array_merge( array( 'completed' => true ), array( $parse_url['scheme'] . $zip_file => $listing ), $folders );
 	}
 
 	/**
@@ -311,8 +310,8 @@ class Zip extends Directory_Listing_Base implements Service {
 			array(
 				'action' => 'efml_import_url( "file://" + url.replace("file://", "") + file.file, login, password );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
-				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
+				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
 			),
 		);
 	}

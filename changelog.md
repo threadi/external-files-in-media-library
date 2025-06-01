@@ -7,6 +7,8 @@
 - Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added option to delete synchronized files of single directory archive with one click
 - Added file type specific icons in directory listings
+- Added Taskfile as third way to build plugin release
+- Added check for PHP strict usage on every release with PHPStan
 
 ### Changed
 

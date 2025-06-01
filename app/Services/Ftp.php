@@ -274,8 +274,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 			array(
 				'action' => 'efml_import_url( file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
-				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
+				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
 			),
 		);
 	}

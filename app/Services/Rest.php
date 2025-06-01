@@ -118,7 +118,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// append the directory with the default REST API URL, if not set.
-		if( ! str_ends_with( $directory, '/wp-json/wp/v2/media' ) ) {
+		if ( ! str_ends_with( $directory, '/wp-json/wp/v2/media' ) ) {
 			$directory = trailingslashit( $directory ) . '/wp-json/wp/v2/media';
 		}
 
@@ -144,12 +144,12 @@ class Rest extends Directory_Listing_Base implements Service {
 			'files' => array(),
 			'dirs'  => array(),
 		);
-		for( $p=1;$p<100;$p++ ) {
+		for ( $p = 1;$p < 100;$p++ ) {
 			// extend the given URL.
 			$url = add_query_arg(
 				array(
 					'page'     => $p,
-					'per_page' => 100
+					'per_page' => 100,
 				),
 				$directory
 			);
@@ -171,7 +171,7 @@ class Rest extends Directory_Listing_Base implements Service {
 			}
 
 			// bail if response is 400 (means there a no more files => return the list).
-			if( 400 === $http_status ) {
+			if ( 400 === $http_status ) {
 				return $listing;
 			}
 
@@ -267,8 +267,8 @@ class Rest extends Directory_Listing_Base implements Service {
 			array(
 				'action' => 'efml_import_url( file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
-				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
+				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
 			),
 		);
 	}
@@ -315,14 +315,14 @@ class Rest extends Directory_Listing_Base implements Service {
 	 */
 	public function get_translations( array $translations ): array {
 		$translations['form_file'] = array(
-			'title' => __( 'Enter the WordPress-URL', 'external-files-in-media-library' ),
+			'title'       => __( 'Enter the WordPress-URL', 'external-files-in-media-library' ),
 			'description' => __( 'Enter the URL of the WordPress project from which you want to integrate media files into your project via REST API.', 'external-files-in-media-library' ),
-			'url' => array(
-				'label' => __( 'WordPress-URL', 'external-files-in-media-library' )
+			'url'         => array(
+				'label' => __( 'WordPress-URL', 'external-files-in-media-library' ),
 			),
-			'button' => array(
-				'label' => __( 'Use this URL', 'external-files-in-media-library' )
-			)
+			'button'      => array(
+				'label' => __( 'Use this URL', 'external-files-in-media-library' ),
+			),
 		);
 		return $translations;
 	}
@@ -335,8 +335,8 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return bool
 	 */
 	private function is_rest_api_url( string $url ): bool {
-		foreach( array( '/wp-json/wp/v2/media' ) as $path ) {
-			if( ! str_contains( $url, $path ) ) {
+		foreach ( array( '/wp-json/wp/v2/media' ) as $path ) {
+			if ( ! str_contains( $url, $path ) ) {
 				continue;
 			}
 
@@ -364,7 +364,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// bail if mime type is not JSON.
-		if( $mime_type !== 'application/json' ) {
+		if ( 'application/json' !== $mime_type ) {
 			return false;
 		}
 
@@ -375,8 +375,9 @@ class Rest extends Directory_Listing_Base implements Service {
 	/**
 	 * Return the list of files from given REST API-URL for import.
 	 *
-	 * @param array<string,mixed> $results The result as array for file import.
-	 * @param string              $url     The used URL.
+	 * @param array<int,array<string,mixed>> $results The result as array for file import.
+	 * @param string                         $url     The used URL.
+	 * @param Protocols\Http                 $http_obj The HTTP object.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -403,12 +404,12 @@ class Rest extends Directory_Listing_Base implements Service {
 		$file_list = array();
 
 		// loop through the directory until no more files come back.
-		for ( $p = 1; $p < 100; $p ++ ) {
+		for ( $p = 1; $p < 100; $p++ ) {
 			// extend the given URL.
 			$url = add_query_arg(
 				array(
 					'page'     => $p,
-					'per_page' => 100
+					'per_page' => 100,
 				),
 				$directory
 			);

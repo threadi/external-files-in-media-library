@@ -805,7 +805,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 				// and add the file to each of them.
 				foreach ( $parent_dirs as $parent_folder_id ) {
 					// add the directory if it does not exist atm in the list.
-					if( ! isset( $folders[ trailingslashit( $parent_folder_id ) ] ) ) {
+					if ( ! isset( $folders[ trailingslashit( $parent_folder_id ) ] ) ) {
 						// get directory data.
 						$parent_folder_obj = $service->files->get( $parent_folder_id );
 
@@ -813,13 +813,13 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 						$folders[ trailingslashit( $parent_folder_id ) ] = array(
 							'title' => $parent_folder_obj->getName(),
 							'files' => array(),
-							'dirs' => array()
+							'dirs'  => array(),
 						);
 
-						$listing['dirs'][ trailingslashit( $parent_folder_id )] = array(
+						$listing['dirs'][ trailingslashit( $parent_folder_id ) ] = array(
 							'title' => $parent_folder_obj->getName(),
 							'files' => array(),
-							'dirs' => array()
+							'dirs'  => array(),
 						);
 					}
 
@@ -833,9 +833,12 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// return the resulting file list.
-		return array_merge( array(
-			$directory => $listing,
-		), $folders );
+		return array_merge(
+			array(
+				$directory => $listing,
+			),
+			$folders
+		);
 	}
 
 	/**
@@ -851,8 +854,8 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			array(
 				'action' => 'efml_import_url( "' . $this->get_url_mark() . '" + file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
-				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
+				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
+				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
 			),
 		);
 	}

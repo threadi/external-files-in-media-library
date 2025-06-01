@@ -67,18 +67,18 @@ jobs:
           rm readme.md
           rm ruleset.xml
           cd ..
-          zip -r -q ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/* -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig"
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/google/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/ralouphie/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/symfony/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/monolog/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/psr/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/guzzlehttp/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/phpseclib/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
-          zip -ur ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/lib/*
+          zip -rq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig" "*/assets/*" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*"
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/google/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/ralouphie/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/symfony/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/monolog/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/psr/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/guzzlehttp/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/phpseclib/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
+          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/lib/*
           cp ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/
 
       - name: Create Release

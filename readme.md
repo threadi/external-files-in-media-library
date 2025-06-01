@@ -12,17 +12,29 @@ As user of the plugin you find documentation for protocols and handling in the [
 
 After checkout go through the following steps:
 
+### Using ant
+
 1. copy _build/build.properties.dist_ to _build/build.properties_.
 2. modify the build/build.properties file - note the comments in the file.
-3. after that the plugin can be activated in WordPress
+3. after that the plugin can be activated in WordPress.
+
+### Using Taskfile
+
+1. Run this command: `task prepare`
+2. after that the plugin can be activated in WordPress.
 
 ## Release
 
-### from local environment
+### from local environment with ant
 
 1. increase the version number in _build/build.properties_.
 2. execute the following command in _build/_: `ant build`
-3. after that you will finde in the release directory a zip file which could be used in WordPress to install it.
+3. after that you will find a zip file in the release directory which could be used in WordPress to install it.
+
+### from local environment with Taskfile
+
+1. execute the following command in main directory: `task release -- 4.0.0` - adjust the version number.
+2. after that you will find a zip file in the release directory which could be used in WordPress to install it.
 
 ### on GitHub
 

@@ -214,7 +214,7 @@ class Http extends Protocol_Base {
 			 * Filter the URL with custom import methods.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
-			 * @param array $array Result list with infos.
+			 * @param array<int,array<string,mixed>> $array Result list with infos.
 			 * @param string $url The URL to import.
 			 * @param Http $instance The actual protocol object.
 			 */
@@ -229,7 +229,7 @@ class Http extends Protocol_Base {
 				}
 
 				// return the result as array for import this as single URL.
-				if( isset( $response['title'] ) ) {
+				if ( isset( $response['title'] ) ) {
 					return array( $results );
 				}
 

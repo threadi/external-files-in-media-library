@@ -413,7 +413,7 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	protected function is_content_type_for_multiple_files( string $mime_type, string $url ): bool {
-		$false = $mime_type === 'text/html';
+		$false = 'text/html' === $mime_type;
 		/**
 		 * Filter whether the given mime type could provide multiple files.
 		 *
