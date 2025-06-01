@@ -401,7 +401,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array<int,mixed>
+	 * @return array<int|string,mixed>
 	 * @throws JsonException Could throw exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
@@ -439,7 +439,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// collect the entries for the list.
-		$list = array();
+		$listing = array(
+			'title' => basename( $directory ),
+			'files' => array(),
+			'dirs'  => array(),
+		);
 
 		// loop through the results to add each video URL.
 		foreach ( $video_list['items'] as $item ) {
@@ -466,12 +470,12 @@ class Youtube extends Directory_Listing_Base implements Service {
 				'preview'       => $thumbnail,
 			);
 
-			// add to the list.
-			$list[] = $entry;
+			// add the entry to the list.
+			$listing['files'][] = $entry;
 		}
 
 		// return true if import has been run.
-		return $list;
+		return $listing;
 	}
 
 	/**
@@ -644,7 +648,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$youtube_channel_search_url = $this->get_api_url() . $channel_id . '&maxResults=100&key=' . $api_key;
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the content from external URL.
 		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );

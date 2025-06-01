@@ -208,15 +208,17 @@ class Http extends Protocol_Base {
 		$response_headers     = $response_headers_obj->getAll();
 
 		// if content-type is "text/html" it could be a directory listing.
-		if ( ! empty( $response_headers['content-type'] ) && Helper::get_content_type_from_string( $response_headers['content-type'] ) === 'text/html' ) {
+		if ( ! empty( $response_headers['content-type'] ) && $this->is_content_type_for_multiple_files( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_url() ) ) {
+			$instance = $this;
 			/**
 			 * Filter the URL with custom import methods.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array $array Result list with infos.
 			 * @param string $url The URL to import.
+			 * @param Http $instance The actual protocol object.
 			 */
-			$results = apply_filters( 'eml_filter_url_response', array(), $this->get_url() );
+			$results = apply_filters( 'eml_filter_url_response', array(), $this->get_url(), $instance );
 			if ( ! empty( $results ) ) {
 				// bail if URL is already in media library.
 				if ( $this->check_for_duplicate( $this->get_url() ) ) {
@@ -226,8 +228,13 @@ class Http extends Protocol_Base {
 					return array();
 				}
 
-				// return the result as array for import this URL.
-				return array( $results );
+				// return the result as array for import this as single URL.
+				if( isset( $response['title'] ) ) {
+					return array( $results );
+				}
+
+				// return the result as list of files.
+				return $results;
 			}
 
 			/**
@@ -630,12 +637,12 @@ class Http extends Protocol_Base {
 	 *
 	 * This should be used if external object does NOT exist for a URL.
 	 *
-	 * @param string $url The URL.
+	 * @param string $url       The URL.
 	 * @param string $mime_type The mime-type.
 	 *
 	 * @return bool
 	 */
-	private function url_should_be_saved_local( string $url, string $mime_type ): bool {
+	public function url_should_be_saved_local( string $url, string $mime_type ): bool {
 		// if credentials are set, file should be saved local.
 		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
 			return true;
@@ -648,8 +655,8 @@ class Http extends Protocol_Base {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param bool $true Use false to disable this.
-		 * @param string $url The URL to check.
+		 * @param bool   $true Use false to disable this.
+		 * @param string $url  The URL to check.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
@@ -666,8 +673,9 @@ class Http extends Protocol_Base {
 		 * Filter if a http-file should be saved local or not.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param bool $result True if file should be saved local.
-		 * @param string $url The used URL.
+		 *
+		 * @param bool   $result True if file should be saved local.
+		 * @param string $url    The used URL.
 		 */
 		return apply_filters( 'eml_http_save_local', $result, $url );
 	}

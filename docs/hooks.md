@@ -310,7 +310,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$attachment_id` |  | 
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 185](ExternalFiles/Tables.php#L185-L188)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 209](ExternalFiles/Tables.php#L209-L212)
 
 ### `eml_image_meta_data`
 
@@ -609,7 +609,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 269](Plugin/Helper.php#L269-L288)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 273](Plugin/Helper.php#L273-L292)
 
 ### `eml_get_mime_types`
 
@@ -636,7 +636,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 310](Plugin/Helper.php#L310-L326)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 314](Plugin/Helper.php#L314-L330)
 
 ### `eml_help_tabs`
 

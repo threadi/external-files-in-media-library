@@ -84,6 +84,11 @@ class Local implements Service {
 	 * @noinspection PhpArrayAccessCanBeReplacedWithForeachValueInspection
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
+		// bail if this has already been run.
+		if( defined( 'EML_LOCAL_UPDATED' ) ) {
+			return $directory_listing_objects;
+		}
+
 		foreach ( $directory_listing_objects as $i => $obj ) {
 			if ( ! $obj instanceof \easyDirectoryListingForWordPress\Listings\Local ) {
 				continue;
@@ -93,6 +98,9 @@ class Local implements Service {
 			$directory_listing_objects[ $i ]->set_actions( $this->get_actions() );
 			$directory_listing_objects[ $i ]->add_global_action( $this->get_global_actions() );
 		}
+
+		// mark as updated.
+		define( 'EML_LOCAL_UPDATED', time() );
 
 		// return resulting list of objects.
 		return $directory_listing_objects;
@@ -117,14 +125,14 @@ class Local implements Service {
 	 */
 	public function get_actions(): array {
 		// get list of allowed mime types.
-		$mimetypes = implode( ',', array_keys( Helper::get_possible_mime_types() ) );
+		$mimetypes = implode( ',', Helper::get_allowed_mime_types() );
 
 		return array(
 			array(
 				'action' => 'efml_import_url( file.file, "", "", [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => __( 'Not supported mime type', 'external-files-in-media-library' )
+				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
 			),
 		);
 	}

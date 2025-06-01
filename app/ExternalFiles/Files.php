@@ -70,6 +70,9 @@ class Files {
 		// initialize the synchronization.
 		Synchronization::get_instance()->init();
 
+		// initialize REST API support.
+		Rest::get_instance()->init();
+
 		// misc.
 		add_action( 'add_meta_boxes_attachment', array( $this, 'add_media_box' ), 20, 1 );
 
@@ -542,7 +545,17 @@ class Files {
 		?>
 		<div class="misc-pub-external-file">
 		<p>
-			<?php echo esc_html__( 'External URL of this file:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
+			<?php echo esc_html__( 'External URL of this file:', 'external-files-in-media-library' ); ?><br>
+			<?php
+			if( ! empty( esc_url( $url ) ) ) {
+				?>
+					<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
+				<?php
+			}
+			else {
+				echo esc_html( $url );
+			}
+			?>
 		</p>
 		</div>
 		<ul class="misc-pub-external-file">
@@ -1406,6 +1419,19 @@ class Files {
 		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		if ( is_null( $api_key ) ) {
 			$api_key = '';
+		}
+
+		// get the credentials from the used term.
+		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+		if ( $term_id > 0 ) {
+			// get the term.
+			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+			if( ! empty( $term_data ) ) {
+				$login = $term_data['login'];
+				$password = $term_data['password'];
+				$api_key = $term_data['api_key'];
+			}
 		}
 
 		// add the archive.

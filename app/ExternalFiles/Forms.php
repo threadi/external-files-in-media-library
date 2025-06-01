@@ -381,9 +381,6 @@ class Forms {
 		// set initial title.
 		update_option( 'eml_import_title', __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
 
-		// get import-object.
-		$import = Import::get_instance();
-
 		// get the URLs from request.
 		$urls      = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$url_array = explode( "\n", $urls );
@@ -391,6 +388,7 @@ class Forms {
 		// get the credentials.
 		$login    = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_key  = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get additional fields.
 		$additional_fields = isset( $_POST['additional_fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['additional_fields'] ) ) : array();
@@ -423,6 +421,7 @@ class Forms {
 				// get the credentials.
 				$login    = $term_data['login'];
 				$password = $term_data['password'];
+				$api_key  = $term_data['api_key'];
 			}
 		}
 
@@ -465,9 +464,13 @@ class Forms {
 		// save count of URLs.
 		update_option( 'eml_import_url_max', count( $url_array ) );
 
+		// get import-object.
+		$import_obj = Import::get_instance();
+
 		// add the credentials.
-		$import->set_login( $login );
-		$import->set_password( $password );
+		$import_obj->set_login( $login );
+		$import_obj->set_password( $password );
+		$import_obj->set_api_key( (string) $api_key );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -496,7 +499,7 @@ class Forms {
 			$url = apply_filters( 'eml_import_url_before', $url, $additional_fields );
 
 			// import file in media library if enqueue option is not set.
-			$file_added = $import->add_url( $url, $add_to_queue );
+			$file_added = $import_obj->add_url( $url, $add_to_queue );
 
 			// update counter for URLs.
 			update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );

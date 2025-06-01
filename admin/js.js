@@ -92,7 +92,7 @@ jQuery(document).ready(function($) {
         let id = $("#post_ID").val();
 
         // send request
-        jQuery.ajax({
+        $.ajax({
           url: efmlJsVars.ajax_url,
           type: 'post',
           data: {
@@ -452,7 +452,7 @@ function efml_reset_proxy() {
 /**
  * Start import of single URL.
  *
- * @param url The URLs to import.
+ * @param url The URL to import.
  * @param login The login to use for import.
  * @param password The password to use for import.
  * @param additional_fields Additional fields added by extensions.
@@ -642,8 +642,9 @@ function efml_sync_save_config() {
  * @param login The login (optional).
  * @param password The password (optional).
  * @param api_key The API Key (optional).
+ * @param term_id The used term (optional).
  */
-function efml_save_as_directory( type, url, login, password, api_key ) {
+function efml_save_as_directory( type, url, login, password, api_key, term_id ) {
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
     type: 'POST',
@@ -654,6 +655,7 @@ function efml_save_as_directory( type, url, login, password, api_key ) {
       login: login,
       password: password,
       api_key: api_key,
+      term_id: term_id,
       nonce: efmlJsVars.add_archive_nonce,
     },
     error: function( jqXHR, textStatus, errorThrown ) {

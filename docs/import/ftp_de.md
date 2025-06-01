@@ -1,6 +1,6 @@
 # Import von FTP
 
-Hier wird beschrieben wie Du Dateien von einem FTP-Verzeichnis importieren kannst.
+Hier wird beschrieben wie du Dateien von einem FTP-Verzeichnis importieren kannst.
 
 ## Voraussetzungen
 
@@ -24,14 +24,14 @@ Beispiel: `ftp://login:password@example.com/example.png`
 
 ### Einzelne Datei
 
-Für den Import einer einzelnen Datei von einem FTP-Zugang gibst Du die FTP-URL dieser Datei zusammen mit den
+Für den Import einer einzelnen Datei von einem FTP-Zugang gibst du die FTP-URL dieser Datei zusammen mit den
 FTP-Zugangsdaten an.
 
 Beispiel für eine URL: `ftp://example.com/example.png`
 
 ### Verzeichnis importieren
 
-Für den Import aller Dateien eines FTP-Verzeichnisses gibst Du die FTP-URL dieses Verzeichnisses zusammen mit den
+Für den Import aller Dateien eines FTP-Verzeichnisses gibst du die FTP-URL dieses Verzeichnisses zusammen mit den
 FTP-Zugangsdaten an.
 
 Beispiel für eine URL: `ftp://example.com/directory-name/`

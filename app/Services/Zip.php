@@ -14,7 +14,6 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Services\Zip\ZipArchiveBrowser;
 use WP_Error;
 use ZipArchive;
 
@@ -105,7 +104,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array<int,mixed>
+	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// bail if "ZipArchive" is not available.
@@ -147,8 +146,156 @@ class Zip extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
+		// bail if no scheme could be excluded.
+		if ( empty( $parse_url['scheme'] ) ) {
+			return array();
+		}
+
+		// set variables.
+		$zip_file = $parse_url['path'];
+
+		if ( ! file_exists( $zip_file ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'Given file does not exist!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return an empty list as we could not analyse the file.
+			return array();
+		}
+
+		// open zip file using ZipArchive as readonly.
+		$zip    = new ZipArchive();
+		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
+
+		// bail if ZIP could not be opened.
+		if ( ! $opened ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'Given file is not a valid ZIP-file!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return empty array.
+			return array();
+		}
+
+		// get count of files.
+		$file_count = $zip->count();
+
+		// collect the list of files.
+		$listing = array(
+			'title' => basename( $zip_file ),
+			'files' => array(),
+			'dirs'  => array(),
+		);
+
+		// collect folders.
+		$folders = array();
+
+		// loop through the files and create the list.
+		for ( $i = 0; $i < $file_count; $i++ ) {
+			// get the name.
+			$name = $zip->getNameIndex( $i );
+
+			// bail if name could not be read.
+			if ( ! is_string( $name ) ) {
+				continue;
+			}
+
+			// get parts of the path.
+			$parts = explode( DIRECTORY_SEPARATOR, $name );
+
+			// get entry data.
+			$file_stat = $zip->statIndex( $i );
+
+			// bail if file_stat could not be read.
+			if ( ! is_array( $file_stat ) ) {
+				continue;
+			}
+
+			// collect the entry.
+			$entry = array(
+				'title' => basename( $file_stat['name'] ),
+			);
+
+			// if array contains more than 1 entry this file is in a directory.
+			if( end( $parts ) ) {
+				// get content type of this file.
+				$mime_type = wp_check_filetype( $file_stat['name'] );
+
+				// bail if file is not allowed.
+				if ( empty( $mime_type['type'] ) ) {
+					continue;
+				}
+
+				// add settings for entry.
+				$entry['file']          = $file_stat['name'];
+				$entry['filesize']      = absint( $file_stat['size'] );
+				$entry['mime-type']     = $mime_type;
+				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
+				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $file_stat['mtime'] ) ) );
+				$entry['preview']       = '';
+			}
+
+			// if array contains more than 1 entry this file is in a directory.
+			if( count( $parts ) > 1 ) {
+				$the_keys = array_keys($parts);
+				$last_key = end($the_keys);
+				$last_dir = '';
+				$dir_path = '';
+				foreach( $parts as $key => $dir ) {
+					// bail if dir is empty.
+					if( empty( $dir ) ) {
+						continue;
+					}
+
+					// bail for last entry (which is a file).
+					if( $key === $last_key ) {
+						// add the file to the last iterated directory.
+						$folders[ $last_dir ]['files'][] = $entry;
+						continue;
+					}
+
+					// add the path.
+					$dir_path .= DIRECTORY_SEPARATOR . $dir;
+
+					// add the directory if it does not exist atm in the list.
+					$index = $parse_url['scheme'] . $zip_file . '/' . trailingslashit( $dir_path );
+					if( ! isset( $folders[ $index ] ) ) {
+						// add the directory to the list.
+						$folders[ $index ] = array(
+							'title' => $dir,
+							'files' => array(),
+							'dirs' => array()
+						);
+
+						// add the directory to the list.
+						$listing['dirs'][ $index ] = array(
+							'title' => $dir,
+							'files' => array(),
+							'dirs' => array()
+						);
+					}
+
+					// mark this dir as last dir for file path.
+					$last_dir = $index;
+				}
+			}
+			else {
+				// simply add the entry to the list if no directory data exist.
+				$listing['files'][] = $entry;
+			}
+		}
+
+		// close the zip handle.
+		$zip->close();
+
 		// return the resulting list.
-		return ZipArchiveBrowser::get_contents( $this, $parse_url['path'] );
+		return array_merge( array( 'completed' => true ), array( $parse_url['scheme'] . $zip_file => $listing ), $folders);
 	}
 
 	/**
@@ -158,14 +305,14 @@ class Zip extends Directory_Listing_Base implements Service {
 	 */
 	public function get_actions(): array {
 		// get list of allowed mime types.
-		$mimetypes = implode( ',', array_keys( Helper::get_possible_mime_types() ) );
+		$mimetypes = implode( ',', Helper::get_allowed_mime_types() );
 
 		return array(
 			array(
 				'action' => 'efml_import_url( "file://" + url.replace("file://", "") + file.file, login, password );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => __( 'Not supported mime type', 'external-files-in-media-library' )
+				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
 			),
 		);
 	}

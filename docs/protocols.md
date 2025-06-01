@@ -9,3 +9,7 @@ The plugin currently supports the following protocols for integrating external f
 * [sftp://](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/sftp.md)
 * [file://](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/file.md)
 
+It is also possible to import files from external sources:
+
+* [YouTube](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/youtube.md)
+* [WordPress REST API](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/rest.md)

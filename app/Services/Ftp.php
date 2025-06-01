@@ -89,7 +89,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Choose file from a FTP server', 'external-files-in-media-library' );
+		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
 	}
@@ -123,7 +123,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The requested directory.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// prepend directory with ftp:// if that is not given.
@@ -134,7 +134,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
-		// bail if handler is not FTP.
+		// bail if the detected protocol handler is not FTP.
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			return array();
 		}
@@ -176,45 +176,22 @@ class Ftp extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// collect the files and directories.
-		return $this->get_directory_recursively( $parent_dir, $directory_list, $ftp_connection, $directory );
-	}
-
-	/**
-	 * Get the directory recursively.
-	 *
-	 * @param string               $parent_dir     The parent directory path.
-	 * @param array<string,mixed>  $directory_list The directory to add.
-	 * @param WP_Filesystem_FTPext $ftp_connection The FTP-connection to use.
-	 * @param string               $directory      The FTP-URL used.
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function get_directory_recursively( string $parent_dir, array $directory_list, WP_Filesystem_FTPext $ftp_connection, string $directory ): array {
-		$file_list = array();
+		// collect the content of this directory.
+		$listing = array(
+			'title' => basename( $directory ),
+			'files' => array(),
+			'dirs'  => array(),
+		);
 
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
-		// get the protocol and the domain.
-		$parse_url = wp_parse_url( $directory );
-
-		// bail if URL could not be parsed.
-		if ( ! is_array( $parse_url ) ) {
-			return array();
-		}
-
-		// bail if scheme or host is not given.
-		if ( empty( $parse_url['scheme'] ) || empty( $parse_url['host'] ) ) {
-			return array();
-		}
-
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
-			$item_path = $parent_dir . $item_name;
+			$path = $parent_dir . $item_name;
 
 			// collect the entry.
 			$entry = array(
@@ -222,23 +199,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 			);
 
 			// if item is a directory, check its files.
-			if ( $ftp_connection->is_dir( $item_path ) ) {
-				// get the list.
-				$subdirectory_list = $ftp_connection->dirlist( trailingslashit( $item_path ) );
-
-				// bail if list could not be loaded.
-				if ( ! $subdirectory_list ) {
-					continue;
-				}
-
-				// get the subs.
-				$subs           = $this->get_directory_recursively( trailingslashit( $item_path ), $subdirectory_list, $ftp_connection, $directory );
-				$entry['dir']   = $parse_url['scheme'] . '://' . $parse_url['host'] . $item_path;
-				$entry['sub']   = $subs;
-				$entry['count'] = count( $subs );
+			if ( $ftp_connection->is_dir( $path ) ) {
+				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {
 				// get content type of this file.
-				$mime_type = wp_check_filetype( $item_name );
+				$mime_type = wp_check_filetype( $path );
 
 				// bail if file is not allowed.
 				if ( empty( $mime_type['type'] ) ) {
@@ -280,20 +245,20 @@ class Ftp extends Directory_Listing_Base implements Service {
 				}
 
 				// add settings for entry.
-				$entry['file']          = $item_path;
+				$entry['file']          = $path;
 				$entry['filesize']      = absint( $item_settings['size'] );
 				$entry['mime-type']     = $mime_type['type'];
-				$entry['icon']          = '<span class="dashicons dashicons-media-default"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $item_settings['time'] ) );
+				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
+				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $item_settings['time'] ) ) );
 				$entry['preview']       = $thumbnail;
-			}
 
-			// add the entry to the list.
-			$file_list[] = $entry;
+				// add the entry to the list.
+				$listing['files'][] = $entry;
+			}
 		}
 
 		// return resulting list.
-		return $file_list;
+		return $listing;
 	}
 
 	/**
@@ -303,14 +268,14 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function get_actions(): array {
 		// get list of allowed mime types.
-		$mimetypes = implode( ',', array_keys( Helper::get_possible_mime_types() ) );
+		$mimetypes = implode( ',', Helper::get_allowed_mime_types() );
 
 		return array(
 			array(
-				'action' => 'efml_import_url( url + file.file, login, password, [], term );',
+				'action' => 'efml_import_url( file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => __( 'Not supported mime type', 'external-files-in-media-library' )
+				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
 			),
 		);
 	}
@@ -329,7 +294,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "ftp", actualDirectoryPath, login, password, "" );',
+					'action' => 'efml_save_as_directory( "ftp", actualDirectoryPath, login, password, "", config.term );',
 					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
 				),
 			)

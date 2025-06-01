@@ -142,6 +142,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
 			'ExternalFilesInMediaLibrary\Services\Local',
+			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 			'ExternalFilesInMediaLibrary\Services\Zip',
@@ -186,7 +187,7 @@ class Services {
 	}
 
 	/**
-	 * Get service by its name.
+	 * Return service by its name.
 	 *
 	 * @param string $method The name of the method.
 	 *
@@ -195,11 +196,6 @@ class Services {
 	public function get_service_by_name( string $method ): Directory_Listing_Base|false {
 		$directory_listing_obj = false;
 		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
-			// bail if this is not a base object.
-			if ( ! $obj instanceof Directory_Listing_Base ) {
-				continue;
-			}
-
 			// bail if name does not match.
 			if ( $method !== $obj->get_name() ) {
 				continue;

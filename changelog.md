@@ -4,18 +4,25 @@
 
 ### Added
 
+- Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added option to delete synchronized files of single directory archive with one click
+- Added file type specific icons in directory listings
 
 ### Changed
 
-- Show processed file URLs during synchronization
+- Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive
 - Small optimizations on multiple codes
 - Using fallback to default interval for each of our events if setting of not available
 - Show hide and rating on directory archive listing
-- Optimized documentation
+- Directory reload no shows the progress
+- Optimized ZIP service
 - Updated some unfavorable text descriptions
 - Updated dependencies
+- Active folder in directory listing is now marked
+- Optimized styling of directory listings
+- Multiple new hooks
+- Extended documentation in GitHub for all services we provide
 
 ### Fixed
 

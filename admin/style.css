@@ -261,6 +261,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f18b";
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before {
+	content: "\f120";
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {
 	display: none;
 }

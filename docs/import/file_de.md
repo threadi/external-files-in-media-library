@@ -1,6 +1,6 @@
 # Import von lokalem Verzeichnis
 
-Hier wird beschrieben wie Du Dateien von einem lokalen Verzeichnis auf dem Hosting des Projektes importieren kannst.
+Hier wird beschrieben wie du Dateien von einem lokalen Verzeichnis auf dem Hosting des Projektes importieren kannst.
 
 ## Voraussetzungen
 

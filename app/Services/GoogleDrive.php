@@ -696,7 +696,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $directory The given directory.
 	 *
-	 * @return array<int,mixed>
+	 * @return array<int|string,mixed>
 	 * @throws Exception Could be thrown an exception.
 	 * @throws JsonException Could be thrown an exception.
 	 */
@@ -739,7 +739,11 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// get list of files.
+		/**
+		 * Get list of files.
+		 *
+		 * This will be all files in the complete requested directory incl. subdirectories.
+		 */
 		$files = $results->getFiles();
 
 		// bail if list is empty.
@@ -747,11 +751,12 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// collect the list of folders.
-		$folders = array();
-
 		// collect the list of files.
-		$list = array();
+		$listing = array(
+			'title' => basename( $directory ),
+			'files' => array(),
+			'dirs'  => array(),
+		);
 
 		/**
 		 * Filter the list of files we got from Google Drive.
@@ -760,6 +765,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		 * @param array<DriveFile> $files List of files.
 		 */
 		$files = apply_filters( 'eml_google_drive_files', $files );
+
+		// collect list of folders.
+		$folders = array();
 
 		// loop through the files and add them to the list.
 		foreach ( $files as $file_obj ) {
@@ -790,43 +798,44 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_obj->getCreatedTime() ) ) ) );
 			$entry['preview']       = $thumbnail;
 
-			// get directory-data for this file and add file in the directory.
-			if ( $file_obj->getParents() ) {
-				// loop through all parent folders and add the file to each of them.
-				foreach ( $file_obj->getParents() as $parent_folder_id ) {
-					// if specific folder is set, show only this.
-					if ( $directory !== $parent_folder_id && $directory !== $this->get_directory() ) {
-						continue;
+			// get directory-data for this file and add file in the given directories.
+			$parent_dirs = $file_obj->getParents();
+			if ( $parent_dirs ) {
+				// loop through all parent folders, add the directory if it does not exist in the list
+				// and add the file to each of them.
+				foreach ( $parent_dirs as $parent_folder_id ) {
+					// add the directory if it does not exist atm in the list.
+					if( ! isset( $folders[ trailingslashit( $parent_folder_id ) ] ) ) {
+						// get directory data.
+						$parent_folder_obj = $service->files->get( $parent_folder_id );
+
+						// add the directory to the list.
+						$folders[ trailingslashit( $parent_folder_id ) ] = array(
+							'title' => $parent_folder_obj->getName(),
+							'files' => array(),
+							'dirs' => array()
+						);
+
+						$listing['dirs'][ trailingslashit( $parent_folder_id )] = array(
+							'title' => $parent_folder_obj->getName(),
+							'files' => array(),
+							'dirs' => array()
+						);
 					}
 
-					// add file to already existing folder.
-					if ( ! empty( $folders[ $parent_folder_id ] ) ) {
-						$folders[ $parent_folder_id ]['sub'][] = $entry;
-						++$folders[ $parent_folder_id ]['count'];
-						continue;
-					}
-
-					// get folder data.
-					$parent_folder_obj = $service->files->get( $parent_folder_id );
-
-					// add file to this folder and define the folder for this.
-					$folders[ $parent_folder_id ] = array(
-						'title' => $parent_folder_obj->getName(),
-						'dir'   => $parent_folder_obj->getId(),
-						'sub'   => array(
-							$entry,
-						),
-						'count' => 1,
-					);
+					// add the file to this directory.
+					$folders[ trailingslashit( $parent_folder_id ) ]['files'][] = $entry;
 				}
 			} else {
-				// add entry to the list.
-				$list[] = $entry;
+				// simply add the entry to the list if no directory data exist.
+				$listing['files'][] = $entry;
 			}
 		}
 
 		// return the resulting file list.
-		return array_merge( array_values( $folders ), $list );
+		return array_merge( array(
+			$directory => $listing,
+		), $folders );
 	}
 
 	/**
@@ -836,14 +845,14 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 */
 	public function get_actions(): array {
 		// get list of allowed mime types.
-		$mimetypes = implode( ',', array_keys( Helper::get_possible_mime_types() ) );
+		$mimetypes = implode( ',', Helper::get_allowed_mime_types() );
 
 		return array(
 			array(
 				'action' => 'efml_import_url( "' . $this->get_url_mark() . '" + file.file, login, password, [], term );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show' => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
-				'hint' => __( 'Not supported mime type', 'external-files-in-media-library' )
+				'hint' => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>'
 			),
 		);
 	}

@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Rest;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
@@ -166,11 +167,6 @@ class Directory_Listing {
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
-						// bail if this is not a base object.
-						if ( ! $obj instanceof Directory_Listing_Base ) {
-							continue;
-						}
-
 						// show disabled listing object.
 						if ( $obj->is_disabled() ) {
 							// show enabled listing object.
@@ -271,8 +267,11 @@ class Directory_Listing {
 	 * @return array<string,mixed>
 	 */
 	private function get_translations(): array {
-		return array(
-			'is_loading'        => __( 'Please wait, list is loading.', 'external-files-in-media-library' ),
+		$translations = array(
+			'is_loading'        => __( 'Directory is loading', 'external-files-in-media-library' ),
+			'loading_directory'        => __( 'one sub-directory do load', 'external-files-in-media-library' ),
+			/* translators: %1$d will be replaced by a number. */
+			'loading_directories'        => __( '%1$d sub-directories do load', 'external-files-in-media-library' ),
 			'could_not_load'    => __( 'Directory could not be loaded.', 'external-files-in-media-library' ),
 			'reload'            => __( 'Reload', 'external-files-in-media-library' ),
 			'import_directory'  => __( 'Import this directory', 'external-files-in-media-library' ),
@@ -361,6 +360,19 @@ class Directory_Listing {
 				),
 			),
 		);
+
+		// get all registered directory listings and get their translation-additions.
+		foreach( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+			$translations = $obj->get_translations( $translations );
+		}
+
+		/**
+		 * Filter the translations to use for directory listings.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param array<string,mixed> $translations List of translations.
+		 */
+		return apply_filters( 'eml_directory_translations', $translations );
 	}
 
 	/**

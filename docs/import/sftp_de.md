@@ -1,6 +1,6 @@
 # Import von SFTP/SSH
 
-Hier wird beschrieben wie Du Dateien von einem SFTP/SSH-Verzeichnis importieren kannst.
+Hier wird beschrieben wie du Dateien von einem SFTP/SSH-Verzeichnis importieren kannst.
 
 ## Voraussetzungen
 
