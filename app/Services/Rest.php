@@ -283,7 +283,7 @@ class Rest extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( actualDirectoryPath + "/wp-json/wp/v2/media/", login, password, [], config.term );',
+					'action' => 'efml_import_url( actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", login, password, [], config.term );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
