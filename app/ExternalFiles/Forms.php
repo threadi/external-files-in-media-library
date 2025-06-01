@@ -80,7 +80,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
 	}
 
 	/**
@@ -625,7 +625,13 @@ class Forms {
 			if ( ! empty( $successfully_imported_urls ) ) {
 				$result .= '<p><strong>' . _n( 'The following URL have been saved successfully:', 'The following URLs has been saved successfully:', count( $successfully_imported_urls ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-success-list">';
 				foreach ( $successfully_imported_urls as $url ) {
-					$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					$url_to_use = esc_url( $url['url'] );
+					if( empty( $url_to_use ) ) {
+						$result .= '<li><span title="' . esc_attr( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</span> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					}
+					else {
+						$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank" title="' . esc_url( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
+					}
 				}
 				$result .= '</ul>';
 			}
@@ -782,11 +788,14 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File $external_file_obj The file object.
+	 * @param File   $external_file_obj The file object.
+	 * @param array<string,mixed>  $file_data
+	 * @param string $url The used URL.
 	 *
 	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_imported_url_to_list( File $external_file_obj ): void {
+	public function add_imported_url_to_list( File $external_file_obj, array $file_data, string $url ): void {
 		// get actual list.
 		$files = get_option( 'eml_import_files' );
 
@@ -797,7 +806,7 @@ class Forms {
 
 		// add this file in the array.
 		$files[] = array(
-			'url'       => $external_file_obj->get_url( true ),
+			'url'       => $url,
 			'edit_link' => get_edit_post_link( $external_file_obj->get_id() ),
 		);
 

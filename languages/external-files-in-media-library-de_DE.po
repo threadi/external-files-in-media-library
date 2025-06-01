@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the Plugins - External files in Media Library - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2025-04-07 13:05:26+0000\n"
+"PO-Revision-Date: 2025-05-14 11:55:35+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -11,47 +11,489 @@ msgstr ""
 "Language: de\n"
 "Project-Id-Version: Plugins - External files in Media Library - Stable (latest release)\n"
 
-#: app/Plugin/Tables/Logs.php:280
+#: app/ThirdParty/Filebird.php:269
+msgid "Import in specific folder of Filebird"
+msgstr "In bestimmten Ordner von Filebird importieren"
+
+#: app/ThirdParty/EnhancedMediaLibrary.php:282 app/ThirdParty/Folderly.php:282
+msgid "Assign files to categories"
+msgstr "Dateien Kategorien zuordnen"
+
+#: app/ThirdParty/EnhancedMediaLibrary.php:123 app/ThirdParty/Folderly.php:123
+msgid "Choose categories:"
+msgstr "Kategorien auswählen:"
+
+#: app/ThirdParty/CatFolders.php:268 app/ThirdParty/Filebird.php:269
+msgid "Choose folder:"
+msgstr "Ordner wählen:"
+
+#: app/ThirdParty/CatFolders.php:268
+msgid "Import in specific folder of CatFolder"
+msgstr "In bestimmten Ordner von CatFolder importieren"
+
+#: app/ThirdParty/CatFolders.php:140 app/ThirdParty/Filebird.php:141
+msgid "None"
+msgstr "Keine"
+
+#: app/ThirdParty/CatFolders.php:116 app/ThirdParty/Filebird.php:117
+msgid "Choose folder as target:"
+msgstr "Wähle Ordner als Ziel:"
+
+#: app/Services/Local.php:138
+msgid "Import active directory via queue"
+msgstr "Importiere aktives Verzeichnis über Warteschlange"
+
+#: app/Services/Local.php:134
+msgid "Import active directory now"
+msgstr "Importiere aktives Verzeichnis jetzt"
+
+#: app/Services/Imgur.php:199
+msgid "Using Imgur"
+msgstr "Imgur verwenden"
+
+#: app/Services/Imgur.php:190
+msgid "Paste the earlier copied URL in the field in the new dialog."
+msgstr "Füge die vorher kopierte URL in das Feld im neuen Dialog ein."
+
+#: app/Services/Imgur.php:186
+msgid "Right-click on the uploaded image and copy its URL."
+msgstr "Rechtsklick auf das hochgeladene Bild und kopiere die URL."
+
+#: app/Services/Imgur.php:185
+msgid "Upload your image on Imgur."
+msgstr "Lade dein Bild bei Imgur hoch."
+
+#: app/Services/Imgur.php:183
+msgid "How to add them"
+msgstr "Wie man sie hinzufügt"
+
+#: app/Services/Imgur.php:181
+msgid "URLs beginning with <code>https://i.imgur</code> can be used as an image in the Media Library."
+msgstr "URLs die mit <code>https://i.imgur</code> beginnen können als Bild in der Mediathek verwendet werden."
+
+#: app/Services/Imgur.php:180
+msgid "URLs beginning with <code>https://imgur</code> can only be used for embedding. They cannot be used in the Media Library."
+msgstr "URLs beginnend mit <code>https://imgur</code> können nur eingebettet werden. Sie können nicht in der Mediathek verwendet werden."
+
+#: app/Services/Imgur.php:178
+msgid "Please note the following when using Imgur:"
+msgstr "Bitte beachte das Folgende wenn du Imgur verwendest:"
+
+#: app/Services/Imgur.php:177
+msgid "Using images from Imgur"
+msgstr "Bilder von Imgur verwenden"
+
+#: app/Services/Imgur.php:163
+msgid "Given Imgur-URL could not be used as external embed image in websites. This URL can be used for embedding, but not for selecting images."
+msgstr "Die angegebene Imgur-URL kann nicht als externes Bild in Websites verwendet werden. Diese URL kann zum Einbetten genutzt werden, aber nicht zur Auswahl von Bildern."
+
+#: app/Services/Ftp.php:328 app/Services/GoogleDrive.php:865
+#: app/Services/Local.php:142 app/Services/Youtube.php:506
+msgid "Save active directory as directory archive"
+msgstr "Speichere aktives Verzeichnis als Verzeichnisarchiv."
+
+#: app/Plugin/Schedules/Synchronization.php:89
+msgid "Synchronization schedule ended."
+msgstr "Synchronisation beendet."
+
+#: app/Plugin/Schedules/Synchronization.php:78
+msgid "To synchronize external directory does not have any configuration."
+msgstr "Das zu synchronisierende Verzeichnis hat keinerlei Konfiguration."
+
+#: app/Plugin/Schedules/Synchronization.php:69
+msgid "Synchronization listing object unknown:"
+msgstr "Synchronisierungsobjekt ist unbekannt:"
+
+#: app/Plugin/Schedules/Synchronization.php:59
+msgid "Synchronization schedule starting."
+msgstr "Synchronisierung gestartet."
+
+#: app/Plugin/Init.php:155
+msgid "every week"
+msgstr "jede Woche"
+
+#: app/Plugin/Init.php:151
+msgid "every 24 hours"
+msgstr "alle 24 Stunden"
+
+#: app/Plugin/Init.php:147
+msgid "every 12 hours"
+msgstr "alle 12 Stunden"
+
+#: app/Plugin/Init.php:143
+msgid "every 6 hours"
+msgstr "alle 6 Stunden"
+
+#: app/Plugin/Init.php:139
+msgid "every 4 hours"
+msgstr "alle 4 Stunden"
+
+#: app/Plugin/Init.php:135
+msgid "every 3 hours"
+msgstr "alle 3 Stunden"
+
+#: app/Plugin/Init.php:131
+msgid "every 2 hours"
+msgstr "alle 2 Stunden"
+
+#: app/Plugin/Init.php:127
+msgid "every hour"
+msgstr "jede Stunde"
+
+#: app/Plugin/Init.php:123
+msgid "every 30 Minutes"
+msgstr "alle 30 Minuten"
+
+#: app/Plugin/Init.php:119
+msgid "every 20 Minutes"
+msgstr "alle 20 Minuten"
+
+#: app/Plugin/Init.php:115
+msgid "every 15 Minutes"
+msgstr "alle 15 Minuten"
+
+#: app/Plugin/Helper.php:252
+msgid "SVG"
+msgstr "SVG"
+
+#: app/Plugin/Admin/Directory_Listing.php:432
+msgid "With directory archives, you can easily save your frequently used connections to external directories and reuse them at any time. Whats more, you can also use them to automatically synchronize the files with your media library."
+msgstr "Mit Verzeichnisarchiven kannst du einfach deine häufig genutzten Verbindungen zu externen Verzeichnissen speichern und jederzeit wieder verwenden. Mehr noch kannst du sie auch zur automatischen Synchronisierung der Dateien deiner Mediathek verwenden."
+
+#: app/Plugin/Admin/Directory_Listing.php:304
+msgid "Directory Archive deleted."
+msgstr "Verzeichnisarchiv gelöscht."
+
+#: app/Plugin/Admin/Directory_Listing.php:303
+msgid "Directory Archive updated."
+msgstr "Verzeichnisarchiv aktualisiert."
+
+#. translators: %1$s will be replaced by a URL.
+#: app/Plugin/Admin/Directory_Listing.php:300
+msgid "No Directory Archives found. <a href=\"%1$s\">Add them</a> from your external files sources."
+msgstr "Kein Verzeichnisarchiv gefunden. Füge sie <a href=\"%1$s\">über deine externen Dateiquellen</a> ein."
+
+#: app/Plugin/Admin/Directory_Listing.php:298
+msgid "Back to Directory Archives"
+msgstr "Zurück zum Verzeichnisarchiv"
+
+#: app/Plugin/Admin/Directory_Listing.php:297
+#: app/Plugin/Admin/Directory_Listing.php:431
+#: app/Plugin/Admin/Directory_Listing.php:437
+msgid "Directory Archives"
+msgstr "Verzeichnisarchive"
+
+#: app/Plugin/Admin/Directory_Listing.php:296
+msgid "Update Directory Archive"
+msgstr "Aktualisiere Verzeichnisarchiv"
+
+#: app/Plugin/Admin/Directory_Listing.php:295
+msgid "Edit Directory Archive"
+msgstr "Bearbeite Verzeichnisarchiv"
+
+#: app/Plugin/Admin/Directory_Listing.php:294
+msgid "Search Directory Archive"
+msgstr "Suche Verzeichnisarchiv"
+
+#: app/Plugin/Admin/Directory_Listing.php:165
+msgid "Select the source of your external files"
+msgstr "Wähle die Quelle deiner externen Dateien"
+
+#. translators: %1$s will be replaced by a date-time, %2$s by a URL.
+#: app/ExternalFiles/Synchronization.php:768
+msgid "Last synchronized at %1$s from %2$s"
+msgstr "Zuletzt synchronisiert um %1$s von %2$s"
+
+#: app/ExternalFiles/Synchronization.php:731
+msgid "Sync of files running .."
+msgstr "Synchronisierung von Dateien läuft .."
+
+#: app/ExternalFiles/Synchronization.php:699
+msgid "Synchronized from:"
+msgstr "Synchronisiert von:"
+
+#: app/ExternalFiles/Synchronization.php:698
+msgid "Last synchronized:"
+msgstr "Zuletzt synchronisiert:"
+
+#: app/ExternalFiles/Synchronization.php:576
+msgid "The files are now synchronized in your media library."
+msgstr "Die Dateien sind jetzt mit deiner Mediathek synchronisiert."
+
+#: app/ExternalFiles/Synchronization.php:574
+msgid "Synchronization has been executed"
+msgstr "Synchronisation wurde ausgeführt."
+
+#: app/ExternalFiles/Synchronization.php:546
+msgid "Sync of files starting .."
+msgstr "Synchronisation von Dateien startet .."
+
+#: app/ExternalFiles/Synchronization.php:531
+msgid "Requested external directory does not have any configuration."
+msgstr "Angefordertes externes Verzeichnis hat keinerlei Konfiguration."
+
+#: app/ExternalFiles/Synchronization.php:522
+msgid "No external directory given for synchronization."
+msgstr "Kein externes Verzeichnis zur Synchronisation angegeben."
+
+#: app/ExternalFiles/Synchronization.php:513
+msgid "Requested method is unknown: "
+msgstr "Angeforderte Methode ist unbekannt: "
+
+#: app/ExternalFiles/Synchronization.php:504
+msgid "No method given for synchronization."
+msgstr "Keine Methode für Synchronisation angegeben."
+
+#: app/ExternalFiles/Synchronization.php:484
+msgid "Synchronization cleanup ended."
+msgstr "Bereinigung nach Synchronisierung beendet."
+
+#: app/ExternalFiles/Synchronization.php:437
+msgid "Synchronization ended."
+msgstr "Synchronisierung beendet."
+
+#: app/ExternalFiles/Synchronization.php:431
+msgid "Synchronization startet."
+msgstr "Synchronisierung gestartet."
+
+#: app/ExternalFiles/Synchronization.php:374
+msgid "Configure"
+msgstr "Konfigurieren"
+
+#: app/ExternalFiles/Synchronization.php:373
+msgid "Now"
+msgstr "Jetzt"
+
+#: app/ExternalFiles/Synchronization.php:372
+msgid "Off"
+msgstr "Aus"
+
+#: app/ExternalFiles/Synchronization.php:372
+msgid "On"
+msgstr "An"
+
+#: app/ExternalFiles/Synchronization.php:360
+msgid "Save"
+msgstr "Speichern"
+
+#: app/ExternalFiles/Synchronization.php:353
+msgid "Configure interval which will be used to automatically synchronize this external directory with your media library."
+msgstr "Konfiguriere das Intervall, welches zur automatischen Synchronisierung dieses externen Verzeichnisses mit deiner Mediathek genutzt wird."
+
+#. translators: %1$s will be replaced by a name.
+#: app/ExternalFiles/Synchronization.php:351
+msgid "Set interval for %1$s"
+msgstr "Setze Intervall für %1$s"
+
+#: app/ExternalFiles/Synchronization.php:326
+msgid "Choose interval:"
+msgstr "Wähle Intervall:"
+
+#: app/ExternalFiles/Synchronization.php:309
+msgid "Yes, synchronize now"
+msgstr "Ja, synchronisiere jetzt"
+
+#: app/ExternalFiles/Synchronization.php:303
+msgid "Synchronization may take some time."
+msgstr "Die Synchronisierung kann einige Zeit benötigen."
+
+#: app/ExternalFiles/Synchronization.php:302
+msgid "Files that do not belong to this source remain untouched."
+msgstr "Dateien, die nicht zu dieser Quelle gehören, bleiben unverändert."
+
+#: app/ExternalFiles/Synchronization.php:302
+msgid "New files are imported, existing files are retained, files that no longer exist in the source are deleted from the media library."
+msgstr "Neue Dateien werden importiert, vorhandene Dateien bleiben erhalten, Dateien die nicht mehr in der Quelle existieren werden aus der Mediathek gelöscht."
+
+#: app/ExternalFiles/Synchronization.php:302
+msgid "During synchronization, files are synchronized between the source and the media library."
+msgstr "Während der Synchronisierung werden Dateien zwischen der Quelle und der Mediathek abgeglichen."
+
+#: app/ExternalFiles/Synchronization.php:301
+msgid "Are you sure you want to synchronize files from this external directory with your media library?"
+msgstr "Bist du sicher, dass du die Dateien von diesem externen Verzeichnis mit deiner Mediathek synchronisieren willst?"
+
+#: app/ExternalFiles/Synchronization.php:299
+msgid "Synchronize now?"
+msgstr "Jetzt synchronisieren?"
+
+#: app/ExternalFiles/Synchronization.php:203
+msgid "Synchronized files"
+msgstr "Synchronisierte Dateien"
+
+#: app/ExternalFiles/Synchronization.php:180
+msgid "Delete files in media library belonging to an external directory when the connection to the external directory is deleted."
+msgstr "Lösche Dateien in Mediathek die zu einem externen Verzeichnis gehören, wenn die Verbindung zu diesem gelöscht wird."
+
+#: app/ExternalFiles/Synchronization.php:179
+msgid "Delete synchronized files"
+msgstr "Lösche synchronisierte Dateien"
+
+#: app/ExternalFiles/Synchronization.php:167
+msgid "Delete files in the media library that are no longer in the external directory after each synchronization."
+msgstr "Lösche Dateien in der Mediathek die bei einer Synchronisierung nicht mehr im externen Verzeichnis existieren."
+
+#: app/ExternalFiles/Synchronization.php:166
+msgid "Delete unused files"
+msgstr "Lösche nicht verwendete Dateien"
+
+#: app/ExternalFiles/Synchronization.php:154
+msgid "If enabled every new external directory will automatically be synchronized."
+msgstr "Wenn aktiviert wird jedes neue externe Verzeichnis automatisch synchronisiert."
+
+#: app/ExternalFiles/Synchronization.php:153
+msgid "Enable automatic synchronization"
+msgstr "Aktiviere automatische Synchronisation"
+
+#: app/ExternalFiles/Synchronization.php:141
+msgid "Defines the time interval in which the synchronization for new external directories will be processed. This setting can be changed on each external directory."
+msgstr "Legt das Zeitintervall fest in dem die Synchronisation von neuen externen Verzeichnissen ausgeführt wird. Die Einstellung kann pro externem Verzeichnis angepasst werden."
+
+#: app/ExternalFiles/Synchronization.php:140
+msgid "Interval for synchronization"
+msgstr "Intervall zur Synchronisation"
+
+#: app/ExternalFiles/Synchronization.php:129
+msgid "If enabled you can synchronize any supported external directory with your media library."
+msgstr "Wenn aktiviert kannst Du jedes externe Verzeichnis mit deiner Mediathek synchronisieren."
+
+#: app/ExternalFiles/Synchronization.php:128
+msgid "Enable support for synchronization"
+msgstr "Aktiviere Unterstützung für Synchronisation"
+
+#: app/ExternalFiles/Synchronization.php:115
+#: app/ExternalFiles/Synchronization.php:119
+#: app/ExternalFiles/Synchronization.php:204
+msgid "Synchronization"
+msgstr "Synchronisation"
+
+#: app/ExternalFiles/Protocols/Sftp.php:280
+msgid "SFTP-URL could not be not read."
+msgstr "SFTP-URL konnte nicht gelesen werden."
+
+#: app/ExternalFiles/Protocols/Sftp.php:251
+msgid "SFTP-Connection failed."
+msgstr "SFTP-Verbindung fehlgeschlagen."
+
+#: app/ExternalFiles/Protocols/Http.php:91
+msgid "Error during check of availability of URL:"
+msgstr "Fehler beim Prüfen der Verfügbarkeit von URL:"
+
+#: app/ExternalFiles/Protocols/Ftp.php:422
+msgid "Could not get scheme and host from given URL."
+msgstr "Konnte kein Schema und keinen Host von angegebener URL ermitteln."
+
+#: app/ExternalFiles/Protocols/Ftp.php:336
+msgid "Could not get FTP-connection."
+msgstr "Konnte keine FTP-Verbindung herstellen."
+
+#: app/ExternalFiles/Import.php:330
+msgid "The URL will remain external, we simply save the link to the file in the media library."
+msgstr "Die URL bleibt extern, wir speichern nur den Link zu der Datei in der Mediathek."
+
+#: app/ExternalFiles/Import.php:326
+msgid "The temp file for the import was deleted."
+msgstr "Die temporäre Datei für den Import wurde gelöscht."
+
+#: app/ExternalFiles/Import.php:303
+msgid "The URL is saved locally."
+msgstr "Die URL wurde lokal gespeichert."
+
+#: app/ExternalFiles/Import.php:153
+msgid "URL has matched an entry on the blacklist."
+msgstr "URL entspricht einem Eintrag in der Blacklist."
+
+#: app/ExternalFiles/Import.php:98
+msgid "Use a URL"
+msgstr "Verwende eine URL"
+
+#: app/ExternalFiles/Forms.php:194
+msgid "Add Directory Archive"
+msgstr "Verzeichnisarchiv hinzufügen"
+
+#: app/ExternalFiles/Forms.php:193
+msgid "The new interval has been saved."
+msgstr "Das neue Intervall wurde gespeichert."
+
+#: app/ExternalFiles/Forms.php:192
+msgid "Configuration saved"
+msgstr "Konfiguration gespeichert"
+
+#: app/ExternalFiles/Forms.php:191
+msgid "Synchronization in progress"
+msgstr "Synchronisation in Bearbeitung"
+
+#. translators: %1$s will be replaced by the type name (e.g. "Images").
+#: app/ExternalFiles/File_Types.php:146
+msgid "File under this URL has the type %1$s."
+msgstr "Datei unter dieser URL hat den Typ %1$s"
+
+#. translators: %1$s will be replaced by a URL.
+#: app/ExternalFiles/Files.php:1414
+msgid "You can find and use it <a href=\"%1$s\">in the directory archive</a>."
+msgstr "Du kannst sie <a href=\"%1$s\">im Verzeichnisarchiv</a> finden und verwenden."
+
+#: app/ExternalFiles/Files.php:1412
+msgid "The directory has been saved as archive."
+msgstr "Das Verzeichnis wurde als Archiv gespeichert."
+
+#: app/ExternalFiles/Files.php:1410
+msgid "Directory Archive saved"
+msgstr "Verzeichnisarchiv gespeichert"
+
+#: app/ExternalFiles/Files.php:1371
+msgid "The directory could not be saved as a directory archive."
+msgstr "Das Verzeichnis konnte nicht als Verzeichnisarchiv gespeichert werden."
+
+#: app/Dependencies/easySettingsForWordPress/Import.php:94
+msgid "Please choose a JSON-file with settings of <i>Fraunhofer Fokus</i> to import."
+msgstr "Bitte wähle eine JSON-Datei mit Einstellungen zum Import."
+
+#: app/Dependencies/easySettingsForWordPress/Export.php:85
+msgid "You can import this JSON-file in other projects using the WordPress plugin <i>Fraunhofer FOKUS</i>."
+msgstr "Du kannst diese JSON-Datei in andere Projekte importieren, indem du ebenfalls das WordPress-Plugin verwendest."
+
+#: app/Plugin/Tables/Logs.php:296
 msgid "Edit this file"
 msgstr "Diese Datei bearbeiten"
 
-#: app/ExternalFiles/Protocols/Http.php:152
+#: app/ExternalFiles/Protocols/Http.php:150
 msgid "The specified URL is available."
 msgstr "Die angegebene URL ist erreichbar."
 
-#: app/ExternalFiles/Files.php:1198
+#: app/ExternalFiles/Files.php:823
 msgid "URL-File is NOT available"
 msgstr "URL-Datei ist NICHT erreichbar."
 
-#: app/Plugin/Admin/Admin.php:223
+#: app/Plugin/Admin/Admin.php:229
 msgid "Support Forum"
 msgstr "Support-Forum"
 
-#: app/ExternalFiles/Forms.php:229 app/ExternalFiles/Forms.php:303
+#: app/ExternalFiles/Forms.php:246 app/ExternalFiles/Forms.php:325
 msgid "Need help?"
 msgstr "Hilfe benötigt?"
 
-#: app/ThirdParty/WooCommerce.php:263
+#: app/ThirdParty/WooCommerce.php:264
 msgid "WooCommerce product gallery images will be saved as external files on the product."
 msgstr "WooCommerce Produktgalerie Bilder werden als externe Dateien am Produkt gespeichert."
 
-#: app/ThirdParty/WooCommerce.php:239
+#: app/ThirdParty/WooCommerce.php:240
 msgid "WooCommerce product gallery images has been saved as external files."
 msgstr "Die Bilder der WooCommerce-Produktgalerie wurden als externe Dateien gespeichert."
 
-#: app/ThirdParty/WooCommerce.php:206
+#: app/ThirdParty/WooCommerce.php:207
 msgid "Trying to save WooCommerce product gallery images as external files."
 msgstr "Versuche, die Bilder der WooCommerce-Produktgalerie als externe Dateien zu speichern."
 
-#: app/ThirdParty/WooCommerce.php:181
+#: app/ThirdParty/WooCommerce.php:182
 msgid "Save external image file as WooCommerce Product main image."
 msgstr "Speichere die externe Bilddatei als Hauptbild des WooCommerce-Produkts."
 
-#: app/ThirdParty/WooCommerce.php:154
+#: app/ThirdParty/WooCommerce.php:155
 msgid "WooCommerce Product main image has been imported as external file."
 msgstr "Das Hauptbild des WooCommerce-Produkts wurde als externe Datei importiert."
 
-#: app/ThirdParty/WooCommerce.php:135
+#: app/ThirdParty/WooCommerce.php:136
 msgid "Trying to import main image of WooCommerce product as external image."
 msgstr "Versuche, das Hauptbild eines WooCommerce-Produkts als externes Bild zu importieren."
 
@@ -63,103 +505,103 @@ msgstr "Die angegebene Datei ist keine gültige ZIP-Datei!"
 msgid "Given file does not exist!"
 msgstr "Die angegebene Datei existiert nicht!"
 
-#: app/Services/Zip.php:395
+#: app/Services/Zip.php:399
 msgid "PHP-Modul zip is missing!"
 msgstr "PHP-Modul zip fehlt!"
 
 #. translators: %1$s will be replaced by a file path.
-#: app/Services/Zip.php:349
+#: app/Services/Zip.php:353
 msgid "The given path %1$s does not exist on your server."
 msgstr "Der angegebene Pfad %1$s existiert nicht auf deinem Server."
 
 #. translators: %1$s will be replaced by a file path.
-#: app/Services/Zip.php:317
+#: app/Services/Zip.php:321
 msgid "The given path %1$s does not end with \".zip\"!"
 msgstr "Der angegebene Pfad %1$s endet nicht mit \".zip\"!"
 
-#: app/Services/Zip.php:303
+#: app/Services/Zip.php:307
 msgid "The given path does not end with \".zip\"!"
 msgstr "Der angegebene Pfad endet nicht mit \".zip\"!"
 
-#: app/Services/Zip.php:290
+#: app/Services/Zip.php:294
 msgid "No ZIP-file given!"
 msgstr "Keine ZIP-Datei angegeben!"
 
-#: app/Services/Zip.php:251
+#: app/Services/Zip.php:252
 msgid "No data of the file to extract from ZIP could not be loaded."
 msgstr "Es konnten keine Daten der zu extrahierenden Datei aus der ZIP geladen werden."
 
 #. translators: %1$s will be replaced by a file path.
-#: app/Services/Zip.php:239 app/Services/Zip.php:367
+#: app/Services/Zip.php:240 app/Services/Zip.php:371
 msgid "ZIP-file could not be opened for extracting a file from it."
 msgstr "ZIP-Datei konnte nicht geöffnet werden, um eine Datei daraus zu extrahieren."
 
-#: app/Services/Zip.php:218
+#: app/Services/Zip.php:219
 msgid "ZIP-file to use for extracting a file does not exist."
 msgstr "Die ZIP-Datei, die zum Extrahieren einer Datei verwendet werden soll, existiert nicht."
 
-#: app/Services/Zip.php:114 app/Services/Zip.php:331
+#: app/Services/Zip.php:115 app/Services/Zip.php:335
 msgid "PHP-Modul zip is missing! Please contact your hosting support about this problem."
 msgstr "PHP-Modul zip fehlt! Bitte kontaktiere deinen Hosting-Support zu diesem Problem."
 
-#: app/Services/Zip.php:84
+#: app/Services/Zip.php:85
 msgid "Choose file from a ZIP-File"
 msgstr "Datei aus einer ZIP-Datei auswählen"
 
-#: app/Services/Youtube.php:543
+#: app/Services/Youtube.php:559
 msgid "The given API credentials are wrong."
 msgstr "Die angegebenen API-Zugangsdaten sind falsch."
 
-#: app/Services/Youtube.php:521
+#: app/Services/Youtube.php:537
 msgid "API Key missing for Youtube channel"
 msgstr "API-Schlüssel für Youtube-Kanal fehlt"
 
-#: app/Services/Youtube.php:508
+#: app/Services/Youtube.php:524
 msgid "Channel ID missing for Youtube channel"
 msgstr "Channel ID für Youtube-Kanal fehlt"
 
-#: app/Services/Youtube.php:490
+#: app/Services/Youtube.php:502
 msgid "Import all videos"
 msgstr "Importiere alle Videos"
 
-#: app/Services/Youtube.php:141
+#: app/Services/Youtube.php:151
 msgid "Add from your YouTube channel"
 msgstr "Vom Youtube-Kanal hinzufügen"
 
-#: app/Services/Youtube.php:141
+#: app/Services/Youtube.php:151
 msgid "Or add from YouTube channel"
 msgstr "Oder vom Youtube-Kanal hinzufügen"
 
-#: app/Services/Youtube.php:102
+#: app/Services/Youtube.php:110
 msgid "Choose video from a Youtube channel"
 msgstr "Wähle Video von einem Youtube-Kanal"
 
-#: app/Services/Services.php:140
+#: app/Services/Services.php:180
 msgid "Using directories"
 msgstr "Verwende Verzeichnisse"
 
-#: app/Services/Services.php:134
+#: app/Services/Services.php:174
 msgid "Choose the files you want to import in your media library."
-msgstr "Wähle Dateien aus die du in deine Medienbibliothek importieren willst."
+msgstr "Wähle Dateien aus die du in deine Mediathek importieren willst."
 
-#: app/Services/Services.php:133
+#: app/Services/Services.php:173
 msgid "Enter your credentials to use the service for your external directory."
 msgstr "Gib deine Anmeldedaten ein, um den Dienst für dein externes Verzeichnis zu nutzen."
 
-#: app/Services/Services.php:132
+#: app/Services/Services.php:172
 msgid "Choose the service you want to use."
-msgstr "Wähle einen Dienst aus den Du verwenden möchtest."
+msgstr "Wähle einen Dienst aus den du verwenden möchtest."
 
 #. translators: %1$s will be replaced by a URL.
-#: app/Services/Services.php:131
+#: app/Services/Services.php:171
 msgid "Go to Media > <a href=\"%1$s\">Import from directory</a>."
 msgstr "Gehe zu Medien > <a href=\"%1$s\">Import vom Verzeichnis</a>."
 
-#: app/Services/Services.php:128
+#: app/Services/Services.php:168
 msgid "The plugin allows you to integrate files from external directories into your media library."
-msgstr "Das Plugin ermöglicht es dir, Dateien aus externen Verzeichnissen in deine Medienbibliothek zu integrieren."
+msgstr "Das Plugin ermöglicht es dir, Dateien aus externen Verzeichnissen in deine Mediathek zu integrieren."
 
-#: app/Services/Services.php:127
+#: app/Services/Services.php:167
 msgid "Get files from external directory"
 msgstr "Dateien aus externem Verzeichnis abrufen"
 
@@ -175,195 +617,191 @@ msgstr "Oder vom lokalen Serververzeichnis hinzufügen"
 msgid "Google Drive client could not download a requested file during mass-import! Error:"
 msgstr "Google Drive-Client konnte eine angeforderte Datei während des Massenimports herunterladen! Fehler:"
 
-#: app/Services/GoogleDrive/Protocol.php:131
+#: app/Services/GoogleDrive/Protocol.php:133
 msgid "Google Drive client could not download the requested file! Error:"
 msgstr "Der Google Drive-Client konnte die angeforderte Datei herunterladen! Fehler:"
 
-#: app/Services/GoogleDrive/Protocol.php:116
-#: app/Services/GoogleDrive/Protocol.php:213
+#: app/Services/GoogleDrive/Protocol.php:118
+#: app/Services/GoogleDrive/Protocol.php:214
 msgid "Google Drive client could not be initiated!"
 msgstr "Google Drive-Client konnte nicht gestartet werden!"
 
-#: app/Services/GoogleDrive/Protocol.php:103
-#: app/Services/GoogleDrive/Protocol.php:200
+#: app/Services/GoogleDrive/Protocol.php:105
+#: app/Services/GoogleDrive/Protocol.php:201
 msgid "Access token missing to connect to Google Drive!"
 msgstr "API-Token für die Verbindung zu Google Drive fehlt!"
 
-#: app/Services/GoogleDrive/Protocol.php:83
+#: app/Services/GoogleDrive/Protocol.php:85
 msgid "Given URL does not contain a file ID from Google Drive!"
 msgstr "Die angegebene URL enthält keine Datei-ID von Google Drive!"
 
-#: app/Services/GoogleDrive/Client.php:112
+#: app/Services/GoogleDrive/Client.php:120
 msgid "Got error from Google for requested new OAuth token:"
 msgstr "Habe einen Fehler von Google für das angeforderte neue OAuth-Token erhalten:"
 
-#: app/Services/GoogleDrive/Client.php:97
+#: app/Services/GoogleDrive/Client.php:105
 msgid "Got empty response for requested new Google OAuth token!"
 msgstr "Habe eine leere Antwort für das angeforderte neue Google OAuth-Token erhalten!"
 
-#: app/Services/GoogleDrive/Client.php:86
+#: app/Services/GoogleDrive/Client.php:88
 msgid "Google OAuth token expired. Requesting a new one now."
 msgstr "Google OAuth-Token ist abgelaufen. Fordere jetzt ein neues an."
 
 #. translators: %1$s will be replaced by the username.
-#: app/Services/GoogleDrive/Cli.php:151
+#: app/Services/GoogleDrive/Cli.php:149
 msgid "Token has not been refreshed for user %1$s."
 msgstr "Der Token wurde für den Benutzer %1$s nicht aktualisiert."
 
 #. translators: %1$s will be replaced by the username.
-#: app/Services/GoogleDrive/Cli.php:147
+#: app/Services/GoogleDrive/Cli.php:145
 msgid "Token has been refreshed for user %1$s."
 msgstr "Der Token wurde für den Benutzer %1$s aktualisiert."
 
-#: app/Services/GoogleDrive/Cli.php:122
+#: app/Services/GoogleDrive/Cli.php:120
 msgid "No access token found for any user!"
 msgstr "Kein Zugriffstoken für irgendeinen Benutzer gefunden!"
 
 #. translators: %1$d will be replaced by a number.
-#: app/Services/GoogleDrive/Cli.php:102
+#: app/Services/GoogleDrive/Cli.php:100
 msgid "%1$d files found for user %2$s."
 msgstr "%1$d Dateien für Benutzer %2$s gefunden."
 
 #. translators: %1$s will be replaced by the username.
-#: app/Services/GoogleDrive/Cli.php:97
+#: app/Services/GoogleDrive/Cli.php:95
 msgid "No files found for user %1$s!"
 msgstr "Keine Dateien für Benutzer %1$s gefunden!"
 
 #. translators: %1$s will be replaced by the username.
-#: app/Services/GoogleDrive/Cli.php:85
+#: app/Services/GoogleDrive/Cli.php:83
 msgid "List of files could not be loaded from Google Drive for user %1$s. Error:"
 msgstr "Liste der Dateien konnte nicht von Google Drive für den Nutzer %1$s geladen werden. Fehler:"
 
 #. translators: %1$s will be replaced by an ID.
 #. translators: %1$s will be replaced by the User ID.
-#: app/Services/GoogleDrive/Cli.php:56 app/Services/GoogleDrive/Cli.php:136
+#: app/Services/GoogleDrive/Cli.php:54 app/Services/GoogleDrive/Cli.php:134
 msgid "User with ID %1$d could not be found!"
 msgstr "Der Benutzer mit der ID %1$d konnte nicht gefunden werden!"
 
-#: app/Services/GoogleDrive/Cli.php:42
+#: app/Services/GoogleDrive/Cli.php:40
 msgid "Wrong format for access tokens!"
 msgstr "Falsches Format für API-Token!"
 
-#: app/Services/GoogleDrive/Cli.php:37
+#: app/Services/GoogleDrive/Cli.php:35
 msgid "No access tokens found for any user!"
 msgstr "Keine API-Token für irgendeinen Benutzer gefunden!"
 
-#: app/Services/GoogleDrive.php:954
-msgid "Got empty response for refreshing the token."
-msgstr "Erhielt leere Antwort auf die Aktualisierung des Tokens."
-
-#: app/Services/GoogleDrive.php:951
+#: app/Services/GoogleDrive.php:985
 msgid "Error on request to get refreshed token."
 msgstr "Fehler bei der Anforderung, ein aktualisiertes Token zu erhalten."
 
-#: app/Services/GoogleDrive.php:828
+#: app/Services/GoogleDrive.php:857
 msgid "Go to Google Drive"
 msgstr "Gehe zu Google Drive"
 
-#: app/Services/GoogleDrive.php:707 app/Services/GoogleDrive/Protocol.php:234
+#: app/Services/GoogleDrive.php:736 app/Services/GoogleDrive/Protocol.php:235
 msgid "List of files could not be loaded from Google Drive. Error:"
 msgstr "Liste der Dateien konnte nicht von Google Drive geladen werden. Fehler:"
 
-#: app/Services/GoogleDrive.php:660
+#: app/Services/GoogleDrive.php:688
 msgid "Add from your Google Drive"
 msgstr "Von deinem Google Drive hinzufügen"
 
-#: app/Services/GoogleDrive.php:660
+#: app/Services/GoogleDrive.php:688
 msgid "Or add from your Google Drive"
 msgstr "Oder von deinem Google Drive hinzufügen"
 
-#: app/Services/GoogleDrive.php:600
+#: app/Services/GoogleDrive.php:628
 msgid "Got error from Google OAuth:"
 msgstr "Erhielt Fehler von Google OAuth:"
 
 #. translators: %1$s will be replaced by the username.
-#: app/Services/GoogleDrive.php:339
+#: app/Services/GoogleDrive.php:358
 msgid "New Google OAuth token saved for user %1$s."
 msgstr "Neuer Google OAuth token wurde für den Nutzer %1$s gespeichert."
 
-#: app/Services/GoogleDrive.php:247
+#: app/Services/GoogleDrive.php:250
 msgid "Show trashed files"
 msgstr "Zeige gelöschte Dateien"
 
-#: app/Services/GoogleDrive.php:237
+#: app/Services/GoogleDrive.php:240
 msgid "Show shared files"
 msgstr "Zeige geteilte Dateien"
 
 #. translators: %1$s will be replaced by a date and time.
-#: app/Services/GoogleDrive.php:215
+#: app/Services/GoogleDrive.php:218
 msgid "View and import files"
 msgstr "Zeige und importiere Dateien"
 
 #. translators: %1$s will be replaced by a date and time.
-#: app/Services/GoogleDrive.php:215
+#: app/Services/GoogleDrive.php:218
 msgid "Created at %1$s"
 msgstr "Erstellt am %1$s"
 
-#: app/Services/GoogleDrive.php:210
+#: app/Services/GoogleDrive.php:213
 msgid "Disconnect"
 msgstr "Trennen"
 
-#: app/Services/GoogleDrive.php:198
+#: app/Services/GoogleDrive.php:201
 msgid "Disconnect now"
 msgstr "Verbindung trennen"
 
-#: app/Services/GoogleDrive.php:192
+#: app/Services/GoogleDrive.php:195
 msgid "Files you downloaded in the media library will still be there and usable."
 msgstr "Dateien, die in die Mediathek heruntergeladen wurden, sind weiterhin vorhanden und können verwendet werden."
 
-#: app/Services/GoogleDrive.php:191
+#: app/Services/GoogleDrive.php:194
 msgid "Click on the button below to disconnect your Google Drive from your website."
-msgstr "Klicke auf die Schaltfläche unten, um die Verbindung zwischen deinem GoogleDrive und deiner Website zu trennen."
+msgstr "Klicke auf den Button unten, um die Verbindung zwischen deinem GoogleDrive und deiner Website zu trennen."
 
-#: app/Services/GoogleDrive.php:189
+#: app/Services/GoogleDrive.php:192
 msgid "Disconnect Google Drive"
 msgstr "Google Drive trennen"
 
-#: app/Services/GoogleDrive.php:175 app/Services/GoogleDrive.php:209
+#: app/Services/GoogleDrive.php:178 app/Services/GoogleDrive.php:212
 msgid "API connection"
 msgstr "API Verbindung"
 
-#: app/Services/GoogleDrive.php:164 app/Services/GoogleDrive.php:176
+#: app/Services/GoogleDrive.php:167 app/Services/GoogleDrive.php:179
 msgid "Connect now"
 msgstr "Jetzt verbinden"
 
-#: app/Services/GoogleDrive.php:158
+#: app/Services/GoogleDrive.php:161
 msgid "Click on the button below to connect your Google Drive with your website."
 msgstr "Klicke auf den Button unterhalb um dein Google Drive mit deiner Website zu verbinden."
 
-#: app/Services/GoogleDrive.php:157
+#: app/Services/GoogleDrive.php:160
 msgid "You will also be directed to the website of the plugin developer. This is necessary to allow you to easily share your Google Drive account. No data about you will be stored in this context."
 msgstr "Du wirst auf Website des Plugin-Entwicklers weitergeleitet. Dies ist erforderlich, damit du dein Google Drive-Konto problemlos freigeben kannst. In diesem Zusammenhang werden keine Daten von dir gespeichert."
 
-#: app/Services/GoogleDrive.php:156
+#: app/Services/GoogleDrive.php:159
 msgid "You will be directed to a Google dialog. Follow this and confirm the approvals."
 msgstr "Du wirst zu deinem einem Google-Dialog weitergeleitet. Folge diesem und bestätige die Genehmigungen."
 
-#: app/Services/GoogleDrive.php:154
+#: app/Services/GoogleDrive.php:157
 msgid "Connect Google Drive"
 msgstr "Google Drive verbinden"
 
-#: app/Services/GoogleDrive.php:126 app/Services/GoogleDrive.php:130
+#: app/Services/GoogleDrive.php:129 app/Services/GoogleDrive.php:133
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: app/Services/GoogleDrive.php:94
+#: app/Services/GoogleDrive.php:97
 msgid "Choose file from your Google Drive"
 msgstr "Wähle Datei von deinem Google Drive"
 
-#: app/Services/Ftp.php:349
+#: app/Services/Ftp.php:387
 msgid "Connection to FTP failed! Reason:"
 msgstr "Verbindung per FTP fehlgeschlagen. Grund:"
 
-#: app/Services/Ftp.php:336
+#: app/Services/Ftp.php:374
 msgid "Connection to FTP failed! Check the log for details."
 msgstr "Verbindung per FTP fehlgeschlagen! Prüfe das Protokoll für Details dazu."
 
-#: app/Services/Ftp.php:316
-msgid "Given URL is not a FTP-path! Should be one if sftp:// or ftps://."
-msgstr "Die angegebene URL ist kein FTP-Pfad! Dieser sollte mit sftp:// oder ftps:// beginnen."
+#: app/Services/Ftp.php:354
+msgid "Given URL is not a FTP-path! Should be one of sftp:// or ftps://."
+msgstr "Die angegebene URL ist kein FTP-Pfad! Dieser sollte sftp:// oder ftps:// sein."
 
-#: app/Services/Ftp.php:290 app/Services/Local.php:134
+#: app/Services/Ftp.php:324
 msgid "Import active directory"
 msgstr "Importiere aktuelles Verzeichnis"
 
@@ -379,300 +817,255 @@ msgstr "Oder von deinem FTP-Verzeichnis"
 msgid "Choose file from a FTP server"
 msgstr "Wähle Datei von einem FTP-Server"
 
-#: app/Plugin/Settings/Tables/Table.php:133
+#: app/Dependencies/easySettingsForWordPress/Tables/Table.php:133
 msgid "No entries found."
 msgstr "Keine Einträge gefunden."
 
-#: app/Plugin/Settings/Tables/Table.php:61
+#: app/Dependencies/easySettingsForWordPress/Tables/Table.php:61
 msgid "Entry"
 msgstr "Eintrag"
 
-#: app/Plugin/Settings.php:888
+#: app/Plugin/Settings.php:919
 msgid "We recommend emptying the cache of the proxy. Click on the button below to do this."
-msgstr "Wir empfehlen, den Cache des Proxys zu leeren. Klicke auf die Schaltfläche unten, um dies zu tun."
+msgstr "Wir empfehlen, den Cache des Proxys zu leeren. Klicke auf den Button unten, um dies zu tun."
 
-#: app/Plugin/Settings.php:888
+#: app/Plugin/Settings.php:919
 msgid "The proxy state has been changed."
 msgstr "Der Proxy-Status wurde geändert."
 
-#: app/Plugin/Settings.php:334
+#: app/Plugin/Settings.php:339
 msgid "If this option is enabled the file preview in directory listings will not be used. This might increase the loading speed of directory listings."
 msgstr "Wenn diese Option aktiviert ist, wird die Dateivorschau in Verzeichnislisten nicht verwendet. Dies kann die Ladegeschwindigkeit der Verzeichnislisten erhöhen."
 
-#: app/Plugin/Settings.php:333
+#: app/Plugin/Settings.php:338
 msgid "Disable file preview in directory listings"
 msgstr "Dateivorschau in Verzeichnisauflistungen deaktivieren"
 
-#: app/Plugin/Admin/Directory_Listing.php:324
+#: app/Plugin/Admin/Directory_Listing.php:360
 msgid "Choose file from local server directory"
 msgstr "Datei aus dem lokalen Serververzeichnis auswählen"
 
-#: app/Plugin/Admin/Directory_Listing.php:323
+#: app/Plugin/Admin/Directory_Listing.php:359
 msgid "Local server directory"
 msgstr "Lokales Speicherverzeichnis:"
 
-#: app/Plugin/Admin/Directory_Listing.php:306
+#: app/Plugin/Admin/Directory_Listing.php:342
 msgid "Server-IP or -name (starting with ftp:// or ftps://)"
 msgstr "Server-IP oder -name (beginnend mit ftp:// oder ftps://)"
 
-#: app/Plugin/Admin/Directory_Listing.php:300
-#: app/Plugin/Admin/Directory_Listing.php:318
+#: app/Plugin/Admin/Directory_Listing.php:336
+#: app/Plugin/Admin/Directory_Listing.php:354
 msgid "Show directory"
 msgstr "Verzeichnis anzeigen"
 
-#: app/Plugin/Admin/Directory_Listing.php:297
-#: app/Plugin/Admin/Directory_Listing.php:315
+#: app/Plugin/Admin/Directory_Listing.php:333
+#: app/Plugin/Admin/Directory_Listing.php:351
 msgid "Save this credentials in directory archive"
 msgstr "Speichere diese Anmeldeinformationen im Verzeichnis-Archiv"
 
-#: app/Plugin/Admin/Directory_Listing.php:291
+#: app/Plugin/Admin/Directory_Listing.php:327
 msgid "Channel-ID"
 msgstr "Kanal-ID"
 
-#: app/Plugin/Admin/Directory_Listing.php:289
-#: app/Plugin/Admin/Directory_Listing.php:304
+#: app/Plugin/Admin/Directory_Listing.php:325
+#: app/Plugin/Admin/Directory_Listing.php:340
 msgid "Enter your credentials"
 msgstr "Gibt deine Anmeldedaten ein"
 
-#: app/Plugin/Admin/Directory_Listing.php:285
+#: app/Plugin/Admin/Directory_Listing.php:321
 msgid "Use this file"
 msgstr "Verwende diese Datei"
 
-#: app/Plugin/Admin/Directory_Listing.php:282
+#: app/Plugin/Admin/Directory_Listing.php:318
 msgid "Path to the ZIP-file"
 msgstr "Pfad zur ZIP-Datei"
 
 #. translators: %1$s will be replaced by a file path.
-#: app/Plugin/Admin/Directory_Listing.php:280
+#: app/Plugin/Admin/Directory_Listing.php:316
 msgid "Enter the path to a ZIP file on your hosting. Must start with \"file://%1$s\" and end with \".zip\"."
 msgstr "Gib den Pfad zu einer ZIP-Datei auf deinem Hosting ein. Muss mit \"file://%1$s\" beginnen und mit \".zip\" enden."
 
-#: app/Plugin/Admin/Directory_Listing.php:278
-msgid "Enter the path to a local ZIP-file"
-msgstr "Gibt den Pfad zu einer lokalen ZIP-Datei ein"
+#: app/Plugin/Admin/Directory_Listing.php:314
+msgid "Enter the path to a ZIP-file"
+msgstr "Gibt den Pfad zu einer ZIP-Datei ein"
 
-#: app/Plugin/Admin/Directory_Listing.php:275
-#: app/Plugin/Admin/Directory_Listing.php:294
+#: app/Plugin/Admin/Directory_Listing.php:311
+#: app/Plugin/Admin/Directory_Listing.php:330
 msgid "API Key"
 msgstr "API Key"
 
-#: app/Plugin/Admin/Directory_Listing.php:272
+#: app/Plugin/Admin/Directory_Listing.php:308
 msgid "Type could not be loaded!"
 msgstr "Typ konnte nicht geladen werden!"
 
-#: app/Plugin/Admin/Directory_Listing.php:271 app/Services/GoogleDrive.php:862
+#: app/Plugin/Admin/Directory_Listing.php:307 app/Services/GoogleDrive.php:895
 msgid "Connect"
 msgstr "Verbinden"
 
-#: app/Plugin/Admin/Directory_Listing.php:270
+#: app/Plugin/Admin/Directory_Listing.php:306
 msgid "Type"
 msgstr "Typ"
 
-#: app/Plugin/Admin/Directory_Listing.php:268
-msgid "Directory Credential deleted."
-msgstr "Verzeichniszugangsdaten gelöscht."
-
-#: app/Plugin/Admin/Directory_Listing.php:267
-msgid "Directory Credential updated."
-msgstr "Verzeichniszugangsdaten aktualisiert."
-
-#: app/Plugin/Admin/Directory_Listing.php:264
-msgid "Back to Directory Credentials"
-msgstr "Zurück zu Verzeichniszugangsdaten"
-
-#: app/Plugin/Admin/Directory_Listing.php:263
-msgid "Directory Credentials"
-msgstr "Verzeichniszugangsdaten"
-
-#: app/Plugin/Admin/Directory_Listing.php:262
-msgid "Update Directory Credential"
-msgstr "Aktualisiere Verzeichniszugangsdaten"
-
-#: app/Plugin/Admin/Directory_Listing.php:261
-msgid "Edit Directory Credential"
-msgstr "Bearbeite Verzeichniszugangsdaten"
-
-#: app/Plugin/Admin/Directory_Listing.php:260
-msgid "Search Directory Credential"
-msgstr "Suche Verzeichniszugangsdaten"
-
-#: app/Plugin/Admin/Directory_Listing.php:259
+#: app/Plugin/Admin/Directory_Listing.php:293
 msgctxt "taxonomy singular name"
-msgid "Directory Credential"
-msgstr "Verzeichniszugangsdaten"
+msgid "Directory Archive"
+msgstr "Verzeichnisarchiv"
 
-#: app/Plugin/Admin/Directory_Listing.php:258
+#: app/Plugin/Admin/Directory_Listing.php:292
 msgctxt "taxonomy general name"
-msgid "Directory Credentials"
-msgstr "Verzeichniszugangsdaten"
+msgid "Directory Archives"
+msgstr "Verzeichnisarchive"
 
-#: app/Plugin/Admin/Directory_Listing.php:256
+#: app/Plugin/Admin/Directory_Listing.php:290
 msgid "Open now"
 msgstr "Jetzt öffnen"
 
-#: app/Plugin/Admin/Directory_Listing.php:254
+#: app/Plugin/Admin/Directory_Listing.php:288
 msgid "Incorrect response received from the server, possibly a server-side error."
 msgstr "Falsche Antwort vom Server erhalten, möglicherweise ein serverseitiger Fehler."
 
-#: app/Plugin/Admin/Directory_Listing.php:251
+#: app/Plugin/Admin/Directory_Listing.php:285
 msgid "Loaded an empty directory. This could also mean that the files in the directory cannot be imported into WordPress, e.g. because they have a non-approved file type."
 msgstr "Es wurde ein leeres Verzeichnis geladen. Dies kann auch bedeuten, dass die Dateien im Verzeichnis nicht in WordPress importiert werden können, z. B. weil sie einen nicht zugelassenen Dateityp haben."
 
-#: app/Plugin/Admin/Directory_Listing.php:250
+#: app/Plugin/Admin/Directory_Listing.php:284
 msgid "Secure token for Directory Listing missing!"
 msgstr "Sicheres Token für Verzeichnisauflistung fehlt!"
 
-#: app/Plugin/Admin/Directory_Listing.php:249
+#: app/Plugin/Admin/Directory_Listing.php:283
 msgid "Configuration for Directory Listing missing!"
 msgstr "Konfiguration für Verzeichnisauflistung fehlt!"
 
-#: app/Plugin/Admin/Directory_Listing.php:247
+#: app/Plugin/Admin/Directory_Listing.php:281
 msgid "Size"
 msgstr "Größe"
 
-#: app/Plugin/Admin/Directory_Listing.php:246
+#: app/Plugin/Admin/Directory_Listing.php:280
 msgid "Filename"
 msgstr "Dateiname"
 
-#: app/Plugin/Admin/Directory_Listing.php:245
+#: app/Plugin/Admin/Directory_Listing.php:279
 msgid "Actions"
 msgstr "Aktionen"
 
-#: app/Plugin/Admin/Directory_Listing.php:244
+#: app/Plugin/Admin/Directory_Listing.php:278
 msgid "Import this directory"
 msgstr "Importiere aktuelles Verzeichnis"
 
-#: app/Plugin/Admin/Directory_Listing.php:243
+#: app/Plugin/Admin/Directory_Listing.php:277
 msgid "Reload"
 msgstr "Neu laden"
 
-#: app/Plugin/Admin/Directory_Listing.php:242
+#: app/Plugin/Admin/Directory_Listing.php:276
 msgid "Directory could not be loaded."
 msgstr "Verzeichnis konnte nicht geladen werden."
 
-#: app/Plugin/Admin/Directory_Listing.php:241
+#: app/Plugin/Admin/Directory_Listing.php:275
 msgid "Please wait, list is loading."
 msgstr "Bitte warten, Liste lädt."
 
-#: app/Plugin/Admin/Directory_Listing.php:169
+#: app/Plugin/Admin/Directory_Listing.php:196
 msgid "Your directory archive"
 msgstr "Dein Verzeichnisarchiv"
 
-#: app/Plugin/Admin/Directory_Listing.php:145
-msgid "Choose protocol"
-msgstr "Wähle Protokoll"
-
-#: app/Plugin/Admin/Directory_Listing.php:99
-#: app/Plugin/Admin/Directory_Listing.php:100
-msgid "Import from directories"
-msgstr "Import aus Verzeichnissen"
-
-#: app/ExternalFiles/Protocols/Sftp.php:240
+#: app/ExternalFiles/Protocols/Sftp.php:259
 msgid "SFTP-URL is not readable."
 msgstr "SFTP-URL ist nicht lesbar."
 
-#: app/ExternalFiles/Protocols/Ftp.php:318
+#: app/ExternalFiles/Protocols/Ftp.php:344
 msgid "FTP-URL is not readable."
 msgstr "FTP-URL ist nicht lesbar."
 
 #. translators: %1$s will be replaced by a protocol name (like SFTP).
-#: app/ExternalFiles/Protocols.php:127
+#: app/ExternalFiles/Protocols.php:121
 msgid "The given URL is not compatible with the protocol %1$s. Further tests for other protocols will follow."
 msgstr "Die angegebene URL ist nicht kompatibel mit dem Protokoll %1$s. Weitere Tests für andere Protokolle werden folgen."
 
 #. translators: %1$s will be replaced by a protocol name (like SFTP).
-#: app/ExternalFiles/Protocols.php:120
+#: app/ExternalFiles/Protocols.php:114
 msgid "The protocol %1$s is not usable in this hosting."
 msgstr "Das Protokoll %1$s ist in diesem Hosting nicht verwendbar."
 
 #. translators: %1$s will be replaced by a name.
-#: app/ExternalFiles/Protocols.php:113
+#: app/ExternalFiles/Protocols.php:107
 msgid "Protocol %1$s is not a Protocol_Base object."
 msgstr "Protokoll %1$s ist kein Protocol_Base-Objekt."
 
 #. translators: %1$s will be replaced by a name.
-#: app/ExternalFiles/Protocols.php:103
+#: app/ExternalFiles/Protocols.php:97
 msgid "Protocol %1$s does not exist as object."
 msgstr "Das Protokoll %1$s existiert nicht als Objekt."
 
-#: app/ExternalFiles/Protocols.php:96
-msgid "Got faulty protocol:"
-msgstr "Das Protokoll ist fehlerhaft:"
-
-#: app/ExternalFiles/Forms.php:806
+#: app/ExternalFiles/Forms.php:831
 msgid "Use below credentials to import these URLs"
 msgstr "Verwende die folgenden Anmeldeinformationen, um diese URLs zu importieren"
 
-#: app/ExternalFiles/Forms.php:791
+#: app/ExternalFiles/Forms.php:816
 msgid "Use below credentials to import the URL"
 msgstr "Verwende die folgenden Anmeldeinformationen, um die URL zu importieren"
 
-#: app/ExternalFiles/Forms.php:605 app/ExternalFiles/Forms.php:629
+#: app/ExternalFiles/Forms.php:630 app/ExternalFiles/Forms.php:654
 msgid "Import has been executed"
 msgstr "Der Import wurde ausgeführt"
 
-#: app/ExternalFiles/Forms.php:566
+#: app/ExternalFiles/Forms.php:591
 msgid "The following error has occurred:"
 msgid_plural "The following errors have occurred:"
 msgstr[0] "Der folgende Fehler ist aufgetreten:"
 msgstr[1] "Die folgenden Fehler sind aufgetreten:"
 
 #. translators: %1$s will be replaced by the image sizes.
-#: app/ExternalFiles/Files.php:1370
+#: app/ExternalFiles/Files.php:1005
 msgid "Generated new thumb for %1$s"
 msgstr "Neues Vorschaubild für %1$s generiert"
 
 #. translators: %1$s will be replaced by the image sizes.
-#: app/ExternalFiles/Files.php:1323
+#: app/ExternalFiles/Files.php:948
 msgid "Loading thumb from cache for %1$s"
 msgstr "Lade Vorschaubild aus dem Cache für %1$s"
 
-#: app/ExternalFiles/Files.php:1146
+#: app/ExternalFiles/Files.php:776
 msgid "Error during switch to local hosting."
 msgstr "Fehler beim Wechsel zum lokalen Hosting."
 
-#: app/ExternalFiles/Files.php:1130
+#: app/ExternalFiles/Files.php:760
 msgid "Error during switch to external hosting."
 msgstr "Fehler beim Wechsel zum externen Hosting."
 
-#: app/ExternalFiles/Files.php:959
+#: app/ExternalFiles/Files.php:610
 msgid "Proxy is disabled for this file type."
 msgstr "Proxy ist für diesen Dateityp deaktiviert."
 
-#: app/ExternalFiles/Files.php:522
+#: app/ExternalFiles/Import.php:395
 msgid "Using following settings to save this URL:"
 msgstr "Verwende die folgenden Einstellungen, um diese URL zu speichern:"
 
-#: app/ExternalFiles/Files.php:453
-msgid "Temp-file for import has been deleted."
-msgstr "Die Temp-Datei für den Import wurde gelöscht."
-
-#: app/Plugin/Settings.php:320
+#: app/Plugin/Settings.php:325
 msgid "If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used."
-msgstr "Wenn diese Option aktiviert ist, werden alle externen Dateien in der Medienbibliothek mit dem vom externen Speicherort festgelegten Datum gespeichert. Wenn der externe Speicherort kein Datum festlegt, wird das aktuelle Datum verwendet."
+msgstr "Wenn diese Option aktiviert ist, werden alle externen Dateien in der Mediathek mit dem vom externen Speicherort festgelegten Datum gespeichert. Wenn der externe Speicherort kein Datum festlegt, wird das aktuelle Datum verwendet."
 
-#: app/Plugin/Settings.php:319
+#: app/Plugin/Settings.php:324
 msgid "Use external file dates"
 msgstr "Verwende externe Datei-Datumsangaben"
 
 #: app/ExternalFiles/Protocols/File.php:83
-#: app/ExternalFiles/Protocols/Ftp.php:210
+#: app/ExternalFiles/Protocols/Ftp.php:222
 msgid "Given file already exist in media library."
-msgstr "Die angegebene Datei existiert bereits in der Medienbibliothek."
+msgstr "Die angegebene Datei existiert bereits in der Mediathek."
 
-#: app/ExternalFiles/Forms.php:791 app/ExternalFiles/Forms.php:806
+#: app/ExternalFiles/Forms.php:816 app/ExternalFiles/Forms.php:831
 msgid "Files with credentials are saved locally."
 msgstr "Dateien mit Zugangsdaten werden lokal gespeichert."
 
-#: app/ThirdParty/WooCommerce.php:115
+#: app/ThirdParty/WooCommerce.php:116
 msgid "If enabled any external hosted images during CSV-import will be handled as external files by this plugin."
 msgstr "Wenn diese Option aktiviert ist, werden alle extern gehosteten Bilder während des CSV-Imports von diesem Plugin als externe Dateien behandelt."
 
-#: app/ThirdParty/WooCommerce.php:114
+#: app/ThirdParty/WooCommerce.php:115
 msgid "Enable support for WooCommerce"
 msgstr "Aktiviere Unterstützung für WooCommerce"
 
-#: app/ThirdParty/WooCommerce.php:101 app/ThirdParty/WooCommerce.php:105
+#: app/ThirdParty/WooCommerce.php:102 app/ThirdParty/WooCommerce.php:106
 msgid "WooCommerce"
 msgstr "WooCommerce"
 
@@ -680,119 +1073,115 @@ msgstr "WooCommerce"
 msgid "This is handled by Rank Math."
 msgstr "Das wird durch Rank Math übernommen."
 
-#: app/Services/Imgur.php:162
-msgid "Given Imgur-URL could not be used as external embed image in websites."
-msgstr "Die angegebene Imgur-URL kann nicht als externes Bild in Websites eingebettet werden."
-
-#: app/Services/GoogleDrive.php:411
+#: app/Services/GoogleDrive.php:430
 msgid "Given GoogleDrive-URL could not be used as external file in websites."
 msgstr "Die angegebene GoogleDrive-URL kann nicht als externe, eingebettete Datei in Websites verwendet werden."
 
-#: app/ThirdParty/Exmage.php:128
+#: app/ThirdParty/Exmage.php:138
 msgid "Migrate now"
 msgstr "Jetzt migrieren"
 
-#: app/ThirdParty/Exmage.php:128
+#: app/ThirdParty/Exmage.php:138
 msgid "<strong>We detected that you are using Exmage - great!</strong> Click on the following button to migrate the Exmage-files."
-msgstr "<strong>Wir haben festgestellt, dass Sie Exmage verwenden - großartig!</strong> Klicken Sie auf die folgende Schaltfläche, um die Exmage-Dateien zu migrieren."
+msgstr "<strong>Wir haben festgestellt, dass du Exmage verwendest - großartig!</strong> Klicke auf den folgenden Button, um die Exmage-Dateien zu migrieren."
 
-#: app/ThirdParty/Exmage.php:115
+#: app/ThirdParty/Exmage.php:117
 msgid "Yes, migrate"
 msgstr "Ja, migrieren"
 
-#: app/ThirdParty/Exmage.php:109
+#: app/ThirdParty/Exmage.php:111
 msgid "Hint: create a backup before you run this migration."
-msgstr "Tipp: Erstelle eine Sicherung, bevor Du diese Migration durchführst."
+msgstr "Tipp: Erstelle eine Sicherung, bevor du diese Migration durchführst."
 
-#: app/ThirdParty/Exmage.php:108
+#: app/ThirdParty/Exmage.php:110
 msgid "After the migration you will not be able to use the Exmage functions on your files. But you could use the features of External Files for Media Library."
-msgstr "Nach der Migration kannst Du die Exmage-Funktionen für deine Dateien nicht mehr verwenden. Du kannst aber die Funktionen von Externen Dateien in der Medienbibliothek nutzen."
+msgstr "Nach der Migration kannst du die Exmage-Funktionen für deine Dateien nicht mehr verwenden. Du kannst aber die Funktionen von Externen Dateien in der Mediathek nutzen."
+
+#: app/ThirdParty/Exmage.php:109
+msgid "Are you sure you want to migrate your files?"
+msgstr "Möchtest du die Dateien wirklich migrieren?"
 
 #: app/ThirdParty/Exmage.php:107
-msgid "Are you sure you want to migrate your files?"
-msgstr "Möchtest Du die Dateien wirklich migrieren?"
-
-#: app/ThirdParty/Exmage.php:105
 msgid "Migrate from Exmage to External Files for Media Library"
-msgstr "Migriere von Exmage zu Externe Dateien in der Medien Bibliothek"
+msgstr "Migriere von Exmage zu Externe Dateien in der Mediathek"
 
-#: app/Plugin/Tables/Queue.php:357
+#: app/Plugin/Tables/Queue.php:387
 msgid "Process entry"
 msgstr "Verarbeite Eintrag"
 
-#: app/Plugin/Tables/Queue.php:340
+#: app/Plugin/Tables/Queue.php:364
 msgid "The URL will be imported as external file. You may be want to import this URL through the automatic import of the queue."
-msgstr "Die URL wird als externe Datei importiert. Möglicherweise möchtest Du diese URL über den automatischen Import der Warteschlange importieren."
+msgstr "Die URL wird als externe Datei importiert. Möglicherweise möchtest du diese URL über den automatischen Import der Warteschlange importieren."
 
-#: app/Plugin/Tables/Queue.php:340
+#: app/Plugin/Tables/Queue.php:364
 msgid "Are you sure you want to process this queue entry now?"
-msgstr "Bist Du sicher, dass du diesen Eintrag in der Warteschlange jetzt verarbeiten lassen willst?"
+msgstr "Bist du sicher, dass du diesen Eintrag in der Warteschlange jetzt verarbeiten lassen willst?"
 
-#: app/Plugin/Tables/Queue.php:338
+#: app/Plugin/Tables/Queue.php:362
 msgid "Process queue entry"
 msgstr "Verarbeite Eintrag der Warteschlange"
 
-#: app/Plugin/Tables/Queue.php:307
+#: app/Plugin/Tables/Queue.php:325
 msgid "The URL will not be imported. You can add the URL any time again."
 msgstr "Die URL wird nicht importiert. Du kannst die URL jederzeit wieder hinzufügen."
 
-#: app/Plugin/Tables/Queue.php:307
+#: app/Plugin/Tables/Queue.php:325
 msgid "Are you sure you want to delete this queue entry?"
 msgstr "Bist Du sicher, dass du diesen Eintrag in der Warteschlange löschen möchtest?"
 
-#: app/Plugin/Tables/Queue.php:305
+#: app/Plugin/Tables/Queue.php:323
 msgid "Delete queue entry"
 msgstr "Lösche Eintrag in Warteschlange"
 
-#: app/Plugin/Tables/Queue.php:248
+#: app/Plugin/Tables/Queue.php:266
 msgid "Will be processed"
 msgstr "Wird verarbeitet"
 
-#: app/Plugin/Tables/Queue.php:235
+#: app/Plugin/Tables/Queue.php:253
 msgid "No entries in queue found."
 msgstr "Keine Einträge in Warteschlange gefunden."
 
-#: app/Plugin/Tables/Queue.php:226
+#: app/Plugin/Tables/Queue.php:244
 msgid "Delete error entries"
 msgstr "Lösche Einträge zu Fehlern"
 
-#: app/Plugin/Tables/Queue.php:215
+#: app/Plugin/Tables/Queue.php:227
 msgid "Yes, delete them"
 msgstr "Ja, lösche sie"
 
-#: app/Plugin/Tables/Queue.php:209
+#: app/Plugin/Tables/Queue.php:221
 msgid "Every entry with state \"error\" in the queue will be deleted."
 msgstr "Jeder Eintrag mit dem Status \"Fehler\" in der Warteschlange wird gelöscht."
 
-#: app/Plugin/Tables/Queue.php:208
+#: app/Plugin/Tables/Queue.php:220
 msgid "Are you sure you want to delete error entries in the queue now?"
 msgstr "Bist Du sicher, dass du die Fehlereinträge in der Warteschlange jetzt löschen willst?"
 
-#: app/Plugin/Tables/Queue.php:206
+#: app/Plugin/Tables/Queue.php:218
 msgid "Delete error entries in the queue now"
 msgstr "Fehlereinträge in der Warteschlange jetzt löschen"
 
-#: app/Plugin/Tables/Queue.php:189
+#: app/Plugin/Tables/Queue.php:201
 msgid "Clear queue"
 msgstr "Warteschlange leeren"
 
-#: app/Plugin/Tables/Queue.php:178
+#: app/Plugin/Tables/Queue.php:184
 msgid "Yes, clear the queue"
 msgstr "Ja, lösche die Warteschlange"
 
-#: app/Plugin/Tables/Queue.php:172
+#: app/Plugin/Tables/Queue.php:178
 msgid "Every entry in the queue will be deleted."
 msgstr "Jeder Eintrag in der Warteschlange wird gelöscht."
 
-#: app/Plugin/Tables/Queue.php:171
+#: app/Plugin/Tables/Queue.php:177
 msgid "Are you sure you want to clear the queue now?"
 msgstr "Bist Du sicher, dass du die Warteschlange jetzt leeren willst?"
 
-#: app/Plugin/Tables/Queue.php:169
+#: app/Plugin/Tables/Queue.php:175
 msgid "Clear the queue now"
 msgstr "Leere die Warteschlange jetzt"
 
-#: app/Plugin/Tables/Queue.php:155
+#: app/Plugin/Tables/Queue.php:161
 msgid "Process queue"
 msgstr "Verarbeite Warteschlange"
 
@@ -817,77 +1206,79 @@ msgstr "Bist Du sicher, dass du die Warteschlange jetzt bearbeiten willst?"
 msgid "Process the queue now"
 msgstr "Verarbeite Warteschlange jetzt"
 
-#: app/Plugin/Tables/Logs.php:272 app/Plugin/Tables/Queue.php:324
+#: app/Plugin/Tables/Logs.php:283 app/Plugin/Tables/Queue.php:348
 msgid "Delete entry"
 msgstr "Lösche Eintrag"
 
-#: app/Plugin/Tables/Logs.php:266 app/Plugin/Tables/Queue.php:318
-#: app/Plugin/Tables/Queue.php:351 app/ThirdParty/Exmage.php:120
+#: app/ExternalFiles/Synchronization.php:314 app/Plugin/Tables/Logs.php:271
+#: app/Plugin/Tables/Queue.php:336 app/Plugin/Tables/Queue.php:375
+#: app/ThirdParty/Exmage.php:122
 msgid "No"
 msgstr "Nein"
 
-#: app/Plugin/Tables/Logs.php:261 app/Plugin/Tables/Queue.php:313
-#: app/Plugin/Tables/Queue.php:346
+#: app/Plugin/Tables/Logs.php:266 app/Plugin/Tables/Queue.php:331
+#: app/Plugin/Tables/Queue.php:370
 msgid "Yes"
 msgstr "﻿Ja"
 
-#: app/Plugin/Tables/Logs.php:255
+#: app/Plugin/Tables/Logs.php:260
 msgid "Are you sure you want to delete this log entry?"
 msgstr "Bist Du sicher, dass du diesen Protokolleintrag löschen willst?"
 
-#: app/Plugin/Tables/Logs.php:253
+#: app/Plugin/Tables/Logs.php:258
 msgid "Delete log entry"
 msgstr "Lösche Protokolleintrag"
 
-#: app/Plugin/Tables/Logs.php:237
+#: app/Plugin/Tables/Logs.php:242
 msgid "Copy this entry in your clipboard"
 msgstr "Kopiere diesen Eintrag in die Zwischenablage"
 
-#: app/Plugin/Tables/Logs.php:237
+#: app/Plugin/Tables/Logs.php:242
 msgid "Copied"
 msgstr "Kopiert"
 
-#: app/Plugin/Tables/Logs.php:212 app/Plugin/Tables/Queue.php:271
+#: app/Plugin/Tables/Logs.php:217 app/Plugin/Tables/Queue.php:289
 msgid "Errors"
 msgstr "Fehler"
 
-#: app/Plugin/Tables/Logs.php:207 app/Plugin/Tables/Queue.php:266
+#: app/Plugin/Tables/Logs.php:212 app/Plugin/Tables/Queue.php:284
 msgid "All"
 msgstr "Alle"
 
-#: app/Plugin/Tables/Logs.php:186
+#: app/Plugin/Tables/Logs.php:191
 msgid "Info"
 msgstr "Information"
 
-#: app/Plugin/Tables/Logs.php:185
+#: app/Plugin/Tables/Logs.php:190
 msgid "Success"
 msgstr "Erfolgreich"
 
-#: app/Plugin/Tables/Logs.php:184 app/Plugin/Tables/Queue.php:247
+#: app/ExternalFiles/Files.php:1370 app/Plugin/Tables/Logs.php:189
+#: app/Plugin/Tables/Queue.php:265
 msgid "Error"
 msgstr "Fehler"
 
-#: app/Plugin/Tables/Logs.php:172
+#: app/Plugin/Tables/Logs.php:177
 msgid "No log entries found."
 msgstr "Keine Protokolleinträge gefunden."
 
-#: app/Plugin/Tables/Logs.php:163
+#: app/Plugin/Tables/Logs.php:168
 msgid "Empty the log"
 msgstr "Leere das Protokoll"
 
-#: app/Plugin/Tables/Logs.php:152
+#: app/Plugin/Tables/Logs.php:151
 msgid "Yes, empty the log"
 msgstr "Ja, leere das Protokoll"
 
-#: app/Plugin/Tables/Logs.php:146
+#: app/Plugin/Tables/Logs.php:145
 msgid "You will loose any log until now."
 msgstr "Du wirst alle Protokolleinträge bis jetzt verlieren."
 
-#: app/Plugin/Tables/Logs.php:145
+#: app/Plugin/Tables/Logs.php:144
 msgid "Are you sure you want to empty the log?"
-msgstr "Bist Du sicher, dass Du das Protokoll leeren willst?"
+msgstr "Bist Du sicher, dass du das Protokoll leeren willst?"
 
-#: app/Plugin/Tables/Logs.php:143
+#: app/Plugin/Tables/Logs.php:142
 msgid "Empty log entries"
 msgstr "Lösche Protokolleinträge"
 
@@ -895,314 +1286,302 @@ msgstr "Lösche Protokolleinträge"
 msgid "Log"
 msgstr "Protokoll"
 
-#: app/Plugin/Admin/Directory_Listing.php:248 app/Plugin/Tables/Logs.php:32
+#: app/Plugin/Admin/Directory_Listing.php:282 app/Plugin/Tables/Logs.php:32
 #: app/Plugin/Tables/Queue.php:30
 msgid "Date"
 msgstr "Datum"
 
-#: app/Plugin/Settings/Tables/Table.php:60 app/Plugin/Tables/Logs.php:30
-#: app/Plugin/Tables/Queue.php:28
+#: app/Dependencies/easySettingsForWordPress/Tables/Table.php:60
+#: app/Plugin/Tables/Logs.php:30 app/Plugin/Tables/Queue.php:28
 msgid "Options"
 msgstr "Optionen"
 
-#: app/Plugin/Statistics.php:295
+#: app/Plugin/Statistics.php:298
 msgid "The statistics has been reset."
 msgstr "Die Statistik wurde zurückgesetzt."
 
-#: app/Plugin/Statistics.php:265
+#: app/Plugin/Statistics.php:273
 msgid "<strong>The statistics has been reset.</strong> No files have been found."
 msgstr "<strong>Die Statistik wurde zurückgesetzt.</strong> Es wurden keine Dateien gefunden."
 
-#: app/Plugin/Statistics.php:133
+#: app/Plugin/Statistics.php:132
 msgid "Click on the button below to reset the file statistics for external files."
-msgstr "Klicke auf die Schaltfläche unten, um die Dateistatistiken für externe Dateien zurückzusetzen."
+msgstr "Klicke auf den Button unten, um die Dateistatistiken für externe Dateien zurückzusetzen."
 
-#: app/Plugin/Statistics.php:131 app/Plugin/Statistics.php:157
+#: app/Plugin/Statistics.php:130 app/Plugin/Statistics.php:156
 msgid "Reset file statistics"
 msgstr "Dateistatistiken zurücksetzen"
 
-#: app/Plugin/Statistics.php:116
+#: app/Plugin/Statistics.php:115
 msgid "The value is in bytes."
 msgstr "Der Wert ist in Bytes."
 
-#: app/Plugin/Statistics.php:115
+#: app/Plugin/Statistics.php:114
 msgid "External file sizes"
 msgstr "Größe der externen Dateien"
 
-#: app/Plugin/Statistics.php:101
+#: app/Plugin/Statistics.php:100
 msgid "External file counter"
 msgstr "Zähler für externe Dateien"
 
-#: app/Plugin/Statistics.php:90
+#: app/Plugin/Statistics.php:89
 msgid "Files"
 msgstr "Dateien"
 
-#: app/Plugin/Statistics.php:85
+#: app/Plugin/Statistics.php:84
 msgid "Statistics"
 msgstr "Statistiken"
 
-#: app/Plugin/Settings/Import.php:251
+#: app/Dependencies/easySettingsForWordPress/Import.php:250
 msgid "The new settings are now active. Click on the button below to reload the page and see the settings."
-msgstr "Die neuen Einstellungen sind nun aktiv. Klicke auf die Schaltfläche unten, um die Seite neu zu laden und die Einstellungen zu sehen."
+msgstr "Die neuen Einstellungen sind nun aktiv. Klicke auf den Button unten, um die Seite neu zu laden und die Einstellungen zu sehen."
 
-#: app/Plugin/Settings/Import.php:250
+#: app/Dependencies/easySettingsForWordPress/Import.php:249
 msgid "Import has been run successfully."
 msgstr "Import wurde erfolgreich durchgeführt."
 
-#: app/Plugin/Settings/Import.php:249
+#: app/Dependencies/easySettingsForWordPress/Import.php:248
 msgid "Settings have been imported"
 msgstr "Einstellungen wurden importiert."
 
-#: app/Plugin/Settings/Import.php:223
+#: app/Dependencies/easySettingsForWordPress/Import.php:222
 msgid "The uploaded file is not a valid JSON-file with settings for this plugin."
 msgstr "Die hochgeladene Datei ist keine gültige JSON-Datei mit Einstellungen für dieses Plugin."
 
-#: app/Plugin/Settings/Import.php:202 app/Plugin/Settings/Import.php:208
+#: app/Dependencies/easySettingsForWordPress/Import.php:201
+#: app/Dependencies/easySettingsForWordPress/Import.php:207
 msgid "The uploaded file could not be saved. Contact your hoster about this problem."
 msgstr "Die hochgeladene Datei konnte nicht gespeichert werden. Kontaktiere deinen Hoster zu diesem Problem."
 
-#: app/Plugin/Settings/Import.php:195
+#: app/Dependencies/easySettingsForWordPress/Import.php:194
 msgid "The uploaded file does not have the file extension <i>.json</i>."
 msgstr "Die hochgeladene Datei hat nicht die Datei-Endung <i>.json</i>."
 
-#: app/Plugin/Settings/Import.php:184
+#: app/Dependencies/easySettingsForWordPress/Import.php:183
 msgid "The uploaded file is not a valid JSON-file."
 msgstr "Die hochgeladene Datei ist keine gültige JSON-Datei."
 
-#: app/Plugin/Settings/Import.php:178
+#: app/Dependencies/easySettingsForWordPress/Import.php:177
 msgid "The uploaded file is no size."
 msgstr "Die hochgeladene Datei hat keine Größe."
 
-#: app/Plugin/Settings/Import.php:172
+#: app/Dependencies/easySettingsForWordPress/Import.php:171
 msgid "No file was uploaded."
 msgstr "Keine Datei hochgeladen."
 
-#: app/Plugin/Settings/Import.php:158
+#: app/Dependencies/easySettingsForWordPress/Import.php:157
 msgid "The file could not be imported!"
 msgstr "Die Datei konnte nicht importiert werden!"
 
-#: app/Plugin/Settings/Import.php:156
+#: app/Dependencies/easySettingsForWordPress/Import.php:155
 msgid "Error during import"
 msgstr "Fehler beim Import"
 
-#: app/Plugin/Settings/Import.php:137 app/Services/Ftp.php:274
-#: app/Services/GoogleDrive.php:812 app/Services/Local.php:120
-#: app/Services/Youtube.php:474 app/Services/Zip.php:162
+#: app/Dependencies/easySettingsForWordPress/Import.php:136
+#: app/Services/Ftp.php:308 app/Services/GoogleDrive.php:841
+#: app/Services/Local.php:120 app/Services/Youtube.php:486
+#: app/Services/Zip.php:163
 msgid "Import"
 msgstr "Import"
 
-#: app/Plugin/Settings/Import.php:121 app/Plugin/Settings/Import.php:138
+#: app/Dependencies/easySettingsForWordPress/Import.php:120
+#: app/Dependencies/easySettingsForWordPress/Import.php:137
 msgid "Import now"
 msgstr "Jetzt importieren"
 
-#: app/Plugin/Settings/Import.php:114
+#: app/Dependencies/easySettingsForWordPress/Import.php:113
 msgid "Click on the button below to chose your JSON-file with the settings."
-msgstr "Klicke auf die Schaltfläche unten, um deine JSON-Datei mit den Einstellungen auszuwählen."
+msgstr "Klicke auf den Button unten, um deine JSON-Datei mit den Einstellungen auszuwählen."
 
-#: app/Plugin/Settings/Import.php:112
+#: app/Dependencies/easySettingsForWordPress/Import.php:111
 msgid "Import plugin settings"
 msgstr "Plugin-Einstellungen importieren"
 
-#: app/Plugin/Settings/Import.php:95
-msgid "Please choose a JSON-file with settings of <i>External Files in Media Library</i> to import."
-msgstr "Bitte wähle eine JSON-Datei mit den Einstellungen von <i>Externe Dateien in der Mediathek</i> zum Importieren."
-
-#: app/Plugin/Settings/Import.php:94
+#: app/Dependencies/easySettingsForWordPress/Import.php:93
 msgid "Required file missing"
 msgstr "Erforderliche Datei fehlt"
 
-#: app/Plugin/Settings/Export.php:135
-msgid "No settings could be loaded."
-msgstr "Keine Einstellung konnte geladen werden."
-
-#: app/Plugin/Settings/Export.php:135
-msgid "Export could not run!"
-msgstr "Export konnte nicht durchgeführt werden!"
-
-#: app/Plugin/Settings/Export.php:108
+#: app/Dependencies/easySettingsForWordPress/Export.php:107
 msgid "Export"
 msgstr "Export"
 
-#: app/Plugin/Settings/Export.php:92 app/Plugin/Settings/Export.php:109
+#: app/Dependencies/easySettingsForWordPress/Export.php:91
+#: app/Dependencies/easySettingsForWordPress/Export.php:108
 msgid "Export now"
 msgstr "Jetzt exportieren"
 
-#: app/Plugin/Settings/Export.php:86
-msgid "You can import this JSON-file in other projects using the WordPress plugin <i>External Files in Media Library</i>."
-msgstr "Du kannst diese JSON-Datei in andere Projekte importieren, indem Du ebenfalls das WordPress-Plugin <i>Externe Dateien in der Medien Bibliothek</i> verwendest."
-
-#: app/Plugin/Settings/Export.php:85
+#: app/Dependencies/easySettingsForWordPress/Export.php:84
 msgid "Click on the button below to export the actual settings."
-msgstr "Klicke auf die Schaltfläche unten, um die aktuellen Einstellungen zu exportieren."
+msgstr "Klicke auf den Button unten, um die aktuellen Einstellungen zu exportieren."
 
-#: app/Plugin/Settings/Export.php:83
+#: app/Dependencies/easySettingsForWordPress/Export.php:82
 msgid "Export plugin settings"
 msgstr "Plugin-Einstellungen exportieren"
 
-#: app/Plugin/Settings.php:790
+#: app/Plugin/Settings.php:823
 msgid "External Media Files Settings"
-msgstr "Einstellungen für Externe Dateien in der Medien Bibliothek"
+msgstr "Einstellungen für Externe Dateien in der Mediathek"
 
 #. translators: %1$s will be replaced by a URL.
-#: app/Plugin/Settings.php:769
+#: app/Plugin/Settings.php:794
 msgid "You can adjust the behavior of the plugin to your own requirements in many places via <a href=\"%1$s\">the settings</a>. The possible settings are described in more detail below."
 msgstr "Du kannst das Verhalten des Plugins an vielen Stellen über <a href=\"%1$s\">die Einstellungen</a> an deine eigenen Bedürfnisse anpassen. Die möglichen Einstellungen werden im Folgenden näher beschrieben."
 
-#: app/Plugin/Settings.php:767
+#: app/Plugin/Settings.php:792
 msgid "Settings for External Files in Media Library"
-msgstr "Einstellungen für Externe Dateien in der Medienbibliothek"
+msgstr "Einstellungen für Externe Dateien in der Mediathek"
 
-#: app/Plugin/Settings.php:756
+#: app/Plugin/Settings.php:781
 msgid "These settings only apply to files that are provided via http. Files from other protocols (such as FTP) are generally only saved locally without a proxy."
 msgstr "Diese Einstellungen gelten nur für Dateien, die über http bereitgestellt werden. Dateien aus anderen Protokollen (z. B. ftp) werden in der Regel nur lokal ohne Proxy gespeichert."
 
-#: app/Plugin/Settings.php:580 app/Plugin/Settings.php:888
-#: app/Plugin/Settings.php:911 app/Plugin/Statistics.php:139
-#: app/Plugin/Statistics.php:158
+#: app/Plugin/Settings.php:591 app/Plugin/Settings.php:919
+#: app/Plugin/Settings.php:942 app/Plugin/Statistics.php:138
+#: app/Plugin/Statistics.php:157
 msgid "Reset now"
 msgstr "Jetzt zurücksetzen"
 
-#: app/Plugin/Settings.php:905
+#: app/Plugin/Settings.php:936
 msgid "Click on the following button to reset the proxy cache."
-msgstr "Klicke auf die folgende Schaltfläche, um den Proxy-Cache zurückzusetzen."
+msgstr "Klicke auf den folgenden Button, um den Proxy-Cache zurückzusetzen."
 
-#: app/Plugin/Settings.php:579 app/Plugin/Settings.php:903
+#: app/Plugin/Settings.php:590 app/Plugin/Settings.php:934
 msgid "Reset proxy cache"
 msgstr "Proxy Cache zurücksetzen"
 
-#: app/Plugin/Settings.php:570
+#: app/Plugin/Settings.php:581
 msgid "This is the path on the filesystem of your WordPress relativ to the <i>wp-content</i> directory. If you change it, the new directory should not exist. All cached files will be copied to the new path."
-msgstr "Dies ist der Pfad im Dateisystem deines WordPress relativ zum <i>wp-content</i> Verzeichnis. Wenn Du ihn änderst, sollte das neue Verzeichnis nicht existieren. Alle zwischengespeicherten Dateien werden kopiert."
+msgstr "Dies ist der Pfad im Dateisystem deines WordPress relativ zum <i>wp-content</i> Verzeichnis. Wenn du ihn änderst, sollte das neue Verzeichnis nicht existieren. Alle zwischengespeicherten Dateien werden kopiert."
 
-#: app/Plugin/Settings.php:569
+#: app/Plugin/Settings.php:580
 msgid "Proxy path"
 msgstr "Pfad zum Proxy"
 
-#: app/Plugin/Settings.php:558
+#: app/Plugin/Settings.php:569
 msgid "If disabled we will not warn you about the GPRD regulations regarding external files in websites."
-msgstr "Wenn das Häkchen gesetzt ist, wirst Du nicht auf die DSGVO-Vorschriften für externe Dateien auf Websites hingewiesen."
+msgstr "Wenn das Häkchen gesetzt ist, wirst du nicht auf die DSGVO-Vorschriften für externe Dateien auf Websites hingewiesen."
 
-#: app/Plugin/Settings.php:557
+#: app/Plugin/Settings.php:568
 msgid "Disable GPRD-hint"
 msgstr "Deaktiviere DSGVO-Hinweis"
 
-#: app/Plugin/Settings.php:547
+#: app/Plugin/Settings.php:558
 msgid "Export & Import settings"
 msgstr "Export & Import Einstellungen"
 
-#: app/Plugin/Settings.php:525
+#: app/Plugin/Settings.php:536
 msgid "If enabled after every URL during import the max execution of the PHP-processes is checked regarding the PHP-<i>max_execution_time</i>-setting in your hosting."
 msgstr "Wenn aktiviert, wird beim Import nach jeder URL die maximale Ausführungszeit der PHP-Prozesse anhand der PHP-<i>max_execution_time</i>-Einstellung in deinem Hosting überprüft."
 
-#: app/Plugin/Settings.php:524
+#: app/Plugin/Settings.php:535
 msgid "Enable max execution check"
 msgstr "Aktiviere Prüfung der maximalen Ausführzeit"
 
-#: app/Plugin/Settings.php:514
+#: app/Plugin/Settings.php:525
 msgid "Defines how long videos, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
 msgstr "Legt fest, wie lange Videos, die über unseren eigenen Proxy geladen werden, lokal gespeichert werden. Nach dieser Zeit wird ihr Cache erneuert."
 
-#: app/Plugin/Settings.php:513
+#: app/Plugin/Settings.php:524
 msgid "Max age for cached video in proxy in hours"
 msgstr "Maximales Alter für zwischengespeicherte Videos im Proxy in Stunden"
 
-#: app/Plugin/Settings.php:502
+#: app/Plugin/Settings.php:513
 msgid "This option is only available if videos are hosted external. If this option is disabled, external videos will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the videos locally."
-msgstr "Diese Option ist nur verfügbar, wenn die Videos extern gehostet werden. Wenn diese Option deaktiviert ist, werden die externen Videos mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, kannst Du diese Option aktivieren, um die Videos lokal zu laden."
+msgstr "Diese Option ist nur verfügbar, wenn die Videos extern gehostet werden. Wenn diese Option deaktiviert ist, werden die externen Videos mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, kannst du diese Option aktivieren, um die Videos lokal zu laden."
 
-#: app/Plugin/Settings.php:501
+#: app/Plugin/Settings.php:512
 msgid "Enable proxy for videos"
 msgstr "Aktiviere Proxy für Videos"
 
-#: app/Plugin/Settings.php:485
+#: app/Plugin/Settings.php:496
 msgid "Defines how external video are handled."
 msgstr "Legt fest, wie externe Videos behandelt werden."
 
-#: app/Plugin/Settings.php:484
+#: app/Plugin/Settings.php:495
 msgid "Mode for video handling"
 msgstr "Modus für Video-Bearbeitung"
 
-#: app/Plugin/Settings.php:473
+#: app/Plugin/Settings.php:484
 msgid "Defines the maximum timeout for any external request for files."
 msgstr "Legt die maximale Zeitüberschreitung für alle externen Dateianfragen fest."
 
-#: app/Plugin/Settings.php:472
+#: app/Plugin/Settings.php:483
 msgid "Max. Timeout in seconds"
 msgstr "Max. Zeitüberschreitung in Sekunden"
 
-#: app/Plugin/Settings.php:436
+#: app/Plugin/Settings.php:447
 msgid "Defines how long audios, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
 msgstr "Legt fest, wie lange Audios, die über unseren eigenen Proxy geladen werden, lokal gespeichert werden. Nach dieser Zeit wird ihr Cache erneuert."
 
-#: app/Plugin/Settings.php:435
+#: app/Plugin/Settings.php:446
 msgid "Max age for cached audio in proxy in hours"
 msgstr "Höchstalter für zwischengespeicherte Audiodateien im Proxy in Stunden"
 
-#: app/Plugin/Settings.php:424
+#: app/Plugin/Settings.php:435
 msgid "This option is only available if audios are hosted external. If this option is disabled, external audios will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the audios locally."
-msgstr "Diese Option ist nur verfügbar, wenn die Audios extern gehostet werden. Wenn diese Option deaktiviert ist, werden externe Audios mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, kannst Du diese Option aktivieren, um die Audios lokal zu laden."
+msgstr "Diese Option ist nur verfügbar, wenn die Audios extern gehostet werden. Wenn diese Option deaktiviert ist, werden externe Audios mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, kannst du diese Option aktivieren, um die Audios lokal zu laden."
 
-#: app/Plugin/Settings.php:423
+#: app/Plugin/Settings.php:434
 msgid "Enable proxy for audios"
 msgstr "Aktiviere Proxy für Audios"
 
-#: app/Plugin/Settings.php:407
+#: app/Plugin/Settings.php:418
 msgid "Defines how external audios are handled."
 msgstr "Legt fest, wie externe Audios behandelt werden."
 
-#: app/Plugin/Settings.php:406
+#: app/Plugin/Settings.php:417
 msgid "Mode for audio handling"
 msgstr "Modus für Audio-Bearbeitung"
 
-#: app/Plugin/Settings.php:306
+#: app/Plugin/Settings.php:311
 msgid "If this option is enabled all external files will be saved local during uninstallation of this plugin."
 msgstr "Wenn diese Option aktiviert ist, werden alle externen Dateien bei Deinstallation des Plugins lokal gespeichert."
 
-#: app/Plugin/Settings.php:305
+#: app/Plugin/Settings.php:310
 msgid "Switch external files to local hosting during uninstallation"
 msgstr "Externe Dateien während der Deinstallation auf lokales Hosting umstellen"
 
-#: app/Plugin/Settings.php:223
+#: app/Plugin/Settings.php:228
 msgid "Advanced settings"
 msgstr "Erweiterte Einstellungen"
 
-#: app/Plugin/Settings.php:218
+#: app/Plugin/Settings.php:223
 msgid "Proxy settings"
 msgstr "Proxy-Einstellungen"
 
-#: app/Plugin/Settings.php:212
+#: app/Plugin/Settings.php:217
 msgid "Video Settings"
 msgstr "Video-Einstellungen"
 
-#: app/Plugin/Settings.php:200
+#: app/Plugin/Settings.php:205
 msgid "Audio Settings"
 msgstr "Audio-Einstellungen"
 
-#: app/Plugin/Settings.php:195
+#: app/Plugin/Settings.php:200
 msgid "Permissions to add files"
 msgstr "Berechtigungen zum Hinzufügen von Dateien"
 
-#: app/Plugin/Settings.php:168
+#: app/Plugin/Settings.php:173
 msgid "Advanced"
 msgstr "Erweitert"
 
-#: app/Plugin/Settings.php:164
+#: app/Plugin/Settings.php:169
 msgid "Proxy"
 msgstr "Proxy"
 
-#: app/Plugin/Settings.php:160
+#: app/Plugin/Settings.php:165
 msgid "Videos"
 msgstr "Videos"
 
-#: app/Plugin/Settings.php:156
+#: app/Plugin/Settings.php:161
 msgid "Images"
 msgstr "Bilder"
 
-#: app/Plugin/Settings.php:152
+#: app/Plugin/Settings.php:157
 msgid "Audio"
 msgstr "Audio"
 
-#: app/Plugin/Settings.php:148
+#: app/Plugin/Settings.php:153
 msgid "Permissions"
 msgstr "Berechtigungen"
 
@@ -1214,21 +1593,21 @@ msgstr "Warteschlangenausführung beendet."
 msgid "Queue schedule starting."
 msgstr "Warteschlangenausführung gestartet."
 
-#: app/Plugin/Schedules/Check_Files.php:65
+#: app/Plugin/Schedules/Check_Files.php:64
 msgid "Check file schedule ended."
 msgstr "Dateiprüfung gestartet."
 
-#: app/Plugin/Schedules/Check_Files.php:59
+#: app/Plugin/Schedules/Check_Files.php:58
 msgid "Check file schedule starting."
 msgstr "Dateiprüfung beendet."
 
 #. translators: %1$s will be replaced by the event name.
-#: app/Plugin/Schedules.php:167
+#: app/Plugin/Schedules.php:168
 msgid "Not enabled cron event <i>%1$s</i> automatically removed."
 msgstr "Nicht aktiviertes Cron-Event <i>%1$s</i> automatisch entfernt."
 
 #. translators: %1$s will be replaced by the event name.
-#: app/Plugin/Schedules.php:155
+#: app/Plugin/Schedules.php:156
 msgid "Missing cron event <i>%1$s</i> automatically re-installed."
 msgstr "Fehlendes Cron-Ereignis <i>%1$s</i> wurde automatisch neu installiert."
 
@@ -1236,19 +1615,19 @@ msgstr "Fehlendes Cron-Ereignis <i>%1$s</i> wurde automatisch neu installiert."
 #. files.
 #: app/Plugin/Install.php:89
 msgid "<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href=\"%1$s\">here</a>."
-msgstr "<strong>Du hast <i>Externe Dateien in der Medien Bibliothek</i> installiert - großartig und danke!</strong> Du kannst jetzt sofort externe URLs zu deiner Medienbibliothek <a href=\"%1$s\">hier</a> hinzufügen."
+msgstr "<strong>Du hast <i>Externe Dateien in der Mediathek</i> installiert - großartig und danke!</strong> Du kannst jetzt sofort externe URLs zu deiner Mediathek <a href=\"%1$s\">hier</a> hinzufügen."
 
-#: app/Plugin/Helper.php:424
+#: app/Plugin/Helper.php:449
 msgid "Disabled"
 msgstr "Deaktiviert"
 
 #. translators: %1$s will nbe replaced by our support-URL.
-#: app/Plugin/Crypt/Sodium.php:101
+#: app/Plugin/Crypt/Sodium.php:106
 msgid "Error on decrypting with PHP-sodium. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
 msgstr "Fehler beim Entschlüsseln mit PHP-Sodium. Bitte kontaktiere <a href=\"%1$s\">unser Supportforum</a> über dieses Problem."
 
 #. translators: %1$s will nbe replaced by our support-URL.
-#: app/Plugin/Crypt/Sodium.php:72
+#: app/Plugin/Crypt/Sodium.php:73
 msgid "Error on encrypting with PHP-sodium. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
 msgstr "Fehler beim Verschlüsseln mit PHP-Sodium. Bitte kontaktiere <a href=\"%1$s\">unser Supportforum</a> über dieses Problem."
 
@@ -1257,213 +1636,214 @@ msgstr "Fehler beim Verschlüsseln mit PHP-Sodium. Bitte kontaktiere <a href=\"%
 msgid "No supported encryption method found. Please contact <a href=\"%1$s\">our support forum</a> about this problem."
 msgstr "Keine Verschlüsselungs-Methode gefunden. Bitte kontaktiere <a href=\"%1$s\">unser Supportforum</a> über dieses Problem."
 
-#: app/Plugin/Cli.php:405
+#: app/Plugin/Cli.php:400
 msgid "Error-URLs has been removed from the queue."
 msgstr "Fehler-URLs wurden aus der Warteschlange entfernt."
 
-#: app/Plugin/Cli.php:366
+#: app/Plugin/Cli.php:361
 msgid "Files have been switches to local hosting."
 msgstr "Dateien haben zum lokalen Hosting gewechselt."
 
-#: app/Plugin/Cli.php:317
+#: app/Plugin/Cli.php:312
 msgid "Files have been switches to external hosting."
 msgstr "Dateien haben zum externen Hosting gewechselt."
 
-#: app/Plugin/Cli.php:268
+#: app/Plugin/Cli.php:263
 msgid "Plugin have been reset."
 msgstr "Plugin wurde zurückgesetzt."
 
-#: app/Plugin/Cli.php:265
+#: app/Plugin/Cli.php:260
 msgid "Plugin have been reset via cli."
 msgstr "Plugin wurde per WP CLI zurückgesetzt."
 
-#: app/Plugin/Cli.php:242
+#: app/Plugin/Cli.php:237
 msgid "URL-check has been run."
 msgstr "URL-Prüfung wurde ausgeführt."
 
-#: app/Plugin/Cli.php:192
+#: app/Plugin/Cli.php:187
 msgid "Log has been cleared via cli."
 msgstr "Protokoll wurde per WP CLI geleert."
 
 #. translators: %1$d is replaced by a number.
-#: app/Plugin/Cli.php:173 app/Plugin/Cli.php:175
+#: app/Plugin/Cli.php:168 app/Plugin/Cli.php:170
 msgid "%1$d URLs have been deleted."
 msgstr "%1$d URLs wurden entfernt."
 
 #: app/Plugin/Cli.php:152
 msgid "Deleting external files from media library"
-msgstr "Lösche externe Dateien aus Medienbibliothek."
+msgstr "Lösche externe Dateien aus Mediathek."
 
-#: app/Plugin/Cli.php:147
+#: app/Plugin/Cli.php:148
 msgid "There are no external URLs to delete."
 msgstr "Es gibt keine externen URLs zum Löschen."
 
-#: app/Plugin/Cli.php:146
+#: app/Plugin/Cli.php:147
 msgid "No files found to delete."
 msgstr "Keine Dateien zum Löschen gefunden."
 
-#: app/Plugin/Cli.php:121
+#: app/Plugin/Cli.php:122
 msgid "External files will be deleted via WP CLI."
 msgstr "Externe Dateien werden per WP CLI gelöscht."
 
-#: app/Plugin/Cli.php:105
+#: app/Plugin/Cli.php:106
 msgid "Results of the import:"
 msgstr "Ergebnis des Imports:"
 
 #. translators: %1$s will be replaced by URL.
-#: app/Plugin/Cli.php:94
+#: app/Plugin/Cli.php:95
 msgid "%1$s could not be saved in media library. Take a look in the log for details."
-msgstr "%1$s konnte nicht in der Medienbibliothek gespeichert werden. Schau im Protokoll nach für Details dazu."
+msgstr "%1$s konnte nicht in der Mediathek gespeichert werden. Schau im Protokoll nach für Details dazu."
 
 #. translators: %1$s will be replaced by URL.
-#: app/Plugin/Cli.php:91
+#: app/Plugin/Cli.php:92
 msgid "%1$s has been added to the queue. It will be imported automatically in your media library."
-msgstr "%1$s wurde zur Warteschlange hinzugefügt. Sie wird automatisch in die Medienbibliothek importiert werden."
+msgstr "%1$s wurde zur Warteschlange hinzugefügt. Sie wird automatisch in die Mediathek importiert werden."
 
 #. translators: %1$s will be replaced by URL.
-#: app/Plugin/Cli.php:88
+#: app/Plugin/Cli.php:89
 msgid "%1$s has been saved in media library."
-msgstr "%1$s wurde in der Medienbibliothek gelöscht."
+msgstr "%1$s wurde in der Mediathek gelöscht."
 
 #. translators: %1$s will be replaced by URL.
-#: app/Plugin/Cli.php:76
+#: app/Plugin/Cli.php:77
 msgid "%1$s is not a valid URL and will not be saved."
 msgstr "%1$s ist keine gültige URL und wird nicht gespeichert."
 
-#: app/Plugin/Cli.php:57
+#: app/Plugin/Cli.php:58
 msgid "Import files from given URL"
 msgid_plural "Import files from given URLs"
 msgstr[0] "Importiere Dateien von angegebener URL"
 msgstr[1] "Importiere Dateien von angegebenen URLs"
 
-#: app/Plugin/Admin/Help_System.php:98
+#: app/Plugin/Admin/Help_System.php:99
 msgid "Ask in our forum"
 msgstr "Frag in unserem Forum"
 
-#: app/Plugin/Admin/Help_System.php:98
+#: app/Plugin/Admin/Help_System.php:99
 msgid "Question not answered?"
 msgstr "Deine Frage wurde nicht beantwortet?"
 
 #. translators: %1$s will be replaced by a URL.
-#: app/Plugin/Admin/Admin.php:320
+#: app/Plugin/Admin/Admin.php:326
 msgid "The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href=\"%1$s\">by click on this link</a>."
-msgstr "Die oben erwähnte Erkennung basiert auf der Sprache, die Du in WordPress verwendest. Wenn Du nicht von den DSGVO-Regeln betroffen bist, entschuldigen wir uns für diese Information. Du kannst den Hinweis <a href=\"%1$s\">über diesen Link</a> dauerhaft ausblenden."
+msgstr "Die oben erwähnte Erkennung basiert auf der Sprache, die du in WordPress verwendest. Wenn du nicht von den DSGVO-Regeln betroffen bist, entschuldigen wir uns für diese Information. Du kannst den Hinweis <a href=\"%1$s\">über diesen Link</a> dauerhaft ausblenden."
 
 #. translators: %1$s will be replaced by a URL.
-#: app/Plugin/Admin/Admin.php:320
+#: app/Plugin/Admin/Admin.php:326
 msgid "Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files for Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor."
-msgstr "Bitte beachte, dass nach diesen Regeln die Verwendung von externen, direkt geladenen Dateien (wie z.B. Bilder oder Videos) in einer Website eine aktive Information des Besuchers erfordert, bevor diese Dateien geladen werden. Wir empfehlen dir, bei der Verwendung von <i>Externen Dateien für die Mediathek</i> den angebotenen Proxy-Modus zu verwenden. Dies bedeutet, dass die Dateien nicht direkt von einer externen Quelle geladen werden, sondern lokal zwischengespeichert werden. Solltest Du weitere Fragen zu diesen Regeln haben, wende dich bitte an deinen Rechtsbeistand."
+msgstr "Bitte beachte, dass nach diesen Regeln die Verwendung von externen, direkt geladenen Dateien (wie z.B. Bilder oder Videos) in einer Website eine aktive Information des Besuchers erfordert, bevor diese Dateien geladen werden. Wir empfehlen dir, bei der Verwendung von <i>Externen Dateien für die Mediathek</i> den angebotenen Proxy-Modus zu verwenden. Dies bedeutet, dass die Dateien nicht direkt von einer externen Quelle geladen werden, sondern lokal zwischengespeichert werden. Solltest du weitere Fragen zu diesen Regeln haben, wende dich bitte an deinen Rechtsbeistand."
 
 #. translators: %1$s will be replaced by a URL.
-#: app/Plugin/Admin/Admin.php:320
+#: app/Plugin/Admin/Admin.php:326
 msgid "Your website seems to be subject to the European Union rules of the <a href=\"%1$s\" target=\"_blank\">GPRD (opens new window)</a>!"
 msgstr "Deine Website scheint von den Regeln zur <a href=\"%1$s\" target=\"_blank\">DSGVO (öffnet neues Fenster)</a> von der Europäischen Union betroffen zu sein!"
 
-#: app/Plugin/Admin/Admin.php:276
+#: app/Plugin/Admin/Admin.php:282
 msgid "The log entry has been deleted."
 msgstr "Der Protokolleintrag wurde gelöscht."
 
-#: app/Plugin/Admin/Admin.php:185
+#: app/Plugin/Admin/Admin.php:191
 msgid "Talk to your hosting support team about this."
 msgstr "Sprich mit dem Support deines Hosters hierüber."
 
-#: app/Plugin/Admin/Admin.php:185
-msgid "Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.0 or older. These versions <a href=\"https://www.php.net/supported-versions.php\" target=\"_blank\">are outdated</a> since December 2023. To continue using the plugins new features, please update your PHP version."
-msgstr "Zukünftige Versionen von <i>Externe Dateien in der Medien Bibliothek</i> werden nicht länger mit PHP 8.0 oder älter kompatibel sein. Diese Versionen seit Dezember 2023 <a href=\"https://www.php.net/supported-versions.php\" target=\"_blank\">sind veraltet</a>. Aktualisiere die PHP-Version um auch künftig neue Funktionen des Plugins nutzen zu können."
+#: app/Plugin/Admin/Admin.php:191
+msgid "Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href=\"https://www.php.net/supported-versions.php\" target=\"_blank\">will be outdated</a> after December 2025. To continue using the plugins new features, please update your PHP version."
+msgstr "Zukünftige Versionen von <i>Externe Dateien in der Mediathek</i> werden nicht länger mit PHP 8.1 oder älter kompatibel sein. Diese Versionen seit Dezember 2025 <a href=\"https://www.php.net/supported-versions.php\" target=\"_blank\">sind veraltet</a>. Aktualisiere die PHP-Version um auch künftig neue Funktionen des Plugins nutzen zu können."
 
-#: app/Plugin/Admin/Admin.php:185
-msgid "Your website is using an outdated PHP-version!"
+#: app/Plugin/Admin/Admin.php:191
+msgid "Your website is using an old PHP-version!"
 msgstr "Deine Website verwendet eine veraltete PHP-Version!"
 
 #. translators: %1$s will be replaced by the URL for the plugin configuration.
 #: app/Plugin/Admin/Admin.php:113
 msgid "<strong>External files could not be used as no mime-types are allowed.</strong> Go to <a href=\"%1$s\">Settings</a> to choose mime-types you want to use."
-msgstr "<strong>Externe Dateien können nicht verwendet werden, da kein Mime-Type erlaubt ist.</strong> Gehe zu den <a href=\"%1$s\">Einstellungen</a> um Mime-Types zu wählen die Du verwenden möchtest."
+msgstr "<strong>Externe Dateien können nicht verwendet werden, da kein Mime-Type erlaubt ist.</strong> Gehe zu den <a href=\"%1$s\">Einstellungen</a> um Mime-Types zu wählen die du verwenden möchtest."
 
-#: app/ExternalFiles/Queue.php:690
+#: app/ExternalFiles/Queue.php:746
 msgid "The queue entry has been deleted."
 msgstr "Der Eintrag der Warteschlange wurde gelöscht."
 
 #. translators: %1$s is replaced by an error-code.
-#: app/ExternalFiles/Queue.php:634
+#: app/ExternalFiles/Queue.php:683
 msgid "Database-Error: %1$s"
 msgstr "Datenbank-Fehler: %1$s"
 
-#: app/ExternalFiles/Queue.php:469
+#: app/ExternalFiles/Queue.php:495
 msgid "Error entries from queue has been deleted."
 msgstr "Fehlereinträge in der Warteschlange wurden gelöscht."
 
-#: app/ExternalFiles/Queue.php:441 app/Plugin/Cli.php:392
+#: app/ExternalFiles/Queue.php:467 app/Plugin/Cli.php:387
 msgid "The queue has been cleared."
 msgstr "Die Warteschlange wurde geleert."
 
-#: app/ExternalFiles/Queue.php:405
+#: app/ExternalFiles/Queue.php:424
 msgid "The entry has been processed."
 msgstr "Der Eintrag wurde verarbeitet."
 
-#: app/ExternalFiles/Queue.php:374 app/Plugin/Cli.php:379
+#: app/ExternalFiles/Queue.php:393 app/Plugin/Cli.php:374
 msgid "The queue has been processed."
 msgstr "Die Warteschlange wurde verarbeitet."
 
 #. translators: %1$d will be replaced by a number.
-#: app/ExternalFiles/Queue.php:319
+#: app/ExternalFiles/Queue.php:338
 msgid "Processing the import of %1$d URL from queue ended."
 msgid_plural "Processing the import of %1$d URLs from queue ended."
 msgstr[0] "Verarbeitung vom Import von einer URL beendet."
 msgstr[1] "Verarbeitung vom Import von %1$d URLs beendet."
 
 #. translators: %1$d will be replaced by a number.
-#: app/ExternalFiles/Queue.php:271 app/ExternalFiles/Queue.php:275
+#: app/ExternalFiles/Queue.php:290 app/ExternalFiles/Queue.php:294
 msgid "Processing the import of %1$d URL from queue."
 msgid_plural "Processing the import of %1$d URLs from queue."
 msgstr[0] "Verarbeitung vom Import von einer URL läuft."
 msgstr[1] "Verarbeitung vom Import von %1$d URLs läuft."
 
-#: app/ExternalFiles/Queue.php:237
+#: app/ExternalFiles/Queue.php:256
 msgid "URL is already in queue."
 msgstr "URL ist bereits in Warteschlange."
 
-#: app/ExternalFiles/Queue.php:174
+#: app/ExternalFiles/Queue.php:181
 msgid "Queue schedule interval has changed."
 msgstr "Der Zeitplan für die Warteschlange wurde verändert."
 
-#: app/ExternalFiles/Queue.php:168
+#: app/ExternalFiles/Queue.php:175
 msgid "Queue schedule has been disabled."
 msgstr "Die automatische Verarbeitung der Warteschlange wurde deaktiviert."
 
-#: app/ExternalFiles/Queue.php:134 app/Plugin/Settings.php:606
+#: app/ExternalFiles/Queue.php:138 app/ExternalFiles/Synchronization.php:1158
+#: app/Plugin/Settings.php:617
 msgid "An interval has to be set."
 msgstr "Es muss ein Intervall gesetzt werden."
 
-#: app/ExternalFiles/Queue.php:117 app/ExternalFiles/Queue.php:651
+#: app/ExternalFiles/Queue.php:121 app/ExternalFiles/Queue.php:700
 msgid "Queue"
 msgstr "Warteschlange"
 
-#: app/ExternalFiles/Queue.php:112
+#: app/ExternalFiles/Queue.php:116
 msgid "Set the limit of URLs which will be process per cycle."
 msgstr "Setze die Anzahl der zu verarbeitenden URLs pro Durchlauf"
 
-#: app/ExternalFiles/Queue.php:111
+#: app/ExternalFiles/Queue.php:115
 msgid "To process per queue cycle"
 msgstr "Pro Durchlauf zu verarbeiten"
 
-#: app/ExternalFiles/Queue.php:99
+#: app/ExternalFiles/Queue.php:103
 msgid "Defines the time interval in which the queue for new URLs will be processed."
 msgstr "Definiert das zeitliche Intervall in dem die Warteschlange für neue URLs verarbeitet wird."
 
-#: app/ExternalFiles/Queue.php:98
+#: app/ExternalFiles/Queue.php:102
 msgid "Set interval for queue processing"
 msgstr "Setze Intervall für Verarbeitung"
 
-#: app/ExternalFiles/Proxy.php:319
+#: app/ExternalFiles/Proxy.php:320
 msgid "Proxy cache has been reset via AJAX."
 msgstr "Proxy Cache wurde per AJAX zurückgesetzt."
 
-#: app/ExternalFiles/Proxy.php:306
+#: app/ExternalFiles/Proxy.php:307
 msgid "The proxy has been reset."
 msgstr "Der Proxy wurde zurückgesetzt."
 
-#: app/ExternalFiles/Proxy.php:304
+#: app/ExternalFiles/Proxy.php:305
 msgid "Proxy has been reset"
 msgstr "Proxy wurde zurückgesetzt"
 
@@ -1491,17 +1871,17 @@ msgid "Proxy tries to load the filename %1$s."
 msgstr "Proxy versucht den Dateinamen %1$s zu laden."
 
 #. translators: %1$s will be replaced by the file-URL
-#: app/ExternalFiles/Protocols/Sftp.php:324
+#: app/ExternalFiles/Protocols/Sftp.php:365
 msgid "SSH/SFTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s"
 msgstr "SSH/SFTP-Verbindung fehlgeschlagen. Prüfe den Servernamen %1$s und die angegebenen Zugangsdaten. Fehler: %2$s"
 
-#: app/ExternalFiles/Protocols/Sftp.php:115
+#: app/ExternalFiles/Protocols/Sftp.php:120
 msgid "SFTP-directory returns no files."
 msgstr "SFTP-Verzeichnis enthält keine Dateien."
 
 #: app/ExternalFiles/Protocols/Sftp.php:85
-msgid "SFTP-URL looks not like an URL."
-msgstr "SFTP-URL sieht nicht wie eine URL aus."
+msgid "SFTP-URL looks not like a URL."
+msgstr "SFTP-URL sieht nicht aus wie eine URL."
 
 #: app/ExternalFiles/Protocols/Sftp.php:75
 msgid "Missing credentials for import from SFTP-URL."
@@ -1520,12 +1900,12 @@ msgstr "Angegebene URL existiert in der Mediendatenbank bereits als lokale Datei
 msgid "The presumed directory URL does not contain any linked files."
 msgstr "Das vermutete Verzeichnis der URL enthält keine verlinkten Dateien."
 
-#: app/ExternalFiles/Protocols/Http.php:266
+#: app/ExternalFiles/Protocols/Http.php:262
 msgid "The presumed directory URL could not be loaded."
 msgstr "Das vermutete Verzeichnis konnte nicht geladen werden."
 
 #. translators: %1$s by the error in JSON-format.
-#: app/ExternalFiles/Protocols/Http.php:794
+#: app/ExternalFiles/Protocols/Http.php:811
 msgid "Temp file could not be created because of the following error: %1$s"
 msgstr "Temporäre Datei konnte wegen folgendem Fehler nicht erstellt werden: %1$s"
 
@@ -1535,32 +1915,32 @@ msgid "Given URL response with HTTP-status %1$d."
 msgstr "Angegebene URL antwortet mit HTTP-Status %1$d"
 
 #. translators: %1$s will be replaced by the servername.
-#: app/ExternalFiles/Protocols/Ftp.php:429
+#: app/ExternalFiles/Protocols/Ftp.php:467
 msgid "FTP-Connection failed. Check the servername %1$s and the given credentials. Error: %2$s"
 msgstr "FTP-Verbindung fehlgeschlagen. Prüfe den Servernamen %1$s und die angegebenen Zugangsdaten. Fehler: %2$s"
 
 #. translators: %1$s is replaced by a URL.
-#: app/ExternalFiles/Protocols/Ftp.php:198
+#: app/ExternalFiles/Protocols/Ftp.php:210
 #: app/ExternalFiles/Protocols/Http.php:296
-#: app/ExternalFiles/Protocols/Sftp.php:138
+#: app/ExternalFiles/Protocols/Sftp.php:143
 msgid "Check files from presumed directory URL %1$s"
 msgstr "Prüfe Dateien in der vermuteten Verzeichnis URL %1$s"
 
 #. translators: %1$s will be replaced by the file-URL
-#: app/ExternalFiles/Protocols/Ftp.php:168
+#: app/ExternalFiles/Protocols/Ftp.php:177
 msgid "FTP-directory returns no files."
 msgstr "FTP-Verzeichnis enthält keine Dateien."
 
 #: app/ExternalFiles/Protocols/Ftp.php:135
-#: app/ExternalFiles/Protocols/Ftp.php:390
-msgid "FTP-path looks not like an URL."
-msgstr "FTP-Pfad sieht nicht nach einer URL aus."
+#: app/ExternalFiles/Protocols/Ftp.php:416
+msgid "FTP-path looks not like a URL."
+msgstr "FTP-Pfad sieht nicht aus wie eine URL."
 
 #: app/ExternalFiles/Protocols/Ftp.php:126
 msgid "Missing credentials for import from FTP-path."
 msgstr "Zugangsdaten für den Import vom FTP-Pfad fehlen."
 
-#: app/ExternalFiles/Protocols/File.php:189
+#: app/ExternalFiles/Protocols/File.php:193
 msgid "File-URL does not exist."
 msgstr "FTP-URL existiert nicht."
 
@@ -1569,560 +1949,551 @@ msgstr "FTP-URL existiert nicht."
 msgid "Check files from presumed directory path %1$s"
 msgstr "Prüfe Dateien im vermuteten Verzeichnis-Pfad %1$s"
 
-#: app/ExternalFiles/Protocols.php:138
+#: app/ExternalFiles/Protocols.php:132
 msgid "Given URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library."
-msgstr "Angegebene URL verwendet kein unterstütztes TCP-Protokoll. Du wirst diese URL nicht als externe Datei in der Medienbibliothek verwenden können."
+msgstr "Angegebene URL verwendet kein unterstütztes TCP-Protokoll. Du wirst diese URL nicht als externe Datei in der Mediathek verwenden können."
 
-#: app/ExternalFiles/Forms.php:806
+#: app/ExternalFiles/Forms.php:831
 msgid "Add credentials to access these URLs"
 msgstr "Ergänze Zugangsdaten für den Zugriff auf diese URLs"
 
-#: app/ExternalFiles/Queue.php:713
+#: app/ExternalFiles/Queue.php:769
 msgid "Add these URLs to the queue that is processed in the background."
 msgstr "Füge diese URLs zur Warteschlange hinzu, die im Hintergrund verarbeitet wird."
 
-#: app/ExternalFiles/Forms.php:791 app/ExternalFiles/Forms.php:806
+#: app/ExternalFiles/Forms.php:816 app/ExternalFiles/Forms.php:831
 msgid "Hint:"
 msgstr "Hinweis:"
 
-#: app/ExternalFiles/Forms.php:791 app/ExternalFiles/Forms.php:806
-#: app/Plugin/Admin/Directory_Listing.php:274
-#: app/Plugin/Admin/Directory_Listing.php:312
+#: app/ExternalFiles/Forms.php:816 app/ExternalFiles/Forms.php:831
+#: app/Plugin/Admin/Directory_Listing.php:310
+#: app/Plugin/Admin/Directory_Listing.php:348
 msgid "Password"
 msgstr "Passwort"
 
-#: app/ExternalFiles/Forms.php:791 app/ExternalFiles/Forms.php:806
-#: app/Plugin/Admin/Directory_Listing.php:273
+#: app/ExternalFiles/Forms.php:816 app/ExternalFiles/Forms.php:831
 #: app/Plugin/Admin/Directory_Listing.php:309
+#: app/Plugin/Admin/Directory_Listing.php:345
 msgid "Login"
 msgstr "Login"
 
-#: app/ExternalFiles/Forms.php:791
+#: app/ExternalFiles/Forms.php:816
 msgid "Add credentials to access this URL"
 msgstr "Ergänze Zugangsdaten für den Zugriff auf diese URL"
 
-#: app/ExternalFiles/Forms.php:788
+#: app/ExternalFiles/Forms.php:813
 msgid "Enter the URL of an external file you want to insert in your library"
-msgstr "Gib eine URL für eine Datei ein, die Du deiner Mediathek hinzufügen möchtest"
+msgstr "Gib eine URL für eine Datei ein, die du deiner Mediathek hinzufügen möchtest"
 
 #. translators: %1$s is replaced by a URL.
-#: app/ExternalFiles/Forms.php:712
+#: app/ExternalFiles/Forms.php:737
 msgid "Saving URL %1$s .."
 msgstr "Speichere URL %1$s .."
 
 #. translators: %1$s is replaced by a URL.
-#: app/ExternalFiles/Forms.php:699
+#: app/ExternalFiles/Forms.php:724
 msgid "Checking URL %1$s .."
 msgstr "Prüfe URL %1$s .."
 
 #. translators: %1$s is replaced by a URL.
-#: app/ExternalFiles/Forms.php:687
+#: app/ExternalFiles/Forms.php:712
 msgid "Import of presumed directory URL %1$s starting .."
 msgstr "Import vom vermuteter Verzeichnis-URL %1$s startet .."
 
-#: app/ExternalFiles/Forms.php:649
+#: app/ExternalFiles/Forms.php:674 app/ExternalFiles/Synchronization.php:587
 msgid "Go to media library"
-msgstr "Gehe zu Medienbibliothek"
+msgstr "Gehe zu Mediathek"
 
 #. translators: %1$d will be replaced by a number.
-#: app/ExternalFiles/Forms.php:632
+#: app/ExternalFiles/Forms.php:657
 msgid "The import has checked %1$d URL with the following result:"
 msgid_plural "The import has checked %1$d URLs with the following result:"
 msgstr[0] "Der Import hat eine URL mit folgendem Ergebnis geprüft:"
 msgstr[1] "Der Import hat %1$d URLs mit folgendem Ergebnis geprüft:"
 
-#: app/ExternalFiles/Forms.php:661
+#: app/ExternalFiles/Forms.php:686
 msgid "Go to queue"
 msgstr "Gehe zu Warteschlange"
 
-#: app/ExternalFiles/Forms.php:619 app/ExternalFiles/Forms.php:644
+#: app/ExternalFiles/Forms.php:644 app/ExternalFiles/Forms.php:669
 msgid "Go to logs"
 msgstr "Gehe zum Protokoll"
 
-#: app/ExternalFiles/Forms.php:614 app/ExternalFiles/Forms.php:639
+#: app/ExternalFiles/Forms.php:639 app/ExternalFiles/Forms.php:664
 msgid "Finalized"
 msgstr "Abgeschlossen"
 
-#: app/ExternalFiles/Forms.php:607
+#: app/ExternalFiles/Forms.php:632
 msgid "They might have been added to the queue if you used this option."
 msgstr "Sie könnten eventuell zur Warteschlange hinzugefügt wurden sein, wenn du diese Option verwendet hast."
 
-#: app/ExternalFiles/Forms.php:607
+#: app/ExternalFiles/Forms.php:632
 msgid "No URLs have been imported."
 msgstr "Es wurden keine URLs importiert."
 
-#: app/ExternalFiles/Forms.php:534
+#: app/ExternalFiles/Forms.php:559
 msgid "End of AJAX-request to import URLs."
 msgstr "Ende vom AJAX-Request zum Import von URLs."
 
-#: app/ExternalFiles/Forms.php:477
+#: app/ExternalFiles/Forms.php:503
 msgid "Error occurred during check of URL. The URL has not been added."
 msgstr "Fehler beim Prüfen der URL. Sie wird nicht hinzugefügt."
 
-#: app/ExternalFiles/Forms.php:451
+#: app/ExternalFiles/Forms.php:477
 msgid "Try to import the URL."
 msgstr "Versuche die Datei zu importieren."
 
-#: app/ExternalFiles/Forms.php:422
+#: app/ExternalFiles/Forms.php:448
 msgid "URLs has been transferred via AJAX and will now be checked and imported."
 msgstr "URLs wurden per AJAX übermittelt und werden jetzt geprüft und importiert."
 
-#: app/ExternalFiles/Forms.php:342
+#: app/ExternalFiles/Forms.php:369
 msgid "AJAX-request to import URLs has been called."
 msgstr "AJAX-Request zum Importieren von URLs wurde aufgerufen."
 
 #. translators: %1$s will be replaced with the URL for add new media
-#: app/ExternalFiles/Forms.php:263
+#: app/ExternalFiles/Forms.php:285
 msgid "Add external files via their URL <a href=\"%1$s\" target=\"_blank\">here (opens new window)</a>."
 msgstr "Füge externe Dateien über ihre URL <a href=\"%1$s\" target=\"_blank\">hier (öffnet neues Fenster)</a> hinzu."
 
-#: app/ExternalFiles/Forms.php:212
+#: app/ExternalFiles/Forms.php:229
 msgid "Add URLs of external files"
 msgstr "Externe Dateien über ihre URLs hinzufügen"
 
-#: app/ExternalFiles/Forms.php:182
+#: app/ExternalFiles/Forms.php:190
 msgid "The hosting of the file will be changed."
 msgstr "Das Hosting der Datei wird geändert."
 
-#: app/ExternalFiles/Forms.php:181
+#: app/ExternalFiles/Forms.php:189
 msgid "Please wait"
 msgstr "Bitte warten"
 
-#: app/ExternalFiles/Forms.php:179
+#: app/ExternalFiles/Forms.php:187
 msgid "An error occurred"
 msgstr "Es ist ein Fehler aufgetreten"
 
-#: app/ExternalFiles/Forms.php:178 app/Plugin/Admin/Directory_Listing.php:252
+#: app/ExternalFiles/Forms.php:186 app/Plugin/Admin/Directory_Listing.php:286
 msgid "The following error occurred:"
 msgstr "Der folgende Fehler trat auf:"
 
-#: app/ExternalFiles/Forms.php:175
+#: app/ExternalFiles/Forms.php:183
 msgid "It is no problem to continue using the URL in your media library."
-msgstr "Es ist kein Problem diese URL in deiner Medienbibliothek weiterhin zu verwenden."
+msgstr "Es ist kein Problem diese URL in deiner Mediathek weiterhin zu verwenden."
 
-#: app/ExternalFiles/Forms.php:170 app/Plugin/Admin/Directory_Listing.php:253
+#: app/ExternalFiles/Forms.php:178 app/Plugin/Admin/Directory_Listing.php:287
 msgid "The following errors occurred:"
 msgstr "Die folgenden Fehler traten auf:"
 
-#: app/ExternalFiles/Forms.php:169
+#: app/ExternalFiles/Forms.php:177
 msgid "The following URLs were successfully imported:"
 msgstr "Die folgenden URLs wurden erfolgreich importiert:"
 
-#: app/ExternalFiles/Forms.php:168
+#: app/ExternalFiles/Forms.php:176
 msgid "Close"
 msgstr "Schließen"
 
-#: app/ExternalFiles/Forms.php:165
+#: app/ExternalFiles/Forms.php:173
 msgid "The specified URLs have been processed."
 msgstr "Die angegebenen URLs wurden verarbeitet."
 
-#: app/ExternalFiles/File_Types.php:163
+#: app/ExternalFiles/File_Types.php:158
 msgid "File type could not be detected. Fallback to general file."
 msgstr "Dateityp nicht ermittelbar. Verwende Standard Dateityp."
 
-#. translators: %1$s will be replaced by the type name (e.g. "Images").
-#: app/ExternalFiles/File_Types.php:151
-msgid "File has the type %1$s."
-msgstr "Datei hat den Typ %1$s."
-
-#: app/ExternalFiles/Files.php:1730
+#: app/ExternalFiles/Files.php:1274 app/Services/Imgur.php:193
 msgid "Take a look at your added external files in the media library."
-msgstr "Wirf einen Blick auf deine hinzugefügten externen Dateien in der Medienbibliothek."
+msgstr "Wirf einen Blick auf deine hinzugefügten externen Dateien in der Mediathek."
 
-#: app/ExternalFiles/Files.php:1729
+#: app/ExternalFiles/Files.php:1273 app/Services/Imgur.php:192
 msgid "Wait until you get an answer."
 msgstr "Warte bis du eine Antwort erhältst."
 
-#: app/ExternalFiles/Files.php:1728
+#: app/ExternalFiles/Files.php:1272 app/Services/Imgur.php:191
 msgid "Click on \"Add URLs\"."
 msgstr "Klicke auf \"URLs hinzufügen\"."
 
-#: app/ExternalFiles/Files.php:1727
+#: app/ExternalFiles/Files.php:1271
 msgid "Optionally add credentials below the field."
-msgstr "Optional kannst Du unterhalb des Feldes Zugangsdaten hinzufügen."
+msgstr "Optional kannst du unterhalb des Feldes Zugangsdaten hinzufügen."
 
-#: app/ExternalFiles/Files.php:1726
+#: app/ExternalFiles/Files.php:1270
 msgid "Paste the URLs you want to add in the field in the new dialog."
-msgstr "Füge in das Feld in dem neuen Dialog die URLs ein die Du hinzufügen willst."
+msgstr "Füge in das Feld in dem neuen Dialog die URLs ein die du hinzufügen willst."
 
-#: app/ExternalFiles/Files.php:1725
+#: app/ExternalFiles/Files.php:1269 app/Services/Imgur.php:189
 msgid "Click on the button \"Add external files\"."
 msgstr "Klicke auf den Button \"Hinzufügen externer Dateien\"."
 
 #. translators: %1$s will be replaced by a URL.
-#: app/ExternalFiles/Files.php:1724
-msgid "Go to Media > <a href=\"%1$s\">New file</a>."
+#: app/ExternalFiles/Files.php:1268 app/Services/Imgur.php:188
+msgid "Go to Media > <a href=\"%1$s\">Add Media File</a>."
 msgstr "Gehe zu Medien > <a href=\"%1$s\">Neue Mediendatei hinzufügen</a>."
 
-#: app/ExternalFiles/Files.php:1722 app/Services/Services.php:129
+#: app/ExternalFiles/Files.php:1266 app/Services/Services.php:169
 msgid "How to use"
 msgstr "Wie es funktioniert"
 
-#: app/ExternalFiles/Files.php:1721
+#: app/ExternalFiles/Files.php:1265
 msgid "The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to."
 msgstr "Das Plugin ermöglicht es dir, externe Dateien in deine Mediendatanbank zu integrieren. Diese werden dann genau so behandelt wie andere Dateien, die du hier hochladen kannst. Du kannst sie wie gewohnt in deine Website einbinden."
 
-#: app/ExternalFiles/Files.php:1720 app/ExternalFiles/Files.php:1736
+#: app/ExternalFiles/Files.php:1264 app/ExternalFiles/Files.php:1280
 msgid "Upload external files"
 msgstr "Hochladen externer Dateien"
 
-#: app/ExternalFiles/Files.php:1705
+#: app/ExternalFiles/Import.php:476
 msgid "Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported were saved in the queue and are now automatically imported individually."
 msgstr "Der Importvorgang wurde abgebrochen, weil er zu lange dauerte und die maximale Ausführungszeit im Hosting erreicht hätte. Die zu importierenden Dateien wurden in der Warteschlange gespeichert und werden nun automatisch einzeln importiert."
 
-#: app/ExternalFiles/Files.php:1137
+#: app/ExternalFiles/Files.php:767
 msgid "File is now extern hosted."
 msgstr "Die Datei wird jetzt extern gehostet."
 
-#: app/ExternalFiles/Files.php:978
+#: app/ExternalFiles/Files.php:629
 msgid "Mime type:"
 msgstr "MIME-Typ:"
 
-#: app/ExternalFiles/Files.php:974
+#: app/ExternalFiles/Files.php:625
 msgid "Reset thumbnails"
 msgstr "Vorschaubilder zurücksetzen"
 
-#: app/ExternalFiles/Files.php:970
+#: app/ExternalFiles/Files.php:621
 msgid "Show log entries"
 msgstr "Zeige Protokolleinträge"
 
-#: app/ExternalFiles/Files.php:966
+#: app/ExternalFiles/Files.php:617
 msgid "File is protected with login and password."
 msgstr "Datei ist mit Login und Passwort geschützt."
 
-#: app/ExternalFiles/Files.php:895
+#: app/ExternalFiles/Files.php:546
 msgid "External URL of this file:"
 msgstr "Externe URL von dieser Datei:"
 
-#: app/ExternalFiles/Files.php:483
+#: app/ExternalFiles/Import.php:356
 msgid "External file object for URL could not be loaded."
 msgstr "Externes Dateiobjekt für URL konnte nicht geladen werden."
 
-#: app/ExternalFiles/Files.php:457
-msgid "URL will be stay external, just save the reference in media library."
-msgstr "Die URL wird extern bleiben, speichere einfach den Verweis in der Mediathek."
-
-#: app/ExternalFiles/Files.php:432
-msgid "URL will be saved local."
-msgstr "URL wird lokal gespeichert."
-
 #. translators: %1$s is replaced by a URL.
-#: app/ExternalFiles/Files.php:374
+#: app/ExternalFiles/Import.php:241
 msgid "Save file from URL"
 msgid_plural "Save files from URL"
 msgstr[0] "Speichere Datei von URL"
 msgstr[1] "Speichere Dateien von URL"
 
-#: app/ExternalFiles/Files.php:346
+#: app/ExternalFiles/Import.php:213
 msgid "URL has been added to queue."
 msgstr "URL wurde zur Warteschlange hinzugefügt."
 
-#: app/ExternalFiles/Files.php:335
+#: app/ExternalFiles/Import.php:202
 msgid "No files found under given URL."
 msgstr "Keine Dateien unter der angegebenen URL gefunden."
 
-#: app/ExternalFiles/Files.php:286
-msgid "URL has matched a blacklist entry."
-msgstr "URL stimmt mit Blacklist-Eintrag überein."
-
 #. translators: %1$s will be replaced by the file URL.
-#: app/ExternalFiles/Files.php:1159
+#: app/ExternalFiles/Files.php:789
 msgid "File has been switched the hosting."
 msgstr "Datei hat das Hosting gewechselt."
 
-#: app/ExternalFiles/Files.php:1119
+#: app/ExternalFiles/Files.php:746
 msgid "Given file is not an external file."
 msgstr "Angegebene Datei ist keine externe Datei."
 
-#: app/ExternalFiles/Files.php:936
+#: app/ExternalFiles/Files.php:587
 msgid "Switch to local"
 msgstr "Wechseln zu lokal"
 
-#: app/ExternalFiles/Files.php:929
+#: app/ExternalFiles/Files.php:580
 msgid "Switch to extern"
 msgstr "Wechseln zu extern"
 
-#: app/ExternalFiles/Forms.php:177
+#: app/ExternalFiles/Forms.php:185
 msgid "The hosting of this file has been changed."
 msgstr "Das Hosting dieser Datei wurde geändert."
 
-#: app/ExternalFiles/Forms.php:176
+#: app/ExternalFiles/Forms.php:184
 msgid "Hosting changed"
 msgstr "Hosting verändert"
 
-#: app/ExternalFiles/Files.php:933
+#: app/ExternalFiles/Files.php:584
 msgid "File is extern hosted."
 msgstr "Datei wird extern gehosted."
 
-#: app/ExternalFiles/Files.php:926 app/ExternalFiles/Files.php:1153
+#: app/ExternalFiles/Files.php:577 app/ExternalFiles/Files.php:783
 msgid "File is local hosted."
 msgstr "Datei wird lokal gehosted."
 
 #. translators: %1$s will be replaced by the URL which is imported.
-#: app/ExternalFiles/Forms.php:455
+#: app/ExternalFiles/Forms.php:481
 msgid "Importing URL %1$s"
 msgstr "Importiere URL %1$s"
 
-#: app/ExternalFiles/Forms.php:355
+#: app/ExternalFiles/Forms.php:382
 msgid "Import of URLs starting .."
 msgstr "Import von URLs startet .."
 
-#: app/ExternalFiles/Forms.php:161 app/ExternalFiles/Forms.php:319
+#: app/ExternalFiles/Forms.php:169 app/ExternalFiles/Forms.php:346
 msgid "Add external file"
 msgstr "Externe Datei hinzufügen"
 
-#: app/ExternalFiles/Forms.php:286 app/ExternalFiles/Forms.php:292
+#: app/ExternalFiles/Forms.php:308 app/ExternalFiles/Forms.php:314
 msgid "Add URL"
 msgstr "URL hinzufügen"
 
-#: app/Plugin/Admin/Admin.php:198 app/Services/GoogleDrive.php:832
+#: app/Dependencies/easySettingsForWordPress/Settings.php:1079
+#: app/Plugin/Admin/Admin.php:204 app/Services/GoogleDrive.php:861
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: app/ExternalFiles/Forms.php:253 app/Plugin/Admin/Admin.php:201
+#: app/ExternalFiles/Forms.php:275 app/Plugin/Admin/Admin.php:207
+#: app/Plugin/Admin/Directory_Listing.php:107
+#: app/Plugin/Admin/Directory_Listing.php:108
 msgid "Add external files"
 msgstr "Externe Dateien hinzufügen"
 
-#: app/ExternalFiles/Forms.php:218
+#: app/ExternalFiles/Forms.php:235
 msgid "Add URLs"
 msgstr "URLs hinzufügen"
 
-#: app/ExternalFiles/Forms.php:175
+#: app/ExternalFiles/Forms.php:183
 msgid "The file is available."
 msgstr "Die Datei ist erreichbar."
 
-#: app/ExternalFiles/Forms.php:174
+#: app/ExternalFiles/Forms.php:182
 msgid "The file is NOT available."
 msgstr "Die Datei ist NICHT erreichbar."
 
-#: app/ExternalFiles/Forms.php:173
+#: app/ExternalFiles/Forms.php:181
 msgid "Availability refreshed"
 msgstr "Erreichbarkeit geprüft"
 
-#: app/ExternalFiles/Forms.php:172
+#: app/ExternalFiles/Forms.php:180
 msgid "Please enter one or more URLs to import in the field."
 msgstr "Bitte gibt eine oder mehr URLs zum Import in das Feld ein."
 
-#: app/ExternalFiles/Forms.php:171
+#: app/ExternalFiles/Forms.php:179
 msgid "No URLs given"
 msgstr "Keine URLs angegeben"
 
-#: app/ExternalFiles/Forms.php:592
+#: app/ExternalFiles/Forms.php:617
 msgid "The following URL have been saved successfully:"
 msgid_plural "The following URLs has been saved successfully:"
 msgstr[0] "Die folgende URL wurde erfolgreich importiert"
 msgstr[1] "Die folgenden URLs wurden erfolgreich importiert"
 
-#: app/ExternalFiles/Forms.php:167 app/ExternalFiles/Forms.php:223
-#: app/ExternalFiles/Forms.php:297 app/Plugin/Settings.php:916
-#: app/Plugin/Settings/Export.php:97 app/Plugin/Settings/Import.php:126
-#: app/Plugin/Statistics.php:144 app/Plugin/Tables/Logs.php:157
-#: app/Plugin/Tables/Queue.php:149 app/Plugin/Tables/Queue.php:183
-#: app/Plugin/Tables/Queue.php:220 app/Services/GoogleDrive.php:169
-#: app/Services/GoogleDrive.php:203
+#: app/Dependencies/easySettingsForWordPress/Export.php:96
+#: app/Dependencies/easySettingsForWordPress/Import.php:125
+#: app/ExternalFiles/Forms.php:175 app/ExternalFiles/Forms.php:240
+#: app/ExternalFiles/Forms.php:319 app/ExternalFiles/Synchronization.php:365
+#: app/Plugin/Settings.php:947 app/Plugin/Statistics.php:143
+#: app/Plugin/Tables/Logs.php:156 app/Plugin/Tables/Queue.php:149
+#: app/Plugin/Tables/Queue.php:189 app/Plugin/Tables/Queue.php:232
+#: app/Services/GoogleDrive.php:172 app/Services/GoogleDrive.php:206
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: app/ExternalFiles/Forms.php:166 app/ExternalFiles/Proxy.php:312
-#: app/Plugin/Settings/Import.php:96 app/Plugin/Settings/Import.php:164
+#: app/Dependencies/easySettingsForWordPress/Import.php:95
+#: app/Dependencies/easySettingsForWordPress/Import.php:163
+#: app/ExternalFiles/Files.php:1376 app/ExternalFiles/Files.php:1420
+#: app/ExternalFiles/Forms.php:174 app/ExternalFiles/Proxy.php:313
+#: app/ExternalFiles/Synchronization.php:582
 msgid "OK"
 msgstr "Ok"
 
-#: app/ExternalFiles/Forms.php:164
+#: app/ExternalFiles/Forms.php:172
 msgid "Import has been run"
 msgstr "Import wurde durchgeführt"
 
-#: app/ExternalFiles/Forms.php:163
+#: app/ExternalFiles/Forms.php:171
 msgid "Import of URLs running"
 msgstr "Import von URLs läuft"
 
-#: app/Plugin/Settings.php:177
+#: app/Plugin/Settings.php:182
 msgid "Questions? Check our forum"
 msgstr "Fragen? Schau in unser Forum"
 
-#: app/ExternalFiles/Forms.php:162
+#: app/ExternalFiles/Forms.php:170
 msgid "Rate this plugin"
 msgstr "Bewerte dieses Plugin"
 
 #. translators: %1$s will be replaced by the external hook-documentation-URL
-#: app/Plugin/Settings.php:265
+#: app/Plugin/Settings.php:270
 msgid "Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href=\"%1$s\" target=\"_blank\">at our hooks (opens new window)</a>."
-msgstr "Wählen einen die Content-Typ, die Du als externe URL zulassen willst. Wenn Du diese Einstellung änderst, werden bereits verwendete externe Dateien im Frontend nicht verändert. Wenn Du einen Content-Typ vermisst, ergänze einen <a href=\"%1$s\" target=\"_blank\">über unsere Hooks</a>."
+msgstr "Wählen einen die Content-Typ, die du als externe URL zulassen willst. Wenn du diese Einstellung änderst, werden bereits verwendete externe Dateien im Frontend nicht verändert. Wenn du einen Content-Typ vermisst, ergänze einen <a href=\"%1$s\" target=\"_blank\">über unsere Hooks</a>."
 
-#: app/Plugin/Settings.php:675
+#: app/Plugin/Settings.php:696
 msgid "The given mime-type is not supported. Setting will not be saved."
 msgstr "Der angegebene Content-type wird nicht Unterstützung. Einstellung wird nicht gespeichert."
 
 #. translators: %1$s will be replaced by the name of the used interval
-#: app/ExternalFiles/Queue.php:147 app/Plugin/Settings.php:619
+#: app/ExternalFiles/Queue.php:151 app/ExternalFiles/Synchronization.php:1171
+#: app/Plugin/Settings.php:630
 msgid "The given interval %1$s does not exists."
 msgstr "Das angegebene Intervall %1$s existiert nicht."
 
-#: app/Plugin/Settings.php:172 app/Plugin/Settings.php:722
+#: app/Plugin/Settings.php:177 app/Plugin/Settings.php:744
 msgid "Logs"
 msgstr "Protokolle"
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: app/ExternalFiles/Files.php:1043
+#: app/ExternalFiles/Files.php:709
 msgid "URL-File is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr "URL-Datei ist nicht erreichbar. Prüfe <a href=\"%1$s\">das Log</a> für Details dazu."
 
-#: app/ExternalFiles/Files.php:995 app/ExternalFiles/Files.php:1093
+#: app/ExternalFiles/Files.php:655 app/ExternalFiles/Files.php:728
 msgid "No ID given."
 msgstr "Keine ID angegeben."
 
-#: app/ExternalFiles/Files.php:950
+#: app/ExternalFiles/Files.php:601
 msgid "File is not cached in proxy."
 msgstr "Datei ist keine über den Proxy gecachte Datei."
 
-#: app/ExternalFiles/Files.php:948
+#: app/ExternalFiles/Files.php:599
 msgid "File is delivered through proxied cache."
 msgstr "Datei wird über einen Proxy-Cache bereitgestellt."
 
-#: app/ExternalFiles/Files.php:918
+#: app/ExternalFiles/Files.php:569
 msgid "Recheck availability"
 msgstr "Verfügbarkeit prüfen"
 
 #. translators: %1$s will be replaced by the URL for the logs
-#: app/ExternalFiles/Files.php:911
+#: app/ExternalFiles/Files.php:562
 msgid "File-URL is NOT available! Check <a href=\"%1$s\">the log</a> for details."
 msgstr "Datei-URL ist nicht erreichbar. Prüfe <a href=\"%1$s\">das Log</a> für Details dazu."
 
-#: app/ExternalFiles/Files.php:903 app/ExternalFiles/Files.php:1032
+#: app/ExternalFiles/Files.php:554 app/ExternalFiles/Files.php:698
 msgid "File-URL is available."
 msgstr "Datei-URL ist erreichbar."
 
-#: app/ExternalFiles/Files.php:858 app/ExternalFiles/Tables.php:172
+#: app/ExternalFiles/Files.php:509 app/ExternalFiles/Tables.php:185
 msgid "External file"
 msgstr "Externe Datei"
 
-#: app/ExternalFiles/Tables.php:95
+#: app/ExternalFiles/Tables.php:92
 msgid "no external URLs"
 msgstr "nur nicht externe URLs"
 
-#: app/ExternalFiles/Tables.php:94
+#: app/ExternalFiles/Tables.php:91
 msgid "only external URLs"
 msgstr "nur externe URLs"
 
-#: app/ExternalFiles/Tables.php:93
+#: app/ExternalFiles/Tables.php:90
 msgid "All files"
 msgstr "Alle Dateien"
 
-#: app/ExternalFiles/Forms.php:803
+#: app/ExternalFiles/Forms.php:828
 msgid "Enter one URL per line for external files you want to insert in your library"
-msgstr "Gibt eine URL pro Zeile für die Dateien ein, die Du deiner Mediathek hinzufügen möchtest"
+msgstr "Gibt eine URL pro Zeile für die Dateien ein, die du deiner Mediathek hinzufügen möchtest"
 
-#: app/Plugin/Settings.php:133
+#: app/Plugin/Settings.php:138
 msgid "External files in Medias Library"
 msgstr "Externe Dateien in der Mediathek"
 
-#: app/Plugin/Settings.php:134
+#: app/Plugin/Settings.php:139
 msgid "Settings for External files in Media Library"
-msgstr "Einstellungen für externe Dateien in der Medienbibliothek"
+msgstr "Einstellungen für externe Dateien in der Mediathek"
 
-#: app/Plugin/Settings.php:460
+#: app/Plugin/Settings.php:471
 msgid "Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed."
 msgstr "Legt fest, wie lange Bilder, die über unseren eigenen Proxy geladen werden, lokal gespeichert werden. Nach dieser Zeit wird ihr Cache erneuert."
 
-#: app/Plugin/Settings.php:459
+#: app/Plugin/Settings.php:470
 msgid "Max age for cached images in proxy in hours"
 msgstr "Höchstalter für zwischengespeicherte Bilder im Proxy in Stunden"
 
-#: app/Plugin/Settings.php:448
+#: app/Plugin/Settings.php:459
 msgid "This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally."
-msgstr "Diese Option ist nur verfügbar, wenn die Bilder extern gehostet werden. Wenn diese Option deaktiviert ist, werden die externen Bilder mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, können Sie diese Option aktivieren, um die Bilder lokal zu laden."
+msgstr "Diese Option ist nur verfügbar, wenn die Bilder extern gehostet werden. Wenn diese Option deaktiviert ist, werden die externen Bilder mit ihrer externen URL eingebettet. Um Probleme mit dem Datenschutz zu vermeiden, kannst Du diese Option aktivieren, um die Bilder lokal zu laden."
 
-#: app/Plugin/Settings.php:447
+#: app/Plugin/Settings.php:458
 msgid "Enable proxy for images"
 msgstr "Aktiviere Proxy für Bilder"
 
-#: app/Plugin/Settings.php:394 app/Plugin/Settings.php:411
-#: app/Plugin/Settings.php:489
+#: app/Plugin/Settings.php:405 app/Plugin/Settings.php:422
+#: app/Plugin/Settings.php:500
 msgid "download and host them local"
 msgstr "runterladen und lokal hosten"
 
-#: app/Plugin/Settings.php:393 app/Plugin/Settings.php:410
-#: app/Plugin/Settings.php:488
+#: app/Plugin/Settings.php:404 app/Plugin/Settings.php:421
+#: app/Plugin/Settings.php:499
 msgid "host them extern"
 msgstr "extern hosten"
 
-#: app/Plugin/Settings.php:390
+#: app/Plugin/Settings.php:401
 msgid "Defines how external images are handled."
 msgstr "Legt fest, wie externe Bilder behandelt werden."
 
-#: app/Plugin/Settings.php:389
+#: app/Plugin/Settings.php:400
 msgid "Mode for image handling"
 msgstr "Modus für Bild-Bearbeitung"
 
-#: app/Plugin/Settings.php:206
+#: app/Plugin/Settings.php:211
 msgid "Images Settings"
 msgstr "Bild-Einstellungen"
 
-#: app/Plugin/Settings.php:378
+#: app/Plugin/Settings.php:389
 msgid "This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them."
 msgstr "Dies ist nur ein Fallback, wenn der eigentliche Benutzer nicht verfügbar ist (z. B. über CLI-Import). Neue Dateien werden normalerweise dem Benutzer zugewiesen, der sie hinzugefügt hat."
 
-#: app/Plugin/Settings.php:377
+#: app/Plugin/Settings.php:388
 msgid "User new files should be assigned to"
 msgstr "Benutzer dem neue Dateien zugewiesen werden"
 
-#: app/Plugin/Settings.php:356
+#: app/Plugin/Settings.php:361
 msgid "Select roles which should be allowed to add external files."
-msgstr "Wählen Sie die Rollen aus, denen es erlaubt sein soll, externe Dateien hinzuzufügen."
+msgstr "Wähle die Rollen aus, denen es erlaubt sein soll, externe Dateien hinzuzufügen."
 
-#: app/Plugin/Settings.php:355
+#: app/Plugin/Settings.php:360
 msgid "Select user roles"
 msgstr "Benutzerrollen auswählen"
 
-#: app/Plugin/Settings.php:292
+#: app/Plugin/Settings.php:297
 msgid "If this option is enabled all URL-files will be deleted during deinstallation of this plugin."
 msgstr "Wenn diese Option aktiviert ist, werden alle URL-Dateien bei der Deinstallation des Plugins gelöscht."
 
-#: app/Plugin/Settings.php:291
+#: app/Plugin/Settings.php:296
 msgid "Delete all data on uninstallation"
 msgstr "Lösche alle Daten bei Deinstallation"
 
-#: app/Plugin/Settings.php:540
+#: app/Plugin/Settings.php:551
 msgid "log all"
 msgstr "alles loggen"
 
-#: app/Plugin/Settings.php:539
+#: app/Plugin/Settings.php:550
 msgid "log warnings"
 msgstr "Warnungen loggen"
 
-#: app/Plugin/Settings.php:538
+#: app/Plugin/Settings.php:549
 msgid "normal"
 msgstr "normal"
 
-#: app/Plugin/Settings.php:535
+#: app/Plugin/Settings.php:546
 msgid "Log-mode"
 msgstr "Log-Mode"
 
-#: app/Plugin/Settings.php:263
+#: app/Plugin/Settings.php:268
 msgid "Select allowed mime-types"
 msgstr "Erlaubte Content-Types auswählen"
 
-#: app/Plugin/Settings.php:276
+#: app/Plugin/Settings.php:281
 msgid "Defines the time interval in which files with URLs are automatically checked for its availability."
 msgstr "Legt das Zeitintervall fest, in dem Dateien mit URLs automatisch auf ihre Verfügbarkeit geprüft werden."
 
-#: app/Plugin/Settings.php:278
+#: app/Plugin/Settings.php:283
 msgid "Set interval for file-check"
 msgstr "Intervall für die Dateiprüfung festlegen"
 
-#: app/Plugin/Settings.php:246
+#: app/Plugin/Settings.php:251
 msgid "Disable the attachment page for URL-files"
-msgstr "Deaktivieren Sie die Anhangseite für URL-Dateien"
+msgstr "Deaktiviere die Anhangseite für URL-Dateien"
 
 #: app/ThirdParty/Yoast.php:85
 msgid "This is handled by Yoast SEO."
 msgstr "Das wird durch Yoast SEO übernommen."
 
-#: app/Plugin/Settings.php:230
+#: app/Plugin/Settings.php:235
 msgid "Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs."
-msgstr "Jede Datei in der Medienbibliothek hat eine Anhangseite, die im Frontend aufgerufen werden kann. Mit dieser Option können Sie diese Anhangsseite für Dateien mit URLs deaktivieren."
+msgstr "Jede Datei in der Mediathek hat eine Anhangseite, die im Frontend aufgerufen werden kann. Mit dieser Option kannst du diese Anhangsseite für Dateien mit URLs deaktivieren."
 
-#: app/Plugin/Settings.php:144 app/Plugin/Settings.php:190
+#: app/Plugin/Settings.php:149 app/Plugin/Settings.php:195
 msgid "General Settings"
 msgstr "Allgemeine Einstellungen"
 
@@ -2134,44 +2505,44 @@ msgstr "Status"
 msgid "URL"
 msgstr "URL"
 
-#: app/ExternalFiles/Files.php:1212
+#: app/ExternalFiles/Files.php:837
 msgid "Mime-type is not allowed"
 msgstr "Content-type ist nicht erlaubt"
 
-#: app/Plugin/Helper.php:243
+#: app/Plugin/Helper.php:268
 msgid "MP4 Video"
 msgstr "MP4 Video"
 
-#: app/Plugin/Helper.php:239
+#: app/Plugin/Helper.php:264
 msgid "ZIP"
 msgstr "ZIP"
 
-#: app/Plugin/Helper.php:235
+#: app/Plugin/Helper.php:260
 msgid "PDF"
 msgstr "PDF"
 
-#: app/Plugin/Helper.php:231
+#: app/Plugin/Helper.php:256
 msgid "WEBP"
 msgstr "WEBP"
 
-#: app/Plugin/Helper.php:227
+#: app/Plugin/Helper.php:248
 msgid "PNG"
 msgstr "PNG"
 
-#: app/Plugin/Helper.php:223
+#: app/Plugin/Helper.php:244
 msgid "JPG/JPEG"
 msgstr "JPG/JPEG"
 
-#: app/Plugin/Helper.php:219
+#: app/Plugin/Helper.php:240
 msgid "GIF"
 msgstr "GIF"
 
-#: app/ExternalFiles/Files.php:569
+#: app/ExternalFiles/Files.php:278
 msgid "URL has been deleted from media library."
-msgstr "Die URL wurde aus der Medienbibliothek gelöscht."
+msgstr "Die URL wurde aus der Mediathek gelöscht."
 
 #. translators: %1$s will be replaced by its Mime-Type
-#: app/ExternalFiles/Protocols/Http.php:134
+#: app/ExternalFiles/Protocols/Http.php:133
 msgid "Given URL response with the disallowed mime-type %1$s."
 msgstr "Die angegebene URL antwortet mit einem nicht zulässigen Content-type %1$s."
 
@@ -2179,21 +2550,17 @@ msgstr "Die angegebene URL antwortet mit einem nicht zulässigen Content-type %1
 msgid "Given URL response without Content-type."
 msgstr "Die angegebene URL verfügt über keinen Content-Type."
 
-#: app/ExternalFiles/Protocols/Http.php:91
-msgid "Given URL is not available."
-msgstr "Die angegebene URL ist nicht verfügbar."
-
 #: app/ExternalFiles/Protocols/File.php:127
 #: app/ExternalFiles/Protocols/Ftp.php:84
-#: app/ExternalFiles/Protocols/Ftp.php:261
-#: app/ExternalFiles/Protocols/Http.php:226
+#: app/ExternalFiles/Protocols/Ftp.php:273
+#: app/ExternalFiles/Protocols/Http.php:224
 #: app/ExternalFiles/Protocols/Http.php:341
 #: app/ExternalFiles/Protocols/Http.php:395
-#: app/ExternalFiles/Protocols/Sftp.php:150
-#: app/Services/GoogleDrive/Protocol.php:91
-#: app/Services/GoogleDrive/Protocol.php:265
+#: app/ExternalFiles/Protocols/Sftp.php:155
+#: app/Services/GoogleDrive/Protocol.php:93
+#: app/Services/GoogleDrive/Protocol.php:266
 msgid "Given URL already exist in media library."
-msgstr "Die angegebene URL existiert bereits in der Medienbibliothek."
+msgstr "Die angegebene URL existiert bereits in der Mediathek."
 
 #. translators: %1$s will be replaced by the file-URL
 #: app/ExternalFiles/Protocols/Http.php:57
@@ -2201,13 +2568,13 @@ msgid "Given string %1$s is not a valid URL."
 msgstr "Die angegebene Zeichenkette %1$s ist keine gültige URL."
 
 #. translators: %1$s will be replaced by a WP-error-message
-#: app/ExternalFiles/Files.php:468
-msgid "URL could not be saved because of the following error: %1$s"
+#: app/ExternalFiles/Import.php:341
+msgid "The URL could not be saved due to the following error: %1$s"
 msgstr "URL konnte wegen des folgenden Fehlers nicht gespeichert werden: %1$s"
 
-#: app/ExternalFiles/Files.php:521
+#: app/ExternalFiles/Import.php:394
 msgid "URL successfully added in media library."
-msgstr "URL erfolgreich in Medienbibliothek hinzugefügt."
+msgstr "URL erfolgreich in Mediathek hinzugefügt."
 
 #: app/Plugin/Transient.php:172
 msgid "Dismiss this notice."
@@ -2226,9 +2593,9 @@ msgstr "Thomas Zwirner"
 #. Description of the plugin
 #: external-files-in-media-library.php
 msgid "Enables the Media Library to use external files."
-msgstr "Ermöglicht es der Medienbibliothek, externe Dateien zu verwenden."
+msgstr "Ermöglicht es der Mediathek, externe Dateien zu verwenden."
 
 #. Plugin Name of the plugin
 #: external-files-in-media-library.php
 msgid "External files in Media Library"
-msgstr "Externe Dateien in der Medienbibliothek"
+msgstr "Externe Dateien in der Mediathek"

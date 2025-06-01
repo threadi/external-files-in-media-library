@@ -121,6 +121,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
 		add_filter( 'eml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
 		add_filter( 'eml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
+		add_filter( 'eml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
 
 		// change handling of media files.
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
@@ -466,7 +467,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 				'filesize'      => 0,
 				'mime-type'     => 'video/mp4',
 				'icon'          => '<span class="dashicons dashicons-youtube"></span>',
-				'last-modified' => absint( strtotime( $item['snippet']['publishedAt'] ) ),
+				'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $item['snippet']['publishedAt'] ) ) ) ),
 				'preview'       => $thumbnail,
 			);
 
@@ -794,6 +795,24 @@ class Youtube extends Directory_Listing_Base implements Service {
 		}
 
 		// return false to prevent local usage.
+		return false;
+	}
+
+	/**
+	 * Prevent local save of YouTube videos during import.
+	 *
+	 * @param bool   $no_external_object The marker.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function prevent_local_save_during_import( bool $no_external_object, string $url ): bool {
+		// bail if used URL is not from YouTube.
+		if( ! $this->is_youtube_video( $url ) ) {
+			return $no_external_object;
+		}
+
+		// import YouTube videos local.
 		return false;
 	}
 }

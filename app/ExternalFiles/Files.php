@@ -103,6 +103,8 @@ class Files {
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
 		add_filter( 'eml_import_fields', array( $this, 'add_date_option_in_form' ) );
+		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
+		add_filter( 'eml_file_import_attachment', array( $this, 'add_title_on_real_import' ), 10, 3 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1482,5 +1484,45 @@ class Files {
 
 		// return the resulting fields.
 		return $fields;
+	}
+
+	/**
+	 * Return true if real import is enabled to force local saving of each file.
+	 *
+	 * @param bool $result The result.
+	 *
+	 * @return bool
+	 */
+	public function import_local_on_real_import( bool $result ): bool {
+		// bail if setting is disabled to use the generated value.
+		if( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+			return $result;
+		}
+
+		// return true to force local saving of this file.
+		return true;
+	}
+
+	/**
+	 * Add title for file if real import is enabled.
+	 *
+	 * @param array<string,mixed> $post_array The attachment settings.
+	 * @param string              $url        The requested external URL.
+	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_title_on_real_import( array $post_array, string $url, array $file_data ): array {
+		// bail if setting is disabled to use the generated value.
+		if( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+			return $post_array;
+		}
+
+		// add the title.
+		$post_array['post_title'] = $file_data['title'];
+
+		// return the resulting array.
+		return $post_array;
 	}
 }

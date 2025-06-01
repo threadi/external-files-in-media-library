@@ -229,7 +229,7 @@ class Http extends Protocol_Base {
 				}
 
 				// return the result as array for import this as single URL.
-				if ( isset( $response['title'] ) ) {
+				if ( isset( $results['title'] ) ) {
 					return array( $results );
 				}
 
@@ -804,7 +804,7 @@ class Http extends Protocol_Base {
 
 		// download file as temporary file.
 		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
-		$tmp_file = download_url( $this->get_url() );
+		$tmp_file = download_url( $url );
 		remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 
 		// bail if error occurred.

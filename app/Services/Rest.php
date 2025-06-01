@@ -236,7 +236,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					$entry['filesize']      = isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0;
 					$entry['mime-type']     = $file['mime_type'];
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $file['type'] ) . '"></span>';
-					$entry['last-modified'] = absint( strtotime( $file['modified'] ) );
+					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file['modified'] ) ) ) );
 					$entry['preview']       = $thumbnail;
 
 					// add the entry to the list.
@@ -472,7 +472,7 @@ class Rest extends Directory_Listing_Base implements Service {
 						'mime-type' => $mime_type['type'],
 						'local'     => $local,
 						'url'       => $file['source_url'],
-						'tmp-file'  => $local ? $http_obj->get_temp_file( $url, Helper::get_wp_filesystem() ) : '',
+						'tmp-file'  => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
 						'last-modified' => absint( strtotime( $file['modified'] ) )
 					);
 				}

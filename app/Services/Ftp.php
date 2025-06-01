@@ -191,7 +191,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
-			$path = $parent_dir . $item_name;
+			$path = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
 
 			// collect the entry.
 			$entry = array(
@@ -249,7 +249,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 				$entry['filesize']      = absint( $item_settings['size'] );
 				$entry['mime-type']     = $mime_type['type'];
 				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = absint( $item_settings['time'] );
+				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $item_settings['time'] ) ) );
 				$entry['preview']       = $thumbnail;
 
 				// add the entry to the list.
