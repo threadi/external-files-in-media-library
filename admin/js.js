@@ -1,8 +1,8 @@
 jQuery(document).ready(function($) {
     /**
-     * Add rating hint.
+     * Add rating hint and add file action.
      */
-    $('body.settings_page_eml_settings h1.wp-heading-inline, body.media_page_efml_local_directories h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline, body.media_page_efml_local_directories h1.wp-heading-inline').each(function() {
+    $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
       let review_button = document.createElement('a');
       review_button.className = 'review-hint-button page-title-action';
       review_button.href = efmlJsVars.review_url;
@@ -15,17 +15,24 @@ jQuery(document).ready(function($) {
       add_file_button.href = efmlJsVars.add_file_url;
       add_file_button.innerHTML = efmlJsVars.title_add_file;
       this.after(add_file_button);
-    });
 
-    /**
-     * Add link to overview over possible external sources.
-     */
-    $('body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
       let add_directory_listing_button = document.createElement( 'a' );
       add_directory_listing_button.className = 'page-title-action';
       add_directory_listing_button.href = efmlJsVars.directory_listing_url;
       add_directory_listing_button.innerHTML = efmlJsVars.title_add_source;
       this.after( add_directory_listing_button );
+    });
+
+    /**
+     * Add rating hint.
+     */
+    $('body.media_page_efml_local_directories h1.wp-heading-inline').each(function() {
+      let review_button = document.createElement('a');
+      review_button.className = 'review-hint-button page-title-action';
+      review_button.href = efmlJsVars.review_url;
+      review_button.innerHTML = efmlJsVars.title_rate_us;
+      review_button.target = '_blank';
+      this.after(review_button);
     });
 
     /**
