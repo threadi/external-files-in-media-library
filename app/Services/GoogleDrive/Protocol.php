@@ -143,7 +143,7 @@ class Protocol extends Protocol_Base {
 			'title'         => $file_data->getName(),
 			'local'         => true,
 			'url'           => $this->get_url(),
-			'last-modified' => $file_data->getCreatedTime(),
+			'last-modified' => absint( strtotime( $file_data->getCreatedTime() ) ),
 		);
 
 		// get WP Filesystem-handler.
@@ -286,7 +286,7 @@ class Protocol extends Protocol_Base {
 				'title'         => $file_obj->getName(),
 				'local'         => true,
 				'url'           => $this->get_url() . $file_obj->getId(),
-				'last-modified' => $file_obj->getCreatedTime(),
+				'last-modified' => absint( strtotime( $file_obj->getCreatedTime() ) ),
 			);
 
 			// get WP Filesystem-handler.

@@ -237,7 +237,7 @@ class Zip extends Directory_Listing_Base implements Service {
 				$entry['filesize']      = absint( $file_stat['size'] );
 				$entry['mime-type']     = $mime_type;
 				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $file_stat['mtime'] ) ) );
+				$entry['last-modified'] = absint( $file_stat['mtime'] );
 				$entry['preview']       = '';
 			}
 

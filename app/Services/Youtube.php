@@ -466,7 +466,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 				'filesize'      => 0,
 				'mime-type'     => 'video/mp4',
 				'icon'          => '<span class="dashicons dashicons-youtube"></span>',
-				'last-modified' => Helper::get_format_date_time( $item['snippet']['publishedAt'] ),
+				'last-modified' => absint( strtotime( $item['snippet']['publishedAt'] ) ),
 				'preview'       => $thumbnail,
 			);
 

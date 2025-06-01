@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -101,6 +102,7 @@ class Files {
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
+		add_filter( 'eml_import_fields', array( $this, 'add_date_option_in_form' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1350,8 +1352,16 @@ class Files {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_file_date( array $post_array, string $url, array $file_data ): array {
-		// bail if setting is disabled.
-		if ( 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
+		// get value from request.
+		$use_date = isset( $_POST['additional_fields']['use_dates'] ) ? absint( $_POST['additional_fields']['use_dates'] ) : -1;
+
+		// bail if not set from request and global setting not enabled.
+		if( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
+			return $post_array;
+		}
+
+		// bail if not enabled in request.
+		if( 0 === $use_date ) {
 			return $post_array;
 		}
 
@@ -1457,5 +1467,20 @@ class Files {
 												),
 			)
 		);
+	}
+
+	/**
+	 * Add a checkbox to mark the fields to add them to queue.
+	 *
+	 * @param array<int,string> $fields List of fields in form.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_date_option_in_form( array $fields ): array {
+		// add the field to enable queue-upload.
+		$fields[] = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( 1 === absint( get_option( 'eml_use_file_dates' ) ) ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use external file dates.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+
+		// return the resulting fields.
+		return $fields;
 	}
 }

@@ -352,10 +352,10 @@ class Ftp extends Protocol_Base {
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the size.
-		$results['filesize'] = $ftp_connection->size( $file_path );
+		$results['filesize'] = absint( $ftp_connection->size( $file_path ) );
 
 		// get the last modified date.
-		$results['last-modified'] = $ftp_connection->mtime( $file_path );
+		$results['last-modified'] = absint( $ftp_connection->mtime( $file_path ) );
 
 		// get the temp file.
 		$results['tmp-file'] = $this->get_temp_file( $file_path, $ftp_connection );

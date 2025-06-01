@@ -204,7 +204,7 @@ class File extends Protocol_Base {
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the last modified date.
-		$results['last-modified'] = $wp_filesystem->mtime( $file_path );
+		$results['last-modified'] = absint( $wp_filesystem->mtime( $file_path ) );
 
 		// get the file content.
 		$content = $wp_filesystem->get_contents( $file_path );
@@ -218,7 +218,7 @@ class File extends Protocol_Base {
 		$wp_filesystem->put_contents( $results['tmp-file'], $content );
 
 		// get the size.
-		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );
+		$results['filesize'] = absint( $wp_filesystem->size( $results['tmp-file'] ) );
 
 		$response_headers = array();
 		/**

@@ -271,15 +271,19 @@ function efml_upload_files() {
   let additional_fields = {};
   jQuery('.easy-dialog-for-wordpress-text .eml-use-for-import').each(function() {
     if( 'INPUT' === jQuery(this).prop('nodeName') ) {
-      if( 'checkbox' === jQuery(this).attr('type') && jQuery(this).prop('checked') === true ) {
-        if( jQuery(this).hasClass('eml-multi') ) {
-          if (!additional_fields[jQuery( this ).prop( 'name' )]) {
-            additional_fields[jQuery( this ).prop( 'name' )] = {};
+      if( 'checkbox' === jQuery(this).attr('type') ) {
+        if( jQuery(this).prop('checked') === true ) {
+          if (jQuery( this ).hasClass( 'eml-multi' )) {
+            if (!additional_fields[jQuery( this ).prop( 'name' )]) {
+              additional_fields[jQuery( this ).prop( 'name' )] = {};
+            }
+            additional_fields[jQuery( this ).prop( 'name' )][jQuery( this ).val()] = 1;
+          } else {
+            additional_fields[jQuery( this ).prop( 'name' )] = 1;
           }
-          additional_fields[jQuery( this ).prop( 'name' )][jQuery( this ).val()] = 1;
         }
         else {
-          additional_fields[jQuery( this ).prop( 'name' )] = 1;
+          additional_fields[jQuery( this ).prop( 'name' )] = 0;
         }
       }
       if( 'text' === jQuery(this).attr('type') ) {

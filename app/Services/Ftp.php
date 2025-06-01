@@ -249,7 +249,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 				$entry['filesize']      = absint( $item_settings['size'] );
 				$entry['mime-type']     = $mime_type['type'];
 				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $item_settings['time'] ) ) );
+				$entry['last-modified'] = absint( $item_settings['time'] );
 				$entry['preview']       = $thumbnail;
 
 				// add the entry to the list.

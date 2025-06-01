@@ -795,7 +795,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			$entry['filesize']      = absint( $file_obj->getSize() );
 			$entry['mime-type']     = $mime_type;
 			$entry['icon']          = '<img src="' . esc_url( $file_obj->getIconLink() ) . '" alt="">';
-			$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_obj->getCreatedTime() ) ) ) );
+			$entry['last-modified'] = absint( strtotime( $file_obj->getCreatedTime() ) );
 			$entry['preview']       = $thumbnail;
 
 			// get directory-data for this file and add file in the given directories.

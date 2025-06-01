@@ -7,6 +7,7 @@
 - Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added option to delete synchronized files of single directory archive with one click
 - Added file type specific icons in directory listings
+- Added option for use the date of external files in add-dialog
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 
@@ -23,6 +24,7 @@
 - Updated dependencies
 - Active folder in directory listing is now marked
 - Optimized styling of directory listings
+- Standardize the usage of timestamp as last-modified date for each service and protocol
 - Multiple new hooks
 - Extended documentation in GitHub for all services we provide
 
