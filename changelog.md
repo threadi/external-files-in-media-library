@@ -29,6 +29,7 @@
 ### Fixed
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
+- Fixed wrong link to queue list in settings
 
 ## [4.0.0] - 2025-05-14
 
