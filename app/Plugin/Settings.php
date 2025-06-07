@@ -313,7 +313,6 @@ class Settings {
 		);
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_use_file_dates' );
@@ -327,21 +326,6 @@ class Settings {
 		);
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_directory_listing_real_import' );
-		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_field(
-			array(
-				'type'        => 'Checkbox',
-				'title'       => __( 'Really import each file', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. There will be no "external files".', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_preview' );
@@ -355,7 +339,19 @@ class Settings {
 		);
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_not_supported_file_types' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Hide not supported file types in directory listings', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled not supported file types will not be visible in directory listings. Disable this option will not allow you to import these files.', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
 
 		// get user roles.
 		$user_roles = array();

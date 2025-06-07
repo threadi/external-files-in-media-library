@@ -357,7 +357,7 @@ class Synchronization {
 		/**
 		 * Filter the form to configure this external directory.
 		 *
-		 * @since 4.0.0 Available since 4.0.0.
+		 * @since 5.0.0 Available since 5.0.0.
 		 * @param string $form The form HTML-code.
 		 * @param int $term_id The term ID.
 		 */
@@ -435,7 +435,7 @@ class Synchronization {
 		/**
 		 * Allow to add additional tasks before sync is running.
 		 *
-		 * @since 4.0.0 Available since 4.0.0.
+		 * @since 5.0.0 Available since 5.0.0.
 		 * @param string $url The used URL.
 		 * @param array<string,string> $term_data The term data.
 		 * @param int $term_id The used term ID.
@@ -450,13 +450,13 @@ class Synchronization {
 		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
 
 		// log this event.
-		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info' );
+		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// and run the import of this directory.
 		$import->add_url( $url );
 
 		// log this event.
-		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info' );
+		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// delete unused files, if enabled.
 		if ( 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
@@ -1273,7 +1273,7 @@ class Synchronization {
 		/**
 		 * Run additional tasks during saving a new sync configuration.
 		 *
-		 * @since 4.0.0 Available since 4.0.0.
+		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array $fields List of fields.
 		 */
 		do_action( 'efml_sync_save_config', $fields );

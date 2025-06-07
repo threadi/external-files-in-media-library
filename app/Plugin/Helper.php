@@ -445,7 +445,7 @@ class Helper {
 			/**
 			 * Disable all schedules, not only our own.
 			 *
-			 * @since 4.0.0 Available since 4.0.0.
+			 * @since 5.0.0 Available since 5.0.0.
 			 * @param bool $true Set to "false", to use all schedules.
 			 * @param string $name The name of the schedule.
 			 * @param array<string,mixed> $interval The schedule configuration.

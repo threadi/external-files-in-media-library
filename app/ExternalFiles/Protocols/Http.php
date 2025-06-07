@@ -518,8 +518,6 @@ class Http extends Protocol_Base {
 		 * @param array<string,mixed>  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
 		 * @param array<string,mixed> $response_headers The response header.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		return apply_filters( 'eml_external_file_infos', $results, $url, $response_headers );
 	}

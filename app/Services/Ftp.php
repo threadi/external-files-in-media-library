@@ -92,6 +92,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
 	/**
@@ -192,6 +193,25 @@ class Ftp extends Directory_Listing_Base implements Service {
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
 			$path = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
+			$path_only = $parent_dir . $item_name;
+
+			$false = false;
+			$is_dir = $ftp_connection->is_dir( $path_only );
+			/**
+			 * Filter whether given local file should be hidden.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
+			 * @param bool $false True if it should be hidden.
+			 * @param string $path Absolute path to the given file.
+			 * @param string $directory The requested directory.
+			 * @param string $is_dir True if this entry is a directory.
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
+			 */
+			if ( apply_filters( Init::get_instance()->get_prefix() . '_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
+				continue;
+			}
 
 			// collect the entry.
 			$entry = array(
@@ -199,7 +219,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			);
 
 			// if item is a directory, check its files.
-			if ( $ftp_connection->is_dir( $path ) ) {
+			if ( $is_dir ) {
 				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {
 				// get content type of this file.
@@ -365,5 +385,33 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// return true if connection was successfully.
 		return true;
+	}
+
+	/**
+	 * Prevent visibility of not allowed mime types.
+	 *
+	 * @param bool   $result The result - should be true to prevent the usage.
+	 * @param string $path   The file path.
+	 * @param string $url The used URL.
+	 * @param bool   $is_dir Is this is a directory.
+	 *
+	 * @return bool
+	 */
+	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+			return $result;
+		}
+
+		// bail if this is a directory.
+		if( $is_dir ) {
+			return $result;
+		}
+
+		// get content type of this file.
+		$mime_type = wp_check_filetype( $path );
+
+		// return whether this file type is allowed (false) or not (true).
+		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
 	}
 }

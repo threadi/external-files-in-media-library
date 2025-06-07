@@ -226,9 +226,9 @@ class File extends Protocol_Base {
 		 *
 		 * @since 1.1.0 Available since 1.1.0
 		 *
-		 * @param array  $results List of detected file settings.
+		 * @param array<string,mixed>  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
-		 * @param array $response_headers The response header.
+		 * @param array<string,mixed> $response_headers The response header.
 		 */
 		return apply_filters( 'eml_external_file_infos', $results, $file_path, $response_headers );
 	}

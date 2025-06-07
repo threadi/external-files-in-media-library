@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use function cli\err;
 
 /**
  * Object to handle local import support.
@@ -73,6 +74,7 @@ class Local implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 	}
 
 	/**
@@ -157,5 +159,34 @@ class Local implements Service {
 				'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
 			),
 		);
+	}
+
+	/**
+	 * Prevent visibility of not allowed mime types.
+	 *
+	 * @param bool   $result The result - should be true to prevent the usage.
+	 * @param string $path The file path.
+	 *
+	 * @return bool
+	 */
+	public function prevent_not_allowed_files( bool $result, string $path ): bool {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+			return $result;
+		}
+
+		// remove the scheme.
+		$path = str_replace( 'file://', '', $path );
+
+		// bail for directories.
+		if ( is_dir( $path ) ) {
+			return $result;
+		}
+
+		// get content type of this file.
+		$mime_type = wp_check_filetype( $path );
+
+		// return whether this file type is allowed (false) or not (true).
+		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
 	}
 }
