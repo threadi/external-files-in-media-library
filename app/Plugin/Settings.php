@@ -315,19 +315,6 @@ class Settings {
 		$setting->set_default( 0 );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_use_file_dates' );
-		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_field(
-			array(
-				'type'        => 'Checkbox',
-				'title'       => __( 'Use external file dates', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used.', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
-
-		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_preview' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(

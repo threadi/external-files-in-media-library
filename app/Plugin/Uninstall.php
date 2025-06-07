@@ -11,9 +11,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
-use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
  * Uninstall this plugin.
@@ -99,9 +99,8 @@ class Uninstall {
 			}
 		}
 
-		// delete the queue-tables.
-		$files_obj = Queue::get_instance();
-		$files_obj->uninstall();
+		// run the uninstallation tasks for each file handling extension.
+		Extensions::get_instance()->uninstall();
 
 		// delete options this plugin has used.
 		$options = array(

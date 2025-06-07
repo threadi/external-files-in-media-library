@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -693,14 +692,13 @@ class Forms {
 				);
 			}
 
-			// add button to go to queue if URLs are in there.
-			if ( ! empty( Queue::get_instance()->get_urls() ) ) {
-				$dialog['detail']['buttons'][] = array(
-					'action'  => 'location.href="' . Settings::get_instance()->get_url() . '";',
-					'variant' => 'secondary',
-					'text'    => __( 'Go to queue', 'external-files-in-media-library' ),
-				);
-			}
+			/**
+			 * Filter the dialog after adding files.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param array<string,mixed> $dialog The dialog configuration.
+			 */
+			$dialog = apply_filters( 'eml_dialog_after_adding', $dialog );
 		}
 
 		// return import info.

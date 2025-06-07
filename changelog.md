@@ -6,8 +6,9 @@
 
 - Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added option to delete synchronized files of single directory archive with one click
-- Added option to use the date of external files in add-dialog
-- Added option to really import files in media library (this disabled all external files functions for these files)
+- Introduced file handling extensions and make queue to the first one
+- Added option to use the date of external files in add-dialog (2nd file handling extension)
+- Added option to really import files in media library (this disables all external files functions for these files)
 - Added file type specific icons in directory listings
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
@@ -33,7 +34,7 @@
 ### Fixed
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
-- Fixed wrong link to queue list in settings
+- Fixed wrong link to queue list in settings and in dialog
 
 ## [4.0.0] - 2025-05-14
 

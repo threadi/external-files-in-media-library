@@ -5,17 +5,18 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\ExternalFiles;
+namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-
 defined( 'ABSPATH' ) || exit;
+
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 
 /**
  * Handler controls how to import external files for real in media library without external connection.
  */
-class Real_Import {
+class Real_Import extends Extension_Base {
 	/**
 	 * Instance of actual object.
 	 *
