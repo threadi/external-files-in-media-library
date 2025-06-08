@@ -10,10 +10,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Filesystem_Base;
@@ -213,6 +213,8 @@ class Http extends Protocol_Base {
 			/**
 			 * Filter the URL with custom import methods.
 			 *
+			 * TODO den Rückgabewert der filer anpassen auf diesen array-type.
+			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array<int,array<string,mixed>> $array Result list with infos.
 			 * @param string $url The URL to import.
@@ -234,7 +236,7 @@ class Http extends Protocol_Base {
 				}
 
 				// return the result as list of files.
-				return $results;
+				return $results; // @phpstan-ignore return.type
 			}
 
 			/**
@@ -518,8 +520,6 @@ class Http extends Protocol_Base {
 		 * @param array<string,mixed>  $results List of detected file settings.
 		 * @param string $url     The requested external URL.
 		 * @param array<string,mixed> $response_headers The response header.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		return apply_filters( 'eml_external_file_infos', $results, $url, $response_headers );
 	}

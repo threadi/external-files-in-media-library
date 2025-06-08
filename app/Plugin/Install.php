@@ -10,8 +10,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
-use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 
 /**
  * Object which handles the installation of this plugin.
@@ -67,10 +68,10 @@ class Install {
 		// install settings.
 		Settings::get_instance()->activation();
 
-		// initialize the queue-handling.
-		$queue_obj = Queue::get_instance();
-		$queue_obj->install();
-		$queue_obj->init_queue();
+		// initialize the extensions.
+		Extensions::get_instance()->install();
+
+		// enable the settings.
 		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
 
 		// flush rewrite rules.

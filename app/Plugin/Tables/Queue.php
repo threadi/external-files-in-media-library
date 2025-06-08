@@ -42,7 +42,7 @@ class Queue extends WP_List_Table {
 		$state = 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
 
 		// get logs.
-		return \ExternalFilesInMediaLibrary\ExternalFiles\Queue::get_instance()->get_urls( $state, true );
+		return \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( $state, true );
 	}
 
 	/**
@@ -202,7 +202,7 @@ class Queue extends WP_List_Table {
 			<?php
 
 			// get all error entries.
-			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Queue::get_instance()->get_urls( 'error' );
+			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( 'error' );
 
 			// define clear error URL.
 			$clear_errors_url = add_query_arg(

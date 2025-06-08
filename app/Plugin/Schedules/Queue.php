@@ -57,7 +57,7 @@ class Queue extends Schedules_Base {
 		Log::get_instance()->create( __( 'Queue schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
 
 		// run the queue.
-		\ExternalFilesInMediaLibrary\ExternalFiles\Queue::get_instance()->process_queue();
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->process_queue();
 
 		// log event.
 		Log::get_instance()->create( __( 'Queue schedule ended.', 'external-files-in-media-library' ), '', 'success', 2 );

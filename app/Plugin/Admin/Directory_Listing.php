@@ -369,7 +369,7 @@ class Directory_Listing {
 		/**
 		 * Filter the translations to use for directory listings.
 		 *
-		 * @since 4.0.0 Available since 4.0.0.
+		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $translations List of translations.
 		 */
 		return apply_filters( 'eml_directory_translations', $translations );

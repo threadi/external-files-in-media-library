@@ -4,11 +4,13 @@
 
 ### Added
 
-- Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added DropBox support for import of external files into your media library
 - Added option to delete synchronized files of single directory archive with one click
+- Introduced file handling extensions and make queue to the first one
+- Added option to use the date of external files in add-dialog (2nd file handling extension)
+- Added option to really import files in media library (this disables all external files functions for these files)
 - Added file type specific icons in directory listings
-- Added option for use the date of external files in add-dialog
-- Added option to really import files in media library (this disabled all external files functions for these files)
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 
@@ -26,13 +28,16 @@
 - Active folder in directory listing is now marked
 - Optimized styling of directory listings
 - Standardize the usage of timestamp as last-modified date for each service and protocol
+- Optimized check if a mime type is allowed in directory listing and during import
 - Multiple new hooks
 - Extended documentation in GitHub for all services we provide
 
 ### Fixed
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
-- Fixed wrong link to queue list in settings
+- Fixed wrong link to queue list in settings and in dialog
+- Fixed missing file on FTP listing if for previous file not thumbnail could be created
+- Fixed missing file preview if PHP-imagick-library is not used
 
 ## [4.0.0] - 2025-05-14
 

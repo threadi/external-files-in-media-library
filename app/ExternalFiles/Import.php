@@ -13,6 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -302,7 +303,7 @@ class Import extends Directory_Listing_Base {
 				// log this event.
 				$log->create( __( 'The URL is saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
 
-							// import file as image via WP-own functions, if ID is not already set.
+				// import file as attachment via WP-own functions, if ID is not already set.
 				if ( empty( $post_array['ID'] ) ) {
 					$array         = array(
 						'name'     => $title,
@@ -363,17 +364,20 @@ class Import extends Directory_Listing_Base {
 			}
 
 			// do not handle this file as external file it the option for it is enabled.
-			$no_external_object = 1 === absint( get_option( 'eml_directory_listing_real_import' ) );
+			$no_external_object = false;
 			/**
 			 * Filter whether we import no external files.
 			 *
 			 * Return to true if we only import files in media db without external links.
 			 *
-			 * @since 4.0.0 Available since 4.0.0.
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
 			 * @param bool $no_external_object The marker.
 			 * @param string $url The used URL.
 			 * @param array $file_data The file data.
 			 * @param File $external_file_obj The resulting external file (without any configuration yet).
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
 			if( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
 				/**

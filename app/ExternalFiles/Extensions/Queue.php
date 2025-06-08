@@ -5,7 +5,7 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFilesInMediaLibrary\ExternalFiles;
+namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
@@ -13,6 +13,8 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -23,7 +25,7 @@ use wpdb;
 /**
  * Controller for queue tasks.
  */
-class Queue {
+class Queue extends Extension_Base {
 	/**
 	 * Instance of actual object.
 	 *
@@ -63,7 +65,7 @@ class Queue {
 	 */
 	public function init(): void {
 		// add settings.
-		add_action( 'init', array( $this, 'init_queue' ), 20 );
+		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
 		// misc.
 		add_action( 'admin_action_eml_queue_process', array( $this, 'process_queue_by_request' ) );
@@ -75,14 +77,15 @@ class Queue {
 		// use our own hooks.
 		add_filter( 'eml_import_fields', array( $this, 'add_field_in_form' ) );
 		add_filter( 'eml_import_add_to_queue', array( $this, 'add_urls_to_queue' ), 10, 2 );
+		add_filter( 'eml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
 	}
 
 	/**
-	 * Initialize the settings for this part of the plugin.
+	 * Initialize the settings for this object.
 	 *
 	 * @return void
 	 */
-	public function init_queue(): void {
+	public function add_settings(): void {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -221,6 +224,9 @@ class Queue {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // @phpstan-ignore requireOnce.fileNotFound
 		dbDelta( $sql );
+
+		// also run initialisation.
+		$this->init();
 	}
 
 	/**
@@ -788,5 +794,29 @@ class Queue {
 
 		// return true if add to queue is set.
 		return 1 === absint( $config['add_to_queue'] );
+	}
+
+	/**
+	 * Change dialog configuration after adding files if queue is not empty.
+	 *
+	 * @param array<string,mixed> $dialog The dialog configuration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function change_dialog_after_adding( array $dialog ): array {
+		// bail if Queue is empty.
+		if ( empty( $this->get_urls() ) ) {
+			return $dialog;
+		}
+
+		// extend the dialog.
+		$dialog['detail']['buttons'][] = array(
+			'action'  => 'location.href="' . \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) . '";',
+			'variant' => 'secondary',
+			'text'    => __( 'Go to queue', 'external-files-in-media-library' ),
+		);
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 }

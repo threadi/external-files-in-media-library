@@ -10,9 +10,9 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
-use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 
 /**
@@ -94,6 +94,7 @@ class Update {
 			$this->version201();
 			$this->version300();
 			$this->version400();
+			$this->version500();
 
 			// save new plugin-version in DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -207,5 +208,15 @@ class Update {
 
 		// reinstall the event.
 		$queue_event_obj->reset();
+	}
+
+	/**
+	 * To run on update to version 5.0.0 or newer.
+	 *
+	 * @return void
+	 */
+	public function version500(): void {
+		// enable file hiding.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
 	}
 }

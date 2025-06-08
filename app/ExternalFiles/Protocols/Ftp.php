@@ -13,8 +13,8 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Filesystem_Base;
@@ -332,7 +332,7 @@ class Ftp extends Protocol_Base {
 		$parse_url = wp_parse_url( $file_path );
 
 		// bail if no path could be loaded.
-		if( ! $parse_url['path'] ) {
+		if( ! isset( $parse_url['path'] ) ) {
 			return array();
 		}
 

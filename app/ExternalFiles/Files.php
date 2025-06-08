@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -20,8 +19,6 @@ use WP_Query;
 
 /**
  * Controller for external files-tasks.
- *
- * @noinspection PhpUnused
  */
 class Files {
 	/**
@@ -65,14 +62,14 @@ class Files {
 		// initialize the import.
 		Import::get_instance()->init();
 
-		// initialize the queue.
-		Queue::get_instance()->init();
-
 		// initialize the synchronization.
 		Synchronization::get_instance()->init();
 
 		// initialize REST API support.
 		Rest::get_instance()->init();
+
+		// initialize the file handling extensions.
+		Extensions::get_instance()->init();
 
 		// misc.
 		add_action( 'add_meta_boxes_attachment', array( $this, 'add_media_box' ), 20, 1 );
@@ -101,10 +98,7 @@ class Files {
 		// use our own hooks.
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
-		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
-		add_filter( 'eml_import_fields', array( $this, 'add_date_option_in_form' ) );
-		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
-		add_filter( 'eml_file_import_attachment', array( $this, 'add_title_on_real_import' ), 10, 3 );
+		add_filter( 'eml_external_file_infos', array( $this, 'prevent_not_allowed_mime_type' ), 10, 2 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1344,42 +1338,6 @@ class Files {
 	}
 
 	/**
-	 * Add file date to post array to set the date of the external file.
-	 *
-	 * @param array<string,mixed> $post_array The attachment settings.
-	 * @param string              $url        The requested external URL.
-	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
-	 *
-	 * @return array<string,mixed>
-	 * @noinspection PhpUnusedParameterInspection
-	 */
-	public function add_file_date( array $post_array, string $url, array $file_data ): array {
-		// get value from request.
-		$use_date = isset( $_POST['additional_fields']['use_dates'] ) ? absint( $_POST['additional_fields']['use_dates'] ) : -1;
-
-		// bail if not set from request and global setting not enabled.
-		if( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
-			return $post_array;
-		}
-
-		// bail if not enabled in request.
-		if( 0 === $use_date ) {
-			return $post_array;
-		}
-
-		// bail if no last-modified is given.
-		if ( empty( $file_data['last-modified'] ) ) {
-			return $post_array;
-		}
-
-		// add the last-modified date.
-		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', $file_data['last-modified'] );
-
-		// return the resulting array.
-		return $post_array;
-	}
-
-	/**
 	 * Add archive via AJAX-request.
 	 *
 	 * @return void
@@ -1472,57 +1430,38 @@ class Files {
 	}
 
 	/**
-	 * Add a checkbox to mark the fields to add them to queue.
+	 * Prevent usage of not allowed mime types.
 	 *
-	 * @param array<int,string> $fields List of fields in form.
-	 *
-	 * @return array<int,string>
-	 */
-	public function add_date_option_in_form( array $fields ): array {
-		// add the field to enable queue-upload.
-		$fields[] = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( 1 === absint( get_option( 'eml_use_file_dates' ) ) ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use external file dates.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
-
-		// return the resulting fields.
-		return $fields;
-	}
-
-	/**
-	 * Return true if real import is enabled to force local saving of each file.
-	 *
-	 * @param bool $result The result.
-	 *
-	 * @return bool
-	 */
-	public function import_local_on_real_import( bool $result ): bool {
-		// bail if setting is disabled to use the generated value.
-		if( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
-			return $result;
-		}
-
-		// return true to force local saving of this file.
-		return true;
-	}
-
-	/**
-	 * Add title for file if real import is enabled.
-	 *
-	 * @param array<string,mixed> $post_array The attachment settings.
-	 * @param string              $url        The requested external URL.
-	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
+	 * @param array<string,mixed> $results The result for URL info detection, should include 'mime-type'.
+	 * @param string $url The used URL.
 	 *
 	 * @return array<string,mixed>
-	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_title_on_real_import( array $post_array, string $url, array $file_data ): array {
-		// bail if setting is disabled to use the generated value.
-		if( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
-			return $post_array;
+	public function prevent_not_allowed_mime_type( array $results, string $url ): array {
+		// bail if no mime type is present.
+		if( ! isset( $results['mime-type'] ) ) {
+			return array();
 		}
 
-		// add the title.
-		$post_array['post_title'] = $file_data['title'];
+		// bail if mime-type is set, but empty.
+		if( empty( $results['mime-type'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'success', 1 );
 
-		// return the resulting array.
-		return $post_array;
+			// return empty array to not import this file.
+			return array();
+		}
+
+		// bail if mime type is not allowed.
+		if( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'success', 1 );
+
+			// return empty array to not import this file.
+			return array();
+		}
+
+		// return the results of this file.
+		return $results;
 	}
 }

@@ -17,7 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Error;
 use WP_Filesystem_FTPext;
-use WP_Image_Editor_Imagick;
+use WP_Image_Editor;
 
 /**
  * Object to handle support for FTP-based directory listing.
@@ -92,6 +92,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
 	/**
@@ -159,6 +160,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get the staring directory.
 		$parse_url = wp_parse_url( $directory );
 
+		// bail if scheme or host is not found in directory URL.
+		if( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+			return array();
+		}
+
 		// set parent dir.
 		$parent_dir = '/';
 
@@ -192,6 +198,25 @@ class Ftp extends Directory_Listing_Base implements Service {
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
 			$path = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
+			$path_only = $parent_dir . $item_name;
+
+			$false = false;
+			$is_dir = $ftp_connection->is_dir( $path_only );
+			/**
+			 * Filter whether given local file should be hidden.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
+			 * @param bool $false True if it should be hidden.
+			 * @param string $path Absolute path to the given file.
+			 * @param string $directory The requested directory.
+			 * @param bool $is_dir True if this entry is a directory.
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
+			 */
+			if ( apply_filters( Init::get_instance()->get_prefix() . '_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
+				continue;
+			}
 
 			// collect the entry.
 			$entry = array(
@@ -199,7 +224,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			);
 
 			// if item is a directory, check its files.
-			if ( $ftp_connection->is_dir( $path ) ) {
+			if ( $is_dir ) {
 				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {
 				// get content type of this file.
@@ -221,24 +246,22 @@ class Ftp extends Directory_Listing_Base implements Service {
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
 						// bail if filename could not be read.
-						if ( ! is_string( $filename ) ) {
-							continue;
-						}
+						if ( is_string( $filename ) ) {
+							// get image editor object of the file to get a thumb of it.
+							$editor = wp_get_image_editor( $filename );
 
-						// get image editor object of the file to get a thumb of it.
-						$editor = wp_get_image_editor( $filename );
+							// get the thumb via image editor object.
+							if ( $editor instanceof WP_Image_Editor ) {
+								// set size for the preview.
+								$editor->resize( 32, 32 );
 
-						// get the thumb via image editor object.
-						if ( $editor instanceof WP_Image_Editor_Imagick ) {
-							// set size for the preview.
-							$editor->resize( 32, 32 );
+								// save the thumb.
+								$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
 
-							// save the thumb.
-							$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
-
-							// add thumb to output if it does not result in an error.
-							if ( ! is_wp_error( $results ) ) {
-								$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+								// add thumb to output if it does not result in an error.
+								if ( ! is_wp_error( $results ) ) {
+									$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+								}
 							}
 						}
 					}
@@ -365,5 +388,33 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// return true if connection was successfully.
 		return true;
+	}
+
+	/**
+	 * Prevent visibility of not allowed mime types.
+	 *
+	 * @param bool   $result The result - should be true to prevent the usage.
+	 * @param string $path   The file path.
+	 * @param string $url The used URL.
+	 * @param bool   $is_dir Is this is a directory.
+	 *
+	 * @return bool
+	 */
+	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+			return $result;
+		}
+
+		// bail if this is a directory.
+		if( $is_dir ) {
+			return $result;
+		}
+
+		// get content type of this file.
+		$mime_type = wp_check_filetype( $path );
+
+		// return whether this file type is allowed (false) or not (true).
+		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
 	}
 }
