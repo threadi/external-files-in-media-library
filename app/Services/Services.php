@@ -138,6 +138,7 @@ class Services {
 	 */
 	private function get_services(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\Services\DropBox',
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',

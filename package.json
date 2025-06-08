@@ -1,6 +1,6 @@
 {
 	"name": "@threadi/external-files-in-media-library",
-	"version": "4.0.0",
+	"version": "5.0.0",
 	"description": "Changes support for YouTube-videos in video block.",
 	"author": "threadi",
 	"license": "GPL-2.0-or-later",

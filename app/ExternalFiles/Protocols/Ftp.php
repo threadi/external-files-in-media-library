@@ -332,7 +332,7 @@ class Ftp extends Protocol_Base {
 		$parse_url = wp_parse_url( $file_path );
 
 		// bail if no path could be loaded.
-		if( ! $parse_url['path'] ) {
+		if( ! isset( $parse_url['path'] ) ) {
 			return array();
 		}
 

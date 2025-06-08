@@ -16,7 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use JsonException;
-use WP_Image_Editor_Imagick;
+use WP_Image_Editor;
 
 /**
  * Object to handle support for REST-based directory listing.
@@ -233,7 +233,7 @@ class Rest extends Directory_Listing_Base implements Service {
 							$editor = wp_get_image_editor( $filename );
 
 							// get the thumb via image editor object.
-							if ( $editor instanceof WP_Image_Editor_Imagick ) {
+							if ( $editor instanceof WP_Image_Editor ) {
 								// set size for the preview.
 								$editor->resize( 32, 32 );
 

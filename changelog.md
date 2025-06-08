@@ -4,7 +4,8 @@
 
 ### Added
 
-- Added custom REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added DropBox support for import of external files into your media library
 - Added option to delete synchronized files of single directory archive with one click
 - Introduced file handling extensions and make queue to the first one
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
@@ -35,6 +36,8 @@
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
 - Fixed wrong link to queue list in settings and in dialog
+- Fixed missing file on FTP listing if for previous file not thumbnail could be created
+- Fixed missing file preview if PHP-imagick-library is not used
 
 ## [4.0.0] - 2025-05-14
 

@@ -213,6 +213,8 @@ class Http extends Protocol_Base {
 			/**
 			 * Filter the URL with custom import methods.
 			 *
+			 * TODO den Rückgabewert der filer anpassen auf diesen array-type.
+			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array<int,array<string,mixed>> $array Result list with infos.
 			 * @param string $url The URL to import.
@@ -234,7 +236,7 @@ class Http extends Protocol_Base {
 				}
 
 				// return the result as list of files.
-				return $results;
+				return $results; // @phpstan-ignore return.type
 			}
 
 			/**

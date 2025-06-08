@@ -63,7 +63,7 @@ class Extensions {
 	/**
 	 * Return the list of file handling extension objects.
 	 *
-	 * @return array
+	 * @return array<int,Extension_Base>
 	 */
 	private function get_extensions_as_objects(): array {
 		// collect the list.
