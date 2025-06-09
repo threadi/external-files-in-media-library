@@ -14,10 +14,12 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
+use WP_Error;
 use WP_Image_Editor;
 use WP_User;
 
@@ -91,7 +93,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Choose file from your DropBox', 'external-files-in-media-library' );
+		$this->title = __( 'Choose file(s) from your DropBox', 'external-files-in-media-library' );
 
 		// use hooks.
 		add_action( 'init', array( $this, 'init_drop_box' ), 20 );
@@ -541,7 +543,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 		// bail if account infos are empty.
 		if( empty( $account_infos ) ) {
-			return '<strong>' . esc_html__( 'Could not load the DropBox account infos. This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '</strong><br>';;
+			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';;
 		}
 
 		// collect the text for return.
@@ -549,6 +551,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$infos .= '<strong>' . esc_html__( 'Name:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['name']['display_name'] ) . '<br>';
 		$infos .= '<strong>' . esc_html__( 'Email:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['email'] ) . '<br>';
 		$infos .= '<strong>' . esc_html__( 'Account ID:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['account_id'] );
+		$infos .= '<br><br><a href="' . esc_url( Directory_Listing::get_instance()->get_view_directory_url( $this ) ) . '" class="button button-primary">' . esc_html__( 'View and import your files', 'external-files-in-media-library' ) . '</a>';
 
 		// return the infos.
 		return $infos;
@@ -777,5 +780,54 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 		// return the resulting list.
 		return $protocols;
+	}
+
+	/**
+	 * Check if access token for DropBox is set and valid.
+	 *
+	 * @param string $directory The directory to check.
+	 *
+	 * @return bool
+	 */
+	public function do_login( string $directory ): bool {
+		// bail if access token is empty.
+		if ( empty( $this->get_access_token() ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'No access token for DropBox given!', 'external-files-in-media-library' ), '', 'error', 1 );
+
+			// create error.
+			$error = new WP_Error();
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+
+			// add error.
+			$this->add_error( $error );
+
+			return false;
+		}
+
+		// get the client with the given token.
+		$client = new Client( $this->get_access_token() );
+
+		// start a simple request to check if access token could be used.
+		try {
+			$client->getAccountInfo();
+		}
+		catch( ClientException $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during check of DropBox access token:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+
+			// create error.
+			$error = new WP_Error();
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+
+			// add error.
+			$this->add_error( $error );
+
+			// return false as login was not successfully.
+			return false;
+		}
+
+		// return true as login is possible.
+		return true;
 	}
 }

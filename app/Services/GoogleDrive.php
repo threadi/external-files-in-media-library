@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
@@ -23,6 +24,7 @@ use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Google\Service\Exception;
 use JsonException;
+use WP_Error;
 use WP_User;
 
 /**
@@ -95,7 +97,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Choose file from your Google Drive', 'external-files-in-media-library' );
+		$this->title = __( 'Choose file(s) from your Google Drive', 'external-files-in-media-library' );
 
 		// use hooks.
 		add_action( 'init', array( $this, 'init_google_drive' ), 20 );
@@ -786,7 +788,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 			// get thumbnail, if set.
 			$thumbnail = '';
-			if ( $file_obj->getHasThumbnail() ) {
+			if ( $file_obj->getHasThumbnail() && Init::get_instance()->is_preview_enabled() ) {
 				$thumbnail = '<img src="' . esc_url( $file_obj->getThumbnailLink() ) . '" alt="" class="filepreview">';
 			}
 
@@ -1030,5 +1032,72 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		return array();
+	}
+
+	/**
+	 * Check if access token for GoogleDrive is set and valid.
+	 *
+	 * @param string $directory The directory to check.
+	 *
+	 * @return bool
+	 */
+	public function do_login( string $directory ): bool {
+		// get the access token.
+		$access_token = $this->get_access_token();
+
+		// bail if no access token is set.
+		if( empty( $access_token ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'GoogleDrive is not connected!', 'external-files-in-media-library' ), '', 'error', 1 );
+
+			// create error.
+			$error = new WP_Error();
+			$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive is not connected. Please create a connection to Google Drive <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+
+			// add error.
+			$this->add_error( $error );
+
+			// return false as login was not successfully.
+			return false;
+		}
+
+		// get the client.
+		$client_obj = new Client( $access_token );
+		try {
+			$client     = $client_obj->get_client();
+
+			// bail if client is not a Client object.
+			if ( ! $client instanceof \Google\Client ) {
+				// log this event.
+				Log::get_instance()->create( __( 'GoogleDrive access token is not valid.', 'external-files-in-media-library' ), '', 'error', 1 );
+
+				// create error.
+				$error = new WP_Error();
+				$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive access token appears to be no longer valid. Please create a new connection to Google Drive <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+
+				// add error.
+				$this->add_error( $error );
+
+				// return false as login was not successfully.
+				return false;
+			}
+		}
+		catch( JsonException $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during check of GoogleDrive access token:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+
+			// create error.
+			$error = new WP_Error();
+			$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+
+			// add error.
+			$this->add_error( $error );
+
+			// return false as login was not successfully.
+			return false;
+		}
+
+		// return true as all is ok.
+		return true;
 	}
 }

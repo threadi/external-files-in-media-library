@@ -238,7 +238,17 @@ class Directory_Listing {
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
-			<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+			<?php
+				// bail if directory is not set on loading a concrete listing.
+				if( empty( $config['directory'] ) && isset( $config['term'] ) ) {
+					?><div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'Directory Archive could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div><?php
+				}
+				else {
+					?>
+						<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+					<?php
+				}
+			?>
 		</div>
 		<?php
 	}
@@ -285,6 +295,7 @@ class Directory_Listing {
 			'error_title'         => __( 'The following error occurred:', 'external-files-in-media-library' ),
 			'errors_title'        => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 			'serverside_error'    => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
+			'directory_could_not_be_loaded' => __( 'Directory Listing object could not be read!', 'external-files-in-media-library' ),
 			'directory_archive'   => array(
 				'connect_now'     => __( 'Open now', 'external-files-in-media-library' ),
 				'labels'          => array(
@@ -356,7 +367,7 @@ class Directory_Listing {
 			'services'            => array(
 				'local' => array(
 					'label' => __( 'Local server directory', 'external-files-in-media-library' ),
-					'title' => __( 'Choose file from local server directory', 'external-files-in-media-library' ),
+					'title' => __( 'Choose file(s) from local server directory', 'external-files-in-media-library' ),
 				),
 			),
 		);

@@ -81,7 +81,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Choose file from a ZIP-File', 'external-files-in-media-library' );
+		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
 		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
@@ -438,6 +438,19 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
+		// bail if "ZipArchive" is not available.
+		if ( ! class_exists( 'ZipArchive' ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to prevent further processing.
+			return false;
+		}
+
 		// bail if directory is not set.
 		if ( empty( $directory ) ) {
 			// create error object.
@@ -469,26 +482,13 @@ class Zip extends Directory_Listing_Base implements Service {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced by a file path. */
-			$error->add( 'efml_service_zip', sprintf( __( 'The given path %1$s does not end with ".zip"!', 'external-files-in-media-library' ), $directory ) );
+			$error->add( 'efml_service_zip', sprintf( __( 'The given path <code>%1$s</code> does not end with ".zip"!', 'external-files-in-media-library' ), $directory ) );
 
 			// add it to the list.
 			$this->add_error( $error );
 
 			// return false to prevent further processing.
 
-			return false;
-		}
-
-		// bail if "ZipArchive" is not available.
-		if ( ! class_exists( 'ZipArchive' ) ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
-
-			// add it to the list.
-			$this->add_error( $error );
-
-			// return false to prevent further processing.
 			return false;
 		}
 
@@ -501,7 +501,7 @@ class Zip extends Directory_Listing_Base implements Service {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced by a file path. */
-			$error->add( 'efml_service_zip', sprintf( __( 'The given path %1$s does not exist on your server.', 'external-files-in-media-library' ), $zip_file ) );
+			$error->add( 'efml_service_zip', sprintf( __( 'The given path <code>%1$s</code> does not exist on your server.', 'external-files-in-media-library' ), $zip_file ) );
 
 			// add it to the list.
 			$this->add_error( $error );

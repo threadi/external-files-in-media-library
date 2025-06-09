@@ -81,7 +81,7 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Get files from WordPress REST API', 'external-files-in-media-library' );
+		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
 		// use our own hooks to allow import of REST API media files.
@@ -217,7 +217,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					// define the thumb.
 					$thumbnail = '';
 
-					if ( Init::get_instance()->is_preview_enabled() ) {
+					if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 						// get protocol handler for this external file.
 						$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $file['source_url'] );
 						if ( $protocol_handler instanceof Protocols\Http ) {

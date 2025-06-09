@@ -107,7 +107,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 */
 	public function init(): void {
 		// set title for service.
-		$this->title = __( 'Choose video from a Youtube channel', 'external-files-in-media-library' );
+		$this->title = __( 'Choose video(s) from a Youtube channel', 'external-files-in-media-library' );
 
 		// add service.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
