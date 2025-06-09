@@ -38,6 +38,7 @@
 - Fixed wrong link to queue list in settings and in dialog
 - Fixed missing file on FTP listing if for previous file not thumbnail could be created
 - Fixed missing file preview if PHP-imagick-library is not used
+- Fixed disabling of thumbnails on GoogleDrive view
 
 ## [4.0.0] - 2025-05-14
 

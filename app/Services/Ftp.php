@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
@@ -238,15 +239,18 @@ class Ftp extends Directory_Listing_Base implements Service {
 				// define the thumb.
 				$thumbnail = '';
 
-				if ( Init::get_instance()->is_preview_enabled() ) {
+				if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 					// get protocol handler for this external file.
 					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_name );
 					if ( $protocol_handler instanceof Protocols\Ftp ) {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
-						// bail if filename could not be read.
-						if ( is_string( $filename ) ) {
+						// get the real image mime.
+						$image_mime = wp_get_image_mime( $path );
+
+						// bail if filename could not be read and if real mime type is not an image.
+						if ( is_string( $filename ) && str_contains( $image_mime, 'image/' ) ) {
 							// get image editor object of the file to get a thumb of it.
 							$editor = wp_get_image_editor( $filename );
 
@@ -332,6 +336,19 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
+		// bail if credentials are missing.
+		if( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false to login check.
+			return false;
+		}
+
 		// prepend directory with ftp:// if that is not given.
 		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
 			$directory = 'ftp://' . $directory;
@@ -364,7 +381,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $ftp_connection ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed! Check the log for details.', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$error->add( 'efml_service_ftp', sprintf( __( 'Connection to FTP failed! <a href="%1$s">Check the log</a> for details.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_logs' ) ) ) );
 
 			// add it to the list.
 			$this->add_error( $error );
