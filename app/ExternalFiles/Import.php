@@ -268,6 +268,8 @@ class Import extends Directory_Listing_Base {
 			 */
 			$title = apply_filters( 'eml_file_import_title', $title, $file_url, $file_data );
 
+			error_log( 'aaaa' );
+
 			/**
 			 * Prepare attachment-post-settings.
 			 */
@@ -287,6 +289,8 @@ class Import extends Directory_Listing_Base {
 			 */
 			$post_array = apply_filters( 'eml_file_import_attachment', $post_array, $file_url, $file_data );
 
+			error_log( 'bbbb' );
+
 			/**
 			 * Run action just before the file is saved in database.
 			 *
@@ -295,6 +299,8 @@ class Import extends Directory_Listing_Base {
 			 * @param string $file_url   The URL to import.
 			 */
 			do_action( 'eml_file_import_before_save', $file_url );
+
+			error_log( 'cccc' );
 
 			/**
 			 * Save this file local if it is required.
@@ -335,6 +341,8 @@ class Import extends Directory_Listing_Base {
 				 */
 				$attachment_id = wp_insert_attachment( $post_array, $file_url );
 			}
+
+			error_log( 'dddd' );
 
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {

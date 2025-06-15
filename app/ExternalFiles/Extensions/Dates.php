@@ -106,7 +106,7 @@ class Dates extends Extension_Base {
 	 */
 	public function add_file_date( array $post_array, string $url, array $file_data ): array {
 		// check nonce.
-		if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'efml-nonce' ) ) {
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;
 		}
 
