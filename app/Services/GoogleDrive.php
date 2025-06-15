@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
@@ -127,12 +128,20 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
 		// add new tab for settings.
-		$tab = $settings_obj->add_tab( $this->get_settings_tab_slug() );
+		$tab = $settings_page->add_tab( $this->get_settings_tab_slug(), 100 );
 		$tab->set_title( __( 'Google Drive', 'external-files-in-media-library' ) );
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_googledrive_main' );
+		$section = $tab->add_section( 'section_googledrive_main', 10 );
 		$section->set_title( __( 'Google Drive', 'external-files-in-media-library' ) );
 
 		// add setting for button to connect.
@@ -1046,7 +1055,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$access_token = $this->get_access_token();
 
 		// bail if no access token is set.
-		if( empty( $access_token ) ) {
+		if ( empty( $access_token ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'GoogleDrive is not connected!', 'external-files-in-media-library' ), '', 'error', 1 );
 
@@ -1064,7 +1073,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		// get the client.
 		$client_obj = new Client( $access_token );
 		try {
-			$client     = $client_obj->get_client();
+			$client = $client_obj->get_client();
 
 			// bail if client is not a Client object.
 			if ( ! $client instanceof \Google\Client ) {
@@ -1081,8 +1090,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 				// return false as login was not successfully.
 				return false;
 			}
-		}
-		catch( JsonException $e ) {
+		} catch ( JsonException $e ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Error during check of GoogleDrive access token:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 

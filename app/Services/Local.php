@@ -171,7 +171,7 @@ class Local implements Service {
 	 */
 	public function prevent_not_allowed_files( bool $result, string $path ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 

@@ -29,7 +29,8 @@
 - Optimized styling of directory listings
 - Standardize the usage of timestamp as last-modified date for each service and protocol
 - Optimized check if a mime type is allowed in directory listing and during import
-- Multiple new hooks
+- Multiple new hooks and updated hook documentation
+- Updated settings object for better performance and more possibilities
 - Extended documentation in GitHub for all services we provide
 
 ### Fixed

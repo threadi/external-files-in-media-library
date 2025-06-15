@@ -17,7 +17,7 @@ jobs:
           composer update
 
       - name: Generate hooks documentation file
-        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_
+        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php --exclude=Page.php --exclude=Rest.php
 
       - name: Update file
         uses: stefanzweifel/git-auto-commit-action@v5

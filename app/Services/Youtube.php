@@ -808,7 +808,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_local_save_during_import( bool $no_external_object, string $url ): bool {
 		// bail if used URL is not from YouTube.
-		if( ! $this->is_youtube_video( $url ) ) {
+		if ( ! $this->is_youtube_video( $url ) ) {
 			return $no_external_object;
 		}
 

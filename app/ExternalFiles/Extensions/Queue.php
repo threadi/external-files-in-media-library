@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
@@ -89,11 +92,27 @@ class Queue extends Extension_Base {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
-		// add interval setting on main tab.
-		$general_tab_main = $settings_obj->get_section( 'settings_section_main' );
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page could not be found.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get the general tab.
+		$general_tab = $settings_page->get_tab( 'eml_general' );
 
 		// bail if section could not be loaded.
-		if ( ! $general_tab_main ) {
+		if ( ! $general_tab instanceof Tab ) {
+			return;
+		}
+
+		// add interval setting on main tab.
+		$general_tab_main = $general_tab->get_section( 'settings_section_main' );
+
+		// bail if section could not be loaded.
+		if ( ! $general_tab_main instanceof Section ) {
 			return;
 		}
 
@@ -121,7 +140,7 @@ class Queue extends Extension_Base {
 		$setting->set_field( $field );
 
 		// add tab for queue table.
-		$queue_table_tab = $settings_obj->add_tab( 'eml_queue_table' );
+		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 70 );
 		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
 		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
 	}

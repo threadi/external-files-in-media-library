@@ -625,10 +625,9 @@ class Forms {
 				$result .= '<p><strong>' . _n( 'The following URL have been saved successfully:', 'The following URLs has been saved successfully:', count( $successfully_imported_urls ), 'external-files-in-media-library' ) . '</strong></p><ul class="eml-success-list">';
 				foreach ( $successfully_imported_urls as $url ) {
 					$url_to_use = esc_url( $url['url'] );
-					if( empty( $url_to_use ) ) {
+					if ( empty( $url_to_use ) ) {
 						$result .= '<li><span title="' . esc_attr( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</span> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
-					}
-					else {
+					} else {
 						$result .= '<li><a href="' . esc_url( $url['url'] ) . '" target="_blank" title="' . esc_url( $url['url'] ) . '">' . esc_html( Helper::shorten_url( $url['url'] ) ) . '</a> <a href="' . esc_url( $url['edit_link'] ) . '" target="_blank" class="dashicons dashicons-edit"></a></li>';
 					}
 				}
@@ -786,9 +785,9 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File   $external_file_obj The file object.
-	 * @param array<string,mixed>  $file_data
-	 * @param string $url The used URL.
+	 * @param File                $external_file_obj The file object.
+	 * @param array<string,mixed> $file_data
+	 * @param string              $url The used URL.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection

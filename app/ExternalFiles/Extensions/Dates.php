@@ -76,7 +76,7 @@ class Dates extends Extension_Base {
 		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_advanced' );
 
 		// bail if section could not be loaded.
-		if( ! $advanced_tab_advanced ) {
+		if ( ! $advanced_tab_advanced ) {
 			return;
 		}
 
@@ -109,12 +109,12 @@ class Dates extends Extension_Base {
 		$use_date = isset( $_POST['additional_fields']['use_dates'] ) ? absint( $_POST['additional_fields']['use_dates'] ) : -1;
 
 		// bail if not set from request and global setting not enabled.
-		if( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
+		if ( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
 			return $post_array;
 		}
 
 		// bail if not enabled in request.
-		if( 0 === $use_date ) {
+		if ( 0 === $use_date ) {
 			return $post_array;
 		}
 
@@ -144,5 +144,4 @@ class Dates extends Extension_Base {
 		// return the resulting fields.
 		return $fields;
 	}
-
 }

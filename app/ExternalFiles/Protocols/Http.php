@@ -231,7 +231,7 @@ class Http extends Protocol_Base {
 				}
 
 				// return the result as array for import this as single URL.
-				if ( isset( $results['title'] ) ) {
+				if ( isset( $results['title'] ) ) { // @phpstan-ignore isset.offset
 					return array( $results );
 				}
 

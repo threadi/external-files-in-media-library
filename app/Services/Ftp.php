@@ -162,7 +162,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if scheme or host is not found in directory URL.
-		if( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
 			return array();
 		}
 
@@ -198,10 +198,10 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
-			$path = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
+			$path      = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
 			$path_only = $parent_dir . $item_name;
 
-			$false = false;
+			$false  = false;
 			$is_dir = $ftp_connection->is_dir( $path_only );
 			/**
 			 * Filter whether given local file should be hidden.
@@ -215,7 +215,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
-			if ( apply_filters( Init::get_instance()->get_prefix() . '_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
+			if ( apply_filters( 'efml_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
 				continue;
 			}
 
@@ -250,7 +250,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 						$image_mime = wp_get_image_mime( $path );
 
 						// bail if filename could not be read and if real mime type is not an image.
-						if ( is_string( $filename ) && str_contains( $image_mime, 'image/' ) ) {
+						if ( is_string( $filename ) && is_string( $image_mime ) && str_contains( $image_mime, 'image/' ) ) {
 							// get image editor object of the file to get a thumb of it.
 							$editor = wp_get_image_editor( $filename );
 
@@ -337,7 +337,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// bail if credentials are missing.
-		if( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
@@ -420,12 +420,12 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 
 		// bail if this is a directory.
-		if( $is_dir ) {
+		if ( $is_dir ) {
 			return $result;
 		}
 

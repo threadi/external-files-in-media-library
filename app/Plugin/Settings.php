@@ -79,7 +79,7 @@ class Settings {
 	 *
 	 * @return string
 	 */
-	private function get_menu_slug(): string {
+	public function get_menu_slug(): string {
 		return 'eml_settings';
 	}
 
@@ -141,90 +141,95 @@ class Settings {
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
 
 		/**
+		 * Add the settings page.
+		 */
+		$settings_page = $settings_obj->add_page( $this->get_menu_slug() );
+
+		/**
 		 * Configure all tabs for this object.
 		 */
 		// the general tab.
-		$general_tab = $settings_obj->add_tab( 'eml_general' );
+		$general_tab = $settings_page->add_tab( 'eml_general', 10 );
 		$general_tab->set_name( 'eml_general' );
 		$general_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 
 		// the permissions tab.
-		$permissions_tab = $settings_obj->add_tab( 'eml_permissions' );
+		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 20 );
 		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
 
 		// the audio tab.
-		$audio_tab = $settings_obj->add_tab( 'eml_audio' );
+		$audio_tab = $settings_page->add_tab( 'eml_audio', 30 );
 		$audio_tab->set_title( __( 'Audio', 'external-files-in-media-library' ) );
 
 		// the images tab.
-		$images_tab = $settings_obj->add_tab( 'eml_images' );
+		$images_tab = $settings_page->add_tab( 'eml_images', 40 );
 		$images_tab->set_title( __( 'Images', 'external-files-in-media-library' ) );
 
 		// the video tab.
-		$video_tab = $settings_obj->add_tab( 'eml_video' );
+		$video_tab = $settings_page->add_tab( 'eml_video', 50 );
 		$video_tab->set_title( __( 'Videos', 'external-files-in-media-library' ) );
 
 		// the proxy tab.
-		$proxy_tab = $settings_obj->add_tab( 'eml_proxy' );
+		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 60 );
 		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
 
 		// the advanced tab.
-		$advanced_tab = $settings_obj->add_tab( 'eml_advanced' );
+		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 70 );
 		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
 
 		// the logs tab.
-		$logs_tab = $settings_obj->add_tab( 'eml_logs' );
+		$logs_tab = $settings_page->add_tab( 'eml_logs', 80 );
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 
 		// the helper tab.
-		$helper_tab = $settings_obj->add_tab( 'eml_helper' );
+		$helper_tab = $settings_page->add_tab( 'eml_helper', 90 );
 		$helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
 		$helper_tab->set_url( Helper::get_plugin_support_url() );
 		$helper_tab->set_url_target( '_blank' );
 		$helper_tab->set_tab_class( 'nav-tab-help' );
 
 		// set the default tab.
-		$settings_obj->set_default_tab( $general_tab );
+		$settings_page->set_default_tab( $general_tab );
 
 		/**
 		 * Configure all sections for this settings object.
 		 */
 		// the main section.
-		$general_tab_main = $general_tab->add_section( 'settings_section_main' );
+		$general_tab_main = $general_tab->add_section( 'settings_section_main', 10 );
 		$general_tab_main->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 		$general_tab_main->set_setting( $settings_obj );
 
 		// the files section.
-		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files' );
+		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files', 10 );
 		$permissions_tab_files->set_title( __( 'Permissions to add files', 'external-files-in-media-library' ) );
 		$permissions_tab_files->set_setting( $settings_obj );
 
 		// the audio section.
-		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio' );
+		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio', 10 );
 		$audio_tab_audios->set_title( __( 'Audio Settings', 'external-files-in-media-library' ) );
 		$audio_tab_audios->set_callback( array( $this, 'show_protocol_hint' ) );
 		$audio_tab_audios->set_setting( $settings_obj );
 
 		// the images section.
-		$images_tab_images = $images_tab->add_section( 'settings_section_images' );
+		$images_tab_images = $images_tab->add_section( 'settings_section_images', 10 );
 		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
 		$images_tab_images->set_callback( array( $this, 'show_protocol_hint' ) );
 		$images_tab_images->set_setting( $settings_obj );
 
 		// the videos section.
-		$videos_tab_videos = $video_tab->add_section( 'settings_section_images' );
+		$videos_tab_videos = $video_tab->add_section( 'settings_section_images', 10 );
 		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
 		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
 		$videos_tab_videos->set_setting( $settings_obj );
 
 		// the proxy section.
-		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy' );
+		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy', 10 );
 		$proxy_tab_proxy->set_title( __( 'Proxy settings', 'external-files-in-media-library' ) );
 		$proxy_tab_proxy->set_setting( $settings_obj );
 
 		// the advanced section.
-		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced' );
+		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced', 10 );
 		$advanced_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
 		$advanced_tab_advanced->set_setting( $settings_obj );
 
@@ -551,7 +556,7 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add the import/export section in advanced.
-		$advanced_tab_importexport = $advanced_tab->add_section( 'settings_section_advanced_importexport' );
+		$advanced_tab_importexport = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
 		$advanced_tab_importexport->set_title( __( 'Export & Import settings', 'external-files-in-media-library' ) );
 		$advanced_tab_importexport->set_setting( $settings_obj );
 

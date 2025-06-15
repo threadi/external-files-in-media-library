@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -113,12 +114,20 @@ class Synchronization {
 		// get settings object.
 		$settings_obj = Settings::get_instance();
 
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
 		// add settings tab for WooCommerce.
-		$sync_settings_tab = $settings_obj->add_tab( 'synchronization' );
+		$sync_settings_tab = $settings_page->add_tab( 'synchronization', 80 );
 		$sync_settings_tab->set_title( __( 'Synchronization', 'external-files-in-media-library' ) );
 
 		// add section for WooCommerce settings.
-		$sync_settings_section = $sync_settings_tab->add_section( 'eml_synchronisation_settings' );
+		$sync_settings_section = $sync_settings_tab->add_section( 'eml_synchronisation_settings', 10 );
 		$sync_settings_section->set_title( __( 'Synchronization', 'external-files-in-media-library' ) );
 
 		// add setting to enable sync support.

@@ -210,7 +210,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					 *
 					 * @noinspection PhpConditionAlreadyCheckedInspection
 					 */
-					if ( apply_filters( Init::get_instance()->get_prefix() . '_service_rest_hide_file', $false, $mime_type, $directory ) ) {
+					if ( apply_filters( 'efml_service_rest_hide_file', $false, $mime_type, $directory ) ) {
 						continue;
 					}
 
@@ -338,12 +338,12 @@ class Rest extends Directory_Listing_Base implements Service {
 		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if no method is called.
-		if( is_null( $method ) ) {
+		if ( is_null( $method ) ) {
 			return $translations;
 		}
 
 		// bail if called method is not ours.
-		if( 'rest' !== $method ) {
+		if ( 'rest' !== $method ) {
 			return $translations;
 		}
 
@@ -495,13 +495,13 @@ class Rest extends Directory_Listing_Base implements Service {
 
 					// collect the file data.
 					$entry = array(
-						'title'     => basename( $file['source_url'] ),
-						'filesize'  => isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0,
-						'mime-type' => $file['mime_type'],
-						'local'     => $local,
-						'url'       => $file['source_url'],
-						'tmp-file'  => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
-						'last-modified' => absint( strtotime( $file['modified'] ) )
+						'title'         => basename( $file['source_url'] ),
+						'filesize'      => isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0,
+						'mime-type'     => $file['mime_type'],
+						'local'         => $local,
+						'url'           => $file['source_url'],
+						'tmp-file'      => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
+						'last-modified' => absint( strtotime( $file['modified'] ) ),
 					);
 
 					$response_headers = array();
@@ -514,15 +514,15 @@ class Rest extends Directory_Listing_Base implements Service {
 					 * @param string $url     The requested external URL.
 					 * @param array<string,mixed> $response_headers The response header.
 					 */
-					 $entry = apply_filters( 'eml_external_file_infos', $entry, $url, $response_headers );
+					$entry = apply_filters( 'eml_external_file_infos', $entry, $url, $response_headers );
 
-					 // bail if entry is empty.
-					if( empty( $entry ) ) {
+					// bail if entry is empty.
+					if ( empty( $entry ) ) {
 						continue;
 					}
 
 					// add entry to the list.
-					$file_list[]  = $entry;
+					$file_list[] = $entry;
 				}
 			} catch ( JsonException $e ) {
 				continue;
@@ -543,7 +543,7 @@ class Rest extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_not_allowed_files( bool $result, string $mime_type ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 

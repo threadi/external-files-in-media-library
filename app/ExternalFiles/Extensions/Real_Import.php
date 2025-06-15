@@ -78,7 +78,7 @@ class Real_Import extends Extension_Base {
 		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_advanced' );
 
 		// bail if section could not be loaded.
-		if( ! $advanced_tab_advanced ) {
+		if ( ! $advanced_tab_advanced ) {
 			return;
 		}
 
@@ -105,7 +105,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function import_local_on_real_import( bool $result ): bool {
 		// bail if setting is disabled to use the generated value.
-		if( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
 			return $result;
 		}
 
@@ -128,7 +128,7 @@ class Real_Import extends Extension_Base {
 		$real_import = isset( $_POST['additional_fields']['real_import'] ) ? absint( $_POST['additional_fields']['real_import'] ) : -1;
 
 		// bail if either setting is disabled to use the generated value.
-		if( 1 !== $real_import && 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		if ( 1 !== $real_import && 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
 			return $post_array;
 		}
 

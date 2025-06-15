@@ -80,13 +80,12 @@ class Protocol extends Protocol_Base {
 		$file_data = array();
 		try {
 			$file_data = $client->getMetadata( $url );
-		}
-		catch( ClientException $e ) {
+		} catch ( ClientException $e ) {
 			Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 		}
 
 		// bail if file_data is empty (e.g. if error occurred).
-		if( empty( $file_data) ) {
+		if ( empty( $file_data ) ) {
 			return array();
 		}
 
@@ -99,7 +98,7 @@ class Protocol extends Protocol_Base {
 		);
 
 		// get mime type.
-		$mime_type            = wp_check_filetype( $results['title'] );
+		$mime_type = wp_check_filetype( $results['title'] );
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -111,7 +110,7 @@ class Protocol extends Protocol_Base {
 		$content = stream_get_contents( $client->download( $url ) );
 
 		// bail if content could not be loaded.
-		if( ! is_string( $content ) ) {
+		if ( ! is_string( $content ) ) {
 			return array();
 		}
 

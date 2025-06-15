@@ -1433,18 +1433,18 @@ class Files {
 	 * Prevent usage of not allowed mime types.
 	 *
 	 * @param array<string,mixed> $results The result for URL info detection, should include 'mime-type'.
-	 * @param string $url The used URL.
+	 * @param string              $url The used URL.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public function prevent_not_allowed_mime_type( array $results, string $url ): array {
 		// bail if no mime type is present.
-		if( ! isset( $results['mime-type'] ) ) {
+		if ( ! isset( $results['mime-type'] ) ) {
 			return array();
 		}
 
 		// bail if mime-type is set, but empty.
-		if( empty( $results['mime-type'] ) ) {
+		if ( empty( $results['mime-type'] ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'success', 1 );
 
@@ -1453,7 +1453,7 @@ class Files {
 		}
 
 		// bail if mime type is not allowed.
-		if( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
+		if ( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'success', 1 );
 

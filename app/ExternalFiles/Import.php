@@ -379,7 +379,7 @@ class Import extends Directory_Listing_Base {
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
-			if( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
+			if ( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
 				/**
 				 * Run additional tasks after new external file has been added.
 				 *

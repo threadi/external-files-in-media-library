@@ -50,7 +50,7 @@
     <!-- generate documentation -->
     <target name="generate-documentation" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/wp-documentor">
-            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php" />
+            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php --exclude=Page.php" />
         </exec>
     </target>
 
