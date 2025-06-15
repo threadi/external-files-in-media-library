@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
+use function cli\err;
 
 /**
  * Object to handle support for FTP-based directory listing.
@@ -246,25 +247,28 @@ class Ftp extends Directory_Listing_Base implements Service {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
-						// get the real image mime.
-						$image_mime = wp_get_image_mime( $path );
+						// check mime if file could be saved.
+						if( is_string( $filename ) ) {
+							// get the real image mime.
+							$image_mime = wp_get_image_mime( $filename );
 
-						// bail if filename could not be read and if real mime type is not an image.
-						if ( is_string( $filename ) && is_string( $image_mime ) && str_contains( $image_mime, 'image/' ) ) {
-							// get image editor object of the file to get a thumb of it.
-							$editor = wp_get_image_editor( $filename );
+							// bail if filename could not be read and if real mime type is not an image.
+							if ( is_string( $image_mime ) && str_contains( $image_mime, 'image/' ) ) {
+								// get image editor object of the file to get a thumb of it.
+								$editor = wp_get_image_editor( $filename );
 
-							// get the thumb via image editor object.
-							if ( $editor instanceof WP_Image_Editor ) {
-								// set size for the preview.
-								$editor->resize( 32, 32 );
+								// get the thumb via image editor object.
+								if ( $editor instanceof WP_Image_Editor ) {
+									// set size for the preview.
+									$editor->resize( 32, 32 );
 
-								// save the thumb.
-								$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
+									// save the thumb.
+									$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
 
-								// add thumb to output if it does not result in an error.
-								if ( ! is_wp_error( $results ) ) {
-									$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+									// add thumb to output if it does not result in an error.
+									if ( ! is_wp_error( $results ) ) {
+										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+									}
 								}
 							}
 						}

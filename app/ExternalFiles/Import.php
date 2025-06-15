@@ -301,7 +301,7 @@ class Import extends Directory_Listing_Base {
 			 */
 			if ( false !== $file_data['local'] ) {
 				// log this event.
-				$log->create( __( 'The URL is saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
+				$log->create( __( 'The URL will be saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
 
 				// import file as attachment via WP-own functions, if ID is not already set.
 				if ( empty( $post_array['ID'] ) ) {
