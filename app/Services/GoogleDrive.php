@@ -1061,6 +1061,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive is not connected. Please create a connection to Google Drive <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.
@@ -1082,6 +1083,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 				// create error.
 				$error = new WP_Error();
+				/* translators: %1$s will be replaced with a URL. */
 				$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive access token appears to be no longer valid. Please create a new connection to Google Drive <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 				// add error.
@@ -1096,6 +1098,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_googledrive', sprintf( __( 'GoogleDrive access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.

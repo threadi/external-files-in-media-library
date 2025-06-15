@@ -105,6 +105,11 @@ class Dates extends Extension_Base {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_file_date( array $post_array, string $url, array $file_data ): array {
+		// check nonce.
+		if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// get value from request.
 		$use_date = isset( $_POST['additional_fields']['use_dates'] ) ? absint( $_POST['additional_fields']['use_dates'] ) : -1;
 

@@ -124,6 +124,11 @@ class Real_Import extends Extension_Base {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_title_on_real_import( array $post_array, string $url, array $file_data ): array {
+		// check nonce.
+		if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// get value from request.
 		$real_import = isset( $_POST['additional_fields']['real_import'] ) ? absint( $_POST['additional_fields']['real_import'] ) : -1;
 
@@ -145,6 +150,11 @@ class Real_Import extends Extension_Base {
 	 * @return bool
 	 */
 	public function save_file_local(): bool {
+		// check nonce.
+		if ( isset( $_POST['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// get value from request.
 		$real_import = isset( $_POST['additional_fields']['real_import'] ) ? absint( $_POST['additional_fields']['real_import'] ) : -1;
 

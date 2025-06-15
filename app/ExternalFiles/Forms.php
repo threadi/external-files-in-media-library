@@ -786,7 +786,7 @@ class Forms {
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
 	 * @param File                $external_file_obj The file object.
-	 * @param array<string,mixed> $file_data
+	 * @param array<string,mixed> $file_data The data of the file.
 	 * @param string              $url The used URL.
 	 *
 	 * @return void

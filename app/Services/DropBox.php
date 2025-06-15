@@ -745,7 +745,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	/**
 	 * Save a temp file from DropBox and return its path.
 	 *
-	 * @param string $content The content of the file
+	 * @param string $content The content of the file.
 	 *
 	 * @return string|false
 	 */
@@ -803,6 +803,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.
@@ -823,6 +824,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.

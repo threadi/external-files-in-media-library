@@ -140,6 +140,8 @@
             <zipfileset dir="${src.dir}/vendor/phpseclib" prefix="${plugin.slug}/vendor/phpseclib" />
             <zipfileset dir="${src.dir}/vendor/monolog" prefix="${plugin.slug}/vendor/monolog" />
             <zipfileset dir="${src.dir}/vendor/psr" prefix="${plugin.slug}/vendor/psr" />
+            <zipfileset dir="${src.dir}/vendor/spatie" prefix="${plugin.slug}/vendor/spatie" />
+            <zipfileset dir="${src.dir}/vendor/graham-campbell" prefix="${plugin.slug}/vendor/graham-campbell" />
             <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
