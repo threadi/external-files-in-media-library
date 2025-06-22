@@ -40,6 +40,15 @@ class Http extends Protocol_Base {
 	private array $http_heads = array();
 
 	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'HTTP(S)', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Check the given URL regarding its string.
 	 *
 	 * Return true if URL is ok.

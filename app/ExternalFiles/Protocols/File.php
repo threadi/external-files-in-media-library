@@ -32,6 +32,15 @@ class File extends Protocol_Base {
 	);
 
 	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Local files', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Return infos to each given URL.
 	 *
 	 * @return array<int,array<string,mixed>> List of file-infos.

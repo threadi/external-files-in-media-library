@@ -15,6 +15,8 @@
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
   are occurring simultaneously
+- Added import date for each external URL
+- Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 

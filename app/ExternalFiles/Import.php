@@ -414,6 +414,9 @@ class Import extends Directory_Listing_Base {
 			// add file to local cache, if necessary.
 			$external_file_obj->add_to_cache();
 
+			// set date of import (this is not the attachment datetime).
+			$external_file_obj->set_date();
+
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
 			$log->create( __( 'Using following settings to save this URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );

@@ -277,7 +277,7 @@ class Queue extends Extension_Base {
 
 		// bail if given URL is already in queue.
 		if ( ! empty( $this->get_url( $url ) ) ) {
-			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'info' );
+			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
 			return true;
 		}
 

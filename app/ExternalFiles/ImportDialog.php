@@ -375,22 +375,18 @@ class ImportDialog {
 		 */
 		$settings = apply_filters( 'efml_user_settings', $settings );
 
+		// loop through the settings and save them.
 		foreach ( $settings as $name => $setting ) {
 			// get the settings full name.
 			$full_name = 'efml_' . $name;
 
-			// bail if setting does not exist in request.
-			if ( ! isset( $_POST[ $full_name ] ) ) {
-				continue;
-			}
-
 			// get the value from request depending on field type.
 			switch ( $setting['field'] ) {
 				case 'checkbox':
-					$value = absint( $_POST[ $full_name ] );
+					$value = isset( $_POST[ $full_name ] ) ? absint( $_POST[ $full_name ] ) : 0;
 					break;
 				default:
-					$value = sanitize_text_field( wp_unslash( $_POST[ $full_name ] ) );
+					$value = isset( $_POST[ $full_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $full_name ] ) ) : '';
 			}
 
 			// save it in DB.
