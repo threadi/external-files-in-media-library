@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle different file types.
+ * Object to handle different file extensions.
  */
 class Extension_Base {
 	/**

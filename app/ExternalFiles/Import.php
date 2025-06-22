@@ -13,7 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -41,6 +41,13 @@ class Import extends Directory_Listing_Base {
 	 * @var float
 	 */
 	private float $start_time = 0.0;
+
+	/**
+	 * The import identifier.
+	 *
+	 * @var string
+	 */
+	private string $identifier = '';
 
 	/**
 	 * Instance of actual object.
@@ -123,7 +130,7 @@ class Import extends Directory_Listing_Base {
 	/**
 	 * Add a URL in media library.
 	 *
-	 * This is the main function for any import.
+	 * This is the main function for any integration of external URLs.
 	 *
 	 * If URL is a directory we try to import all files from this directory.
 	 * If URL is a single file, this single file will be imported.
@@ -131,31 +138,30 @@ class Import extends Directory_Listing_Base {
 	 * The import will be use a protocol handler matching the protocol of the used URL.
 	 *
 	 * @param string $url The URL to add.
-	 * @param bool   $add_to_queue Whether this URL should just be added to the queue.
 	 *
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
-	public function add_url( string $url, bool $add_to_queue = false ): bool {
-		// get the log object.
-		$log = Log::get_instance();
-
-		$false = false;
+	public function add_url( string $url ): bool {
+		$false    = false;
+		$login    = $this->get_login();
+		$password = $this->get_password();
 		/**
-		 * Filter the given URL against custom blacklists.
+		 * Prevent import of this single URL.
 		 *
-		 * @since 2.0.0 Available since 2.0.0.
-		 * @param bool $false Return true if blacklist matches and import should not be started.
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $false Return true if normal import should not be started.
 		 * @param string $url The given URL.
+		 * @param string $login The login to use.
+		 * @param string $password The password to use.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_blacklist', $false, $url ) ) {
-			// log this event.
-			$log->create( __( 'URL has matched an entry on the blacklist.', 'external-files-in-media-library' ), $url, 'info', 2 );
-
-			// do not import this URL.
+		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password ) ) {
 			return false;
 		}
+
+		// get the log object.
+		$log = Log::get_instance();
 
 		/**
 		 * Save the start time.
@@ -177,13 +183,8 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Add the given credentials, even if none are set.
 		 */
-		$protocol_handler_obj->set_login( $this->get_login() );
-		$protocol_handler_obj->set_password( $this->get_password() );
-
-		/**
-		 * Set queue-mode.
-		 */
-		$protocol_handler_obj->set_queue_mode( $add_to_queue );
+		$protocol_handler_obj->set_login( $login );
+		$protocol_handler_obj->set_password( $password );
 
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
@@ -196,24 +197,9 @@ class Import extends Directory_Listing_Base {
 		$files = $protocol_handler_obj->get_url_infos();
 
 		/**
-		 * Do nothing if check of URL resulted in empty file list if queue is not used.
-		 */
-		if ( empty( $files ) && ! $add_to_queue ) {
-			// log event.
-			$log->create( __( 'No files found under given URL.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
-
-			// do not import this URL.
-			return false;
-		}
-
-		/**
-		 * Do nothing if check of URL resulted in empty list if queue is used.
+		 * Do nothing if check of URL resulted in empty file list.
 		 */
 		if ( empty( $files ) ) {
-			// log this event.
-			$log->create( __( 'URL has been added to queue.', 'external-files-in-media-library' ), $url, 'info', 2 );
-
-			// do not import this URL.
 			return false;
 		}
 
@@ -301,7 +287,7 @@ class Import extends Directory_Listing_Base {
 			 */
 			if ( false !== $file_data['local'] ) {
 				// log this event.
-				$log->create( __( 'The URL is saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
+				$log->create( __( 'The URL will be saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
 
 				// import file as attachment via WP-own functions, if ID is not already set.
 				if ( empty( $post_array['ID'] ) ) {
@@ -324,11 +310,11 @@ class Import extends Directory_Listing_Base {
 					$wp_filesystem->delete( $file_data['tmp-file'] );
 
 					// log this event.
-					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2 );
+					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
 				}
 			} else {
 				// log this event.
-				$log->create( __( 'The URL will remain external, we simply save the link to the file in the media library.', 'external-files-in-media-library' ), $url, 'info', 2 );
+				$log->create( __( 'The URL will remain external, we simply save the link to the file in the media library.', 'external-files-in-media-library' ), $url, 'info', 2, $this->get_identified() );
 
 				/**
 				 * For all other files: simply create the attachment.
@@ -339,7 +325,7 @@ class Import extends Directory_Listing_Base {
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
-				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error' );
+				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identified() );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -354,7 +340,7 @@ class Import extends Directory_Listing_Base {
 			// bail if object could not be loaded.
 			if ( ! $external_file_obj ) {
 				// log event.
-				$log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_url, 'error' );
+				$log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_url, 'error', 0, $this->get_identified() );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -379,7 +365,7 @@ class Import extends Directory_Listing_Base {
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
-			if( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
+			if ( apply_filters( 'eml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
 				/**
 				 * Run additional tasks after new external file has been added.
 				 *
@@ -391,7 +377,7 @@ class Import extends Directory_Listing_Base {
 				do_action( 'eml_after_file_save', $external_file_obj, $file_data, $url );
 
 				// log event.
-				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success' );
+				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -429,8 +415,8 @@ class Import extends Directory_Listing_Base {
 			$external_file_obj->add_to_cache();
 
 			// log that URL has been added as file in media library.
-			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success' );
-			$log->create( __( 'Using following settings to save this URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2 );
+			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
+			$log->create( __( 'Using following settings to save this URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );
 
 			/**
 			 * Run additional tasks after new external file has been added.
@@ -507,11 +493,8 @@ class Import extends Directory_Listing_Base {
 
 		// cancel process if runtime is nearly reached.
 		if ( $runtime >= $max_execution_time ) {
-			// add files to queue.
-			Queue::get_instance()->add_urls( $file_list, $this->get_login(), $this->get_password() );
-
 			// log the event.
-			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported were saved in the queue and are now automatically imported individually.', 'external-files-in-media-library' ), '', 'info', 2 );
+			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported were saved in the queue and are now automatically imported individually.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identified() );
 
 			// kill process.
 			exit;
@@ -585,5 +568,22 @@ class Import extends Directory_Listing_Base {
 
 		// return resulting list of file data.
 		return $title;
+	}
+
+	/**
+	 * Return a unique import identifier.
+	 *
+	 * Create one if it does not already exist.
+	 *
+	 * @return string
+	 */
+	public function get_identified(): string {
+		// create a new identifier if none exist atm.
+		if ( empty( $this->identifier ) ) {
+			$this->identifier = uniqid( '', true );
+		}
+
+		// return the identifier.
+		return $this->identifier;
 	}
 }

@@ -37,6 +37,12 @@ class Cli {
 	 * [--queue]
 	 * : Adds the given URL(s) to the queue.
 	 *
+	 * [--real_import]
+	 * : Import files from URLs as real files, not linked to external URL.
+	 *
+	 * [--use_dates]
+	 * : Use files dates.
+	 *
 	 * @param array<string,string> $urls Array with URL which might be given as parameter on CLI-command.
 	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
 	 *
@@ -51,11 +57,16 @@ class Cli {
 		$import->set_login( ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '' );
 		$import->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
 
-		// get the queue settings.
-		$add_to_queue = ! empty( $arguments['queue'] );
+		/**
+		 * Run additional tasks from extensions.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array $arguments List of CLI arguments.
+		 */
+		do_action( 'eml_cli_arguments', $arguments );
 
 		// show progress.
-		$progress = \WP_CLI\Utils\make_progress_bar( _n( 'Import files from given URL', 'Import files from given URLs', count( $urls ), 'external-files-in-media-library' ), count( $urls ) );
+		$progress = \WP_CLI\Utils\make_progress_bar( _n( 'Import files from a specific URL', 'Import files from given URLs', count( $urls ), 'external-files-in-media-library' ), count( $urls ) );
 
 		// check each single given url.
 		foreach ( $urls as $url ) {
@@ -68,7 +79,7 @@ class Cli {
 				continue;
 			}
 
-			// convert spaces in URL to HTML-coded spaces.
+			// convert spaces in URL to HTML-encoded spaces.
 			$url = str_replace( ' ', '%20', $url );
 
 			// bail if given string is not a URL.
@@ -84,15 +95,12 @@ class Cli {
 			}
 
 			// try to add this URL as single file.
-			if ( $import->add_url( $url, $add_to_queue ) ) {
+			if ( $import->add_url( $url ) ) {
 				/* translators: %1$s will be replaced by URL. */
 				$results[] = sprintf( __( '%1$s has been saved in media library.', 'external-files-in-media-library' ), $url );
-			} elseif ( $add_to_queue ) {
-					/* translators: %1$s will be replaced by URL. */
-					$results[] = sprintf( __( '%1$s has been added to the queue. It will be imported automatically in your media library.', 'external-files-in-media-library' ), $url );
 			} else {
 				/* translators: %1$s will be replaced by URL. */
-				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log for details.', 'external-files-in-media-library' ), $url );
+				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log (Settings > External files in Media Library) for details.', 'external-files-in-media-library' ), $url );
 			}
 
 			// show progress.
@@ -103,7 +111,7 @@ class Cli {
 		$progress->finish();
 
 		// show results.
-		\WP_CLI::success( __( 'Results of the import:', 'external-files-in-media-library' ) . "\n" . implode( "\n", $results ) );
+		\WP_CLI::success( __( 'Import results:', 'external-files-in-media-library' ) . "\n" . implode( "\n", $results ) );
 	}
 
 	/**

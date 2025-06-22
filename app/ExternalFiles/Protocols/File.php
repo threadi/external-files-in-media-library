@@ -13,7 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -54,12 +54,6 @@ class File extends Protocol_Base {
 			// get the files.
 			$file_list = scandir( $this->get_url() );
 
-			// add files to list in queue mode.
-			if ( $this->is_queue_mode() ) {
-				Queue::get_instance()->add_urls( $file_list, $this->get_login(), $this->get_password() );
-				return array();
-			}
-
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */
 			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $this->get_url() ), count( $file_list ) ) : '';
@@ -80,7 +74,7 @@ class File extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_path ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), $file_path, 'error' );
+					Log::get_instance()->create( __( 'Given file already exist in your media library.', 'external-files-in-media-library' ), $file_path, 'error', 0, Import::get_instance()->get_identified() );
 					continue;
 				}
 
@@ -124,13 +118,7 @@ class File extends Protocol_Base {
 		} else {
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
-				return array();
-			}
-
-			// add files to list in queue mode.
-			if ( $this->is_queue_mode() ) {
-				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 				return array();
 			}
 
@@ -190,7 +178,7 @@ class File extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'eml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
-			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();

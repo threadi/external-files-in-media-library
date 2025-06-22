@@ -240,14 +240,15 @@ class Directory_Listing {
 			<h1 class="wp-heading-inline"><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
 			<?php
 				// bail if directory is not set on loading a concrete listing.
-				if( empty( $config['directory'] ) && isset( $config['term'] ) ) {
-					?><div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'Directory Archive could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div><?php
-				}
-				else {
-					?>
-						<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+			if ( empty( $config['directory'] ) && isset( $config['term'] ) ) {
+				?>
+					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'Directory Archive could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
 					<?php
-				}
+			} else {
+				?>
+						<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+					<?php
+			}
 			?>
 		</div>
 		<?php
@@ -278,25 +279,25 @@ class Directory_Listing {
 	 */
 	private function get_translations(): array {
 		$translations = array(
-			'is_loading'          => __( 'Directory is loading', 'external-files-in-media-library' ),
-			'loading_directory'   => __( 'one sub-directory do load', 'external-files-in-media-library' ),
+			'is_loading'                    => __( 'Directory is loading', 'external-files-in-media-library' ),
+			'loading_directory'             => __( 'one sub-directory do load', 'external-files-in-media-library' ),
 			/* translators: %1$d will be replaced by a number. */
-			'loading_directories' => __( '%1$d sub-directories do load', 'external-files-in-media-library' ),
-			'could_not_load'      => __( 'Directory could not be loaded.', 'external-files-in-media-library' ),
-			'reload'              => __( 'Reload', 'external-files-in-media-library' ),
-			'import_directory'    => __( 'Import this directory', 'external-files-in-media-library' ),
-			'actions'             => __( 'Actions', 'external-files-in-media-library' ),
-			'filename'            => __( 'Filename', 'external-files-in-media-library' ),
-			'filesize'            => __( 'Size', 'external-files-in-media-library' ),
-			'date'                => __( 'Date', 'external-files-in-media-library' ),
-			'config_missing'      => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
-			'nonce_missing'       => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
-			'empty_directory'     => __( 'Loaded an empty directory. This could also mean that the files in the directory cannot be imported into WordPress, e.g. because they have a non-approved file type.', 'external-files-in-media-library' ),
-			'error_title'         => __( 'The following error occurred:', 'external-files-in-media-library' ),
-			'errors_title'        => __( 'The following errors occurred:', 'external-files-in-media-library' ),
-			'serverside_error'    => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
+			'loading_directories'           => __( '%1$d sub-directories do load', 'external-files-in-media-library' ),
+			'could_not_load'                => __( 'Directory could not be loaded.', 'external-files-in-media-library' ),
+			'reload'                        => __( 'Reload', 'external-files-in-media-library' ),
+			'import_directory'              => __( 'Import this directory', 'external-files-in-media-library' ),
+			'actions'                       => __( 'Actions', 'external-files-in-media-library' ),
+			'filename'                      => __( 'Filename', 'external-files-in-media-library' ),
+			'filesize'                      => __( 'Size', 'external-files-in-media-library' ),
+			'date'                          => __( 'Date', 'external-files-in-media-library' ),
+			'config_missing'                => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
+			'nonce_missing'                 => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
+			'empty_directory'               => __( 'Loaded an empty directory. This could also mean that the files in the directory cannot be imported into WordPress, e.g. because they have a non-approved file type.', 'external-files-in-media-library' ),
+			'error_title'                   => __( 'The following error occurred:', 'external-files-in-media-library' ),
+			'errors_title'                  => __( 'The following errors occurred:', 'external-files-in-media-library' ),
+			'serverside_error'              => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
 			'directory_could_not_be_loaded' => __( 'Directory Listing object could not be read!', 'external-files-in-media-library' ),
-			'directory_archive'   => array(
+			'directory_archive'             => array(
 				'connect_now'     => __( 'Open now', 'external-files-in-media-library' ),
 				'labels'          => array(
 					'name'          => _x( 'Directory Archives', 'taxonomy general name', 'external-files-in-media-library' ),
@@ -320,7 +321,7 @@ class Directory_Listing {
 				'password'        => __( 'Password', 'external-files-in-media-library' ),
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
-			'form_file'           => array(
+			'form_file'                     => array(
 				'title'       => __( 'Enter the path to a ZIP-file', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a file path. */
 				'description' => sprintf( __( 'Enter the path to a ZIP file on your hosting. Must start with "file://%1$s" and end with ".zip".', 'external-files-in-media-library' ), ABSPATH ),
@@ -331,7 +332,7 @@ class Directory_Listing {
 					'label' => __( 'Use this file', 'external-files-in-media-library' ),
 				),
 			),
-			'form_api'            => array(
+			'form_api'                      => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
 				'url'              => array(
 					'label' => __( 'Channel-ID', 'external-files-in-media-library' ),
@@ -346,7 +347,7 @@ class Directory_Listing {
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
 				),
 			),
-			'form_login'          => array(
+			'form_login'                    => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
 				'url'              => array(
 					'label' => __( 'Server-IP or -name (starting with ftp:// or ftps://)', 'external-files-in-media-library' ),
@@ -364,7 +365,7 @@ class Directory_Listing {
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
 				),
 			),
-			'services'            => array(
+			'services'                      => array(
 				'local' => array(
 					'label' => __( 'Local server directory', 'external-files-in-media-library' ),
 					'title' => __( 'Choose file(s) from local server directory', 'external-files-in-media-library' ),

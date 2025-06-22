@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
@@ -97,12 +98,20 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// get settings object.
 		$settings_obj = Settings::get_instance();
 
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
 		// add settings tab for WooCommerce.
-		$woocommerce_settings_tab = $settings_obj->add_tab( 'woocommerce' );
+		$woocommerce_settings_tab = $settings_page->add_tab( 'woocommerce', 120 );
 		$woocommerce_settings_tab->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 
 		// add section for WooCommerce settings.
-		$woocommerce_settings_section = $woocommerce_settings_tab->add_section( 'eml_woocommerce_settings' );
+		$woocommerce_settings_section = $woocommerce_settings_tab->add_section( 'eml_woocommerce_settings', 10 );
 		$woocommerce_settings_section->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 
 		// add setting to enable the WooCommerce-support.

@@ -50,7 +50,7 @@
     <!-- generate documentation -->
     <target name="generate-documentation" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/wp-documentor">
-            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php" />
+            <arg line="parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php --exclude=Page.php" />
         </exec>
     </target>
 
@@ -140,6 +140,8 @@
             <zipfileset dir="${src.dir}/vendor/phpseclib" prefix="${plugin.slug}/vendor/phpseclib" />
             <zipfileset dir="${src.dir}/vendor/monolog" prefix="${plugin.slug}/vendor/monolog" />
             <zipfileset dir="${src.dir}/vendor/psr" prefix="${plugin.slug}/vendor/psr" />
+            <zipfileset dir="${src.dir}/vendor/spatie" prefix="${plugin.slug}/vendor/spatie" />
+            <zipfileset dir="${src.dir}/vendor/graham-campbell" prefix="${plugin.slug}/vendor/graham-campbell" />
             <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />

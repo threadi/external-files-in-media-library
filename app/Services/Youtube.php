@@ -111,7 +111,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 
 		// add service.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 
 		// use our own hooks to allow import of YouTube videos and channels.
 		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
@@ -142,15 +142,24 @@ class Youtube extends Directory_Listing_Base implements Service {
 	}
 
 	/**
-	 * Add option to import from local directory.
+	 * Add option to import from YouTube.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_local_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Or add from YouTube channel', 'external-files-in-media-library' ) . '</summary><div><label for="eml_youtube"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from your YouTube channel', 'external-files-in-media-library' ) . '</a></label></div></details>';
-		return $fields;
+	public function add_option_for_local_import( array $dialog, array $settings ): array {
+		// bail if "no_services" is set in settings.
+		if ( isset( $settings['no_services'] ) ) {
+			return $dialog;
+		}
+
+		// add the hint for local import.
+		$dialog['texts'][] = '<details><summary>' . __( 'Or add from YouTube channel', 'external-files-in-media-library' ) . '</summary><div><label for="eml_youtube"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from your YouTube channel', 'external-files-in-media-library' ) . '</a></label></div></details>';
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 
 	/**
@@ -487,7 +496,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password, [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
@@ -503,7 +512,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( "' . $this->get_channel_url() . '" + url, url, apiKey, [], config.term );',
+					'action' => 'efml_get_import_dialog( { "service": "local", "urls": "' . $this->get_channel_url() . '" + url, "login": url, "password": apiKey, "term": config.term } );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
 				),
 				array(
@@ -808,7 +817,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_local_save_during_import( bool $no_external_object, string $url ): bool {
 		// bail if used URL is not from YouTube.
-		if( ! $this->is_youtube_video( $url ) ) {
+		if ( ! $this->is_youtube_video( $url ) ) {
 			return $no_external_object;
 		}
 

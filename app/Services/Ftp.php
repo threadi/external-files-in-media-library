@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
+use function cli\err;
 
 /**
  * Object to handle support for FTP-based directory listing.
@@ -92,7 +93,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
@@ -111,13 +112,22 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_local_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
-		return $fields;
+	public function add_option_for_local_import( array $dialog, array $settings ): array {
+		// bail if "no_services" is set in settings.
+		if ( isset( $settings['no_services'] ) ) {
+			return $dialog;
+		}
+
+		// add the hint for local import.
+		$dialog['texts'][] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
+
+		// return resulting dialog.
+		return $dialog;
 	}
 
 	/**
@@ -162,7 +172,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if scheme or host is not found in directory URL.
-		if( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
 			return array();
 		}
 
@@ -198,10 +208,10 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
-			$path = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
+			$path      = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
 			$path_only = $parent_dir . $item_name;
 
-			$false = false;
+			$false  = false;
 			$is_dir = $ftp_connection->is_dir( $path_only );
 			/**
 			 * Filter whether given local file should be hidden.
@@ -215,7 +225,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
-			if ( apply_filters( Init::get_instance()->get_prefix() . '_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
+			if ( apply_filters( 'efml_service_ftp_hide_file', $false, $path, $directory, $is_dir ) ) {
 				continue;
 			}
 
@@ -246,25 +256,28 @@ class Ftp extends Directory_Listing_Base implements Service {
 						// get the tmp file for this file.
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
-						// get the real image mime.
-						$image_mime = wp_get_image_mime( $path );
+						// check mime if file could be saved.
+						if ( is_string( $filename ) ) {
+							// get the real image mime.
+							$image_mime = wp_get_image_mime( $filename );
 
-						// bail if filename could not be read and if real mime type is not an image.
-						if ( is_string( $filename ) && str_contains( $image_mime, 'image/' ) ) {
-							// get image editor object of the file to get a thumb of it.
-							$editor = wp_get_image_editor( $filename );
+							// bail if filename could not be read and if real mime type is not an image.
+							if ( is_string( $image_mime ) && str_contains( $image_mime, 'image/' ) ) {
+								// get image editor object of the file to get a thumb of it.
+								$editor = wp_get_image_editor( $filename );
 
-							// get the thumb via image editor object.
-							if ( $editor instanceof WP_Image_Editor ) {
-								// set size for the preview.
-								$editor->resize( 32, 32 );
+								// get the thumb via image editor object.
+								if ( $editor instanceof WP_Image_Editor ) {
+									// set size for the preview.
+									$editor->resize( 32, 32 );
 
-								// save the thumb.
-								$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
+									// save the thumb.
+									$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
 
-								// add thumb to output if it does not result in an error.
-								if ( ! is_wp_error( $results ) ) {
-									$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+									// add thumb to output if it does not result in an error.
+									if ( ! is_wp_error( $results ) ) {
+										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+									}
 								}
 							}
 						}
@@ -299,7 +312,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password, [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -317,7 +330,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( actualDirectoryPath, login, password, [], config.term );',
+					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
@@ -337,7 +350,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// bail if credentials are missing.
-		if( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
@@ -361,7 +374,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Given URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Specified URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -420,12 +433,12 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 
 		// bail if this is a directory.
-		if( $is_dir ) {
+		if ( $is_dir ) {
 			return $result;
 		}
 

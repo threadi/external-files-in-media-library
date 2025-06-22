@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 
@@ -79,13 +80,21 @@ class Statistics {
 		// get the settings object.
 		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
 
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
 		// add tab.
-		$tab = $settings_obj->add_tab( 'eml_statistics' );
+		$tab = $settings_page->add_tab( 'eml_statistics', 110 );
 		$tab->set_title( __( 'Statistics', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 
 		// add section for file statistics.
-		$section_files = $tab->add_section( 'section_file_statistics' );
+		$section_files = $tab->add_section( 'section_file_statistics', 10 );
 		$section_files->set_title( __( 'Files', 'external-files-in-media-library' ) );
 
 		// add setting for file count.

@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -127,13 +128,21 @@ class DropBox extends Directory_Listing_Base implements Service {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
 		// add new tab for settings.
-		$tab = $settings_obj->add_tab( $this->get_settings_tab_slug() );
+		$tab = $settings_page->add_tab( $this->get_settings_tab_slug(), 90 );
 		$tab->set_title( __( 'DropBox', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_dropbox_main' );
+		$section = $tab->add_section( 'section_dropbox_main', 10 );
 		$section->set_title( __( 'DropBox', 'external-files-in-media-library' ) );
 
 		// add invisible setting for access token.
@@ -161,7 +170,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 				'title'   => __( 'Connect DropBox', 'external-files-in-media-library' ),
 				'texts'   => array(
 					'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
-					'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value=""></div>'
+					'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value=""></div>',
 				),
 				'buttons' => array(
 					array(
@@ -287,9 +296,9 @@ class DropBox extends Directory_Listing_Base implements Service {
 			'eml-admin-dropbox',
 			'efmlJsVarsDropBox',
 			array(
-				'ajax_url'      => admin_url( 'admin-ajax.php' ),
-				'access_token_connect_nonce' => wp_create_nonce( 'efml-dropbox-save-access-token' ),
-				'access_token_disconnect_nonce' => wp_create_nonce( 'efml-dropbox-remove-access-token' )
+				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
+				'access_token_connect_nonce'    => wp_create_nonce( 'efml-dropbox-save-access-token' ),
+				'access_token_disconnect_nonce' => wp_create_nonce( 'efml-dropbox-remove-access-token' ),
 			)
 		);
 	}
@@ -307,7 +316,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$access_token = filter_input( INPUT_POST, 'access_token', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if token is empty.
-		if( empty( $access_token ) ) {
+		if ( empty( $access_token ) ) {
 			// create dialog.
 			$dialog = array(
 				'title'   => __( 'Error', 'external-files-in-media-library' ),
@@ -385,7 +394,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * Set the access token for the actual WordPress user.
 	 *
 	 * @param string $access_token The access token.
-	 * @param int                  $user_id The user id (optional).
+	 * @param int    $user_id The user id (optional).
 	 *
 	 * @return void
 	 */
@@ -467,7 +476,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		check_ajax_referer( 'efml-dropbox-remove-access-token', 'nonce' );
 
 		// remove the token.
-		if( ! $this->delete_access_token() ) {
+		if ( ! $this->delete_access_token() ) {
 			// create dialog.
 			$dialog = array(
 				'title'   => __( 'Error', 'external-files-in-media-library' ),
@@ -517,8 +526,8 @@ class DropBox extends Directory_Listing_Base implements Service {
 		/* translators: %1$s will be replaced by a URL. */
 		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>. ', 'external-files-in-media-library' ), 'https://www.dropbox.com/developers/apps' ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL:', 'external-files-in-media-library' ) . ' <code>' . get_option( 'home' ) . '</code></li>';
-		$help .= '<li>' .  esc_html__( 'Copy the access token.', 'external-files-in-media-library' ) . '</li>';
-		$help .= '<li>' .  esc_html__( 'Click on the button "Connect" above here.', 'external-files-in-media-library' ) . '</li>';
+		$help .= '<li>' . esc_html__( 'Copy the access token.', 'external-files-in-media-library' ) . '</li>';
+		$help .= '<li>' . esc_html__( 'Click on the button "Connect" above here.', 'external-files-in-media-library' ) . '</li>';
 		$help .= '</ol>';
 		return $help;
 	}
@@ -536,18 +545,18 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$account_infos = array();
 		try {
 			$account_infos = $client->getAccountInfo();
-		}
-		catch( ClientException $e ) {
+		} catch ( ClientException $e ) {
 			Log::get_instance()->create( __( 'Error during request of DropBox account infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 		}
 
 		// bail if account infos are empty.
-		if( empty( $account_infos ) ) {
-			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';;
+		if ( empty( $account_infos ) ) {
+			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';
+
 		}
 
 		// collect the text for return.
-		$infos = '<strong>' . esc_html__( 'You are connected to this DropBox account:', 'external-files-in-media-library' ) . '</strong><br>';
+		$infos  = '<strong>' . esc_html__( 'You are connected to this DropBox account:', 'external-files-in-media-library' ) . '</strong><br>';
 		$infos .= '<strong>' . esc_html__( 'Name:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['name']['display_name'] ) . '<br>';
 		$infos .= '<strong>' . esc_html__( 'Email:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['email'] ) . '<br>';
 		$infos .= '<strong>' . esc_html__( 'Account ID:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $account_infos['account_id'] );
@@ -579,18 +588,17 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$entries = array();
 		try {
 			$entries = $client->listFolder( '/', true );
-		}
-		catch( ClientException $e ) {
+		} catch ( ClientException $e ) {
 			Log::get_instance()->create( __( 'Error during request of DropBox entries:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 		}
 
 		// bail if list is empty.
-		if( empty( $entries ) ) {
+		if ( empty( $entries ) ) {
 			return $listing;
 		}
 
 		// bail if entries does not exist.
-		if( empty( $entries["entries"] ) ) {
+		if ( empty( $entries['entries'] ) ) {
 			return $listing;
 		}
 
@@ -603,29 +611,28 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
 		// add the entries to the list.
-		foreach( $entries["entries"] as $dropbox_entry ) {
+		foreach ( $entries['entries'] as $dropbox_entry ) {
 			// collect the entry.
 			$entry = array(
 				'title' => $dropbox_entry['name'],
 			);
 
 			// if this is a directory, add it there.
-			if( 'folder' === $dropbox_entry['.tag'] ) {
-				$listing['dirs'][ trailingslashit(  $directory . $dropbox_entry['path_lower'] ) ] = array(
+			if ( 'folder' === $dropbox_entry['.tag'] ) {
+				$listing['dirs'][ trailingslashit( $directory . $dropbox_entry['path_lower'] ) ] = array(
 					'title' => $dropbox_entry['name'],
 					'files' => array(),
 					'dirs'  => array(),
 				);
 				// add the directory to the list.
-				$folders[ trailingslashit(  $directory . $dropbox_entry['path_lower'] ) ] = array(
+				$folders[ trailingslashit( $directory . $dropbox_entry['path_lower'] ) ] = array(
 					'title' => $dropbox_entry['name'],
 					'files' => array(),
 					'dirs'  => array(),
 				);
-			}
-			else {
+			} else {
 				// get parts of the path.
-				$parts = explode( "/", $dropbox_entry['path_lower'] );
+				$parts = explode( '/', $dropbox_entry['path_lower'] );
 
 				// get content type of this file.
 				$mime_type = wp_check_filetype( $dropbox_entry['path_lower'] );
@@ -645,7 +652,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 							$filename = $this->save_temp_file( $dropbox_thumbnail );
 
 							// if temp path is given, save it via image editor.
-							if( is_string( $filename ) ) {
+							if ( is_string( $filename ) ) {
 								// get image editor object of the file to get a thumb of it.
 								$editor = wp_get_image_editor( $filename );
 
@@ -678,14 +685,13 @@ class DropBox extends Directory_Listing_Base implements Service {
 				$entry['preview']       = $thumbnail;
 
 				// if parts contains more than 2 entries, this file is in a subdirectory.
-				if( count($parts) > 2 ) {
+				if ( count( $parts ) > 2 ) {
 					// get the path.
 					$path = dirname( $dropbox_entry['path_lower'] );
 
 					// add it to this list.
-					$folders[trailingslashit(  $directory . $path )]['files'][] = $entry;
-				}
-				else {
+					$folders[ trailingslashit( $directory . $path ) ]['files'][] = $entry;
+				} else {
 					// add the entry to the list.
 					$listing['files'][] = $entry;
 				}
@@ -707,7 +713,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password );',
+				'action' => 'efml_get_import_dialog( { "service": "dropbox", "urls": file.file } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -739,7 +745,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	/**
 	 * Save a temp file from DropBox and return its path.
 	 *
-	 * @param string $content The content of the file
+	 * @param string $content The content of the file.
 	 *
 	 * @return string|false
 	 */
@@ -797,6 +803,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.
@@ -811,13 +818,13 @@ class DropBox extends Directory_Listing_Base implements Service {
 		// start a simple request to check if access token could be used.
 		try {
 			$client->getAccountInfo();
-		}
-		catch( ClientException $e ) {
+		} catch ( ClientException $e ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Error during check of DropBox access token:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 
 			// create error.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced with a URL. */
 			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
 
 			// add error.

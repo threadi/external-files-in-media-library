@@ -218,5 +218,19 @@ class Update {
 	public function version500(): void {
 		// enable file hiding.
 		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
+
+		// remove not used options.
+		delete_option( 'eml_import_errors' );
+		delete_option( 'eml_import_files' );
+		delete_option( 'eml_import_url_count' );
+		delete_option( 'eml_import_url_max' );
+		delete_option( 'eml_import_running' );
+		delete_option( 'eml_import_title' );
+
+		// update database-table for logs.
+		Log::get_instance()->install();
+
+		// update database-table for queues.
+		Queue::get_instance()->install();
 	}
 }

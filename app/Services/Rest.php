@@ -210,14 +210,14 @@ class Rest extends Directory_Listing_Base implements Service {
 					 *
 					 * @noinspection PhpConditionAlreadyCheckedInspection
 					 */
-					if ( apply_filters( Init::get_instance()->get_prefix() . '_service_rest_hide_file', $false, $mime_type, $directory ) ) {
+					if ( apply_filters( 'efml_service_rest_hide_file', $false, $mime_type, $directory ) ) {
 						continue;
 					}
 
 					// define the thumb.
 					$thumbnail = '';
 
-					if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
+					if ( str_contains( $mime_type, 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 						// get protocol handler for this external file.
 						$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $file['source_url'] );
 						if ( $protocol_handler instanceof Protocols\Http ) {
@@ -254,7 +254,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					);
 					$entry['file']          = $file['source_url'];
 					$entry['filesize']      = isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0;
-					$entry['mime-type']     = $file['mime_type'];
+					$entry['mime-type']     = $mime_type;
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $file['type'] ) . '"></span>';
 					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file['modified'] ) ) ) );
 					$entry['preview']       = $thumbnail;
@@ -285,7 +285,7 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password, [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -303,7 +303,8 @@ class Rest extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", login, password, [], config.term );',
+					// TODO find better solution for path (pretty vs. not-pretty).
+					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
@@ -338,12 +339,12 @@ class Rest extends Directory_Listing_Base implements Service {
 		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if no method is called.
-		if( is_null( $method ) ) {
+		if ( is_null( $method ) ) {
 			return $translations;
 		}
 
 		// bail if called method is not ours.
-		if( 'rest' !== $method ) {
+		if ( 'rest' !== $method ) {
 			return $translations;
 		}
 
@@ -495,13 +496,13 @@ class Rest extends Directory_Listing_Base implements Service {
 
 					// collect the file data.
 					$entry = array(
-						'title'     => basename( $file['source_url'] ),
-						'filesize'  => isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0,
-						'mime-type' => $file['mime_type'],
-						'local'     => $local,
-						'url'       => $file['source_url'],
-						'tmp-file'  => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
-						'last-modified' => absint( strtotime( $file['modified'] ) )
+						'title'         => basename( $file['source_url'] ),
+						'filesize'      => isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0,
+						'mime-type'     => $file['mime_type'],
+						'local'         => $local,
+						'url'           => $file['source_url'],
+						'tmp-file'      => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
+						'last-modified' => absint( strtotime( $file['modified'] ) ),
 					);
 
 					$response_headers = array();
@@ -514,15 +515,15 @@ class Rest extends Directory_Listing_Base implements Service {
 					 * @param string $url     The requested external URL.
 					 * @param array<string,mixed> $response_headers The response header.
 					 */
-					 $entry = apply_filters( 'eml_external_file_infos', $entry, $url, $response_headers );
+					$entry = apply_filters( 'eml_external_file_infos', $entry, $url, $response_headers );
 
-					 // bail if entry is empty.
-					if( empty( $entry ) ) {
+					// bail if entry is empty.
+					if ( empty( $entry ) ) {
 						continue;
 					}
 
 					// add entry to the list.
-					$file_list[]  = $entry;
+					$file_list[] = $entry;
 				}
 			} catch ( JsonException $e ) {
 				continue;
@@ -543,7 +544,7 @@ class Rest extends Directory_Listing_Base implements Service {
 	 */
 	public function prevent_not_allowed_files( bool $result, string $mime_type ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 

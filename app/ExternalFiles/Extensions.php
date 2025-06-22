@@ -55,7 +55,7 @@ class Extensions {
 	 */
 	public function init(): void {
 		// loop through all supported file handling extensions.
-		foreach( $this->get_extensions_as_objects() as $obj ) {
+		foreach ( $this->get_extensions_as_objects() as $obj ) {
 			$obj->init();
 		}
 	}
@@ -70,7 +70,7 @@ class Extensions {
 		$list = array();
 
 		// loop through all supported file handling extensions.
-		foreach( $this->get_extensions() as $method_class_name ) {
+		foreach ( $this->get_extensions() as $method_class_name ) {
 			// get function name.
 			$class_name = $method_class_name . '::get_instance';
 
@@ -102,7 +102,7 @@ class Extensions {
 	 */
 	public function install(): void {
 		// loop through all supported file handling extensions.
-		foreach( $this->get_extensions_as_objects() as $obj ) {
+		foreach ( $this->get_extensions_as_objects() as $obj ) {
 			$obj->install();
 		}
 	}
@@ -114,7 +114,7 @@ class Extensions {
 	 */
 	public function uninstall(): void {
 		// loop through all supported file handling extensions.
-		foreach( $this->get_extensions_as_objects() as $obj ) {
+		foreach ( $this->get_extensions_as_objects() as $obj ) {
 			$obj->uninstall();
 		}
 	}
@@ -128,7 +128,7 @@ class Extensions {
 		$list = array(
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
-			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import'
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
 		);
 
 		/**

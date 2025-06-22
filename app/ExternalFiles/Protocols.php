@@ -129,7 +129,7 @@ class Protocols {
 		// bail if no supported protocol could be found for this URL.
 		if ( ! $result ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Given URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error' );
 
 			// return false in this case.
 			return false;

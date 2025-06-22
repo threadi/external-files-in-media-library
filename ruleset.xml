@@ -18,6 +18,7 @@
     <exclude-pattern>*/vendor/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
     <exclude-pattern>*/svn/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
     <exclude-pattern>*/app/Dependencies/*</exclude-pattern>
 
     <!-- Use additional rulesets -->

@@ -85,7 +85,7 @@ class Protocol extends Protocol_Base {
 		// bail if no file id could be loaded.
 		if ( empty( $file_id ) ) {
 			// log event.
-			Log::get_instance()->create( __( 'Given URL does not contain a file ID from Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL does not contain a file ID from Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
 			// return an empty list as we could not analyse the file.
 			return array();
@@ -93,7 +93,7 @@ class Protocol extends Protocol_Base {
 
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $this->get_url() ) ) {
-			Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
 			// return an empty list as we could not analyse the file.
 			return array();
@@ -266,7 +266,7 @@ class Protocol extends Protocol_Base {
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() . $file_obj->getId() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
 
 				continue;
 			}

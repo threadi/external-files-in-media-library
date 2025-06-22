@@ -235,7 +235,7 @@ class Zip extends Directory_Listing_Base implements Service {
 				// add settings for entry.
 				$entry['file']          = $file_stat['name'];
 				$entry['filesize']      = absint( $file_stat['size'] );
-				$entry['mime-type']     = $mime_type;
+				$entry['mime-type']     = $mime_type['type'];
 				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
 				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( ( $file_stat['mtime'] ) ) ) );
 				$entry['preview']       = '';
@@ -308,7 +308,7 @@ class Zip extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( "file://" + url.replace("file://", "") + file.file, login, password );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "file://" + url.replace("file://", "") + "/" + file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -327,11 +327,6 @@ class Zip extends Directory_Listing_Base implements Service {
 	public function is_file_in_zip_file( bool $return_value, string $file_path ): bool {
 		// bail if file path does not contain '.zip'.
 		if ( ! str_contains( $file_path, '.zip' ) ) {
-			return $return_value;
-		}
-
-		// bail if file path does end with '.zip'.
-		if ( str_ends_with( $file_path, '.zip' ) ) {
 			return $return_value;
 		}
 
