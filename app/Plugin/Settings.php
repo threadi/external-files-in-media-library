@@ -199,7 +199,7 @@ class Settings {
 
 		// the dialog section.
 		$general_tab_dialog = $general_tab->add_section( 'settings_section_dialog', 20 );
-		$general_tab_dialog->set_title( __( 'Dialog', 'external-files-in-media-library' ) );
+		$general_tab_dialog->set_title( __( 'Options for saving external files', 'external-files-in-media-library' ) );
 		$general_tab_dialog->set_setting( $settings_obj );
 
 		// the files section.
@@ -406,7 +406,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_log_mode' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
+		$setting->set_default( Helper::is_development_mode() ? 1 : 0 );
 		$field = new Select();
 		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
 		$field->set_options(

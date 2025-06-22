@@ -174,7 +174,7 @@ class Dates extends Extension_Base {
 
 		// if user has its own setting, use this.
 		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
-			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_use_dates', true ) );
+			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
 		// collect the entry.
@@ -251,7 +251,7 @@ class Dates extends Extension_Base {
 		}
 
 		// add our setting.
-		$settings['use_dates'] = array(
+		$settings[$this->get_name()] = array(
 			'label' => __( 'Use dates of the external files', 'external-files-in-media-library' ),
 			'description' => __( 'If enabled we try to use the dates external files have. External files without this information will be saved with the actual date.', 'external-files-in-media-library' ),
 			'field' => 'checkbox',

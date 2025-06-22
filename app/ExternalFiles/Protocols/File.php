@@ -188,7 +188,6 @@ class File extends Protocol_Base {
 		 */
 		if ( apply_filters( 'eml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
 			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
-
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
@@ -205,17 +204,16 @@ class File extends Protocol_Base {
 
 		// get the file content.
 		$content = $wp_filesystem->get_contents( $file_path );
-		if ( ! $content ) {
-			return array();
+
+		if( is_string( $content ) ) {
+			// set the file as tmp-file for import.
+			$results['tmp-file'] = wp_tempnam();
+			// and save the file there.
+			$wp_filesystem->put_contents( $results['tmp-file'], $content );
+
+			// get the size.
+			$results['filesize'] = absint( $wp_filesystem->size( $results['tmp-file'] ) );
 		}
-
-		// set the file as tmp-file for import.
-		$results['tmp-file'] = wp_tempnam();
-		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $content );
-
-		// get the size.
-		$results['filesize'] = absint( $wp_filesystem->size( $results['tmp-file'] ) );
 
 		$response_headers = array();
 		/**

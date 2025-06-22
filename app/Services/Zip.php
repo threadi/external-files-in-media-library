@@ -82,7 +82,11 @@ class Zip extends Directory_Listing_Base implements Service {
 	 */
 	public function init(): void {
 		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
+
+		// add the directory listing.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// use our own hooks.
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
 		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 	}
@@ -327,6 +331,11 @@ class Zip extends Directory_Listing_Base implements Service {
 	public function is_file_in_zip_file( bool $return_value, string $file_path ): bool {
 		// bail if file path does not contain '.zip'.
 		if ( ! str_contains( $file_path, '.zip' ) ) {
+			return $return_value;
+		}
+
+		// bail if file path does end with '.zip' (if it is the ZIP itself).
+		if( str_ends_with( $file_path, '.zip' ) ) {
 			return $return_value;
 		}
 

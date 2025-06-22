@@ -852,7 +852,7 @@ class Queue extends Extension_Base {
 		$checked = false;
 
 		// if user has its own setting, use this.
-		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_add_to_queue', true ) ) ) {
+		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) ) ) {
 			$checked = true;
 		}
 
@@ -987,7 +987,7 @@ class Queue extends Extension_Base {
 		}
 
 		// add our setting.
-		$settings['add_to_queue'] = array(
+		$settings[$this->get_name()] = array(
 			'label'       => __( 'Add URLs to the queue', 'external-files-in-media-library' ),
 			'description' => __( 'If enabled new files will be imported with the queue in background.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',

@@ -770,4 +770,16 @@ class Helper {
 		// return if role is in list of user-roles.
 		return in_array($role, $user->roles);
 	}
+
+	/**
+	 * Return whether this WordPress runs in development mode (which is available since WordPress 6.3).
+	 *
+	 * @return bool
+	 */
+	public static function is_development_mode(): bool {
+		return (
+			function_exists( 'wp_is_development_mode' ) && false === wp_is_development_mode( 'plugin' )
+		)
+		|| ! function_exists( 'wp_is_development_mode' );
+	}
 }

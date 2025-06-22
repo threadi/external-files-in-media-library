@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use WP_User;
 
 /**
  * Uninstall this plugin.
@@ -97,6 +98,23 @@ class Uninstall {
 				// switch the hosting of this file to local.
 				$external_file_obj->switch_to_local();
 			}
+		}
+
+		// remove user-specific settings.
+		$users = get_users();
+		foreach( $users as $user ) {
+			// bail if user is not WP_User.
+			if( ! $user instanceof WP_User ) {
+				continue;
+			}
+
+			// loop through all extension and remove their settings.
+			foreach( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+				delete_user_meta( $user->ID, 'efml_' . $extension_obj->get_name() );
+			}
+
+			// and also the "hide_dialog" setting.
+			delete_user_meta( $user->ID, 'efml_hide_dialog' );
 		}
 
 		// run the uninstallation tasks for each file handling extension.

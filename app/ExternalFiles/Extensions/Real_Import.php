@@ -208,7 +208,7 @@ class Real_Import extends Extension_Base {
 
 		// if user has its own setting, use this.
 		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
-			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_real_import', true ) );
+			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
 		// collect the entry.
@@ -285,7 +285,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// add our setting.
-		$settings['real_import'] = array(
+		$settings[$this->get_name()] = array(
 			'label'       => __( 'Really import each file', 'external-files-in-media-library' ),
 			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',

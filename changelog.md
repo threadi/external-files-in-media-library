@@ -41,6 +41,7 @@
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities
 - Extended documentation in GitHub for all services we provide
+- Extended logging is automatically enabled if WordPress is running in development mode
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 
