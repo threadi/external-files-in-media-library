@@ -134,8 +134,8 @@ class Dates extends Extension_Base {
 		// get value from request.
 		$use_date = isset( $_POST['use_dates'] ) ? absint( $_POST['use_dates'] ) : -1;
 
-		// bail if not set from request and global setting not enabled.
-		if ( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
+		// bail if not set from request.
+		if ( -1 === $use_date ) {
 			return $post_array;
 		}
 
@@ -245,9 +245,15 @@ class Dates extends Extension_Base {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function add_user_setting( array $settings ): array {
+		// only add if it is enabled in settings.
+		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $settings;
+		}
+
 		// add our setting.
 		$settings['use_dates'] = array(
-			'label' => __( 'Use dates of the external files.', 'external-files-in-media-library' ),
+			'label' => __( 'Use dates of the external files', 'external-files-in-media-library' ),
+			'description' => __( 'If enabled we try to use the dates external files have. External files without this information will be saved with the actual date.', 'external-files-in-media-library' ),
 			'field' => 'checkbox',
 		);
 

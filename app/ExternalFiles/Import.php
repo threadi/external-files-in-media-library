@@ -354,7 +354,7 @@ class Import extends Directory_Listing_Base {
 			/**
 			 * Filter whether we import no external files.
 			 *
-			 * Return to true if we only import files in media db without external links.
+			 * Return true if we only import files in media db without external URL.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 *

@@ -981,10 +981,15 @@ class Queue extends Extension_Base {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function add_user_setting( array $settings ): array {
+		// only add if it is enabled in settings.
+		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $settings;
+		}
+
 		// add our setting.
 		$settings['add_to_queue'] = array(
-			'label'       => __( 'Add URLs to the queue.', 'external-files-in-media-library' ),
-			'description' => __( 'The queue is processed in background.', 'external-files-in-media-library' ),
+			'label'       => __( 'Add URLs to the queue', 'external-files-in-media-library' ),
+			'description' => __( 'If enabled new files will be imported with the queue in background.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
 

@@ -124,12 +124,20 @@ class Real_Import extends Extension_Base {
 	 * @return bool
 	 */
 	public function import_local_on_real_import( bool $result ): bool {
-		// bail if setting is disabled to use the generated value.
-		if ( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
+		// get value from request.
+		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
+
+		// bail if it is not enabled during import.
+		if ( 1 !== $real_import ) {
 			return $result;
 		}
 
-		// return true to force local saving of this file.
+		// return true to mark this as local importing file.
 		return true;
 	}
 
@@ -152,8 +160,8 @@ class Real_Import extends Extension_Base {
 		// get value from request.
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
-		// bail if either setting is disabled to use the generated value.
-		if ( 1 !== $real_import && 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		// bail if it is not enabled during import.
+		if ( 1 !== $real_import ) {
 			return $post_array;
 		}
 
@@ -165,7 +173,7 @@ class Real_Import extends Extension_Base {
 	}
 
 	/**
-	 * Save file local if global setting is enabled.
+	 * Save file local if setting during import or global is enabled.
 	 *
 	 * @return bool
 	 */
@@ -179,7 +187,7 @@ class Real_Import extends Extension_Base {
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
 		// return whether to import this file as real file and not external.
-		return 1 === $real_import || ( -1 === $real_import && 1 === absint( get_option( 'eml_directory_listing_real_import' ) ) );
+		return 1 === $real_import;
 	}
 
 	/**
@@ -271,9 +279,14 @@ class Real_Import extends Extension_Base {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function add_user_setting( array $settings ): array {
+		// only add if it is enabled in settings.
+		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $settings;
+		}
+
 		// add our setting.
 		$settings['real_import'] = array(
-			'label'       => __( 'Really import each file.', 'external-files-in-media-library' ),
+			'label'       => __( 'Really import each file', 'external-files-in-media-library' ),
 			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
