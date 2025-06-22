@@ -613,7 +613,7 @@ class Forms {
 	 */
 	public function set_http_import_title_start( string $url ): void {
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title', sprintf( __( 'Import of presumed directory URL %1$s starting ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Import of presumed directory URL %1$s starting ..', 'external-files-in-media-library' ), $url ) );
 	}
 
 	/**
@@ -625,8 +625,8 @@ class Forms {
 	 */
 	public function set_import_file_check( string $url ): void {
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title', sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
 	}
 
 	/**
@@ -638,8 +638,8 @@ class Forms {
 	 */
 	public function set_import_file_save( string $url ): void {
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title', sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count', absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
 	}
 
 	/**
@@ -652,7 +652,7 @@ class Forms {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function set_import_max( string $url, array $matches ): void {
-		update_option( 'eml_import_url_max', absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
+		update_option( 'eml_import_url_max_' . get_current_user_id(), absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
 	}
 
 	/**
