@@ -37,6 +37,7 @@
 - Standardize the usage of timestamp as last-modified date for each service and protocol
 - Optimized check if a mime type is allowed in directory listing and during import
 - Optimized detection of multiple URLs entered in the textarea-field with different line breaks
+- Optimized WooCommerce CSV-import with URLs for external files
 - Re-arranged the settings for a better overview
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities

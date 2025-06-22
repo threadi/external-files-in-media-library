@@ -222,6 +222,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		foreach ( $data['raw_gallery_image_ids'] as $index => $url ) {
 			// add the image and bail if it was not successfully.
 			if ( ! Import::get_instance()->add_url( $url ) ) {
+				Log::get_instance()->create( __( 'Failed to import given URL during WooCommerce-import.', 'external-files-in-media-library' ), $url, 'error' );
 				continue;
 			}
 
