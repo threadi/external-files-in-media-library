@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -31,6 +32,13 @@ use wpdb;
  * Controller for queue tasks.
  */
 class Queue extends Extension_Base {
+	/**
+	 * The internal extension name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'queue';
+
 	/**
 	 * Instance of actual object.
 	 *
@@ -88,6 +96,15 @@ class Queue extends Extension_Base {
 	}
 
 	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Queue', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Initialize the settings for this object.
 	 *
 	 * @return void
@@ -121,17 +138,17 @@ class Queue extends Extension_Base {
 		}
 
 		// create interval setting.
-		$setting = $settings_obj->add_setting( 'eml_queue_interval' );
-		$setting->set_section( $general_tab_main );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'efml_hourly' );
+		$queue_interval_setting = $settings_obj->add_setting( 'eml_queue_interval' );
+		$queue_interval_setting->set_section( $general_tab_main );
+		$queue_interval_setting->set_type( 'string' );
+		$queue_interval_setting->set_default( 'efml_hourly' );
 		$field = new Select();
 		$field->set_title( __( 'Set interval for queue processing', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which the queue for new URLs will be processed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_intervals() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
-		$setting->set_save_callback( array( $this, 'update_interval_setting' ) );
-		$setting->set_field( $field );
+		$queue_interval_setting->set_save_callback( array( $this, 'update_interval_setting' ) );
+		$queue_interval_setting->set_field( $field );
 
 		// add setting for limit.
 		$setting = $settings_obj->add_setting( 'eml_queue_limit' );
@@ -821,6 +838,11 @@ class Queue extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_in_form( array $dialog ): array {
+		// only add if it is enabled in settings.
+		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $dialog;
+		}
+
 		// bail if queue is disabled.
 		if ( 'eml_disable_check' === get_option( 'eml_queue_interval' ) ) {
 			return $dialog;

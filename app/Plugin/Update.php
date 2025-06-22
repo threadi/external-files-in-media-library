@@ -232,5 +232,9 @@ class Update {
 
 		// update database-table for queues.
 		Queue::get_instance()->install();
+
+		// set new options.
+		update_option( 'eml_user_settings', 1 );
+		update_option( 'eml_import_extensions', array( 'dates', 'queue', 'real_import' ) );
 	}
 }

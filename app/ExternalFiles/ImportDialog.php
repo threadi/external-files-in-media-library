@@ -71,10 +71,12 @@ class ImportDialog {
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
 
 		// add user-specific configuration.
-		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
-		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
-		add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
-		add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
+		if( $this->is_customization_allowed() ) {
+			add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
+			add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
+			add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
+			add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
+		}
 	}
 
 	/**
@@ -470,5 +472,60 @@ class ImportDialog {
 
 		// return the settings.
 		return $settings;
+	}
+
+	/**
+	 * Check if actual user could use custom settings for imports.
+	 * This depends on the global setting and (if this is enabled) on its role.
+	 *
+	 * @return bool
+	 */
+	public function is_customization_allowed(): bool {
+		// bail if global setting is disabled.
+		if( 1 !== absint( get_option( 'eml_user_settings' ) ) ) {
+			return false;
+		}
+
+		// get the list of allowed roles.
+		$roles = get_option( 'eml_user_settings_allowed_roles', array() );
+
+		// bail if roles is not an array.
+		if( ! is_array( $roles ) ) {
+			return false;
+		}
+
+		// check the given roles.
+		foreach( $roles as $role ) {
+			// bail if role is not a string.
+			if( ! is_string( $role ) ) {
+				continue;
+			}
+
+			// check if actual user has this role.
+			if( Helper::has_current_user_role( $role ) ) {
+				return true;
+			}
+		}
+
+		// return false as user does not have an allowed role.
+		return false;
+	}
+
+	/**
+	 * Return list of enabled extensions from settings.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_enabled_extensions(): array {
+		// get the value of the setting.
+		$setting = get_option( 'eml_import_extensions', array() );
+
+		// if it is not an array, return an empty one.
+		if( ! is_array( $setting ) ) {
+			return array();
+		}
+
+		// return the setting.
+		return $setting;
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the handling of third party support we provide.
+ * This file contains the handling of services we provide.
  *
  * This could be an external file platform we adapt.
  *
@@ -14,6 +14,8 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 
 /**
@@ -97,7 +99,38 @@ class Services {
 		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 
 		// misc.
+		add_action( 'init', array( $this, 'init_settings' ), 15 );
 		add_action( 'init', array( $this, 'init_services' ) );
+	}
+
+	/**
+	 * Initialize the settings.
+	 *
+	 * @return void
+	 */
+	public function init_settings(): void {
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// add new tab for services.
+		$tab = $settings_page->add_tab( 'services', 110 );
+		$tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
+		$tab->set_hide_save( true );
+
+		// add tab for hint.
+		$main_services_tab = $tab->add_tab( 'services', 0 );
+		$main_services_tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
+		$main_services_tab->set_hide_save( true );
+		$main_services_tab->set_callback( array( $this, 'show_settings_services_hint' ) );
+		$tab->set_default_tab( $main_services_tab );
 	}
 
 	/**
@@ -237,5 +270,14 @@ class Services {
 
 		// return the resulting dialog settings.
 		return $settings;
+	}
+
+	/**
+	 * Show hint on direct call of services tab under settings.
+	 *
+	 * @return void
+	 */
+	public function show_settings_services_hint(): void {
+		echo '<p><strong>' . esc_html__( 'Chose one of the services to get to its settings.', 'external-files-in-media-library' ) . '</strong></p>';
 	}
 }

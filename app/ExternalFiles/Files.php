@@ -68,6 +68,9 @@ class Files {
 		// initialize REST API support.
 		Rest::get_instance()->init();
 
+		// initialize the file types support.
+		File_Types::get_instance()->init();
+
 		// initialize the file handling extensions.
 		Extensions::get_instance()->init();
 

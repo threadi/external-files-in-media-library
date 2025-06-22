@@ -65,7 +65,7 @@ class Extensions {
 	 *
 	 * @return array<int,Extension_Base>
 	 */
-	private function get_extensions_as_objects(): array {
+	public function get_extensions_as_objects(): array {
 		// collect the list.
 		$list = array();
 

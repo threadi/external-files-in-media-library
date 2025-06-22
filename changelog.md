@@ -8,10 +8,11 @@
 - Added DropBox support for import of external files into your media library
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
-- Introduced file handling extensions and added queue handling to the first one
+- Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
 - Added these 2 new options also as parameter on WP CLI command to import URLs
+- Added option to choose which of these extensions should be available for file handlings
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
   are occurring simultaneously
@@ -36,6 +37,7 @@
 - Standardize the usage of timestamp as last-modified date for each service and protocol
 - Optimized check if a mime type is allowed in directory listing and during import
 - Optimized detection of multiple URLs entered in the textarea-field with different line breaks
+- Re-arranged the settings for a better overview
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities
 - Extended documentation in GitHub for all services we provide

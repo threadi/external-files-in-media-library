@@ -15,6 +15,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class Extension_Base {
 	/**
+	 * The internal extension name.
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void
@@ -34,4 +41,22 @@ class Extension_Base {
 	 * @return void
 	 */
 	public function uninstall(): void {}
+
+	/**
+	 * Return the object name.
+	 *
+	 * @return string
+	 */
+	public function get_name(): string {
+		return $this->name;
+	}
+
+	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return '';
+	}
 }

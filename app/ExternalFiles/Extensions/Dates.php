@@ -12,11 +12,20 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 
 /**
  * Handler controls how to import external files for real in media library without external connection.
  */
 class Dates extends Extension_Base {
+	/**
+	 * The internal extension name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'dates';
+
 	/**
 	 * Instance of actual object.
 	 *
@@ -67,6 +76,15 @@ class Dates extends Extension_Base {
 	}
 
 	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Use external file dates', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Add our custom settings for this plugin.
 	 *
 	 * @return void
@@ -76,7 +94,7 @@ class Dates extends Extension_Base {
 		$settings_obj = Settings::get_instance();
 
 		// get the advanced section.
-		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_advanced' );
+		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );
 
 		// bail if section could not be loaded.
 		if ( ! $advanced_tab_advanced ) {
@@ -89,8 +107,8 @@ class Dates extends Extension_Base {
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
-				'title'       => __( 'Use external file dates', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used. This setting overrides user-specific settings if enabled.', 'external-files-in-media-library' ),
+				'title'       => $this->get_title(),
+				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -146,12 +164,17 @@ class Dates extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function add_date_option_in_form( array $dialog ): array {
+		// only add if it is enabled in settings.
+		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $dialog;
+		}
+
 		// get the actual state for the checkbox.
 		$checked = 1 === absint( get_option( 'eml_use_file_dates' ) );
 
 		// if user has its own setting, use this.
-		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_use_dates', true ) ) ) {
-			$checked = true;
+		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
+			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_use_dates', true ) );
 		}
 
 		// collect the entry.

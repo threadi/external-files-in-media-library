@@ -67,7 +67,7 @@ class Proxy {
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 
 		// bail if no proxy is enabled.
-		if ( ! File_Types::get_instance()->is_any_proxy_enabled() ) {
+		if ( ! $this->is_any_proxy_enabled() ) {
 			return;
 		}
 
@@ -321,5 +321,39 @@ class Proxy {
 
 		// response with dialog.
 		wp_send_json( $dialog );
+	}
+
+	/**
+	 * Return true if any proxy for any file is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_any_proxy_enabled(): bool {
+		// check each supported file type.
+		foreach ( File_Types::get_instance()->get_file_types() as $file_type ) {
+			// bail if object does not exist.
+			if ( ! class_exists( $file_type ) ) {
+				continue;
+			}
+
+			// get the object.
+			$file_type_obj = new $file_type( false );
+
+			// bail if object is not a file type base object.
+			if ( ! $file_type_obj instanceof File_Types_Base ) {
+				continue;
+			}
+
+			// bail if proxy for this file type is not enabled.
+			if ( ! $file_type_obj->is_proxy_enabled() ) {
+				continue;
+			}
+
+			// return true if proxy is enabled.
+			return true;
+		}
+
+		// return false if no proxy is enabled.
+		return false;
 	}
 }

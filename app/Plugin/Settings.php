@@ -19,6 +19,8 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
@@ -96,11 +98,12 @@ class Settings {
 	 * Return the link to the settings.
 	 *
 	 * @param string $tab The tab.
+	 * @param string $sub_tab The sub tab.
 	 * @param string $url The URL to filter for.
 	 *
 	 * @return string
 	 */
-	public function get_url( string $tab = '', string $url = '' ): string {
+	public function get_url( string $tab = '', string $sub_tab = '', string $url = '' ): string {
 		// define base array.
 		$array = array(
 			'page' => $this->get_menu_slug(),
@@ -109,6 +112,11 @@ class Settings {
 		// add tab, if set.
 		if ( ! empty( $tab ) ) {
 			$array['tab'] = $tab;
+		}
+
+		// add sbu-tab, if set.
+		if ( ! empty( $sub_tab ) ) {
+			$array['subtab'] = $sub_tab;
 		}
 
 		// add URL, if set.
@@ -159,37 +167,24 @@ class Settings {
 		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 20 );
 		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
 
-		// the audio tab.
-		$audio_tab = $settings_page->add_tab( 'eml_audio', 30 );
-		$audio_tab->set_title( __( 'Audio', 'external-files-in-media-library' ) );
-
-		// the images tab.
-		$images_tab = $settings_page->add_tab( 'eml_images', 40 );
-		$images_tab->set_title( __( 'Images', 'external-files-in-media-library' ) );
-
-		// the video tab.
-		$video_tab = $settings_page->add_tab( 'eml_video', 50 );
-		$video_tab->set_title( __( 'Videos', 'external-files-in-media-library' ) );
-
 		// the proxy tab.
-		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 60 );
+		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 40 );
 		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
 
 		// the advanced tab.
-		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 70 );
+		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 50 );
 		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
 
 		// the logs tab.
-		$logs_tab = $settings_page->add_tab( 'eml_logs', 80 );
+		$logs_tab = $settings_page->add_tab( 'eml_logs', 60 );
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 
 		// the helper tab.
-		$helper_tab = $settings_page->add_tab( 'eml_helper', 90 );
-		$helper_tab->set_title( __( 'Questions? Check our forum', 'external-files-in-media-library' ) );
+		$helper_tab = $settings_page->add_tab( 'eml_helper', 70 );
 		$helper_tab->set_url( Helper::get_plugin_support_url() );
 		$helper_tab->set_url_target( '_blank' );
-		$helper_tab->set_tab_class( 'nav-tab-help' );
+		$helper_tab->set_tab_class( 'nav-tab-help dashicons dashicons-editor-help' );
 
 		// set the default tab.
 		$settings_page->set_default_tab( $general_tab );
@@ -202,28 +197,15 @@ class Settings {
 		$general_tab_main->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 		$general_tab_main->set_setting( $settings_obj );
 
+		// the dialog section.
+		$general_tab_dialog = $general_tab->add_section( 'settings_section_dialog', 20 );
+		$general_tab_dialog->set_title( __( 'Dialog', 'external-files-in-media-library' ) );
+		$general_tab_dialog->set_setting( $settings_obj );
+
 		// the files section.
 		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files', 10 );
-		$permissions_tab_files->set_title( __( 'Permissions to add files', 'external-files-in-media-library' ) );
+		$permissions_tab_files->set_title( __( 'Permissions for external files', 'external-files-in-media-library' ) );
 		$permissions_tab_files->set_setting( $settings_obj );
-
-		// the audio section.
-		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio', 10 );
-		$audio_tab_audios->set_title( __( 'Audio Settings', 'external-files-in-media-library' ) );
-		$audio_tab_audios->set_callback( array( $this, 'show_protocol_hint' ) );
-		$audio_tab_audios->set_setting( $settings_obj );
-
-		// the images section.
-		$images_tab_images = $images_tab->add_section( 'settings_section_images', 10 );
-		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
-		$images_tab_images->set_callback( array( $this, 'show_protocol_hint' ) );
-		$images_tab_images->set_setting( $settings_obj );
-
-		// the videos section.
-		$videos_tab_videos = $video_tab->add_section( 'settings_section_images', 10 );
-		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
-		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
-		$videos_tab_videos->set_setting( $settings_obj );
 
 		// the proxy section.
 		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy', 10 );
@@ -361,7 +343,7 @@ class Settings {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
-		$field->set_title( __( 'Select user roles', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$field->set_sanitize_callback( array( $this, 'set_capabilities' ) );
@@ -385,94 +367,13 @@ class Settings {
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
-		$setting->set_section( $permissions_tab_files );
+		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'integer' );
 		$setting->set_default( $first_administrator );
 		$field = new Select();
 		$field->set_title( __( 'User new files should be assigned to', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-files-in-media-library' ) );
 		$field->set_options( $users );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_images_mode' );
-		$setting->set_section( $images_tab_images );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'external' );
-		$field = new Select();
-		$field->set_title( __( 'Mode for image handling', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how external images are handled.', 'external-files-in-media-library' ) );
-		$field->set_options(
-			array(
-				'external' => __( 'host them extern', 'external-files-in-media-library' ),
-				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_audio_mode' );
-		$setting->set_section( $audio_tab_audios );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'external' );
-		$field = new Select();
-		$field->set_title( __( 'Mode for audio handling', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how external audios are handled.', 'external-files-in-media-library' ) );
-		$field->set_options(
-			array(
-				'external' => __( 'host them extern', 'external-files-in-media-library' ),
-				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_audio_proxy' );
-		$setting->set_section( $audio_tab_audios );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 1 );
-		$field = new Checkbox();
-		$field->set_title( __( 'Enable proxy for audios', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This option is only available if audios are hosted external. If this option is disabled, external audios will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the audios locally.', 'external-files-in-media-library' ) );
-		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_audio_proxy_max_age' );
-		$setting->set_section( $audio_tab_audios );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 24 );
-		$field = new Number();
-		$field->set_title( __( 'Max age for cached audio in proxy in hours', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how long audios, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_proxy' );
-		$setting->set_section( $images_tab_images );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 1 );
-		$setting->set_save_callback( array( $this, 'update_proxy_setting' ) );
-		$field = new Checkbox();
-		$field->set_title( __( 'Enable proxy for images', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ) );
-		$field->set_readonly( 'external' !== get_option( 'eml_images_mode', '' ) );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_proxy_max_age' );
-		$setting->set_section( $images_tab_images );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 24 );
-		$field = new Number();
-		$field->set_title( __( 'Max age for cached images in proxy in hours', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -488,46 +389,6 @@ class Settings {
 				'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_video_mode' );
-		$setting->set_section( $videos_tab_videos );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'external' );
-		$field = new Select();
-		$field->set_title( __( 'Mode for video handling', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how external video are handled.', 'external-files-in-media-library' ) );
-		$field->set_options(
-			array(
-				'external' => __( 'host them extern', 'external-files-in-media-library' ),
-				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_video_proxy' );
-		$setting->set_section( $videos_tab_videos );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 1 );
-		$field = new Checkbox();
-		$field->set_title( __( 'Enable proxy for videos', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This option is only available if videos are hosted external. If this option is disabled, external videos will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the videos locally.', 'external-files-in-media-library' ) );
-		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_video_proxy_max_age' );
-		$setting->set_section( $videos_tab_videos );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 24 * 7 );
-		$field = new Number();
-		$field->set_title( __( 'Max age for cached video in proxy in hours', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines how long videos, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
-		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
@@ -596,6 +457,50 @@ class Settings {
 		$field->add_class( 'easy-dialog-for-wordpress' );
 		$field->set_custom_attributes( array( 'data-dialog' => $this->get_proxy_reset_dialog() ) );
 		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_user_settings' );
+		$setting->set_section( $general_tab_dialog );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'User-specific settings', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
+				'description' => sprintf( __( 'If this option is enabled WordPress-user can choose their own settings for import of external URLs. Choose in <a href="%1$s">permissions</a> the roles which could use it.', 'external-files-in-media-library' ), esc_url( $this->get_url( 'eml_permissions' ) ) ),
+			)
+		);
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+
+		// get the available extensions for import.
+		$extensions = array();
+		foreach( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+			$extensions[$extension_obj->get_name()] = $extension_obj->get_title();
+		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_import_extensions' );
+		$setting->set_section( $general_tab_dialog );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'dates', 'queue', 'real_import' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Available options for import', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );
+		$field->set_options( $extensions );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_user_settings_allowed_roles' );
+		$setting->set_section( $permissions_tab_files );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator', 'editor' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Use custom settings', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles which should be allowed to use custom settings for the import of external URLs.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add import/export settings.
 		Import::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );

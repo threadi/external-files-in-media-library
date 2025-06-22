@@ -743,4 +743,31 @@ class Helper {
 		}
 		return $new_interval_name;
 	}
+
+	/**
+	 * Return true if the current user has the given role.
+	 *
+	 * @param string $role The role to check.
+	 * @return bool
+	 */
+	public static function has_current_user_role( string $role ): bool {
+		// necessary to use logged in check.
+		include_once(ABSPATH . 'wp-includes/pluggable.php');
+
+		// bail if user is not logged in.
+		if( ! is_user_logged_in() ) {
+			return false;
+		}
+
+		// get the user object.
+		$user = wp_get_current_user();
+
+		// bail if object could not be loaded.
+		if( ! $user instanceof WP_User ) {
+			return false;
+		}
+
+		// return if role is in list of user-roles.
+		return in_array($role, $user->roles);
+	}
 }

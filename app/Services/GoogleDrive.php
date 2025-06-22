@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\But
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -51,7 +52,14 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'eml_googledrive';
+	private string $settings_tab = 'services';
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	private string $settings_sub_tab = 'eml_googledrive';
 
 	/**
 	 * Instance of actual object.
@@ -136,13 +144,21 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 			return;
 		}
 
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( 'services' );
+
+		// bail if tab does not exist.
+		if( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
 		// add new tab for settings.
-		$tab = $settings_page->add_tab( $this->get_settings_tab_slug(), 100 );
+		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 100 );
 		$tab->set_title( __( 'Google Drive', 'external-files-in-media-library' ) );
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_googledrive_main', 10 );
-		$section->set_title( __( 'Google Drive', 'external-files-in-media-library' ) );
+		$section = $tab->add_section( 'section_googledrive_main', 20 );
+		$section->set_title( __( 'Settings for Google Drive', 'external-files-in-media-library' ) );
 
 		// add setting for button to connect.
 		$setting = $settings_obj->add_setting( 'eml_google_drive_connector' );
@@ -661,6 +677,15 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	}
 
 	/**
+	 * Return the settings sub tab slug.
+	 *
+	 * @return string
+	 */
+	private function get_settings_subtab_slug(): string {
+		return $this->settings_sub_tab;
+	}
+
+	/**
 	 * Enable WP CLI for Google Drive tasks.
 	 *
 	 * @return void
@@ -926,7 +951,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return '<a class="connect button button-secondary" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
+		return '<a class="connect button button-secondary" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
 	}
 
 	/**
