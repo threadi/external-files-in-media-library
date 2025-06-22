@@ -246,7 +246,7 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-						<div id="easy-directory-listing-for-wordpress" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+						<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
 					<?php
 			}
 			?>

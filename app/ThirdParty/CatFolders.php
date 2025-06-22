@@ -74,8 +74,8 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_folder_selection' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_folder_import' ) );
-		add_action( 'eml_import_url_after', array( $this, 'save_url_in_folder' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_folder_import' ) );
+		add_action( 'eml_after_file_save', array( $this, 'save_url_in_folder' ) );
 	}
 
 	/**
@@ -225,23 +225,27 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	 * Save external file to a configured folder after import.
 	 *
 	 * @param string $url The used URL.
-	 * @param array  $fields The used fields.
 	 *
 	 * @return void
 	 */
-	public function save_url_in_folder( string $url, array $fields ): void {
+	public function save_url_in_folder( string $url ): void {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// bail if "FolderModel" does not exist.
 		if ( ! method_exists( '\CatFolders\Models\FolderModel', 'set_attachments' ) ) {
 			return;
 		}
 
-		// bail if fields does not contain "catfolder".
-		if ( empty( $fields['catfolder'] ) ) {
+		// bail if post does not contain "catfolder".
+		if ( ! isset( $_POST['catfolder'] ) ) {
 			return;
 		}
 
 		// bail if given "catfolder" value is not > 0.
-		if ( 0 === absint( $fields['catfolder'] ) ) {
+		if ( 0 === absint( $_POST['catfolder'] ) ) {
 			return;
 		}
 
@@ -254,18 +258,18 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// move the file to the given folder.
-		FolderModel::set_attachments( absint( $fields['catfolder'] ), array( $external_file_obj->get_id() ), false );
+		FolderModel::set_attachments( absint( $_POST['catfolder'] ), array( $external_file_obj->get_id() ), false );
 	}
 
 	/**
 	 * Add option to import in CatFolder.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_folder_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Import in specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
-		return $fields;
+	public function add_option_for_folder_import( array $dialog ): array {
+		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		return $dialog;
 	}
 }

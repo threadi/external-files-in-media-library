@@ -93,7 +93,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
@@ -112,13 +112,22 @@ class Ftp extends Directory_Listing_Base implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_local_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
-		return $fields;
+	public function add_option_for_local_import( array $dialog, array $settings ): array {
+		// bail if "no_services" is set in settings.
+		if ( isset( $settings['no_services'] ) ) {
+			return $dialog;
+		}
+
+		// add the hint for local import.
+		$dialog['texts'][] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
+
+		// return resulting dialog.
+		return $dialog;
 	}
 
 	/**
@@ -248,7 +257,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 						$filename = $protocol_handler->get_temp_file( $protocol_handler->get_url(), $ftp_connection );
 
 						// check mime if file could be saved.
-						if( is_string( $filename ) ) {
+						if ( is_string( $filename ) ) {
 							// get the real image mime.
 							$image_mime = wp_get_image_mime( $filename );
 
@@ -303,7 +312,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password, [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -321,7 +330,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( actualDirectoryPath, login, password, [], config.term );',
+					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
@@ -365,7 +374,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Given URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Specified URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );

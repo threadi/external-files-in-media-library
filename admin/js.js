@@ -36,6 +36,14 @@ jQuery(document).ready(function($) {
     });
 
     /**
+     * Get and show the import dialog.
+     */
+    $('.efml-import-dialog').on( 'click', function(e) {
+      e.preventDefault();
+      efml_get_import_dialog();
+    });
+
+    /**
      * Add AJAX-functionality to recheck the availability of a single file.
      */
     $("#eml_recheck_availability").on('click', function(e) {
@@ -45,7 +53,7 @@ jQuery(document).ready(function($) {
         let id = $("#post_ID").val();
 
         // send request
-        jQuery.ajax({
+        $.ajax({
             url: efmlJsVars.ajax_url,
             type: 'post',
             data: {
@@ -146,7 +154,9 @@ jQuery(document).ready(function($) {
         });
     })
 
-    // save to hide transient-messages via ajax-request
+    /**
+     * Save to hide transient-messages via AJAX-request.
+     */
     $('div.eml-transient[data-dismissible] button.notice-dismiss').on('click',
         function (event) {
             event.preventDefault();
@@ -171,25 +181,48 @@ jQuery(document).ready(function($) {
     );
 
     /**
-     * Add event to enable/disable credential fields if
+     * Add observer to check if easy dialog has been opened.
+     *
+     * If it is opened:
+     * - Add event to enable/disable credential fields in import-dialog.
+     * - Check if automatic processing has been set and run it.
+     *
+     * @type {MutationObserver}
      */
-    $('body').on( 'change', function() {
-      // check if class is set.
-      if( $(this).hasClass( 'easy-dialog-for-wordpress' ) ) {
-        $('#eml_use_credentials').off().on('click', function() {
-          // get fields.
-          let login = $('#eml_login');
-          let password = $('#eml_password');
-          if( $(this).is(':checked') ) {
-            login.removeAttr('readonly');
-            password.removeAttr('readonly');
-          }
-          else {
-            login.attr('readonly', 'readonly');
-            password.attr('readonly', 'readonly');
+    let observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.attributeName === "class") {
+            if ($(mutation.target).hasClass('easy-dialog-for-wordpress')){
+              /**
+               * Add click event for credentials
+               */
+              $('.efml-import-dialog #use_credentials').off().on('click', function() {
+                // get fields.
+                let login = $('#login');
+                let password = $('#password');
+                if( $(this).is(':checked') ) {
+                  login.removeAttr('readonly');
+                  password.removeAttr('readonly');
+                }
+                else {
+                  login.attr('readonly', 'readonly');
+                  password.attr('readonly', 'readonly');
+                }
+              });
+
+              /**
+               * Trigger automatic submit if class "efml-import-dialog-process-now" is set.
+               */
+              if( $('.efml-import-dialog.efml-import-dialog-process-now').length === 1 ) {
+                efml_process_import_dialog();
+              }
+            }
           }
         });
-      }
+      });
+
+    observer.observe(document.body, {
+      attributes: true
     });
 
     /**
@@ -224,116 +257,12 @@ jQuery(document).ready(function($) {
     });
 
     /**
-     * Prevent editing of archive terms.
+     * Prevent editing of our own archive terms.
      */
     $('body.taxonomy-edlfw_archive #edittag input').each( function() {
         $(this).attr('readonly', true);
     });
 });
-
-/**
- * Handling for upload of URLs from textarea or input-field in dialog.
- */
-function efml_upload_files() {
-  let urls = jQuery( '#external_files' ).val();
-
-  // do nothing if list is empty.
-  if( urls.length === 0 ) {
-    let dialog_config = {
-      detail: {
-        className: 'eml',
-        title: efmlJsVars.title_no_urls,
-        texts: [
-          '<p>' + efmlJsVars.text_no_urls + '</p>'
-        ],
-        buttons: [
-          {
-            'action': 'edfw_open_dialog("add_eml_files");',
-            'variant': 'primary',
-            'text': efmlJsVars.lbl_ok
-          },
-        ]
-      }
-    }
-    efml_create_dialog( dialog_config );
-    return;
-  }
-
-  // get the credentials (optional).
-  let login = '';
-  let password = '';
-  if( jQuery('#eml_use_credentials').is(':checked') ) {
-    login = jQuery( '#eml_login' ).val();
-    password = jQuery( '#eml_password' ).val();
-  }
-
-  // collect values of additional fields.
-  let additional_fields = {};
-  jQuery('.easy-dialog-for-wordpress-text .eml-use-for-import').each(function() {
-    if( 'INPUT' === jQuery(this).prop('nodeName') ) {
-      if( 'checkbox' === jQuery(this).attr('type') ) {
-        if( jQuery(this).prop('checked') === true ) {
-          if (jQuery( this ).hasClass( 'eml-multi' )) {
-            if (!additional_fields[jQuery( this ).prop( 'name' )]) {
-              additional_fields[jQuery( this ).prop( 'name' )] = {};
-            }
-            additional_fields[jQuery( this ).prop( 'name' )][jQuery( this ).val()] = 1;
-          } else {
-            additional_fields[jQuery( this ).prop( 'name' )] = 1;
-          }
-        }
-        else {
-          additional_fields[jQuery( this ).prop( 'name' )] = 0;
-        }
-      }
-      if( 'text' === jQuery(this).attr('type') ) {
-        additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
-      }
-    }
-    if( 'SELECT' === jQuery(this).prop('nodeName') ) {
-      additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
-    }
-    if( 'TEXTAREA' === jQuery(this).prop('nodeName') ) {
-      additional_fields[jQuery(this).prop('name')] = jQuery(this).val();
-    }
-  });
-
-  // send request.
-  jQuery.ajax({
-    url: efmlJsVars.ajax_url,
-    type: 'post',
-    data: {
-      urls: urls,
-      login: login,
-      password: password,
-      additional_fields: additional_fields,
-      action: 'eml_add_external_urls',
-      nonce: efmlJsVars.urls_nonce
-    },
-    error: function( jqXHR, textStatus, errorThrown ) {
-      efml_ajax_error_dialog( errorThrown )
-    },
-    beforeSend: function() {
-      // show progress.
-      let dialog_config = {
-        detail: {
-          className: 'eml',
-          title: efmlJsVars.title_import_progress,
-          progressbar: {
-            active: true,
-            progress: 0,
-            id: 'progress',
-            label_id: 'progress_status'
-          },
-        }
-      }
-      efml_create_dialog( dialog_config );
-
-      // get info about progress.
-      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
-    }
-  });
-}
 
 /**
  * Get info about running import of URLs.
@@ -458,54 +387,6 @@ function efml_reset_proxy() {
       efml_create_dialog( dialog_config );
     }
   } )
-}
-
-/**
- * Start import of single URL.
- *
- * @param url The URL to import.
- * @param login The login to use for import.
- * @param password The password to use for import.
- * @param additional_fields Additional fields added by extensions.
- * @param term The directory archive term which could be used.
- */
-function efml_import_url( url, login, password, additional_fields, term ) {
-  // send request.
-  jQuery.ajax({
-    url: efmlJsVars.ajax_url,
-    type: 'post',
-    data: {
-      urls: url,
-      login: login,
-      password: password,
-      additional_fields: additional_fields,
-      action: 'eml_add_external_urls',
-      nonce: efmlJsVars.urls_nonce,
-      term: term
-    },
-    error: function( jqXHR, textStatus, errorThrown ) {
-      efml_ajax_error_dialog( errorThrown )
-    },
-    beforeSend: function() {
-      // show progress.
-      let dialog_config = {
-        detail: {
-          className: 'eml',
-          title: efmlJsVars.title_import_progress,
-          progressbar: {
-            active: true,
-            progress: 0,
-            id: 'progress',
-            label_id: 'progress_status'
-          },
-        }
-      }
-      efml_create_dialog( dialog_config );
-
-      // get info about progress.
-      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
-    }
-  });
 }
 
 /**
@@ -674,6 +555,95 @@ function efml_save_as_directory( type, url, login, password, api_key, term_id ) 
     },
     success: function ( dialog_config ) {
       efml_create_dialog( dialog_config );
+    }
+  });
+}
+
+/**
+ * Get the import dialog via AJAX and show it.
+ */
+function efml_get_import_dialog( settings ) {
+  if( typeof settings === "undefined" ) {
+    settings = {};
+    /*settings.no_textarea = true;
+    settings.urls = 'https://pdfobject.com/pdf/sample.pdf';
+    settings.no_services = true;
+    settings.no_credentials = true;
+    settings.no_dialog = true;*/
+  }
+
+  // send request to get the actual dialog.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: {
+      action: 'efml_get_import_dialog',
+      nonce: efmlJsVars.import_dialog_nonce,
+      settings: settings
+    },
+    beforeSend: function() {
+      // show loading dialog.
+      let dialog_config = {
+        detail: {
+          className: 'is-loading',
+          title: efmlJsVars.title_loading,
+          texts: [
+            '<p>' + efmlJsVars.text_loading + '</p>'
+          ],
+        }
+      }
+      efml_create_dialog( dialog_config );
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (response) {
+      if( response.detail ) {
+        efml_create_dialog( response );
+      }
+    }
+  });
+}
+
+/**
+ * Start the process of a URL import from dialog.
+ *
+ * Send the complete form from the dialog via AJAX to process it.
+ */
+function efml_process_import_dialog() {
+  // get all form data.
+  let formData = jQuery('.efml-import-dialog :input').serializeArray();
+
+  // add data to process this request.
+  formData.push({ 'name': 'action', 'value': 'eml_add_external_urls'});
+  formData.push({ 'name': 'nonce', 'value': efmlJsVars.urls_nonce});
+
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: formData,
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_import_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
     }
   });
 }

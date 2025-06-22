@@ -65,7 +65,7 @@ class Imgur implements Service {
 		add_filter( 'eml_http_states', array( $this, 'add_http_state' ), 10, 2 );
 		add_filter( 'eml_http_check_content_type_existence', array( $this, 'allow_http_response_without_content_type' ), 10, 2 );
 		add_filter( 'eml_http_save_local', array( $this, 'force_local_saving' ), 10, 2 );
-		add_filter( 'eml_blacklist', array( $this, 'check_url' ), 10, 2 );
+		add_filter( 'eml_prevent_import', array( $this, 'check_url' ), 10, 2 );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 	}
 

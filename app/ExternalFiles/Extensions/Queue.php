@@ -18,10 +18,12 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
+use JsonException;
 use mysqli_result;
 use wpdb;
 
@@ -78,9 +80,11 @@ class Queue extends Extension_Base {
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
 
 		// use our own hooks.
-		add_filter( 'eml_import_fields', array( $this, 'add_field_in_form' ) );
-		add_filter( 'eml_import_add_to_queue', array( $this, 'add_urls_to_queue' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ) );
 		add_filter( 'eml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
+		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 10, 4 );
+		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
 
 	/**
@@ -238,6 +242,7 @@ class Queue extends Extension_Base {
             `login` text DEFAULT '' NOT NULL,
             `password` text DEFAULT '' NOT NULL,
             `state` text DEFAULT '' NOT NULL,
+            `options` text DEFAULT '' NOT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
@@ -249,55 +254,67 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Add list of URLs to the queue.
+	 * Add a URL to the queue.
 	 *
-	 * @param array<string|int,mixed> $urls List of URLs.
-	 * @param string                  $login The login to use.
-	 * @param string                  $password The password to use.
+	 * @param string $url The URL to add.
+	 * @param string $login The login to use.
+	 * @param string $password The password to use.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function add_urls( array $urls, string $login = '', string $password = '' ): void {
+	private function add_url( string $url, string $login, string $password ): bool {
 		global $wpdb;
 
 		// bail if $wpdb is not.
 		if ( ! $wpdb instanceof wpdb ) {
-			return;
+			return false;
 		}
 
-		// bail if list is empty.
-		if ( empty( $urls ) ) {
-			return;
+		// bail if no URL is given.
+		if ( empty( $url ) ) {
+			return false;
 		}
 
-		// add the files to the queue table.
-		foreach ( $urls as $url ) {
-			// bail if file-string is empty.
-			if ( empty( $url ) ) {
-				continue;
-			}
-
-			// bail if given URL is already in queue.
-			if ( ! empty( $this->get_url( $url ) ) ) {
-				Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'info' );
-				continue;
-			}
-
-			// add the URL of this file to the list.
-			$result = $wpdb->insert(
-				$wpdb->prefix . 'eml_queue',
-				array(
-					'time'     => gmdate( 'Y-m-d H:i:s' ),
-					'url'      => $url,
-					'login'    => ! empty( $login ) ? Crypt::get_instance()->encrypt( $login ) : '',
-					'password' => ! empty( $password ) ? Crypt::get_instance()->encrypt( $password ) : '',
-					'state'    => 'new',
-				)
-			);
-
-			// use error-handling.
-			$this->db_error_handling( $result, $url );
+		// bail if given URL is already in queue.
+		if ( ! empty( $this->get_url( $url ) ) ) {
+			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'info' );
+			return true;
 		}
+
+		$options = array();
+		/**
+		 * Get the options used for import of this URL.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array $options List of options.
+		 * @param string $url The used URL.
+		 */
+		$options = apply_filters( 'eml_import_options', $options, $url );
+
+		// convert options to JSON.
+		$options_json = wp_json_encode( $options );
+		if ( ! $options_json ) {
+			$options_json = '';
+		}
+
+		// add the URL of this file to the list.
+		$result = $wpdb->insert(
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'time'     => gmdate( 'Y-m-d H:i:s' ),
+				'url'      => $url,
+				'login'    => ! empty( $login ) ? Crypt::get_instance()->encrypt( $login ) : '',
+				'password' => ! empty( $password ) ? Crypt::get_instance()->encrypt( $password ) : '',
+				'state'    => 'new',
+				'options'  => $options_json,
+			)
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, $url );
+
+		// return result of the db-insert-statement.
+		return false !== $result;
 	}
 
 	/**
@@ -383,11 +400,26 @@ class Queue extends Extension_Base {
 		// get the files object.
 		$import = Import::get_instance();
 
-		// set the login.
+		// set the credentials.
 		$import->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
-
-		// set the password.
 		$import->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
+
+		// set the options, if set.
+		if ( ! empty( $url_data['options'] ) ) {
+			// get them.
+			try {
+				$options = json_decode( $url_data['options'], true, 512, JSON_THROW_ON_ERROR );
+
+				// set options in POST-request-array as extension use this for their tasks.
+				if ( is_array( $options ) ) {
+					foreach ( $options as $key => $value ) {
+						$_POST[ $key ] = $value;
+					}
+				}
+			} catch ( JsonException $e ) {
+				Log::get_instance()->create( __( 'Error decoding options to import this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identified() );
+			}
+		}
 
 		// import the URL.
 		if ( $import->add_url( $url_data['url'] ) ) {
@@ -481,6 +513,7 @@ class Queue extends Extension_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function clear_by_request(): void {
+		// check nonce.
 		check_admin_referer( 'eml-queue-clear', 'nonce' );
 
 		// clear the queue.
@@ -506,6 +539,7 @@ class Queue extends Extension_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function delete_errors_by_request(): void {
+		// check nonce.
 		check_admin_referer( 'eml-queue-clear-errors', 'nonce' );
 
 		// get the error entries.
@@ -599,7 +633,7 @@ class Queue extends Extension_Base {
 		}
 
 		// return the data of the single URL.
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password`, `options` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -756,6 +790,7 @@ class Queue extends Extension_Base {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function delete_entry_by_request(): void {
+		// check nonce.
 		check_admin_referer( 'eml-queue-delete-entry', 'nonce' );
 
 		// get the ID from request.
@@ -781,38 +816,98 @@ class Queue extends Extension_Base {
 	/**
 	 * Add a checkbox to mark the fields to add them to queue.
 	 *
-	 * @param array<int,string> $fields List of fields in form.
+	 * @param array<string,mixed> $dialog The dialog.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_field_in_form( array $fields ): array {
+	public function add_option_in_form( array $dialog ): array {
 		// bail if queue is disabled.
 		if ( 'eml_disable_check' === get_option( 'eml_queue_interval' ) ) {
-			return $fields;
+			return $dialog;
 		}
 
-		// add the field to enable queue-upload.
-		$fields[] = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+		// we have no global setting to enable the queue in dialog.
+		$checked = false;
+
+		// if user has its own setting, use this.
+		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_add_to_queue', true ) ) ) {
+			$checked = true;
+		}
+
+		// collect the entry.
+		$text = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' );
+
+		// add link to user settings.
+		$url   = add_query_arg(
+			array(),
+			get_admin_url() . 'profile.php'
+		);
+		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+
+		// add link to global settings.
+		if ( current_user_can( 'manage_options' ) ) {
+			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
+		}
+
+		// end the text.
+		$text .= '</label>';
+
+		// add the field.
+		$dialog['texts'][] = $text;
 
 		// return the resulting fields.
-		return $fields;
+		return $dialog;
 	}
 
 	/**
-	 * Add URLs for queue if the config "add_to_queue" from form request is set.
+	 * Add single URL to queue if request for it is set.
 	 *
-	 * @param bool          $return_value The return value to use (true to import queue).
-	 * @param array<string> $config The config from form.
+	 * @param bool   $results The return value to use (true to prevent normal import).
+	 * @param string $url     The used URL.
+	 * @param string $login   The login to use.
+	 * @param string $password The password to use.
 	 *
 	 * @return bool
 	 */
-	public function add_urls_to_queue( bool $return_value, array $config ): bool {
-		if ( empty( $config['add_to_queue'] ) ) {
-			return $return_value;
+	public function add_urls_to_queue( bool $results, string $url, string $login, string $password ): bool {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
 		}
 
-		// return true if add to queue is set.
-		return 1 === absint( $config['add_to_queue'] );
+		if ( ! isset( $_POST['add_to_queue'] ) ) {
+			return $results;
+		}
+
+		// create result object.
+		$result_obj = new Results\Url_Result();
+
+		// add the URL to the queue.
+		if ( ! $this->add_url( $url, $login, $password ) ) {
+			// define to result object.
+			$result_obj->set_url( $url );
+			$result_obj->set_result_text( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ) );
+
+			// add result to the list.
+			Results::get_instance()->add( $result_obj );
+
+			// log event.
+			Log::get_instance()->create( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
+		} else {
+			// define to result object.
+			$result_obj->set_url( $url );
+			$result_obj->set_error( false );
+			$result_obj->set_result_text( __( 'Specified URL has been added to queue.', 'external-files-in-media-library' ) );
+
+			// add result to the list.
+			Results::get_instance()->add( $result_obj );
+
+			// log event.
+			Log::get_instance()->create( __( 'Specified URL has been added to queue.', 'external-files-in-media-library' ), esc_url( $url ), 'info', 2 );
+		}
+
+		// return true to prevent any further processing.
+		return true;
 	}
 
 	/**
@@ -837,5 +932,41 @@ class Queue extends Extension_Base {
 
 		// return the resulting dialog.
 		return $dialog;
+	}
+
+	/**
+	 * Check the WP CLI arguments before import of URLs there.
+	 *
+	 * @param array<string,mixed> $arguments List of WP CLI arguments.
+	 *
+	 * @return void
+	 */
+	public function check_cli_arguments( array $arguments ): void {
+		// bail if argument is not set.
+		if ( ! isset( $arguments['queue'] ) ) {
+			return;
+		}
+
+		// add the marker.
+		$_POST['add_to_queue'] = 1;
+	}
+
+	/**
+	 * Add option for the user-specific setting.
+	 *
+	 * @param array<string,array<string,mixed>> $settings List of settings.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function add_user_setting( array $settings ): array {
+		// add our setting.
+		$settings['add_to_queue'] = array(
+			'label'       => __( 'Add URLs to the queue.', 'external-files-in-media-library' ),
+			'description' => __( 'The queue is processed in background.', 'external-files-in-media-library' ),
+			'field'       => 'checkbox',
+		);
+
+		// return the settings.
+		return $settings;
 	}
 }

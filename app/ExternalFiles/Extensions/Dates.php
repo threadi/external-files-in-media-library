@@ -60,7 +60,10 @@ class Dates extends Extension_Base {
 
 		// use our own hooks.
 		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
-		add_filter( 'eml_import_fields', array( $this, 'add_date_option_in_form' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_date_option_in_form' ) );
+		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
+		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
 
 	/**
@@ -87,7 +90,7 @@ class Dates extends Extension_Base {
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Use external file dates', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used.', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled all external files will be saved in media library with the date set by the external location. If the external location does not set any date the actual date will be used. This setting overrides user-specific settings if enabled.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -111,7 +114,7 @@ class Dates extends Extension_Base {
 		}
 
 		// get value from request.
-		$use_date = isset( $_POST['additional_fields']['use_dates'] ) ? absint( $_POST['additional_fields']['use_dates'] ) : -1;
+		$use_date = isset( $_POST['use_dates'] ) ? absint( $_POST['use_dates'] ) : -1;
 
 		// bail if not set from request and global setting not enabled.
 		if ( -1 === $use_date && 1 !== absint( get_option( 'eml_use_file_dates' ) ) ) {
@@ -138,15 +141,94 @@ class Dates extends Extension_Base {
 	/**
 	 * Add a checkbox to mark the files to add them to queue.
 	 *
-	 * @param array<int,string> $fields List of fields in form.
+	 * @param array<string,mixed> $dialog The dialog.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_date_option_in_form( array $fields ): array {
-		// add the field to enable queue-upload.
-		$fields[] = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( 1 === absint( get_option( 'eml_use_file_dates' ) ) ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use external file dates.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+	public function add_date_option_in_form( array $dialog ): array {
+		// get the actual state for the checkbox.
+		$checked = 1 === absint( get_option( 'eml_use_file_dates' ) );
+
+		// if user has its own setting, use this.
+		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_use_dates', true ) ) ) {
+			$checked = true;
+		}
+
+		// collect the entry.
+		$text = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use dates of the external files.', 'external-files-in-media-library' );
+
+		// add link to user settings.
+		$url   = add_query_arg(
+			array(),
+			get_admin_url() . 'profile.php'
+		);
+		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+
+		// add link to global settings.
+		if ( current_user_can( 'manage_options' ) ) {
+			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
+		}
+
+		// end the text.
+		$text .= '</label>';
+
+		// add the field.
+		$dialog['texts'][] = $text;
 
 		// return the resulting fields.
-		return $fields;
+		return $dialog;
+	}
+
+	/**
+	 * Add option to the list of all options used during an import, if set.
+	 *
+	 * @param array<string,mixed> $options List of options.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_import_option_to_list( array $options ): array {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
+		// bail if our option is not set.
+		if ( ! isset( $_POST['use_dates'] ) ) {
+			return $options;
+		}
+
+		// add the option to the list.
+		$options['use_dates'] = absint( $_POST['use_dates'] );
+
+		return $options;
+	}
+
+	/**
+	 * Check the WP CLI arguments before import of URLs there.
+	 *
+	 * @param array<string,mixed> $arguments List of WP CLI arguments.
+	 *
+	 * @return void
+	 */
+	public function check_cli_arguments( array $arguments ): void {
+		$_POST['use_dates'] = isset( $arguments['use_dates'] ) ? 1 : 0;
+	}
+
+	/**
+	 * Add option for the user-specific setting.
+	 *
+	 * @param array<string,array<string,mixed>> $settings List of settings.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function add_user_setting( array $settings ): array {
+		// add our setting.
+		$settings['use_dates'] = array(
+			'label' => __( 'Use dates of the external files.', 'external-files-in-media-library' ),
+			'field' => 'checkbox',
+		);
+
+		// return the settings.
+		return $settings;
 	}
 }

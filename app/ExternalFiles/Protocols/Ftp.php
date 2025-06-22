@@ -13,7 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -81,7 +81,7 @@ class Ftp extends Protocol_Base {
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $url ) ) {
 			// log event.
-			Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return false as URL is a duplicate.
 			return false;
@@ -123,7 +123,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if no credentials are set.
 		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
-			Log::get_instance()->create( __( 'Missing credentials for import from FTP-path.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'Missing credentials for import from FTP-path.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return array();
 		}
 
@@ -132,7 +132,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return array();
 		}
 
@@ -174,24 +174,9 @@ class Ftp extends Protocol_Base {
 			$file_list = $ftp_connection->dirlist( $path );
 			if ( empty( $file_list ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
-				Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+				Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 				// exit the process.
-				return array();
-			}
-
-			// add files to list in queue mode.
-			if ( $this->is_queue_mode() ) {
-				// convert the dirlist-array to a file_list array with complete URLs as value for queuing.
-				$file_list_new = array();
-				foreach ( $file_list as $filename => $settings ) {
-					$file_list_new[] = $this->get_url() . $filename;
-				}
-
-				// add the list to queue.
-				Queue::get_instance()->add_urls( $file_list_new, $this->get_login(), $this->get_password() );
-
-				// return empty array to prevent any further processing.
 				return array();
 			}
 
@@ -219,7 +204,7 @@ class Ftp extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error' );
+					Log::get_instance()->create( __( 'Given file already exist in your media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error', 0, Import::get_instance()->get_identified() );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -270,13 +255,7 @@ class Ftp extends Protocol_Base {
 		} else {
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Given URL already exist in media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
-				return array();
-			}
-
-			// add files to list in queue mode.
-			if ( $this->is_queue_mode() ) {
-				Queue::get_instance()->add_urls( array( $this->get_url() ), $this->get_login(), $this->get_password() );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 				return array();
 			}
 
@@ -341,7 +320,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if connection is not available.
 		if ( ! $ftp_connection ) {
-			Log::get_instance()->create( __( 'Could not get FTP-connection.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'Could not get FTP-connection.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we got not the file.
 			return array();
@@ -349,7 +328,7 @@ class Ftp extends Protocol_Base {
 
 		// get the file contents.
 		if ( ! $ftp_connection->is_readable( $parse_url['path'] ) ) {
-			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we got not the file.
 			return array();
@@ -421,13 +400,13 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return false;
 		}
 
 		// bail if scheme and host could not be loaded.
 		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
-			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return false;
 		}
 
@@ -472,7 +451,7 @@ class Ftp extends Protocol_Base {
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
 			/* translators: %1$s will be replaced by the servername. */
-			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the servername %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), '<em>' . $connection_arguments['hostname'] . '</em>', '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error' );
+			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the servername %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), '<em>' . $connection_arguments['hostname'] . '</em>', '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return false;
 		}
 

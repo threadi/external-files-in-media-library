@@ -57,7 +57,7 @@ class Check_Files extends Schedules_Base {
 		// log event.
 		Log::get_instance()->create( __( 'Check file schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
 
-		// run the queue.
+		// run the availability check.
 		Files::get_instance()->check_files();
 
 		// log event.

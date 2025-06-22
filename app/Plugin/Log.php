@@ -62,6 +62,7 @@ class Log {
             `log` text DEFAULT '' NOT NULL,
             `url` text DEFAULT '' NOT NULL,
             `state` varchar(40) DEFAULT '' NOT NULL,
+            `identifier` varchar(255) DEFAULT '' NOT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
@@ -83,13 +84,14 @@ class Log {
 	 * Create new Log-entry
 	 *
 	 * @param string $message The text for this entry.
-	 * @param string $url The URL this entry is assigned to.
-	 * @param string $state The state for this entry (success/error).
-	 * @param int    $level The highest log level this entry will be used for.
+	 * @param string $url     The URL this entry is assigned to.
+	 * @param string $state   The state for this entry (success/error).
+	 * @param int    $level   The highest log level this entry will be used for.
+	 * @param string $identifier The identifier for this entry.
 	 *
 	 * @return void
 	 */
-	public function create( string $message, string $url, string $state, int $level = 0 ): void {
+	public function create( string $message, string $url, string $state, int $level = 0, string $identifier = '' ): void {
 		global $wpdb;
 
 		// log only if log-level for the new entry is higher or equal actual setting.
@@ -101,10 +103,11 @@ class Log {
 		$wpdb->insert(
 			$wpdb->prefix . 'eml_logs',
 			array(
-				'time'  => gmdate( 'Y-m-d H:i:s' ),
-				'log'   => $message,
-				'url'   => $url,
-				'state' => $state,
+				'time'       => gmdate( 'Y-m-d H:i:s' ),
+				'log'        => $message,
+				'url'        => $url,
+				'state'      => $state,
+				'identifier' => $identifier,
 			)
 		);
 		$this->clean_log();
@@ -115,13 +118,17 @@ class Log {
 	 *
 	 * @param string $url The URL to filter for, get only last entry (optional).
 	 * @param string $state The requested state (optional).
+	 * @param string $identifier The identifier (optional).
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
-	public function get_logs( string $url = '', string $state = '' ): array {
+	public function get_logs( string $url = '', string $state = '', string $identifier = '' ): array {
 		global $wpdb;
 		if ( ! empty( $url ) ) {
 			if ( ! empty( $state ) ) {
+				if ( ! empty( $identifier ) ) {
+					return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s AND `identifier` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state, $identifier ) ), ARRAY_A );
+				}
 				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
 			}
 			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );

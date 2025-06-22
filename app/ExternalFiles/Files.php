@@ -292,6 +292,8 @@ class Files {
 	/**
 	 * Check all external files regarding their availability.
 	 *
+	 * TODO in extension auslagern.
+	 *
 	 * @return void
 	 */
 	public function check_files(): void {

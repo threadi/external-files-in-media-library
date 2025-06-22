@@ -6,11 +6,15 @@
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added DropBox support for import of external files into your media library
+- Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
-- Introduced file handling extensions and make queue to the first one
+- Introduced file handling extensions and added queue handling to the first one
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
+- Added these 2 new options also as parameter on WP CLI command to import URLs
 - Added file type specific icons in directory listings
+- Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
+  are occurring simultaneously
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 
@@ -29,9 +33,12 @@
 - Optimized styling of directory listings
 - Standardize the usage of timestamp as last-modified date for each service and protocol
 - Optimized check if a mime type is allowed in directory listing and during import
+- Optimized detection of multiple URLs entered in the textarea-field with different line breaks
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities
 - Extended documentation in GitHub for all services we provide
+- Renamed filter "eml_import_url_before" to "eml_import_url"
+- Renamed filter "eml_blacklist" to "eml_prevent_import"
 
 ### Fixed
 
@@ -40,6 +47,11 @@
 - Fixed missing file on FTP listing if for previous file not thumbnail could be created
 - Fixed missing file preview if PHP-imagick-library is not used
 - Fixed disabling of thumbnails on GoogleDrive view
+
+### Removed
+
+- Removed hook "eml_import_fields" as we do not use fields in this form anymore
+- Removed hook "eml_import_url_after" as it could be better used via the hook "eml_after_file_save"
 
 ## [4.0.0] - 2025-05-14
 

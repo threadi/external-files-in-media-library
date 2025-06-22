@@ -73,7 +73,7 @@ class Local implements Service {
 	 */
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_local_import' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 	}
 
@@ -111,13 +111,22 @@ class Local implements Service {
 	/**
 	 * Add option to import from local directory.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The settings.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_local_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Or add from local server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_local"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( \easyDirectoryListingForWordPress\Listings\Local::get_instance() ) . '" class="button button-secondary">' . esc_html__( 'Add from local server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
-		return $fields;
+	public function add_option_for_local_import( array $dialog, array $settings ): array {
+		// bail if "no_services" is set in settings.
+		if ( isset( $settings['no_services'] ) ) {
+			return $dialog;
+		}
+
+		// add the entry.
+		$dialog['texts'][] = '<details><summary>' . __( 'Or add from local server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_local"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( \easyDirectoryListingForWordPress\Listings\Local::get_instance() ) . '" class="button button-secondary">' . esc_html__( 'Add from local server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
+
+		// return resulting dialog.
+		return $dialog;
 	}
 
 	/**
@@ -131,7 +140,7 @@ class Local implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, "", "", [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "local", "urls": file.file, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -147,16 +156,12 @@ class Local implements Service {
 	public function get_global_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_import_url( actualDirectoryPath, "", "", [], config.term );',
-				'label'  => __( 'Import active directory now', 'external-files-in-media-library' ),
-			),
-			array(
-				'action' => 'let config = { "add_to_queue": 1 };efml_import_url( actualDirectoryPath + "/", "", "", config );',
-				'label'  => __( 'Import active directory via queue', 'external-files-in-media-library' ),
+				'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath, "term": config.term } );',
+				'label'  => __( 'Import this directory now', 'external-files-in-media-library' ),
 			),
 			array(
 				'action' => 'efml_save_as_directory( "local", actualDirectoryPath + "/", "", "", "" );',
-				'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
+				'label'  => __( 'Save this directory as directory archive', 'external-files-in-media-library' ),
 			),
 		);
 	}

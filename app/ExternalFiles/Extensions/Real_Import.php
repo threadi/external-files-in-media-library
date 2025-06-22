@@ -62,7 +62,10 @@ class Real_Import extends Extension_Base {
 		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
 		add_filter( 'eml_file_import_attachment', array( $this, 'add_title_on_real_import' ), 10, 3 );
 		add_filter( 'eml_import_no_external_file', array( $this, 'save_file_local' ), 10, 0 );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_in_form' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ) );
+		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
+		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
 
 	/**
@@ -89,7 +92,7 @@ class Real_Import extends Extension_Base {
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Really import each file', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. There will be no "external files".', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. They will not be "external files" in your media library. This setting overrides user-specific settings if enabled.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -130,7 +133,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// get value from request.
-		$real_import = isset( $_POST['additional_fields']['real_import'] ) ? absint( $_POST['additional_fields']['real_import'] ) : -1;
+		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
 		// bail if either setting is disabled to use the generated value.
 		if ( 1 !== $real_import && 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
@@ -156,7 +159,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// get value from request.
-		$real_import = isset( $_POST['additional_fields']['real_import'] ) ? absint( $_POST['additional_fields']['real_import'] ) : -1;
+		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
 		// return whether to import this file as real file and not external.
 		return 1 === $real_import || ( -1 === $real_import && 1 === absint( get_option( 'eml_directory_listing_real_import' ) ) );
@@ -165,15 +168,95 @@ class Real_Import extends Extension_Base {
 	/**
 	 * Add a checkbox to mark the files to add them real and not as external files.
 	 *
-	 * @param array<int,string> $fields List of fields in form.
+	 * @param array<string,mixed> $dialog The dialog.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_in_form( array $fields ): array {
-		// add the field to enable queue-upload.
-		$fields[] = '<label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1" class="eml-use-for-import"' . ( 1 === absint( get_option( 'eml_directory_listing_real_import' ) ) ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Really import each file. Files are not imported as external files.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank"><span class="dashicons dashicons-admin-generic"></span></a></label>';
+	public function add_option_in_form( array $dialog ): array {
+		// get the actual state for the checkbox.
+		$checked = 1 === absint( get_option( 'eml_real_import' ) );
+
+		// if user has its own setting, use this.
+		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_real_import', true ) ) ) {
+			$checked = true;
+		}
+
+		// collect the entry.
+		$text = '<label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Really import each file. Files are not imported as external files.', 'external-files-in-media-library' );
+
+		// add link to user settings.
+		$url   = add_query_arg(
+			array(),
+			get_admin_url() . 'profile.php'
+		);
+		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+
+		// add link to global settings.
+		if ( current_user_can( 'manage_options' ) ) {
+			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
+		}
+
+		// end the text.
+		$text .= '</label>';
+
+		// add the field.
+		$dialog['texts'][] = $text;
 
 		// return the resulting fields.
-		return $fields;
+		return $dialog;
+	}
+
+	/**
+	 * Add option to the list of all options used during an import, if set.
+	 *
+	 * @param array<string,mixed> $options List of options.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_import_option_to_list( array $options ): array {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
+		// bail if our option is not set.
+		if ( ! isset( $_POST['real_import'] ) ) {
+			return $options;
+		}
+
+		// add the option to the list.
+		$options['real_import'] = absint( $_POST['real_import'] );
+
+		return $options;
+	}
+
+	/**
+	 * Check the WP CLI arguments before import of URLs there.
+	 *
+	 * @param array<string,mixed> $arguments List of WP CLI arguments.
+	 *
+	 * @return void
+	 */
+	public function check_cli_arguments( array $arguments ): void {
+		$_POST['real_import'] = isset( $arguments['real_import'] ) ? 1 : 0;
+	}
+
+	/**
+	 * Add option for the user-specific setting.
+	 *
+	 * @param array<string,array<string,mixed>> $settings List of settings.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function add_user_setting( array $settings ): array {
+		// add our setting.
+		$settings['real_import'] = array(
+			'label'       => __( 'Really import each file.', 'external-files-in-media-library' ),
+			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
+			'field'       => 'checkbox',
+		);
+
+		// return the settings.
+		return $settings;
 	}
 }

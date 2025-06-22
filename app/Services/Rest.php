@@ -217,7 +217,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					// define the thumb.
 					$thumbnail = '';
 
-					if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
+					if ( str_contains( $mime_type, 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 						// get protocol handler for this external file.
 						$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $file['source_url'] );
 						if ( $protocol_handler instanceof Protocols\Http ) {
@@ -254,7 +254,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					);
 					$entry['file']          = $file['source_url'];
 					$entry['filesize']      = isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0;
-					$entry['mime-type']     = $file['mime_type'];
+					$entry['mime-type']     = $mime_type;
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $file['type'] ) . '"></span>';
 					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file['modified'] ) ) ) );
 					$entry['preview']       = $thumbnail;
@@ -285,7 +285,7 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_import_url( file.file, login, password, [], term );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -303,7 +303,8 @@ class Rest extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_import_url( actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", login, password, [], config.term );',
+					// TODO find better solution for path (pretty vs. not-pretty).
+					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(

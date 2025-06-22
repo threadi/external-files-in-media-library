@@ -75,8 +75,8 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_folder_selection' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
-		add_filter( 'eml_import_fields', array( $this, 'add_option_for_folder_import' ) );
-		add_action( 'eml_import_url_after', array( $this, 'save_url_in_folder' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_folder_import' ) );
+		add_action( 'eml_after_file_save', array( $this, 'save_url_in_folder' ) );
 	}
 
 	/**
@@ -225,24 +225,28 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Save external file to a configured folder after import.
 	 *
-	 * @param string              $url The used URL.
-	 * @param array<string,mixed> $fields The used fields.
+	 * @param string $url The used URL.
 	 *
 	 * @return void
 	 */
-	public function save_url_in_folder( string $url, array $fields ): void {
+	public function save_url_in_folder( string $url ): void {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// bail if "FolderModel" does not exist.
 		if ( ! method_exists( '\FileBird\Model\Folder', 'assignFolder' ) ) {
 			return;
 		}
 
 		// bail if fields does not contain "filebirdfolder".
-		if ( empty( $fields['fildbirdfolder'] ) ) {
+		if ( ! isset( $_POST['fildbirdfolder'] ) ) {
 			return;
 		}
 
 		// bail if given "fildbirdfolder" value is not > 0.
-		if ( 0 === absint( $fields['fildbirdfolder'] ) ) {
+		if ( 0 === absint( $_POST['fildbirdfolder'] ) ) {
 			return;
 		}
 
@@ -255,18 +259,18 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// move the file to the given folder.
-		Folder::assignFolder( absint( $fields['fildbirdfolder'] ), array( $external_file_obj->get_id() ), Languages::get_instance()->get_current_lang() );
+		Folder::assignFolder( absint( $_POST['fildbirdfolder'] ), array( $external_file_obj->get_id() ), Languages::get_instance()->get_current_lang() );
 	}
 
 	/**
 	 * Add option to import in Filebird.
 	 *
-	 * @param array<int,string> $fields List of import options.
+	 * @param array<string,mixed> $dialog The dialog.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 */
-	public function add_option_for_folder_import( array $fields ): array {
-		$fields[] = '<details><summary>' . __( 'Import in specific folder of Filebird', 'external-files-in-media-library' ) . '</summary><div><label for="filebirdfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
-		return $fields;
+	public function add_option_for_folder_import( array $dialog ): array {
+		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of Filebird', 'external-files-in-media-library' ) . '</summary><div><label for="filebirdfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		return $dialog;
 	}
 }

@@ -92,8 +92,11 @@ class Services {
 	 * @return void
 	 */
 	public function init(): void {
-		// use hook.
+		// use our own hooks.
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
+		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
+
+		// misc.
 		add_action( 'init', array( $this, 'init_services' ) );
 	}
 
@@ -207,5 +210,32 @@ class Services {
 
 		// return resulting object.
 		return $directory_listing_obj;
+	}
+
+	/**
+	 * Format the import dialog settings if "service" is given.
+	 *
+	 * This will prevent a visible dialog and start the import automatic.
+	 *
+	 * Exception: the user has configured to show this dialog.
+	 *
+	 * @param array<string,mixed> $settings The dialog settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function set_dialog_settings_for_services( array $settings ): array {
+		// bail if "service" is not set.
+		if ( ! isset( $settings['service'] ) ) {
+			return $settings;
+		}
+
+		// set dialog settings for prevent a visible dialog with options.
+		$settings['no_textarea']    = true;
+		$settings['no_services']    = true;
+		$settings['no_credentials'] = true;
+		$settings['no_dialog']      = 1 === absint( get_user_meta( get_current_user_id(), 'efml_hide_dialog', true ) );
+
+		// return the resulting dialog settings.
+		return $settings;
 	}
 }

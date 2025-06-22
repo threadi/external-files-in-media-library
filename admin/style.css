@@ -71,25 +71,12 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	width: 100%;
 }
 
-.eml .easy-dialog-for-wordpress-text .error-list, .eml .easy-dialog-for-wordpress-text .ok-list {
-	list-style: disc;
-	margin-left: 14px;
-}
-
-.eml .easy-dialog-for-wordpress-text:has(.eml-success-list) p, .eml .easy-dialog-for-wordpress-text:has(.eml-error-list) p {
-	margin-bottom: 0;
-}
-
-.eml .easy-dialog-for-wordpress-text .eml-success-list, .eml .easy-dialog-for-wordpress-text .eml-error-list {
-	margin-top: 0;
-}
-
-.eml .easy-dialog-for-wordpress-text .eml-success-list li, .eml .easy-dialog-for-wordpress-text .eml-error-list li {
+.eml .easy-dialog-for-wordpress-text .efml-import-result-list li {
 	text-indent: -10px;
 	padding-left: 18px;
 }
 
-.eml .easy-dialog-for-wordpress-text .eml-success-list li:before, .eml .easy-dialog-for-wordpress-text .eml-error-list li:before {
+.eml .easy-dialog-for-wordpress-text .efml-import-result-list li:before {
 	color: red;
 	content: "\f158";
 	display: inline-block;
@@ -99,7 +86,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	vertical-align: middle;
 }
 
-.eml .easy-dialog-for-wordpress-text .eml-success-list li:before {
+.eml .easy-dialog-for-wordpress-text .efml-import-result-list li.success:before {
 	content: "\f147";
 	color: green;
 }
@@ -311,7 +298,7 @@ body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is
 }
 
 body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons-editor-help):not(.dashicons-admin-generic) {
-	margin-left: 1em;
+	margin-left: .4em;
 }
 
 body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog button.efml-help-button {
@@ -364,3 +351,9 @@ body.eml-file-synced #delete-action { display: none }
 }
 
 body.taxonomy-edlfw_archive .search-box { display: none }
+
+#easy-directory-listing-for-wordpress[data-type="youtube"] {
+	.filesize, .type {
+		display: none
+	}
+}

@@ -104,11 +104,6 @@ class Uninstall {
 
 		// delete options this plugin has used.
 		$options = array(
-			'eml_import_url_count',
-			'eml_import_url_max',
-			'eml_import_running',
-			'eml_import_title',
-			'eml_import_errors',
 			'eml_sync_url_count',
 			'eml_sync_url_max',
 			'eml_sync_running',
