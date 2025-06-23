@@ -13,7 +13,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -354,7 +353,7 @@ class Import extends Directory_Listing_Base {
 			/**
 			 * Filter whether we import no external files.
 			 *
-			 * Return to true if we only import files in media db without external links.
+			 * Return true if we only import files in media db without external URL.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
@@ -413,6 +412,9 @@ class Import extends Directory_Listing_Base {
 
 			// add file to local cache, if necessary.
 			$external_file_obj->add_to_cache();
+
+			// set date of import (this is not the attachment datetime).
+			$external_file_obj->set_date();
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );

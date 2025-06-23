@@ -78,15 +78,7 @@ class Update {
 		}
 
 		// compare version if we are not in development-mode.
-		if (
-			(
-				(
-					function_exists( 'wp_is_development_mode' ) && false === wp_is_development_mode( 'plugin' )
-				)
-				|| ! function_exists( 'wp_is_development_mode' )
-			)
-			&& version_compare( $installed_plugin_version, $db_plugin_version, '>' )
-		) {
+		if ( ! Helper::is_development_mode() && version_compare( $installed_plugin_version, $db_plugin_version, '>' ) ) {
 			if ( ! defined( 'EFML_UPDATE_RUNNING ' ) ) {
 				define( 'EFML_UPDATE_RUNNING', 1 );
 			}
@@ -232,5 +224,9 @@ class Update {
 
 		// update database-table for queues.
 		Queue::get_instance()->install();
+
+		// set new options.
+		update_option( 'eml_user_settings', 1 );
+		update_option( 'eml_import_extensions', array( 'dates', 'queue', 'real_import' ) );
 	}
 }

@@ -10,10 +10,15 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
- * Object to handle different protocols.
+ * Object to handle different file types.
  */
 class File_Types {
 
@@ -57,11 +62,195 @@ class File_Types {
 	}
 
 	/**
+	 * Initialize this object.
+	 *
+	 * @return void
+	 */
+	public function init(): void {
+		add_action( 'init', array( $this, 'add_settings' ), 20 );
+	}
+
+	/**
+	 * Add settings for file types.
+	 *
+	 * @return void
+	 */
+	public function add_settings(): void {
+		// get settings object.
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+
+		// get main settings page.
+		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// add file types tab.
+		$file_types_tab = $settings_page->add_tab( 'eml_file_types', 30 );
+		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
+		$file_types_tab->set_hide_save( true );
+
+		// the audio tab.
+		$audio_tab = $file_types_tab->add_tab( 'eml_audio', 10 );
+		$audio_tab->set_title( __( 'Audio', 'external-files-in-media-library' ) );
+
+		// the images tab.
+		$images_tab = $file_types_tab->add_tab( 'eml_images', 20 );
+		$images_tab->set_title( __( 'Images', 'external-files-in-media-library' ) );
+		$file_types_tab->set_default_tab( $images_tab );
+
+		// the video tab.
+		$video_tab = $file_types_tab->add_tab( 'eml_video', 30 );
+		$video_tab->set_title( __( 'Videos', 'external-files-in-media-library' ) );
+
+		// the audio section.
+		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio', 10 );
+		$audio_tab_audios->set_title( __( 'Audio Settings', 'external-files-in-media-library' ) );
+		$audio_tab_audios->set_callback( array( $this, 'show_protocol_hint' ) );
+		$audio_tab_audios->set_setting( $settings_obj );
+
+		// the images section.
+		$images_tab_images = $images_tab->add_section( 'settings_section_images', 10 );
+		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
+		$images_tab_images->set_callback( array( $this, 'show_protocol_hint' ) );
+		$images_tab_images->set_setting( $settings_obj );
+
+		// the videos section.
+		$videos_tab_videos = $video_tab->add_section( 'settings_section_images', 10 );
+		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
+		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
+		$videos_tab_videos->set_setting( $settings_obj );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_images_mode' );
+		$setting->set_section( $images_tab_images );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
+		$field = new Select();
+		$field->set_title( __( 'Mode for image handling', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how external images are handled.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_mode' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
+		$field = new Select();
+		$field->set_title( __( 'Mode for audio handling', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how external audios are handled.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_proxy' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable proxy for audios', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This option is only available if audios are hosted external. If this option is disabled, external audios will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the audios locally.', 'external-files-in-media-library' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_audio_proxy_max_age' );
+		$setting->set_section( $audio_tab_audios );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 );
+		$field = new Number();
+		$field->set_title( __( 'Max age for cached audio in proxy in hours', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how long audios, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_proxy' );
+		$setting->set_section( $images_tab_images );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$setting->set_save_callback( array( $this, 'update_proxy_setting' ) );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable proxy for images', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This option is only available if images are hosted external. If this option is disabled, external images will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the images locally.', 'external-files-in-media-library' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_images_mode', '' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_proxy_max_age' );
+		$setting->set_section( $images_tab_images );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 );
+		$field = new Number();
+		$field->set_title( __( 'Max age for cached images in proxy in hours', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how long images, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_video_mode' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'external' );
+		$field = new Select();
+		$field->set_title( __( 'Mode for video handling', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how external video are handled.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'external' => __( 'host them extern', 'external-files-in-media-library' ),
+				'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_video_proxy' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable proxy for videos', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This option is only available if videos are hosted external. If this option is disabled, external videos will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load the videos locally.', 'external-files-in-media-library' ) );
+		$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_video_proxy_max_age' );
+		$setting->set_section( $videos_tab_videos );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 24 * 7 );
+		$field = new Number();
+		$field->set_title( __( 'Max age for cached video in proxy in hours', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines how long videos, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+	}
+
+	/**
 	 * Return list of supported file types.
 	 *
 	 * @return array<string>
 	 */
-	private function get_file_types(): array {
+	public function get_file_types(): array {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Audio',
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File',
@@ -167,39 +356,5 @@ class File_Types {
 
 		// return the default file object if nothing matches.
 		return $file_type_obj;
-	}
-
-	/**
-	 * Return true if any proxy for any file is enabled.
-	 *
-	 * @return bool
-	 */
-	public function is_any_proxy_enabled(): bool {
-		// check each supported file type.
-		foreach ( $this->get_file_types() as $file_type ) {
-			// bail if object does not exist.
-			if ( ! class_exists( $file_type ) ) {
-				continue;
-			}
-
-			// get the object.
-			$file_type_obj = new $file_type( false );
-
-			// bail if object is not a file type base object.
-			if ( ! $file_type_obj instanceof File_Types_Base ) {
-				continue;
-			}
-
-			// bail if proxy for this file type is not enabled.
-			if ( ! $file_type_obj->is_proxy_enabled() ) {
-				continue;
-			}
-
-			// return true if proxy is enabled.
-			return true;
-		}
-
-		// return false if no proxy is enabled.
-		return false;
 	}
 }

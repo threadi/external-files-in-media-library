@@ -40,6 +40,15 @@ class Http extends Protocol_Base {
 	private array $http_heads = array();
 
 	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'HTTP(S)', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Check the given URL regarding its string.
 	 *
 	 * Return true if URL is ok.
@@ -212,8 +221,6 @@ class Http extends Protocol_Base {
 			$instance = $this;
 			/**
 			 * Filter the URL with custom import methods.
-			 *
-			 * TODO den Rückgabewert der filer anpassen auf diesen array-type.
 			 *
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param array<int,array<string,mixed>> $array Result list with infos.

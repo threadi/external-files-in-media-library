@@ -68,6 +68,15 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'FTP', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Check the given URL regarding its string.
 	 *
 	 * Return true if URL is ok.

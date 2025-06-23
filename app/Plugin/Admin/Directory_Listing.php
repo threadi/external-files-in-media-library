@@ -15,7 +15,6 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use ExternalFilesInMediaLibrary\Services\Rest;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**

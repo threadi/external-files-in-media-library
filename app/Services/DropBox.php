@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -47,7 +48,14 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'eml_dropbox';
+	private string $settings_tab = 'services';
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	private string $settings_sub_tab = 'eml_dropbox';
 
 	/**
 	 * Instance of actual object.
@@ -136,14 +144,22 @@ class DropBox extends Directory_Listing_Base implements Service {
 			return;
 		}
 
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( 'services' );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
 		// add new tab for settings.
-		$tab = $settings_page->add_tab( $this->get_settings_tab_slug(), 90 );
+		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
 		$tab->set_title( __( 'DropBox', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 
 		// add section for file statistics.
 		$section = $tab->add_section( 'section_dropbox_main', 10 );
-		$section->set_title( __( 'DropBox', 'external-files-in-media-library' ) );
+		$section->set_title( __( 'Settings for DropBox', 'external-files-in-media-library' ) );
 
 		// add invisible setting for access token.
 		$setting = $settings_obj->add_setting( 'eml_dropbox_access_tokens' );
@@ -232,6 +248,15 @@ class DropBox extends Directory_Listing_Base implements Service {
 	}
 
 	/**
+	 * Return the settings sub tab slug.
+	 *
+	 * @return string
+	 */
+	private function get_settings_subtab_slug(): string {
+		return $this->settings_sub_tab;
+	}
+
+	/**
 	 * Set a pseudo-directory to force the directory listing.
 	 *
 	 * @return string
@@ -255,7 +280,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return '<a class="connect button button-secondary" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
+		return '<a class="connect button button-secondary" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
 	}
 
 	/**
@@ -735,7 +760,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Go to DropBox', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '";',
+					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 			)
@@ -804,7 +829,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
 
 			// add error.
 			$this->add_error( $error );
@@ -825,7 +850,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
 
 			// add error.
 			$this->add_error( $error );

@@ -972,4 +972,33 @@ class File {
 	public function get_protocol_handler_obj(): Protocol_Base|false {
 		return Protocols::get_instance()->get_protocol_object_for_external_file( $this );
 	}
+
+	/**
+	 * Return the import datetime.
+	 *
+	 * Hint: this is not the WP_Post date.
+	 *
+	 * @return string
+	 */
+	public function get_date(): string {
+		// get date from post meta.
+		$date = get_post_meta( $this->get_id(), 'eml_external_file_date', true );
+
+		// bail if date is empty.
+		if ( empty( $date ) ) {
+			return '';
+		}
+
+		// return formatted date time.
+		return Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $date ) ) );
+	}
+
+	/**
+	 * Set the import datetime.
+	 *
+	 * @return void
+	 */
+	public function set_date(): void {
+		update_post_meta( $this->get_id(), 'eml_external_file_date', time() );
+	}
 }

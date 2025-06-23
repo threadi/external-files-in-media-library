@@ -1086,6 +1086,13 @@ class Synchronization {
 	 * @return void
 	 */
 	public function add_style(): void {
+		global $pagenow;
+
+		// bail if called page is not the media library.
+		if ( 'upload.php' !== $pagenow ) {
+			return;
+		}
+
 		// bail if setting is disabled.
 		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
 			return;

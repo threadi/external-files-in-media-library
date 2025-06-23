@@ -34,14 +34,15 @@ body.settings_page_eml_settings .review-hint-button:after, body.media_page_efml_
 body.settings_page_eml_settings .nav-tab-help {
 	background-color: #fca15b;
 	float: right;
+	padding-bottom: 9px;
 }
 
 body.settings_page_eml_settings .nav-tab-help:before {
-	content: "\f125";
-	display: inline-block;
-	font-family: "dashicons", sans-serif;
-	font-size: 12px;
-	margin-right: 8px;
+	font-size: 30px;
+	position: relative;
+	top: -14px;
+	left: -5px;
+	z-index: 1;
 }
 
 body.settings_page_eml_settings .dashicons-no { color: red }

@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Query;
 
 /**
@@ -181,7 +182,8 @@ class Tables {
 	 * @return array<string,string>
 	 */
 	public function add_media_columns( array $columns ): array {
-		$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );
+		$columns['external_files']        = __( 'External file', 'external-files-in-media-library' );
+		$columns['external_files_source'] = __( 'Source', 'external-files-in-media-library' );
 		return $columns;
 	}
 
@@ -194,10 +196,10 @@ class Tables {
 	 * @return void
 	 */
 	public function add_media_column_content( string $column_name, int $attachment_id ): void {
-		if ( 'external_files' === $column_name ) {
-			// get the external object for this file.
-			$external_file = Files::get_instance()->get_file( $attachment_id );
+		// get the external object for this file.
+		$external_file = Files::get_instance()->get_file( $attachment_id );
 
+		if ( 'external_files' === $column_name ) {
 			// bail if it is not an external file.
 			if ( ! $external_file || false === $external_file->is_valid() ) {
 				echo '<span class="dashicons dashicons-no"></span>';
@@ -209,6 +211,52 @@ class Tables {
 			 * Run additional tasks for show more infos here.
 			 */
 			do_action( 'eml_table_column_content', $attachment_id );
+		}
+
+		// bail if it is not an external file.
+		if ( ( 'external_files_source' === $column_name ) && $external_file && $external_file->is_valid() ) {
+			// get the unproxied URL.
+			$url = $external_file->get_url( true );
+
+			// get URL for show depending on used protocol.
+			$url_to_show = $external_file->get_protocol_handler_obj()->get_link();
+
+			// get link or string for the URL.
+			$url_html = esc_html( $url );
+			if ( ! empty( esc_url( $url ) ) ) {
+				$url_html = '<a href="' . esc_url( $url ) . '" title="' . esc_attr( $url ) . '">' . esc_html( $url_to_show ) . '</a>';
+			}
+
+			// get URL.
+			$edit_url = get_edit_post_link( $external_file->get_id() );
+			if ( ! is_string( $edit_url ) ) {
+				$edit_url = '#';
+			}
+
+			// create dialog.
+			$dialog = array(
+				'title'   => __( 'File info', 'external-files-in-media-library' ),
+				'texts'   => array(
+					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
+					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file->get_date() . '</p>',
+					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+					array(
+						'action'  => 'location.href="' . $edit_url . '#attachment_external_file"',
+						'variant' => 'secondary',
+						'text'    => __( 'Show all infos', 'external-files-in-media-library' ),
+					),
+				),
+			);
+
+			// output.
+			echo $external_file->get_protocol_handler_obj()->get_title() . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>';
 		}
 	}
 }

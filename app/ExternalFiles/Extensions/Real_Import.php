@@ -12,11 +12,19 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 
 /**
  * Handler controls how to import external files for real in media library without external connection.
  */
 class Real_Import extends Extension_Base {
+	/**
+	 * The internal extension name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'real_import';
+
 	/**
 	 * Instance of actual object.
 	 *
@@ -69,6 +77,15 @@ class Real_Import extends Extension_Base {
 	}
 
 	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Really import each file', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Add our custom settings for this plugin.
 	 *
 	 * @return void
@@ -78,7 +95,7 @@ class Real_Import extends Extension_Base {
 		$settings_obj = Settings::get_instance();
 
 		// get the advanced section.
-		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_advanced' );
+		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );
 
 		// bail if section could not be loaded.
 		if ( ! $advanced_tab_advanced ) {
@@ -86,13 +103,13 @@ class Real_Import extends Extension_Base {
 		}
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_directory_listing_real_import' );
+		$setting = $settings_obj->add_setting( 'eml_real_import' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
-				'title'       => __( 'Really import each file', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. They will not be "external files" in your media library. This setting overrides user-specific settings if enabled.', 'external-files-in-media-library' ),
+				'title'       => $this->get_title(),
+				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. They will not be "external files" in your media library.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -107,12 +124,20 @@ class Real_Import extends Extension_Base {
 	 * @return bool
 	 */
 	public function import_local_on_real_import( bool $result ): bool {
-		// bail if setting is disabled to use the generated value.
-		if ( 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
+		// get value from request.
+		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
+
+		// bail if it is not enabled during import.
+		if ( 1 !== $real_import ) {
 			return $result;
 		}
 
-		// return true to force local saving of this file.
+		// return true to mark this as local importing file.
 		return true;
 	}
 
@@ -135,8 +160,8 @@ class Real_Import extends Extension_Base {
 		// get value from request.
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
-		// bail if either setting is disabled to use the generated value.
-		if ( 1 !== $real_import && 1 !== absint( get_option( 'eml_directory_listing_real_import' ) ) ) {
+		// bail if it is not enabled during import.
+		if ( 1 !== $real_import ) {
 			return $post_array;
 		}
 
@@ -148,7 +173,7 @@ class Real_Import extends Extension_Base {
 	}
 
 	/**
-	 * Save file local if global setting is enabled.
+	 * Save file local if setting during import or global is enabled.
 	 *
 	 * @return bool
 	 */
@@ -162,7 +187,7 @@ class Real_Import extends Extension_Base {
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
 		// return whether to import this file as real file and not external.
-		return 1 === $real_import || ( -1 === $real_import && 1 === absint( get_option( 'eml_directory_listing_real_import' ) ) );
+		return 1 === $real_import;
 	}
 
 	/**
@@ -173,12 +198,17 @@ class Real_Import extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_in_form( array $dialog ): array {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $dialog;
+		}
+
 		// get the actual state for the checkbox.
 		$checked = 1 === absint( get_option( 'eml_real_import' ) );
 
 		// if user has its own setting, use this.
-		if ( 1 === absint( get_user_meta( get_current_user_id(), 'efml_real_import', true ) ) ) {
-			$checked = true;
+		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
+			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
 		// collect the entry.
@@ -249,9 +279,14 @@ class Real_Import extends Extension_Base {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function add_user_setting( array $settings ): array {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $settings;
+		}
+
 		// add our setting.
-		$settings['real_import'] = array(
-			'label'       => __( 'Really import each file.', 'external-files-in-media-library' ),
+		$settings[ $this->get_name() ] = array(
+			'label'       => __( 'Really import each file', 'external-files-in-media-library' ),
 			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);

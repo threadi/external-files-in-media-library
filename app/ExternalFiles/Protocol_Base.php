@@ -57,6 +57,15 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return '';
+	}
+
+	/**
 	 * Return the URL used by this object.
 	 *
 	 * @return string

@@ -19,7 +19,6 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
-use function cli\err;
 
 /**
  * Object to handle support for FTP-based directory listing.
@@ -430,6 +429,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @param bool   $is_dir Is this is a directory.
 	 *
 	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
 		// bail if setting is disabled.

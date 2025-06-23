@@ -113,6 +113,7 @@ class Cli {
 	 *
 	 * @return void
 	 * @throws JsonException Could Throw exception.
+	 * @noinspection PhpUnused
 	 */
 	public function google_drive_refresh_token(): void {
 		// get access token.
