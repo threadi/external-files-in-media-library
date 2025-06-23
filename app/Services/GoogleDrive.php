@@ -148,7 +148,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$services_tab = $settings_page->get_tab( 'services' );
 
 		// bail if tab does not exist.
-		if( ! $services_tab instanceof Tab ) {
+		if ( ! $services_tab instanceof Tab ) {
 			return;
 		}
 

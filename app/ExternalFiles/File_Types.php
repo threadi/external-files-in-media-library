@@ -83,7 +83,7 @@ class File_Types {
 		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
 
 		// bail if page does not exist.
-		if( ! $settings_page instanceof Page ) {
+		if ( ! $settings_page instanceof Page ) {
 			return;
 		}
 

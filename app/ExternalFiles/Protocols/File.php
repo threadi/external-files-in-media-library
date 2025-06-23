@@ -205,7 +205,7 @@ class File extends Protocol_Base {
 		// get the file content.
 		$content = $wp_filesystem->get_contents( $file_path );
 
-		if( is_string( $content ) ) {
+		if ( is_string( $content ) ) {
 			// set the file as tmp-file for import.
 			$results['tmp-file'] = wp_tempnam();
 			// and save the file there.

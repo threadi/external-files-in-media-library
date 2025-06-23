@@ -103,7 +103,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get the folders.
-		$folders = \FileBird\Model\Folder::allFolders();
+		$folders = Folder::allFolders();
 
 		// bail if list is empty.
 		if ( empty( $folders ) ) {
@@ -134,7 +134,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get the folders.
-		$folders = \FileBird\Model\Folder::allFolders();
+		$folders = Folder::allFolders();
 
 		// create the HTML-code.
 		$form  = '<select id="fildbirdfolder" name="fildbirdfolder" class="eml-use-for-import">';

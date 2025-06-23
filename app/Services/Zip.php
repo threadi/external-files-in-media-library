@@ -335,7 +335,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		}
 
 		// bail if file path does end with '.zip' (if it is the ZIP itself).
-		if( str_ends_with( $file_path, '.zip' ) ) {
+		if ( str_ends_with( $file_path, '.zip' ) ) {
 			return $return_value;
 		}
 

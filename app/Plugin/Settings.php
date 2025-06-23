@@ -474,8 +474,8 @@ class Settings {
 
 		// get the available extensions for import.
 		$extensions = array();
-		foreach( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			$extensions[$extension_obj->get_name()] = $extension_obj->get_title();
+		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 
 		// add setting.

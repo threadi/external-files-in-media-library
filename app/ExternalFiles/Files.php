@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains a controller-object to handle external files operations.
+ * This file contains the main controller-object to handle external files operations.
  *
  * @package external-files-in-media-library
  */
@@ -563,14 +563,14 @@ class Files {
 		<ul class="misc-pub-external-file">
 			<?php
 			$date = $external_file_obj->get_date();
-			if( ! empty( $date ) ) {
-			?>
+			if ( ! empty( $date ) ) {
+				?>
 			<li>
 				<span class="dashicons dashicons-clock"></span> <?php echo __( 'Imported at', 'external-files-in-media-library' ) . ' ' . $date; ?>
 			</li>
 				<?php
 			}
-		?>
+			?>
 		<li>
 			<?php
 			if ( $external_file_obj->is_available() ) {

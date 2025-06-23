@@ -839,7 +839,7 @@ class Queue extends Extension_Base {
 	 */
 	public function add_option_in_form( array $dialog ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
 		}
 
@@ -982,12 +982,12 @@ class Queue extends Extension_Base {
 	 */
 	public function add_user_setting( array $settings ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $settings;
 		}
 
 		// add our setting.
-		$settings[$this->get_name()] = array(
+		$settings[ $this->get_name() ] = array(
 			'label'       => __( 'Add URLs to the queue', 'external-files-in-media-library' ),
 			'description' => __( 'If enabled new files will be imported with the queue in background.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',

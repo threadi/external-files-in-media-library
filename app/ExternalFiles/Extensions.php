@@ -8,8 +8,6 @@
 namespace ExternalFilesInMediaLibrary\ExternalFiles;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\Plugin\Crypt_Base;
-
 defined( 'ABSPATH' ) || exit;
 
 /**

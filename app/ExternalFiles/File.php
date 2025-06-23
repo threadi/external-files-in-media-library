@@ -985,7 +985,7 @@ class File {
 		$date = get_post_meta( $this->get_id(), 'eml_external_file_date', true );
 
 		// bail if date is empty.
-		if( empty( $date ) ) {
+		if ( empty( $date ) ) {
 			return '';
 		}
 

@@ -49,15 +49,15 @@ class OpenSsl extends Crypt_Base {
 	public function encrypt( string $plain_text ): string {
 		$cipher    = 'AES-128-CBC';
 		$iv_length = openssl_cipher_iv_length( $cipher );
-		if ( ! $iv_length ) {
+		$iv        = openssl_random_pseudo_bytes( $iv_length );
+
+		// bail if iv could not be created.
+		if ( ! $iv ) {
 			return '';
 		}
-		$iv             = openssl_random_pseudo_bytes( $iv_length );
+
 		$ciphertext_raw = openssl_encrypt( $plain_text, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
-		if ( ! $ciphertext_raw ) {
-			return '';
-		}
-		$hmac = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
+		$hmac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
 		return base64_encode( base64_encode( $iv ) . ':' . base64_encode( $hmac . $ciphertext_raw ) );
 	}
 
@@ -71,10 +71,7 @@ class OpenSsl extends Crypt_Base {
 	public function decrypt( string $encrypted_text ): string {
 		$cipher    = 'AES-128-CBC';
 		$iv_length = openssl_cipher_iv_length( $cipher );
-		if ( ! $iv_length ) {
-			return '';
-		}
-		$c = base64_decode( $encrypted_text );
+		$c         = base64_decode( $encrypted_text );
 		if ( str_contains( $c, ':' ) ) {
 			$c_exploded     = explode( ':', $c );
 			$iv             = base64_decode( $c_exploded[0] );
@@ -89,7 +86,7 @@ class OpenSsl extends Crypt_Base {
 		}
 		$original_plaintext = openssl_decrypt( $ciphertext_raw, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
 		$calc_mac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
-		if ( $original_plaintext && $hmac && hash_equals( $hmac, $calc_mac ) ) {
+		if ( $hmac && hash_equals( $hmac, $calc_mac ) ) {
 			return $original_plaintext;
 		}
 		return '';

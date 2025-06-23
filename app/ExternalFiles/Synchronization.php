@@ -1089,7 +1089,7 @@ class Synchronization {
 		global $pagenow;
 
 		// bail if called page is not the media library.
-		if( 'upload.php' !== $pagenow ) {
+		if ( 'upload.php' !== $pagenow ) {
 			return;
 		}
 

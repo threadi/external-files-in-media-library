@@ -102,14 +102,14 @@ class Uninstall {
 
 		// remove user-specific settings.
 		$users = get_users();
-		foreach( $users as $user ) {
+		foreach ( $users as $user ) {
 			// bail if user is not WP_User.
-			if( ! $user instanceof WP_User ) {
+			if ( ! $user instanceof WP_User ) {
 				continue;
 			}
 
 			// loop through all extension and remove their settings.
-			foreach( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+			foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
 				delete_user_meta( $user->ID, 'efml_' . $extension_obj->get_name() );
 			}
 

@@ -199,7 +199,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_option_in_form( array $dialog ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
 		}
 
@@ -280,12 +280,12 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_user_setting( array $settings ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $settings;
 		}
 
 		// add our setting.
-		$settings[$this->get_name()] = array(
+		$settings[ $this->get_name() ] = array(
 			'label'       => __( 'Really import each file', 'external-files-in-media-library' ),
 			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',

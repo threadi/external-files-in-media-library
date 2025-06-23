@@ -99,9 +99,8 @@ class Queue extends WP_List_Table {
 	 * @param  string                $column_name - Current iterated column name.
 	 *
 	 * @return string
-	 * @noinspection PhpMissingReturnTypeInspection
 	 */
-	public function column_default( $item, $column_name ) {
+	public function column_default( $item, $column_name ): string {
 		return match ( $column_name ) {
 			'options' => $this->get_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),

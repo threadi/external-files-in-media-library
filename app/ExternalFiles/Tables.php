@@ -182,7 +182,7 @@ class Tables {
 	 * @return array<string,string>
 	 */
 	public function add_media_columns( array $columns ): array {
-		$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );
+		$columns['external_files']        = __( 'External file', 'external-files-in-media-library' );
 		$columns['external_files_source'] = __( 'Source', 'external-files-in-media-library' );
 		return $columns;
 	}
@@ -229,19 +229,19 @@ class Tables {
 
 			// get URL.
 			$edit_url = get_edit_post_link( $external_file->get_id() );
-			if( ! is_string( $edit_url ) ) {
+			if ( ! is_string( $edit_url ) ) {
 				$edit_url = '#';
 			}
 
 			// create dialog.
 			$dialog = array(
-				'title'     => __( 'File info', 'external-files-in-media-library' ),
-				'texts'     => array(
-					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) .  ':</strong> ' . $url_html . '</p>',
-					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) .  ':</strong> ' . $external_file->get_date() . '</p>',
-					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) .  ':</strong> ' . ( $external_file->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>'
+				'title'   => __( 'File info', 'external-files-in-media-library' ),
+				'texts'   => array(
+					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
+					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file->get_date() . '</p>',
+					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
 				),
-				'buttons'   => array(
+				'buttons' => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',

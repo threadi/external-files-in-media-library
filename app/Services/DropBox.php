@@ -148,7 +148,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$services_tab = $settings_page->get_tab( 'services' );
 
 		// bail if tab does not exist.
-		if( ! $services_tab instanceof Tab ) {
+		if ( ! $services_tab instanceof Tab ) {
 			return;
 		}
 
@@ -760,7 +760,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Go to DropBox', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug()) ) . '";',
+					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 			)

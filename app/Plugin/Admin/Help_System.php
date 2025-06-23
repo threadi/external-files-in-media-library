@@ -1,6 +1,6 @@
 <?php
 /**
- * File for handling site health options of this plugin.
+ * File for handle help system options of this plugin.
  *
  * @package external-files-in-media-library
  */
@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Screen;
 
 /**
- * Helper-function for Dashboard options of this plugin.
+ * Helper-function for dashboard options of this plugin.
  */
 class Help_System {
 	/**

@@ -165,7 +165,7 @@ class Dates extends Extension_Base {
 	 */
 	public function add_date_option_in_form( array $dialog ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
 		}
 
@@ -246,15 +246,15 @@ class Dates extends Extension_Base {
 	 */
 	public function add_user_setting( array $settings ): array {
 		// only add if it is enabled in settings.
-		if( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $settings;
 		}
 
 		// add our setting.
-		$settings[$this->get_name()] = array(
-			'label' => __( 'Use dates of the external files', 'external-files-in-media-library' ),
+		$settings[ $this->get_name() ] = array(
+			'label'       => __( 'Use dates of the external files', 'external-files-in-media-library' ),
 			'description' => __( 'If enabled we try to use the dates external files have. External files without this information will be saved with the actual date.', 'external-files-in-media-library' ),
-			'field' => 'checkbox',
+			'field'       => 'checkbox',
 		);
 
 		// return the settings.
