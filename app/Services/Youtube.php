@@ -165,10 +165,10 @@ class Youtube extends Directory_Listing_Base implements Service {
 	/**
 	 * Check if given URL during import is a YouTube video and set its data.
 	 *
-	 * @param array<string,mixed> $results The result as array for file import.
+	 * @param array<int,array<string,mixed>> $results The result as array for file import.
 	 * @param string              $url     The used URL.
 	 *
-	 * @return array<string,mixed>
+	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_video_data( array $results, string $url ): array {
 		// bail if this is not a YouTube-URL.
@@ -190,16 +190,18 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 *
 	 * @param string $url The given URL.
 	 *
-	 * @return array<string,mixed>
+	 * @return array<int,array<string,mixed>>
 	 */
 	private function get_basic_url_info_for_video( string $url ): array {
 		return array(
-			'title'     => basename( $url ),
-			'filesize'  => 1,
-			'mime-type' => 'video/mp4',
-			'local'     => false,
-			'url'       => $url,
-			'tmp-file'  => '',
+			array(
+				'title'     => basename( $url ),
+				'filesize'  => 1,
+				'mime-type' => 'video/mp4',
+				'local'     => false,
+				'url'       => $url,
+				'tmp-file'  => '',
+			)
 		);
 	}
 

@@ -74,10 +74,10 @@ class Vimeo implements Service {
 	/**
 	 * Check if given URL during import is a Vimeo video and set its data.
 	 *
-	 * @param array<string,mixed> $results The result as array for file import.
+	 * @param array<int,array<string,mixed>> $results The result as array for file import.
 	 * @param string              $url The used URL.
 	 *
-	 * @return array<string,mixed>
+	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_video_data( array $results, string $url ): array {
 		// bail if this is not a Vimeo-URL.
@@ -87,12 +87,14 @@ class Vimeo implements Service {
 
 		// initialize basic array for file data.
 		return array(
-			'title'     => basename( $url ),
-			'filesize'  => 1,
-			'mime-type' => 'video/mp4',
-			'local'     => false,
-			'url'       => $url,
-			'tmp-file'  => '',
+			array(
+				'title'     => basename( $url ),
+				'filesize'  => 1,
+				'mime-type' => 'video/mp4',
+				'local'     => false,
+				'url'       => $url,
+				'tmp-file'  => '',
+			)
 		);
 	}
 

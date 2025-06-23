@@ -14,7 +14,7 @@ Add external files to your media library to link or embed them in your website. 
 
 Add one or more files with their URLs under Media > “Add new media file”. In this way, you can add external files in all places where the media library is used.
 
-Embed your files from Google Drive, YouTube, Vimeo, FTP, local paths or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more.
+Embed your files from Google Drive, DropBox, YouTube, Vimeo, FTP, local paths or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more.
 
 Automatically synchronize the external files with your media library.
 
