@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use JsonException;
+use WP_Error;
 use WP_Image_Editor;
 
 /**
@@ -113,14 +114,27 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @throws \JsonException Could throw exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
+		// bail if the requested URL is the own URL.
+		if( false !== str_starts_with( $directory, get_option( 'home' ) ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_' . $this->get_name(), __( 'Your own website cannot be used to load external files in this way.', 'external-files-in-media-library' ) );
+
+			// add the error to the list for response.
+			$this->add_error( $error );
+
+			// return empty array to not load anything more.
+			return array();
+		}
+
 		// prepend directory with https:// if that is not given.
-		if ( ! ( absint( stripos( $directory, 'http://' ) ) >= 0 || absint( stripos( $directory, 'https://' ) ) > 0 ) ) {
+		if ( ! str_starts_with( $directory, 'http://' ) && ! str_starts_with( $directory, 'https://' ) ) {
 			$directory = 'https://' . $directory;
 		}
 
-		// append the directory with the default REST API URL, if not set.
-		if ( ! str_ends_with( $directory, '/wp-json/wp/v2/media' ) ) {
-			$directory = trailingslashit( $directory ) . '/wp-json/wp/v2/media';
+		// remove the possible REST API paths from the given URL.
+		foreach( $this->get_rest_api_paths() as $path ) {
+			$directory = str_replace( $path, '', $directory );
 		}
 
 		// get the protocol handler for this URL.
@@ -128,6 +142,30 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// bail if the detected protocol handler is not HTTP.
 		if ( ! $protocol_handler_obj instanceof Protocols\Http ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_' . $this->get_name(), __( 'No protocol given for this URL.', 'external-files-in-media-library' ) );
+
+			// add the error to the list for response.
+			$this->add_error( $error );
+
+			return array();
+		}
+
+		// disable the check for unsafe URLs.
+		add_filter( 'eml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
+		// get the URL to use.
+		$url_to_use = $this->get_url_to_use( $directory );
+
+		// bail if no URL could be found to load.
+		if( ! $url_to_use ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+
+			// add the error to the list for response.
+			$this->add_error( $error );
 			return array();
 		}
 
@@ -136,15 +174,15 @@ class Rest extends Directory_Listing_Base implements Service {
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
-		// disable the check for unsafe URLs.
-		add_filter( 'eml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
-
-		// we use pagination to get really all files from the external media library.
+		// prepare the response array.
 		$listing = array(
 			'title' => basename( $directory ),
 			'files' => array(),
 			'dirs'  => array(),
 		);
+
+		// we use pagination to get really all files from the external media library.
+		// we use max. 100 steps for 100 files per request (makes max. 10.000 files).
 		for ( $p = 1;$p < 100;$p++ ) {
 			// extend the given URL.
 			$url = add_query_arg(
@@ -152,7 +190,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					'page'     => $p,
 					'per_page' => 100,
 				),
-				$directory
+				$url_to_use
 			);
 
 			// request the external WordPress REST-API.
@@ -160,6 +198,12 @@ class Rest extends Directory_Listing_Base implements Service {
 
 			// bail general if error occurred.
 			if ( is_wp_error( $response ) ) {
+				// create error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_all_import_json_to_xml( $response->get_error_code() ) . '</code>' );
+
+				// add the error to the list for response.
+				$this->add_error( $error );
 				return array();
 			}
 
@@ -174,6 +218,21 @@ class Rest extends Directory_Listing_Base implements Service {
 			// bail if response is 400 (means there a no more files => return the list).
 			if ( 400 === $http_status ) {
 				return $listing;
+			}
+
+			// get the response headers.
+			$response_headers_obj = $response['http_response']->get_headers();
+			$response_headers = $response_headers_obj->getAll();
+
+			// bail if content-type is not application/json.
+			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+				// create error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+
+				// add the error to the list for response.
+				$this->add_error( $error );
+				return array();
 			}
 
 			// get the content.
@@ -263,7 +322,14 @@ class Rest extends Directory_Listing_Base implements Service {
 					$listing['files'][] = $entry;
 				}
 			} catch ( JsonException $e ) {
-				continue;
+				// create error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_' . $this->get_name(), __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );
+
+				// add the error to the list for response.
+				$this->add_error( $error );
+
+				return array();
 			}
 		}
 
@@ -303,12 +369,11 @@ class Rest extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					// TODO find better solution for path (pretty vs. not-pretty).
-					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath.includes("/wp-json/wp/v2/media/") ? actualDirectoryPath : actualDirectoryPath + "/wp-json/wp/v2/media/", "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "rest", actualDirectoryPath, login, password, "" );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "" );',
 					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
 				),
 			)
@@ -372,7 +437,8 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return bool
 	 */
 	private function is_rest_api_url( string $url ): bool {
-		foreach ( array( '/wp-json/wp/v2/media' ) as $path ) {
+		foreach ( $this->get_rest_api_paths() as $path ) {
+			// bail is URL does not contain this path.
 			if ( ! str_contains( $url, $path ) ) {
 				continue;
 			}
@@ -419,8 +485,16 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_rest_api_files( array $results, string $url, Protocols\Http $http_obj ): array {
-		// bail if this is not a REST API-URL.
-		if ( ! $this->is_rest_api_url( $url ) ) {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if( is_null( $service ) ) {
+			return $results;
+		}
+
+		// bail if service is not ours.
+		if( $this->get_name() !== $service ) {
 			return $results;
 		}
 
@@ -440,6 +514,20 @@ class Rest extends Directory_Listing_Base implements Service {
 		// collect the files.
 		$file_list = array();
 
+		// get the URL to use.
+		$url_to_use = $this->get_url_to_use( $directory );
+
+		// bail if no URL could be found to load.
+		if( ! $url_to_use ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+
+			// add the error to the list for response.
+			$this->add_error( $error );
+			return array();
+		}
+
 		// loop through the directory until no more files come back.
 		for ( $p = 1; $p < 100; $p++ ) {
 			// extend the given URL.
@@ -448,7 +536,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					'page'     => $p,
 					'per_page' => 100,
 				),
-				$directory
+				$url_to_use
 			);
 
 			// request the external WordPress REST-API.
@@ -470,6 +558,21 @@ class Rest extends Directory_Listing_Base implements Service {
 			// bail if response is 400 (means there a no more files => return the list).
 			if ( 400 === $http_status ) {
 				return $file_list;
+			}
+
+			// get the response headers.
+			$response_headers_obj = $response['http_response']->get_headers();
+			$response_headers = $response_headers_obj->getAll();
+
+			// bail if content-type is not application/json.
+			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+				// create error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+
+				// add the error to the list for response.
+				$this->add_error( $error );
+				return array();
 			}
 
 			// get the content.
@@ -550,5 +653,72 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type, Helper::get_allowed_mime_types(), true );
+	}
+
+	/**
+	 * Return the list of possible WordPress REST API paths.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_rest_api_paths(): array {
+		$list = array(
+			'/wp-json/wp/v2/media',
+			'/?rest_route=/wp/v2/media'
+		);
+
+		/**
+		 * Filter the possible WordPress REST API paths.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<int,string> $list List of possible WordPress REST API paths.
+		 */
+		return apply_filters( 'efml_directory_listing_rest_paths', $list );
+	}
+
+	/**
+	 * Return the URL to use as WordPress REST API URL with path.
+	 *
+	 * @param string $directory The given URL.
+	 *
+	 * @return string|bool
+	 */
+	private function get_url_to_use( string $directory ): string|bool {
+		// we check first which WordPress REST API URL is available.
+		$url_to_use = false;
+		foreach( $this->get_rest_api_paths() as $path ) {
+			// build the URL to check
+			$url_to_check = $directory . $path;
+
+			// request the external WordPress REST-API.
+			$response = wp_remote_get( $url_to_check );
+
+			// bail general if error occurred.
+			if ( is_wp_error( $response ) ) {
+				continue;
+			}
+
+			// get the HTTP-status.
+			$http_status = wp_remote_retrieve_response_code( $response );
+
+			// bail general if HTTP status is not 200.
+			if ( 200 !== $http_status ) {
+				continue;
+			}
+
+			// get the response headers.
+			$response_headers_obj = $response['http_response']->get_headers();
+			$response_headers = $response_headers_obj->getAll();
+
+			// bail if content-type is not application/json.
+			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+				continue;
+			}
+
+			// mark this as URL to use.
+			$url_to_use = $url_to_check;
+		}
+
+		// return the result.
+		return $url_to_use;
 	}
 }

@@ -565,11 +565,6 @@ function efml_save_as_directory( type, url, login, password, api_key, term_id ) 
 function efml_get_import_dialog( settings ) {
   if( typeof settings === "undefined" ) {
     settings = {};
-    /*settings.no_textarea = true;
-    settings.urls = 'https://pdfobject.com/pdf/sample.pdf';
-    settings.no_services = true;
-    settings.no_credentials = true;
-    settings.no_dialog = true;*/
   }
 
   // send request to get the actual dialog.
