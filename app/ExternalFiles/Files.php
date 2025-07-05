@@ -94,7 +94,6 @@ class Files {
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
 
 		// add ajax hooks.
-		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
 
@@ -290,37 +289,6 @@ class Files {
 	 */
 	public function get_file( int $attachment_id ): false|File {
 		return new File( $attachment_id );
-	}
-
-	/**
-	 * Check all external files regarding their availability.
-	 *
-	 * TODO in extension auslagern.
-	 *
-	 * @return void
-	 */
-	public function check_files(): void {
-		// get all files.
-		$files = $this->get_files();
-
-		// bail if no files are found.
-		if ( empty( $files ) ) {
-			return;
-		}
-
-		// loop through the files and check each.
-		foreach ( $files as $external_file_obj ) {
-			// get the protocol handler for this URL.
-			$protocol_handler = $external_file_obj->get_protocol_handler_obj();
-
-			// bail if handler is false.
-			if ( ! $protocol_handler ) {
-				continue;
-			}
-
-			// get and save its availability.
-			$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
-		}
 	}
 
 	/**
@@ -566,35 +534,11 @@ class Files {
 			if ( ! empty( $date ) ) {
 				?>
 			<li>
-				<span class="dashicons dashicons-clock"></span> <?php echo __( 'Imported at', 'external-files-in-media-library' ) . ' ' . $date; ?>
+				<span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Imported at', 'external-files-in-media-library' ) . ' ' . esc_html( $date ); ?>
 			</li>
 				<?php
 			}
 			?>
-		<li>
-			<?php
-			if ( $external_file_obj->is_available() ) {
-				?>
-				<span id="eml_url_file_state"><span class="dashicons dashicons-yes-alt"></span> <?php echo esc_html__( 'File-URL is available.', 'external-files-in-media-library' ); ?></span>
-				<?php
-			} else {
-				$log_url = Helper::get_log_url();
-				?>
-				<span id="eml_url_file_state"><span class="dashicons dashicons-no-alt"></span>
-					<?php
-					/* translators: %1$s will be replaced by the URL for the logs */
-					echo wp_kses_post( sprintf( __( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( $log_url ) ) );
-					?>
-					</span>
-				<?php
-			}
-			if ( $protocol_handler->can_check_availability() ) {
-				?>
-				<a class="button dashicons dashicons-image-rotate" href="#" id="eml_recheck_availability" title="<?php echo esc_attr__( 'Recheck availability', 'external-files-in-media-library' ); ?>"></a>
-				<?php
-			}
-			?>
-		</li>
 		<li><span class="dashicons dashicons-yes-alt"></span>
 		<?php
 		if ( false !== $external_file_obj->is_locally_saved() ) {
@@ -662,79 +606,6 @@ class Files {
 			?>
 		</ul>
 		<?php
-	}
-
-	/**
-	 * Check file availability via AJAX request.
-	 *
-	 * @return       void
-	 */
-	public function check_file_availability_via_ajax(): void {
-		// check nonce.
-		check_ajax_referer( 'eml-availability-check-nonce', 'nonce' );
-
-		// create error-result.
-		$result = array(
-			'state'   => 'error',
-			'message' => __( 'No ID given.', 'external-files-in-media-library' ),
-		);
-
-		// get ID.
-		$attachment_id = absint( filter_input( INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// bail if no file is given.
-		if ( 0 === $attachment_id ) {
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
-		// get the single external file-object.
-		$external_file_obj = $this->get_file( $attachment_id );
-
-		// bail if this is not an external file.
-		if ( false === $external_file_obj ) {
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
-		// bail if file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
-		// get protocol handler for this url.
-		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
-
-		// bail if protocol handler could not be loaded.
-		if ( ! $protocol_handler ) {
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
-		// check and save its availability.
-		$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
-
-		// return result depending on availability-value.
-		if ( $external_file_obj->is_available() ) {
-			$result = array(
-				'state'   => 'success',
-				'message' => __( 'File-URL is available.', 'external-files-in-media-library' ),
-			);
-
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
-		// return error if file is not available.
-		$result = array(
-			'state'   => 'error',
-			/* translators: %1$s will be replaced by the URL for the logs */
-			'message' => sprintf( __( 'URL-File is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), Helper::get_log_url() ),
-		);
-
-		// send response as JSON.
-		wp_send_json( $result );
 	}
 
 	/**

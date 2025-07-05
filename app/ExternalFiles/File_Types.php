@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
  * Object to handle different file types.
@@ -108,19 +109,19 @@ class File_Types {
 		// the audio section.
 		$audio_tab_audios = $audio_tab->add_section( 'settings_section_audio', 10 );
 		$audio_tab_audios->set_title( __( 'Audio Settings', 'external-files-in-media-library' ) );
-		$audio_tab_audios->set_callback( array( $this, 'show_protocol_hint' ) );
+		$audio_tab_audios->set_callback( array( Settings::get_instance(), 'show_protocol_hint' ) );
 		$audio_tab_audios->set_setting( $settings_obj );
 
 		// the images section.
 		$images_tab_images = $images_tab->add_section( 'settings_section_images', 10 );
 		$images_tab_images->set_title( __( 'Images Settings', 'external-files-in-media-library' ) );
-		$images_tab_images->set_callback( array( $this, 'show_protocol_hint' ) );
+		$images_tab_images->set_callback( array( Settings::get_instance(), 'show_protocol_hint' ) );
 		$images_tab_images->set_setting( $settings_obj );
 
 		// the videos section.
 		$videos_tab_videos = $video_tab->add_section( 'settings_section_images', 10 );
 		$videos_tab_videos->set_title( __( 'Video Settings', 'external-files-in-media-library' ) );
-		$videos_tab_videos->set_callback( array( $this, 'show_protocol_hint' ) );
+		$videos_tab_videos->set_callback( array( Settings::get_instance(), 'show_protocol_hint' ) );
 		$videos_tab_videos->set_setting( $settings_obj );
 
 		// add setting.
@@ -356,5 +357,34 @@ class File_Types {
 
 		// return the default file object if nothing matches.
 		return $file_type_obj;
+	}
+
+	/**
+	 * Check the change of proxy-setting.
+	 *
+	 * @param string $new_value The old value.
+	 * @param string $old_value The new value.
+	 *
+	 * @return int
+	 */
+	public function update_proxy_setting( string $new_value, string $old_value ): int {
+		// convert the values.
+		$new_value_int = absint( $new_value );
+		$old_value_int = absint( $old_value );
+
+		// bail if value has not been changed.
+		if ( $new_value_int === $old_value_int ) {
+			return $old_value_int;
+		}
+
+		// show hint to reset the proxy-cache.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'eml_proxy_changed' );
+		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Settings::get_instance()->get_proxy_reset_dialog() ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
+		$transient_obj->set_type( 'success' );
+		$transient_obj->save();
+
+		// return the new value.
+		return $new_value_int;
 	}
 }

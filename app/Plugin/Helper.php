@@ -115,7 +115,7 @@ class Helper {
 	}
 
 	/**
-	 * Get the ID of the first administrator user.
+	 * Return the ID of the first administrator user.
 	 *
 	 * @return int
 	 */
@@ -752,7 +752,7 @@ class Helper {
 	 */
 	public static function has_current_user_role( string $role ): bool {
 		// necessary to use logged in check.
-		include_once ABSPATH . 'wp-includes/pluggable.php';
+		include_once ABSPATH . 'wp-includes/pluggable.php'; // @phpstan-ignore includeOnce.fileNotFound
 
 		// bail if user is not logged in.
 		if ( ! is_user_logged_in() ) {
@@ -763,12 +763,12 @@ class Helper {
 		$user = wp_get_current_user();
 
 		// bail if object could not be loaded.
-		if ( ! $user instanceof WP_User ) {
+		if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
 			return false;
 		}
 
 		// return if role is in list of user-roles.
-		return in_array( $role, $user->roles );
+		return in_array( $role, $user->roles, true );
 	}
 
 	/**

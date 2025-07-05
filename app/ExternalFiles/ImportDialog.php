@@ -92,7 +92,7 @@ class ImportDialog {
 		$settings = isset( $_POST['settings'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['settings'] ) ) : array();
 
 		/**
-		 * Filter the given settings.
+		 * Filter the given settings for the import dialog.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 *
@@ -269,7 +269,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
-		// add the textarea for entering the external URLs.
+		// add the hidden input for given term.
 		$dialog['texts'][] = '<input type="hidden" name="term" value="' . absint( $settings['term'] ) . '">';
 
 		// return the resulting dialog.

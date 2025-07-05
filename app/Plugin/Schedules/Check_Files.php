@@ -10,7 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Schedules;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
 
@@ -58,7 +58,7 @@ class Check_Files extends Schedules_Base {
 		Log::get_instance()->create( __( 'Check file schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
 
 		// run the availability check.
-		Files::get_instance()->check_files();
+		Availability::get_instance()->check_files();
 
 		// log event.
 		Log::get_instance()->create( __( 'Check file schedule ended.', 'external-files-in-media-library' ), '', 'success', 2 );

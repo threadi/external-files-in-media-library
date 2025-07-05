@@ -97,6 +97,7 @@ class Services {
 		// use our own hooks.
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
 
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
@@ -281,5 +282,26 @@ class Services {
 		echo '<h2>' . esc_html__( 'Settings for services', 'external-files-in-media-library' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Services help you access external data sources for files.', 'external-files-in-media-library' ) . '</p>';
 		echo '<p><strong>' . esc_html__( 'Select one of the services to access its settings.', 'external-files-in-media-library' ) . '</strong></p>';
+	}
+
+	/**
+	 * Add hidden field in dialog for used service.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_service_in_form( array $dialog, array $settings ): array {
+		// bail if 'term' is not set in settings.
+		if ( ! isset( $settings['service'] ) ) {
+			return $dialog;
+		}
+
+		// add the hidden input for given service.
+		$dialog['texts'][] = '<input type="hidden" name="service" value="' . esc_attr( $settings['service'] ) . '">';
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 }

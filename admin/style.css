@@ -72,6 +72,10 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	width: 100%;
 }
 
+.eml .easy-dialog-for-wordpress-text .efml-import-result-list {
+	margin-bottom: 2em;
+}
+
 .eml .easy-dialog-for-wordpress-text .efml-import-result-list li {
 	text-indent: -10px;
 	padding-left: 18px;

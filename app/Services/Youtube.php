@@ -166,7 +166,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 * Check if given URL during import is a YouTube video and set its data.
 	 *
 	 * @param array<int,array<string,mixed>> $results The result as array for file import.
-	 * @param string              $url     The used URL.
+	 * @param string                         $url     The used URL.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -201,7 +201,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 				'local'     => false,
 				'url'       => $url,
 				'tmp-file'  => '',
-			)
+			),
 		);
 	}
 
@@ -627,10 +627,10 @@ class Youtube extends Directory_Listing_Base implements Service {
 	/**
 	 * Import videos from YouTube channel via import object.
 	 *
-	 * @param array<array<string,mixed>> $files      The list of files to import.
-	 * @param Protocol_Base              $import_obj The import object.
+	 * @param array<int,array<string,mixed>> $files      The list of files to import.
+	 * @param Protocol_Base                  $import_obj The import object.
 	 *
-	 * @return array<array<string,mixed>>
+	 * @return array<int,array<string,mixed>>
 	 * @throws JsonException Could throw exception.
 	 */
 	public function import_videos_from_channel_by_import_obj( array $files, Protocol_Base $import_obj ): array {
@@ -699,7 +699,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 			}
 
 			// add this file to the list to import.
-			$files[] = $this->get_basic_url_info_for_video( $url );
+			$files[] = $this->get_basic_url_info_for_video( $url )[0];
 		}
 
 		// return resulting list of files.

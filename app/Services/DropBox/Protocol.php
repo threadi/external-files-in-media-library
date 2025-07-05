@@ -15,7 +15,6 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\DropBox;
 use GuzzleHttp\Exception\ClientException;
-use JsonException;
 use Spatie\Dropbox\Client;
 
 /**
@@ -67,7 +66,6 @@ class Protocol extends Protocol_Base {
 	 * Check the availability of a given URL.
 	 *
 	 * @return array<int,array<string,mixed>> List of files with its infos.
-	 * @throws JsonException Could throw exception.
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.

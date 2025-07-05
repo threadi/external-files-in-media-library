@@ -158,7 +158,6 @@ class Forms {
 			array(
 				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
 				'urls_nonce'                    => wp_create_nonce( 'eml-urls-upload-nonce' ),
-				'availability_nonce'            => wp_create_nonce( 'eml-availability-check-nonce' ),
 				'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
@@ -184,9 +183,6 @@ class Forms {
 				'text_urls_errors'              => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 				'title_no_urls'                 => __( 'No URLs given', 'external-files-in-media-library' ),
 				'text_no_urls'                  => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
-				'title_availability_refreshed'  => __( 'Availability refreshed', 'external-files-in-media-library' ),
-				'text_not_available'            => __( 'The file is NOT available.', 'external-files-in-media-library' ),
-				'text_is_available'             => '<strong>' . __( 'The file is available.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is no problem to continue using the URL in your media library.', 'external-files-in-media-library' ),
 				'title_hosting_changed'         => __( 'Hosting changed', 'external-files-in-media-library' ),
 				'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
 				'txt_error'                     => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',

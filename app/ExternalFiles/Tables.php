@@ -199,6 +199,7 @@ class Tables {
 		// get the external object for this file.
 		$external_file = Files::get_instance()->get_file( $attachment_id );
 
+		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
 			// bail if it is not an external file.
 			if ( ! $external_file || false === $external_file->is_valid() ) {
@@ -213,13 +214,21 @@ class Tables {
 			do_action( 'eml_table_column_content', $attachment_id );
 		}
 
-		// bail if it is not an external file.
-		if ( ( 'external_files_source' === $column_name ) && $external_file && $external_file->is_valid() ) {
+		// show additional infos about external files.
+		if ( 'external_files_source' === $column_name && $external_file && $external_file->is_valid() ) {
 			// get the unproxied URL.
 			$url = $external_file->get_url( true );
 
+			// get protocol handler.
+			$protocol_handler = $external_file->get_protocol_handler_obj();
+
+			// bail if handler could not be found.
+			if ( ! $protocol_handler instanceof Protocol_Base ) {
+				return;
+			}
+
 			// get URL for show depending on used protocol.
-			$url_to_show = $external_file->get_protocol_handler_obj()->get_link();
+			$url_to_show = $protocol_handler->get_link();
 
 			// get link or string for the URL.
 			$url_html = esc_html( $url );
@@ -256,7 +265,7 @@ class Tables {
 			);
 
 			// output.
-			echo $external_file->get_protocol_handler_obj()->get_title() . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>';
+			echo wp_kses_post( $protocol_handler->get_title() . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
 		}
 	}
 }

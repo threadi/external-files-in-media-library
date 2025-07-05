@@ -75,7 +75,7 @@ class Vimeo implements Service {
 	 * Check if given URL during import is a Vimeo video and set its data.
 	 *
 	 * @param array<int,array<string,mixed>> $results The result as array for file import.
-	 * @param string              $url The used URL.
+	 * @param string                         $url The used URL.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
@@ -94,7 +94,7 @@ class Vimeo implements Service {
 				'local'     => false,
 				'url'       => $url,
 				'tmp-file'  => '',
-			)
+			),
 		);
 	}
 

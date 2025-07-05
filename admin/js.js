@@ -44,57 +44,6 @@ jQuery(document).ready(function($) {
     });
 
     /**
-     * Add AJAX-functionality to recheck the availability of a single file.
-     */
-    $("#eml_recheck_availability").on('click', function(e) {
-        e.preventDefault();
-
-        // get the ID of the file
-        let id = $("#post_ID").val();
-
-        // send request
-        $.ajax({
-            url: efmlJsVars.ajax_url,
-            type: 'post',
-            data: {
-                id: id,
-                action: 'eml_check_availability',
-                nonce: efmlJsVars.availability_nonce
-            },
-            error: function( jqXHR, textStatus, errorThrown ) {
-              efml_ajax_error_dialog( errorThrown )
-            },
-            success: function (response) {
-              let p = $("#eml_url_file_state");
-              let dialog_config = {
-                detail: {
-                  className: 'eml',
-                  title: efmlJsVars.title_availability_refreshed,
-                  texts: [
-                    '<p>' + efmlJsVars.text_not_available + '</p>'
-                  ],
-                  buttons: [
-                    {
-                      'action': 'closeDialog();',
-                      'variant': 'primary',
-                      'text': efmlJsVars.lbl_ok
-                    },
-                  ]
-                }
-              }
-              if( response.state === 'error' ) {
-                  p.html('<span class="dashicons dashicons-no-alt"></span> ' + response.message);
-              }
-              else {
-                  p.html('<span class="dashicons dashicons-yes-alt"></span> ' + response.message);
-                  dialog_config.detail.texts[0] = '<p>' + efmlJsVars.text_is_available + '</p>';
-              }
-              efml_create_dialog( dialog_config );
-            }
-        });
-    });
-
-    /**
      * Switch the hosting of an external file.
      */
     $('.button.eml-change-host').on( 'click', function(e) {
@@ -565,11 +514,6 @@ function efml_save_as_directory( type, url, login, password, api_key, term_id ) 
 function efml_get_import_dialog( settings ) {
   if( typeof settings === "undefined" ) {
     settings = {};
-    /*settings.no_textarea = true;
-    settings.urls = 'https://pdfobject.com/pdf/sample.pdf';
-    settings.no_services = true;
-    settings.no_credentials = true;
-    settings.no_dialog = true;*/
   }
 
   // send request to get the actual dialog.
