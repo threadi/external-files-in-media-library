@@ -534,7 +534,7 @@ class Files {
 			if ( ! empty( $date ) ) {
 				?>
 			<li>
-				<span class="dashicons dashicons-clock"></span> <?php echo __( 'Imported at', 'external-files-in-media-library' ) . ' ' . $date; ?>
+				<span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Imported at', 'external-files-in-media-library' ) . ' ' . esc_html( $date ); ?>
 			</li>
 				<?php
 			}

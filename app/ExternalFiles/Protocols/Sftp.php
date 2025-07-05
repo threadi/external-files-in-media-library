@@ -212,7 +212,7 @@ class Sftp extends Protocol_Base {
 		 * Filter list of files during this import.
 		 *
 		 * @since 3.0.0 Available since 3.0.0
-		 * @param array $files List of files.
+		 * @param array<int,array<string,mixed>> $files List of files.
 		 * @param Protocol_Base $instance The import object.
 		 */
 		return apply_filters( 'eml_external_files_infos', $files, $instance );

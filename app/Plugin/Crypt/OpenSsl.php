@@ -49,7 +49,12 @@ class OpenSsl extends Crypt_Base {
 	public function encrypt( string $plain_text ): string {
 		$cipher    = 'AES-128-CBC';
 		$iv_length = openssl_cipher_iv_length( $cipher );
-		$iv        = openssl_random_pseudo_bytes( $iv_length );
+
+		if ( ! is_int( $iv_length ) ) {
+			return '';
+		}
+
+		$iv = openssl_random_pseudo_bytes( $iv_length );
 
 		// bail if iv could not be created.
 		if ( ! $iv ) {
@@ -57,7 +62,12 @@ class OpenSsl extends Crypt_Base {
 		}
 
 		$ciphertext_raw = openssl_encrypt( $plain_text, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
-		$hmac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
+
+		if ( ! $ciphertext_raw ) {
+			return '';
+		}
+
+		$hmac = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
 		return base64_encode( base64_encode( $iv ) . ':' . base64_encode( $hmac . $ciphertext_raw ) );
 	}
 
@@ -71,12 +81,21 @@ class OpenSsl extends Crypt_Base {
 	public function decrypt( string $encrypted_text ): string {
 		$cipher    = 'AES-128-CBC';
 		$iv_length = openssl_cipher_iv_length( $cipher );
-		$c         = base64_decode( $encrypted_text );
+		if ( ! $iv_length ) {
+			return '';
+		}
+		$c = base64_decode( $encrypted_text );
 		if ( str_contains( $c, ':' ) ) {
-			$c_exploded     = explode( ':', $c );
-			$iv             = base64_decode( $c_exploded[0] );
-			$iv             = substr( $iv, 0, $iv_length );
-			$c              = base64_decode( $c_exploded[1] );
+			$c_exploded = explode( ':', $c );
+			$iv         = base64_decode( $c_exploded[0] );
+			if ( ! $iv ) {
+				return '';
+			}
+			$iv = substr( $iv, 0, $iv_length );
+			$c  = base64_decode( $c_exploded[1] );
+			if ( ! $c ) {
+				return '';
+			}
 			$hmac           = substr( $c, 0, $sha2len = 32 );
 			$ciphertext_raw = substr( $c, $sha2len, strlen( $c ) );
 		} else {
@@ -86,7 +105,7 @@ class OpenSsl extends Crypt_Base {
 		}
 		$original_plaintext = openssl_decrypt( $ciphertext_raw, $cipher, $this->get_hash(), OPENSSL_RAW_DATA, $iv );
 		$calc_mac           = hash_hmac( 'sha256', $ciphertext_raw, $this->get_hash(), true );
-		if ( $hmac && hash_equals( $hmac, $calc_mac ) ) {
+		if ( $original_plaintext && $hmac && hash_equals( $hmac, $calc_mac ) ) {
 			return $original_plaintext;
 		}
 		return '';

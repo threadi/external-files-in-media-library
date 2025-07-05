@@ -73,7 +73,7 @@ class Availability extends Extension_Base {
 		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
 
 		// use our own hooks.
-		add_action( 'eml_show_file_info', array( $this, 'show_availability'  ) );
+		add_action( 'eml_show_file_info', array( $this, 'show_availability' ) );
 	}
 
 	/**
@@ -144,12 +144,12 @@ class Availability extends Extension_Base {
 			'eml-availability-admin',
 			'efmlJsAvailabilityVars',
 			array(
-				'ajax_url'      => admin_url( 'admin-ajax.php' ),
-				'availability_nonce'            => wp_create_nonce( 'eml-availability-check-nonce' ),
-				'title_availability_refreshed'  => __( 'Availability refreshed', 'external-files-in-media-library' ),
-				'text_not_available'            => __( 'The file is NOT available.', 'external-files-in-media-library' ),
-				'text_is_available'             => '<strong>' . __( 'The file is available.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is no problem to continue using the URL in your media library.', 'external-files-in-media-library' ),
-				'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
+				'ajax_url'                     => admin_url( 'admin-ajax.php' ),
+				'availability_nonce'           => wp_create_nonce( 'eml-availability-check-nonce' ),
+				'title_availability_refreshed' => __( 'Availability refreshed', 'external-files-in-media-library' ),
+				'text_not_available'           => __( 'The file is NOT available.', 'external-files-in-media-library' ),
+				'text_is_available'            => '<strong>' . __( 'The file is available.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is no problem to continue using the URL in your media library.', 'external-files-in-media-library' ),
+				'lbl_ok'                       => __( 'OK', 'external-files-in-media-library' ),
 			)
 		);
 	}

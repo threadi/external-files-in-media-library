@@ -115,7 +115,7 @@ class Rest extends Directory_Listing_Base implements Service {
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// bail if the requested URL is the own URL.
-		if( false !== str_starts_with( $directory, get_option( 'home' ) ) ) {
+		if ( false !== str_starts_with( $directory, get_option( 'home' ) ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'Your own website cannot be used to load external files in this way.', 'external-files-in-media-library' ) );
@@ -133,7 +133,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// remove the possible REST API paths from the given URL.
-		foreach( $this->get_rest_api_paths() as $path ) {
+		foreach ( $this->get_rest_api_paths() as $path ) {
 			$directory = str_replace( $path, '', $directory );
 		}
 
@@ -159,7 +159,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		$url_to_use = $this->get_url_to_use( $directory );
 
 		// bail if no URL could be found to load.
-		if( ! $url_to_use ) {
+		if ( ! $url_to_use ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -200,7 +200,7 @@ class Rest extends Directory_Listing_Base implements Service {
 			if ( is_wp_error( $response ) ) {
 				// create error object.
 				$error = new WP_Error();
-				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_all_import_json_to_xml( $response->get_error_code() ) . '</code>' );
+				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response->get_error_code() ) . '</code>' );
 
 				// add the error to the list for response.
 				$this->add_error( $error );
@@ -222,10 +222,10 @@ class Rest extends Directory_Listing_Base implements Service {
 
 			// get the response headers.
 			$response_headers_obj = $response['http_response']->get_headers();
-			$response_headers = $response_headers_obj->getAll();
+			$response_headers     = $response_headers_obj->getAll();
 
 			// bail if content-type is not application/json.
-			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
 				// create error object.
 				$error = new WP_Error();
 				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -489,12 +489,12 @@ class Rest extends Directory_Listing_Base implements Service {
 		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if it is not set.
-		if( is_null( $service ) ) {
+		if ( is_null( $service ) ) {
 			return $results;
 		}
 
 		// bail if service is not ours.
-		if( $this->get_name() !== $service ) {
+		if ( $this->get_name() !== $service ) {
 			return $results;
 		}
 
@@ -518,7 +518,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		$url_to_use = $this->get_url_to_use( $directory );
 
 		// bail if no URL could be found to load.
-		if( ! $url_to_use ) {
+		if ( ! $url_to_use ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -562,10 +562,10 @@ class Rest extends Directory_Listing_Base implements Service {
 
 			// get the response headers.
 			$response_headers_obj = $response['http_response']->get_headers();
-			$response_headers = $response_headers_obj->getAll();
+			$response_headers     = $response_headers_obj->getAll();
 
 			// bail if content-type is not application/json.
-			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
 				// create error object.
 				$error = new WP_Error();
 				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -629,7 +629,14 @@ class Rest extends Directory_Listing_Base implements Service {
 					$file_list[] = $entry;
 				}
 			} catch ( JsonException $e ) {
-				continue;
+				// create error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_' . $this->get_name(), __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );
+
+				// add the error to the list for response.
+				$this->add_error( $error );
+
+				return array();
 			}
 		}
 
@@ -663,7 +670,7 @@ class Rest extends Directory_Listing_Base implements Service {
 	private function get_rest_api_paths(): array {
 		$list = array(
 			'/wp-json/wp/v2/media',
-			'/?rest_route=/wp/v2/media'
+			'/?rest_route=/wp/v2/media',
 		);
 
 		/**
@@ -685,8 +692,8 @@ class Rest extends Directory_Listing_Base implements Service {
 	private function get_url_to_use( string $directory ): string|bool {
 		// we check first which WordPress REST API URL is available.
 		$url_to_use = false;
-		foreach( $this->get_rest_api_paths() as $path ) {
-			// build the URL to check
+		foreach ( $this->get_rest_api_paths() as $path ) {
+			// build the URL to check.
 			$url_to_check = $directory . $path;
 
 			// request the external WordPress REST-API.
@@ -707,10 +714,10 @@ class Rest extends Directory_Listing_Base implements Service {
 
 			// get the response headers.
 			$response_headers_obj = $response['http_response']->get_headers();
-			$response_headers = $response_headers_obj->getAll();
+			$response_headers     = $response_headers_obj->getAll();
 
 			// bail if content-type is not application/json.
-			if( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
 				continue;
 			}
 

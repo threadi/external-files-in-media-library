@@ -14,15 +14,11 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
-use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
-use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
@@ -626,11 +622,6 @@ class Settings {
 
 		// get help texts from each setting, which have one.
 		foreach ( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_settings() as $settings_obj ) {
-			// bail if setting is not a Setting object.
-			if ( ! $settings_obj instanceof Setting ) {
-				continue;
-			}
-
 			// bail if setting has no help text.
 			if ( ! $settings_obj->has_help() ) {
 				continue;
@@ -727,40 +718,11 @@ class Settings {
 	}
 
 	/**
-	 * Check the change of proxy-setting.
-	 *
-	 * @param string $new_value The old value.
-	 * @param string $old_value The new value.
-	 *
-	 * @return int
-	 */
-	public function update_proxy_setting( string $new_value, string $old_value ): int {
-		// convert the values.
-		$new_value_int = absint( $new_value );
-		$old_value_int = absint( $old_value );
-
-		// bail if value has not been changed.
-		if ( $new_value_int === $old_value_int ) {
-			return $old_value_int;
-		}
-
-		// show hint to reset the proxy-cache.
-		$transient_obj = Transients::get_instance()->add();
-		$transient_obj->set_name( 'eml_proxy_changed' );
-		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( $this->get_proxy_reset_dialog() ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
-		$transient_obj->set_type( 'success' );
-		$transient_obj->save();
-
-		// return the new value.
-		return $new_value_int;
-	}
-
-	/**
 	 * Return the proxy reset dialog configuration.
 	 *
 	 * @return string
 	 */
-	private function get_proxy_reset_dialog(): string {
+	public function get_proxy_reset_dialog(): string {
 		$dialog_config = array(
 			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
 			'texts'   => array(
