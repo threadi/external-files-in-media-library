@@ -36,13 +36,14 @@
 - Optimized styling of directory listings
 - Standardize the usage of timestamp as last-modified date for each service and protocol
 - Optimized check if a mime type is allowed in directory listing and during import
-- Optimized detection of multiple URLs entered in the textarea-field with different line breaks
+- Optimized detection of multiple URLs from textarea-field with different line breaks
 - Optimized WooCommerce CSV-import with URLs for external files
 - Re-arranged the settings for a better overview
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities
 - Extended documentation in GitHub for all services we provide
 - Extended logging is automatically enabled if WordPress is running in development mode
+- Moved availability check in extension
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 

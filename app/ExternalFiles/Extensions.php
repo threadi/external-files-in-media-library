@@ -124,6 +124,7 @@ class Extensions {
 	 */
 	private function get_extensions(): array {
 		$list = array(
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
@@ -135,6 +136,6 @@ class Extensions {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<int,string> $list List of extensions.
 		 */
-		return apply_filters( '', $list );
+		return apply_filters( 'eml_extensions', $list );
 	}
 }

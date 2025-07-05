@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
@@ -238,7 +239,7 @@ class Cli {
 			}
 		} else {
 			// run check for all files.
-			$external_files_obj->check_files();
+			Availability::get_instance()->check_files();
 		}
 
 		// return ok-message.

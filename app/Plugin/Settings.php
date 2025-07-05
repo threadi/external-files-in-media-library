@@ -263,20 +263,6 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_check_interval' );
-		$setting->set_section( $general_tab_main );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'daily' );
-		$setting->set_help( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
-		$field = new Select();
-		$field->set_title( __( 'Set interval for file-check', 'external-files-in-media-library' ) );
-		$field->set_description( $setting->get_help() );
-		$field->set_options( Helper::get_intervals() );
-		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
-		$setting->set_save_callback( array( $this, 'update_interval_setting' ) );
-		$setting->set_field( $field );
-
-		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_delete_on_deinstallation' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
@@ -484,7 +470,7 @@ class Settings {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'dates', 'queue', 'real_import' ) );
 		$field = new MultiSelect();
-		$field->set_title( __( 'Available options for import', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
 		$setting->set_field( $field );
@@ -508,70 +494,6 @@ class Settings {
 
 		// initialize this settings object.
 		$settings_obj->init();
-	}
-
-	/**
-	 * Validate the interval setting.
-	 *
-	 * @param string $value The value to sanitize.
-	 *
-	 * @return string
-	 */
-	public function sanitize_interval_setting( string $value ): string {
-		// get option.
-		$option = str_replace( 'sanitize_option_', '', current_filter() );
-
-		// bail if value is empty.
-		if ( empty( $value ) ) {
-			add_settings_error( $option, $option, __( 'An interval has to be set.', 'external-files-in-media-library' ) );
-			return '';
-		}
-
-		// bail if value is 'eml_disable_check'.
-		if ( 'eml_disable_check' === $value ) {
-			return $value;
-		}
-
-		// check if the given interval exists.
-		$intervals = wp_get_schedules();
-		if ( empty( $intervals[ $value ] ) ) {
-			/* translators: %1$s will be replaced by the name of the used interval */
-			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exists.', 'external-files-in-media-library' ), esc_html( $value ) ) );
-		}
-
-		// return the value.
-		return $value;
-	}
-
-	/**
-	 * Update the schedule if interval has been changed.
-	 *
-	 * @param string|null $value The given value for the interval.
-	 *
-	 * @return string
-	 */
-	public function update_interval_setting( string|null $value ): string {
-		// check if value is null.
-		if ( is_null( $value ) ) {
-			$value = '';
-		}
-
-		// get check files-schedule-object.
-		$check_files_schedule = new Check_Files();
-
-		// if new value is 'eml_disable_check' remove the schedule.
-		if ( 'eml_disable_check' === $value ) {
-			$check_files_schedule->delete();
-		} else {
-			// set the new interval.
-			$check_files_schedule->set_interval( $value );
-
-			// reset the schedule.
-			$check_files_schedule->reset();
-		}
-
-		// return the new value to save it via WP.
-		return $value;
 	}
 
 	/**
