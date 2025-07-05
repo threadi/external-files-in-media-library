@@ -54,6 +54,7 @@
 - Fixed missing file on FTP listing if for previous file not thumbnail could be created
 - Fixed missing file preview if PHP-imagick-library is not used
 - Fixed disabling of thumbnails on GoogleDrive view
+- Fixed usage of ZIP service on single uploaded file
 
 ### Removed
 

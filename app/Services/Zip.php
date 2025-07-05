@@ -354,6 +354,19 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return array<string,string>
 	 */
 	public function get_file( array $results, string $file_path ): array {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return $results;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return $results;
+		}
+
 		// bail if file path does not contain '.zip'.
 		if ( ! str_contains( $file_path, '.zip' ) ) {
 			return $results;
