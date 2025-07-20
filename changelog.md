@@ -20,6 +20,7 @@
 - Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
+- Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
 
 ### Changed
 
