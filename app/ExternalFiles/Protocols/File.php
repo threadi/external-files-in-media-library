@@ -15,6 +15,8 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\No_Urls;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -83,7 +85,17 @@ class File extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_path ) ) {
-					Log::get_instance()->create( __( 'Given file already exist in your media library.', 'external-files-in-media-library' ), $file_path, 'error', 0, Import::get_instance()->get_identified() );
+					// log this event.
+					Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $file_path, 'error', 0, Import::get_instance()->get_identified() );
+
+					// add the result to the list.
+					$result = new Results\Url_Result();
+					$result->set_url( $file_path );
+					$result->set_result_text( __( 'This file is already in your media library.', 'external-files-in-media-library' ) );
+					$result->set_error( true );
+					Results::get_instance()->add( $result );
+
+					// do nothing more.
 					continue;
 				}
 

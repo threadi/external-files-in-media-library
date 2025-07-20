@@ -139,6 +139,11 @@ class Schedules {
 			return $our_events;
 		}
 
+		// bail if plugin deinstallation is running.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return $our_events;
+		}
+
 		// check the schedule objects if they are set.
 		foreach ( $this->get_schedule_object_names() as $object_name ) {
 			$obj = new $object_name();

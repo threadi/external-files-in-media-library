@@ -138,4 +138,26 @@ class Extensions {
 		 */
 		return apply_filters( 'eml_extensions', $list );
 	}
+
+	/**
+	 * Return list of default extensions.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_default_extensions(): array {
+		$list = array(
+			'availability',
+			'dates',
+			'queue',
+			'real_import'
+		);
+
+		/**
+		 * Filter the list of default extensions.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<int,string> $list List of default extensions.
+		 */
+		return apply_filters( 'eml_extensions_default', $list );
+	}
 }

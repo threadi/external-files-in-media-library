@@ -59,8 +59,8 @@ class Uninstall {
 	 * @return void
 	 */
 	public function run(): void {
-		if ( ! defined( 'EFML_DEACTIVATION_RUNNING' ) ) {
-			define( 'EFML_DEACTIVATION_RUNNING', 1 );
+		if ( ! defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			define( 'EFML_DEINSTALLATION_RUNNING', 1 );
 		}
 
 		// remove schedules.

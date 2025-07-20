@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
@@ -227,6 +228,6 @@ class Update {
 
 		// set new options.
 		update_option( 'eml_user_settings', 1 );
-		update_option( 'eml_import_extensions', array( 'dates', 'queue', 'real_import' ) );
+		update_option( 'eml_import_extensions', Extensions::get_instance()->get_default_extensions() );
 	}
 }

@@ -464,7 +464,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_import_extensions' );
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_type( 'array' );
-		$setting->set_default( array( 'dates', 'queue', 'real_import' ) );
+		$setting->set_default( Extensions::get_instance()->get_default_extensions() );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );

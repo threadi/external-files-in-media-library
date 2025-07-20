@@ -550,7 +550,7 @@ class Forms {
 
 			// surround with hint and list, if not empty.
 			if ( ! empty( $text ) ) {
-				$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following result:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
+				$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following results:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
 			}
 
 			// create dialog.
