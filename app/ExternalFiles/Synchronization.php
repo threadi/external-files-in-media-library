@@ -85,6 +85,7 @@ class Synchronization {
 		add_action( 'efml_directory_listing_added', array( $this, 'added_new_directory' ) );
 		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
 		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
+		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_sync_info_in_dialog' ), 10, 2 );
 
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
@@ -696,13 +697,13 @@ class Synchronization {
 	/**
 	 * Show sync info (date-time) for files which has been synced.
 	 *
-	 * @param File $extern_file_obj The external file object.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 */
-	public function show_sync_info( File $extern_file_obj ): void {
+	public function show_sync_info( File $external_file_obj ): void {
 		// get sync marker.
-		$sync_marker = absint( get_post_meta( $extern_file_obj->get_id(), 'eml_synced_time', true ) );
+		$sync_marker = absint( get_post_meta( $external_file_obj->get_id(), 'eml_synced_time', true ) );
 
 		// bail if marker ist not set.
 		if ( 0 === $sync_marker ) {
@@ -710,7 +711,7 @@ class Synchronization {
 		}
 
 		// get the assigned archive term.
-		$terms = wp_get_object_terms( $extern_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
+		$terms = wp_get_object_terms( $external_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
 
 		// bail if result is not an array.
 		if ( ! is_array( $terms ) ) {
@@ -730,6 +731,47 @@ class Synchronization {
 		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
 		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?> <a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
 		<?php
+	}
+
+	/**
+	 * Show sync info in info dialog for single file.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param File  $external_file_obj The file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_sync_info_in_dialog( array $dialog, File $external_file_obj ): array {
+		// get sync marker.
+		$sync_marker = absint( get_post_meta( $external_file_obj->get_id(), 'eml_synced_time', true ) );
+
+		// bail if marker ist not set.
+		if ( 0 === $sync_marker ) {
+			return $dialog;
+		}
+
+		// get the assigned archive term.
+		$terms = wp_get_object_terms( $external_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
+
+		// bail if result is not an array.
+		if ( ! is_array( $terms ) ) {
+			return $dialog;
+		}
+
+		// bail if none has been found.
+		if ( empty( $terms ) ) {
+			return $dialog;
+		}
+
+		// get first result.
+		$term = $terms[0];
+
+		// add infos in dialog.
+		$dialog['texts'][] = '<p><strong>' . esc_html__( 'Last synchronized:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ) . '</p>';
+		$dialog['texts'][] = '<p><strong>' . esc_html__( 'Synchronized from:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $term->name ) . '</p>';
+
+		// return resulting dialog.
+		return $dialog;
 	}
 
 	/**
@@ -886,6 +928,11 @@ class Synchronization {
 	 * @return WP_Post|false|null
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
+		// bail if we are running the plugin deinstallation.
+		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return $delete;
+		}
+
 		// bail if setting is disabled.
 		if ( 1 !== absint( get_option( 'eml_sync_delete_file_on_archive_deletion' ) ) ) {
 			return $delete;

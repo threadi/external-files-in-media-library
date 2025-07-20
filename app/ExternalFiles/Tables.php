@@ -264,6 +264,15 @@ class Tables {
 				),
 			);
 
+			/**
+			 * Filter the dialog for this file info.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param array<string,mixed> $dialog The dialog.
+			 * @param File $external_file The external file object.
+			 */
+			$dialog = apply_filters( 'eml_table_column_file_source_dialog', $dialog, $external_file );
+
 			// output.
 			echo wp_kses_post( $protocol_handler->get_title() . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
 		}
