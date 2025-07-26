@@ -66,7 +66,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if plugin is not enabled.
-		if ( ! Helper::is_plugin_active( 'downloadlist/download-list-block-with-icons.php' ) ) { // TODO Pfad anpassen für live!
+		if ( ! Helper::is_plugin_active( 'download-list-block-with-icons/download-list-block-with-icons.php' ) ) {
 			return;
 		}
 
@@ -103,11 +103,6 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 		// check if this is an external file.
 		$external_file_obj = Files::get_instance()->get_file( (int) $file['id'] );
 
-		// quick return the given $url if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $rel_attribute;
-		}
-
 		// return the original URL if this URL-file is not valid or not available or a not allowed mime type.
 		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
 			return $rel_attribute;
@@ -127,10 +122,15 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function add_list_selection( string $form, int $term_id ): string {
 		// get the available lists.
-		$terms = get_terms( array( 'taxonomy' => 'dl_icon_lists', 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'dl_icon_lists',
+				'hide_empty' => false,
+			)
+		);
 
 		// bail if no lists exist.
-		if( empty( $terms ) ) {
+		if ( empty( $terms ) ) {
 			return '';
 		}
 
@@ -153,7 +153,17 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	 */
 	private function get_list_selection( int $mark ): string {
 		// get the available lists.
-		$terms = get_terms( array( 'taxonomy' => 'dl_icon_lists', 'hide_empty' => false ) );
+		$terms = get_terms(
+			array(
+				'taxonomy'   => 'dl_icon_lists',
+				'hide_empty' => false,
+			)
+		);
+
+		// bail if terms could not be loaded.
+		if ( ! is_array( $terms ) ) {
+			return '';
+		}
 
 		// create the HTML-code.
 		$form  = '<select id="downloadlistlist" name="downloadlistlist" class="eml-use-for-import">';
@@ -206,7 +216,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 		$term = get_term( absint( $_POST['downloadlistlist'] ), 'dl_icon_lists' );
 
 		// bail if term object could not be found.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 

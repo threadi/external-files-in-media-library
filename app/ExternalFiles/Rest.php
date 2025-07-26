@@ -73,7 +73,7 @@ class Rest {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'add_file' ),
 				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
+					return current_user_can( EFML_CAP_NAME );
 				},
 			)
 		);
@@ -95,7 +95,7 @@ class Rest {
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_file' ),
 				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
+					return current_user_can( EFML_CAP_NAME );
 				},
 			)
 		);

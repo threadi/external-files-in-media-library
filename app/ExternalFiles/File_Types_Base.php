@@ -71,16 +71,17 @@ class File_Types_Base {
 			return false;
 		}
 
+		// set the mime type.
+		$mime_type = $this->get_mime_type();
+
 		// get the external file object.
 		$external_file_obj = $this->get_file();
 
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj ) {
-			return false;
+		// get mime type from external file object, if set.
+		if ( $external_file_obj ) {
+			// use the mime type from the external file object.
+			$mime_type = $external_file_obj->get_mime_type();
 		}
-
-		// use the mime type from the external file object.
-		$mime_type = $external_file_obj->get_mime_type();
 
 		// check the mime types.
 		$result = in_array( $mime_type, $this->get_mime_types(), true );
@@ -146,6 +147,15 @@ class File_Types_Base {
 	 */
 	public function get_name(): string {
 		return $this->name;
+	}
+
+	/**
+	 * Return the file type title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return '';
 	}
 
 	/**

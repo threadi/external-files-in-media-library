@@ -39,6 +39,15 @@ class Video extends File_Types_Base {
 	);
 
 	/**
+	 * Return the file type title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Videos', 'external-files-in-media-library' );
+	}
+
+	/**
 	 * Output of proxied file.
 	 *
 	 * @return void
@@ -94,7 +103,7 @@ class Video extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 1 === absint( get_option( 'eml_video_proxy' ) );
+		return 'external' === get_option( 'eml_video_mode' ) && 1 === absint( get_option( 'eml_video_proxy' ) );
 	}
 
 	/**

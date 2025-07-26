@@ -169,7 +169,6 @@ class Forms {
 				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
-				'add_file_url'                  => Helper::get_add_media_url(),
 				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
@@ -193,7 +192,6 @@ class Forms {
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
 				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
-				'title_add_source'              => __( 'Add Directory Archive', 'external-files-in-media-library' ),
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 			)

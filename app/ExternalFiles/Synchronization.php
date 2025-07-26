@@ -503,7 +503,7 @@ class Synchronization {
 				$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
 
 				// bail if object could not be loaded.
-				if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+				if ( ! $external_file_obj->is_valid() ) {
 					continue;
 				}
 
@@ -737,7 +737,7 @@ class Synchronization {
 	 * Show sync info in info dialog for single file.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
-	 * @param File  $external_file_obj The file object.
+	 * @param File                $external_file_obj The file object.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -929,7 +929,7 @@ class Synchronization {
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
 		// bail if we are running the plugin deinstallation.
-		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			return $delete;
 		}
 

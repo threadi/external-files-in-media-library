@@ -229,5 +229,10 @@ class Update {
 		// set new options.
 		update_option( 'eml_user_settings', 1 );
 		update_option( 'eml_import_extensions', Extensions::get_instance()->get_default_extensions() );
+
+		// migrate the image proxy setting.
+		update_option( 'eml_images_proxy', get_option( 'eml_proxy' ) );
+		update_option( 'eml_images_proxy_max_age', get_option( 'eml_proxy_max_age' ) );
+
 	}
 }

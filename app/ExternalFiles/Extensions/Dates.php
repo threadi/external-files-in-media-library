@@ -156,7 +156,7 @@ class Dates extends Extension_Base {
 	}
 
 	/**
-	 * Add a checkbox to mark the files to add them to queue.
+	 * Add a checkbox to mark the files to use their external dates.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 *

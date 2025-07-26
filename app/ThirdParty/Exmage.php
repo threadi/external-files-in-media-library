@@ -243,11 +243,6 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			// get external files object for this post.
 			$external_files_obj = Files::get_instance()->get_file( $post_id );
 
-			// bail if file could not be loaded.
-			if ( ! $external_files_obj instanceof File ) {
-				continue;
-			}
-
 			// set the URL.
 			$external_files_obj->set_url( $url );
 

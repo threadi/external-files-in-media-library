@@ -122,6 +122,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
+		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
 	/**
@@ -663,7 +664,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$this->set_access_token( $access_token );
 
 		// forward user to settings page.
-		wp_safe_redirect( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) );
+		wp_safe_redirect( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) );
 		exit;
 	}
 
@@ -813,6 +814,22 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// loop through the files and add them to the list.
 		foreach ( $files as $file_obj ) {
+			$false = false;
+			/**
+			 * Filter whether given GoogleDrive file should be hidden.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
+			 * @param bool $false True if it should be hidden.
+			 * @param DriveFile $file_obj The object with the file data.
+			 * @param string $directory The requested directory.
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
+			 */
+			if ( apply_filters( 'efml_service_googledrive_hide_file', $false, $file_obj, $directory ) ) {
+				continue;
+			}
+
 			// collect the entry.
 			$entry = array(
 				'title' => $file_obj->getName(),
@@ -826,7 +843,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 				continue;
 			}
 
-			// get thumbnail, if set.
+			// get thumbnail, if set and enabled.
 			$thumbnail = '';
 			if ( $file_obj->getHasThumbnail() && Init::get_instance()->is_preview_enabled() ) {
 				$thumbnail = '<img src="' . esc_url( $file_obj->getThumbnailLink() ) . '" alt="" class="filepreview">';
@@ -1141,5 +1158,28 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// return true as all is ok.
 		return true;
+	}
+
+	/**
+	 * Prevent visibility of not allowed mime types.
+	 *
+	 * @param bool      $result The result - should be true to prevent the usage.
+	 * @param DriveFile $file_obj   The file object.
+	 * @param string    $url The used URL.
+	 *
+	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function prevent_not_allowed_files( bool $result, DriveFile $file_obj, string $url ): bool {
+		// bail if setting is disabled.
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+			return $result;
+		}
+
+		// get content type of this file.
+		$mime_type = wp_check_filetype( $file_obj->getName() );
+
+		// return whether this file type is allowed (false) or not (true).
+		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
 	}
 }

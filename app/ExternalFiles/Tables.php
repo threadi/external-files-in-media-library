@@ -202,7 +202,7 @@ class Tables {
 		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
 			// bail if it is not an external file.
-			if ( ! $external_file || false === $external_file->is_valid() ) {
+			if ( ! $external_file->is_valid() ) {
 				echo '<span class="dashicons dashicons-no"></span>';
 			} else {
 				echo '<span class="dashicons dashicons-yes"></span>';

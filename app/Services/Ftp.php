@@ -213,7 +213,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 			$false  = false;
 			$is_dir = $ftp_connection->is_dir( $path_only );
 			/**
-			 * Filter whether given local file should be hidden.
+			 * Filter whether given FTP file should be hidden.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
@@ -248,6 +248,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 				// define the thumb.
 				$thumbnail = '';
 
+				// get thumbnail, if set and enabled.
 				if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 					// get protocol handler for this external file.
 					$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( trailingslashit( $directory ) . $item_name );
@@ -275,7 +276,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 									// add thumb to output if it does not result in an error.
 									if ( ! is_wp_error( $results ) ) {
-										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
+										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="" class="filepreview">';
 									}
 								}
 							}

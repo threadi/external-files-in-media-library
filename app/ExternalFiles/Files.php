@@ -117,11 +117,6 @@ class Files {
 	public function get_attachment_url( string $url, int $attachment_id ): string {
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $url;
-		}
-
 		// return the original URL if this URL-file is not valid or not available or is using a not allowed mime type.
 		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
 			return $url;
@@ -177,11 +172,6 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
-		// bail if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $url;
-		}
-
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
 			return $url;
@@ -234,8 +224,8 @@ class Files {
 			// get the object of the external file.
 			$external_file_obj = $this->get_file( $attachment_id );
 
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+			// bail if object is not an external file.
+			if ( ! $external_file_obj->is_valid() ) {
 				continue;
 			}
 
@@ -264,7 +254,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if it is not an external file.
-		if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -285,9 +275,9 @@ class Files {
 	 *
 	 * @param int $attachment_id    The attachment_id where we want to call the File-object.
 	 *
-	 * @return false|File
+	 * @return File
 	 */
-	public function get_file( int $attachment_id ): false|File {
+	public function get_file( int $attachment_id ): File {
 		return new File( $attachment_id );
 	}
 
@@ -334,8 +324,8 @@ class Files {
 			// get the external file object.
 			$external_file_obj = $this->get_file( $attachment_id );
 
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
+			// bail if object is not an external file.
+			if ( ! $external_file_obj->is_valid() ) {
 				continue;
 			}
 
@@ -384,8 +374,8 @@ class Files {
 		// get the external file object for the match.
 		$external_file_obj = $this->get_file( absint( $result->get_posts()[0] ) );
 
-		// bail if the external file object could not be created or is not valid.
-		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+		// bail if the external file object is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
 			return false;
 		}
 
@@ -433,8 +423,8 @@ class Files {
 		// get the external file object for this attachment.
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if object could not be loaded or is not valid.
-		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+		// bail if external file object is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
 			return false;
 		}
 
@@ -453,7 +443,7 @@ class Files {
 		$external_file = $this->get_file( $attachment_id );
 
 		// bail if it is not an external file.
-		if ( ! $external_file || ! $external_file->is_valid() ) {
+		if ( ! $external_file->is_valid() ) {
 			return;
 		}
 
@@ -474,7 +464,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -494,7 +484,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -543,14 +533,14 @@ class Files {
 		<?php
 		if ( false !== $external_file_obj->is_locally_saved() ) {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+			if ( current_user_can( EFML_CAP_NAME ) && $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
 			}
 		} else {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+			if ( current_user_can( EFML_CAP_NAME ) && $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
@@ -635,7 +625,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			$result = array(
 				'state'   => 'error',
 				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
@@ -700,7 +690,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $actions;
 		}
 
@@ -749,7 +739,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $file;
 		}
 
@@ -776,7 +766,7 @@ class Files {
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $result;
 		}
 
@@ -989,7 +979,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $redirect_url;
 		}
 
@@ -1018,7 +1008,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $sources;
 		}
 
@@ -1049,7 +1039,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $data;
 		}
 
@@ -1125,7 +1115,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
@@ -1207,7 +1197,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $image_meta;
 		}
 

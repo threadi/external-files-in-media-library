@@ -225,12 +225,6 @@ class Availability extends Extension_Base {
 		// get the single external file-object.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
-		// bail if this is not an external file.
-		if ( false === $external_file_obj ) {
-			// send response as JSON.
-			wp_send_json( $result );
-		}
-
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
 			// send response as JSON.

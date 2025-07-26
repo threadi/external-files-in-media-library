@@ -65,7 +65,7 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given URL.
+	 * Return infos to each given URL.
 	 *
 	 * @return array<int,array<string,mixed>> List of files with its infos.
 	 * @throws JsonException Could throw exception.

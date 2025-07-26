@@ -149,7 +149,7 @@ class Extensions {
 			'availability',
 			'dates',
 			'queue',
-			'real_import'
+			'real_import',
 		);
 
 		/**

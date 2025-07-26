@@ -124,9 +124,9 @@ class Youtube extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
 
 		// change handling of media files.
+		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
-		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
 	}
 
 	/**
@@ -307,7 +307,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$external_file_object = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if file is not an external file.
-		if ( ! $external_file_object ) {
+		if ( ! $external_file_object->is_valid() ) {
 			return $block_content;
 		}
 
@@ -352,7 +352,7 @@ class Youtube extends Directory_Listing_Base implements Service {
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $html;
 		}
 
@@ -432,8 +432,29 @@ class Youtube extends Directory_Listing_Base implements Service {
 		// get the content from external URL.
 		$video_list = $wp_filesystem->get_contents( $youtube_channel_search_url );
 
+		// bail if result is "false".
+		if ( false === $video_list ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'API Key or channel is unknown or error on YouTube API!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// do nothing more.
+			return array();
+		}
+
 		// bail if list is empty.
 		if ( empty( $video_list ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'Got empty response from YouTube API.', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// do nothing more.
 			return array();
 		}
 

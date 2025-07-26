@@ -154,6 +154,15 @@ class File {
 	}
 
 	/**
+	 * Remove the external URL.
+	 *
+	 * @return void
+	 */
+	public function remove_url(): void {
+		delete_post_meta( $this->get_id(), EFML_POST_META_URL );
+	}
+
+	/**
 	 * Return the title of this attachment.
 	 *
 	 * @return string
@@ -266,6 +275,15 @@ class File {
 	}
 
 	/**
+	 * Delete the availability of this file.
+	 *
+	 * @return void
+	 */
+	public function remove_availability(): void {
+		delete_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY );
+	}
+
+	/**
 	 * Return whether the mime type of this file is allowed (true) or not (false).
 	 *
 	 * @return bool
@@ -350,7 +368,7 @@ class File {
 	}
 
 	/**
-	 * Return whether this URL-file is an image.
+	 * Return whether this URL-file is locally saved.
 	 *
 	 * @return bool
 	 */
@@ -368,6 +386,15 @@ class File {
 	public function set_is_local_saved( bool $locally_saved ): void {
 		// set in DB.
 		update_post_meta( $this->get_id(), 'eml_locally_saved', $locally_saved );
+	}
+
+	/**
+	 * Remove the marker for locally saved external file.
+	 *
+	 * @return void
+	 */
+	public function remove_local_saved(): void {
+		delete_post_meta( $this->get_id(), 'eml_locally_saved' );
 	}
 
 	/**
@@ -568,7 +595,16 @@ class File {
 	}
 
 	/**
-	 * Save the password on object.
+	 * Remove the login for this file.
+	 *
+	 * @return void
+	 */
+	public function remove_login(): void {
+		delete_post_meta( $this->get_id(), 'eml_login' );
+	}
+
+	/**
+	 * Save the password for this file.
 	 *
 	 * @param string $password The password.
 	 *
@@ -582,6 +618,15 @@ class File {
 
 		// save as encrypted value in db.
 		update_post_meta( $this->get_id(), 'eml_password', Crypt::get_instance()->encrypt( $password ) );
+	}
+
+	/**
+	 * Remove the password for this file.
+	 *
+	 * @return void
+	 */
+	public function remove_password(): void {
+		delete_post_meta( $this->get_id(), 'eml_password' );
 	}
 
 	/**
@@ -698,7 +743,7 @@ class File {
 		);
 
 		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url(), $wp_filesystem );
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
 		// bail if no temp file could be loaded.
 		if ( ! is_string( $tmp_file ) ) {
@@ -1000,5 +1045,14 @@ class File {
 	 */
 	public function set_date(): void {
 		update_post_meta( $this->get_id(), 'eml_external_file_date', time() );
+	}
+
+	/**
+	 * Remove the import datetime.
+	 *
+	 * @return void
+	 */
+	public function remove_date(): void {
+		delete_post_meta( $this->get_id(), 'eml_external_file_date' );
 	}
 }

@@ -80,8 +80,7 @@ class Massedge extends ThirdParty_Base implements ThirdParty {
 
 		// check if the file is an external file, could be proxied and if it is really external hosted.
 		if (
-			$external_file_obj
-			&& $external_file_obj->is_valid()
+			$external_file_obj->is_valid()
 			&& false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->get_file_type_obj()->is_proxy_enabled()
 		) {

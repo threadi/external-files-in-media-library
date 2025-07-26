@@ -21,6 +21,7 @@
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 - Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
+- Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 
 ### Changed
 
@@ -47,6 +48,7 @@
 - Moved availability check in extension
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
+- Hosting of files can now only be changed by users with the capability to upload external files
 
 ### Fixed
 
@@ -56,6 +58,9 @@
 - Fixed missing file preview if PHP-imagick-library is not used
 - Fixed disabling of thumbnails on GoogleDrive view
 - Fixed usage of ZIP service on single uploaded file
+- Fixed wrong capability to access the directory archive for non-administrator users
+- Fixed disabling of check files event
+- Fixed detection of correct file type during import process
 
 ### Removed
 

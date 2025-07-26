@@ -71,12 +71,10 @@ class ImportDialog {
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
 
 		// add user-specific configuration.
-		if ( $this->is_customization_allowed() ) {
-			add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
-			add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
-			add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
-			add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
-		}
+		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
+		add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
 	}
 
 	/**
@@ -305,6 +303,11 @@ class ImportDialog {
 	 * @return void
 	 */
 	public function add_user_settings( WP_User $user ): void {
+		// bail if customization is not allowed.
+		if ( ! $this->is_customization_allowed() ) {
+			return;
+		}
+
 		$settings = array();
 
 		/**
@@ -364,6 +367,11 @@ class ImportDialog {
 	public function save_user_settings( int $user_id ): void {
 		// check for nonce.
 		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
+			return;
+		}
+
+		// bail if customization is not allowed.
+		if ( ! $this->is_customization_allowed() ) {
 			return;
 		}
 

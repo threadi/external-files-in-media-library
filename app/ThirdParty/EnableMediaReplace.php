@@ -78,11 +78,6 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 		// get file by its ID.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
-		// bail if the file is not an external file-URL.
-		if ( ! $external_file_obj instanceof File ) {
-			return;
-		}
-
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
 			return;
@@ -104,11 +99,6 @@ class EnableMediaReplace extends ThirdParty_Base implements ThirdParty {
 	public function remove_row_actions( array $actions, WP_Post $post ): array {
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
-
-		// bail if file is not an external file.
-		if ( ! $external_file_obj instanceof File ) {
-			return $actions;
-		}
 
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {

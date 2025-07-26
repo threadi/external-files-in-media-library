@@ -336,18 +336,6 @@ class Import extends Directory_Listing_Base {
 			// get external file object to update its settings.
 			$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj ) {
-				// log event.
-				$log->create( __( 'External file object for URL could not be loaded.', 'external-files-in-media-library' ), $file_url, 'error', 0, $this->get_identified() );
-
-				// show progress.
-				$progress ? $progress->tick() : '';
-
-				// bail to next file.
-				continue;
-			}
-
 			// do not handle this file as external file it the option for it is enabled.
 			$no_external_object = false;
 			/**
@@ -482,8 +470,8 @@ class Import extends Directory_Listing_Base {
 			return;
 		}
 
-		// get max_execution_time setting.
-		$max_execution_time = absint( ini_get( 'max_execution_time' ) ); // in seconds.
+		// get max_execution_time setting in seconds.
+		$max_execution_time = absint( ini_get( 'max_execution_time' ) );
 
 		// bail if max_execution_time is 0 or -1 (e.g. via WP CLI).
 		if ( $max_execution_time <= 0 ) {
@@ -496,7 +484,7 @@ class Import extends Directory_Listing_Base {
 		// cancel process if runtime is nearly reached.
 		if ( $runtime >= $max_execution_time ) {
 			// log the event.
-			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported were saved in the queue and are now automatically imported individually.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identified() );
+			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported have been saved in the queue and will now be imported automatically in the background.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identified() );
 
 			// kill process.
 			exit;

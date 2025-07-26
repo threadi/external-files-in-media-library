@@ -100,7 +100,7 @@ class Elementor extends ThirdParty_Base implements ThirdParty {
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if external file obj could not be loaded.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 

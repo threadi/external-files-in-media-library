@@ -64,11 +64,11 @@ class Vimeo implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_shortcode( 'eml_vimeo', array( $this, 'render_video_shortcode' ) );
 		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
 		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
-		add_shortcode( 'eml_vimeo', array( $this, 'render_video_shortcode' ) );
 	}
 
 	/**
@@ -158,7 +158,7 @@ class Vimeo implements Service {
 		$external_file_object = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if file is not an external file.
-		if ( ! $external_file_object ) {
+		if ( ! $external_file_object->is_valid() ) {
 			return $block_content;
 		}
 
@@ -227,7 +227,7 @@ class Vimeo implements Service {
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! $external_file_obj ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $html;
 		}
 

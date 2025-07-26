@@ -266,10 +266,10 @@ class Cli {
 
 		// log resetting via cli.
 		$logs = Log::get_instance();
-		$logs->create( __( 'Plugin have been reset via cli.', 'external-files-in-media-library' ), '', 'success', 2 );
+		$logs->create( __( 'Plugin has been reset via cli.', 'external-files-in-media-library' ), '', 'success', 2 );
 
 		// return ok-message.
-		\WP_CLI::success( __( 'Plugin have been reset.', 'external-files-in-media-library' ) );
+		\WP_CLI::success( __( 'Plugin has been reset.', 'external-files-in-media-library' ) );
 	}
 
 	/**

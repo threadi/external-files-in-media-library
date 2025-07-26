@@ -113,31 +113,55 @@ According to Google guidelines, an app that is used to connect to the Google Dri
 
 = @@VersionNumber@@ =
 
-- Added option to synchronize directories with files on every supported protocol
-- Added support for the plugins CatFolders, Filebird and Folderly to import files in specific folders of this plugins
-- Added support for the plugin Enhanced Media Library to add imported files to their categories
-- Added wrapper for all settings of this plugin for easier management in the future
-- Added custom intervals for any cron event this plugin delivers
-- Added option for import local files from chosen directory via queue (for very large directories)
-- Added support to add external SVG files
-- PHP 8.1 is now minimum requirement
-- Optimized styling of list of directory services
-- Optimized handling of import through directory services
-- Moved import tasks from general Files in own object Import which is now also a directory listing object
-- Multiple code optimizations
-- Extended support for YouTube channel imports
-- Extended help for using Imgur images
-- Renamed Directory Credentials to Directory Archive
-- Optimized hint if PHP-module zip is missing for the ZIP service
-- More hooks
-- Fixed error on import on any files from local hosting
-- Fixed to early loading of translations
-- Fixed error on GoogleDrive import which would break if a duplicate is detected
-- Fixed potential error of sodium encryption is used and failed
-- Fixed faulty check for existing schedules
-- Fixed missing check for duplicate YouTube videos during import of them
-- Fixed preview of files in FTP service (which also prevents the usage of FTP-files as service)
-- Fixed wrong "Go to logs" URL if import failed
-- Fixed typos
+- Added REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added DropBox support for import of external files into your media library
+- Added new URL-import dialog in backend
+- Added option to delete synchronized files of single directory archive with one click
+- Introduced file handling extensions and added 3 of them (date, queue, real_import)
+- Added option to use the date of external files in add-dialog (2nd file handling extension)
+- Added option to really import files in media library (this disables all external files functions for these files)
+- Added these 2 new options also as parameter on WP CLI command to import URLs
+- Added option to choose which of these extensions should be available for file handlings
+- Added file type specific icons in directory listings
+- Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
+  are occurring simultaneously
+- Added import date for each external URL
+- Added new table column in media library which shows basic URL information
+- Added Taskfile as third way to build plugin release
+- Added check for PHP strict usage on every release with PHPStan
+- Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
+- Show processed file URLs during manual started synchronization
+- Hide import button for unsupported files in directory archive
+- Small optimizations on multiple codes
+- Using fallback to default interval for each of our events if setting of not available
+- Show hide and rating on directory archive listing
+- Directory reload no shows the progress
+- Optimized ZIP service
+- Updated some unfavorable text descriptions
+- Updated dependencies
+- Active folder in directory listing is now marked
+- Optimized styling of directory listings
+- Standardize the usage of timestamp as last-modified date for each service and protocol
+- Optimized check if a mime type is allowed in directory listing and during import
+- Optimized detection of multiple URLs from textarea-field with different line breaks
+- Optimized WooCommerce CSV-import with URLs for external files
+- Re-arranged the settings for a better overview
+- Multiple new hooks and updated hook documentation
+- Updated settings object for better performance and more possibilities
+- Extended documentation in GitHub for all services we provide
+- Extended logging is automatically enabled if WordPress is running in development mode
+- Moved availability check in extension
+- Renamed filter "eml_import_url_before" to "eml_import_url"
+- Renamed filter "eml_blacklist" to "eml_prevent_import"
+- Hosting of files can now only be changed by users with the capability to upload external files
+- Wrong usage of import URLs from directory archives if they are using a path after the domain
+- Fixed wrong link to queue list in settings and in dialog
+- Fixed missing file on FTP listing if for previous file not thumbnail could be created
+- Fixed missing file preview if PHP-imagick-library is not used
+- Fixed disabling of thumbnails on GoogleDrive view
+- Fixed usage of ZIP service on single uploaded file
+- Fixed wrong capability to access the directory archive for non-administrator users
+- Removed hook "eml_import_fields" as we do not use fields in this form anymore
+- Removed hook "eml_import_url_after" as it could be better used via the hook "eml_after_file_save"
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

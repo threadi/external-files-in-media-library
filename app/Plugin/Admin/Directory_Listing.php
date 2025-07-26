@@ -102,11 +102,15 @@ class Directory_Listing {
 	 * @return void
 	 */
 	public function add_view_directory_page(): void {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		add_submenu_page(
 			'upload.php',
 			__( 'Add external files', 'external-files-in-media-library' ),
 			__( 'Add external files', 'external-files-in-media-library' ),
-			'manage_options',
+			EFML_CAP_NAME,
 			$this->get_menu_slug(),
 			array( $this, 'render_view_directory_page' ),
 			2

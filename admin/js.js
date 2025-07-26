@@ -12,15 +12,9 @@ jQuery(document).ready(function($) {
 
       let add_file_button = document.createElement('a');
       add_file_button.className = 'page-title-action';
-      add_file_button.href = efmlJsVars.add_file_url;
+      add_file_button.href = efmlJsVars.directory_listing_url;
       add_file_button.innerHTML = efmlJsVars.title_add_file;
       this.after(add_file_button);
-
-      let add_directory_listing_button = document.createElement( 'a' );
-      add_directory_listing_button.className = 'page-title-action';
-      add_directory_listing_button.href = efmlJsVars.directory_listing_url;
-      add_directory_listing_button.innerHTML = efmlJsVars.title_add_source;
-      this.after( add_directory_listing_button );
     });
 
     /**

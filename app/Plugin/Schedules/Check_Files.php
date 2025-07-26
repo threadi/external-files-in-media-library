@@ -49,6 +49,19 @@ class Check_Files extends Schedules_Base {
 	}
 
 	/**
+	 * Return whether this schedule should be enabled and active according to configuration.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		// do not enable this schedule if it is disabled.
+		if ( 'eml_disable_check' === $this->get_interval() ) {
+			return false;
+		}
+		return parent::is_enabled();
+	}
+
+	/**
 	 * Run this schedule.
 	 *
 	 * @return void
