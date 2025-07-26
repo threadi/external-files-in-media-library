@@ -938,7 +938,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 				),
 				array(
 					'action' => 'efml_save_as_directory( "google-drive", actualDirectoryPath, "", "", "" );',
-					'label'  => __( 'Save active directory as directory archive', 'external-files-in-media-library' ),
+					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
 		);

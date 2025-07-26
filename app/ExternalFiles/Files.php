@@ -1158,7 +1158,7 @@ class Files {
 	 * @return array<array<string,string>>
 	 */
 	public function add_help( array $help_list ): array {
-		$content  = '<h1>' . __( 'Upload external files', 'external-files-in-media-library' ) . '</h1>';
+		$content  = '<h1>' . __( 'Add external files', 'external-files-in-media-library' ) . '</h1>';
 		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
 		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
 		/* translators: %1$s will be replaced by a URL. */
@@ -1174,7 +1174,7 @@ class Files {
 		// add help for the settings of this plugin.
 		$help_list[] = array(
 			'id'      => 'eml-upload',
-			'title'   => __( 'Upload external files', 'external-files-in-media-library' ),
+			'title'   => __( 'Add external files', 'external-files-in-media-library' ),
 			'content' => $content,
 		);
 
@@ -1237,7 +1237,7 @@ class Files {
 					'detail' =>
 						array(
 							'title'   => __( 'Error', 'external-files-in-media-library' ),
-							'texts'   => array( '<p>' . __( 'The directory could not be saved as a directory archive.', 'external-files-in-media-library' ) . '</p>' ),
+							'texts'   => array( '<p>' . __( 'The directory could not be saved as external source.', 'external-files-in-media-library' ) . '</p>' ),
 							'buttons' => array(
 								array(
 									'action'  => 'closeDialog();',
@@ -1289,11 +1289,11 @@ class Files {
 			array(
 				'detail' =>
 												array(
-													'title'   => __( 'Directory Archive saved', 'external-files-in-media-library' ),
+													'title'   => __( 'External source saved', 'external-files-in-media-library' ),
 													'texts'   => array(
-														'<p><strong>' . __( 'The directory has been saved as archive.', 'external-files-in-media-library' ) . '</strong></p>',
+														'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
 														/* translators: %1$s will be replaced by a URL. */
-														'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in the directory archive</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_url() ) . '</p>',
+														'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_url() ) . '</p>',
 													),
 													'buttons' => array(
 														array(

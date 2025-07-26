@@ -369,7 +369,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$dialog = array(
 			'title'   => __( 'DropBox access token saved', 'external-files-in-media-library' ),
 			'texts'   => array(
-				'<p>' . __( 'You will now be able to use DropBox as directory archive.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'You will now be able to use DropBox as your external source.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons' => array(
 				array(

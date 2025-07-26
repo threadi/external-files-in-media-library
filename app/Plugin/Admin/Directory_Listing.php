@@ -189,7 +189,7 @@ class Directory_Listing {
 					}
 
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your directory archive', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external source', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -242,7 +242,7 @@ class Directory_Listing {
 				// bail if directory is not set on loading a concrete listing.
 			if ( empty( $config['directory'] ) && isset( $config['term'] ) ) {
 				?>
-					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'Directory Archive could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
+					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'External source could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
 					<?php
 			} else {
 				?>
@@ -300,19 +300,19 @@ class Directory_Listing {
 			'directory_archive'             => array(
 				'connect_now'     => __( 'Open now', 'external-files-in-media-library' ),
 				'labels'          => array(
-					'name'          => _x( 'Directory Archives', 'taxonomy general name', 'external-files-in-media-library' ),
-					'singular_name' => _x( 'Directory Archive', 'taxonomy singular name', 'external-files-in-media-library' ),
-					'search_items'  => __( 'Search Directory Archive', 'external-files-in-media-library' ),
-					'edit_item'     => __( 'Edit Directory Archive', 'external-files-in-media-library' ),
-					'update_item'   => __( 'Update Directory Archive', 'external-files-in-media-library' ),
-					'menu_name'     => __( 'Directory Archives', 'external-files-in-media-library' ),
-					'back_to_items' => __( 'Back to Directory Archives', 'external-files-in-media-library' ),
+					'name'          => _x( 'Your external sources', 'taxonomy general name', 'external-files-in-media-library' ),
+					'singular_name' => _x( 'Your external source', 'taxonomy singular name', 'external-files-in-media-library' ),
+					'search_items'  => __( 'Search your external sources', 'external-files-in-media-library' ),
+					'edit_item'     => __( 'Edit your external source', 'external-files-in-media-library' ),
+					'update_item'   => __( 'Update your external source', 'external-files-in-media-library' ),
+					'menu_name'     => __( 'Your external sources', 'external-files-in-media-library' ),
+					'back_to_items' => __( 'Back to your external sources', 'external-files-in-media-library' ),
 					/* translators: %1$s will be replaced by a URL. */
-					'not_found'     => sprintf( __( 'No Directory Archives found. <a href="%1$s">Add them</a> from your external files sources.', 'external-files-in-media-library' ), $this->get_view_directory_url( false ) ),
+					'not_found'     => sprintf( __( 'No external sources found. Add them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_view_directory_url( false ) ),
 				),
 				'messages'        => array(
-					'updated' => __( 'Directory Archive updated.', 'external-files-in-media-library' ),
-					'deleted' => __( 'Directory Archive deleted.', 'external-files-in-media-library' ),
+					'updated' => __( 'External source updated.', 'external-files-in-media-library' ),
+					'deleted' => __( 'External source deleted.', 'external-files-in-media-library' ),
 				),
 				'type'            => __( 'Type', 'external-files-in-media-library' ),
 				'connect'         => __( 'Connect', 'external-files-in-media-library' ),
@@ -341,7 +341,7 @@ class Directory_Listing {
 					'label' => __( 'API Key', 'external-files-in-media-library' ),
 				),
 				'save_credentials' => array(
-					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
+					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
@@ -359,7 +359,7 @@ class Directory_Listing {
 					'label' => __( 'Password', 'external-files-in-media-library' ),
 				),
 				'save_credentials' => array(
-					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
+					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
@@ -452,13 +452,13 @@ class Directory_Listing {
 	 * @return array<array<string,string>>
 	 */
 	public function add_help( array $help_list ): array {
-		$content  = '<h1>' . __( 'Directory Archives', 'external-files-in-media-library' ) . '</h1>';
-		$content .= '<p>' . __( 'With directory archives, you can easily save your frequently used connections to external directories and reuse them at any time. Whats more, you can also use them to automatically synchronize the files with your media library.', 'external-files-in-media-library' ) . '</p>';
+		$content  = '<h1>' . __( 'External sources', 'external-files-in-media-library' ) . '</h1>';
+		$content .= '<p>' . __( 'With your external sources, you can easily save your frequently used connections to external directories and reuse them at any time. Whats more, you can also use them to automatically synchronize the files with your media library.', 'external-files-in-media-library' ) . '</p>';
 
 		// add help for the settings of this plugin.
 		$help_list[] = array(
 			'id'      => 'eml-directory-archives',
-			'title'   => __( 'Directory Archives', 'external-files-in-media-library' ),
+			'title'   => __( 'External sources', 'external-files-in-media-library' ),
 			'content' => $content,
 		);
 

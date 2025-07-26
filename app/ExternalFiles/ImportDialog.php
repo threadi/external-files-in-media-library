@@ -475,7 +475,7 @@ class ImportDialog {
 		// add our setting.
 		$settings['hide_dialog'] = array(
 			'label'       => __( 'Hide dialog', 'external-files-in-media-library' ),
-			'description' => __( 'When the dialog is hidden, the above settings are used for importing external files from any directory archive.', 'external-files-in-media-library' ),
+			'description' => __( 'When the dialog is hidden, the above settings are used for importing files from any external source.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
 

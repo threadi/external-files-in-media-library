@@ -160,7 +160,7 @@ class Local implements Service {
 			),
 			array(
 				'action' => 'efml_save_as_directory( "local", actualDirectoryPath, "", "", "" );',
-				'label'  => __( 'Save this directory as directory archive', 'external-files-in-media-library' ),
+				'label'  => __( 'Save this directory as your external source', 'external-files-in-media-library' ),
 			),
 		);
 	}

@@ -377,7 +377,7 @@ class Synchronization {
 		$dialog_sync_config = array(
 			'className' => 'eml-sync-config',
 			/* translators: %1$s will be replaced by a name. */
-			'title'     => sprintf( __( 'Set interval for %1$s', 'external-files-in-media-library' ), $listing_obj->get_label() ),
+			'title'     => sprintf( __( 'Settings for this %1$s connection', 'external-files-in-media-library' ), $listing_obj->get_label() ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Configure interval which will be used to automatically synchronize this external directory with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
 				$form,
@@ -605,7 +605,7 @@ class Synchronization {
 				'className' => 'eml',
 				'title'     => __( 'Synchronization has been executed', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<p><strong>' . __( 'The files in this directory archive are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p><strong>' . __( 'The files in this external source are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'You can now use them on your website.', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
@@ -1412,7 +1412,7 @@ class Synchronization {
 	 * @return array<int|string,string>
 	 */
 	public function add_filter_options( array $options ): array {
-		// get all directory archives.
+		// get all external sources.
 		$terms = get_terms(
 			array(
 				'taxonomy'   => Taxonomy::get_instance()->get_name(),

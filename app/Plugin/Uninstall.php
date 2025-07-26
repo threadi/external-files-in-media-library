@@ -143,7 +143,7 @@ class Uninstall {
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();
 
-		// cleanup directory archive.
+		// cleanup saved external sources.
 		Taxonomy::get_instance()->uninstall();
 
 		// delete Log-database-table.
