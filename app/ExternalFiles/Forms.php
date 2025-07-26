@@ -564,11 +564,6 @@ class Forms {
 							'text'    => __( 'Done', 'external-files-in-media-library' ),
 						),
 						array(
-							'action'  => 'location.href="' . Helper::get_log_url() . '";',
-							'variant' => 'secondary',
-							'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
-						),
-						array(
 							'action'  => 'location.href="' . Helper::get_media_library_url() . '";',
 							'variant' => 'secondary',
 							'text'    => __( 'Go to media library', 'external-files-in-media-library' ),

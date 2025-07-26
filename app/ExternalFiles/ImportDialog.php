@@ -69,6 +69,7 @@ class ImportDialog {
 		add_filter( 'eml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
 		add_action( 'eml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
+		add_filter( 'eml_dialog_after_adding', array( $this, 'add_log_button' ) );
 
 		// add user-specific configuration.
 		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
@@ -535,5 +536,29 @@ class ImportDialog {
 
 		// return the setting.
 		return $setting;
+	}
+
+	/**
+	 * Add the log button in import dialog.
+	 *
+	 * @param array<string,mixed> $dialog The dialog configuration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_log_button( array $dialog ): array {
+		// bail if capability is not set.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $dialog;
+		}
+
+		// add the log button on dialog.
+		$dialog['detail']['buttons'][] = array(
+			'action'  => 'location.href="' . Helper::get_log_url() . '";',
+			'variant' => 'secondary',
+			'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
+		);
+
+		// return the dialog.
+		return $dialog;
 	}
 }

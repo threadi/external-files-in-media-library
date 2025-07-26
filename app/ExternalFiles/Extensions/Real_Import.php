@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\Plugin\Crypt_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -313,12 +314,17 @@ class Real_Import extends Extension_Base {
 	 * @return void
 	 */
 	public function add_option_to_real_import_file( File $external_file_obj ): void {
+		// bail if capability is not set.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// create the import URL.
 		$url = add_query_arg(
 			array(
 				'action' => 'eml_real_import_external_file',
-				'nonce' => wp_create_nonce( 'eml-real-import-external-file' ),
-				'post' => $external_file_obj->get_id()
+				'nonce'  => wp_create_nonce( 'eml-real-import-external-file' ),
+				'post'   => $external_file_obj->get_id(),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -363,7 +369,7 @@ class Real_Import extends Extension_Base {
 	 */
 	private function import_local( File $external_file_obj ): void {
 		// bail if this file is not valid.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -422,7 +428,7 @@ class Real_Import extends Extension_Base {
 		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if attachment ID is not given.
-		if( 0 === $attachment_id ) {
+		if ( 0 === $attachment_id ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -446,7 +452,15 @@ class Real_Import extends Extension_Base {
 	 * @return array<string,string>
 	 */
 	public function add_bulk_action( array $actions ): array {
+		// bail if capability is not set.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return $actions;
+		}
+
+		// add our bulk action.
 		$actions['eml-real-import'] = __( 'Import as real file', 'external-files-in-media-library' );
+
+		// return resulting list of actions.
 		return $actions;
 	}
 
@@ -456,23 +470,23 @@ class Real_Import extends Extension_Base {
 	 *
 	 * @param string $sendback The return value.
 	 * @param string $doaction The action used.
-	 * @param array  $items The items to take action.
+	 * @param array<int,int>  $items The items to take action.
 	 *
 	 * @return string
 	 */
 	public function run_bulk_action( string $sendback, string $doaction, array $items ): string {
 		// bail if action is not ours.
-		if( 'eml-real-import' !== $doaction ) {
+		if ( 'eml-real-import' !== $doaction ) {
 			return $sendback;
 		}
 
 		// bail if item list is empty.
-		if( empty( $items ) ) {
+		if ( empty( $items ) ) {
 			return $sendback;
 		}
 
 		// check the files and change its state.
-		foreach( $items as $attachment_id ) {
+		foreach ( $items as $attachment_id ) {
 			// get external file object for this attachment.
 			$external_file_obj = Files::get_instance()->get_file( absint( $attachment_id ) );
 

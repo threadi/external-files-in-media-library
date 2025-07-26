@@ -548,7 +548,7 @@ class Settings {
 		}
 
 		// set capabilities.
-		Helper::set_capabilities( $values );
+		Roles::get_instance()->set( $values );
 
 		// return given value.
 		return $values;

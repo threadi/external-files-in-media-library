@@ -92,7 +92,7 @@ class File_Types_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
 		 * @param bool $result The result (true or false).
-		 * @param File $external_file_obj The external file object.
+		 * @param File|false $external_file_obj The external file object.
 		 * @param string $mime_type The used mime type (added in 3.0.0).
 		 */
 		return apply_filters( 'eml_file_type_compatibility_result', $result, $external_file_obj, $mime_type );

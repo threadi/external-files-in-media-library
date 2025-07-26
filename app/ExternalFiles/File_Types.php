@@ -17,7 +17,6 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
-use function cli\err;
 
 /**
  * Object to handle different file types.
@@ -94,7 +93,7 @@ class File_Types {
 		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$file_types_tab->set_hide_save( true );
 
-		foreach( $this->get_file_types_as_objects() as $index => $file_type_obj ) {
+		foreach ( $this->get_file_types_as_objects() as $index => $file_type_obj ) {
 			// get the internal name.
 			$name = strtolower( $file_type_obj->get_name() );
 
@@ -103,7 +102,7 @@ class File_Types {
 			$tab->set_title( $file_type_obj->get_title() );
 
 			// set images as default.
-			if( 'images' === $name  ) {
+			if ( 'images' === $name ) {
 				$file_types_tab->set_default_tab( $tab );
 			}
 
@@ -187,6 +186,8 @@ class File_Types {
 
 	/**
 	 * Return file types as objects.
+	 *
+	 * @param File|false $external_file_obj The external file object.
 	 *
 	 * @return array<int,File_Types_Base>
 	 */

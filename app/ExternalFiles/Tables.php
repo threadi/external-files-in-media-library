@@ -215,7 +215,7 @@ class Tables {
 		}
 
 		// show additional infos about external files.
-		if ( 'external_files_source' === $column_name && $external_file && $external_file->is_valid() ) {
+		if ( 'external_files_source' === $column_name && $external_file->is_valid() ) {
 			// get the unproxied URL.
 			$url = $external_file->get_url( true );
 

@@ -93,19 +93,16 @@ class Directory_Listing {
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
 		$directory_listing_obj->set_page_hook( 'media_page_' . $this->get_menu_slug() );
 		$directory_listing_obj->set_menu_slug( $this->get_menu_slug() );
+		$directory_listing_obj->set_capability( EFML_CAP_NAME );
 		$directory_listing_obj->init();
 	}
 
 	/**
-	 * Add hidden backend page for directory view.
+	 * Add backend page for directory view.
 	 *
 	 * @return void
 	 */
 	public function add_view_directory_page(): void {
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
-			return;
-		}
-
 		add_submenu_page(
 			'upload.php',
 			__( 'Add external files', 'external-files-in-media-library' ),

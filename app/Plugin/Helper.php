@@ -82,39 +82,6 @@ class Helper {
 	}
 
 	/**
-	 * Set capability for our own plugin on given roles.
-	 *
-	 * @param array<string> $user_roles List of allowed user-roles.
-	 *
-	 * @return void
-	 */
-	public static function set_capabilities( array $user_roles ): void {
-		if ( ! ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) ) {
-			return;
-		}
-
-		// set the capability 'eml_manage_files' for the given roles.
-		foreach ( wp_roles()->roles as $slug => $role ) {
-			// get the role-object.
-			$role_obj = get_role( $slug );
-
-			// bail if role object could not be loaded.
-			if ( ! $role_obj instanceof WP_Role ) {
-				continue;
-			}
-
-			// check if given role is in list of on-install supported roles.
-			if ( in_array( $slug, $user_roles, true ) ) {
-				// add capability.
-				$role_obj->add_cap( EFML_CAP_NAME );
-			} else {
-				// remove capability.
-				$role_obj->remove_cap( EFML_CAP_NAME );
-			}
-		}
-	}
-
-	/**
 	 * Return the ID of the first administrator user.
 	 *
 	 * @return int

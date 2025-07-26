@@ -122,7 +122,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
-		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
+		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 	}
 
 	/**

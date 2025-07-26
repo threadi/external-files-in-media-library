@@ -575,10 +575,12 @@ class Files {
 			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
-		?>
-		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
-		<?php
-		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			?>
+			<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
+			<?php
+		}
+		if ( current_user_can( EFML_CAP_NAME ) && $external_file_obj->get_file_type_obj()->has_thumbs() ) {
 			?>
 			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $this->get_thumbnail_reset_url( $external_file_obj ) ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
 			<?php

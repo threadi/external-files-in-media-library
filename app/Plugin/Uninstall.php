@@ -134,6 +134,9 @@ class Uninstall {
 			delete_option( $option );
 		}
 
+		// remove capability from roles.
+		Roles::get_instance()->uninstall();
+
 		// clean managed settings.
 		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
 
