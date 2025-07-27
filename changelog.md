@@ -21,6 +21,7 @@
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 - Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
+- Added support for plugin Folders to import external files in its folders
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 

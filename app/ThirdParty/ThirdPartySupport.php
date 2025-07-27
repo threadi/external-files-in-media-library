@@ -131,6 +131,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Exmage',
 			'ExternalFilesInMediaLibrary\ThirdParty\Filebird',
 			'ExternalFilesInMediaLibrary\ThirdParty\Folderly',
+			'ExternalFilesInMediaLibrary\ThirdParty\Folders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',

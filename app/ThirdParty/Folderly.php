@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -244,21 +243,13 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Save external file to a configured categories after import.
 	 *
-	 * @param string $url The used URL.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 */
-	public function save_url_in_categories( string $url ): void {
+	public function save_url_in_categories( File $external_file_obj ): void {
 		// check for nonce.
 		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
-			return;
-		}
-
-		// get the external file object.
-		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
-
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj ) {
 			return;
 		}
 
