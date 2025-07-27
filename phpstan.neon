@@ -18,6 +18,7 @@ parameters:
     - "#FileBird#"
     - "#WP_REST_Request#"
     - "#WCP_Folders#"
+    - "#iFolders#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

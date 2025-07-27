@@ -132,6 +132,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Filebird',
 			'ExternalFilesInMediaLibrary\ThirdParty\Folderly',
 			'ExternalFilesInMediaLibrary\ThirdParty\Folders',
+			'ExternalFilesInMediaLibrary\ThirdParty\IFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',

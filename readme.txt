@@ -12,7 +12,7 @@ Add external files to your media library to link or embed them in your website. 
 
 == Description ==
 
-Add one or more files with their URLs under Media > “Add new media file”. You can use this external files in all places where the media library is used.
+Add one or more files with their URLs under Media > "Add new media file". You can use this external files in all places where the media library is used.
 
 == Feature ==
 
@@ -22,10 +22,10 @@ Automatically synchronize external directories containing files with your media 
 
 And even more:
 
-* Add the files with their external date.
-* Import them as real files instead of just linking to them in your media library.
-* Check their availability (only for HTTP connections).
-* Configure which users in your project are allowed to use these options.
+* Add the files with their external dates. This allows you to obtain the date, which is helpful for SEO, for example.
+* Import them as real files instead of just linking to them in your media library. This allows you to import any number of files into your project.
+* Check their availability (only for HTTP connections) to ensure that the external files are actually available.
+* Configure which users in your project are allowed to use the external files options.
 
 == Support for other plugins ==
 
@@ -33,7 +33,7 @@ Use an external data source for product images in your WooCommerce-based store.
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
-Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://de.wordpress.org/plugins/folderly/), [Folders](https://de.wordpress.org/plugins/folders/) and [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/).
+Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/) and [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/). You can import and synchronize them in these plugins.
 
 == REST API ==
 
