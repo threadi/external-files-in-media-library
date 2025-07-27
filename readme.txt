@@ -33,7 +33,7 @@ Use an external data source for product images in your WooCommerce-based store.
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
-Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://de.wordpress.org/plugins/folderly/) and [Folders](https://de.wordpress.org/plugins/folders/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/).
+Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://de.wordpress.org/plugins/folderly/), [Folders](https://de.wordpress.org/plugins/folders/) and [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/).
 
 == REST API ==
 
