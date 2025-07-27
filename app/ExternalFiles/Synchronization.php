@@ -433,7 +433,7 @@ class Synchronization {
 		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ), 10, 3 );
 
 		// add counter handling.
-		add_action( 'eml_after_file_save', array( $this, 'update_url_count' ) );
+		add_action( 'eml_after_file_save', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );

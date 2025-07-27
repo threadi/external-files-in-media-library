@@ -62,7 +62,7 @@ class Statistics {
 		add_action( 'init', array( $this, 'init_statistics' ), 30 );
 
 		// use our own hooks.
-		add_action( 'eml_after_file_save', array( $this, 'add_file_count' ) );
+		add_action( 'eml_after_file_save', array( $this, 'add_file_count' ), 10, 0 );
 		add_action( 'eml_after_file_save', array( $this, 'add_file_sizes' ) );
 		add_action( 'eml_file_delete', array( $this, 'sub_file_count' ) );
 		add_action( 'eml_file_delete', array( $this, 'sub_file_sizes' ) );
