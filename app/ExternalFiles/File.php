@@ -65,7 +65,7 @@ class File {
 	}
 
 	/**
-	 * Get the ID.
+	 * Return the ID.
 	 *
 	 * @return int
 	 */
@@ -84,7 +84,7 @@ class File {
 	}
 
 	/**
-	 * Get the external URL.
+	 * Return the external URL.
 	 *
 	 * @param bool $unproxied Whether this call could be use proxy (true) or not (false).
 	 *
@@ -124,11 +124,6 @@ class File {
 			return $this->url;
 		}
 
-		// bail if file type is not proxy compatible.
-		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
-			return $this->url;
-		}
-
 		// if no permalink structure is set, generate a parameterized URL.
 		if ( empty( get_option( 'permalink_structure', '' ) ) ) {
 			// return link for simple permalinks.
@@ -151,6 +146,15 @@ class File {
 
 		// set in object.
 		$this->url = $url;
+	}
+
+	/**
+	 * Remove the external URL.
+	 *
+	 * @return void
+	 */
+	public function remove_url(): void {
+		delete_post_meta( $this->get_id(), EFML_POST_META_URL );
 	}
 
 	/**
@@ -266,6 +270,15 @@ class File {
 	}
 
 	/**
+	 * Delete the availability of this file.
+	 *
+	 * @return void
+	 */
+	public function remove_availability(): void {
+		delete_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY );
+	}
+
+	/**
 	 * Return whether the mime type of this file is allowed (true) or not (false).
 	 *
 	 * @return bool
@@ -350,7 +363,7 @@ class File {
 	}
 
 	/**
-	 * Return whether this URL-file is an image.
+	 * Return whether this URL-file is locally saved.
 	 *
 	 * @return bool
 	 */
@@ -368,6 +381,15 @@ class File {
 	public function set_is_local_saved( bool $locally_saved ): void {
 		// set in DB.
 		update_post_meta( $this->get_id(), 'eml_locally_saved', $locally_saved );
+	}
+
+	/**
+	 * Remove the marker for locally saved external file.
+	 *
+	 * @return void
+	 */
+	public function remove_local_saved(): void {
+		delete_post_meta( $this->get_id(), 'eml_locally_saved' );
 	}
 
 	/**
@@ -391,13 +413,8 @@ class File {
 			return false;
 		}
 
-		// check if cached file has reached its max age.
-		if ( $this->get_file_type_obj()->is_cache_expired() ) {
-			return false;
-		}
-
-		// return true as it is cached and not to old.
-		return true;
+		// return value depending on check if cached file has reached its max age.
+		return ! $this->get_file_type_obj()->is_cache_expired();
 	}
 
 	/**
@@ -568,7 +585,16 @@ class File {
 	}
 
 	/**
-	 * Save the password on object.
+	 * Remove the login for this file.
+	 *
+	 * @return void
+	 */
+	public function remove_login(): void {
+		delete_post_meta( $this->get_id(), 'eml_login' );
+	}
+
+	/**
+	 * Save the password for this file.
 	 *
 	 * @param string $password The password.
 	 *
@@ -582,6 +608,15 @@ class File {
 
 		// save as encrypted value in db.
 		update_post_meta( $this->get_id(), 'eml_password', Crypt::get_instance()->encrypt( $password ) );
+	}
+
+	/**
+	 * Remove the password for this file.
+	 *
+	 * @return void
+	 */
+	public function remove_password(): void {
+		delete_post_meta( $this->get_id(), 'eml_password' );
 	}
 
 	/**
@@ -698,7 +733,7 @@ class File {
 		);
 
 		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url(), $wp_filesystem );
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
 		// bail if no temp file could be loaded.
 		if ( ! is_string( $tmp_file ) ) {
@@ -1000,5 +1035,30 @@ class File {
 	 */
 	public function set_date(): void {
 		update_post_meta( $this->get_id(), 'eml_external_file_date', time() );
+	}
+
+	/**
+	 * Remove the import datetime.
+	 *
+	 * @return void
+	 */
+	public function remove_date(): void {
+		delete_post_meta( $this->get_id(), 'eml_external_file_date' );
+	}
+
+	/**
+	 * Return the thumbnail reset URL for this file.
+	 *
+	 * @return string
+	 */
+	public function get_thumbnail_reset_url(): string {
+		return add_query_arg(
+			array(
+				'action' => 'eml_reset_thumbnails',
+				'post'   => $this->get_id(),
+				'nonce'  => wp_create_nonce( 'eml-reset-thumbnails' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
 	}
 }

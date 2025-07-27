@@ -377,7 +377,7 @@ class Synchronization {
 		$dialog_sync_config = array(
 			'className' => 'eml-sync-config',
 			/* translators: %1$s will be replaced by a name. */
-			'title'     => sprintf( __( 'Set interval for %1$s', 'external-files-in-media-library' ), $listing_obj->get_label() ),
+			'title'     => sprintf( __( 'Settings for this %1$s connection', 'external-files-in-media-library' ), $listing_obj->get_label() ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Configure interval which will be used to automatically synchronize this external directory with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
 				$form,
@@ -433,7 +433,8 @@ class Synchronization {
 		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ), 10, 3 );
 
 		// add counter handling.
-		add_action( 'eml_after_file_save', array( $this, 'update_url_count' ) );
+		add_action( 'eml_after_file_save', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'eml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
@@ -503,17 +504,17 @@ class Synchronization {
 				$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
 
 				// bail if object could not be loaded.
-				if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+				if ( ! $external_file_obj->is_valid() ) {
 					continue;
 				}
 
 				// delete this file.
 				$external_file_obj->delete();
 			}
-		}
 
-		// log this event.
-		Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info' );
+			// log this event.
+			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+		}
 	}
 
 	/**
@@ -605,7 +606,7 @@ class Synchronization {
 				'className' => 'eml',
 				'title'     => __( 'Synchronization has been executed', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<p><strong>' . __( 'The files in this directory archive are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p><strong>' . __( 'The files in this external source are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'You can now use them on your website.', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
@@ -737,7 +738,7 @@ class Synchronization {
 	 * Show sync info in info dialog for single file.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
-	 * @param File  $external_file_obj The file object.
+	 * @param File                $external_file_obj The file object.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -929,7 +930,7 @@ class Synchronization {
 	 */
 	public function prevent_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
 		// bail if we are running the plugin deinstallation.
-		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			return $delete;
 		}
 
@@ -1412,7 +1413,7 @@ class Synchronization {
 	 * @return array<int|string,string>
 	 */
 	public function add_filter_options( array $options ): array {
-		// get all directory archives.
+		// get all external sources.
 		$terms = get_terms(
 			array(
 				'taxonomy'   => Taxonomy::get_instance()->get_name(),

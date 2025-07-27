@@ -79,6 +79,9 @@ class Install {
 		// install the schedules.
 		Schedules::get_instance()->create_schedules();
 
+		// set capability on roles.
+		Roles::get_instance()->install();
+
 		// trigger a welcome message if it is not already set.
 		$transients_obj = Transients::get_instance();
 		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_set() ) {

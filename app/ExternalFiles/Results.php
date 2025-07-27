@@ -102,6 +102,6 @@ class Results {
 	 * @return int
 	 */
 	private function get_user_id(): int {
-		return get_current_blog_id();
+		return get_current_user_id();
 	}
 }

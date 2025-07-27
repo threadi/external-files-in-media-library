@@ -9,7 +9,7 @@ von WordPress bereitgestellten Anwendungspasswort erfolgen.
 
 ## Der Endpunkt
 
-`/wp-json/efml/file/`
+`/wp-json/efml/v1/file/`
 
 ## Methoden
 

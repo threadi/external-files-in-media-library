@@ -69,14 +69,13 @@ class ImportDialog {
 		add_filter( 'eml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
 		add_action( 'eml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
+		add_filter( 'eml_dialog_after_adding', array( $this, 'add_log_button' ) );
 
 		// add user-specific configuration.
-		if ( $this->is_customization_allowed() ) {
-			add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
-			add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
-			add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
-			add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
-		}
+		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
+		add_action( 'personal_options_update', array( $this, 'save_user_settings' ) );
+		add_action( 'edit_user_profile_update', array( $this, 'save_user_settings' ) );
 	}
 
 	/**
@@ -161,7 +160,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add textarea field in dialog where user can enter multiple URLs.
+	 * Add hidden field to URLs from settings.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -195,6 +194,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
+		// add the fields.
 		$dialog['texts'][] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="use_credentials"><input type="checkbox" name="use_credentials" value="1" id="use_credentials"> ' . esc_html__( 'Use below credentials to import these URLs', 'external-files-in-media-library' ) . '</label></div><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="login" name="login" value="" autocomplete="off" readonly></div><div><label for="password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="password" name="password" value="" autocomplete="off" readonly></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials are saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
 		// return the resulting dialog.
@@ -240,7 +240,7 @@ class ImportDialog {
 	 * @return array<string,mixed>
 	 */
 	public function prevent_dialog_usage( array $dialog, array $settings ): array {
-		// bail if "no_dialog" is not set to true.
+		// bail if "no_dialog" is not set or not true.
 		if ( ! isset( $settings['no_dialog'] ) || false === $settings['no_dialog'] ) {
 			return $dialog;
 		}
@@ -290,7 +290,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
-		// add the textarea for entering the external URLs.
+		// add the fields.
 		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1"><input type="hidden" name="login" value="' . esc_attr( $settings['login'] ) . '"><input type="hidden" name="password" value="' . esc_attr( $settings['password'] ) . '">';
 
 		// return the resulting dialog.
@@ -305,10 +305,15 @@ class ImportDialog {
 	 * @return void
 	 */
 	public function add_user_settings( WP_User $user ): void {
+		// bail if customization for this user is not allowed.
+		if ( ! $this->is_customization_allowed() ) {
+			return;
+		}
+
 		$settings = array();
 
 		/**
-		 * Get the possible user settings.
+		 * Filter the possible user settings for import dialog.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,array<string,mixed>> $settings List of settings.
@@ -367,10 +372,15 @@ class ImportDialog {
 			return;
 		}
 
+		// bail if customization for this user is not allowed.
+		if ( ! $this->is_customization_allowed() ) {
+			return;
+		}
+
 		$settings = array();
 
 		/**
-		 * Get the possible user settings.
+		 * Filter the possible user settings for import dialog.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,array<string,mixed>> $settings List of settings.
@@ -466,7 +476,7 @@ class ImportDialog {
 		// add our setting.
 		$settings['hide_dialog'] = array(
 			'label'       => __( 'Hide dialog', 'external-files-in-media-library' ),
-			'description' => __( 'When the dialog is hidden, the above settings are used for importing external files from any directory archive.', 'external-files-in-media-library' ),
+			'description' => __( 'When the dialog is hidden, the above settings are used for importing files from any external source.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
 
@@ -527,5 +537,29 @@ class ImportDialog {
 
 		// return the setting.
 		return $setting;
+	}
+
+	/**
+	 * Add the log button in import dialog.
+	 *
+	 * @param array<string,mixed> $dialog The dialog configuration.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_log_button( array $dialog ): array {
+		// bail if capability is not set.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $dialog;
+		}
+
+		// add the log button on dialog.
+		$dialog['detail']['buttons'][] = array(
+			'action'  => 'location.href="' . Helper::get_log_url() . '";',
+			'variant' => 'secondary',
+			'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
+		);
+
+		// return the dialog.
+		return $dialog;
 	}
 }

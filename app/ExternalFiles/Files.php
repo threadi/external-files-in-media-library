@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Post;
@@ -92,10 +90,10 @@ class Files {
 		add_action( 'delete_attachment', array( $this, 'log_url_deletion' ), 10, 1 );
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
+		add_filter( 'media_meta', array( $this, 'show_media_info_in_modal' ), 10, 2 );
 
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
-		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
@@ -116,11 +114,6 @@ class Files {
 	 */
 	public function get_attachment_url( string $url, int $attachment_id ): string {
 		$external_file_obj = $this->get_file( $attachment_id );
-
-		// bail if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $url;
-		}
 
 		// return the original URL if this URL-file is not valid or not available or is using a not allowed mime type.
 		if ( false === $external_file_obj->is_valid() || false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
@@ -177,11 +170,6 @@ class Files {
 		// get the external file object.
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
-		// bail if file is not a URL-file.
-		if ( false === $external_file_obj ) {
-			return $url;
-		}
-
 		// bail if file is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
 			return $url;
@@ -192,17 +180,17 @@ class Files {
 			return $url;
 		}
 
-		// return the external URL.
+		// return the external URL (in WP-admin not proxied).
 		return $external_file_obj->get_url( is_admin() );
 	}
 
 	/**
-	 * Get all external files in media library.
+	 * Return all external files in media library.
 	 *
-	 * @return array<File>
+	 * @return array<int,File>
 	 */
 	public function get_files(): array {
-		$query  = array(
+		$query = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
 			'meta_query'     => array(
@@ -214,6 +202,16 @@ class Files {
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
 		);
+
+		/**
+		 * Filter the query to load all external files.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<string,mixed> $query The query.
+		 */
+		$query = apply_filters( 'eml_files_query', $query );
+
+		// run the query.
 		$result = new WP_Query( $query );
 
 		// bail on no results.
@@ -234,8 +232,8 @@ class Files {
 			// get the object of the external file.
 			$external_file_obj = $this->get_file( $attachment_id );
 
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj || ! $external_file_obj->is_valid() ) {
+			// bail if object is not an external file.
+			if ( ! $external_file_obj->is_valid() ) {
 				continue;
 			}
 
@@ -253,7 +251,7 @@ class Files {
 	}
 
 	/**
-	 * Log deletion of external URLs in media library.
+	 * Log the deletion of external URLs in media library.
 	 *
 	 * @param int $attachment_id  The attachment_id which will be deleted.
 	 *
@@ -264,7 +262,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if it is not an external file.
-		if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -281,74 +279,19 @@ class Files {
 	}
 
 	/**
-	 * Return external_file object of single attachment by given ID without checking its availability.
+	 * Return external file object of single attachment by given ID without checking its validity.
 	 *
 	 * @param int $attachment_id    The attachment_id where we want to call the File-object.
 	 *
-	 * @return false|File
+	 * @return File
 	 */
-	public function get_file( int $attachment_id ): false|File {
+	public function get_file( int $attachment_id ): File {
 		return new File( $attachment_id );
 	}
 
 	/**
-	 * Get all imported external files.
-	 *
-	 * @return array<File>
-	 */
-	public function get_imported_external_files(): array {
-		$query  = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
-				'relation' => 'AND',
-				array(
-					'key'     => EFML_POST_META_URL,
-					'compare' => 'EXISTS',
-				),
-				array(
-					'key'   => EFML_POST_IMPORT_MARKER,
-					'value' => 1,
-				),
-			),
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		);
-		$result = new WP_Query( $query );
-
-		// bail if result is 0.
-		if ( 0 === $result->post_count ) {
-			return array();
-		}
-
-		// get the list.
-		$results = array();
-
-		// loop through the results.
-		foreach ( $result->get_posts() as $attachment_id ) {
-			// bail if attachment_id is not an integer.
-			if ( ! is_int( $attachment_id ) ) {
-				continue;
-			}
-
-			// get the external file object.
-			$external_file_obj = $this->get_file( $attachment_id );
-
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj || false === $external_file_obj->is_valid() ) {
-				continue;
-			}
-
-			// add to the list.
-			$results[] = $external_file_obj;
-		}
-
-		// return resulting list.
-		return $results;
-	}
-
-	/**
-	 * Get file-object by a given URL.
+	 * Return external file object by a given URL.
+	 * Also checks for validity of the object.
 	 *
 	 * @param string $url The URL we use to search.
 	 *
@@ -384,8 +327,8 @@ class Files {
 		// get the external file object for the match.
 		$external_file_obj = $this->get_file( absint( $result->get_posts()[0] ) );
 
-		// bail if the external file object could not be created or is not valid.
-		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+		// bail if the external file object is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
 			return false;
 		}
 
@@ -394,7 +337,8 @@ class Files {
 	}
 
 	/**
-	 * Get file-object by its title.
+	 * Return external file object by its title.
+	 * Also checks for validity of the object.
 	 *
 	 * @param string $title The title we use to search.
 	 *
@@ -433,8 +377,8 @@ class Files {
 		// get the external file object for this attachment.
 		$external_file_obj = $this->get_file( $attachment_id );
 
-		// bail if object could not be loaded or is not valid.
-		if ( ! ( $external_file_obj && $external_file_obj->is_valid() ) ) {
+		// bail if external file object is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
 			return false;
 		}
 
@@ -453,7 +397,7 @@ class Files {
 		$external_file = $this->get_file( $attachment_id );
 
 		// bail if it is not an external file.
-		if ( ! $external_file || ! $external_file->is_valid() ) {
+		if ( ! $external_file->is_valid() ) {
 			return;
 		}
 
@@ -474,7 +418,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -494,7 +438,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return;
 		}
 
@@ -543,14 +487,14 @@ class Files {
 		<?php
 		if ( false !== $external_file_obj->is_locally_saved() ) {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+			if ( current_user_can( EFML_CAP_NAME ) && $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
 			}
 		} else {
 			echo '<span class="eml-hosting-state">' . esc_html__( 'File is extern hosted.', 'external-files-in-media-library' ) . '</span>';
-			if ( $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+			if ( current_user_can( EFML_CAP_NAME ) && $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to local', 'external-files-in-media-library' ); ?>">&nbsp;</a>
 					<?php
@@ -585,12 +529,14 @@ class Files {
 			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
-		?>
-		<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
-		<?php
-		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
+		if ( current_user_can( 'manage_options' ) ) {
 			?>
-			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $this->get_thumbnail_reset_url( $external_file_obj ) ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
+			<li><span class="dashicons dashicons-list-view"></span> <a href="<?php echo esc_url( Helper::get_log_url( $url ) ); ?>"><?php echo esc_html__( 'Show log entries', 'external-files-in-media-library' ); ?></a></li>
+			<?php
+		}
+		if ( current_user_can( EFML_CAP_NAME ) && $external_file_obj->get_file_type_obj()->has_thumbs() ) {
+			?>
+			<li><span class="dashicons dashicons-images-alt"></span> <a href="<?php echo esc_url( $external_file_obj->get_thumbnail_reset_url() ); ?>"><?php echo esc_html__( 'Reset thumbnails', 'external-files-in-media-library' ); ?></a></li>
 			<?php
 		}
 		?>
@@ -609,7 +555,7 @@ class Files {
 	}
 
 	/**
-	 * Switch the hosting of a single file from local to extern or extern to local.
+	 * Switch the hosting of a single file from "local to extern" or "extern to local".
 	 *
 	 * @return       void
 	 */
@@ -635,7 +581,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			$result = array(
 				'state'   => 'error',
 				'message' => __( 'Given file is not an external file.', 'external-files-in-media-library' ),
@@ -700,11 +646,11 @@ class Files {
 		$external_file_obj = $this->get_file( $post->ID );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $actions;
 		}
 
-		// if file is not available, show hint.
+		// if file is not available, remove actions and show hint.
 		if ( false === $external_file_obj->is_available() ) {
 			// remove actions if file is not available.
 			if ( ! empty( $actions['edit'] ) ) {
@@ -715,10 +661,10 @@ class Files {
 				unset( $actions['download'] ); }
 
 			// add custom hint.
-			$actions['eml-hint-availability'] = __( 'URL-File is NOT available', 'external-files-in-media-library' );
+			$actions['eml-hint-availability'] = __( 'External file is NOT available', 'external-files-in-media-library' );
 		}
 
-		// if file is using a not allowed mime type, show hint as action.
+		// if file is using a not allowed mime type, remove action and show hint.
 		if ( false === $external_file_obj->is_mime_type_allowed() ) {
 			// remove actions if file mime type is not allowed.
 			if ( ! empty( $actions['edit'] ) ) {
@@ -739,23 +685,25 @@ class Files {
 	/**
 	 * Prevent output as file if availability is not given.
 	 *
-	 * @param string $file The file.
-	 * @param int    $post_id The post-ID.
+	 * @source https://developer.wordpress.org/reference/hooks/get_attached_file/
 	 *
-	 * @return string
+	 * @param false|string $file The file.
+	 * @param int          $post_id The post-ID.
+	 *
+	 * @return false|string
 	 */
-	public function get_attached_file( string $file, int $post_id ): string {
+	public function get_attached_file( false|string $file, int $post_id ): false|string {
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $file;
 		}
 
 		// return nothing to prevent output as file is not available or is using a not allowed mime type.
 		if ( false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
-			return '';
+			return false;
 		}
 
 		// return normal file-name.
@@ -765,8 +713,10 @@ class Files {
 	/**
 	 * Prevent image downsizing for external hosted images.
 	 *
+	 * @source https://developer.wordpress.org/reference/hooks/image_downsize/
+	 *
 	 * @param bool|array<int,mixed> $result        The resulting array with image-data.
-	 * @param int|string            $attachment_id The attachment ID.
+	 * @param int|string            $attachment_id The attachment ID (also as string for compatibility with other plugins).
 	 * @param array<int>|string     $size               The requested size.
 	 *
 	 * @return bool|array<int,mixed>
@@ -776,7 +726,7 @@ class Files {
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $result;
 		}
 
@@ -907,7 +857,7 @@ class Files {
 
 		// log the event.
 		/* translators: %1$s will be replaced by the image sizes. */
-		Log::get_instance()->create( sprintf( __( 'Generated new thumb for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'New thumb for %1$s generated', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
 
 		// return the thumb.
 		return array(
@@ -924,43 +874,31 @@ class Files {
 	 * @return void
 	 */
 	public function import_end(): void {
-		// loop through all imported external files and update their wp_attached_file-setting.
-		foreach ( $this->get_imported_external_files() as $external_file ) {
-			update_post_meta( $external_file->get_id(), '_wp_attached_file', $external_file->get_url() );
-		}
-
-		// get all imported external files attachments.
-		$query  = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
-				array(
+		add_filter(
+			'eml_files_query',
+			function ( array $query ) {
+				// extend the query to only get files we imported.
+				$query['meta_query'][] = array(
 					'key'   => EFML_POST_IMPORT_MARKER,
 					'value' => 1,
-				),
-			),
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
+				);
+
+				// return the resulting query.
+				return $query;
+			}
 		);
-		$result = new WP_Query( $query );
 
-		// bail if no results found.
-		if ( 0 === $result->post_count ) {
-			return;
-		}
-
-		// delete the import marker for each of these files.
-		foreach ( $result->get_posts() as $attachment_id ) {
-			// get the ID.
-			$attachment_id = absint( $attachment_id );
-
-			// delete the entry.
-			delete_post_meta( $attachment_id, EFML_POST_IMPORT_MARKER );
+		// loop through all imported external files and update their wp_attached_file-setting.
+		foreach ( $this->get_files() as $external_file ) {
+			update_post_meta( $external_file->get_id(), '_wp_attached_file', $external_file->get_url() );
+			delete_post_meta( $external_file->get_id(), EFML_POST_IMPORT_MARKER );
 		}
 	}
 
 	/**
 	 * Disable attachment-pages for external files.
+	 *
+	 * @source https://developer.wordpress.org/reference/hooks/redirect_canonical/
 	 *
 	 * @param string $redirect_url The redirect URL to use.
 	 *
@@ -981,7 +919,7 @@ class Files {
 		$post_id = get_the_ID();
 
 		// bail if no post ID is given.
-		if ( ! $post_id ) {
+		if ( ! is_int( $post_id ) ) {
 			return $redirect_url;
 		}
 
@@ -989,7 +927,7 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $redirect_url;
 		}
 
@@ -997,12 +935,13 @@ class Files {
 		global $wp_query;
 		$wp_query->set_404();
 		status_header( 404 );
-
 		return $redirect_url;
 	}
 
 	/**
 	 * Change the URL in srcset-attribute for each attachment.
+	 *
+	 * @source https://developer.wordpress.org/reference/hooks/wp_calculate_image_srcset/
 	 *
 	 * @param array<string> $sources Array with srcset-data if the image.
 	 * @param array<string> $size_array Array with sizes for images.
@@ -1018,7 +957,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $sources;
 		}
 
@@ -1039,22 +978,24 @@ class Files {
 	 * Force permalink-URL for file-attribute in meta-data for external URL-files
 	 * to change the link-target if attachment-pages are disabled via attachment_link-hook.
 	 *
+	 * @source https://developer.wordpress.org/reference/hooks/wp_get_attachment_metadata/
+	 *
 	 * @param array<string,string> $data The image-data.
-	 * @param int                  $attachment_id The attachment-ID.
+	 * @param int|string           $attachment_id The attachment-ID (also as string for compatibility with other plugins).
 	 *
 	 * @return array<string,string>
 	 */
-	public function get_attachment_metadata( array $data, int $attachment_id ): array {
+	public function get_attachment_metadata( array $data, int|string $attachment_id ): array {
 		// get the external file object.
-		$external_file_obj = $this->get_file( $attachment_id );
+		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $data;
 		}
 
 		// set permalink as file.
-		$data['file'] = (string) get_permalink( $attachment_id );
+		$data['file'] = (string) get_permalink( absint( $attachment_id ) );
 
 		// return resulting data array.
 		return $data;
@@ -1085,25 +1026,9 @@ class Files {
 	}
 
 	/**
-	 * Return the thumbnail reset URL for single external file.
-	 *
-	 * @param File $external_file_obj The external file object.
-	 *
-	 * @return string
-	 */
-	private function get_thumbnail_reset_url( File $external_file_obj ): string {
-		return add_query_arg(
-			array(
-				'action' => 'eml_reset_thumbnails',
-				'post'   => $external_file_obj->get_id(),
-				'nonce'  => wp_create_nonce( 'eml-reset-thumbnails' ),
-			),
-			get_admin_url() . 'admin.php'
-		);
-	}
-
-	/**
 	 * Reset thumbnails if single file by request.
+	 *
+	 * Hint: the thumbs are generated by WordPress itself. We must not run this here, we just delete existing thumbs.
 	 *
 	 * @return void
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
@@ -1125,15 +1050,13 @@ class Files {
 		$external_file_obj = $this->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
 
 		// delete the thumbs of this file.
 		$external_file_obj->delete_thumbs();
-
-		// generate the thumbs.
 
 		// redirect user.
 		wp_safe_redirect( wp_get_referer() );
@@ -1166,7 +1089,7 @@ class Files {
 	 * @return array<array<string,string>>
 	 */
 	public function add_help( array $help_list ): array {
-		$content  = '<h1>' . __( 'Upload external files', 'external-files-in-media-library' ) . '</h1>';
+		$content  = '<h1>' . __( 'Add external files', 'external-files-in-media-library' ) . '</h1>';
 		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
 		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
 		/* translators: %1$s will be replaced by a URL. */
@@ -1182,7 +1105,7 @@ class Files {
 		// add help for the settings of this plugin.
 		$help_list[] = array(
 			'id'      => 'eml-upload',
-			'title'   => __( 'Upload external files', 'external-files-in-media-library' ),
+			'title'   => __( 'Add external files', 'external-files-in-media-library' ),
 			'content' => $content,
 		);
 
@@ -1207,7 +1130,7 @@ class Files {
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if this is not an external file.
-		if ( ! ( false !== $external_file_obj && false !== $external_file_obj->is_valid() ) ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $image_meta;
 		}
 
@@ -1221,98 +1144,6 @@ class Files {
 
 		// return resulting meta.
 		return $image_meta;
-	}
-
-	/**
-	 * Add archive via AJAX-request.
-	 *
-	 * @return void
-	 */
-	public function add_archive_via_ajax(): void {
-		// check nonce.
-		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
-
-		// get the type.
-		$type = filter_input( INPUT_POST, 'type', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// get the URL.
-		$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if type or URL is not given.
-		if ( is_null( $type ) || is_null( $url ) ) {
-			wp_send_json(
-				array(
-					'detail' =>
-						array(
-							'title'   => __( 'Error', 'external-files-in-media-library' ),
-							'texts'   => array( '<p>' . __( 'The directory could not be saved as a directory archive.', 'external-files-in-media-library' ) . '</p>' ),
-							'buttons' => array(
-								array(
-									'action'  => 'closeDialog();',
-									'variant' => 'primary',
-									'text'    => __( 'OK', 'external-files-in-media-library' ),
-								),
-							),
-						),
-				)
-			);
-		}
-
-		// get the login.
-		$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $login ) ) {
-			$login = '';
-		}
-
-		// get the password.
-		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $password ) ) {
-			$password = '';
-		}
-
-		// get the API key.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $api_key ) ) {
-			$api_key = '';
-		}
-
-		// get the credentials from the used term.
-		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
-		if ( $term_id > 0 ) {
-			// get the term.
-			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
-
-			if ( ! empty( $term_data ) ) {
-				$login    = $term_data['login'];
-				$password = $term_data['password'];
-				$api_key  = $term_data['api_key'];
-			}
-		}
-
-		// add the archive.
-		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
-
-		// return OK.
-		wp_send_json(
-			array(
-				'detail' =>
-												array(
-													'title'   => __( 'Directory Archive saved', 'external-files-in-media-library' ),
-													'texts'   => array(
-														'<p><strong>' . __( 'The directory has been saved as archive.', 'external-files-in-media-library' ) . '</strong></p>',
-														/* translators: %1$s will be replaced by a URL. */
-														'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in the directory archive</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_url() ) . '</p>',
-													),
-													'buttons' => array(
-														array(
-															'action' => 'closeDialog();',
-															'variant' => 'primary',
-															'text' => __( 'OK', 'external-files-in-media-library' ),
-														),
-													),
-												),
-			)
-		);
 	}
 
 	/**
@@ -1349,5 +1180,42 @@ class Files {
 
 		// return the results of this file.
 		return $results;
+	}
+
+	/**
+	 * Extend info about external file in attachment modal.
+	 *
+	 * @param string  $html The HTML to output.
+	 * @param WP_Post $post The WP_Post object of the requested attachment.
+	 *
+	 * @return string
+	 */
+	public function show_media_info_in_modal( string $html, WP_Post $post ): string {
+		// bail if html is not empty (it is the detail view without modal).
+		if ( ! empty( $html ) ) {
+			return $html;
+		}
+
+		// get the external file object of this post.
+		$external_file_obj = $this->get_file( $post->ID );
+
+		// bail if this is not an external file.
+		if ( ! $external_file_obj->is_valid() ) {
+			return $html;
+		}
+
+		// add infos about the external file.
+		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_html( $external_file_obj->get_url( true ) ) . '">' . Helper::shorten_url( $external_file_obj->get_url( true ) ) . '</span></div>';
+
+		// get the protocol handler.
+		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
+
+		// if it is known, show its title.
+		if ( $protocol_handler instanceof Protocol_Base ) {
+			$html .= '<div class="efml-attachment-source"><strong>' . __( 'External file source:', 'external-files-in-media-library' ) . '</strong> ' . $protocol_handler->get_title() . '</div>';
+		}
+
+		// return the resulting string.
+		return $html;
 	}
 }

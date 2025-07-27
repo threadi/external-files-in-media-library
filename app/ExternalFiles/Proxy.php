@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the proxy-handling.
+ * This file contains the proxy tasks.
  *
  * @package external-files-in-media-library
  */
@@ -85,6 +85,9 @@ class Proxy {
 		 * Run proxy to show called file.
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
+
+		// misc.
+		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 	}
 
 	/**
@@ -127,14 +130,14 @@ class Proxy {
 		// get the query-value.
 		$title = get_query_var( $this->get_slug() );
 
-		// get basename from request for sized images.
-		$size = array();
+		// get basename from request for sized images depending on its dimensions.
+		$dimensions = array();
 		if ( 1 === preg_match( '/(.*)-(.*)x(.*)\.(.*)/', $title, $matches ) ) {
-			$size  = array(
+			$dimensions = array(
 				absint( $matches[2] ),
 				absint( $matches[3] ),
 			);
-			$title = $matches[1] . '.' . $matches[4];
+			$title      = $matches[1] . '.' . $matches[4];
 		}
 
 		// log this event.
@@ -164,7 +167,7 @@ class Proxy {
 		}
 
 		// get cached file path.
-		$cached_file_path = $external_file_obj->get_cache_file( $size );
+		$cached_file_path = $external_file_obj->get_cache_file( $dimensions );
 
 		// bail if file does not exist.
 		if ( ! file_exists( $cached_file_path ) ) {
@@ -178,7 +181,7 @@ class Proxy {
 
 		// get the object of this file type.
 		$file_type_obj = File_Types::get_instance()->get_type_object_for_file_obj( $external_file_obj );
-		$file_type_obj->set_size( $size );
+		$file_type_obj->set_dimensions( $dimensions );
 
 		// output the proxied file.
 		$file_type_obj->get_proxied_file();
@@ -355,5 +358,23 @@ class Proxy {
 
 		// return false if no proxy is enabled.
 		return false;
+	}
+
+	/**
+	 * Return whether proxy is enabled for single external file depending on its file type settings.
+	 *
+	 * @param bool $result               The result.
+	 * @param File $external_file_object The file object.
+	 *
+	 * @return bool
+	 */
+	public function prevent_proxied_url( bool $result, File $external_file_object ): bool {
+		// bail if result is already false.
+		if ( ! $result ) {
+			return false;
+		}
+
+		// return the result of proxy setting on file type of this file.
+		return $external_file_object->get_file_type_obj()->is_proxy_enabled();
 	}
 }

@@ -9,7 +9,7 @@ application password provided by WordPress.
 
 ## The endpoint
 
-`/wp-json/efml/file/`
+`/wp-json/efml/v1/file/`
 
 ## Methods
 
@@ -17,21 +17,21 @@ application password provided by WordPress.
 
 * Creates a new entry for an external URL in the media library
 * Parameters:
-  * “url” with the external URL
-  * “login” with a login (optional)
-  * “password” with the corresponding password (optional)
+  * "url" with the external URL
+  * "login" with a login (optional)
+  * "password" with the corresponding password (optional)
 
 ### GET
 
 * Returns whether a specified external URL exists in the media library
 * Parameters:
-  * “url” with the external URL
+  * "url" with the external URL
 
 ### DELETE
 
 * Deletes a specified external URL
 * Parameters:
-  * “url” with the external URL
+  * "url" with the external URL
 
 ## Notes
 

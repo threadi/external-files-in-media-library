@@ -169,7 +169,6 @@ class Forms {
 				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
-				'add_file_url'                  => Helper::get_add_media_url(),
 				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
@@ -193,7 +192,6 @@ class Forms {
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
 				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
-				'title_add_source'              => __( 'Add Directory Archive', 'external-files-in-media-library' ),
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 			)
@@ -207,7 +205,7 @@ class Forms {
 	 */
 	public function add_multi_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -247,13 +245,13 @@ class Forms {
 	}
 
 	/**
-	 * Output form to enter multiple URLs for external files.
+	 * Output form to enter single URL of an external file.
 	 *
 	 * @return void
 	 */
 	public function add_single_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -265,7 +263,7 @@ class Forms {
 	}
 
 	/**
-	 * Process AJAX-request to insert multiple URLs in the media library.
+	 * Process AJAX-request to insert single or multiple URLs in the media library.
 	 *
 	 * @return       void
 	 */
@@ -397,7 +395,7 @@ class Forms {
 		}
 
 		/**
-		 * Mark this hook as deprecated as we do not use it anymore.
+		 * Mark this hook as deprecated as we do not use it anymore since 5.0.0.
 		 */
 		apply_filters_deprecated( 'eml_import_add_to_queue', array( false, array() ), '5.0.0' );
 
@@ -405,7 +403,7 @@ class Forms {
 		$errors = array();
 
 		/**
-		 * Run additional tasks just before AJAX-related import of URLs is started.
+		 * Run additional tasks just before AJAX-related import of URLs is starting.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array List of URLs to import.
@@ -534,7 +532,7 @@ class Forms {
 		// get the running marker.
 		$running = absint( get_option( 'eml_import_running_' . $user_id, 0 ) );
 
-		// if import is not running build the dialog for the response.
+		// if import is not running anymore, build the dialog for the response.
 		$dialog = array();
 		if ( 1 !== $running ) {
 			// collect result text.
@@ -564,11 +562,6 @@ class Forms {
 							'action'  => 'closeDialog();',
 							'variant' => 'primary',
 							'text'    => __( 'Done', 'external-files-in-media-library' ),
-						),
-						array(
-							'action'  => 'location.href="' . Helper::get_log_url() . '";',
-							'variant' => 'secondary',
-							'text'    => __( 'Go to logs', 'external-files-in-media-library' ),
 						),
 						array(
 							'action'  => 'location.href="' . Helper::get_media_library_url() . '";',

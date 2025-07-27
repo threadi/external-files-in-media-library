@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -120,7 +119,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// add the HTML-code.
-		$form .= '<div><label for="folderly_categories">' . __( 'Choose categories:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
+		$form .= '<div><label for="folderly_categories">' . __( 'Choose categories of plugin Folderly:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -155,7 +154,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		// create the HTML-code.
 		$form = '';
 		foreach ( $terms as $term ) {
-			$form .= '<label for="folderly_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="folderly_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="folderly_categories" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+			$form .= '<label for="folderly_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="folderly_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="folderly_categories[]" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
 		}
 
 		// return the resulting HTML-code.
@@ -236,7 +235,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// assign the file to the categories.
-		foreach ( $categories as $cat_id => $enabled ) {
+		foreach ( $categories as $cat_id ) {
 			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
 		}
 	}
@@ -244,21 +243,13 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Save external file to a configured categories after import.
 	 *
-	 * @param string $url The used URL.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 */
-	public function save_url_in_categories( string $url ): void {
+	public function save_url_in_categories( File $external_file_obj ): void {
 		// check for nonce.
 		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
-			return;
-		}
-
-		// get the external file object.
-		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
-
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj ) {
 			return;
 		}
 
@@ -266,7 +257,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		$folderly_categories = isset( $_POST['folderly_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['folderly_categories'] ) ) : array();
 
 		// assign the file to the categories.
-		foreach ( $folderly_categories as $cat_id => $enabled ) {
+		foreach ( $folderly_categories as $cat_id ) {
 			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'folderly_attachment' );
 		}
 	}

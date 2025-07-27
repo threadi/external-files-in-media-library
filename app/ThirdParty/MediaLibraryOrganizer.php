@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Enhanced Media Library".
+ * File to handle support for plugin "Media Library Organizer".
  *
  * @package external-files-in-media-library
  */
@@ -11,13 +11,12 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle support for this plugin.
  */
-class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
+class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * The term ID used in a sync.
@@ -29,9 +28,9 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?EnhancedMediaLibrary
+	 * @var ?MediaLibraryOrganizer
 	 */
-	private static ?EnhancedMediaLibrary $instance = null;
+	private static ?MediaLibraryOrganizer $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -48,9 +47,9 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return EnhancedMediaLibrary
+	 * @return MediaLibraryOrganizer
 	 */
-	public static function get_instance(): EnhancedMediaLibrary {
+	public static function get_instance(): MediaLibraryOrganizer {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -65,7 +64,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if plugin is not enabled.
-		if ( ! Helper::is_plugin_active( 'enhanced-media-library/enhanced-media-library.php' ) ) {
+		if ( ! Helper::is_plugin_active( 'media-library-organizer/media-library-organizer.php' ) ) {
 			return;
 		}
 
@@ -98,7 +97,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		// get the categories.
 		$terms = get_terms(
 			array(
-				'taxonomy'   => 'media_category',
+				'taxonomy'   => 'mlo-category',
 				'hide_empty' => false,
 			)
 		);
@@ -114,13 +113,13 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get the actual setting.
-		$assigned_categories = get_term_meta( $term_id, 'eml_categories', true );
+		$assigned_categories = get_term_meta( $term_id, 'mlo_categories', true );
 		if ( ! is_array( $assigned_categories ) ) {
 			$assigned_categories = array();
 		}
 
 		// add the HTML-code.
-		$form .= '<div><label for="eml_categories">' . __( 'Choose categories:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
+		$form .= '<div><label for="mlo_categories">' . __( 'Choose categories of plugin Media Library Organizer', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( array_flip( $assigned_categories ) ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -137,7 +136,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		// get the categories.
 		$terms = get_terms(
 			array(
-				'taxonomy'   => 'media_category',
+				'taxonomy'   => 'mlo-category',
 				'hide_empty' => false,
 			)
 		);
@@ -155,7 +154,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		// create the HTML-code.
 		$form = '';
 		foreach ( $terms as $term ) {
-			$form .= '<label for="eml_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="eml_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="eml_categories" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+			$form .= '<label for="mlo_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="mlo_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="mlo_categories[]" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
 		}
 
 		// return the resulting HTML-code.
@@ -184,16 +183,16 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$term_id = absint( $fields['term_id'] );
 
 		// get our fields from request.
-		$eml_categories = isset( $_POST['fields']['eml_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['eml_categories'] ) ) : array();
+		$categories = isset( $_POST['fields']['mlo_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['mlo_categories'] ) ) : array();
 
-		// if eml_categories is empty, just remove the setting.
-		if ( empty( $eml_categories ) ) {
-			delete_term_meta( $term_id, 'eml_categories' );
+		// if folderly_categories is empty, just remove the setting.
+		if ( empty( $categories ) ) {
+			delete_term_meta( $term_id, 'mlo_categories' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'eml_categories', $eml_categories );
+		update_term_meta( $term_id, 'mlo_categories', array_flip( $categories ) );
 	}
 
 	/**
@@ -228,7 +227,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get the folder setting from this term ID.
-		$categories = get_term_meta( $this->get_term_id(), 'eml_categories', true );
+		$categories = get_term_meta( $this->get_term_id(), 'mlo_categories', true );
 
 		// bail if no categories are set.
 		if ( empty( $categories ) ) {
@@ -236,8 +235,8 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// assign the file to the categories.
-		foreach ( $categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
+		foreach ( $categories as $cat_id ) {
+			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category' );
 		}
 	}
 
@@ -255,11 +254,11 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$eml_categories = isset( $_POST['eml_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['eml_categories'] ) ) : array();
+		$categories = isset( $_POST['mlo_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['mlo_categories'] ) ) : array();
 
 		// assign the file to the categories.
-		foreach ( $eml_categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
+		foreach ( $categories as $cat_id ) {
+			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category', true );
 		}
 	}
 

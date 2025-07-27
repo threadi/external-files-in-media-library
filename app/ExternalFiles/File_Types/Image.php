@@ -22,7 +22,7 @@ class Image extends File_Types_Base {
 	 *
 	 * @var string
 	 */
-	protected string $name = 'Image';
+	protected string $name = 'Images';
 
 	/**
 	 * Define mime types this object is used for.
@@ -37,6 +37,15 @@ class Image extends File_Types_Base {
 		'image/gif',
 		'image/webp',
 	);
+
+	/**
+	 * Return the file type title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Images', 'external-files-in-media-library' );
+	}
 
 	/**
 	 * Output of proxied file.
@@ -54,7 +63,7 @@ class Image extends File_Types_Base {
 		$external_file_obj = $this->get_file();
 
 		// get the cached file.
-		$cached_file = $external_file_obj->get_cache_file( $this->get_size() );
+		$cached_file = $external_file_obj->get_cache_file( $this->get_dimensions() );
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -162,7 +171,7 @@ class Image extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 1 === absint( get_option( 'eml_proxy' ) );
+		return 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) );
 	}
 
 	/**
@@ -177,12 +186,12 @@ class Image extends File_Types_Base {
 		}
 
 		// bail if no proxy age is set.
-		if ( absint( get_option( 'eml_proxy_max_age' ) ) <= 0 ) {
+		if ( absint( get_option( 'eml_images_proxy_max_age' ) ) <= 0 ) {
 			return false;
 		}
 
 		// compare cache file date with max proxy age.
-		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_proxy_max_age' ) ) * 60 * 60 );
+		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_images_proxy_max_age' ) ) * 60 * 60 );
 	}
 
 	/**

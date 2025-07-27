@@ -252,7 +252,7 @@ class Settings {
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
-		$field->set_description( sprintf( __( 'Choose the mime-types you wish to allow as external URL. If you change this setting, already used external files will not change their accessibility in frontend. If you miss a mime-type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
+		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
 		$field->set_options( $mime_types );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
 		$setting->set_field( $field );
@@ -354,7 +354,7 @@ class Settings {
 		$setting->set_default( $first_administrator );
 		$field = new Select();
 		$field->set_title( __( 'User new files should be assigned to', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g. via CLI-import). New files are normally assigned to the user who add them.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g. via WP CLI import). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
 		$field->set_options( $users );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -368,7 +368,7 @@ class Settings {
 			array(
 				'type'        => 'Number',
 				'title'       => __( 'Max. Timeout in seconds', 'external-files-in-media-library' ),
-				'description' => __( 'Defines the maximum timeout for any external request for files.', 'external-files-in-media-library' ),
+				'description' => __( 'Sets the maximum timeout for all external requests for files.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -388,7 +388,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_log_mode' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
-		$setting->set_default( Helper::is_development_mode() ? 1 : 0 );
+		$setting->set_default( Helper::is_development_mode() ? 2 : 0 );
 		$field = new Select();
 		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
 		$field->set_options(
@@ -548,7 +548,7 @@ class Settings {
 		}
 
 		// set capabilities.
-		Helper::set_capabilities( $values );
+		Roles::get_instance()->set( $values );
 
 		// return given value.
 		return $values;
@@ -605,7 +605,7 @@ class Settings {
 	 * @return void
 	 */
 	public function show_protocol_hint(): void {
-		echo esc_html__( 'These settings only apply to files that are provided via http. Files from other protocols (such as FTP) are generally only saved locally without a proxy.', 'external-files-in-media-library' );
+		echo wp_kses_post( __( 'These settings only apply to files that are provided via <code>HTTP</code>. Files from other protocols (such as <code>FTP</code>) are generally only saved locally without a proxy.', 'external-files-in-media-library' ) );
 	}
 
 	/**
@@ -672,6 +672,7 @@ class Settings {
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function disable_gprd_hint_by_request(): void {
+		// check referer.
 		check_admin_referer( 'eml-disable-gprd-hint', 'nonce' );
 
 		// set the option.

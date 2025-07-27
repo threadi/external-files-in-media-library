@@ -224,11 +224,11 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Save external file to a configured folder after import.
 	 *
-	 * @param string $url The used URL.
+	 * @param File $external_file_obj The external files object.
 	 *
 	 * @return void
 	 */
-	public function save_url_in_folder( string $url ): void {
+	public function save_url_in_folder( File $external_file_obj ): void {
 		// check nonce.
 		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;
@@ -246,14 +246,6 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 
 		// bail if given "catfolder" value is not > 0.
 		if ( 0 === absint( $_POST['catfolder'] ) ) {
-			return;
-		}
-
-		// get the external file object.
-		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
-
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj ) {
 			return;
 		}
 

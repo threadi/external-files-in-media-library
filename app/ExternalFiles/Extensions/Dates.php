@@ -72,6 +72,7 @@ class Dates extends Extension_Base {
 		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
+		add_filter( 'efml_service_rest_file_data', array( $this, 'add_file_date_from_rest_api' ), 10, 3 );
 	}
 
 	/**
@@ -156,7 +157,43 @@ class Dates extends Extension_Base {
 	}
 
 	/**
-	 * Add a checkbox to mark the files to add them to queue.
+	 * Add date from REST API response to file data.
+	 *
+	 * @param array<string,mixed>  $results The results to use.
+	 * @param string $file_path The used URL.
+	 * @param array<string,mixed>  $rest_file_data The REST API response data.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_file_date_from_rest_api( array $results, string $file_path, array $rest_file_data ): array {
+		// get value from request.
+		$use_date = isset( $_POST['use_dates'] ) ? absint( $_POST['use_dates'] ) : -1;
+
+		// bail if not set from request.
+		if ( -1 === $use_date ) {
+			return $results;
+		}
+
+		// bail if not enabled in request.
+		if ( 0 === $use_date ) {
+			return $results;
+		}
+
+		// bail if no last-modified is given.
+		if ( empty( $rest_file_data['date'] ) ) {
+			return $results;
+		}
+
+		// add the last-modified date.
+		$results['last-modified'] = strtotime( $rest_file_data['date'] );
+
+		// return the resulting array.
+		return $results;
+	}
+
+	/**
+	 * Add a checkbox to mark the files to use their external dates.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 *

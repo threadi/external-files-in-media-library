@@ -12,7 +12,12 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\Plugin\Crypt_Base;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
  * Handler controls how to import external files for real in media library without external connection.
@@ -65,6 +70,7 @@ class Real_Import extends Extension_Base {
 	public function init(): void {
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
+		add_action( 'admin_action_eml_real_import_external_file', array( $this, 'import_local_per_request' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
@@ -74,6 +80,11 @@ class Real_Import extends Extension_Base {
 		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
+		add_action( 'eml_show_file_info', array( $this, 'add_option_to_real_import_file' ) );
+
+		// misc.
+		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_action' ) );
+		add_filter( 'handle_bulk_actions-upload', array( $this, 'run_bulk_action' ), 10, 3 );
 	}
 
 	/**
@@ -293,5 +304,197 @@ class Real_Import extends Extension_Base {
 
 		// return the settings.
 		return $settings;
+	}
+
+	/**
+	 * Add option to real import an external file.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function add_option_to_real_import_file( File $external_file_obj ): void {
+		// bail if capability is not set.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
+		// create the import URL.
+		$url = add_query_arg(
+			array(
+				'action' => 'eml_real_import_external_file',
+				'nonce'  => wp_create_nonce( 'eml-real-import-external-file' ),
+				'post'   => $external_file_obj->get_id(),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			/* translators: %1$s will be replaced by the file name. */
+			'title'   => sprintf( __( 'Import %1$s as real file', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
+			'texts'   => array(
+				/* translators: %1$s will be replaced by the file name. */
+				'<p><strong>' . sprintf( __( 'Are you sure you want to import %1$s in your media library?', 'external-files-in-media-library' ), $external_file_obj->get_title() ) . '</strong></p>',
+				'<p>' . __( 'The file will be saved as real file in your media library without external connections.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'It will then no longer be managed by External Files for Media Library for you.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, import', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'No', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		?>
+		<li>
+			<span id="eml_url_real_import"><span class="dashicons dashicons-database-import"></span> <a href="#" class="easy-dialog-for-wordpress" data-dialog="<?php echo esc_attr( Helper::get_json( $dialog ) ); ?>"><?php echo esc_html__( 'Import as real file', 'external-files-in-media-library' ); ?></a></span>
+		</li>
+		<?php
+	}
+
+	/**
+	 * Import single file as real local file.
+	 *
+	 * @param File $external_file_obj The object of the external file which will be changed.
+	 *
+	 * @return void
+	 */
+	private function import_local( File $external_file_obj ): void {
+		// bail if this file is not valid.
+		if ( ! $external_file_obj->is_valid() ) {
+			return;
+		}
+
+		// switch to local if file is external and bail if it is run in an error.
+		if ( ! $external_file_obj->is_locally_saved() && ! $external_file_obj->switch_to_local() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'File could not be converted to real local file as switching to local hosting failed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error' );
+
+			// do nothing more.
+			return;
+		}
+
+		// remove the URL from file settings.
+		$external_file_obj->remove_url();
+
+		// remove availability.
+		$external_file_obj->remove_availability();
+
+		// remove locally saved marker.
+		$external_file_obj->remove_local_saved();
+
+		// remove the credentials.
+		$external_file_obj->remove_login();
+		$external_file_obj->remove_password();
+
+		// clear the cache.
+		$external_file_obj->delete_cache();
+		$external_file_obj->delete_thumbs();
+
+		// remove the import date.
+		$external_file_obj->remove_date();
+
+		// log this event.
+		Log::get_instance()->create( __( 'File from external URL has been saved local.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+	}
+
+	/**
+	 * Save an existing external file as real file in media library per request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function import_local_per_request(): void {
+		// check referer.
+		check_admin_referer( 'eml-real-import-external-file', 'nonce' );
+
+		// get referer.
+		$referer = wp_get_referer();
+
+		// if referer is false, set empty string.
+		if ( ! $referer ) {
+			$referer = '';
+		}
+
+		// get attachment ID.
+		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if attachment ID is not given.
+		if ( 0 === $attachment_id ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// get the external files object.
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+
+		// import the file.
+		$this->import_local( $external_file_obj );
+
+		// forward the user.
+		wp_safe_redirect( $referer );
+		exit;
+	}
+
+	/**
+	 * Add bulk option to import external files as real files.
+	 *
+	 * @param array<string,string> $actions List of actions.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_bulk_action( array $actions ): array {
+		// bail if capability is not set.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return $actions;
+		}
+
+		// add our bulk action.
+		$actions['eml-real-import'] = __( 'Import as real file', 'external-files-in-media-library' );
+
+		// return resulting list of actions.
+		return $actions;
+	}
+
+	/**
+	 * If our bulk action is run, check each marked file if it is an external file and change it as
+	 * real file.
+	 *
+	 * @param string         $sendback The return value.
+	 * @param string         $doaction The action used.
+	 * @param array<int,int> $items The items to take action.
+	 *
+	 * @return string
+	 */
+	public function run_bulk_action( string $sendback, string $doaction, array $items ): string {
+		// bail if action is not ours.
+		if ( 'eml-real-import' !== $doaction ) {
+			return $sendback;
+		}
+
+		// bail if item list is empty.
+		if ( empty( $items ) ) {
+			return $sendback;
+		}
+
+		// check the files and change its state.
+		foreach ( $items as $attachment_id ) {
+			// get external file object for this attachment.
+			$external_file_obj = Files::get_instance()->get_file( absint( $attachment_id ) );
+
+			// change it.
+			$this->import_local( $external_file_obj );
+		}
+
+		// return the given value.
+		return $sendback;
 	}
 }

@@ -84,10 +84,10 @@ class Protocol_Base {
 
 		$instance = $this;
 		/**
-		 * Filter the tcp protocols.
+		 * Filter the protocols.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array<string,int> $tcp_protocols List of tcp protocol of this object (e.g. 'http').
+		 * @param array<string,int> $tcp_protocols List of protocols of this object (e.g. 'http' or 'ftp').
 		 * @param Protocol_Base $instance The actual object.
 		 */
 		return apply_filters( 'eml_tcp_protocols', $tcp_protocols, $instance );
@@ -96,7 +96,7 @@ class Protocol_Base {
 	/**
 	 * Return the default port of the used protocol.
 	 *
-	 * @param string $tcp_protocol The protocol (e.g. "ftps").
+	 * @param string $tcp_protocol The protocol (e.g. 'http' or 'ftp').
 	 *
 	 * @return int
 	 */
@@ -119,7 +119,9 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check if URL is compatible with the given protocol.
+	 * Check if URL is compatible with the given protocol by compare the protocol handler
+	 * and the start of the given URL with the supported protocols of this protocol handler
+	 * (e.g. 'http' or 'ftp').
 	 *
 	 * @return bool
 	 */
@@ -130,7 +132,7 @@ class Protocol_Base {
 			}
 		}
 
-		// return false if no protocol has been found.
+		// return false if no compatible protocol has been found.
 		return false;
 	}
 
@@ -221,11 +223,11 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check given URL for duplicate.
+	 * Return whether given URL is already exists in media library, it is then a duplicate.
 	 *
 	 * @param string $url The URL to check.
 	 *
-	 * @return bool
+	 * @return bool True if duplicate has been found.
 	 */
 	public function check_for_duplicate( string $url ): bool {
 		$false = false;
@@ -310,7 +312,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Get temp file from given URL.
+	 * Return temp file from given URL.
 	 *
 	 * @param string             $url The given URL.
 	 * @param WP_Filesystem_Base $filesystem The file system handler.

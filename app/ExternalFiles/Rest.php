@@ -14,7 +14,7 @@ use WP_REST_Request;
 use WP_REST_Server;
 
 /**
- * Controller for REST API support.
+ * Object to handle the REST API support.
  */
 class Rest {
 	/**
@@ -27,16 +27,14 @@ class Rest {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -61,7 +59,7 @@ class Rest {
 	}
 
 	/**
-	 * Register REST endpoints.
+	 * Register REST API endpoints.
 	 *
 	 * @return void
 	 */
@@ -73,7 +71,7 @@ class Rest {
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'add_file' ),
 				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
+					return current_user_can( EFML_CAP_NAME );
 				},
 			)
 		);
@@ -95,7 +93,7 @@ class Rest {
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'delete_file' ),
 				'permission_callback' => function () {
-					return current_user_can( 'manage_options' );
+					return current_user_can( EFML_CAP_NAME );
 				},
 			)
 		);

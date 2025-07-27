@@ -258,7 +258,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f120";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-drop-box a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-drop-box span:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox span:before {
 	content: url(../gfx/dropbox_icon.svg);
 }
 
@@ -266,7 +266,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a.c
 	display: none;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-drop-box a.connect {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a.connect {
 	margin-top: 24px;
 }
 

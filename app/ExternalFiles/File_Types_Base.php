@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle different file types.
+ * Object to provide the base functions for each file type we support.
  */
 class File_Types_Base {
 	/**
@@ -71,16 +71,17 @@ class File_Types_Base {
 			return false;
 		}
 
+		// set the mime type.
+		$mime_type = $this->get_mime_type();
+
 		// get the external file object.
 		$external_file_obj = $this->get_file();
 
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj ) {
-			return false;
+		// get mime type from external file object, if set.
+		if ( $external_file_obj ) {
+			// use the mime type from the external file object.
+			$mime_type = $external_file_obj->get_mime_type();
 		}
-
-		// use the mime type from the external file object.
-		$mime_type = $external_file_obj->get_mime_type();
 
 		// check the mime types.
 		$result = in_array( $mime_type, $this->get_mime_types(), true );
@@ -91,14 +92,14 @@ class File_Types_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
 		 * @param bool $result The result (true or false).
-		 * @param File $external_file_obj The external file object.
+		 * @param File|false $external_file_obj The external file object.
 		 * @param string $mime_type The used mime type (added in 3.0.0).
 		 */
 		return apply_filters( 'eml_file_type_compatibility_result', $result, $external_file_obj, $mime_type );
 	}
 
 	/**
-	 * Return the given proxied file.
+	 * Output the given proxied file.
 	 *
 	 * @return void
 	 */
@@ -149,22 +150,31 @@ class File_Types_Base {
 	}
 
 	/**
-	 * Return the configured size.
+	 * Return the file type title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return '';
+	}
+
+	/**
+	 * Return the configured dimensions as array (0 => width, 1 => height).
 	 *
 	 * @return array<int>
 	 */
-	protected function get_size(): array {
+	protected function get_dimensions(): array {
 		return $this->size;
 	}
 
 	/**
-	 * Set the size to use.
+	 * Set the dimensions to use.
 	 *
-	 * @param array<int> $size The size as array (0 => width, 1 => height).
+	 * @param array<int> $size The dimensions as array (0 => width, 1 => height).
 	 *
 	 * @return void
 	 */
-	public function set_size( array $size ): void {
+	public function set_dimensions( array $size ): void {
 		$this->size = $size;
 	}
 

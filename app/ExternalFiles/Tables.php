@@ -202,7 +202,7 @@ class Tables {
 		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
 			// bail if it is not an external file.
-			if ( ! $external_file || false === $external_file->is_valid() ) {
+			if ( ! $external_file->is_valid() ) {
 				echo '<span class="dashicons dashicons-no"></span>';
 			} else {
 				echo '<span class="dashicons dashicons-yes"></span>';
@@ -215,7 +215,7 @@ class Tables {
 		}
 
 		// show additional infos about external files.
-		if ( 'external_files_source' === $column_name && $external_file && $external_file->is_valid() ) {
+		if ( 'external_files_source' === $column_name && $external_file->is_valid() ) {
 			// get the unproxied URL.
 			$url = $external_file->get_url( true );
 

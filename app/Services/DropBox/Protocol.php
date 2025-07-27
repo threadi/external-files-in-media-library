@@ -37,7 +37,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not a DropBox URL.
-		if ( ! str_starts_with( $this->get_url(), 'DropBox' ) ) {
+		if ( ! str_starts_with( $this->get_url(), DropBox::get_instance()->get_name() ) ) {
 			return false;
 		}
 
@@ -63,13 +63,13 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
-	 * Check the availability of a given URL.
+	 * Return infos to each given URL.
 	 *
 	 * @return array<int,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.
-		$url = str_replace( 'DropBox', '', $this->get_url() );
+		$url = str_replace( DropBox::get_instance()->get_name(), '', $this->get_url() );
 
 		// get the client with the given token.
 		$client = new Client( DropBox::get_instance()->get_access_token() );
@@ -108,7 +108,7 @@ class Protocol extends Protocol_Base {
 		$content = stream_get_contents( $client->download( $url ) );
 
 		// bail if content could not be loaded.
-		if ( ! is_string( $content ) ) {
+		if ( ! is_string( $content ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			return array();
 		}
 
@@ -143,5 +143,14 @@ class Protocol extends Protocol_Base {
 	 */
 	public function can_change_hosting(): bool {
 		return false;
+	}
+
+	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return DropBox::get_instance()->get_label();
 	}
 }

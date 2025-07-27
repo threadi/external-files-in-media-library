@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Enhanced Media Library".
+ * File to handle support for plugin "iFolders".
  *
  * @package external-files-in-media-library
  */
@@ -11,14 +11,13 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use iFolders\Models\FoldersModel;
 
 /**
  * Object to handle support for this plugin.
  */
-class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
-
+class IFolders extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * The term ID used in a sync.
 	 *
@@ -29,9 +28,9 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?EnhancedMediaLibrary
+	 * @var ?iFolders
 	 */
-	private static ?EnhancedMediaLibrary $instance = null;
+	private static ?IFolders $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -48,9 +47,9 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return EnhancedMediaLibrary
+	 * @return iFolders
 	 */
-	public static function get_instance(): EnhancedMediaLibrary {
+	public static function get_instance(): IFolders {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -65,7 +64,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if plugin is not enabled.
-		if ( ! Helper::is_plugin_active( 'enhanced-media-library/enhanced-media-library.php' ) ) {
+		if ( ! Helper::is_plugin_active( 'ifolders/ifolders.php' ) ) {
 			return;
 		}
 
@@ -95,32 +94,22 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	public function add_category_selection( string $form, int $term_id ): string {
-		// get the categories.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'media_category',
-				'hide_empty' => false,
-			)
-		);
-
-		// bail on any error.
-		if ( ! is_array( $terms ) ) {
-			return $form;
-		}
+		// get the folders.
+		$folders = FoldersModel::getFolders( 'attachment' );
 
 		// bail if list is empty.
-		if ( empty( $terms ) ) {
+		if ( empty( $folders ) ) {
 			return $form;
 		}
 
 		// get the actual setting.
-		$assigned_categories = get_term_meta( $term_id, 'eml_categories', true );
+		$assigned_categories = get_term_meta( $term_id, 'ifolders_folders', true );
 		if ( ! is_array( $assigned_categories ) ) {
 			$assigned_categories = array();
 		}
 
 		// add the HTML-code.
-		$form .= '<div><label for="eml_categories">' . __( 'Choose categories:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
+		$form .= '<div><label for="ifolders_folders">' . __( 'Choose categories of plugin iFolders:', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( $assigned_categories ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -134,28 +123,18 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	private function get_category_selection( array $mark ): string {
-		// get the categories.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'media_category',
-				'hide_empty' => false,
-			)
-		);
-
-		// bail on any error.
-		if ( ! is_array( $terms ) ) {
-			return '';
-		}
+		// get the folders.
+		$folders = FoldersModel::getFolders( 'attachment' );
 
 		// bail if list is empty.
-		if ( empty( $terms ) ) {
+		if ( empty( $folders ) ) {
 			return '';
 		}
 
 		// create the HTML-code.
 		$form = '';
-		foreach ( $terms as $term ) {
-			$form .= '<label for="eml_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="eml_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="eml_categories" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+		foreach ( $folders as $folder ) {
+			$form .= '<label for="ifolders_folders_' . absint( $folder['id'] ) . '"><input type="checkbox" id="ifolders_folders_' . absint( $folder['id'] ) . '" class="eml-use-for-import eml-multi" name="ifolders_folders[]" value="' . absint( $folder['id'] ) . '"' . ( isset( $mark[ $folder['id'] ] ) ? ' checked' : '' ) . '> ' . esc_html( $folder['title'] ) . '</label>';
 		}
 
 		// return the resulting HTML-code.
@@ -184,16 +163,16 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$term_id = absint( $fields['term_id'] );
 
 		// get our fields from request.
-		$eml_categories = isset( $_POST['fields']['eml_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['eml_categories'] ) ) : array();
+		$folders = isset( $_POST['fields']['ifolders_folders'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['ifolders_folders'] ) ) : array();
 
-		// if eml_categories is empty, just remove the setting.
-		if ( empty( $eml_categories ) ) {
-			delete_term_meta( $term_id, 'eml_categories' );
+		// if folders is empty, just remove the setting.
+		if ( empty( $folders ) ) {
+			delete_term_meta( $term_id, 'ifolders_folders' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'eml_categories', $eml_categories );
+		update_term_meta( $term_id, 'ifolders_folders', $folders );
 	}
 
 	/**
@@ -228,16 +207,16 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get the folder setting from this term ID.
-		$categories = get_term_meta( $this->get_term_id(), 'eml_categories', true );
+		$folders = get_term_meta( $this->get_term_id(), 'ifolders_folders', true );
 
-		// bail if no categories are set.
-		if ( empty( $categories ) ) {
+		// bail if no folders are set.
+		if ( empty( $folders ) ) {
 			return;
 		}
 
 		// assign the file to the categories.
-		foreach ( $categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
+		foreach ( $folders as $folder_id ) {
+			FoldersModel::attachToFolder( 'attachment', $folder_id, array( $external_file_obj->get_id() ) );
 		}
 	}
 
@@ -255,11 +234,11 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$eml_categories = isset( $_POST['eml_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['eml_categories'] ) ) : array();
+		$folders = isset( $_POST['ifolders_folders'] ) ? array_map( 'absint', wp_unslash( $_POST['ifolders_folders'] ) ) : array();
 
 		// assign the file to the categories.
-		foreach ( $eml_categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
+		foreach ( $folders as $folder_id ) {
+			FoldersModel::attachToFolder( 'attachment', $folder_id, array( $external_file_obj->get_id() ) );
 		}
 	}
 
@@ -271,7 +250,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to folders of iFolders', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		return $dialog;
 	}
 }

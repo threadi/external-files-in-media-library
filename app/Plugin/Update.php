@@ -115,22 +115,22 @@ class Update {
 	 * @return void
 	 */
 	private function version201(): void {
-		// get actual capabilities.
-		$caps = get_option( 'eml_allowed_roles' );
+		// get the configured roles.
+		$roles = get_option( 'eml_allowed_roles' );
 
 		// check for array.
-		if ( ! is_array( $caps ) ) {
+		if ( ! is_array( $roles ) ) {
 			$caps = array();
 		}
 
 		// if list is empty, set the defaults.
-		if ( empty( $caps ) ) {
-			$caps = array( 'administrator', 'editor' );
-			update_option( 'eml_allowed_roles', $caps );
+		if ( empty( $roles ) ) {
+			$roles = array( 'administrator', 'editor' );
+			update_option( 'eml_allowed_roles', $roles );
 		}
 
 		// set capabilities.
-		Helper::set_capabilities( $caps );
+		Roles::get_instance()->set( $roles );
 	}
 
 	/**
@@ -229,5 +229,12 @@ class Update {
 		// set new options.
 		update_option( 'eml_user_settings', 1 );
 		update_option( 'eml_import_extensions', Extensions::get_instance()->get_default_extensions() );
+
+		// migrate the image proxy setting.
+		update_option( 'eml_images_proxy', get_option( 'eml_proxy' ) );
+		update_option( 'eml_images_proxy_max_age', get_option( 'eml_proxy_max_age' ) );
+
+		// set configured capabilities.
+		Roles::get_instance()->install();
 	}
 }
