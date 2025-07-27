@@ -364,7 +364,12 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_add_media_url(): string {
-		return add_query_arg( array(), get_admin_url() . 'media-new.php' );
+		return add_query_arg(
+			array(
+				'page' => 'efml_local_directories',
+			),
+			get_admin_url() . 'upload.php'
+		);
 	}
 
 	/**

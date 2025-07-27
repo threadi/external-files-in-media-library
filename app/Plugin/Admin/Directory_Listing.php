@@ -83,6 +83,7 @@ class Directory_Listing {
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_edit_action_for_archive_terms' ) );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 30 );
+		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
 
 		// initialize the serverside tasks object for directory listing.
 		$directory_listing_obj = Init::get_instance();
@@ -477,6 +478,98 @@ class Directory_Listing {
 				'post_type' => 'attachment',
 			),
 			Directory_Listings::get_instance()->get_directory_archive_url()
+		);
+	}
+
+	/**
+	 * Add external source via AJAX-request.
+	 *
+	 * @return void
+	 */
+	public function add_archive_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
+
+		// get the type.
+		$type = filter_input( INPUT_POST, 'type', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get the URL.
+		$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if type or URL is not given.
+		if ( is_null( $type ) || is_null( $url ) ) {
+			wp_send_json(
+				array(
+					'detail' =>
+						array(
+							'title'   => __( 'Error', 'external-files-in-media-library' ),
+							'texts'   => array( '<p>' . __( 'The directory could not be saved as external source.', 'external-files-in-media-library' ) . '</p>' ),
+							'buttons' => array(
+								array(
+									'action'  => 'closeDialog();',
+									'variant' => 'primary',
+									'text'    => __( 'OK', 'external-files-in-media-library' ),
+								),
+							),
+						),
+				)
+			);
+		}
+
+		// get the login.
+		$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( is_null( $login ) ) {
+			$login = '';
+		}
+
+		// get the password.
+		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( is_null( $password ) ) {
+			$password = '';
+		}
+
+		// get the API key.
+		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( is_null( $api_key ) ) {
+			$api_key = '';
+		}
+
+		// get the credentials from the used term.
+		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+		if ( $term_id > 0 ) {
+			// get the term.
+			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+			if ( ! empty( $term_data ) ) {
+				$login    = $term_data['login'];
+				$password = $term_data['password'];
+				$api_key  = $term_data['api_key'];
+			}
+		}
+
+		// add the archive.
+		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
+
+		// return OK.
+		wp_send_json(
+			array(
+				'detail' =>
+					array(
+						'title'   => __( 'External source saved', 'external-files-in-media-library' ),
+						'texts'   => array(
+							'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
+							/* translators: %1$s will be replaced by a URL. */
+							'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), self::get_instance()->get_url() ) . '</p>',
+						),
+						'buttons' => array(
+							array(
+								'action'  => 'closeDialog();',
+								'variant' => 'primary',
+								'text'    => __( 'OK', 'external-files-in-media-library' ),
+							),
+						),
+					),
+			)
 		);
 	}
 }

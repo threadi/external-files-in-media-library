@@ -17,7 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
- * Object to handle the import of files.
+ * Object to handle the import of any external file.
  */
 class Import extends Directory_Listing_Base {
 	/**
@@ -341,11 +341,11 @@ class Import extends Directory_Listing_Base {
 			/**
 			 * Filter whether we import no external files.
 			 *
-			 * Return true if we only import files in media db without external URL.
+			 * Return true if we only import files in media db without external URL settings.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
-			 * @param bool $no_external_object The marker.
+			 * @param bool $no_external_object The marker, must be true to import the file of external URL as local file.
 			 * @param string $url The used URL.
 			 * @param array $file_data The file data.
 			 * @param File $external_file_obj The resulting external file (without any configuration yet).
@@ -406,7 +406,7 @@ class Import extends Directory_Listing_Base {
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
-			$log->create( __( 'Using following settings to save this URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );
+			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );
 
 			/**
 			 * Run additional tasks after new external file has been added.

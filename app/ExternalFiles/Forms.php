@@ -205,7 +205,7 @@ class Forms {
 	 */
 	public function add_multi_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -245,13 +245,13 @@ class Forms {
 	}
 
 	/**
-	 * Output form to enter multiple URLs for external files.
+	 * Output form to enter single URL of an external file.
 	 *
 	 * @return void
 	 */
 	public function add_single_form(): void {
 		// bail if user has not the capability for it.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -263,7 +263,7 @@ class Forms {
 	}
 
 	/**
-	 * Process AJAX-request to insert multiple URLs in the media library.
+	 * Process AJAX-request to insert single or multiple URLs in the media library.
 	 *
 	 * @return       void
 	 */
@@ -395,7 +395,7 @@ class Forms {
 		}
 
 		/**
-		 * Mark this hook as deprecated as we do not use it anymore.
+		 * Mark this hook as deprecated as we do not use it anymore since 5.0.0.
 		 */
 		apply_filters_deprecated( 'eml_import_add_to_queue', array( false, array() ), '5.0.0' );
 
@@ -403,7 +403,7 @@ class Forms {
 		$errors = array();
 
 		/**
-		 * Run additional tasks just before AJAX-related import of URLs is started.
+		 * Run additional tasks just before AJAX-related import of URLs is starting.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array List of URLs to import.
@@ -532,7 +532,7 @@ class Forms {
 		// get the running marker.
 		$running = absint( get_option( 'eml_import_running_' . $user_id, 0 ) );
 
-		// if import is not running build the dialog for the response.
+		// if import is not running anymore, build the dialog for the response.
 		$dialog = array();
 		if ( 1 !== $running ) {
 			// collect result text.

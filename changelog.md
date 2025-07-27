@@ -63,6 +63,7 @@
 - Fixed wrong capability to access the directory archive for non-administrator users
 - Fixed disabling of check files event
 - Fixed detection of correct file type during import process
+- Fixed potential error with attached files if they do not exist
 
 ### Removed
 

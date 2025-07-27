@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle different file types.
+ * Object to provide the base functions for each file type we support.
  */
 class File_Types_Base {
 	/**
@@ -99,7 +99,7 @@ class File_Types_Base {
 	}
 
 	/**
-	 * Return the given proxied file.
+	 * Output the given proxied file.
 	 *
 	 * @return void
 	 */
@@ -159,22 +159,22 @@ class File_Types_Base {
 	}
 
 	/**
-	 * Return the configured size.
+	 * Return the configured dimensions as array (0 => width, 1 => height).
 	 *
 	 * @return array<int>
 	 */
-	protected function get_size(): array {
+	protected function get_dimensions(): array {
 		return $this->size;
 	}
 
 	/**
-	 * Set the size to use.
+	 * Set the dimensions to use.
 	 *
-	 * @param array<int> $size The size as array (0 => width, 1 => height).
+	 * @param array<int> $size The dimensions as array (0 => width, 1 => height).
 	 *
 	 * @return void
 	 */
-	public function set_size( array $size ): void {
+	public function set_dimensions( array $size ): void {
 		$this->size = $size;
 	}
 

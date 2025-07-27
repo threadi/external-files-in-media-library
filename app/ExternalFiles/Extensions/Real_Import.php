@@ -468,9 +468,9 @@ class Real_Import extends Extension_Base {
 	 * If our bulk action is run, check each marked file if it is an external file and change it as
 	 * real file.
 	 *
-	 * @param string $sendback The return value.
-	 * @param string $doaction The action used.
-	 * @param array<int,int>  $items The items to take action.
+	 * @param string         $sendback The return value.
+	 * @param string         $doaction The action used.
+	 * @param array<int,int> $items The items to take action.
 	 *
 	 * @return string
 	 */

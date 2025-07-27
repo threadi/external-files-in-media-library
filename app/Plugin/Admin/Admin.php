@@ -116,7 +116,7 @@ class Admin {
 	}
 
 	/**
-	 * Add WP Dialog Easy scripts in wp-admin.
+	 * Add Easy Dialog for WP scripts in wp-admin.
 	 */
 	public function add_dialog_scripts(): void {
 		// define paths: adjust if necessary.
@@ -165,7 +165,7 @@ class Admin {
 		// get transients object.
 		$transients_obj = Transients::get_instance();
 
-		// use this after 2025-10-01.
+		// do not use the PHP 8.2 check before 2025-10-01.
 		if ( time() < 1759269600 ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
@@ -178,7 +178,7 @@ class Admin {
 		}
 
 		// bail if WordPress is in developer mode.
-		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
+		if ( Helper::is_development_mode() ) {
 			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
 			return;
 		}
@@ -193,7 +193,7 @@ class Admin {
 	}
 
 	/**
-	 * Add link to settings in plugin list.
+	 * Add link to settings and adding files in plugin list.
 	 *
 	 * @param array<string> $links List of links.
 	 *
@@ -211,7 +211,7 @@ class Admin {
 	}
 
 	/**
-	 * Add links in row meta.
+	 * Add links in plugin lists row meta.
 	 *
 	 * @param array<string> $links List of links.
 	 * @param string        $file The requested plugin file name.
@@ -254,6 +254,14 @@ class Admin {
 		// empty the table.
 		Log::get_instance()->truncate_log();
 
+		// show ok message.
+		$transients_obj = Transients::get_instance();
+		$transient_obj  = $transients_obj->add();
+		$transient_obj->set_name( 'eml_log_emptied' );
+		$transient_obj->set_message( '<strong>' . __( 'The log has been emptied.', 'external-files-in-media-library' ) . '</strong>' );
+		$transient_obj->set_type( 'success' );
+		$transient_obj->save();
+
 		// redirect user.
 		wp_safe_redirect( wp_get_referer() );
 		exit;
@@ -289,7 +297,7 @@ class Admin {
 	}
 
 	/**
-	 * Check if website is using a language which _might_ be underlying the GPRS.
+	 * Check if website is using a language which _might_ be underlying the GPRD in germany.
 	 *
 	 * Show a warning hint if it is the case.
 	 *

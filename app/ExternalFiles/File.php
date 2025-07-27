@@ -413,13 +413,8 @@ class File {
 			return false;
 		}
 
-		// check if cached file has reached its max age.
-		if ( $this->get_file_type_obj()->is_cache_expired() ) {
-			return false;
-		}
-
-		// return true as it is cached and not to old.
-		return true;
+		// return value depending on check if cached file has reached its max age.
+		return ! $this->get_file_type_obj()->is_cache_expired();
 	}
 
 	/**
@@ -1049,5 +1044,21 @@ class File {
 	 */
 	public function remove_date(): void {
 		delete_post_meta( $this->get_id(), 'eml_external_file_date' );
+	}
+
+	/**
+	 * Return the thumbnail reset URL for this file.
+	 *
+	 * @return string
+	 */
+	public function get_thumbnail_reset_url(): string {
+		return add_query_arg(
+			array(
+				'action' => 'eml_reset_thumbnails',
+				'post'   => $this->get_id(),
+				'nonce'  => wp_create_nonce( 'eml-reset-thumbnails' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
 	}
 }

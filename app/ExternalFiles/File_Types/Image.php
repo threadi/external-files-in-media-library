@@ -63,7 +63,7 @@ class Image extends File_Types_Base {
 		$external_file_obj = $this->get_file();
 
 		// get the cached file.
-		$cached_file = $external_file_obj->get_cache_file( $this->get_size() );
+		$cached_file = $external_file_obj->get_cache_file( $this->get_dimensions() );
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();

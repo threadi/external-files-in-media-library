@@ -510,10 +510,10 @@ class Synchronization {
 				// delete this file.
 				$external_file_obj->delete();
 			}
-		}
 
-		// log this event.
-		Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info' );
+			// log this event.
+			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+		}
 	}
 
 	/**

@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handle different file types.
+ * File which handle the different file types.
  *
  * @package external-files-in-media-library
  */
@@ -19,7 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
- * Object to handle different file types.
+ * Object to handle the different file types.
  */
 class File_Types {
 
@@ -93,6 +93,7 @@ class File_Types {
 		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$file_types_tab->set_hide_save( true );
 
+		// add settings for each supported file type.
 		foreach ( $this->get_file_types_as_objects() as $index => $file_type_obj ) {
 			// get the internal name.
 			$name = strtolower( $file_type_obj->get_name() );
@@ -162,7 +163,7 @@ class File_Types {
 	/**
 	 * Return list of supported file types.
 	 *
-	 * @return array<string>
+	 * @return array<int,string>
 	 */
 	public function get_file_types(): array {
 		$list = array(
@@ -175,11 +176,11 @@ class File_Types {
 		);
 
 		/**
-		 * Filter the list of available file types.
+		 * Filter the list of supported file types.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array<string> $list List of file type handler.
+		 * @param array<int,string> $list List of class names for the file type handlers.
 		 */
 		return apply_filters( 'eml_file_types', $list );
 	}
@@ -238,7 +239,7 @@ class File_Types {
 	}
 
 	/**
-	 * Get the file type object by given URL and mime type.
+	 * Return the file type object by given URL and mime type.
 	 *
 	 * @param string     $mime_type The mime type.
 	 * @param false|File $external_file_obj The external file object or simply false.
@@ -283,7 +284,7 @@ class File_Types {
 		// log this event.
 		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 1 );
 
-		// get object.
+		// get the default file object.
 		$file_type_obj = new File_Types\File( $external_file_obj );
 
 		// add to the cache list.
@@ -293,34 +294,5 @@ class File_Types {
 
 		// return the default file object if nothing matches.
 		return $file_type_obj;
-	}
-
-	/**
-	 * Check the change of proxy-setting.
-	 *
-	 * @param string $new_value The old value.
-	 * @param string $old_value The new value.
-	 *
-	 * @return int
-	 */
-	public function update_proxy_setting( string $new_value, string $old_value ): int {
-		// convert the values.
-		$new_value_int = absint( $new_value );
-		$old_value_int = absint( $old_value );
-
-		// bail if value has not been changed.
-		if ( $new_value_int === $old_value_int ) {
-			return $old_value_int;
-		}
-
-		// show hint to reset the proxy-cache.
-		$transient_obj = Transients::get_instance()->add();
-		$transient_obj->set_name( 'eml_proxy_changed' );
-		$transient_obj->set_message( '<strong>' . __( 'The proxy state has been changed.', 'external-files-in-media-library' ) . '</strong> ' . __( 'We recommend emptying the cache of the proxy. Click on the button below to do this.', 'external-files-in-media-library' ) . '<br><a href="#" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Settings::get_instance()->get_proxy_reset_dialog() ) . '">' . esc_html__( 'Reset now', 'external-files-in-media-library' ) . '</a>' );
-		$transient_obj->set_type( 'success' );
-		$transient_obj->save();
-
-		// return the new value.
-		return $new_value_int;
 	}
 }

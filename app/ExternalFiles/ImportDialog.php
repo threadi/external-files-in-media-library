@@ -160,7 +160,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add textarea field in dialog where user can enter multiple URLs.
+	 * Add hidden field to URLs from settings.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -194,6 +194,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
+		// add the fields.
 		$dialog['texts'][] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="use_credentials"><input type="checkbox" name="use_credentials" value="1" id="use_credentials"> ' . esc_html__( 'Use below credentials to import these URLs', 'external-files-in-media-library' ) . '</label></div><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="login" name="login" value="" autocomplete="off" readonly></div><div><label for="password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="password" name="password" value="" autocomplete="off" readonly></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials are saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
 		// return the resulting dialog.
@@ -239,7 +240,7 @@ class ImportDialog {
 	 * @return array<string,mixed>
 	 */
 	public function prevent_dialog_usage( array $dialog, array $settings ): array {
-		// bail if "no_dialog" is not set to true.
+		// bail if "no_dialog" is not set or not true.
 		if ( ! isset( $settings['no_dialog'] ) || false === $settings['no_dialog'] ) {
 			return $dialog;
 		}
@@ -289,7 +290,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
-		// add the textarea for entering the external URLs.
+		// add the fields.
 		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1"><input type="hidden" name="login" value="' . esc_attr( $settings['login'] ) . '"><input type="hidden" name="password" value="' . esc_attr( $settings['password'] ) . '">';
 
 		// return the resulting dialog.
@@ -304,7 +305,7 @@ class ImportDialog {
 	 * @return void
 	 */
 	public function add_user_settings( WP_User $user ): void {
-		// bail if customization is not allowed.
+		// bail if customization for this user is not allowed.
 		if ( ! $this->is_customization_allowed() ) {
 			return;
 		}
@@ -312,7 +313,7 @@ class ImportDialog {
 		$settings = array();
 
 		/**
-		 * Get the possible user settings.
+		 * Filter the possible user settings for import dialog.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,array<string,mixed>> $settings List of settings.
@@ -371,7 +372,7 @@ class ImportDialog {
 			return;
 		}
 
-		// bail if customization is not allowed.
+		// bail if customization for this user is not allowed.
 		if ( ! $this->is_customization_allowed() ) {
 			return;
 		}
@@ -379,7 +380,7 @@ class ImportDialog {
 		$settings = array();
 
 		/**
-		 * Get the possible user settings.
+		 * Filter the possible user settings for import dialog.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,array<string,mixed>> $settings List of settings.
