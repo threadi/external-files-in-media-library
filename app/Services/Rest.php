@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use JsonException;
 use WP_Error;
 use WP_Image_Editor;
@@ -89,6 +90,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
 		add_filter( 'eml_filter_url_response', array( $this, 'get_rest_api_files' ), 10, 3 );
 		add_filter( 'efml_service_rest_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
+		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 	}
 
 	/**
@@ -315,7 +317,7 @@ class Rest extends Directory_Listing_Base implements Service {
 					$entry['filesize']      = isset( $file['media_details']['filesize'] ) ? absint( $file['media_details']['filesize'] ) : 0;
 					$entry['mime-type']     = $mime_type;
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $file['type'] ) . '"></span>';
-					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file['modified'] ) ) ) );
+					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file['date'] ) ) ) );
 					$entry['preview']       = $thumbnail;
 
 					// add the entry to the list.
@@ -605,7 +607,7 @@ class Rest extends Directory_Listing_Base implements Service {
 						'local'         => $local,
 						'url'           => $file['source_url'],
 						'tmp-file'      => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
-						'last-modified' => absint( strtotime( $file['modified'] ) ),
+						'last-modified' => absint( strtotime( $file['date'] ) ),
 					);
 
 					$response_headers = array();
@@ -727,5 +729,120 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// return the result.
 		return $url_to_use;
+	}
+
+	/**
+	 * Return info about requested file from REST API.
+	 *
+	 * We need to request the external REST API for the file data.
+	 *
+	 * @param array<string,string> $results The result.
+	 * @param string               $file_path The path to the file (should contain and not end with '.zip').
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_file( array $results, string $file_path ): array {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return $results;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return $results;
+		}
+
+		// get domain from given URL.
+		$file_url_parts = wp_parse_url( $file_path );
+
+		// bail if scheme and host are not given.
+		if( empty( $file_url_parts['scheme'] ) && empty( $file_url_parts['host'] ) ) {
+			return $results;
+		}
+
+		// get the URL to use.
+		// TODO wir sollten die möglichen REST API URLs cachen.
+		$url_to_use = $this->get_url_to_use( $file_url_parts['scheme'] . '://' . $file_url_parts['host'] );
+
+		// bail if no URL could be found to load.
+		if ( ! $url_to_use ) {
+			return $results;
+		}
+
+		// create URL to request the data for this single file.
+		$url_to_use = add_query_arg( array(
+				'search' => basename( $file_path ),
+			),
+			$url_to_use
+		);
+
+		// request the external WordPress REST-API.
+		$response = wp_remote_get( $url_to_use );
+
+		// bail general if error occurred.
+		if ( is_wp_error( $response ) ) {
+			return $results;
+		}
+
+		// get the HTTP-status.
+		$http_status = wp_remote_retrieve_response_code( $response );
+
+		// bail general if HTTP status is not 200 and not 400.
+		if ( ! in_array( $http_status, array( 200, 400 ), true ) ) {
+			return array();
+		}
+
+		// get the response headers.
+		$response_headers_obj = $response['http_response']->get_headers();
+		$response_headers     = $response_headers_obj->getAll();
+
+		// bail if content-type is not application/json.
+		if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+
+			// add the error to the list for response.
+			$this->add_error( $error );
+			return array();
+		}
+
+		// get the content.
+		$body = wp_remote_retrieve_body( $response );
+
+		// decode the JSON.
+		try {
+			$files = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
+
+			// bail if list is not an array.
+			if ( ! is_array( $files ) ) {
+				return $results;
+			}
+
+			// add each file from response to the list of all files.
+			foreach ( $files as $file ) {
+				/**
+				 * Filter the REST API file results.
+				 *
+				 * @since 5.0.0 Available since 5.0.0
+				 *
+				 * @param array<string,mixed> $post_array     The attachment settings.
+				 * @param string $file_url       The requested external URL.
+				 * @param array<string,mixed>  $file_data List of file settings detected by importer.
+				 */
+				$results = apply_filters( 'efml_service_rest_file_data', $results, $file_path, $file );
+			}
+
+			// return the results.
+			return $results;
+		} catch ( JsonException $e ) {
+			// add log
+			Log::get_instance()->create( __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $file, 'error' );
+
+			return array();
+		}
 	}
 }
