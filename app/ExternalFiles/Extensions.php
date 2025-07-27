@@ -140,7 +140,7 @@ class Extensions {
 	}
 
 	/**
-	 * Return list of default extensions.
+	 * Return list of names of the default extensions.
 	 *
 	 * @return array<int,string>
 	 */
@@ -156,7 +156,7 @@ class Extensions {
 		 * Filter the list of default extensions.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array<int,string> $list List of default extensions.
+		 * @param array<int,string> $list List of names of the default extensions.
 		 */
 		return apply_filters( 'eml_extensions_default', $list );
 	}

@@ -85,6 +85,9 @@ class Proxy {
 		 * Run proxy to show called file.
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
+
+		// misc.
+		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 	}
 
 	/**
@@ -355,5 +358,23 @@ class Proxy {
 
 		// return false if no proxy is enabled.
 		return false;
+	}
+
+	/**
+	 * Return whether proxy is enabled for single external file depending on its file type settings.
+	 *
+	 * @param bool $result               The result.
+	 * @param File $external_file_object The file object.
+	 *
+	 * @return bool
+	 */
+	public function prevent_proxied_url( bool $result, File $external_file_object ): bool {
+		// bail if result is already false.
+		if( ! $result ) {
+			return false;
+		}
+
+		// return the result of proxy setting on file type of this file.
+		return $external_file_object->get_file_type_obj()->is_proxy_enabled();
 	}
 }

@@ -65,7 +65,7 @@ class File {
 	}
 
 	/**
-	 * Get the ID.
+	 * Return the ID.
 	 *
 	 * @return int
 	 */
@@ -84,7 +84,7 @@ class File {
 	}
 
 	/**
-	 * Get the external URL.
+	 * Return the external URL.
 	 *
 	 * @param bool $unproxied Whether this call could be use proxy (true) or not (false).
 	 *
@@ -121,11 +121,6 @@ class File {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $instance ) ) {
-			return $this->url;
-		}
-
-		// bail if file type is not proxy compatible.
-		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
 			return $this->url;
 		}
 

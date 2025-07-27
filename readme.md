@@ -33,7 +33,7 @@ After checkout go through the following steps:
 
 ### from local environment with Taskfile
 
-1. execute the following command in main directory: `task release -- 4.0.0` - adjust the version number.
+1. execute the following command in main directory: `task release -- 5.0.0` - adjust the version number.
 2. after that you will find a zip file in the release directory which could be used in WordPress to install it.
 
 ### on GitHub
