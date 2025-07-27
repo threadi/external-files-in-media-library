@@ -92,6 +92,7 @@ class Files {
 		add_action( 'delete_attachment', array( $this, 'log_url_deletion' ), 10, 1 );
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
+		add_filter( 'media_meta', array( $this, 'show_media_info_in_modal' ), 10, 2 );
 
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
@@ -1341,5 +1342,35 @@ class Files {
 
 		// return the results of this file.
 		return $results;
+	}
+
+	/**
+	 * Extend info about external file in attachment modal.
+	 *
+	 * @param string  $html
+	 * @param WP_Post $post
+	 *
+	 * @return string
+	 */
+	public function show_media_info_in_modal( string $html, WP_Post $post ): string {
+		// bail if html is not empty (it is the detail view without modal).
+		if( ! empty( $html ) ) {
+			return $html;
+		}
+
+		// get the external file object of this post.
+		$external_file_obj = $this->get_file( $post->ID );
+
+		// bail if this is not an external file.
+		if( ! $external_file_obj->is_valid() ) {
+			return $html;
+		}
+
+		// add infos about the external file.
+		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_html( $external_file_obj->get_url( true )  ) . '">' . Helper::shorten_url( $external_file_obj->get_url( true ) ) . '</span></div>';
+		$html .= '<div class="efml-attachment-source"><strong>' . __( 'External file source:', 'external-files-in-media-library' ) . '</strong> ' . $external_file_obj->get_protocol_handler_obj()->get_title() . '</div>';
+
+		// return the resulting string.
+		return $html;
 	}
 }
