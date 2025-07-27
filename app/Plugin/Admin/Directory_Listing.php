@@ -106,8 +106,8 @@ class Directory_Listing {
 	public function add_view_directory_page(): void {
 		add_submenu_page(
 			'upload.php',
-			__( 'Add external files', 'external-files-in-media-library' ),
-			__( 'Add external files', 'external-files-in-media-library' ),
+			__( 'Add External Files', 'external-files-in-media-library' ),
+			__( 'Add External Files', 'external-files-in-media-library' ),
 			EFML_CAP_NAME,
 			$this->get_menu_slug(),
 			array( $this, 'render_view_directory_page' ),
@@ -306,7 +306,7 @@ class Directory_Listing {
 					'search_items'  => __( 'Search your external sources', 'external-files-in-media-library' ),
 					'edit_item'     => __( 'Edit your external source', 'external-files-in-media-library' ),
 					'update_item'   => __( 'Update your external source', 'external-files-in-media-library' ),
-					'menu_name'     => __( 'Your external sources', 'external-files-in-media-library' ),
+					'menu_name'     => __( 'Your External Sources', 'external-files-in-media-library' ),
 					'back_to_items' => __( 'Back to your external sources', 'external-files-in-media-library' ),
 					/* translators: %1$s will be replaced by a URL. */
 					'not_found'     => sprintf( __( 'No external sources found. Add them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_view_directory_url( false ) ),

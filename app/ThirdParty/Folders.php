@@ -119,7 +119,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		$assigned_category = absint( get_term_meta( $term_id, 'folders_folder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="folders_categories">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
+		$form .= '<div><label for="folders_categories">' . __( 'Choose folder of plugin Folders:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;

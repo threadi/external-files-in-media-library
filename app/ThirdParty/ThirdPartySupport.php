@@ -133,6 +133,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Folderly',
 			'ExternalFilesInMediaLibrary\ThirdParty\Folders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',

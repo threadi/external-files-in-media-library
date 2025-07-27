@@ -427,10 +427,10 @@ function efml_sync_save_config() {
   });
   jQuery('.eml-sync-config input[type="checkbox"]').each(function(){
     if( jQuery(this).is(':checked') ) {
-      if( ! fields[jQuery( this ).attr( 'name' )] ) {
-        fields[jQuery( this ).attr( 'name' )] = {};
+      if( ! fields[jQuery( this ).attr( 'name' ).replace('[', '').replace(']', '')] ) {
+        fields[jQuery( this ).attr( 'name' ).replace('[', '').replace(']', '')] = {};
       }
-      fields[jQuery( this ).attr( 'name' )][jQuery( this ).val()] = 1;
+      fields[jQuery( this ).attr( 'name' ).replace('[', '').replace(']', '')][jQuery( this ).val()] = 1;
     }
   });
   fields['term_id'] = jQuery('#term_id').val();
