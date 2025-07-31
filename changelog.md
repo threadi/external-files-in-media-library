@@ -26,6 +26,7 @@
 - Added support for plugin "iFolders" to import external files in its folders
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
+- Added option to use the files dates during synchronization
 
 ### Changed
 

@@ -73,6 +73,11 @@ class Dates extends Extension_Base {
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 		add_filter( 'efml_service_rest_file_data', array( $this, 'add_file_date_from_rest_api' ), 10, 3 );
+
+		// sync tasks.
+		add_filter( 'efml_sync_configure_form', array( $this, 'add_date_option_on_sync_config' ), 10, 2 );
+		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
+		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
 	}
 
 	/**
@@ -295,5 +300,65 @@ class Dates extends Extension_Base {
 
 		// return the settings.
 		return $settings;
+	}
+
+	/**
+	 * Add config on sync configuration form.
+	 *
+	 * @param string $form The HTML-code of the form.
+	 * @param int    $term_id The term ID.
+	 *
+	 * @return string
+	 */
+	public function add_date_option_on_sync_config( string $form, int $term_id ): string {
+		// get the actual setting.
+		$checked = 1 === absint( get_term_meta( $term_id, 'use_dates', true ) );
+
+		// add the HTML-code.
+		$form .= '<div><label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use dates of the external files.', 'external-files-in-media-library' ) . '</label></div>';
+
+		// return the resulting html-code for the form.
+		return $form;
+	}
+
+	/**
+	 * Save the custom sync configuration for an external directory.
+	 *
+	 * @param array<string,string> $fields List of fields.
+	 *
+	 * @return void
+	 */
+	public function save_sync_settings( array $fields ): void {
+		// get the term ID.
+		$term_id = absint( $fields['term_id'] );
+
+		// if "use_dates" is 0, just remove the setting.
+		if ( 0 === absint( $fields['use_dates'] ) ) {
+			delete_term_meta( $term_id, 'use_dates' );
+			return;
+		}
+
+		// save the setting.
+		update_term_meta( $term_id, 'use_dates', 1 );
+	}
+
+	/**
+	 * Add action to use file dates before sync is running.
+	 *
+	 * @param string               $url The used URL.
+	 * @param array<string,string> $term_data The term data.
+	 * @param int                  $term_id The term ID.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
+		// bail if settings is not set.
+		if( 1 !== absint( get_term_meta( $term_id, 'use_dates', true ) ) ) {
+			return;
+		}
+
+		// set use_dates to 1.
+		$_POST['use_dates'] = 1;
 	}
 }

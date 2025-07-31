@@ -1028,7 +1028,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Get the schedule object by its term ID.
+	 * Return the schedule object by its term ID.
 	 *
 	 * @param int $term_id The term ID.
 	 *
@@ -1306,12 +1306,27 @@ class Synchronization {
 		// check referer.
 		check_ajax_referer( 'eml-sync-save-config-nonce', 'nonce' );
 
+		// create dialog for failures.
+		$dialog = array(
+			'title'   => __( 'Configuration not saved', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p>' . __( 'The configuration for this synchronization could not be saved.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
 		// get the fields.
 		$fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fields'] ) ) : array();
 
 		// bail if term ID or interval is not given.
 		if ( empty( $fields['interval'] ) || 0 === absint( $fields['term_id'] ) ) {
-			wp_send_json_error();
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// get the term ID.
@@ -1323,7 +1338,7 @@ class Synchronization {
 		// check if the given interval exists.
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $interval ] ) ) {
-			wp_send_json_error();
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// save this interval on term as setting.
@@ -1337,12 +1352,27 @@ class Synchronization {
 		 */
 		do_action( 'efml_sync_save_config', $fields );
 
+		// create dialog.
+		$dialog = array(
+			'title'   => __( 'Configuration saved', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p>' . __( 'The new configuration for this synchronization has been saved.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.reload();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
 		// get the sync schedule object for this term_id.
 		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
-		// bail if no schedule found.
-		if ( ! $sync_schedule_obj ) {
-			wp_send_json_error();
+		// bail if no schedule found, but also send OK back.
+		if ( ! $sync_schedule_obj instanceof Schedules\Synchronization ) {
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// set the new interval.
@@ -1352,7 +1382,7 @@ class Synchronization {
 		$sync_schedule_obj->reset();
 
 		// send ok.
-		wp_send_json_success();
+		wp_send_json( array( 'detail' => $dialog ) );
 	}
 
 	/**
