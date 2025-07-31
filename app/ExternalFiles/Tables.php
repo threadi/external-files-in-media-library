@@ -273,8 +273,25 @@ class Tables {
 			 */
 			$dialog = apply_filters( 'eml_table_column_file_source_dialog', $dialog, $external_file );
 
+			// get the title.
+			$title = $protocol_handler->get_title();
+
+			/**
+			 * Filter the title for show in source column in media table for external files.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param string $title The title to use.
+			 * @param int $attachment_id The post ID of the attachment.
+			 */
+			$title = apply_filters( 'eml_table_column_source_title', $title, $attachment_id );
+
 			// output.
-			echo wp_kses_post( $protocol_handler->get_title() . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
+			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
+
+			/**
+			 * Run additional tasks for show more infos here.
+			 */
+			do_action( 'eml_table_column_source', $attachment_id );
 		}
 	}
 }

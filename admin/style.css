@@ -355,7 +355,14 @@ body.eml-file-synced #delete-action { display: none }
 	margin: 0 0 0.4em;
 }
 
-body.taxonomy-edlfw_archive .search-box { display: none }
+body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box { display: none }
+
+.external_files_source .dashicons-clock:before {
+	font-size: 22px;
+	position: relative;
+	top: -1px;
+	z-index: 1;
+}
 
 #easy-directory-listing-for-wordpress[data-type="youtube"] {
 	.filesize, .type {

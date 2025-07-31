@@ -81,7 +81,8 @@ class Synchronization {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_synchronization' ), 10, 3 );
 		add_action( 'eml_show_file_info', array( $this, 'show_sync_info' ) );
-		add_action( 'eml_table_column_content', array( $this, 'show_sync_info_in_table' ) );
+		add_action( 'eml_table_column_source', array( $this, 'show_sync_info_in_table' ) );
+		add_filter( 'eml_table_column_source_title', array( $this, 'get_sync_type_title' ), 10, 2 );
 		add_action( 'efml_directory_listing_added', array( $this, 'added_new_directory' ) );
 		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
 		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
@@ -729,8 +730,8 @@ class Synchronization {
 
 		// show info about sync time.
 		?>
-		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
-		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?> <a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
+		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?><br><code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
+		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
 		<?php
 	}
 
@@ -814,29 +815,23 @@ class Synchronization {
 	 * @return void
 	 */
 	public function show_sync_info_in_table( int $attachment_id ): void {
-		// get sync marker.
-		$sync_marker = absint( get_post_meta( $attachment_id, 'eml_synced_time', true ) );
+		// get synced term by given attachment ID.
+		$term = $this->get_term_by_attachment_id( $attachment_id );
 
-		// bail if marker ist not set.
-		if ( 0 === $sync_marker ) {
+		// bail if term could not be loaded.
+		if( ! $term instanceof WP_Term ) {
 			return;
 		}
 
-		// get the assigned archive term.
-		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
-
-		// bail if result is not an array.
-		if ( ! is_array( $terms ) ) {
-			return;
-		}
-
-		// bail if none has been found.
-		if ( empty( $terms ) ) {
-			return;
-		}
-
-		// get first result.
-		$term = $terms[0];
+		// create URL.
+		$url = add_query_arg(
+			array(
+				'taxonomy' => 'edlfw_archive',
+				'post_type' => 'attachment',
+				's' => $term->name
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
 
 		// create the title-attribute.
 		/* translators: %1$s will be replaced by a date-time, %2$s by a URL. */
@@ -844,7 +839,7 @@ class Synchronization {
 
 		// show info about sync time.
 		?>
-		<span class="dashicons dashicons-clock" title="<?php echo esc_attr( $title ); ?>"></span>
+		<a class="dashicons dashicons-clock" href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $title ); ?>"></a>
 		<?php
 	}
 
@@ -1531,5 +1526,72 @@ class Synchronization {
 	public function update_sync_title( string $url ): void {
 		/* translators: %1$s will be replaced by a URL. */
 		update_option( 'eml_sync_title', sprintf( __( 'Synchronize URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+	}
+
+	/**
+	 * Return the title for a synced file.
+	 *
+	 * @param string $title
+	 * @param int    $attachment_id
+	 *
+	 * @return string
+	 */
+	public function get_sync_type_title( string $title, int $attachment_id ): string {
+		// get synced term bei attachment ID.
+		$term = $this->get_term_by_attachment_id( $attachment_id );
+
+		if( ! $term instanceof WP_Term ) {
+			return $title;
+		}
+
+		// get the type name.
+		$type = get_term_meta( $term->term_id, 'type', true );
+
+		// get the listing object by this name.
+		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// return the listing object label.
+		return $listing_obj->get_label();
+	}
+
+	/**
+	 * Return a term for a given synced attachment ID.
+	 *
+	 * @param int $attachment_id
+	 *
+	 * @return WP_Term|false
+	 */
+	private function get_term_by_attachment_id( int $attachment_id ): WP_Term|false {
+		// get sync marker.
+		$sync_marker = absint( get_post_meta( $attachment_id, 'eml_synced_time', true ) );
+
+		// bail if marker ist not set.
+		if ( 0 === $sync_marker ) {
+			return false;
+		}
+
+		// get the assigned archive term.
+		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
+
+		// bail if result is not an array.
+		if ( ! is_array( $terms ) ) {
+			return false;
+		}
+
+		// bail if none has been found.
+		if ( empty( $terms ) ) {
+			return false;
+		}
+
+		// get first result.
+		$term = $terms[0];
+
+		// bail if term could not be loaded.
+		if( ! $term instanceof WP_Term ) {
+			return false;
+		}
+
+		// return the term.
+		return $term;
 	}
 }

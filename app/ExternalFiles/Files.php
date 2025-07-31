@@ -478,7 +478,7 @@ class Files {
 			if ( ! empty( $date ) ) {
 				?>
 			<li>
-				<span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Imported at', 'external-files-in-media-library' ) . ' ' . esc_html( $date ); ?>
+				<span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Imported at', 'external-files-in-media-library' ) . ' <code>' . esc_html( $date ); ?></code>
 			</li>
 				<?php
 			}
@@ -540,7 +540,7 @@ class Files {
 			<?php
 		}
 		?>
-			<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Mime type:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( $external_file_obj->get_mime_type() ); ?></code></li>
+			<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Mime type:', 'external-files-in-media-library' ); ?><br><code><?php echo esc_html( $external_file_obj->get_mime_type() ); ?></code></li>
 			<?php
 			/**
 			 * Add additional infos about this file.
