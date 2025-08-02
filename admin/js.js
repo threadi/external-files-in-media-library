@@ -422,7 +422,7 @@ function efml_sync_get_info() {
 function efml_sync_save_config() {
   // get fields from the form.
   let fields = {};
-  jQuery('.eml-sync-config select, .eml-sync-config input[type="date"]').each(function(){
+  jQuery('.eml-sync-config select, .eml-sync-config input[type="date"], .eml-sync-config input[type="email"]').each(function(){
     fields[jQuery(this).attr('id')] = jQuery(this).val();
   });
   jQuery('.eml-sync-config input[type="checkbox"]').each(function(){

@@ -333,7 +333,7 @@ class Dates extends Extension_Base {
 		$term_id = absint( $fields['term_id'] );
 
 		// if "use_dates" is 0, just remove the setting.
-		if ( 0 === absint( $fields['use_dates'] ) ) {
+		if ( empty( $fields['use_dates'] ) || 0 === absint( $fields['use_dates'] ) ) {
 			delete_term_meta( $term_id, 'use_dates' );
 			return;
 		}

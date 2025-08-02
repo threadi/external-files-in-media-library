@@ -538,7 +538,7 @@ class Real_Import extends Extension_Base {
 		$term_id = absint( $fields['term_id'] );
 
 		// if "use_dates" is 0, just remove the setting.
-		if ( 0 === absint( $fields['real_import'] ) ) {
+		if ( empty( $fields['real_import'] ) || 0 === absint( $fields['real_import'] ) ) {
 			delete_term_meta( $term_id, 'real_import' );
 			return;
 		}

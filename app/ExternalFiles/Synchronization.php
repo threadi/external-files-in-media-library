@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
@@ -92,7 +93,7 @@ class Synchronization {
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_get_sync_info', array( $this, 'sync_info' ), 10, 0 );
 		add_action( 'wp_ajax_efml_change_sync_state', array( $this, 'sync_state_change_via_ajax' ) );
-		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'sync_config_save_via_ajax' ) );
+		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'save_config_via_ajax' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
@@ -155,46 +156,52 @@ class Synchronization {
 		$field->set_description( __( 'Defines the time interval in which the synchronization for new external directories will be processed. This setting can be changed on each external directory.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_intervals() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
 
 		// add setting to enable automatic sync for every new external directory.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 0 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Enable automatic synchronization', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled every new external directory will automatically be synchronized.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
+		$setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable automatic synchronization', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled every new external directory will automatically be synchronized.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 
 		// add setting for unused files after sync.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_delete_unused_files_after_sync' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 1 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Delete unused files', 'external-files-in-media-library' ),
-				'description' => __( 'Delete files in the media library that are no longer in the external directory after each synchronization.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
+		$setting = $settings_obj->add_setting( 'eml_sync_delete_unused_files_after_sync' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Delete unused files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Delete files in the media library that are no longer in the external directory after each synchronization.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 
 		// add setting for deletion of files on deletion of its archive.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_delete_file_on_archive_deletion' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 1 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Delete synchronized files', 'external-files-in-media-library' ),
-				'description' => __( 'Delete files in media library belonging to an external directory when the connection to the external directory is deleted.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
+		$setting = $settings_obj->add_setting( 'eml_sync_delete_file_on_archive_deletion' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Delete synchronized files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Delete files in media library belonging to an external directory when the connection to the external directory is deleted.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
+
+		// add setting to send emails after sync.
+		$setting = $settings_obj->add_setting( 'eml_sync_email' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Send email after sync', 'external-files-in-media-library' ) );
+		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), get_option( 'admin_email') ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -374,6 +381,12 @@ class Synchronization {
 		 */
 		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
 
+		// get actual email.
+		$email = get_term_meta( $term_id, 'email', true );
+
+		// add option to send email after end of each sync.
+		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
+
 		// create dialog for sync config.
 		$dialog_sync_config = array(
 			'className' => 'eml-sync-config',
@@ -518,6 +531,34 @@ class Synchronization {
 
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+
+			// send email if enabled.
+			if( 1 === absint( get_option( 'eml_sync_email' ) ) ) {
+				// get the to-email from settings.
+				$to = get_term_meta( $term_id, 'email', true );
+				if( empty( $to ) ) {
+					$to      = get_option( 'admin_email' );
+				}
+
+				// get the term.
+				$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
+
+				// bail if term could not be loaded.
+				if( ! $term instanceof WP_Term ) {
+					return;
+				}
+
+				// define mail.
+				$subject = '[' . get_option( 'blogname' ) . '] ' . __( 'Synchronisation completed', 'external-files-in-media-library' );
+				/* translators: %1$s will be replaced by a title. */
+				$body    = sprintf( __( 'The synchronization of %1$s has been successfully completed.', 'external-files-in-media-library' ), esc_html( $term->name ) ) . '<br><br>' . __( 'This email was generated by the WordPress plugin <em>External files for Media Library</em> based on the settings in your project.', 'external-files-in-media-library' );
+				$headers = array(
+					'Content-Type: text/html; charset=UTF-8',
+				);
+
+				// send mail.
+				wp_mail( $to, $subject, $body, $headers );
+			}
 		}
 	}
 
@@ -641,7 +682,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Disable duplicate check.
+	 * Disable duplicate check during synchronisation.
 	 *
 	 * @return bool
 	 */
@@ -1304,11 +1345,11 @@ class Synchronization {
 	}
 
 	/**
-	 * Save new interval settings for single synchronization schedule.
+	 * Save new configuration for single synchronization schedule.
 	 *
 	 * @return void
 	 */
-	public function sync_config_save_via_ajax(): void {
+	public function save_config_via_ajax(): void {
 		// check referer.
 		check_ajax_referer( 'eml-sync-save-config-nonce', 'nonce' );
 
@@ -1349,6 +1390,9 @@ class Synchronization {
 
 		// save this interval on term as setting.
 		update_term_meta( $term_id, 'interval', $interval );
+
+		// save the given email.
+		update_term_meta( $term_id, 'email', $fields['email'] );
 
 		/**
 		 * Run additional tasks during saving a new sync configuration.
