@@ -75,7 +75,7 @@ class Dates extends Extension_Base {
 		add_filter( 'efml_service_rest_file_data', array( $this, 'add_file_date_from_rest_api' ), 10, 3 );
 
 		// sync tasks.
-		add_filter( 'efml_sync_configure_form', array( $this, 'add_date_option_on_sync_config' ), 10, 2 );
+		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
 	}
@@ -310,7 +310,7 @@ class Dates extends Extension_Base {
 	 *
 	 * @return string
 	 */
-	public function add_date_option_on_sync_config( string $form, int $term_id ): string {
+	public function add_option_on_sync_config( string $form, int $term_id ): string {
 		// get the actual setting.
 		$checked = 1 === absint( get_term_meta( $term_id, 'use_dates', true ) );
 
@@ -343,7 +343,7 @@ class Dates extends Extension_Base {
 	}
 
 	/**
-	 * Add action to use file dates before sync is running.
+	 * Add setting to import files with its dates before sync.
 	 *
 	 * @param string               $url The used URL.
 	 * @param array<string,string> $term_data The term data.

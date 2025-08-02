@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the http support.
+ * File which handles the HTTP support.
  *
  * @package external-files-in-media-library
  */
@@ -19,7 +19,7 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Filesystem_Base;
 
 /**
- * Object to handle different protocols.
+ * Object to handle the HTTP-protocol.
  */
 class Http extends Protocol_Base {
 	/**

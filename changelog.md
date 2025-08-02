@@ -27,6 +27,7 @@
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
+- Added option to import real files during synchronization (they are just imported if they are no duplicate)
 
 ### Changed
 
@@ -69,6 +70,7 @@
 - Fixed disabling of check files event
 - Fixed detection of correct file type during import process
 - Fixed potential error with attached files if they do not exist
+- Fixed missing visible progress-bar during synchronization
 
 ### Removed
 

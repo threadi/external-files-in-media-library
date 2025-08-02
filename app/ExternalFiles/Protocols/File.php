@@ -16,12 +16,11 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
-use ExternalFilesInMediaLibrary\ExternalFiles\Results\No_Urls;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
- * Object to handle different protocols.
+ * Object to handle the file protocol.
  */
 class File extends Protocol_Base {
 	/**
@@ -64,6 +63,16 @@ class File extends Protocol_Base {
 
 			// get the files.
 			$file_list = scandir( $this->get_url() );
+
+			/**
+			 * Run action if we have files to check via FILE-protocol.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
+			 * @param string $url   The URL to import.
+			 * @param array<string,mixed> $file_list List of files.
+			 */
+			do_action( 'eml_file_directory_import_files', $this->get_url(), $file_list );
 
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */

@@ -10,13 +10,17 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Query;
 
 /**
  * Handler controls how to import external files for real in media library without external connection.
@@ -69,7 +73,6 @@ class Real_Import extends Extension_Base {
 	public function init(): void {
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
-		add_action( 'admin_action_eml_real_import_external_file', array( $this, 'import_local_per_request' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
@@ -81,9 +84,16 @@ class Real_Import extends Extension_Base {
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 		add_action( 'eml_show_file_info', array( $this, 'add_option_to_real_import_file' ) );
 
+		// sync tasks.
+		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
+		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
+		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'delete_mark_as_synced' ), 20, 3 );
+
 		// misc.
 		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_action' ) );
 		add_filter( 'handle_bulk_actions-upload', array( $this, 'run_bulk_action' ), 10, 3 );
+		add_action( 'admin_action_eml_real_import_external_file', array( $this, 'import_local_per_request' ) );
 	}
 
 	/**
@@ -495,5 +505,132 @@ class Real_Import extends Extension_Base {
 
 		// return the given value.
 		return $sendback;
+	}
+
+	/**
+	 * Add config on sync configuration form.
+	 *
+	 * @param string $form The HTML-code of the form.
+	 * @param int    $term_id The term ID.
+	 *
+	 * @return string
+	 */
+	public function add_option_on_sync_config( string $form, int $term_id ): string {
+		// get the actual setting.
+		$checked = 1 === absint( get_term_meta( $term_id, 'real_import', true ) );
+
+		// add the HTML-code.
+		$form .= '<div><label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Really import each file. Files are not synchronized, just saved if they do not exist.', 'external-files-in-media-library' ) . '</label></div>';
+
+		// return the resulting html-code for the form.
+		return $form;
+	}
+
+	/**
+	 * Save the custom sync configuration for an external directory.
+	 *
+	 * @param array<string,string> $fields List of fields.
+	 *
+	 * @return void
+	 */
+	public function save_sync_settings( array $fields ): void {
+		// get the term ID.
+		$term_id = absint( $fields['term_id'] );
+
+		// if "use_dates" is 0, just remove the setting.
+		if ( 0 === absint( $fields['real_import'] ) ) {
+			delete_term_meta( $term_id, 'real_import' );
+			return;
+		}
+
+		// save the setting.
+		update_term_meta( $term_id, 'real_import', 1 );
+	}
+
+	/**
+	 * Add setting to import files as real files before sync.
+	 *
+	 * @param string               $url The used URL.
+	 * @param array<string,string> $term_data The term data.
+	 * @param int                  $term_id The term ID.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
+		// bail if settings is not set.
+		if( 1 !== absint( get_term_meta( $term_id, 'real_import', true ) ) ) {
+			return;
+		}
+
+		// set use_dates to 1.
+		$_POST['real_import'] = 1;
+
+		// add filter.
+		add_filter( 'eml_external_file_infos', array( $this, 'check_for_duplicate_during_sync' ) );
+	}
+
+	/**
+	 * Mark as updated.
+	 *
+	 * @param File                $external_file_obj The external file object.
+	 * @param array<string,mixed> $file_data The file data.
+	 * @param string              $url The used main URL for the import.
+	 *
+	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function delete_mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
+		// bail if settings is not set.
+		if( 1 !== absint( $_POST['real_import'] ) ) {
+			return;
+		}
+
+		// remove the sync markers.
+		delete_post_meta( $external_file_obj->get_id(), 'eml_synced' );
+		delete_post_meta( $external_file_obj->get_id(), 'eml_synced_time' );
+		wp_delete_object_term_relationships( $external_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
+	}
+
+	/**
+	 * Check for duplicate of real files during sync.
+	 *
+	 * @param array<string,mixed> $results The result with the file infos.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function check_for_duplicate_during_sync( array $results ): array {
+		// bail if no URL is given.
+		if( empty( $results['url'] ) ) {
+			return array();
+		}
+
+		// query for file with same filename.
+		$query   = array(
+			'post_type'      => 'attachment',
+			'title' => basename( $results['url'] ),
+			'post_status'    => array( 'inherit', 'trash' ),
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+		);
+		$existing_file = new WP_Query( $query );
+
+		// bail if another file with same name could be found.
+		if( 1 === $existing_file->found_posts ) {
+			// log this event.
+			Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $results['url'], 'error', 0, Import::get_instance()->get_identified() );
+
+			// add the result to the list.
+			$result = new Results\Url_Result();
+			$result->set_url( $results['url'] );
+			$result->set_result_text( __( 'This file is already in your media library.', 'external-files-in-media-library' ) );
+			$result->set_error( true );
+			Results::get_instance()->add( $result );
+
+			return array();
+		}
+
+		// return the file infos.
+		return $results;
 	}
 }
