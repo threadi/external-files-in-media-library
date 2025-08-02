@@ -300,7 +300,7 @@ class Queue extends Extension_Base {
 
 		$options = array();
 		/**
-		 * Filter the options used for import of this URL.
+		 * Filter the options used for import of this URL via queue.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array $options List of options.

@@ -128,6 +128,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
 		);
 
 		/**

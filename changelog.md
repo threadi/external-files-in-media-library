@@ -11,7 +11,8 @@
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
-- Added these 2 new options also as parameter on WP CLI command to import URLs
+- Added option to choose a specific date for each file to import
+- Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added option to choose which of these extensions should be available for file handlings
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
@@ -20,8 +21,8 @@
 - Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
-- Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
-- Added support for plugin Folders to import external files in its folders
+- Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
+- Added support for plugin "Folders" to import external files in its folders
 - Added support for plugin "Media Library Organizer" to import external files in its categories
 - Added support for plugin "iFolders" to import external files in its folders
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files

@@ -826,6 +826,9 @@ class Synchronization {
 			return;
 		}
 
+		// get sync marker.
+		$sync_marker = absint( get_post_meta( $attachment_id, 'eml_synced_time', true ) );
+
 		// create URL.
 		$url = add_query_arg(
 			array(

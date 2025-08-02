@@ -582,7 +582,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function delete_mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
 		// bail if settings is not set.
-		if( 1 !== absint( $_POST['real_import'] ) ) {
+		if( ! isset( $_POST['real_import'] ) || 1 !== absint( $_POST['real_import'] ) ) {
 			return;
 		}
 

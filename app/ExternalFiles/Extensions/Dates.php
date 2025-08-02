@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 
 /**
- * Handler controls how to import external files for real in media library without external connection.
+ * Handler controls how to import external files with their original dates.
  */
 class Dates extends Extension_Base {
 	/**
@@ -121,7 +121,7 @@ class Dates extends Extension_Base {
 	}
 
 	/**
-	 * Add file date to post array to set the date of the external file.
+	 * Add file date to post array to set the date of the external file during import.
 	 *
 	 * @param array<string,mixed> $post_array The attachment settings.
 	 * @param string              $url        The requested external URL.

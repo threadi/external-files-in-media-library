@@ -42,7 +42,10 @@ class Cli {
 	 * : Import files from URLs as real files, not linked to external URL.
 	 *
 	 * [--use_dates]
-	 * : Use files dates.
+	 * : Use external files dates.
+	 *
+	 * [--use_specific_date=<value>]
+	 * : Use specific date for each file
 	 *
 	 * @param array<string,string> $urls Array with URL which might be given as parameter on CLI-command.
 	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
