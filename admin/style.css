@@ -114,6 +114,10 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-top: -1px;
 }
 
+.eml details[open] {
+	margin-bottom: 1em;
+}
+
 .eml details[open] summary:before {
 	content: "\f140";
 }
@@ -368,4 +372,16 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 	.filesize, .type {
 		display: none
 	}
+}
+
+.efml-import-dialog .error, .eml-sync-config .error {
+	color: red;
+}
+
+.efml-import-dialog .eml_service_list {
+	display: flex;
+	gap: .2em;
+	flex-flow: row wrap;
+	align-content: space-between;
+	justify-content: space-between;
 }

@@ -29,6 +29,7 @@
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
 - Added option to import real files during synchronization (they are just imported if they are no duplicate)
+- Added privacy hint as checkbox in every import dialog, configurable in user settings
 
 ### Changed
 

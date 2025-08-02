@@ -420,6 +420,14 @@ function efml_sync_get_info() {
  * Update the synchronization config for single external directory.
  */
 function efml_sync_save_config() {
+  // bail if any required field is not checked.
+  let required_fields = jQuery( '.eml-sync-config :input[required]:visible' );
+  if( required_fields.length > 0 && ! required_fields.is(":checked") ) {
+    required_fields.parent().addClass( 'error' )
+    return;
+  }
+  required_fields.parent().removeClass( 'error' );
+
   // get fields from the form.
   let fields = {};
   jQuery('.eml-sync-config select, .eml-sync-config input[type="date"], .eml-sync-config input[type="email"]').each(function(){
@@ -538,6 +546,14 @@ function efml_get_import_dialog( settings ) {
  * Send the complete form from the dialog via AJAX to process it.
  */
 function efml_process_import_dialog() {
+  // bail if any required field is not checked.
+  let required_fields = jQuery( '.efml-import-dialog :input[required]:visible' );
+  if( required_fields.length > 0 && ! required_fields.is(":checked") ) {
+    required_fields.parent().addClass( 'error' )
+    return;
+  }
+  required_fields.parent().removeClass( 'error' );
+
   // get all form data.
   let formData = jQuery('.efml-import-dialog :input').serializeArray();
 

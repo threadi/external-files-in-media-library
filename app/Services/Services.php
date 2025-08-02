@@ -98,6 +98,7 @@ class Services {
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 		add_filter( 'eml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
 
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
@@ -300,6 +301,49 @@ class Services {
 
 		// add the hidden input for given service.
 		$dialog['texts'][] = '<input type="hidden" name="service" value="' . esc_attr( $settings['service'] ) . '">';
+
+		// return the resulting dialog.
+		return $dialog;
+	}
+
+	/**
+	 * Add option to import from any service.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_service_hint_in_form( array $dialog, array $settings ): array {
+		// bail if "no_services" is set in settings.
+		if ( isset( $settings['no_services'] ) ) {
+			return $dialog;
+		}
+
+		// collect the possible services as list.
+		$list = '';
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+			// bail if it is disabled.
+			if( $obj->is_disabled() ) {
+				continue;
+			}
+
+			// hide single import.
+			if( 'import' === $obj->get_name() ) {
+				continue;
+			}
+
+			// add this service to the list.
+			$list .= '<a href="' . Directory_Listing::get_instance()->get_view_directory_url( $obj ) . '" class="button button-secondary">' . esc_html( $obj->get_label() ) . '</a>';
+		}
+
+		// bail if list is empty.
+		if( empty( $list ) ) {
+			return $dialog;
+		}
+
+		// add the hint for local import.
+		$dialog['texts'][] = '<details><summary>' . __( 'Or use an external source', 'external-files-in-media-library' ) . '</summary><div class="eml_service_list">' . $list . '</div></details>';
 
 		// return the resulting dialog.
 		return $dialog;

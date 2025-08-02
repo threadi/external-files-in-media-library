@@ -120,7 +120,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'eml_prevent_import', array( $this, 'check_url' ), 10, 2 );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
 		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 	}
@@ -706,32 +705,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		$directory_listing_objects[] = $this;
 		return $directory_listing_objects;
-	}
-
-	/**
-	 * Add option to import from local directory.
-	 *
-	 * @param array<string,mixed> $dialog The dialog.
-	 * @param array<string,mixed> $settings The requested settings.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function add_option_for_local_import( array $dialog, array $settings ): array {
-		// bail if "no_services" is set in settings.
-		if ( isset( $settings['no_services'] ) ) {
-			return $dialog;
-		}
-
-		// bail if no token is set.
-		if ( empty( $this->get_access_token() ) ) {
-			return $dialog;
-		}
-
-		// add the entry.
-		$dialog['texts'][] = '<details><summary>' . __( 'Or add from your Google Drive', 'external-files-in-media-library' ) . '</summary><div><label for="eml_googledrive"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from your Google Drive', 'external-files-in-media-library' ) . '</a></label></div></details>';
-
-		// return the resulting list.
-		return $dialog;
 	}
 
 	/**

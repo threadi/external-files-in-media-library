@@ -72,7 +72,6 @@ class Local implements Service {
 	 */
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 	}
 
@@ -105,27 +104,6 @@ class Local implements Service {
 
 		// return resulting list of objects.
 		return $directory_listing_objects;
-	}
-
-	/**
-	 * Add option to import from local directory.
-	 *
-	 * @param array<string,mixed> $dialog The dialog.
-	 * @param array<string,mixed> $settings The settings.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function add_option_for_local_import( array $dialog, array $settings ): array {
-		// bail if "no_services" is set in settings.
-		if ( isset( $settings['no_services'] ) ) {
-			return $dialog;
-		}
-
-		// add the entry.
-		$dialog['texts'][] = '<details><summary>' . __( 'Or add from local server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_local"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( \easyDirectoryListingForWordPress\Listings\Local::get_instance() ) . '" class="button button-secondary">' . esc_html__( 'Add from local server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
-
-		// return resulting dialog.
-		return $dialog;
 	}
 
 	/**

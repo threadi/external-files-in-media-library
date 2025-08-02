@@ -388,6 +388,11 @@ class Synchronization {
 		// add option to send email after end of each sync.
 		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
 
+		// add privacy hint, if it is not disabled.
+		if( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
+			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files:', 'external-files-in-media-library' ) . '</strong></label></div>';
+		}
+
 		// create dialog for sync config.
 		$dialog_sync_config = array(
 			'className' => 'eml-sync-config',
