@@ -759,7 +759,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		$file_url_parts = wp_parse_url( $file_path );
 
 		// bail if scheme and host are not given.
-		if( empty( $file_url_parts['scheme'] ) && empty( $file_url_parts['host'] ) ) {
+		if ( empty( $file_url_parts['scheme'] ) && empty( $file_url_parts['host'] ) ) {
 			return $results;
 		}
 
@@ -773,7 +773,8 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// create URL to request the data for this single file.
-		$url_to_use = add_query_arg( array(
+		$url_to_use = add_query_arg(
+			array(
 				'search' => basename( $file_path ),
 			),
 			$url_to_use
@@ -839,8 +840,8 @@ class Rest extends Directory_Listing_Base implements Service {
 			// return the results.
 			return $results;
 		} catch ( JsonException $e ) {
-			// add log
-			Log::get_instance()->create( __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $file, 'error' );
+			// add log.
+			Log::get_instance()->create( __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 
 			return array();
 		}

@@ -64,13 +64,29 @@ class File extends Protocol_Base {
 			// get the files.
 			$file_list = scandir( $this->get_url() );
 
+			// bail if list could not be loaded.
+			if ( ! is_array( $file_list ) ) {
+				// log this event.
+				Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+
+				// add the result to the list.
+				$result = new Results\Url_Result();
+				$result->set_url( $this->get_url() );
+				$result->set_result_text( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ) );
+				$result->set_error( true );
+				Results::get_instance()->add( $result );
+
+				// do nothing more.
+				return array();
+			}
+
 			/**
 			 * Run action if we have files to check via FILE-protocol.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
 			 * @param string $url   The URL to import.
-			 * @param array<string,mixed> $file_list List of files.
+			 * @param array<int,string> $file_list List of files.
 			 */
 			do_action( 'eml_file_directory_import_files', $this->get_url(), $file_list );
 
@@ -80,6 +96,11 @@ class File extends Protocol_Base {
 
 			// loop through the directory.
 			foreach ( $file_list as $file ) {
+				// bail for "..".
+				if ( '..' === $file ) {
+					continue;
+				}
+
 				// get file path.
 				$file_path = $this->get_url() . $file;
 

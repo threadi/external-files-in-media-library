@@ -109,7 +109,7 @@ class Specific_Date extends Extension_Base {
 		}
 
 		// add the last-modified date.
-		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', strtotime( $use_specific_date ) );
+		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', (int) strtotime( $use_specific_date ) );
 
 		// return the resulting array.
 		return $post_array;
@@ -118,9 +118,9 @@ class Specific_Date extends Extension_Base {
 	/**
 	 * Add date from REST API response to file data.
 	 *
-	 * @param array<string,mixed>  $results The results to use.
-	 * @param string $file_path The used URL.
-	 * @param array<string,mixed>  $rest_file_data The REST API response data.
+	 * @param array<string,mixed> $results The results to use.
+	 * @param string              $file_path The used URL.
+	 * @param array<string,mixed> $rest_file_data The REST API response data.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
@@ -196,7 +196,7 @@ class Specific_Date extends Extension_Base {
 	 */
 	public function add_option_on_sync_config( string $form, int $term_id ): string {
 		// get the actual setting.
-		$value = (string)get_term_meta( $term_id, 'use_specific_date', true );
+		$value = (string) get_term_meta( $term_id, 'use_specific_date', true );
 
 		// add the HTML-code.
 		$form .= '<div><label for="use_specific_date">' . __( 'Choose date for each file:', 'external-files-in-media-library' ) . '</label><input type="date" name="use_specific_date" id="use_specific_date" value="' . esc_attr( $value ) . '"></div>';
@@ -238,7 +238,7 @@ class Specific_Date extends Extension_Base {
 	 */
 	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
 		// get the actual setting.
-		$value = (string)get_term_meta( $term_id, 'use_specific_date', true );
+		$value = (string) get_term_meta( $term_id, 'use_specific_date', true );
 
 		// if "use_specific_date" is empty, just remove the setting.
 		if ( empty( $value ) ) {

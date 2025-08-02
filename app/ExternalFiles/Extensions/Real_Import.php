@@ -559,7 +559,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
 		// bail if settings is not set.
-		if( 1 !== absint( get_term_meta( $term_id, 'real_import', true ) ) ) {
+		if ( 1 !== absint( get_term_meta( $term_id, 'real_import', true ) ) ) {
 			return;
 		}
 
@@ -581,8 +581,13 @@ class Real_Import extends Extension_Base {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function delete_mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// bail if settings is not set.
-		if( ! isset( $_POST['real_import'] ) || 1 !== absint( $_POST['real_import'] ) ) {
+		if ( ! isset( $_POST['real_import'] ) || 1 !== absint( $_POST['real_import'] ) ) {
 			return;
 		}
 
@@ -601,14 +606,14 @@ class Real_Import extends Extension_Base {
 	 */
 	public function check_for_duplicate_during_sync( array $results ): array {
 		// bail if no URL is given.
-		if( empty( $results['url'] ) ) {
+		if ( empty( $results['url'] ) ) {
 			return array();
 		}
 
 		// query for file with same filename.
-		$query   = array(
+		$query         = array(
 			'post_type'      => 'attachment',
-			'title' => basename( $results['url'] ),
+			'title'          => basename( $results['url'] ),
 			'post_status'    => array( 'inherit', 'trash' ),
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
@@ -616,7 +621,7 @@ class Real_Import extends Extension_Base {
 		$existing_file = new WP_Query( $query );
 
 		// bail if another file with same name could be found.
-		if( 1 === $existing_file->found_posts ) {
+		if ( 1 === $existing_file->found_posts ) {
 			// log this event.
 			Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $results['url'], 'error', 0, Import::get_instance()->get_identified() );
 

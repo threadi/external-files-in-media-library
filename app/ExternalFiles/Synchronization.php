@@ -199,7 +199,8 @@ class Synchronization {
 		$setting->set_default( 1 );
 		$field = new Checkbox();
 		$field->set_title( __( 'Send email after sync', 'external-files-in-media-library' ) );
-		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), get_option( 'admin_email') ) );
+		/* translators: %1$s will be replaced by an email address. */
+		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), get_option( 'admin_email' ) ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
 	}
@@ -533,18 +534,18 @@ class Synchronization {
 			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 			// send email if enabled.
-			if( 1 === absint( get_option( 'eml_sync_email' ) ) ) {
+			if ( 1 === absint( get_option( 'eml_sync_email' ) ) ) {
 				// get the to-email from settings.
 				$to = get_term_meta( $term_id, 'email', true );
-				if( empty( $to ) ) {
-					$to      = get_option( 'admin_email' );
+				if ( empty( $to ) ) {
+					$to = get_option( 'admin_email' );
 				}
 
 				// get the term.
 				$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
 
 				// bail if term could not be loaded.
-				if( ! $term instanceof WP_Term ) {
+				if ( ! $term instanceof WP_Term ) {
 					return;
 				}
 
@@ -863,7 +864,7 @@ class Synchronization {
 		$term = $this->get_term_by_attachment_id( $attachment_id );
 
 		// bail if term could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 
@@ -873,9 +874,9 @@ class Synchronization {
 		// create URL.
 		$url = add_query_arg(
 			array(
-				'taxonomy' => 'edlfw_archive',
+				'taxonomy'  => 'edlfw_archive',
 				'post_type' => 'attachment',
-				's' => $term->name
+				's'         => $term->name,
 			),
 			get_admin_url() . 'edit-tags.php'
 		);
@@ -1611,8 +1612,8 @@ class Synchronization {
 	/**
 	 * Return the title for a synced file.
 	 *
-	 * @param string $title
-	 * @param int    $attachment_id
+	 * @param string $title The title.
+	 * @param int    $attachment_id The attachment ID.
 	 *
 	 * @return string
 	 */
@@ -1620,7 +1621,7 @@ class Synchronization {
 		// get synced term bei attachment ID.
 		$term = $this->get_term_by_attachment_id( $attachment_id );
 
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return $title;
 		}
 
@@ -1630,6 +1631,11 @@ class Synchronization {
 		// get the listing object by this name.
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
+		// bail if listing object could not be loaded.
+		if ( ! $listing_obj instanceof Directory_Listing_Base ) {
+			return $title;
+		}
+
 		// return the listing object label.
 		return $listing_obj->get_label();
 	}
@@ -1637,7 +1643,7 @@ class Synchronization {
 	/**
 	 * Return a term for a given synced attachment ID.
 	 *
-	 * @param int $attachment_id
+	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return WP_Term|false
 	 */
@@ -1667,7 +1673,7 @@ class Synchronization {
 		$term = $terms[0];
 
 		// bail if term could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) { // @phpstan-ignore instanceof.alwaysTrue
 			return false;
 		}
 

@@ -164,14 +164,19 @@ class Dates extends Extension_Base {
 	/**
 	 * Add date from REST API response to file data.
 	 *
-	 * @param array<string,mixed>  $results The results to use.
-	 * @param string $file_path The used URL.
-	 * @param array<string,mixed>  $rest_file_data The REST API response data.
+	 * @param array<string,mixed> $results The results to use.
+	 * @param string              $file_path The used URL.
+	 * @param array<string,mixed> $rest_file_data The REST API response data.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_file_date_from_rest_api( array $results, string $file_path, array $rest_file_data ): array {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// get value from request.
 		$use_date = isset( $_POST['use_dates'] ) ? absint( $_POST['use_dates'] ) : -1;
 
@@ -354,7 +359,7 @@ class Dates extends Extension_Base {
 	 */
 	public function add_action_before_sync( string $url, array $term_data, int $term_id ): void {
 		// bail if settings is not set.
-		if( 1 !== absint( get_term_meta( $term_id, 'use_dates', true ) ) ) {
+		if ( 1 !== absint( get_term_meta( $term_id, 'use_dates', true ) ) ) {
 			return;
 		}
 
