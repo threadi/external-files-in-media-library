@@ -71,7 +71,7 @@ class Forms {
 		add_action( 'post-html-upload-ui', array( $this, 'add_single_form' ), 10, 0 );
 
 		// add AJAX endpoints which processes the import from @ImportDialog.
-		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_via_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
 		// use our own actions.
@@ -265,7 +265,7 @@ class Forms {
 	 *
 	 * @return       void
 	 */
-	public function add_urls_via_ajax(): void {
+	public function add_urls_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'eml-urls-upload-nonce', 'nonce' );
 

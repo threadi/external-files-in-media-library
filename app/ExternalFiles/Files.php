@@ -109,6 +109,7 @@ class Files {
 		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_external_source' ), 10, 2 );
 		add_filter( 'eml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
 		add_action( 'eml_show_file_info', array( $this, 'show_external_source_info' ) );
+		add_filter( 'efml_add_url', array( $this, 'add_urls_by_hook' ), 10, 4 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1417,5 +1418,56 @@ class Files {
 		?>
 		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
 		<?php
+	}
+
+	/**
+	 * Add URLs by using our hook.
+	 *
+	 * Example:
+	 * apply_filters( 'efml_add_url', 0, 'https://example.com/sample.pdf', 'login', 'password', 'apikey' );
+	 *
+	 * @param int    $attachment_id The resulting attachment ID.
+	 * @param string $url           The URL to add.
+	 * @param string $login         The login to access the URL (optional).
+	 * @param string $password      The password to access the URL (optional).
+	 * @param string $api_key       The API-Key to access the URL (optional).
+	 *
+	 * @return int
+	 */
+	public function add_urls_by_hook( int $attachment_id, string $url, string $login = '', string $password = '', string $api_key = '' ): int {
+		// bail if attachment ID is set.
+		if( $attachment_id > 0 ) {
+			return $attachment_id;
+		}
+
+		// get the external file object for the added URL.
+		$external_file_obj = $this->get_file_by_url( $url );
+
+		// bail if external file object could be loaded and is valid = file exist.
+		if( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
+			return $external_file_obj->get_id();
+		}
+
+		// get the import-object.
+		$import_obj = Import::get_instance();
+
+		// add the credentials.
+		$import_obj->set_login( $login );
+		$import_obj->set_password( $password );
+		$import_obj->set_api_key( $api_key );
+
+		// run the import.
+		$import_obj->add_url( $url );
+
+		// get the external file object for the added URL.
+		$external_file_obj = $this->get_file_by_url( $url );
+
+		// bail if external file object could not be loaded or is not valid.
+		if( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
+			return 0;
+		}
+
+		// return the attachment ID of the external file.
+		return $external_file_obj->get_id();
 	}
 }

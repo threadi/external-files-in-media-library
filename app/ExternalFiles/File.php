@@ -1061,4 +1061,23 @@ class File {
 			get_admin_url() . 'admin.php'
 		);
 	}
+
+	/**
+	 * Return list of file data as debug info for this file.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_debug(): array {
+		return array(
+			'url' => $this->get_url(),
+			'post_id' => $this->get_id(),
+			'title' => $this->get_title(),
+			'date' => $this->get_date(),
+			'filesize' => $this->get_filesize(),
+			'protocol' => $this->get_protocol_handler_obj()->get_title(),
+			'file_type' => $this->get_file_type_obj()->get_name(),
+			'local_saved' => $this->get_file_type_obj()->is_local(),
+			'proxied' => $this->get_file_type_obj()->is_proxy_enabled()
+		);
+	}
 }

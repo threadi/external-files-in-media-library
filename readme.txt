@@ -29,7 +29,7 @@ And even more:
 
 == Support for other plugins ==
 
-Use an external data source for product images in your WooCommerce-based store.
+Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these, e.g. via FTP).
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
@@ -41,7 +41,9 @@ You can manage your external files with REST API requests as documented [here](h
 
 == Mass-Import ==
 
-You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it or use the external source tools to navigate to the directory to import. For very large directories there is also an automatically processed queue.
+You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it or use the external source tools to navigate to the directory to import.
+
+For very large directories there is also an automatically processed queue. You could also use the [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md) for large directories.
 
 == TCP Protocols ==
 
