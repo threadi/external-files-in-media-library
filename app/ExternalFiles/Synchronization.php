@@ -385,7 +385,7 @@ class Synchronization {
 		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
 
 		// add privacy hint, if it is not disabled.
-		if( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
+		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
 			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files:', 'external-files-in-media-library' ) . '</strong></label></div>';
 		}
 
@@ -446,7 +446,7 @@ class Synchronization {
 		add_filter( 'eml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
 
 		// and mark each file as updated.
-		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ) );
 
 		// add counter handling.
 		add_action( 'eml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
@@ -719,14 +719,12 @@ class Synchronization {
 	/**
 	 * Mark as updated.
 	 *
-	 * @param File                $external_file_obj The external file object.
-	 * @param array<string,mixed> $file_data The file data.
-	 * @param string              $url The used main URL for the import.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
+	public function mark_as_synced( File $external_file_obj ): void {
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced', 1 );
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced_time', time() );
 	}

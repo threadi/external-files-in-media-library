@@ -1313,7 +1313,7 @@ class Files {
 		$term = $this->get_term_by_attachment_id( $external_file_obj->get_id() );
 
 		// bail if term could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return $dialog;
 		}
 
@@ -1409,7 +1409,7 @@ class Files {
 		$term = $this->get_term_by_attachment_id( $external_file_obj->get_id() );
 
 		// bail if term could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return;
 		}
 

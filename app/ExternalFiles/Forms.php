@@ -85,7 +85,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
 	}
 
 	/**
@@ -340,6 +340,7 @@ class Forms {
 			if ( ! is_string( $password ) ) {
 				$password = '';
 			}
+			$password = html_entity_decode( $password );
 
 			// bail if no credentials are given.
 			if ( empty( $login ) || empty( $password ) ) {
@@ -675,14 +676,11 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File                $external_file_obj The file object.
-	 * @param array<string,mixed> $file_data The data of the file.
-	 * @param string              $url The used URL.
+	 * @param File $external_file_obj The file object.
 	 *
 	 * @return void
-	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_imported_url_to_list( File $external_file_obj, array $file_data, string $url ): void {
+	public function add_imported_url_to_list( File $external_file_obj ): void {
 		// create the entry.
 		$result_obj = new Url_Result();
 		$result_obj->set_error( false );

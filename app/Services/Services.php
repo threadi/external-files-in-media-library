@@ -324,12 +324,12 @@ class Services {
 		$list = '';
 		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 			// bail if it is disabled.
-			if( $obj->is_disabled() ) {
+			if ( $obj->is_disabled() ) {
 				continue;
 			}
 
 			// hide single import.
-			if( 'import' === $obj->get_name() ) {
+			if ( 'import' === $obj->get_name() ) {
 				continue;
 			}
 
@@ -338,7 +338,7 @@ class Services {
 		}
 
 		// bail if list is empty.
-		if( empty( $list ) ) {
+		if ( empty( $list ) ) {
 			return $dialog;
 		}
 

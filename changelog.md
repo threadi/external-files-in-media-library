@@ -59,6 +59,7 @@
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 - Hosting of files can now only be changed by users with the capability to upload external files
 - Synced files will be linked with its linked source in media library
+- Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
 
 ### Fixed
 

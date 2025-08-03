@@ -80,7 +80,7 @@ class Extensions {
 			// get object.
 			$obj = $class_name();
 
-			// bail if object is not Crypt_Base.
+			// bail if object is not Extension_Base.
 			if ( ! $obj instanceof Extension_Base ) {
 				continue;
 			}

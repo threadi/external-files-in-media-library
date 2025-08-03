@@ -582,7 +582,7 @@ class Import extends Directory_Listing_Base {
 	/**
 	 * Set the external source, if given.
 	 *
-	 * @param File                $external_file_obj The external file object.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 */
@@ -591,7 +591,7 @@ class Import extends Directory_Listing_Base {
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if no term_id is given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			return;
 		}
 
