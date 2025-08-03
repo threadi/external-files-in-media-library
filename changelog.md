@@ -31,6 +31,7 @@
 - Added option to import real files during synchronization (they are just imported if they are no duplicate)
 - Added privacy hint as checkbox in every import dialog, configurable in user settings
 - Added WordPress Importer entry
+- Added info in admin footer for pages provided by the plugin or for which it makes extensions
 
 ### Changed
 

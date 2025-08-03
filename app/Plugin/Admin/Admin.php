@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
@@ -91,6 +92,7 @@ class Admin {
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_row_meta_links' ), 10, 2 );
+		add_filter( 'admin_footer_text', array( $this, 'show_plugin_hint_in_footer' ) );
 
 		// register our own importer in backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );
@@ -367,5 +369,38 @@ class Admin {
 	public function forward_importer_to_settings(): void {
 		wp_safe_redirect( Helper::get_add_media_url() );
 		exit;
+	}
+
+	/**
+	 * Show hint in footer in backend on listing and single view of positions there.
+	 *
+	 * @param string $content The actual footer content.
+	 *
+	 * @return string
+	 */
+	public function show_plugin_hint_in_footer( string $content ): string {
+		global $pagenow;
+
+		// show specific text on media pages.
+		if( in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
+			// show hint for our plugin.
+			/* translators: %1$s will be replaced by the plugin name. */
+			return $content . ' ' . sprintf( __( 'This page has been expanded by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
+		}
+
+		// get requested taxonomy.
+		$post_type = filter_input(INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get requested page.
+		$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if this is not the listing or our page.
+		if( $page !== 'efml_local_directories' && $post_type !== Taxonomy::get_instance()->get_name() ) {
+			return $content;
+		}
+
+		// show hint for our plugin.
+		/* translators: %1$s will be replaced by the plugin name. */
+		return $content . ' ' . sprintf( __( 'This page is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
 	}
 }
