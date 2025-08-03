@@ -126,6 +126,10 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 
 .eml a { text-decoration: none }
 
+.misc-pub-external-file code {
+	padding-left: 0;
+}
+
 .misc-pub-external-file span {
 	vertical-align: middle;
 }

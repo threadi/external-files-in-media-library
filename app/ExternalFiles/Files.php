@@ -477,7 +477,7 @@ class Files {
 					<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
 				<?php
 			} else {
-				echo esc_html( $url );
+				echo '<code>' . esc_html( $url ) . '</code>';
 			}
 			?>
 		</p>

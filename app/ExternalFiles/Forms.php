@@ -491,6 +491,7 @@ class Forms {
 				$error_obj = new Url_Result();
 				$error_obj->set_result_text( $log_entry['log'] );
 				$error_obj->set_url( $url );
+				$error_obj->set_error( true );
 
 				// add the error object to the list of errors.
 				Results::get_instance()->add( $error_obj );
@@ -685,7 +686,7 @@ class Forms {
 		// create the entry.
 		$result_obj = new Url_Result();
 		$result_obj->set_error( false );
-		$result_obj->set_url( $url );
+		$result_obj->set_url( $external_file_obj->get_url( true ) );
 		$result_obj->set_attachment_id( $external_file_obj->get_id() );
 
 		// add the error object to the list of errors.

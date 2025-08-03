@@ -754,4 +754,17 @@ class Helper {
 		)
 		|| ! function_exists( 'wp_is_development_mode' );
 	}
+
+	/**
+	 * Return the plugin name.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_name(): string {
+		$plugin_data = get_plugin_data( EFML_PLUGIN, false, false );
+		if ( ! empty( $plugin_data['Name'] ) ) {
+			return $plugin_data['Name'];
+		}
+		return '';
+	}
 }

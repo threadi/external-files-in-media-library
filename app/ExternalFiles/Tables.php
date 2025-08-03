@@ -231,9 +231,9 @@ class Tables {
 			$url_to_show = $protocol_handler->get_link();
 
 			// get link or string for the URL.
-			$url_html = esc_html( $url );
+			$url_html = '<code>' . esc_html( $url ) . '</code>';
 			if ( ! empty( esc_url( $url ) ) ) {
-				$url_html = '<a href="' . esc_url( $url ) . '" title="' . esc_attr( $url ) . '">' . esc_html( $url_to_show ) . '</a>';
+				$url_html = '<a href="' . esc_url( $url ) . '" title="' . esc_attr( $url ) . '" target="_blank">' . esc_html( $url_to_show ) . '</a>';
 			}
 
 			// get URL.

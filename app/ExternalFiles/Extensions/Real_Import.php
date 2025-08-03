@@ -344,9 +344,10 @@ class Real_Import extends Extension_Base {
 			'title'   => sprintf( __( 'Import %1$s as real file', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
 			'texts'   => array(
 				/* translators: %1$s will be replaced by the file name. */
-				'<p><strong>' . sprintf( __( 'Are you sure you want to import %1$s in your media library?', 'external-files-in-media-library' ), $external_file_obj->get_title() ) . '</strong></p>',
+				'<p><strong>' . sprintf( __( 'Are you sure you want to import %1$s in your media library?', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_title() . '</code>' ) . '</strong></p>',
 				'<p>' . __( 'The file will be saved as real file in your media library without external connections.', 'external-files-in-media-library' ) . '</p>',
-				'<p>' . __( 'It will then no longer be managed by External Files for Media Library for you.', 'external-files-in-media-library' ) . '</p>',
+				/* translators: %1$s will be replaced by the plugin name. */
+				'<p>' . sprintf( __( 'It will then no longer be managed by %1$s for you.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' ) . '</p>',
 			),
 			'buttons' => array(
 				array(
