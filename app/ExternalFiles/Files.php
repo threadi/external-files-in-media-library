@@ -10,10 +10,15 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Post;
 use WP_Query;
+use WP_Term;
 
 /**
  * Controller for external files-tasks.
@@ -99,6 +104,11 @@ class Files {
 		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'eml_external_file_infos', array( $this, 'prevent_not_allowed_mime_type' ), 10, 2 );
+		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
+		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
+		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_external_source' ), 10, 2 );
+		add_filter( 'eml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
+		add_action( 'eml_show_file_info', array( $this, 'show_external_source_info' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1217,5 +1227,195 @@ class Files {
 
 		// return the resulting string.
 		return $html;
+	}
+
+	/**
+	 * Add filter options for media library listing.
+	 *
+	 * @param array<int|string,string> $options The options.
+	 *
+	 * @return array<int|string,string>
+	 */
+	public function add_filter_options( array $options ): array {
+		// get all external sources.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
+
+		// add them to the options list.
+		if ( is_array( $terms ) ) {
+			foreach ( $terms as $term ) {
+				$options[ (string) $term->term_id ] = $term->name;
+			}
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Use the filter options.
+	 *
+	 * @param WP_Query $query The WP_Query object.
+	 *
+	 * @return void
+	 */
+	public function use_filter_options( WP_Query $query ): void {
+		// get filter value.
+		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if filter is not set.
+		if ( is_null( $filter ) ) {
+			return;
+		}
+
+		// get the term of the given URL.
+		$term = get_term_by( 'term_id', $filter, Taxonomy::get_instance()->get_name() );
+
+		// bail if no term could be found.
+		if ( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		// extend the filter.
+		$query->set(
+			'tax_query',
+			array(
+				array(
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field'    => 'term_id',
+					'terms'    => $term->term_id,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Show sync info in info dialog for single file.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param File                $external_file_obj The file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_external_source( array $dialog, File $external_file_obj ): array {
+		// get sync marker.
+		$sync_marker = absint( get_post_meta( $external_file_obj->get_id(), 'eml_synced_time', true ) );
+
+		// bail if marker ist not set.
+		if ( 0 === $sync_marker ) {
+			return $dialog;
+		}
+
+		// get the assigned archive term.
+		$term = $this->get_term_by_attachment_id( $external_file_obj->get_id() );
+
+		// bail if term could not be loaded.
+		if( ! $term instanceof WP_Term ) {
+			return $dialog;
+		}
+
+		// add infos in dialog.
+		$dialog['texts'][] = '<p><strong>' . esc_html__( 'External source:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $term->name ) . '</p>';
+
+		// return resulting dialog.
+		return $dialog;
+	}
+
+	/**
+	 * Return a term for a given synced attachment ID.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return WP_Term|false
+	 */
+	public function get_term_by_attachment_id( int $attachment_id ): WP_Term|false {
+		// get sync marker.
+		$sync_marker = absint( get_post_meta( $attachment_id, 'eml_synced_time', true ) );
+
+		// bail if marker ist not set.
+		if ( 0 === $sync_marker ) {
+			return false;
+		}
+
+		// get the assigned archive term.
+		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
+
+		// bail if result is not an array.
+		if ( ! is_array( $terms ) ) {
+			return false;
+		}
+
+		// bail if none has been found.
+		if ( empty( $terms ) ) {
+			return false;
+		}
+
+		// get first result.
+		$term = $terms[0];
+
+		// bail if term could not be loaded.
+		if ( ! $term instanceof WP_Term ) { // @phpstan-ignore instanceof.alwaysTrue
+			return false;
+		}
+
+		// return the term.
+		return $term;
+	}
+
+	/**
+	 * Return the title for a synced file.
+	 *
+	 * @param string $title The title.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_external_source_title( string $title, int $attachment_id ): string {
+		// get synced term bei attachment ID.
+		$term = $this->get_term_by_attachment_id( $attachment_id );
+
+		// bail if no term could be loaded.
+		if ( ! $term instanceof WP_Term ) {
+			return $title;
+		}
+
+		// get the type name.
+		$type = get_term_meta( $term->term_id, 'type', true );
+
+		// get the listing object by this name.
+		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// bail if listing object could not be loaded.
+		if ( ! $listing_obj instanceof Directory_Listing_Base ) {
+			return $title;
+		}
+
+		// return the listing object label.
+		return $listing_obj->get_label();
+	}
+
+	/**
+	 * Show sync info (external source) for files which has been synced.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function show_external_source_info( File $external_file_obj ): void {
+		// get the assigned archive term.
+		$term = $this->get_term_by_attachment_id( $external_file_obj->get_id() );
+
+		// bail if term could not be loaded.
+		if( ! $term instanceof WP_Term ) {
+			return;
+		}
+
+		// show info about sync time.
+		?>
+		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
+		<?php
 	}
 }

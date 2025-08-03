@@ -346,7 +346,7 @@ function efml_sync_from_directory( method, term_id ) {
     data: {
       action: 'efml_sync_from_directory',
       method: method,
-      term_id: term_id,
+      term: term_id,
       nonce: efmlJsVars.sync_nonce,
     },
     error: function( jqXHR, textStatus, errorThrown ) {

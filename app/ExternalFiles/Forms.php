@@ -459,7 +459,7 @@ class Forms {
 			$url_added = $import_obj->add_url( $url );
 
 			// update counter for URLs.
-			update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
+			update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id, 0 ) ) + 1 );
 
 			// add URL to list of errors if it was not successfully.
 			if ( ! $url_added ) {
@@ -611,9 +611,12 @@ class Forms {
 	 * @return void
 	 */
 	public function set_import_file_check( string $url ): void {
+		// get current user ID.
+		$user_id = get_current_user_id();
+
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 
 	/**
@@ -624,9 +627,12 @@ class Forms {
 	 * @return void
 	 */
 	public function set_import_file_save( string $url ): void {
+		// get current user ID.
+		$user_id = get_current_user_id();
+
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 
 	/**
@@ -639,7 +645,11 @@ class Forms {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function set_import_max( string $url, array $matches ): void {
-		update_option( 'eml_import_url_max_' . get_current_user_id(), absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
+		// get current user ID.
+		$user_id = get_current_user_id();
+
+		// update entry.
+		update_option( 'eml_import_url_max_' . $user_id, absint( get_option( 'eml_import_url_max_' . $user_id ) + count( $matches ) ) );
 	}
 
 	/**

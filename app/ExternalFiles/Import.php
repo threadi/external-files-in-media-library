@@ -13,6 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -94,6 +95,7 @@ class Import extends Directory_Listing_Base {
 		add_action( 'eml_sftp_directory_import_file_before_to_list', array( $this, 'check_runtime' ), 10, 2 );
 		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ), 10, 3 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'set_external_source' ) );
 	}
 
 	/**
@@ -575,5 +577,25 @@ class Import extends Directory_Listing_Base {
 
 		// return the identifier.
 		return $this->identifier;
+	}
+
+	/**
+	 * Set the external source, if given.
+	 *
+	 * @param File                $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function set_external_source( File $external_file_obj ): void {
+		// get the term_id.
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if no term_id is given.
+		if( 0 === $term_id ) {
+			return;
+		}
+
+		// assign the file to this archive.
+		wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
 	}
 }

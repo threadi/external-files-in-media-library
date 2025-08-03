@@ -15,7 +15,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
 use JsonException;
@@ -513,11 +512,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "local", "urls": "' . $this->get_channel_url() . '" + url, "login": url, "password": apiKey, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_channel_url() . '" + url, "login": url, "password": apiKey, "term": config.term } );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "youtube", actualDirectoryPath, url, "", apiKey );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, url, "", apiKey );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)

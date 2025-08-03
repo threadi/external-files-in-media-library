@@ -211,6 +211,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li {
 	min-width: 200px;
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li:hover {
+	background-color: rgba(255,255,255,.6);
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:not(.connect) {
 	box-shadow: none;
 	line-height: 1.4;

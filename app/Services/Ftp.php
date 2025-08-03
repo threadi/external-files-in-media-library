@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
@@ -308,11 +307,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "ftp", actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "", config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
