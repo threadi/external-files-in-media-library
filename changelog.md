@@ -5,13 +5,15 @@
 ### Added
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added hook to import external URLs through third party plugins (for custom development)
 - Added DropBox support for import of external files into your media library
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
-- Added these 2 new options also as parameter on WP CLI command to import URLs
+- Added option to choose a specific date for each file to import
+- Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added option to choose which of these extensions should be available for file handlings
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
@@ -20,12 +22,17 @@
 - Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
-- Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
-- Added support for plugin Folders to import external files in its folders
+- Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
+- Added support for plugin "Folders" to import external files in its folders
 - Added support for plugin "Media Library Organizer" to import external files in its categories
 - Added support for plugin "iFolders" to import external files in its folders
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
+- Added option to use the files dates during synchronization
+- Added option to import real files during synchronization (they are just imported if they are no duplicate)
+- Added privacy hint as checkbox in every import dialog, configurable in user settings
+- Added WordPress Importer entry
+- Added info in admin footer for pages provided by the plugin or for which it makes extensions
 
 ### Changed
 
@@ -54,6 +61,8 @@
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 - Hosting of files can now only be changed by users with the capability to upload external files
+- Synced files will be linked with its linked source in media library
+- Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
 
 ### Fixed
 
@@ -67,6 +76,7 @@
 - Fixed disabling of check files event
 - Fixed detection of correct file type during import process
 - Fixed potential error with attached files if they do not exist
+- Fixed missing visible progress-bar during synchronization
 
 ### Removed
 

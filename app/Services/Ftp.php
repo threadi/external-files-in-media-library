@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
@@ -92,7 +91,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_local_import' ), 10, 2 );
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
@@ -106,27 +104,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		$directory_listing_objects[] = $this;
 		return $directory_listing_objects;
-	}
-
-	/**
-	 * Add option to import from local directory.
-	 *
-	 * @param array<string,mixed> $dialog The dialog.
-	 * @param array<string,mixed> $settings The requested settings.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function add_option_for_local_import( array $dialog, array $settings ): array {
-		// bail if "no_services" is set in settings.
-		if ( isset( $settings['no_services'] ) ) {
-			return $dialog;
-		}
-
-		// add the hint for local import.
-		$dialog['texts'][] = '<details><summary>' . __( 'Or add from FTP-server directory', 'external-files-in-media-library' ) . '</summary><div><label for="eml_ftp"><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . esc_html__( 'Add from FTP server directory', 'external-files-in-media-library' ) . '</a></label></div></details>';
-
-		// return resulting dialog.
-		return $dialog;
 	}
 
 	/**
@@ -330,11 +307,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "local", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "ftp", actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "", config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)

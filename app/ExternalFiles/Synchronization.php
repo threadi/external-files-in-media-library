@@ -13,10 +13,10 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
@@ -81,17 +81,15 @@ class Synchronization {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_synchronization' ), 10, 3 );
 		add_action( 'eml_show_file_info', array( $this, 'show_sync_info' ) );
-		add_action( 'eml_table_column_content', array( $this, 'show_sync_info_in_table' ) );
+		add_action( 'eml_table_column_source', array( $this, 'show_sync_info_in_table' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'added_new_directory' ) );
-		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
-		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
 		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_sync_info_in_dialog' ), 10, 2 );
 
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_get_sync_info', array( $this, 'sync_info' ), 10, 0 );
 		add_action( 'wp_ajax_efml_change_sync_state', array( $this, 'sync_state_change_via_ajax' ) );
-		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'sync_config_save_via_ajax' ) );
+		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'save_config_via_ajax' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
@@ -139,10 +137,21 @@ class Synchronization {
 		$sync_settings_setting->set_field(
 			array(
 				'title'       => __( 'Enable support for synchronization', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled you can synchronize any supported external directory with your media library.', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled you can synchronize any supported external source with your media library.', 'external-files-in-media-library' ),
 				'type'        => 'Checkbox',
 			)
 		);
+
+		// add setting to enable automatic sync for every new external directory.
+		$setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Enable automatic synchronization', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled every new external source will automatically be synchronized.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 
 		// create interval setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_interval' );
@@ -151,49 +160,45 @@ class Synchronization {
 		$setting->set_default( 'efml_hourly' );
 		$field = new Select();
 		$field->set_title( __( 'Interval for synchronization', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines the time interval in which the synchronization for new external directories will be processed. This setting can be changed on each external directory.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Serves as a preset for new external sources. This setting can be changed on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_intervals() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
 
-		// add setting to enable automatic sync for every new external directory.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 0 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Enable automatic synchronization', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled every new external directory will automatically be synchronized.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
-
 		// add setting for unused files after sync.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_delete_unused_files_after_sync' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 1 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Delete unused files', 'external-files-in-media-library' ),
-				'description' => __( 'Delete files in the media library that are no longer in the external directory after each synchronization.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
+		$setting = $settings_obj->add_setting( 'eml_sync_delete_unused_files_after_sync' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Delete unused files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Delete files in the media library that are no longer in the external source after each synchronization.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 
 		// add setting for deletion of files on deletion of its archive.
-		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync_delete_file_on_archive_deletion' );
-		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 1 );
-		$sync_settings_setting->set_field(
-			array(
-				'title'       => __( 'Delete synchronized files', 'external-files-in-media-library' ),
-				'description' => __( 'Delete files in media library belonging to an external directory when the connection to the external directory is deleted.', 'external-files-in-media-library' ),
-				'type'        => 'Checkbox',
-			)
-		);
+		$setting = $settings_obj->add_setting( 'eml_sync_delete_file_on_archive_deletion' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Delete synchronized files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Delete files in media library belonging to an external source when the connection to the external source is deleted.', 'external-files-in-media-library' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
+
+		// add setting to send emails after sync.
+		$setting = $settings_obj->add_setting( 'eml_sync_email' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Send email after sync', 'external-files-in-media-library' ) );
+		/* translators: %1$s will be replaced by an email address. */
+		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization for the external source as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), '<code>' . get_option( 'admin_email' ) . '</code>' ) );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -327,7 +332,7 @@ class Synchronization {
 		$dialog_sync_now = array(
 			'title'   => __( 'Synchronize now?', 'external-files-in-media-library' ),
 			'texts'   => array(
-				'<p><strong>' . __( 'Are you sure you want to synchronize files from this external directory with your media library?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p><strong>' . __( 'Are you sure you want to synchronize files from this external source with your media library?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'During synchronization, files are synchronized between the source and the media library.', 'external-files-in-media-library' ) . '<br>' . __( 'New files are imported, existing files are retained, files that no longer exist in the source are deleted from the media library.', 'external-files-in-media-library' ) . '<br>' . __( 'Files that do not belong to this source remain untouched.', 'external-files-in-media-library' ) . '</p>',
 				'<p>' . __( 'Synchronization may take some time.', 'external-files-in-media-library' ) . '</p>',
 			),
@@ -373,13 +378,24 @@ class Synchronization {
 		 */
 		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
 
+		// get actual email.
+		$email = get_term_meta( $term_id, 'email', true );
+
+		// add option to send email after end of each sync.
+		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
+
+		// add privacy hint, if it is not disabled.
+		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
+			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files:', 'external-files-in-media-library' ) . '</strong></label></div>';
+		}
+
 		// create dialog for sync config.
 		$dialog_sync_config = array(
 			'className' => 'eml-sync-config',
 			/* translators: %1$s will be replaced by a name. */
 			'title'     => sprintf( __( 'Settings for this %1$s connection', 'external-files-in-media-library' ), $listing_obj->get_label() ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Configure interval which will be used to automatically synchronize this external directory with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p><strong>' . __( 'Configure interval which will be used to automatically synchronize this external source with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
 				$form,
 			),
 			'buttons'   => array(
@@ -430,14 +446,17 @@ class Synchronization {
 		add_filter( 'eml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
 
 		// and mark each file as updated.
-		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ) );
 
 		// add counter handling.
-		add_action( 'eml_after_file_save', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_file_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
 
 		// update the sync title on each file.
@@ -514,6 +533,34 @@ class Synchronization {
 
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+
+			// send email if enabled.
+			if ( 1 === absint( get_option( 'eml_sync_email' ) ) ) {
+				// get the to-email from settings.
+				$to = get_term_meta( $term_id, 'email', true );
+				if ( empty( $to ) ) {
+					$to = get_option( 'admin_email' );
+				}
+
+				// get the term.
+				$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
+
+				// bail if term could not be loaded.
+				if ( ! $term instanceof WP_Term ) {
+					return;
+				}
+
+				// define mail.
+				$subject = '[' . get_option( 'blogname' ) . '] ' . __( 'Synchronisation completed', 'external-files-in-media-library' );
+				/* translators: %1$s will be replaced by a title. */
+				$body    = sprintf( __( 'The synchronization of %1$s has been successfully completed.', 'external-files-in-media-library' ), esc_html( $term->name ) ) . '<br><br>' . __( 'This email was generated by the WordPress plugin <em>External files for Media Library</em> based on the settings in your project.', 'external-files-in-media-library' );
+				$headers = array(
+					'Content-Type: text/html; charset=UTF-8',
+				);
+
+				// send mail.
+				wp_mail( $to, $subject, $body, $headers );
+			}
 		}
 	}
 
@@ -548,11 +595,11 @@ class Synchronization {
 		}
 
 		// get the requested directory term.
-		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if no term_id is given.
 		if ( $term_id <= 0 ) {
-			$log->create( __( 'No external directory given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+			$log->create( __( 'No external source given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
 			wp_send_json_error();
 		}
 
@@ -561,7 +608,7 @@ class Synchronization {
 
 		// bail if term_data could not be loaded.
 		if ( empty( $term_data ) ) {
-			$log->create( __( 'Requested external directory does not have any configuration.', 'external-files-in-media-library' ), '', 'error' );
+			$log->create( __( 'Requested external source does not have any configuration.', 'external-files-in-media-library' ), '', 'error' );
 			wp_send_json_error();
 		}
 
@@ -637,7 +684,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Disable duplicate check.
+	 * Disable duplicate check during synchronisation.
 	 *
 	 * @return bool
 	 */
@@ -672,27 +719,14 @@ class Synchronization {
 	/**
 	 * Mark as updated.
 	 *
-	 * @param File                $external_file_obj The external file object.
-	 * @param array<string,mixed> $file_data The file data.
-	 * @param string              $url The used main URL for the import.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
+	public function mark_as_synced( File $external_file_obj ): void {
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced', 1 );
 		update_post_meta( $external_file_obj->get_id(), 'eml_synced_time', time() );
-
-		// get the term by the URL.
-		$term = get_term_by( 'name', $url, Taxonomy::get_instance()->get_name() );
-
-		// bail if term is not found.
-		if ( ! $term instanceof WP_Term ) {
-			return;
-		}
-
-		// assign the file to this archive.
-		wp_set_object_terms( $external_file_obj->get_id(), $term->term_id, Taxonomy::get_instance()->get_name() );
 	}
 
 	/**
@@ -711,26 +745,9 @@ class Synchronization {
 			return;
 		}
 
-		// get the assigned archive term.
-		$terms = wp_get_object_terms( $external_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
-
-		// bail if result is not an array.
-		if ( ! is_array( $terms ) ) {
-			return;
-		}
-
-		// bail if none has been found.
-		if ( empty( $terms ) ) {
-			return;
-		}
-
-		// get first result.
-		$term = $terms[0];
-
 		// show info about sync time.
 		?>
-		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?> <code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
-		<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?> <a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
+		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Last synchronized:', 'external-files-in-media-library' ); ?><br><code><?php echo esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ); ?></code></li>
 		<?php
 	}
 
@@ -751,25 +768,8 @@ class Synchronization {
 			return $dialog;
 		}
 
-		// get the assigned archive term.
-		$terms = wp_get_object_terms( $external_file_obj->get_id(), Taxonomy::get_instance()->get_name() );
-
-		// bail if result is not an array.
-		if ( ! is_array( $terms ) ) {
-			return $dialog;
-		}
-
-		// bail if none has been found.
-		if ( empty( $terms ) ) {
-			return $dialog;
-		}
-
-		// get first result.
-		$term = $terms[0];
-
 		// add infos in dialog.
 		$dialog['texts'][] = '<p><strong>' . esc_html__( 'Last synchronized:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( Helper::get_format_date_time( gmdate( 'Y-m-d H:i', $sync_marker ) ) ) . '</p>';
-		$dialog['texts'][] = '<p><strong>' . esc_html__( 'Synchronized from:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $term->name ) . '</p>';
 
 		// return resulting dialog.
 		return $dialog;
@@ -814,29 +814,26 @@ class Synchronization {
 	 * @return void
 	 */
 	public function show_sync_info_in_table( int $attachment_id ): void {
+		// get synced term by given attachment ID.
+		$term = Files::get_instance()->get_term_by_attachment_id( $attachment_id );
+
+		// bail if term could not be loaded.
+		if ( ! $term instanceof WP_Term ) {
+			return;
+		}
+
 		// get sync marker.
 		$sync_marker = absint( get_post_meta( $attachment_id, 'eml_synced_time', true ) );
 
-		// bail if marker ist not set.
-		if ( 0 === $sync_marker ) {
-			return;
-		}
-
-		// get the assigned archive term.
-		$terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name() );
-
-		// bail if result is not an array.
-		if ( ! is_array( $terms ) ) {
-			return;
-		}
-
-		// bail if none has been found.
-		if ( empty( $terms ) ) {
-			return;
-		}
-
-		// get first result.
-		$term = $terms[0];
+		// create URL.
+		$url = add_query_arg(
+			array(
+				'taxonomy'  => 'edlfw_archive',
+				'post_type' => 'attachment',
+				's'         => $term->name,
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
 
 		// create the title-attribute.
 		/* translators: %1$s will be replaced by a date-time, %2$s by a URL. */
@@ -844,7 +841,7 @@ class Synchronization {
 
 		// show info about sync time.
 		?>
-		<span class="dashicons dashicons-clock" title="<?php echo esc_attr( $title ); ?>"></span>
+		<a class="dashicons dashicons-clock" href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $title ); ?>"></a>
 		<?php
 	}
 
@@ -1033,7 +1030,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Get the schedule object by its term ID.
+	 * Return the schedule object by its term ID.
 	 *
 	 * @param int $term_id The term ID.
 	 *
@@ -1303,20 +1300,35 @@ class Synchronization {
 	}
 
 	/**
-	 * Save new interval settings for single synchronization schedule.
+	 * Save new configuration for single synchronization schedule.
 	 *
 	 * @return void
 	 */
-	public function sync_config_save_via_ajax(): void {
+	public function save_config_via_ajax(): void {
 		// check referer.
 		check_ajax_referer( 'eml-sync-save-config-nonce', 'nonce' );
+
+		// create dialog for failures.
+		$dialog = array(
+			'title'   => __( 'Configuration not saved', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p>' . __( 'The configuration for this synchronization could not be saved.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
 
 		// get the fields.
 		$fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fields'] ) ) : array();
 
 		// bail if term ID or interval is not given.
 		if ( empty( $fields['interval'] ) || 0 === absint( $fields['term_id'] ) ) {
-			wp_send_json_error();
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// get the term ID.
@@ -1328,11 +1340,14 @@ class Synchronization {
 		// check if the given interval exists.
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $interval ] ) ) {
-			wp_send_json_error();
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// save this interval on term as setting.
 		update_term_meta( $term_id, 'interval', $interval );
+
+		// save the given email.
+		update_term_meta( $term_id, 'email', $fields['email'] );
 
 		/**
 		 * Run additional tasks during saving a new sync configuration.
@@ -1342,12 +1357,27 @@ class Synchronization {
 		 */
 		do_action( 'efml_sync_save_config', $fields );
 
+		// create dialog.
+		$dialog = array(
+			'title'   => __( 'Configuration saved', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p>' . __( 'The new configuration for this synchronization has been saved.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.reload();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
 		// get the sync schedule object for this term_id.
 		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
-		// bail if no schedule found.
-		if ( ! $sync_schedule_obj ) {
-			wp_send_json_error();
+		// bail if no schedule found, but also send OK back.
+		if ( ! $sync_schedule_obj instanceof Schedules\Synchronization ) {
+			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// set the new interval.
@@ -1357,7 +1387,7 @@ class Synchronization {
 		$sync_schedule_obj->reset();
 
 		// send ok.
-		wp_send_json_success();
+		wp_send_json( array( 'detail' => $dialog ) );
 	}
 
 	/**
@@ -1403,69 +1433,6 @@ class Synchronization {
 
 		// return the user.
 		wp_safe_redirect( $referer );
-	}
-
-	/**
-	 * Add filter options for media library listing.
-	 *
-	 * @param array<int|string,string> $options The options.
-	 *
-	 * @return array<int|string,string>
-	 */
-	public function add_filter_options( array $options ): array {
-		// get all external sources.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
-
-		// add them to the options list.
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$options[ (string) $term->term_id ] = $term->name;
-			}
-		}
-
-		return $options;
-	}
-
-	/**
-	 * Use the filter options.
-	 *
-	 * @param WP_Query $query The WP_Query object.
-	 *
-	 * @return void
-	 */
-	public function use_filter_options( WP_Query $query ): void {
-		// get filter value.
-		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if filter is not set.
-		if ( is_null( $filter ) ) {
-			return;
-		}
-
-		// get the term of the given URL.
-		$term = get_term_by( 'term_id', $filter, Taxonomy::get_instance()->get_name() );
-
-		// bail if no term could be found.
-		if ( ! $term instanceof WP_Term ) {
-			return;
-		}
-
-		// extend the filter.
-		$query->set(
-			'tax_query',
-			array(
-				array(
-					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field'    => 'term_id',
-					'terms'    => $term->term_id,
-				),
-			)
-		);
 	}
 
 	/**

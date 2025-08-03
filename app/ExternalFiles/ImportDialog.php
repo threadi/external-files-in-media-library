@@ -66,10 +66,12 @@ class ImportDialog {
 		add_filter( 'eml_add_dialog', array( $this, 'prevent_dialog_usage' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_term' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_credentials' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_privacy_hint' ), 200, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
 		add_action( 'eml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
 		add_filter( 'eml_dialog_after_adding', array( $this, 'add_log_button' ) );
+		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings' ) );
 
 		// add user-specific configuration.
 		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
@@ -480,6 +482,13 @@ class ImportDialog {
 			'field'       => 'checkbox',
 		);
 
+		// add our setting.
+		$settings['no_privacy_hint'] = array(
+			'label'       => __( 'Hide privacy hint', 'external-files-in-media-library' ),
+			'description' => __( 'If enabled the privacy hint in the dialog will be hidden.', 'external-files-in-media-library' ),
+			'field'       => 'checkbox',
+		);
+
 		// return the settings.
 		return $settings;
 	}
@@ -561,5 +570,51 @@ class ImportDialog {
 
 		// return the dialog.
 		return $dialog;
+	}
+
+	/**
+	 * Add privacy hint on each import dialog with must be checked.
+	 *
+	 * Hide this hint if it is set in settings.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The requested settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_privacy_hint( array $dialog, array $settings ): array {
+		// bail if 'no_privacy_hint' is set in settings and true.
+		if ( isset( $settings['no_privacy_hint'] ) && false !== $settings['no_privacy_hint'] ) {
+			return $dialog;
+		}
+
+		// add the fields.
+		$text = '<label for="privacy_hint"><input type="checkbox" name="privacy_hint" id="privacy_hint" value="1" class="eml-use-for-import" required> <strong>' . esc_html__( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong>';
+
+		// add link to user settings.
+		$url   = add_query_arg(
+			array(),
+			get_admin_url() . 'profile.php'
+		);
+		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		$text .= '</label>';
+
+		// add the text.
+		$dialog['texts'][] = $text;
+
+		// return the resulting dialog.
+		return $dialog;
+	}
+
+	/**
+	 * Set settings for the dialog.
+	 *
+	 * @param array<string,mixed> $settings The dialog settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function set_dialog_settings( array $settings ): array {
+		$settings['no_privacy_hint'] = 1 === absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) );
+		return $settings;
 	}
 }

@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the FTP- and FTPS-support.
+ * File which handles the FTP-/FTPS-support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -21,7 +21,7 @@ use WP_Filesystem_Base;
 use WP_Filesystem_FTPext;
 
 /**
- * Object to handle FTP- and FTPS-support.
+ * Object to handle the FTP-/FTPS protocol.
  */
 class Ftp extends Protocol_Base {
 	/**

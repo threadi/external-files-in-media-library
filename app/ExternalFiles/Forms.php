@@ -71,7 +71,7 @@ class Forms {
 		add_action( 'post-html-upload-ui', array( $this, 'add_single_form' ), 10, 0 );
 
 		// add AJAX endpoints which processes the import from @ImportDialog.
-		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_via_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
 		// use our own actions.
@@ -85,7 +85,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
 	}
 
 	/**
@@ -190,8 +190,6 @@ class Forms {
 				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
 				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
-				'title_sync_config_saved'       => __( 'Configuration saved', 'external-files-in-media-library' ),
-				'text_sync_config_saved'        => __( 'The new interval has been saved.', 'external-files-in-media-library' ),
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 			)
@@ -267,7 +265,7 @@ class Forms {
 	 *
 	 * @return       void
 	 */
-	public function add_urls_via_ajax(): void {
+	public function add_urls_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'eml-urls-upload-nonce', 'nonce' );
 
@@ -342,6 +340,7 @@ class Forms {
 			if ( ! is_string( $password ) ) {
 				$password = '';
 			}
+			$password = html_entity_decode( $password );
 
 			// bail if no credentials are given.
 			if ( empty( $login ) || empty( $password ) ) {
@@ -461,7 +460,7 @@ class Forms {
 			$url_added = $import_obj->add_url( $url );
 
 			// update counter for URLs.
-			update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count', 0 ) ) + 1 );
+			update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id, 0 ) ) + 1 );
 
 			// add URL to list of errors if it was not successfully.
 			if ( ! $url_added ) {
@@ -493,6 +492,7 @@ class Forms {
 				$error_obj = new Url_Result();
 				$error_obj->set_result_text( $log_entry['log'] );
 				$error_obj->set_url( $url );
+				$error_obj->set_error( true );
 
 				// add the error object to the list of errors.
 				Results::get_instance()->add( $error_obj );
@@ -613,9 +613,12 @@ class Forms {
 	 * @return void
 	 */
 	public function set_import_file_check( string $url ): void {
+		// get current user ID.
+		$user_id = get_current_user_id();
+
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 
 	/**
@@ -626,9 +629,12 @@ class Forms {
 	 * @return void
 	 */
 	public function set_import_file_save( string $url ): void {
+		// get current user ID.
+		$user_id = get_current_user_id();
+
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
-		update_option( 'eml_import_url_count_' . get_current_user_id(), absint( get_option( 'eml_import_url_count' ) ) + 1 );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 
 	/**
@@ -641,7 +647,11 @@ class Forms {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function set_import_max( string $url, array $matches ): void {
-		update_option( 'eml_import_url_max_' . get_current_user_id(), absint( get_option( 'eml_import_url_max' ) + count( $matches ) ) );
+		// get current user ID.
+		$user_id = get_current_user_id();
+
+		// update entry.
+		update_option( 'eml_import_url_max_' . $user_id, absint( get_option( 'eml_import_url_max_' . $user_id ) + count( $matches ) ) );
 	}
 
 	/**
@@ -666,18 +676,15 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File                $external_file_obj The file object.
-	 * @param array<string,mixed> $file_data The data of the file.
-	 * @param string              $url The used URL.
+	 * @param File $external_file_obj The file object.
 	 *
 	 * @return void
-	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_imported_url_to_list( File $external_file_obj, array $file_data, string $url ): void {
+	public function add_imported_url_to_list( File $external_file_obj ): void {
 		// create the entry.
 		$result_obj = new Url_Result();
 		$result_obj->set_error( false );
-		$result_obj->set_url( $url );
+		$result_obj->set_url( $external_file_obj->get_url( true ) );
 		$result_obj->set_attachment_id( $external_file_obj->get_id() );
 
 		// add the error object to the list of errors.

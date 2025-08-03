@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the ssh/sftp support.
+ * File which handles the SSH/SFTP support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -21,7 +21,7 @@ use WP_Filesystem_Base;
 use WP_Filesystem_SSH2;
 
 /**
- * Object to handle different protocols.
+ * Object to handle the SSH/SFTP-protocol.
  */
 class Sftp extends Protocol_Base {
 	/**
@@ -163,6 +163,15 @@ class Sftp extends Protocol_Base {
 					// bail on duplicate.
 					continue;
 				}
+
+				/**
+				 * Run action just before the file check via SFTP-protocol.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 *
+				 * @param string $file_url   The URL to import.
+				 */
+				do_action( 'eml_sftp_directory_import_file_check', $file_url );
 
 				// get the file data.
 				$results = $this->get_url_info( $file_path );

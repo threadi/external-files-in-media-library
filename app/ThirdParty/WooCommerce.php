@@ -14,9 +14,11 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WC_Product;
+use WC_Product_CSV_Importer_Controller;
 
 /**
  * Object to handle support for this plugin.
@@ -76,13 +78,14 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 
 		// add settings.
 		add_action( 'init', array( $this, 'init_woocommerce' ) );
+		add_filter( 'woocommerce_product_csv_importer_steps', array( $this, 'add_settings_before_csv_import' ) );
 
 		// bail if support is not enabled.
 		if ( 1 !== absint( get_option( 'eml_woocommerce' ) ) ) {
 			return;
 		}
 
-		// add hooks.
+		// add hooks for usage during CSV-import.
 		add_filter( 'woocommerce_product_import_process_item_data', array( $this, 'import_product_image' ) );
 		add_filter( 'woocommerce_product_import_process_item_data', array( $this, 'import_product_gallery_images' ) );
 		add_action( 'woocommerce_product_import_inserted_product_object', array( $this, 'add_product_image' ), 10, 2 );
@@ -126,6 +129,168 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 				'type'        => 'Checkbox',
 			)
 		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_woocommerce_login' );
+		$setting->set_section( $woocommerce_settings_section );
+		$setting->set_type( 'string' );
+		$setting->set_default( '' );
+		$setting->prevent_export( true );
+		$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+		$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_woocommerce_password' );
+		$setting->set_section( $woocommerce_settings_section );
+		$setting->set_type( 'string' );
+		$setting->set_default( '' );
+		$setting->prevent_export( true );
+		$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+		$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+	}
+
+	/**
+	 * Add hint for import of external files during CSV-import through our plugin.
+	 *
+	 * @param array<string,array<string,mixed>> $steps List of steps during WooCommerce CSV-import.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function add_settings_before_csv_import( array $steps ): array {
+		// set the key after we want to add our settings page.
+		$after_key = 'upload';
+
+		// get the index of this key.
+		$index = array_search( $after_key, array_keys( $steps ), true );
+
+		// add our entry after the given key and return the resulting list.
+		return array_slice( $steps, 0, $index + 1 ) + array(
+			'efml_external_files' => array(
+				'name'    => __( 'Handling of external files', 'external-files-in-media-library' ),
+				'view'    => array( $this, 'show_hint_before_csv_import' ),
+				'handler' => array( $this, 'save_import_settings' ),
+			),
+		) + $steps;
+	}
+
+	/**
+	 * Show the hint after the first step in CSV-importer of WooCommerce.
+	 *
+	 * @source WooCommerce\html-product-csv-import-form.php
+	 *
+	 * @return void
+	 */
+	public function show_hint_before_csv_import(): void {
+		// get actual setting.
+		$checked = 1 === absint( get_option( 'eml_woocommerce' ) ) ? ' checked' : '';
+
+		// output.
+		?>
+		<form class="wc-progress-form-content woocommerce-importer" enctype="multipart/form-data" method="post">
+			<header>
+				<h2><?php esc_html_e( 'Handling of external files', 'external-files-in-media-library' ); ?></h2>
+				<p>
+				<?php
+					/* translators: %1$s will be replaced by our plugin name. */
+					echo wp_kses_post( sprintf( __( 'This option is provided by the plugin %1$s.', 'woocommerce' ), '<em>' . Helper::get_plugin_name() . '</em>' ) );
+				?>
+				</p>
+			</header>
+			<section>
+				<table class="form-table woocommerce-importer-options">
+					<tbody>
+						<tr>
+							<th><label for="woocommerce-importer-efml-import"><?php esc_html_e( 'External files', 'external-files-in-media-library' ); ?></label><br/></th>
+							<td>
+								<input type="hidden" name="efml_import" value="0" />
+								<input type="checkbox" id="woocommerce-importer-efml-import" name="efml_import" value="1"<?php echo esc_html( $checked ); ?> />
+								<label for="woocommerce-importer-efml-import"><?php esc_html_e( 'Save URLs for images in the CSV file as external files in the project.', 'external-files-in-media-library' ); ?></label>
+							</td>
+						</tr>
+						<tr>
+							<th><label for="woocommerce-importer-efml-import-credentials"><?php esc_html_e( 'Credentials', 'external-files-in-media-library' ); ?></label><br/></th>
+							<td>
+								<input type="hidden" name="efml_import_credentials" value="0" />
+								<input type="checkbox" id="woocommerce-importer-efml-import-credentials" name="efml_import_credentials" value="1" />
+								<label for="woocommerce-importer-efml-import-credentials"><?php esc_html_e( 'Enable this to provide credentials to download the external files from your CSV file. This could be the login for FTP access, for example. The URLs must be structured accordingly, including the complete path.', 'external-files-in-media-library' ); ?></label>
+							</td>
+						</tr>
+						<tr class="woocommerce-importer-efml-import-credentials hidden">
+							<th><label for="woocommerce-importer-efml-import-login"><?php esc_html_e( 'Login', 'external-files-in-media-library' ); ?></label><br/></th>
+							<td>
+								<input type="text" id="woocommerce-importer-efml-import-login" name="efml_import_login" value="" placeholder="<?php echo esc_attr__( 'The external login', 'external-files-in-media-library' ); ?>" />
+							</td>
+						</tr>
+						<tr class="woocommerce-importer-efml-import-credentials hidden">
+							<th><label for="woocommerce-importer-efml-import-password"><?php esc_html_e( 'Password', 'external-files-in-media-library' ); ?></label><br/></th>
+							<td>
+								<input type="password" id="woocommerce-importer-efml-import-password" name="efml_import_password" value="" placeholder="<?php echo esc_attr__( 'The external password', 'external-files-in-media-library' ); ?>" />
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+			<script type="text/javascript">
+				jQuery(function() {
+					jQuery( '#woocommerce-importer-efml-import-credentials' ).on( 'click', function() {
+						let elements = jQuery( '.woocommerce-importer-efml-import-credentials' );
+						if ( elements.is( '.hidden' ) ) {
+							elements.removeClass( 'hidden' );
+						} else {
+							elements.addClass( 'hidden' );
+						}
+					} );
+				});
+			</script>
+			<div class="wc-actions">
+				<button type="submit" class="button button-primary button-next" value="<?php esc_attr_e( 'Continue', 'woocommerce' ); ?>" name="save_step"><?php esc_html_e( 'Continue', 'woocommerce' ); ?></button>
+				<?php wp_nonce_field( 'woocommerce-csv-importer-efml' ); ?>
+			</div>
+		</form>
+		<?php
+	}
+
+	/**
+	 * Save import settings for CSV-import from WooCommerce dialog.
+	 *
+	 * @return void
+	 */
+	public function save_import_settings(): void {
+		// check nonce.
+		check_admin_referer( 'woocommerce-csv-importer-efml' );
+
+		// save the import setting.
+		update_option( 'eml_woocommerce', 1 === absint( filter_input( INPUT_POST, 'efml_import', FILTER_SANITIZE_NUMBER_INT ) ) );
+
+		// get the credentials, if enabled.
+		if ( 1 === absint( filter_input( INPUT_POST, 'efml_import_credentials', FILTER_SANITIZE_NUMBER_INT ) ) ) {
+			// get the login.
+			$login = filter_input( INPUT_POST, 'efml_import_login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+			// get the password.
+			$password = filter_input( INPUT_POST, 'efml_import_password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+			$password = html_entity_decode( $password );
+
+			// bail if one of the credentials is missing.
+			if ( empty( $login ) || empty( $password ) ) {
+				// actually we cannot return an error message for the CSV importer of WooCommerce.
+				// the site will just reload.
+				return;
+			}
+
+			// save the login.
+			update_option( 'eml_woocommerce_login', $login );
+
+			// save the password.
+			update_option( 'eml_woocommerce_password', $password );
+		}
+
+		// get the importer object.
+		$importer = new WC_Product_CSV_Importer_Controller();
+
+		// redirect user to next step.
+		wp_safe_redirect( esc_url_raw( $importer->get_next_step_link( 'efml_external_files' ) ) );
+		exit;
 	}
 
 	/**
@@ -146,6 +311,10 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 
 		// get the import object.
 		$import = Import::get_instance();
+
+		// set credentials, if given.
+		$import->set_login( get_option( 'eml_woocommerce_login' ) );
+		$import->set_password( get_option( 'eml_woocommerce_password' ) );
 
 		// add the image and bail if it was not successfully.
 		if ( ! $import->add_url( (string) $data['raw_image_id'] ) ) {
@@ -276,5 +445,49 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// add them to the product as gallery.
 		$product->set_gallery_image_ids( $data['eml_files'] );
 		$product->save();
+	}
+
+	/**
+	 * Encrypt a given value.
+	 *
+	 * @param string|null $value The value.
+	 *
+	 * @return string
+	 */
+	public function encrypt_value( ?string $value ): string {
+		// bail if value is not a string.
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		// bail if string is empty.
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// return encrypted string.
+		return Crypt::get_instance()->encrypt( $value );
+	}
+
+	/**
+	 * Decrypt a given value.
+	 *
+	 * @param string|null $value The value.
+	 *
+	 * @return string
+	 */
+	public function decrypt_value( ?string $value ): string {
+		// bail if value is not a string.
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		// bail if string is empty.
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// return encrypted string.
+		return Crypt::get_instance()->decrypt( $value );
 	}
 }

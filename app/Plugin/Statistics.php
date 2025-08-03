@@ -259,7 +259,7 @@ class Statistics {
 		// check nonce.
 		check_admin_referer( 'eml-recalc-files', 'nonce' );
 
-		// get all files.
+		// get all external files.
 		$files = Files::get_instance()->get_files();
 
 		// get referer.
@@ -279,7 +279,7 @@ class Statistics {
 			$transients_obj = Transients::get_instance();
 			$transient_obj  = $transients_obj->add();
 			$transient_obj->set_name( 'eml_recalc_ok' );
-			$transient_obj->set_message( __( '<strong>The statistics has been reset.</strong> No files have been found.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( __( '<strong>The statistics has been reset.</strong> No external files have been found.', 'external-files-in-media-library' ) );
 			$transient_obj->set_type( 'success' );
 			$transient_obj->save();
 

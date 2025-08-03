@@ -10,7 +10,9 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use WP_Error;
 use WP_REST_Request;
+use WP_REST_Response;
 use WP_REST_Server;
 
 /**
@@ -106,17 +108,15 @@ class Rest {
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return array<string,mixed>
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function add_file( WP_REST_Request $request ): array {
+	public function add_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		// get the params from request.
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
-			return array(
-				'result' => 'error',
-			);
+			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
 		}
 
 		// get the import object.
@@ -133,15 +133,15 @@ class Rest {
 
 		// add the given URL and return success if it was successfully.
 		if ( $import_obj->add_url( $params['url'] ) ) {
-			return array(
-				'result' => 'success',
+			// return success.
+			return new WP_REST_Response(
+				null,
+				200
 			);
 		}
 
 		// return error.
-		return array(
-			'result' => 'error',
-		);
+		return new WP_Error( '400', __( 'External URL could not be saved!', 'external-files-in-media-library' ) );
 	}
 
 	/**
@@ -151,35 +151,32 @@ class Rest {
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return array<string,mixed>
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function delete_file( WP_REST_Request $request ): array {
+	public function delete_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		// get the params from request.
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
-			return array(
-				'result' => 'error',
-			);
+			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
 		}
 
 		// get the external file object of the given URL.
 		$external_file_obj = Files::get_instance()->get_file_by_url( $params['url'] );
 
 		// bail if no external file could be found for the given URL.
-		if ( ! $external_file_obj ) {
-			return array(
-				'result' => 'error',
-			);
+		if ( ! $external_file_obj instanceof File ) {
+			return new WP_Error( '400', __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ) );
 		}
 
 		// delete it.
 		$external_file_obj->delete();
 
 		// return success.
-		return array(
-			'result' => 'success',
+		return new WP_REST_Response(
+			null,
+			200
 		);
 	}
 
@@ -190,32 +187,29 @@ class Rest {
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return array<string,mixed>
+	 * @return WP_REST_Response|WP_Error
 	 */
-	public function get_file( WP_REST_Request $request ): array {
+	public function get_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
 		// get the params from request.
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
-			return array(
-				'result' => 'error',
-			);
+			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
 		}
 
 		// get the external file object of the given URL.
 		$external_file_obj = Files::get_instance()->get_file_by_url( $params['url'] );
 
 		// bail if no external file could be found for the given URL.
-		if ( ! $external_file_obj ) {
-			return array(
-				'result' => 'error',
-			);
+		if ( ! $external_file_obj instanceof File ) {
+			return new WP_Error( '400', __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ) );
 		}
 
 		// return success.
-		return array(
-			'result' => 'success',
+		return new WP_REST_Response(
+			$external_file_obj->get_debug(),
+			200
 		);
 	}
 }

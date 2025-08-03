@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
@@ -91,6 +92,11 @@ class Admin {
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_row_meta_links' ), 10, 2 );
+		add_filter( 'admin_footer_text', array( $this, 'show_plugin_hint_in_footer' ) );
+
+		// register our own importer in backend.
+		add_action( 'admin_init', array( $this, 'add_importer' ) );
+		add_action( 'load-importer-efml-importer', array( $this, 'forward_importer_to_settings' ) );
 	}
 
 	/**
@@ -333,5 +339,68 @@ class Admin {
 		/* translators: %1$s will be replaced by a URL. */
 		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files for Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
 		$transient_obj->save();
+	}
+
+	/**
+	 * Add custom importer for positions under Tools > Import.
+	 *
+	 * @return void
+	 */
+	public function add_importer(): void {
+		// bail if user has not the capability for it.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
+		register_importer(
+			'efml-importer',
+			__( 'External files for Media Library', 'external-files-in-media-library' ),
+			__( 'Import of external files in your media library.', 'external-files-in-media-library' ),
+			'__return_true'
+		);
+	}
+
+	/**
+	 * Forward user to settings-page.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function forward_importer_to_settings(): void {
+		wp_safe_redirect( Helper::get_add_media_url() );
+		exit;
+	}
+
+	/**
+	 * Show hint in footer in backend on listing and single view of positions there.
+	 *
+	 * @param string $content The actual footer content.
+	 *
+	 * @return string
+	 */
+	public function show_plugin_hint_in_footer( string $content ): string {
+		global $pagenow;
+
+		// show specific text on media pages.
+		if( in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
+			// show hint for our plugin.
+			/* translators: %1$s will be replaced by the plugin name. */
+			return $content . ' ' . sprintf( __( 'This page has been expanded by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
+		}
+
+		// get requested taxonomy.
+		$post_type = filter_input(INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get requested page.
+		$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if this is not the listing or our page.
+		if( $page !== 'efml_local_directories' && $post_type !== Taxonomy::get_instance()->get_name() ) {
+			return $content;
+		}
+
+		// show hint for our plugin.
+		/* translators: %1$s will be replaced by the plugin name. */
+		return $content . ' ' . sprintf( __( 'This page is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
 	}
 }
