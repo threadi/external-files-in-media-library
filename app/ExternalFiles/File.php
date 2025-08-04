@@ -1069,9 +1069,9 @@ class File {
 	 */
 	public function get_debug(): array {
 		// get the protocol handler.
-		$protocol_handler_obj = $this->get_protocol_handler_obj();
+		$protocol_handler_obj  = $this->get_protocol_handler_obj();
 		$protocol_handler_name = '';
-		if( $protocol_handler_obj instanceof Protocol_Base ) {
+		if ( $protocol_handler_obj instanceof Protocol_Base ) {
 			$protocol_handler_name = $protocol_handler_obj->get_title();
 		}
 
