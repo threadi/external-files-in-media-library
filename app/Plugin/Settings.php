@@ -728,7 +728,7 @@ class Settings {
 			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
 			'texts'   => array(
 				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
-				'<p>' . __( 'This will remove all files in the cache, including all generated images.', 'external-files-in-media-library' ) . '</p>'
+				'<p>' . __( 'This will remove all files in the cache, including all generated images.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons' => array(
 				array(

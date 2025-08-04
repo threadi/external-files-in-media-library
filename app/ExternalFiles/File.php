@@ -1068,16 +1068,24 @@ class File {
 	 * @return array<string,mixed>
 	 */
 	public function get_debug(): array {
+		// get the protocol handler.
+		$protocol_handler_obj = $this->get_protocol_handler_obj();
+		$protocol_handler_name = '';
+		if( $protocol_handler_obj instanceof Protocol_Base ) {
+			$protocol_handler_name = $protocol_handler_obj->get_title();
+		}
+
+		// return the debug array of this file.
 		return array(
-			'url' => $this->get_url(),
-			'post_id' => $this->get_id(),
-			'title' => $this->get_title(),
-			'date' => $this->get_date(),
-			'filesize' => $this->get_filesize(),
-			'protocol' => $this->get_protocol_handler_obj()->get_title(),
-			'file_type' => $this->get_file_type_obj()->get_name(),
+			'url'         => $this->get_url(),
+			'post_id'     => $this->get_id(),
+			'title'       => $this->get_title(),
+			'date'        => $this->get_date(),
+			'filesize'    => $this->get_filesize(),
+			'protocol'    => $protocol_handler_name,
+			'file_type'   => $this->get_file_type_obj()->get_name(),
 			'local_saved' => $this->get_file_type_obj()->is_local(),
-			'proxied' => $this->get_file_type_obj()->is_proxy_enabled()
+			'proxied'     => $this->get_file_type_obj()->is_proxy_enabled(),
 		);
 	}
 }

@@ -348,7 +348,7 @@ class Admin {
 	 */
 	public function add_importer(): void {
 		// bail if user has not the capability for it.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -382,20 +382,20 @@ class Admin {
 		global $pagenow;
 
 		// show specific text on media pages.
-		if( in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
+		if ( in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
 			// show hint for our plugin.
 			/* translators: %1$s will be replaced by the plugin name. */
 			return $content . ' ' . sprintf( __( 'This page has been expanded by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
 		}
 
 		// get requested taxonomy.
-		$post_type = filter_input(INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$post_type = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get requested page.
-		$page = filter_input(INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if this is not the listing or our page.
-		if( $page !== 'efml_local_directories' && $post_type !== Taxonomy::get_instance()->get_name() ) {
+		if ( $page !== 'efml_local_directories' && $post_type !== Taxonomy::get_instance()->get_name() ) {
 			return $content;
 		}
 

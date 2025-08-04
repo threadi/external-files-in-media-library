@@ -71,7 +71,7 @@ class Url_Result extends Result_Base {
 			$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
 			// bail if external file could not be loaded.
-			if( ! $external_file_obj ) {
+			if ( ! $external_file_obj ) {
 				return $url . '<br>' . $this->get_result_text();
 			}
 

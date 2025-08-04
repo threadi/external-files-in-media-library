@@ -770,10 +770,10 @@ class Files {
 		}
 
 		// get image data.
-		$image_data = (array)wp_get_attachment_metadata( absint( $attachment_id ) );
+		$image_data = (array) wp_get_attachment_metadata( absint( $attachment_id ) );
 
 		// if image data is empty, create the array manually.
-		if ( empty( $image_data ) ) {
+		if ( empty( $image_data['sizes'] ) && empty( $image_data['width'] ) && empty( $image_data['height'] ) ) {
 			$image_data = array(
 				'sizes'  => array(),
 				'width'  => 0,
@@ -832,7 +832,7 @@ class Files {
 		 */
 
 		// if sizes are the same, set height to 0 to prevent scaled images.
-		if( $size[0] === $size[1] ) {
+		if ( $size[0] === $size[1] ) {
 			$size[1] = 0;
 		}
 
@@ -1170,7 +1170,7 @@ class Files {
 		// bail if mime-type is set, but empty.
 		if ( empty( $results['mime-type'] ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error',0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1434,7 +1434,7 @@ class Files {
 	 */
 	public function add_urls_by_hook( int $attachment_id, string $url, string $login = '', string $password = '', string $api_key = '' ): int {
 		// bail if attachment ID is set.
-		if( $attachment_id > 0 ) {
+		if ( $attachment_id > 0 ) {
 			return $attachment_id;
 		}
 
@@ -1442,7 +1442,7 @@ class Files {
 		$external_file_obj = $this->get_file_by_url( $url );
 
 		// bail if external file object could be loaded and is valid = file exist.
-		if( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
+		if ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
 			return $external_file_obj->get_id();
 		}
 
@@ -1461,7 +1461,7 @@ class Files {
 		$external_file_obj = $this->get_file_by_url( $url );
 
 		// bail if external file object could not be loaded or is not valid.
-		if( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
 			return 0;
 		}
 
