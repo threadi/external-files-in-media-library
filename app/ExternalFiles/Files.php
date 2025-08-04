@@ -712,8 +712,8 @@ class Files {
 			return $file;
 		}
 
-		// return nothing to prevent output as file is not available or is using a not allowed mime type.
-		if ( false === $external_file_obj->is_available() || false === $external_file_obj->is_mime_type_allowed() ) {
+		// return nothing to prevent output as file is not available and extern hosted OR is using a not allowed mime type.
+		if ( false === $external_file_obj->is_mime_type_allowed() || ( false === $external_file_obj->is_available() && ! $external_file_obj->is_locally_saved() ) ) {
 			return false;
 		}
 

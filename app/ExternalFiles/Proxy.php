@@ -276,6 +276,7 @@ class Proxy {
 
 		// create directory and check response.
 		if ( false === wp_mkdir_p( $path ) ) {
+			/* translators: %1$s will be replaced by the path. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
 		}
 	}
