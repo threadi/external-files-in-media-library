@@ -722,7 +722,7 @@ class Files {
 	}
 
 	/**
-	 * Prevent image downsizing for external hosted images.
+	 * Provide image downsizing for external images.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/image_downsize/
 	 *
@@ -754,8 +754,9 @@ class Files {
 			);
 		}
 
-		// if file type has proxy not enabled we just return the original URL with requested sizes.
-		if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+		// if file type has proxy not enabled and this file is not saved locally,
+		// we just return the original URL with requested sizes.
+		if ( ! $external_file_obj->is_locally_saved() && ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 			return array(
 				$external_file_obj->get_url( true ),
 				$size[0],
@@ -769,10 +770,10 @@ class Files {
 		}
 
 		// get image data.
-		$image_data = wp_get_attachment_metadata( absint( $attachment_id ) );
+		$image_data = (array) wp_get_attachment_metadata( absint( $attachment_id ) );
 
-		// if image data is false, create the array manually.
-		if ( false === $image_data ) {
+		// if image data is empty, create the array manually.
+		if ( empty( $image_data['sizes'] ) && empty( $image_data['width'] ) && empty( $image_data['height'] ) ) {
 			$image_data = array(
 				'sizes'  => array(),
 				'width'  => 0,
@@ -830,8 +831,13 @@ class Files {
 		 * Generate the requested thumb and save it in metadata for the image.
 		 */
 
+		// if sizes are the same, set height to 0 to prevent scaled images.
+		if ( $size[0] === $size[1] ) {
+			$size[1] = 0;
+		}
+
 		// resize the image.
-		$image_editor->resize( absint( $size[0] ), absint( $size[1] ), true );
+		$image_editor->resize( absint( $size[0] ), absint( $size[1] ) );
 
 		// save the resized image and get its data.
 		$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
@@ -851,16 +857,6 @@ class Files {
 
 		// replace the filename in the resized image data with the public filename we use in our proxy.
 		$new_image_data['file'] = $public_filename;
-
-		// bail if image data is not an array.
-		if ( ! is_array( $image_data ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			return array(
-				$external_file_obj->get_url(),
-				0,
-				0,
-				false,
-			);
-		}
 
 		// update the meta data.
 		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
@@ -1174,7 +1170,7 @@ class Files {
 		// bail if mime-type is set, but empty.
 		if ( empty( $results['mime-type'] ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'success', 1 );
+			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1183,7 +1179,7 @@ class Files {
 		// bail if mime type is not allowed.
 		if ( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'success', 1 );
+			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1202,8 +1198,10 @@ class Files {
 	 * @return string
 	 */
 	public function show_media_info_in_modal( string $html, WP_Post $post ): string {
-		// bail if html is not empty (it is the detail view without modal).
-		if ( ! empty( $html ) ) {
+		global $pagenow;
+
+		// bail if actual page is not "admin-ajax.php".
+		if ( 'admin-ajax.php' !== $pagenow ) {
 			return $html;
 		}
 
@@ -1436,7 +1434,7 @@ class Files {
 	 */
 	public function add_urls_by_hook( int $attachment_id, string $url, string $login = '', string $password = '', string $api_key = '' ): int {
 		// bail if attachment ID is set.
-		if( $attachment_id > 0 ) {
+		if ( $attachment_id > 0 ) {
 			return $attachment_id;
 		}
 
@@ -1444,7 +1442,7 @@ class Files {
 		$external_file_obj = $this->get_file_by_url( $url );
 
 		// bail if external file object could be loaded and is valid = file exist.
-		if( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
+		if ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
 			return $external_file_obj->get_id();
 		}
 
@@ -1463,7 +1461,7 @@ class Files {
 		$external_file_obj = $this->get_file_by_url( $url );
 
 		// bail if external file object could not be loaded or is not valid.
-		if( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
 			return 0;
 		}
 

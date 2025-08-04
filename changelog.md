@@ -77,6 +77,7 @@
 - Fixed detection of correct file type during import process
 - Fixed potential error with attached files if they do not exist
 - Fixed missing visible progress-bar during synchronization
+- Fixed missing saving of actual availability of each file (all were available any time)
 
 ### Removed
 

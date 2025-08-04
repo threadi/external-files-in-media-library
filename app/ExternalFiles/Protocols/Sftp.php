@@ -25,6 +25,13 @@ use WP_Filesystem_SSH2;
  */
 class Sftp extends Protocol_Base {
 	/**
+	 * Internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'sftp';
+
+	/**
 	 * List of supported tcp protocols.
 	 *
 	 * @var array<string,int>

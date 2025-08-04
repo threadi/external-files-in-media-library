@@ -173,7 +173,7 @@ class Proxy {
 		if ( ! file_exists( $cached_file_path ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Proxy could not load cached file %1$s.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load the cached file %1$s.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
 			// return the template.
 			return $template;
@@ -276,7 +276,7 @@ class Proxy {
 
 		// create directory and check response.
 		if ( false === wp_mkdir_p( $path ) ) {
-			Log::get_instance()->create( __( 'Proxy could not create cache directory.', 'external-files-in-media-library' ), '', 'error' );
+			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
 		}
 	}
 

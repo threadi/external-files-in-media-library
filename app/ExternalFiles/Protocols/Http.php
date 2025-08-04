@@ -23,6 +23,13 @@ use WP_Filesystem_Base;
  */
 class Http extends Protocol_Base {
 	/**
+	 * Internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'http';
+
+	/**
 	 * List of supported tcp protocols.
 	 *
 	 * @var array<string,int>

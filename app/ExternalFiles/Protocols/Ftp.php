@@ -25,6 +25,13 @@ use WP_Filesystem_FTPext;
  */
 class Ftp extends Protocol_Base {
 	/**
+	 * Internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'ftp';
+
+	/**
 	 * List of supported tcp protocols.
 	 *
 	 * @var array<string,int>

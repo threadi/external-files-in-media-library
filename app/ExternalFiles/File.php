@@ -41,14 +41,14 @@ class File {
 	private string $title = '';
 
 	/**
-	 * The file availability.
+	 * The availability of this file.
 	 *
 	 * @var bool
 	 */
 	private bool $availability = false;
 
 	/**
-	 * The file size.
+	 * The size of the file.
 	 *
 	 * @var int
 	 */
@@ -239,12 +239,12 @@ class File {
 	public function is_available(): bool {
 		// get value from DB.
 		if ( empty( $this->availability ) ) {
-			$this->availability = (bool) get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
+			$this->availability = 1 === absint( get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true ) );
 		}
 
 		$instance = $this;
 		/**
-		 * Filter and return the file availability.
+		 * Filter and return the availability of an external file.
 		 *
 		 * @since 1.0.0 Available since 1.0.0.
 		 *
@@ -263,7 +263,7 @@ class File {
 	 */
 	public function set_availability( bool $availability ): void {
 		// set in DB.
-		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
+		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, $availability );
 
 		// set in object.
 		$this->availability = $availability;
@@ -1068,16 +1068,24 @@ class File {
 	 * @return array<string,mixed>
 	 */
 	public function get_debug(): array {
+		// get the protocol handler.
+		$protocol_handler_obj = $this->get_protocol_handler_obj();
+		$protocol_handler_name = '';
+		if( $protocol_handler_obj instanceof Protocol_Base ) {
+			$protocol_handler_name = $protocol_handler_obj->get_title();
+		}
+
+		// return the debug array of this file.
 		return array(
-			'url' => $this->get_url(),
-			'post_id' => $this->get_id(),
-			'title' => $this->get_title(),
-			'date' => $this->get_date(),
-			'filesize' => $this->get_filesize(),
-			'protocol' => $this->get_protocol_handler_obj()->get_title(),
-			'file_type' => $this->get_file_type_obj()->get_name(),
+			'url'         => $this->get_url(),
+			'post_id'     => $this->get_id(),
+			'title'       => $this->get_title(),
+			'date'        => $this->get_date(),
+			'filesize'    => $this->get_filesize(),
+			'protocol'    => $protocol_handler_name,
+			'file_type'   => $this->get_file_type_obj()->get_name(),
 			'local_saved' => $this->get_file_type_obj()->is_local(),
-			'proxied' => $this->get_file_type_obj()->is_proxy_enabled()
+			'proxied'     => $this->get_file_type_obj()->is_proxy_enabled(),
 		);
 	}
 }
