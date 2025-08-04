@@ -722,7 +722,7 @@ class Files {
 	}
 
 	/**
-	 * Prevent image downsizing for external hosted images.
+	 * Provide image downsizing for external images.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/image_downsize/
 	 *
@@ -754,8 +754,9 @@ class Files {
 			);
 		}
 
-		// if file type has proxy not enabled we just return the original URL with requested sizes.
-		if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
+		// if file type has proxy not enabled and this file is not saved locally,
+		// we just return the original URL with requested sizes.
+		if ( ! $external_file_obj->is_locally_saved() && ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 			return array(
 				$external_file_obj->get_url( true ),
 				$size[0],
@@ -769,10 +770,10 @@ class Files {
 		}
 
 		// get image data.
-		$image_data = wp_get_attachment_metadata( absint( $attachment_id ) );
+		$image_data = (array)wp_get_attachment_metadata( absint( $attachment_id ) );
 
-		// if image data is false, create the array manually.
-		if ( false === $image_data ) {
+		// if image data is empty, create the array manually.
+		if ( empty( $image_data ) ) {
 			$image_data = array(
 				'sizes'  => array(),
 				'width'  => 0,
@@ -830,8 +831,13 @@ class Files {
 		 * Generate the requested thumb and save it in metadata for the image.
 		 */
 
+		// if sizes are the same, set height to 0 to prevent scaled images.
+		if( $size[0] === $size[1] ) {
+			$size[1] = 0;
+		}
+
 		// resize the image.
-		$image_editor->resize( absint( $size[0] ), absint( $size[1] ), true );
+		$image_editor->resize( absint( $size[0] ), absint( $size[1] ) );
 
 		// save the resized image and get its data.
 		$new_image_data = $image_editor->save( Proxy::get_instance()->get_cache_directory() . $generated_filename );
@@ -851,16 +857,6 @@ class Files {
 
 		// replace the filename in the resized image data with the public filename we use in our proxy.
 		$new_image_data['file'] = $public_filename;
-
-		// bail if image data is not an array.
-		if ( ! is_array( $image_data ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			return array(
-				$external_file_obj->get_url(),
-				0,
-				0,
-				false,
-			);
-		}
 
 		// update the meta data.
 		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
@@ -1202,8 +1198,10 @@ class Files {
 	 * @return string
 	 */
 	public function show_media_info_in_modal( string $html, WP_Post $post ): string {
-		// bail if html is not empty (it is the detail view without modal).
-		if ( ! empty( $html ) ) {
+		global $pagenow;
+
+		// bail if actual page is not "admin-ajax.php".
+		if ( 'admin-ajax.php' !== $pagenow ) {
 			return $html;
 		}
 
