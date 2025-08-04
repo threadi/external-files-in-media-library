@@ -41,14 +41,14 @@ class File {
 	private string $title = '';
 
 	/**
-	 * The file availability.
+	 * The availability of this file.
 	 *
 	 * @var bool
 	 */
 	private bool $availability = false;
 
 	/**
-	 * The file size.
+	 * The size of the file.
 	 *
 	 * @var int
 	 */
@@ -239,12 +239,12 @@ class File {
 	public function is_available(): bool {
 		// get value from DB.
 		if ( empty( $this->availability ) ) {
-			$this->availability = (bool) get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
+			$this->availability = 1 === absint( get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true ) );
 		}
 
 		$instance = $this;
 		/**
-		 * Filter and return the file availability.
+		 * Filter and return the availability of an external file.
 		 *
 		 * @since 1.0.0 Available since 1.0.0.
 		 *
@@ -263,7 +263,7 @@ class File {
 	 */
 	public function set_availability( bool $availability ): void {
 		// set in DB.
-		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true );
+		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, $availability );
 
 		// set in object.
 		$this->availability = $availability;
