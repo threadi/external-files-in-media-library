@@ -70,8 +70,13 @@ class Url_Result extends Result_Base {
 			// get the external file object for this URL.
 			$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
-			// if file could be loaded and is valid, get its edit-URL.
-			if ( $external_file_obj && $external_file_obj->is_valid() ) {
+			// bail if external file could not be loaded.
+			if( ! $external_file_obj ) {
+				return $url . '<br>' . $this->get_result_text();
+			}
+
+			// if external file is valid, get its edit-URL.
+			if ( $external_file_obj->is_valid() ) {
 				$edit_url = get_edit_post_link( $external_file_obj->get_id() );
 			}
 		}

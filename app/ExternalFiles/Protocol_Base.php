@@ -20,6 +20,13 @@ use WP_Query;
 class Protocol_Base {
 
 	/**
+	 * Internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = '';
+
+	/**
 	 * The given URL.
 	 *
 	 * @var string
@@ -54,6 +61,15 @@ class Protocol_Base {
 	 */
 	public function __construct( string $url ) {
 		$this->url = $url;
+	}
+
+	/**
+	 * Return the internal name of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_name(): string {
+		return $this->name;
 	}
 
 	/**

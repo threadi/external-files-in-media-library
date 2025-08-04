@@ -24,6 +24,13 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
  */
 class File extends Protocol_Base {
 	/**
+	 * Internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'file';
+
+	/**
 	 * List of supported tcp protocols.
 	 *
 	 * @var array<string,int>

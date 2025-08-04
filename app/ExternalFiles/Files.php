@@ -1170,7 +1170,7 @@ class Files {
 		// bail if mime-type is set, but empty.
 		if ( empty( $results['mime-type'] ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'success', 1 );
+			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error',0, Import::get_instance()->get_identified() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1179,7 +1179,7 @@ class Files {
 		// bail if mime type is not allowed.
 		if ( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'success', 1 );
+			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array to not import this file.
 			return array();
