@@ -1,6 +1,8 @@
 <?php
 /**
- * File to handle support for plugin "Folders".
+ * File to handle support for plugin "Real Media Library".
+ *
+ * @source https://docs.devowl.io/real-media-library/php/
  *
  * @package external-files-in-media-library
  */
@@ -13,14 +15,12 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use WCP_Folders;
-use WCP_Tree;
 use WP_Post;
 
 /**
  * Object to handle support for this plugin.
  */
-class Folders extends ThirdParty_Base implements ThirdParty {
+class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * The term ID used in a sync.
@@ -32,9 +32,9 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?Folders
+	 * @var ?RealMediaLibrary
 	 */
-	private static ?Folders $instance = null;
+	private static ?RealMediaLibrary $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -51,9 +51,9 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return Folders
+	 * @return RealMediaLibrary
 	 */
-	public static function get_instance(): Folders {
+	public static function get_instance(): RealMediaLibrary {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -68,13 +68,9 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if plugin is not enabled.
-		if ( ! Helper::is_plugin_active( 'folders/folders.php' ) ) {
+		if ( ! Helper::is_plugin_active( 'real-media-library-lite/index.php' ) ) {
 			return;
 		}
-
-		// remove additional options from this plugin for external files.
-		add_filter( 'media_row_actions', array( $this, 'remove_media_action' ), 20, 2 );
-		add_action( 'add_meta_boxes', array( $this, 'remove_meta_boxes' ), 20, 2 );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
@@ -102,24 +98,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	public function add_category_selection( string $form, int $term_id ): string {
-		// bail if WCP_Tree does not exist.
-		if ( ! class_exists( 'WCP_Tree' ) ) {
-			return $form;
-		}
-
-		// get the categories.
-		$options = WCP_Tree::get_folder_option_data( WCP_Folders::get_custom_post_type( 'attachment' ) );
-
-		// bail if list is empty.
-		if ( empty( $options ) ) {
+		// bail if wp_rml_dropdown does not exist.
+		if ( ! function_exists( 'wp_rml_dropdown' ) ) {
 			return $form;
 		}
 
 		// get the actual setting.
-		$assigned_category = absint( get_term_meta( $term_id, 'folders_folder', true ) );
+		$assigned_category = absint( get_term_meta( $term_id, 'rml_folder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="folders_categories">' . __( 'Choose folder of plugin Folders:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
+		$form .= '<div><label for="rml_folder">' . __( 'Choose folder of plugin Real Media Library:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -133,29 +121,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	private function get_folder_selection( int $mark ): string {
-		// bail if WCP_Tree does not exist.
-		if ( ! class_exists( 'WCP_Tree' ) ) {
+		// get the dropdown-list without select-element.
+		$folders = wp_rml_dropdown( $mark, array() );
+
+		// bail if folders is empty.
+		if( empty( $folders ) ) {
 			return '';
 		}
 
-		// get the categories.
-		$options = WCP_Tree::get_folder_option_data( WCP_Folders::get_custom_post_type( 'attachment' ) );
-
-		// bail if list is empty.
-		if ( empty( $options ) ) {
-			return '';
-		}
-
-		// remove existing selection.
-		$options = str_replace( 'selected', '', $options );
-
-		if ( ! empty( $mark ) ) {
-			// add selection for mark.
-			$options = str_replace( ' value="' . $mark . '"', ' selected value="' . $mark . '"', $options );
-		}
-
-		// create the HTML-code.
-		return '<select class="eml-use-for-import" id="folder_for_media" name="folder_for_media"><option value="0">' . __( 'Choose folder', 'external-files-in-media-library' ) . '</option>' . $options . '</select>';
+		// return the select field.
+		return '<select class="eml-use-for-import" id="rml_folder" name="rml_folder">' . $folders . '</select>';
 	}
 
 	/**
@@ -180,16 +155,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		$term_id = absint( $fields['term_id'] );
 
 		// get our fields from request.
-		$folders_categories = isset( $_POST['fields']['folders_folder'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folders_folder'] ) ) : array();
+		$rml_folder = isset( $_POST['fields']['rml_folder'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['fields']['rml_folder'] ) ) : 0;
 
 		// if folderly_categories is empty, just remove the setting.
-		if ( empty( $folders_categories ) ) {
-			delete_term_meta( $term_id, 'folders_folder' );
+		if ( 0 === $rml_folder ) {
+			delete_term_meta( $term_id, 'rml_folder' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'folders_folder', $folders_categories );
+		update_term_meta( $term_id, 'rml_folder', $rml_folder );
 	}
 
 	/**
@@ -223,12 +198,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// get the folder setting from this term ID.
-		$_REQUEST['folder_for_media'] = absint( get_term_meta( $this->get_term_id(), 'folders_folder', true ) );
-		$_POST['folder_for_media']    = absint( get_term_meta( $this->get_term_id(), 'folders_folder', true ) );
+		// get the chosen folder.
+		$rml_folder = absint( get_term_meta( $this->get_term_id(), 'rml_folder', true ) );
 
-		// assign the file to the categories.
-		( new \WCP_Folders() )->add_attachment_category( $external_file_obj->get_id() );
+		// bail if it is 0.
+		if( 0 === $rml_folder ) {
+			return;
+		}
+
+		// assign the file to the folder.
+		wp_rml_move( $rml_folder, array( $external_file_obj->get_id() ) );
 	}
 
 	/**
@@ -244,8 +223,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// assign the file to the categories.
-		( new \WCP_Folders() )->add_attachment_category( $external_file_obj->get_id() );
+		// get the chosen folder.
+		$rml_folder = absint( filter_input( INPUT_POST, 'rml_folder', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if it is 0.
+		if( 0 === $rml_folder ) {
+			return;
+		}
+
+		// assign the file to the folder.
+		wp_rml_move( $rml_folder, array( $external_file_obj->get_id() ) );
 	}
 
 	/**
@@ -256,59 +243,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to folder', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to folder of plugin Real Media Library', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
-	}
-
-	/**
-	 * Remove Folders additional file actions for external files.
-	 *
-	 * @param array<string,string> $actions List of actions.
-	 * @param WP_Post              $post The post object of the attachment.
-	 *
-	 * @return array<string,string>
-	 */
-	public function remove_media_action( array $actions, WP_Post $post ): array {
-		// get external file object by object ID.
-		$external_file_obj = Files::get_instance()->get_file( $post->ID );
-
-		// bail if it is not an external file.
-		if ( ! $external_file_obj->is_valid() ) {
-			return $actions;
-		}
-
-		// remove the "replace_media" action from Folders plugin.
-		unset( $actions['replace_media'] );
-
-		// return the resulting list of actions.
-		return $actions;
-	}
-
-	/**
-	 * Remove meta box to replace external files.
-	 *
-	 * @param string  $post_type The requested post type.
-	 * @param WP_Post $post The post object.
-	 *
-	 * @return void
-	 */
-	public function remove_meta_boxes( string $post_type, WP_Post $post ): void {
-		// bail if post type is not attachment.
-		if ( 'attachment' !== $post_type ) {
-			return;
-		}
-
-		// get external file object for given object ID.
-		// get external file object by object ID.
-		$external_file_obj = Files::get_instance()->get_file( $post->ID );
-
-		// bail if it is not an external file.
-		if ( ! $external_file_obj->is_valid() ) {
-			return;
-		}
-
-		// remove the box to replace or rename this media file.
-		remove_meta_box( 'folders-replace-box', 'attachment', 'side' );
-		remove_meta_box( 'folders-replace-file-name', 'attachment', 'side' );
 	}
 }

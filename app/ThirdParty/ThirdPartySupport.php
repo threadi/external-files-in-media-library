@@ -137,6 +137,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
+			'ExternalFilesInMediaLibrary\ThirdParty\RealMediaLibrary',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
