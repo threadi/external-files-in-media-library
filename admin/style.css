@@ -2,9 +2,32 @@
 
 .eml_add_external_files_wrapper {
 	border: 4px dashed #c3c4c7;
-    margin: 1em auto 0;
+	margin: 1em auto 0;
 	padding: 2em 0;
 	text-align: center;
+}
+
+#eml_add_external_files_form {
+	> div {
+		max-width: 520px;
+		margin: 0 auto 1em;
+		text-align: left;
+		strong {
+			font-size: 20px;
+		}
+		details {
+			cursor: pointer;
+		}
+		label {
+			cursor: pointer;
+			display: block;
+			margin: 0 0 .5em;
+		}
+		textarea {
+			height: 80px;
+			width: 100%;
+		}
+	}
 }
 
 select.eml-field-width {
@@ -114,7 +137,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	margin-top: -1px;
 }
 
-.eml details[open] {
+.eml details[open], .eml_add_external_files_wrapper details[open] {
 	margin-bottom: 1em;
 }
 
@@ -123,6 +146,10 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 }
 
 .eml details[open] > div, .eml details[open] > p { margin-left: 24px }
+
+.eml_add_external_files_wrapper details[open] summary { margin-bottom: .5em; }
+
+.eml_add_external_files_wrapper details[open] > div, .eml_add_external_files_wrapper details[open] > p { margin-left: 10px }
 
 .eml a { text-decoration: none }
 
@@ -386,7 +413,7 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 	color: red;
 }
 
-.efml-import-dialog .eml_service_list {
+.efml-import-dialog .eml_service_list, .eml_add_external_files_wrapper .eml_service_list {
 	display: flex;
 	gap: .2em;
 	flex-flow: row wrap;

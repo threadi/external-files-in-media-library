@@ -4,6 +4,7 @@ Tags: external files, media library, media, embed
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 8.1
+Requires CP:  2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: @@VersionNumber@@
@@ -58,6 +59,10 @@ You can use the following TCP-protocols to import external files in your media l
 * `file://`
 
 Some of them require credentials, for http(s) it is optional.
+
+== ClassicPress ==
+
+This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
 
 == Repository, documentation and reliability ==
 

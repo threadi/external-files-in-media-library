@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Results;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Result_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -70,8 +71,8 @@ class Url_Result extends Result_Base {
 			// get the external file object for this URL.
 			$external_file_obj = Files::get_instance()->get_file_by_url( $url );
 
-			// bail if external file could not be loaded.
-			if ( ! $external_file_obj ) {
+			// bail if external file does not exist, show the original URL with the error text.
+			if ( ! $external_file_obj instanceof File ) {
 				return $url . '<br>' . $this->get_result_text();
 			}
 

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
@@ -234,7 +235,16 @@ class Update {
 		update_option( 'eml_images_proxy', get_option( 'eml_proxy' ) );
 		update_option( 'eml_images_proxy_max_age', get_option( 'eml_proxy_max_age' ) );
 
+		// add the file types settings.
+		File_Types::get_instance()->add_settings();
+
+		// run the same tasks for all settings as if we activate the plugin.
+		Settings::get_instance()->activation();
+
 		// set configured capabilities.
 		Roles::get_instance()->install();
+
+		// flush rewrite rules.
+		Proxy::get_instance()->set_refresh();
 	}
 }

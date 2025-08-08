@@ -767,4 +767,13 @@ class Helper {
 		}
 		return '';
 	}
+
+	/**
+	 * Return whether block support is available in this WordPress project.
+	 *
+	 * @return bool
+	 */
+	public static function is_block_support_enabled(): bool {
+		return class_exists( 'WP_Block_Type_Registry' );
+	}
 }

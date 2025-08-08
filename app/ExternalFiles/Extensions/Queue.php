@@ -903,11 +903,11 @@ class Queue extends Extension_Base {
 
 		// create result object.
 		$result_obj = new Results\Url_Result();
+		$result_obj->set_url( $url );
 
 		// add the URL to the queue.
 		if ( ! $this->add_url( $url, $login, $password ) ) {
 			// define to result object.
-			$result_obj->set_url( $url );
 			$result_obj->set_result_text( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ) );
 
 			// add result to the list.
@@ -917,7 +917,6 @@ class Queue extends Extension_Base {
 			Log::get_instance()->create( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
 		} else {
 			// define to result object.
-			$result_obj->set_url( $url );
 			$result_obj->set_error( false );
 			$result_obj->set_result_text( __( 'Specified URL has been added to queue.', 'external-files-in-media-library' ) );
 

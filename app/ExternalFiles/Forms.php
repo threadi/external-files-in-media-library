@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Transients;
 use WP_Screen;
 
 /**
@@ -74,6 +75,9 @@ class Forms {
 		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
+		// add action to process the import from static form in @ImportDialog.
+		add_action( 'admin_action_efml_add_external_urls', array( $this, 'add_urls_by_request' ) );
+
 		// use our own actions.
 		add_action( 'eml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );
 		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
@@ -85,7 +89,7 @@ class Forms {
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ) );
+		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
 	}
 
 	/**
@@ -224,7 +228,17 @@ class Forms {
 		if ( 'add' === $current_screen->action ) {
 			?>
 			<div class="eml_add_external_files_wrapper">
-				<a href="#" class="button button-secondary efml-import-dialog"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
+				<?php
+					// check if block support is available.
+				if ( Helper::is_block_support_enabled() ) {
+					?>
+							<a href="#" class="button button-secondary efml-import-dialog"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
+						<?php
+				} else {
+					// show simple form without dialog.
+					ImportDialog::get_instance()->get_form();
+				}
+				?>
 			</div>
 			<?php
 		} else {
@@ -594,6 +608,226 @@ class Forms {
 	}
 
 	/**
+	 * Process POST-request to insert single or multiple URLs in the media library.
+	 *
+	 * @return void
+	 */
+	public function add_urls_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-add-external-files', 'nonce' );
+
+		// bail if user is missing the capability.
+		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		}
+
+		// get the URLs from request.
+		$urls = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no URLs are given.
+		if ( empty( $urls ) ) {
+			// show error.
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_name( 'efml_url_import_error' );
+			$transient_obj->set_message( __( 'No URLs given!', 'external-files-in-media-library' ) );
+			$transient_obj->set_type( 'error' );
+			$transient_obj->save();
+
+			// forward user.
+			wp_safe_redirect( wp_get_referer() );
+		}
+
+		// convert the list from request to an array.
+		$url_array = preg_split( '/\r\n|[\r\n]/', $urls );
+
+		// bail if it is not an array.
+		if ( ! is_array( $url_array ) ) {
+			// show error.
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_name( 'efml_url_import_error' );
+			$transient_obj->set_message( __( 'No URLs given!', 'external-files-in-media-library' ) );
+			$transient_obj->set_type( 'error' );
+			$transient_obj->save();
+
+			// forward user.
+			wp_safe_redirect( wp_get_referer() );
+		}
+
+		// get the credential marker.
+		$eml_use_credentials = absint( filter_input( INPUT_POST, 'use_credentials', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// get the credentials, if enabled.
+		$login    = '';
+		$password = '';
+		if ( 1 === $eml_use_credentials ) {
+			$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+			if ( ! is_string( $login ) ) {
+				$login = '';
+			}
+			$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+			if ( ! is_string( $password ) ) {
+				$password = '';
+			}
+			$password = html_entity_decode( $password );
+
+			// bail if no credentials are given.
+			if ( empty( $login ) || empty( $password ) ) {
+				// show error.
+				$transient_obj = Transients::get_instance()->add();
+				$transient_obj->set_name( 'efml_url_import_error' );
+				$transient_obj->set_message( '<strong>' . __( 'No credentials are given!', 'external-files-in-media-library' ) . '</strong> ' . __( 'You indicated that you would provide login details, but did not do so.', 'external-files-in-media-library' ) );
+				$transient_obj->set_type( 'error' );
+				$transient_obj->save();
+
+				// forward user.
+				wp_safe_redirect( wp_get_referer() );
+			}
+		}
+
+		// get the API key, if set.
+		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( ! is_string( $api_key ) ) {
+			$api_key = '';
+		}
+
+		// get the term for credentials from Directory Listing Archive, if set.
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+		if ( $term_id > 0 ) {
+			// get the term data.
+			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+			// if term_data could be loaded, use them.
+			if ( ! empty( $term_data ) ) {
+				// get the domain part of the directory.
+				$term_directory_url = wp_parse_url( $term_data['directory'] );
+
+				// complete the URL.
+				foreach ( $url_array as $i => $url ) { // @phpstan-ignore foreach.nonIterable
+					// get the path from given URL.
+					$parse_url = wp_parse_url( $url );
+
+					// only change the given URL if the URL part is a part and not a URL.
+					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
+						$url_array[ $i ] = $term_data['directory'] . $url; // @phpstan-ignore offsetAccess.nonOffsetAccessible
+						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
+							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
+						}
+					}
+				}
+
+				// get the credentials.
+				$login    = $term_data['login'];
+				$password = $term_data['password'];
+				$api_key  = $term_data['api_key'];
+			}
+		}
+
+		// collect errors.
+		$errors = array();
+
+		// prepare the results.
+		Results::get_instance()->prepare();
+
+		// get the import-object.
+		$import_obj = Import::get_instance();
+
+		// add the credentials.
+		$import_obj->set_login( $login );
+		$import_obj->set_password( $password );
+		$import_obj->set_api_key( $api_key );
+
+		// loop through the list of URLs to add them.
+		foreach ( (array) $url_array as $url ) {
+			// bail if URL is empty.
+			if ( empty( $url ) ) {
+				continue;
+			}
+
+			// cleanup the JS-URL.
+			$url = str_replace( '&amp;', '&', $url );
+
+			/**
+			 * Filter single URL before it will be added as external file.
+			 *
+			 * @since 3.0.0 Available since 3.0.0.
+			 * @param string $url The URL.
+			 */
+			$url = apply_filters( 'eml_import_url', $url );
+
+			// import the given URL in media library.
+			$url_added = $import_obj->add_url( $url );
+
+			// add URL to list of errors if it was not successfully.
+			if ( ! $url_added ) {
+				$errors[] = $url;
+			}
+		}
+
+		/**
+		 * Filter the errors during an AJAX-request to add URLs.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param array $errors List of errors.
+		 */
+		$errors = apply_filters( 'eml_import_urls_errors', $errors );
+
+		// loop through the errors and add them as URL_Error-objects to the list.
+		foreach ( $errors as $url ) {
+			// get log entries for this URL.
+			$log_entries = Log::get_instance()->get_logs( $url, 'error', Import::get_instance()->get_identified() );
+
+			// bail if log is empty.
+			if ( empty( $log_entries ) ) {
+				continue;
+			}
+
+			// add each log entry of this URL to the list.
+			foreach ( $log_entries as $log_entry ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				$error_obj->set_result_text( $log_entry['log'] );
+				$error_obj->set_url( $url );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+			}
+		}
+
+		// collect result text.
+		$text = '';
+
+		// get the results.
+		$results = Results::get_instance()->get_results();
+
+		// set status for response message.
+		$status = 'success';
+
+		// add them to the list.
+		foreach ( $results as $result ) {
+			if ( $result->is_error() ) {
+				$status = 'error';
+			}
+			$text .= '<li class="' . ( $result->is_error() ? 'error' : 'success' ) . '">' . $result->get_text() . '</li>';
+		}
+
+		// surround with hint and list, if not empty.
+		if ( ! empty( $text ) ) {
+			$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following results:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
+		}
+
+		// show ok-message.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_url_import_error' );
+		$transient_obj->set_message( $text );
+		$transient_obj->set_type( $status );
+		$transient_obj->save();
+
+		// forward user.
+		wp_safe_redirect( wp_get_referer() );
+	}
+
+	/**
 	 * Set import title if HTTP import of presumed directory URL is starting.
 	 *
 	 * @param string $url The used URL.
@@ -676,15 +910,18 @@ class Forms {
 	/**
 	 * Add successfully imported URL to the list of successfully imported URLs.
 	 *
-	 * @param File $external_file_obj The file object.
+	 * @param File                $external_file_obj The file object.
+	 * @param array<string,mixed> $file_data The file data.
+	 * @param string              $url The URL.
 	 *
 	 * @return void
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function add_imported_url_to_list( File $external_file_obj ): void {
+	public function add_imported_url_to_list( File $external_file_obj, array $file_data, string $url ): void {
 		// create the entry.
 		$result_obj = new Url_Result();
 		$result_obj->set_error( false );
-		$result_obj->set_url( $external_file_obj->get_url( true ) );
+		$result_obj->set_url( $url );
 		$result_obj->set_attachment_id( $external_file_obj->get_id() );
 
 		// add the error object to the list of errors.

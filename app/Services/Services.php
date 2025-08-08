@@ -17,6 +17,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle support for specific services.
@@ -315,6 +316,11 @@ class Services {
 	 * @return array<string,mixed>
 	 */
 	public function add_service_hint_in_form( array $dialog, array $settings ): array {
+		// bail if block support does not exist.
+		if ( ! Helper::is_block_support_enabled() ) {
+			return $dialog;
+		}
+
 		// bail if "no_services" is set in settings.
 		if ( isset( $settings['no_services'] ) ) {
 			return $dialog;

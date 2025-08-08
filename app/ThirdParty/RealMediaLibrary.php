@@ -125,7 +125,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$folders = wp_rml_dropdown( $mark, array() );
 
 		// bail if folders is empty.
-		if( empty( $folders ) ) {
+		if ( empty( $folders ) ) {
 			return '';
 		}
 
@@ -202,7 +202,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$rml_folder = absint( get_term_meta( $this->get_term_id(), 'rml_folder', true ) );
 
 		// bail if it is 0.
-		if( 0 === $rml_folder ) {
+		if ( 0 === $rml_folder ) {
 			return;
 		}
 
@@ -227,7 +227,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$rml_folder = absint( filter_input( INPUT_POST, 'rml_folder', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if it is 0.
-		if( 0 === $rml_folder ) {
+		if ( 0 === $rml_folder ) {
 			return;
 		}
 

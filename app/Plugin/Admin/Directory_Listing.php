@@ -74,6 +74,11 @@ class Directory_Listing {
 	 * @return void
 	 */
 	public function init(): void {
+		// bail if block support does not exist.
+		if ( ! Helper::is_block_support_enabled() ) {
+			return;
+		}
+
 		// add the page in backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
