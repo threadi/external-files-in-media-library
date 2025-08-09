@@ -12,11 +12,17 @@
             "\"vendor/bin/mozart\" compose",
             "composer dump-autoload"
         ],
-        "pre-autoload-dump": "Google\\Task\\Composer::cleanup"
+        "pre-autoload-dump": [
+            "Google\\Task\\Composer::cleanup",
+            "Aws\\Script\\Composer\\Composer::removeUnusedServices"
+        ]
     },
     "extra": {
         "google/apiclient-services": [
             "Drive"
+        ],
+        "aws/aws-sdk-php": [
+            "S3"
         ],
         "mozart": {
             "dep_namespace": "ExternalFilesInMediaLibrary\\Dependencies\\",
@@ -24,7 +30,8 @@
             "classmap_directory": "/libs/classes/dependencies/",
             "classmap_prefix": "ExternalFilesInMediaLibrary",
             "packages": [
-                "threadi/easy-settings-for-wordpress"
+                "threadi/easy-settings-for-wordpress",
+                "threadi/easy-transients-for-wordpress"
             ]
         }
     },
@@ -61,9 +68,11 @@
         "ext-mysqli": "*",
         "ext-openssl": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^3.2.0",
+        "threadi/easy-directory-listing-for-wordpress": "^3.3.0",
         "threadi/easy-settings-for-wordpress": "^1.12.1",
+        "threadi/easy-transients-for-wordpress": "^1.0.3",
         "google/apiclient": "^2.18",
-        "spatie/dropbox-api": "^1.23"
+        "spatie/dropbox-api": "^1.23",
+        "aws/aws-sdk-php": "^3.352"
     }
 }

@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
@@ -18,7 +19,6 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
-use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
  * Initialize the admin tasks for this plugin.
@@ -72,9 +72,6 @@ class Admin {
 		// initialize the files object.
 		Files::get_instance()->init();
 
-		// initialize transients.
-		Transients::get_instance()->init();
-
 		// initialize the help system.
 		Help_System::get_instance()->init();
 
@@ -88,6 +85,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'check_gprd' ) );
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
+		add_action( 'init', array( $this, 'configure_transients' ) );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -402,5 +400,20 @@ class Admin {
 		// show hint for our plugin.
 		/* translators: %1$s will be replaced by the plugin name. */
 		return $content . ' ' . sprintf( __( 'This page is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
+	}
+
+	/**
+	 * Set base configuration for each transient.
+	 *
+	 * @return void
+	 */
+	public function configure_transients(): void {
+		$transients_obj = Transients::get_instance();
+		$transients_obj->set_slug( 'pi' );
+		$transients_obj->set_path( Helper::get_plugin_path() );
+		$transients_obj->set_url( Helper::get_plugin_url() );
+		$transients_obj->set_capability( 'manage_options' );
+		$transients_obj->set_template( 'grouped.php' );
+		$transients_obj->set_display_method( 'grouped' );
 	}
 }

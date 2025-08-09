@@ -566,4 +566,11 @@ class Zip extends Directory_Listing_Base implements Service {
 	public function get_description(): string {
 		return '<span>' . __( 'PHP-Modul zip is missing!', 'external-files-in-media-library' ) . '</span>';
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

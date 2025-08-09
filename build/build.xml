@@ -133,7 +133,9 @@
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" />
+            <zipfileset dir="${src.dir}/vendor/aws" prefix="${plugin.slug}/vendor/aws" />
             <zipfileset dir="${src.dir}/vendor/google" prefix="${plugin.slug}/vendor/google" />
+            <zipfileset dir="${src.dir}/vendor/mtdowling" prefix="${plugin.slug}/vendor/mtdowling" />
             <zipfileset dir="${src.dir}/vendor/ralouphie" prefix="${plugin.slug}/vendor/ralouphie" />
             <zipfileset dir="${src.dir}/vendor/symfony" prefix="${plugin.slug}/vendor/symfony" />
             <zipfileset dir="${src.dir}/vendor/guzzlehttp" prefix="${plugin.slug}/vendor/guzzlehttp" />

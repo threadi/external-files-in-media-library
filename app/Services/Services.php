@@ -104,6 +104,7 @@ class Services {
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
 		add_action( 'init', array( $this, 'init_services' ) );
+		add_action( 'cli_init', array( $this, 'init_cli_services' ) );
 	}
 
 	/**
@@ -171,6 +172,40 @@ class Services {
 	}
 
 	/**
+	 * Initialize all services.
+	 *
+	 * @return void
+	 */
+	public function init_cli_services(): void {
+		// initiate each supported service.
+		foreach ( $this->get_services() as $service_class_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $service_class_name ) ) {
+				continue;
+			}
+
+			// get class name with method.
+			$class_name = $service_class_name . '::get_instance';
+
+			// bail if it is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
+			// initiate object.
+			$obj = $class_name();
+
+			// bail if object is not a service object.
+			if ( ! $obj instanceof Service ) {
+				continue;
+			}
+
+			// initialize this object.
+			$obj->cli();
+		}
+	}
+
+	/**
 	 * Return list of services support we implement.
 	 *
 	 * @return array<string>
@@ -183,6 +218,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Rest',
+			'ExternalFilesInMediaLibrary\Services\S3',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 			'ExternalFilesInMediaLibrary\Services\Zip',

@@ -146,6 +146,7 @@ class Import extends Directory_Listing_Base {
 		$false    = false;
 		$login    = $this->get_login();
 		$password = $this->get_password();
+		$api_key  = $this->get_api_key();
 		/**
 		 * Prevent import of this single URL.
 		 *
@@ -154,10 +155,11 @@ class Import extends Directory_Listing_Base {
 		 * @param string $url The given URL.
 		 * @param string $login The login to use.
 		 * @param string $password The password to use.
+		 * @param string $api_key The API key to use.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password ) ) {
+		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password, $api_key ) ) {
 			return false;
 		}
 
@@ -186,6 +188,7 @@ class Import extends Directory_Listing_Base {
 		 */
 		$protocol_handler_obj->set_login( $login );
 		$protocol_handler_obj->set_password( $password );
+		$protocol_handler_obj->set_api_key( $api_key );
 
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound

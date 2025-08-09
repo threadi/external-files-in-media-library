@@ -80,21 +80,21 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if( apply_filters( 'eml_is_import_running_for_mcs', $prevent_import, $url ) ) {
+		if ( apply_filters( 'eml_is_import_running_for_mcs', $prevent_import, $url ) ) {
 			return '';
 		}
 
 		// get the post for the given filename.
-		$query = array(
-			'post_type' => 'attachment',
-			'name' => basename( $url ),
+		$query  = array(
+			'post_type'   => 'attachment',
+			'name'        => basename( $url ),
 			'post_status' => 'inherit',
-			'fields' => 'ids'
+			'fields'      => 'ids',
 		);
 		$result = new WP_Query( $query );
 
 		// bail if no result was found.
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
 			return $filename;
 		}
 
@@ -102,7 +102,7 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 		$external_file_obj = Files::get_instance()->get_file( absint( $result->get_posts()[0] ) );
 
 		// bail if object is not valid.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $filename;
 		}
 
@@ -113,11 +113,16 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Allow real import with Media Cloud Sync if option is not enabled.
 	 *
-	 * @param bool $result
+	 * @param bool $result The result.
 	 *
 	 * @return bool
 	 */
 	public function allow_real_import( bool $result ): bool {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
 		// get value from request.
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 

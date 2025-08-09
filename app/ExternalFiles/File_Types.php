@@ -16,7 +16,6 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
-use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
  * Object to handle the different file types.

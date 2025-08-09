@@ -55,6 +55,13 @@ class Protocol_Base {
 	private string $password = '';
 
 	/**
+	 * The API Key.
+	 *
+	 * @var string
+	 */
+	private string $api_key = '';
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 *
 	 * @param string $url The URL to use.
@@ -236,6 +243,26 @@ class Protocol_Base {
 	 */
 	public function set_password( string $password ): void {
 		$this->password = $password;
+	}
+
+	/**
+	 * Return the API Key.
+	 *
+	 * @return string
+	 */
+	public function get_api_key(): string {
+		return $this->api_key;
+	}
+
+	/**
+	 * Set the API key.
+	 *
+	 * @param string $api_key The API key.
+	 *
+	 * @return void
+	 */
+	public function set_api_key( string $api_key ): void {
+		$this->api_key = $api_key;
 	}
 
 	/**

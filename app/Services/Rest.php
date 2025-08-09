@@ -846,4 +846,11 @@ class Rest extends Directory_Listing_Base implements Service {
 			return array();
 		}
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

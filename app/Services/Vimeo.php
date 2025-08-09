@@ -282,4 +282,11 @@ class Vimeo implements Service {
 		}
 		return $content;
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

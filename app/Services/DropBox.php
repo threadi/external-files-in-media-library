@@ -862,4 +862,11 @@ class DropBox extends Directory_Listing_Base implements Service {
 		// return true as login is possible.
 		return true;
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

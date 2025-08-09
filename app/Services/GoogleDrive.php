@@ -114,7 +114,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_action( 'admin_action_eml_google_drive_init', array( $this, 'initiate_connection' ) );
 		add_action( 'admin_action_eml_google_drive_disconnect', array( $this, 'disconnect' ) );
 		add_filter( 'template_include', array( $this, 'check_for_oauth_return_url' ), 10, 1 );
-		add_action( 'cli_init', array( $this, 'cli' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
@@ -145,7 +144,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// get tab for services.
-		$services_tab = $settings_page->get_tab( 'services' );
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
 
 		// bail if tab does not exist.
 		if ( ! $services_tab instanceof Tab ) {

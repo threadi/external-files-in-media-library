@@ -5,6 +5,7 @@
 ### Added
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
+- Added support for AWS S3 as external source of files
 - Added hook to import external URLs through third party plugins (for custom development)
 - Added DropBox support for import of external files into your media library
 - Added new URL-import dialog in backend
@@ -67,6 +68,7 @@
 - Hosting of files can now only be changed by users with the capability to upload external files
 - Synced files will be linked with its linked source in media library
 - Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
+- Using new transient object in backend for hints and errors
 
 ### Fixed
 

@@ -769,6 +769,15 @@ class Helper {
 	}
 
 	/**
+	 * Return the absolute local filesystem-path (already trailed with slash) to the plugin.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_path(): string {
+		return trailingslashit( plugin_dir_path( EFML_PLUGIN ) );
+	}
+
+	/**
 	 * Return whether block support is available in this WordPress project.
 	 *
 	 * @return bool

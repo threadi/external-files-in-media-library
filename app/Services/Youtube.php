@@ -824,4 +824,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 		// import YouTube videos local.
 		return false;
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }
