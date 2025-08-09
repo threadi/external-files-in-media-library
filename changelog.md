@@ -27,6 +27,9 @@
 - Added support for plugin "Media Library Organizer" to import external files in its categories
 - Added support for plugin "iFolders" to import external files in its folders
 - Added support for plugin "Real Media Library Lite" to import external files in its folders
+- Added compatibility with plugin "Media Cloud Sync"
+-> do not sync external files with external clouds
+-> do sync real imported external files
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization

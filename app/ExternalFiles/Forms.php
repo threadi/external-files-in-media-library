@@ -76,7 +76,7 @@ class Forms {
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
 		// add action to process the import from static form in @ImportDialog.
-		add_action( 'admin_action_efml_add_external_urls', array( $this, 'add_urls_by_request' ) );
+		add_action( 'admin_action_eml_add_external_urls', array( $this, 'add_urls_by_request' ) );
 
 		// use our own actions.
 		add_action( 'eml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );

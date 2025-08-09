@@ -685,7 +685,7 @@ class ImportDialog {
 
 		// add our own form.
 		echo '</form><form id="eml_add_external_files_form" action="' . esc_url( get_admin_url() . 'admin.php' ) . '" method="post">';
-		echo '<input type="hidden" name="action" value="efml_add_external_urls" />';
+		echo '<input type="hidden" name="action" value="eml_add_external_urls" />';
 		wp_nonce_field( 'efml-add-external-files', 'nonce' );
 
 		// show heading.
