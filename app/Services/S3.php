@@ -14,12 +14,12 @@ use Aws\EndpointV2\EndpointDefinitionProvider;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
 
 /**
@@ -144,8 +144,13 @@ class S3 extends Directory_Listing_Base implements Service {
 
 		// get list of directories and files in given bucket.
 		try {
+			// create the query to load the list of files.
+			$query = array(
+				'Bucket' => $this->get_api_key()
+			);
+
 			// try to load the requested bucket.
-			$result = $s3->listObjectsV2( array( 'Bucket' => $this->get_api_key() ) );
+			$result = $s3->listObjectsV2( $query );
 
 			/**
 			 * Get list of files.
@@ -246,8 +251,10 @@ class S3 extends Directory_Listing_Base implements Service {
 						// add the path.
 						$dir_path .= DIRECTORY_SEPARATOR . $dir;
 
-						// add the directory if it does not exist atm in the list.
+						// create the full path.
 						$index = $this->get_api_key() . trailingslashit( $dir_path );
+
+						// add the directory if it does not exist atm in the main folder list.
 						if ( ! isset( $folders[ $index ] ) ) {
 							// add the directory to the list.
 							$folders[ $index ] = array(
@@ -255,9 +262,12 @@ class S3 extends Directory_Listing_Base implements Service {
 								'files' => array(),
 								'dirs'  => array(),
 							);
+						}
 
+						// add the directory if it does not exist atm in the main folder list.
+						if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
 							// add the directory to the list.
-							$listing['dirs'][ $index ] = array(
+							$folders[ $last_dir ]['dirs'][ $index ] = array(
 								'title' => $dir,
 								'files' => array(),
 								'dirs'  => array(),
@@ -316,6 +326,11 @@ class S3 extends Directory_Listing_Base implements Service {
 		return array_merge(
 			parent::get_global_actions(),
 			array(
+
+				array(
+					'action' => 'location.href="https://console.aws.amazon.com/s3/buckets/";',
+					'label'  => __( 'Go to AWS S3 Bucket', 'external-files-in-media-library' ),
+				),
 				array(
 					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
@@ -366,6 +381,10 @@ class S3 extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
+			// add log entry.
+			Log::get_instance()->create( sprintf( __( 'Credentials are not valid. AWS S3 returns with HTTP-Status %1$d! Error:', 'external-files-in-media-library' ), $e->getStatusCode() ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+
+			// return false to prevent any further actions.
 			return false;
 		}
 	}
@@ -403,6 +422,12 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// bail if no bucket is set.
+		if( empty( $this->get_api_key() ) ) {
+			return '';
+		}
+
+		// return label and bucket name.
 		return $this->get_label() . '/' . $this->get_api_key();
 	}
 

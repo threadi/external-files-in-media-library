@@ -399,6 +399,7 @@ class Import extends Directory_Listing_Base {
 			// save the credentials on the object, if set.
 			$external_file_obj->set_login( $this->get_login() );
 			$external_file_obj->set_password( $this->get_password() );
+			$external_file_obj->set_api_key( $this->get_api_key() );
 
 			// save file-type-specific meta data.
 			$external_file_obj->set_metadata();

@@ -83,6 +83,7 @@ class Forms {
 		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
 		add_action( 'eml_http_directory_import_file_check', array( $this, 'set_import_file_check' ) );
 		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'eml_s3_directory_import_file_check', array( $this, 'set_import_file_check' ) );
 		add_action( 'eml_file_import_before_save', array( $this, 'set_import_file_save' ) );
 		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
 		add_action( 'eml_http_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );

@@ -276,9 +276,12 @@ class Zip extends Directory_Listing_Base implements Service {
 							'files' => array(),
 							'dirs'  => array(),
 						);
+					}
 
+					// add the directory if it does not exist atm in the main folder list.
+					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
 						// add the directory to the list.
-						$listing['dirs'][ $index ] = array(
+						$folders[ $last_dir ]['dirs'][ $index ] = array(
 							'title' => $dir,
 							'files' => array(),
 							'dirs'  => array(),

@@ -195,7 +195,7 @@ class Directory_Listing {
 					}
 
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external source', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -369,6 +369,25 @@ class Directory_Listing {
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
+				),
+			),
+			'aws_s3_api'            => array(
+				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
+				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you are using. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
+				'access_key'              => array(
+					'label' => __( 'Access Key', 'external-files-in-media-library' )
+				),
+				'secret_key'              => array(
+					'label' => __( 'Secret Key', 'external-files-in-media-library' )
+				),
+				'bucket'              => array(
+					'label' => __( 'Bucket', 'external-files-in-media-library' )
+				),
+				'save_credentials' => array(
+					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' )
+				),
+				'button'           => array(
+					'label' => __( 'Show directory', 'external-files-in-media-library' )
 				),
 			),
 			'services'                      => array(

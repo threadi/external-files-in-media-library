@@ -620,6 +620,55 @@ class File {
 	}
 
 	/**
+	 * Return decrypted API key.
+	 *
+	 * @return string
+	 */
+	public function get_api_key(): string {
+		// get the password for this file.
+		$api_key = get_post_meta( $this->get_id(), 'eml_api_key', true );
+
+		// bail if no string returned.
+		if ( ! is_string( $api_key ) ) {
+			return '';
+		}
+
+		// bail if string is empty.
+		if ( empty( $api_key ) ) {
+			return '';
+		}
+
+		// return decrypted string.
+		return Crypt::get_instance()->decrypt( $api_key );
+	}
+
+	/**
+	 * Save the API key for this file.
+	 *
+	 * @param string $api_key The API key.
+	 *
+	 * @return void
+	 */
+	public function set_api_key( string $api_key ): void {
+		// bail if no password is given.
+		if ( empty( $api_key ) ) {
+			return;
+		}
+
+		// save as encrypted value in db.
+		update_post_meta( $this->get_id(), 'eml_api_key', Crypt::get_instance()->encrypt( $api_key ) );
+	}
+
+	/**
+	 * Remove the password for this file.
+	 *
+	 * @return void
+	 */
+	public function remove_api_key(): void {
+		delete_post_meta( $this->get_id(), 'eml_api_key' );
+	}
+
+	/**
 	 * Return decrypted login.
 	 *
 	 * @return string

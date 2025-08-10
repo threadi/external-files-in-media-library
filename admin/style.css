@@ -301,6 +301,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: url(../gfx/dropbox_icon.svg);
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-s3 a:before {
+	content: "\f162";
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {
 	display: none;
 }

@@ -134,11 +134,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
 
-		// bail if connection failed.
-		if ( ! $ftp_connection ) {
-			return array();
-		}
-
 		// bail if connection is not an FTP-object.
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			return array();
@@ -164,17 +159,17 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get list of directory.
 		$directory_list = $ftp_connection->dirlist( $parent_dir );
 
-		// bail if list is empty.
-		if ( empty( $directory_list ) ) {
-			return array();
-		}
-
 		// collect the content of this directory.
 		$listing = array(
 			'title' => basename( $directory ),
 			'files' => array(),
 			'dirs'  => array(),
 		);
+
+		// bail if list is empty.
+		if ( empty( $directory_list ) ) {
+			return $listing;
+		}
 
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
@@ -210,7 +205,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 				'title' => $item_name,
 			);
 
-			// if item is a directory, check its files.
+			// if item is a directory, add it to the list.
 			if ( $is_dir ) {
 				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {

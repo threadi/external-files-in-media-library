@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\S3;
+use WP_Error;
 
 /**
  * Object to handle different protocols.
@@ -36,7 +37,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), "/" . S3::get_instance()->get_label() ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_label() ) ) {
 			return false;
 		}
 
@@ -84,32 +85,108 @@ class Protocol extends Protocol_Base {
 			// get mime type.
 			$mime_type = wp_check_filetype( basename( $url ) );
 
-			// generate tmp file path.
-			$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+			// list of files.
+			$file_data = array();
 
-			// set query for the file and save it in tmp dir.
-			$query = array(
-				'Bucket' => $this->get_api_key(),
-				'Key' => $url,
-				'SaveAs' => $tmp_file
-			);
+			// if mime type check results with false values, it is a directory.
+			if( ! empty( $mime_type ) && false === $mime_type['ext']  ) {
+				// use the directory listing to get the dirs and files.
+				$files = $s3->get_directory_listing( '/' );
 
-			// try to load the requested bucket.
-			$result = $s3_client->getObject( $query );
+				/**
+				 * Run action if we have files to check via HTTP-protocol.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 *
+				 * @param string $url   The URL to import.
+				 * @param array<string> $files List of matches (the URLs).
+				 */
+				do_action( 'eml_s3_directory_import_files', $url, $files );
 
-			// create the array for the file data.
-			$file_data = array(
-				'title'         => basename( $url ),
-				'local'         => true, // TODO abhängig von Erreichbarkeit des Bucket.
-				'url'           => $this->get_url(),
-				'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $result->get( 'LastModified')->format( 'U' ) ) ) ),
-				'filesize' => $result->get( 'ContentLength' ),
-				'mime-type' => $result->get( 'ContentType' ),
-				'tmp-file' => $tmp_file
-			);
-			return array( $file_data );
+				// loop through all dirs and get infos about its files.
+				foreach( $files as $dir => $dir_data ) {
+					/**
+					 * Run action just before the file check via HTTP-protocol.
+					 *
+					 * @since 5.0.0 Available since 5.0.0.
+					 *
+					 * @param string $file_url   The URL to import.
+					 */
+					do_action( 'eml_s3_directory_import_file_check', $dir );
+
+					// bail if files is empty.
+					if( empty( $dir_data['files'] ) ) {
+						continue;
+					}
+
+					// add each file to the list.
+					foreach( $dir_data['files'] as $file ) {
+						// create the array for the file data.
+						$entry = array(
+							'title'         => basename( $file['file'] ),
+							'local'         => true, // TODO abhängig von Erreichbarkeit des Bucket.
+							'url'           => $file['file'],
+							'last-modified' => $file['last-modified'],
+							'filesize'      => $file['filesize'],
+							'mime-type'     => $file['mime-type'],
+						);
+
+						// get mime type.
+						$mime_type = wp_check_filetype( $file['title'] );
+
+						// generate tmp file path.
+						$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+
+						// set query for the file and save it in tmp dir.
+						$query = array(
+							'Bucket' => $this->get_api_key(),
+							'Key'    => str_replace( $s3->get_label() . '/' . $this->get_api_key() . '/', '', $file['file'] ),
+							'SaveAs' => $tmp_file
+						);
+
+						// try to load the requested bucket to save the tmp file.
+						$s3_client->getObject( $query );
+
+						// add tmp file to the list.
+						$entry['tmp-file'] = $tmp_file;
+
+						// add entry to the list of files.
+						$file_data[] = $entry;
+					}
+				}
+			}
+			else {
+
+				// generate tmp file path.
+				$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+
+				// set query for the file and save it in tmp dir.
+				$query = array(
+					'Bucket' => $this->get_api_key(),
+					'Key'    => $url,
+					'SaveAs' => $tmp_file
+				);
+
+				// try to load the requested bucket.
+				$result = $s3_client->getObject( $query );
+
+				// create the array for the file data.
+				$entry = array(
+					'title'         => basename( $url ),
+					'local'         => true, // TODO abhängig von Erreichbarkeit des Bucket.
+					'url'           => $this->get_url(),
+					'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $result->get( 'LastModified' )->format( 'U' ) ) ) ),
+					'filesize'      => $result->get( 'ContentLength' ),
+					'mime-type'     => $result->get( 'ContentType' ),
+					'tmp-file'      => $tmp_file
+				);
+
+				// add entry to the list of files.
+				$file_data[] = $entry;
+			}
+			return $file_data;
 		} catch( S3Exception $e ) {
-			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 			return array();
 		}
 	}
