@@ -6,6 +6,7 @@
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added support for AWS S3 as external source of files
+- Added support for Google Cloud Storage as external source of files
 - Added hook to import external URLs through third party plugins (for custom development)
 - Added DropBox support for import of external files into your media library
 - Added new URL-import dialog in backend

@@ -666,7 +666,7 @@ class ImportDialog {
 				'class'       => true,
 				'style'       => true,
 				'placeholder' => true,
-				'required' => true
+				'required'    => true,
 			),
 			'label'    => array(
 				'for' => true,

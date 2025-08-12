@@ -74,6 +74,18 @@ class Protocol extends Protocol_Base {
 		// get the Google Drive object.
 		$google_drive_obj = GoogleDrive::get_instance();
 
+		// get the access token of the actual user.
+		$access_token = $google_drive_obj->get_access_token();
+
+		// bail if no access token is given.
+		if ( empty( $access_token ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'Access token missing to connect to Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+
+			// return an empty list as we could not analyse the file.
+			return array();
+		}
+
 		// get the ID from the URL.
 		$file_id = str_replace( $google_drive_obj->get_url_mark(), '', $this->get_url() );
 
@@ -94,18 +106,6 @@ class Protocol extends Protocol_Base {
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $this->get_url() ) ) {
 			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
-
-			// return an empty list as we could not analyse the file.
-			return array();
-		}
-
-		// get the access token of the actual user.
-		$access_token = $google_drive_obj->get_access_token();
-
-		// bail if no access token is given.
-		if ( empty( $access_token ) ) {
-			// log event.
-			Log::get_instance()->create( __( 'Access token missing to connect to Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
 
 			// return an empty list as we could not analyse the file.
 			return array();

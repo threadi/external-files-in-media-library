@@ -410,10 +410,11 @@ class Admin {
 	public function configure_transients(): void {
 		$transients_obj = Transients::get_instance();
 		$transients_obj->set_slug( 'pi' );
-		$transients_obj->set_path( Helper::get_plugin_path() );
-		$transients_obj->set_url( Helper::get_plugin_url() );
+		$transients_obj->set_url( Helper::get_plugin_url() . '/app/Dependencies/easyTransientsForWordPress/' );
+		$transients_obj->set_path( Helper::get_plugin_path() . '/app/Dependencies/easyTransientsForWordPress/' );
 		$transients_obj->set_capability( 'manage_options' );
 		$transients_obj->set_template( 'grouped.php' );
 		$transients_obj->set_display_method( 'grouped' );
+		$transients_obj->init();
 	}
 }

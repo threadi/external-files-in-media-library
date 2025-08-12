@@ -293,6 +293,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f18b";
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:before {
+	content: "\f18b";
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before {
 	content: "\f120";
 }
@@ -309,7 +313,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a.c
 	display: none;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a.connect {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a.connect {
 	margin-top: 24px;
 }
 

@@ -216,6 +216,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
+			'ExternalFilesInMediaLibrary\Services\GoogleCloudStorage',
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\S3',

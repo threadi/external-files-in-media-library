@@ -146,7 +146,7 @@ class S3 extends Directory_Listing_Base implements Service {
 		try {
 			// create the query to load the list of files.
 			$query = array(
-				'Bucket' => $this->get_api_key()
+				'Bucket' => $this->get_api_key(),
 			);
 
 			// try to load the requested bucket.
@@ -382,6 +382,7 @@ class S3 extends Directory_Listing_Base implements Service {
 			$this->add_error( $error );
 
 			// add log entry.
+			/* translators: %1$d will be replaced by a HTTP-status (like 301). */
 			Log::get_instance()->create( sprintf( __( 'Credentials are not valid. AWS S3 returns with HTTP-Status %1$d! Error:', 'external-files-in-media-library' ), $e->getStatusCode() ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 
 			// return false to prevent any further actions.
@@ -412,9 +413,7 @@ class S3 extends Directory_Listing_Base implements Service {
 	 *
 	 * @return void
 	 */
-	public function cli(): void {
-		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Services\S3\Cli' );
-	}
+	public function cli(): void {}
 
 	/**
 	 * Return the directory to use.
@@ -423,7 +422,7 @@ class S3 extends Directory_Listing_Base implements Service {
 	 */
 	public function get_directory(): string {
 		// bail if no bucket is set.
-		if( empty( $this->get_api_key() ) ) {
+		if ( empty( $this->get_api_key() ) ) {
 			return '';
 		}
 

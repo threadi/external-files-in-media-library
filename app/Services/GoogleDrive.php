@@ -255,7 +255,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
 		$setting->prevent_export( true );
-		$setting->set_show_in_rest( false );
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
 		// add setting to show also shared files.
@@ -905,7 +904,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Go to Google Drive', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '";',
+					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(

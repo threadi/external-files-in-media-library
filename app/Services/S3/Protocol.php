@@ -69,7 +69,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.
-		$url = str_replace( "/" . S3::get_instance()->get_label() . '/' . $this->get_api_key() . '/', '', $this->get_url() );
+		$url = str_replace( '/' . S3::get_instance()->get_label() . '/' . $this->get_api_key() . '/', '', $this->get_url() );
 
 		// get our own S3 object.
 		$s3 = S3::get_instance();
@@ -89,7 +89,7 @@ class Protocol extends Protocol_Base {
 			$file_data = array();
 
 			// if mime type check results with false values, it is a directory.
-			if( ! empty( $mime_type ) && false === $mime_type['ext']  ) {
+			if ( ! empty( $mime_type ) && false === $mime_type['ext'] ) { // @phpstan-ignore empty.variable
 				// use the directory listing to get the dirs and files.
 				$files = $s3->get_directory_listing( '/' );
 
@@ -104,7 +104,7 @@ class Protocol extends Protocol_Base {
 				do_action( 'eml_s3_directory_import_files', $url, $files );
 
 				// loop through all dirs and get infos about its files.
-				foreach( $files as $dir => $dir_data ) {
+				foreach ( $files as $dir => $dir_data ) {
 					/**
 					 * Run action just before the file check via HTTP-protocol.
 					 *
@@ -115,12 +115,12 @@ class Protocol extends Protocol_Base {
 					do_action( 'eml_s3_directory_import_file_check', $dir );
 
 					// bail if files is empty.
-					if( empty( $dir_data['files'] ) ) {
+					if ( empty( $dir_data['files'] ) ) {
 						continue;
 					}
 
 					// add each file to the list.
-					foreach( $dir_data['files'] as $file ) {
+					foreach ( $dir_data['files'] as $file ) {
 						// create the array for the file data.
 						$entry = array(
 							'title'         => basename( $file['file'] ),
@@ -141,7 +141,7 @@ class Protocol extends Protocol_Base {
 						$query = array(
 							'Bucket' => $this->get_api_key(),
 							'Key'    => str_replace( $s3->get_label() . '/' . $this->get_api_key() . '/', '', $file['file'] ),
-							'SaveAs' => $tmp_file
+							'SaveAs' => $tmp_file,
 						);
 
 						// try to load the requested bucket to save the tmp file.
@@ -154,8 +154,7 @@ class Protocol extends Protocol_Base {
 						$file_data[] = $entry;
 					}
 				}
-			}
-			else {
+			} else {
 
 				// generate tmp file path.
 				$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
@@ -164,7 +163,7 @@ class Protocol extends Protocol_Base {
 				$query = array(
 					'Bucket' => $this->get_api_key(),
 					'Key'    => $url,
-					'SaveAs' => $tmp_file
+					'SaveAs' => $tmp_file,
 				);
 
 				// try to load the requested bucket.
@@ -178,14 +177,14 @@ class Protocol extends Protocol_Base {
 					'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $result->get( 'LastModified' )->format( 'U' ) ) ) ),
 					'filesize'      => $result->get( 'ContentLength' ),
 					'mime-type'     => $result->get( 'ContentType' ),
-					'tmp-file'      => $tmp_file
+					'tmp-file'      => $tmp_file,
 				);
 
 				// add entry to the list of files.
 				$file_data[] = $entry;
 			}
 			return $file_data;
-		} catch( S3Exception $e ) {
+		} catch ( S3Exception $e ) {
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 			return array();
 		}

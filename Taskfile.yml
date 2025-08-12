@@ -38,7 +38,11 @@ tasks:
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/autoload.php
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/composer/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/google/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/brick/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ramsey/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ralouphie/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/rize/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/firebase/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/symfony/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/monolog/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/psr/*

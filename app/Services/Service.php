@@ -33,5 +33,5 @@ interface Service {
 	 *
 	 * @return void
 	 */
-	public  function cli(): void;
+	public function cli(): void;
 }

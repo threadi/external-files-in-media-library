@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Mul
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
