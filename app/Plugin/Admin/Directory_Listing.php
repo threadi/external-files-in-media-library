@@ -571,6 +571,52 @@ class Directory_Listing {
 			}
 		}
 
+		// get service by type.
+		$service_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// bail if type is unknown.
+		if ( ! $service_obj instanceof Directory_Listing_Base ) {
+			wp_send_json(
+				array(
+					'detail' =>
+						array(
+							'title'   => __( 'Error', 'external-files-in-media-library' ),
+							'texts'   => array( '<p>' . __( 'The type of source for this directory is unknown.', 'external-files-in-media-library' ) . '</p>' ),
+							'buttons' => array(
+								array(
+									'action'  => 'closeDialog();',
+									'variant' => 'primary',
+									'text'    => __( 'OK', 'external-files-in-media-library' ),
+								),
+							),
+						),
+				)
+			);
+		}
+
+		// check requirements for the service.
+		if ( $service_obj->is_login_required() ) {
+			// if no credentials are given, show error.
+			if ( empty( $login ) || empty( $password ) ) {
+				wp_send_json(
+					array(
+						'detail' =>
+							array(
+								'title'   => __( 'Error', 'external-files-in-media-library' ),
+								'texts'   => array( '<p>' . __( 'Credentials are missing for the requested service.', 'external-files-in-media-library' ) . '</p>' ),
+								'buttons' => array(
+									array(
+										'action'  => 'closeDialog();',
+										'variant' => 'primary',
+										'text'    => __( 'OK', 'external-files-in-media-library' ),
+									),
+								),
+							),
+					)
+				);
+			}
+		}
+
 		// add the archive.
 		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
 

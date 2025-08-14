@@ -232,7 +232,7 @@ class File {
 	}
 
 	/**
-	 * Return whether this file is available.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
 	 */

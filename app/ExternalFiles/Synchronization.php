@@ -459,6 +459,8 @@ class Synchronization {
 		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_s3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_s3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'eml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_webdav_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
 
 		// update the sync title on each file.

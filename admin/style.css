@@ -309,6 +309,14 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f162";
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-webdav a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-webdav span:before {
+	background-image: url(../gfx/webdav.svg);
+	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
+	content: '';
+	height: 50px;
+	width: 50px;
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {
 	display: none;
 }

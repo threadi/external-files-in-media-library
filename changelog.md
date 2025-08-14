@@ -6,9 +6,10 @@
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added support for AWS S3 as external source of files
-- Added support for Google Cloud Storage as external source of files
-- Added hook to import external URLs through third party plugins (for custom development)
 - Added DropBox support for import of external files into your media library
+- Added support for Google Cloud Storage as external source of files
+- Added support for WebDav, e.g. usable with your Nextcloud
+- Added hook to import external URLs through third party plugins (for custom development)
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)

@@ -22,7 +22,7 @@ use WP_Error;
  */
 class Protocol extends Protocol_Base {
 	/**
-	 * Return whether this protocol could be used for the given URL.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
 	 */
@@ -94,19 +94,20 @@ class Protocol extends Protocol_Base {
 				$files = $s3->get_directory_listing( '/' );
 
 				/**
-				 * Run action if we have files to check via HTTP-protocol.
+				 * Run action if we have files to check via AWS S3-protocol.
 				 *
 				 * @since 5.0.0 Available since 5.0.0.
 				 *
 				 * @param string $url   The URL to import.
-				 * @param array<string> $files List of matches (the URLs).
+				 * @param array<int|string,mixed> $files List of matches (the URLs).
 				 */
 				do_action( 'eml_s3_directory_import_files', $url, $files );
 
 				// loop through all dirs and get infos about its files.
 				foreach ( $files as $dir => $dir_data ) {
+					$dir = (string)$dir;
 					/**
-					 * Run action just before the file check via HTTP-protocol.
+					 * Run action just before the file check via AWS S3-protocol.
 					 *
 					 * @since 5.0.0 Available since 5.0.0.
 					 *

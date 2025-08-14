@@ -221,6 +221,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\S3',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
+			'ExternalFilesInMediaLibrary\Services\WebDav',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 			'ExternalFilesInMediaLibrary\Services\Zip',
 		);

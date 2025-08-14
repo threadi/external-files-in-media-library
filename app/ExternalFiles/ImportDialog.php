@@ -90,7 +90,7 @@ class ImportDialog {
 		check_ajax_referer( 'efml-import-dialog-nonce', 'nonce' );
 
 		// get settings from request.
-		$settings = isset( $_POST['settings'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['settings'] ) ) : array();
+		$settings = isset( $_POST['settings'] ) ? array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) ) : array();
 
 		/**
 		 * Filter the given settings for the import dialog.

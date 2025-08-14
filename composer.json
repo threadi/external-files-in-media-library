@@ -67,6 +67,7 @@
         "ext-fileinfo": "*",
         "ext-mysqli": "*",
         "ext-openssl": "*",
+        "ext-curl": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "^3.3.0",
         "threadi/easy-settings-for-wordpress": "^1.12.4",
@@ -74,6 +75,7 @@
         "google/apiclient": "^2.18",
         "spatie/dropbox-api": "^1.23",
         "aws/aws-sdk-php": "^3.352",
-        "google/cloud-storage": "^1.48"
+        "google/cloud-storage": "^1.48",
+        "sabre/dav": "^4.7"
     }
 }

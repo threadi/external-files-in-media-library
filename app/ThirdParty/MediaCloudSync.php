@@ -56,7 +56,7 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'wpmcs_get_relative_file_path_from_upload_directory', array( $this, 'prevent_usage_of_external_files' ), 10, 2 );
+		add_filter( 'wpmcs_get_relative_file_path_from_upload_directory', array( $this, 'prevent_usage_of_external_files' ), 10, 2 );
 		add_filter( 'eml_is_import_running_for_mcs', array( $this, 'allow_real_import' ), 20 );
 		add_filter( 'eml_is_import_running_for_mcs', array( $this, 'is_import_running' ) );
 	}

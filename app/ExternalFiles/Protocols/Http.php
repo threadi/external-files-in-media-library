@@ -739,7 +739,7 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Return whether this protocol could be used.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * This depends on the hosting, e.g. if necessary libraries are available.
 	 *

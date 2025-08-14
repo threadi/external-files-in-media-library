@@ -156,8 +156,13 @@ class Protocols {
 			// create object.
 			$obj = new $protocol_name( $external_file->get_url( true ) );
 
-			// bail if object is not a Protocol_Base and not with the URL compatible.
-			if ( ! ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) ) {
+			// bail if object is not a Protocol_Base.
+			if ( ! $obj instanceof Protocol_Base ) {
+				continue;
+			}
+
+			// bail if URL is compatible.
+			if( ! $obj->is_url_compatible() ) {
 				continue;
 			}
 

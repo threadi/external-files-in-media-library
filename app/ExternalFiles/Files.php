@@ -537,7 +537,7 @@ class Files {
 		}
 		if ( $external_file_obj->has_credentials() ) {
 			?>
-			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
+			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'External file is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
 		if ( current_user_can( 'manage_options' ) ) {

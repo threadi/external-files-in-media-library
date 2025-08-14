@@ -21,7 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use Google\Cloud\Storage\StorageClient;
-use function cli\err;
+use WP_Error;
 
 /**
  * Object to handle support for this platform.
@@ -183,14 +183,11 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	}
 
 	/**
-	 * Enable WP CLI for Google Drive tasks.
+	 * Enable WP CLI for Google Cloud Storage tasks.
 	 *
 	 * @return void
-	 * @noinspection PhpFullyQualifiedNameUsageInspection
 	 */
-	public function cli(): void {
-		\WP_CLI::add_command( 'eml', 'ExternalFilesInMediaLibrary\Services\GoogleCloudStorage\Cli' );
-	}
+	public function cli(): void {}
 
 	/**
 	 * Add this object to the list of listing objects.
@@ -333,6 +330,12 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 
 		// bail if bucket does not exist.
 		if ( ! $bucket->exists() ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_googlecloudstorage', __( 'Given bucket does not exist.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// do nothing more.
 			return array();
 		}
 
@@ -560,6 +563,7 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 		$credential_file_path = wp_tempnam();
 
 		// save the tmp-file.
+		// TODO auch wieder löschen!
 		$wp_filesystem = Helper::get_wp_filesystem();
 		$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
 

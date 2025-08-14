@@ -22,7 +22,7 @@ use Spatie\Dropbox\Client;
  */
 class Protocol extends Protocol_Base {
 	/**
-	 * Return whether this protocol could be used for the given URL.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
 	 */

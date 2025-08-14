@@ -411,7 +411,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// bail if called method is not ours.
-		if ( 'rest' !== $method ) {
+		if ( $this->get_name() !== $method ) {
 			return $translations;
 		}
 
