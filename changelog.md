@@ -30,6 +30,7 @@
 - Added support for plugin "Media Library Organizer" to import external files in its categories
 - Added support for plugin "iFolders" to import external files in its folders
 - Added support for plugin "Real Media Library Lite" to import external files in its folders
+- Added support for plugin "Advanced Media Offloader" to prevent the offloading of already external files
 - Added compatibility with plugin "Media Cloud Sync"
 -> do not sync external files with external clouds
 -> do sync real imported external files
