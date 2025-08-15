@@ -115,7 +115,7 @@ class WebDav extends Directory_Listing_Base implements Service {
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
-		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
+		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_service_webdav_client', array( $this, 'ignore_self_signed_ssl' ) );
 		add_filter( 'efml_service_webdav_path', array( $this, 'set_path' ), 10, 2 );
 	}
@@ -319,22 +319,6 @@ class WebDav extends Directory_Listing_Base implements Service {
 
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $file_name => $settings ) {
-			$false = false;
-			/**
-			 * Filter whether given WebDAV file should be hidden.
-			 *
-			 * @since 5.0.0 Available since 5.0.0.
-			 *
-			 * @param bool $false True if it should be hidden.
-			 * @param array<string,mixed> $file The array with the file data.
-			 * @param string $directory The requested directory.
-			 *
-			 * @noinspection PhpConditionAlreadyCheckedInspection
-			 */
-			if ( apply_filters( 'efml_service_webdav_hide_file', $false, $settings, $directory ) ) {
-				continue;
-			}
-
 			// get directory-data for this file and add file in the given directories.
 			$parts = explode( '/', str_replace( $path, '', $file_name ) );
 
@@ -345,6 +329,22 @@ class WebDav extends Directory_Listing_Base implements Service {
 
 			// if array contains more than 1 entry this file is in a directory.
 			if ( end( $parts ) ) {
+				$false = false;
+				/**
+				 * Filter whether given WebDAV file should be hidden.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 *
+				 * @param bool $false True if it should be hidden.
+				 * @param array<string,mixed> $file The array with the file data.
+				 * @param string $file_name The requested file.
+				 *
+				 * @noinspection PhpConditionAlreadyCheckedInspection
+				 */
+				if ( apply_filters( 'efml_service_webdav_hide_file', $false, $settings, $file_name ) ) {
+					continue;
+				}
+
 				// get content type of this file.
 				$mime_type = wp_check_filetype( basename( $file_name ) );
 
@@ -597,26 +597,20 @@ class WebDav extends Directory_Listing_Base implements Service {
 	 * Prevent visibility of not allowed mime types.
 	 *
 	 * @param bool   $result The result - should be true to prevent the usage.
-	 * @param string $path   The file path.
-	 * @param string $url The used URL.
-	 * @param bool   $is_dir Is this is a directory.
+	 * @param array  $settings The settings for the WebDAV connection.
+	 * @param string $file The requested file.
 	 *
 	 * @return bool
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function prevent_not_allowed_files( bool $result, string $path, string $url, bool $is_dir ): bool {
+	public function prevent_not_allowed_files( bool $result, array $settings, string $file ): bool {
 		// bail if setting is disabled.
 		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
 			return $result;
 		}
 
-		// bail if this is a directory.
-		if ( $is_dir ) {
-			return $result;
-		}
-
 		// get content type of this file.
-		$mime_type = wp_check_filetype( $path );
+		$mime_type = wp_check_filetype( $file );
 
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );

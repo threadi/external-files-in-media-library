@@ -71,12 +71,6 @@ class Protocol extends Protocol_Base {
 			$service_name = filter_input( INPUT_POST, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		}
 
-		// check for file object if service is still null.
-		if( is_null( $service_name ) ) {
-			// TODO klären!
-			//$service_name = $this->get_name();
-		}
-
 		// return result of comparing the given service name with ours.
 		return WebDav::get_instance()->get_name() === $service_name;
 	}
