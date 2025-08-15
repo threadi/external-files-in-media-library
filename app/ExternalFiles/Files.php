@@ -717,6 +717,12 @@ class Files {
 			return false;
 		}
 
+		// if file is extern hosted, remove the upload basedir-path before the URL.
+		if( ! $external_file_obj->is_locally_saved() ) {
+			$uploads = wp_get_upload_dir();
+			$file = str_replace( $uploads['basedir'] . '/', '', $file );
+		}
+
 		// return normal file-name.
 		return $file;
 	}

@@ -74,6 +74,7 @@
 - Synced files will be linked with its linked source in media library
 - Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
 - Using new transient object in backend for hints and errors
+- Cleanup the return value for external files via get_attached_file()
 
 ### Fixed
 
