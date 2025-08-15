@@ -136,6 +136,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\IFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaCloudSync',
+			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryAssistant',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',

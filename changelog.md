@@ -26,11 +26,12 @@
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 - Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
-- Added support for plugin "Folders" to import external files in its folders
-- Added support for plugin "Media Library Organizer" to import external files in its categories
-- Added support for plugin "iFolders" to import external files in its folders
-- Added support for plugin "Real Media Library Lite" to import external files in its folders
+- Added support for plugin "Folders" to import external files in its folders incl. sync of them
+- Added support for plugin "Media Library Organizer" to import external files in its categories incl. sync of them
+- Added support for plugin "iFolders" to import external files in its folders incl. sync of them
+- Added support for plugin "Real Media Library Lite" to import external files in its folders incl. sync of them
 - Added support for plugin "Advanced Media Offloader" to prevent the offloading of already external files
+- Added support for plugin "Media Library Assistant" to import external files in its folders incl. sync of them
 - Added compatibility with plugin "Media Cloud Sync"
 -> do not sync external files with external clouds
 -> do sync real imported external files

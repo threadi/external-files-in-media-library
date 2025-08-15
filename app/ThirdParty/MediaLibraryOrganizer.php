@@ -236,7 +236,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 
 		// assign the file to the categories.
 		foreach ( $categories as $cat_id ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category' );
+			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category', true );
 		}
 	}
 

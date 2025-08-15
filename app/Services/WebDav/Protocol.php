@@ -73,7 +73,8 @@ class Protocol extends Protocol_Base {
 
 		// check for file object if service is still null.
 		if( is_null( $service_name ) ) {
-			$service_name = $this->get_name();
+			// TODO klären!
+			//$service_name = $this->get_name();
 		}
 
 		// return result of comparing the given service name with ours.
