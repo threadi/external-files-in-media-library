@@ -142,6 +142,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
 			'ExternalFilesInMediaLibrary\ThirdParty\RealMediaLibrary',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
+			'ExternalFilesInMediaLibrary\ThirdParty\WpExtraFileTypes',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
 

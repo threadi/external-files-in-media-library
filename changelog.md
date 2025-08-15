@@ -42,6 +42,7 @@
 - Added privacy hint as checkbox in every import dialog, configurable in user settings
 - Added WordPress Importer entry
 - Added info in admin footer for pages provided by the plugin or for which it makes extensions
+- Added support for plugin "WP Extra File Types" to enabled additional possible file types to use as external files
 
 ### Changed
 
