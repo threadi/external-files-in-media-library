@@ -11,6 +11,10 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -24,6 +28,20 @@ class Local implements Service {
 	 * @var string
 	 */
 	protected string $name = 'local';
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	private string $settings_tab = 'services';
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	private string $settings_sub_tab = 'eml_local';
 
 	/**
 	 * Instance of actual object.
@@ -70,8 +88,57 @@ class Local implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		// add settings.
+		add_action( 'init', array( $this, 'init_local' ), 20 );
+
+		// use our own hooks.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
+		add_filter( 'efml_service_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
+	}
+
+	/**
+	 * Add settings for local support.
+	 *
+	 * @return void
+	 */
+	public function init_local(): void {
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( 'services' );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
+		// add new tab for settings.
+		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
+		$tab->set_title( __( 'Local', 'external-files-in-media-library' ) );
+
+		// add section for file statistics.
+		$section = $tab->add_section( 'section_local_main', 10 );
+		$section->set_title( __( 'Settings for local', 'external-files-in-media-library' ) );
+
+		// add setting to enable the uploads-loading
+		$setting = $settings_obj->add_setting( 'eml_local_load_upload_dir' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Load upload-directory', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled the local service will also load the upload directory. This might result in long loading times.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -177,4 +244,70 @@ class Local implements Service {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Add the uploads directory to the list of all directories to show.
+	 *
+	 * @param bool   $directory_loading
+	 * @param array  $directory_list
+	 * @param string $directory
+	 *
+	 * @return bool
+	 */
+	public function add_upload_dirs( bool $directory_loading, array $directory_list, string $directory ): bool {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_local_load_upload_dir' ) ) ) {
+			return $directory_loading;
+		}
+
+		// bail if directory loading is true.
+		if( false !== $directory_loading ) {
+			return true;
+		}
+
+		// get the upload dir.
+		$upload_dir = wp_get_upload_dir();
+
+		// bail if uploads-directory are in the list.
+		if( isset( $directory_list[ $upload_dir['basedir'] ] ) ) {
+			return false;
+		}
+
+		// add wp-content-dir only with the upload dir as child.
+		$directory_list[ trailingslashit( WP_CONTENT_DIR ) ] = array(
+			'title' => basename( WP_CONTENT_DIR ),
+			'files' => array(),
+			'dirs' => array(
+				trailingslashit( $upload_dir['basedir'] ) => array(
+					'title' => basename( $upload_dir['basedir'] ),
+					'files' => array(),
+					'dirs' => array()
+				)
+			)
+		);
+
+		// update the setting.
+		set_transient( \easyDirectoryListingForWordPress\Init::get_instance()->get_prefix() . '_' . get_current_user_id() . '_' . md5( $directory ) . '_tree', $directory_list, DAY_IN_SECONDS );
+
+		// return true to force the loading of the upload dirs.
+		return true;
+	}
+
+	/**
+	 * Return the settings slug.
+	 *
+	 * @return string
+	 */
+	private function get_settings_tab_slug(): string {
+		return $this->settings_tab;
+	}
+
+	/**
+	 * Return the settings sub tab slug.
+	 *
+	 * @return string
+	 */
+	private function get_settings_subtab_slug(): string {
+		return $this->settings_sub_tab;
+	}
 }
