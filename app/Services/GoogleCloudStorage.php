@@ -11,15 +11,19 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use Error;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Textarea;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use Google\Cloud\Storage\StorageClient;
 use WP_Error;
 
@@ -325,6 +329,17 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 		// get the storage object.
 		$storage = $this->get_storage_object();
 
+		// bail if storage could not be loaded.
+		if( ! $storage instanceof StorageClient ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_googlecloudstorage', sprintf( __( 'Google Cloud Storage object could not be loaded. Take a look at the <a href="%1$s" target="_blank">log</a> for more information.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
+			$this->add_error( $error );
+
+			// do nothing more.
+			return array();
+		}
+
 		// get our bucket as object.
 		$bucket = $storage->bucket( $this->get_bucket_name() );
 
@@ -556,16 +571,35 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	/**
 	 * Return the StorageClient object for configured JSON.
 	 *
-	 * @return StorageClient
+	 * @return StorageClient|false
 	 */
-	public function get_storage_object(): StorageClient {
+	public function get_storage_object(): StorageClient|false {
 		// create tmp file for the credential JSON.
 		$credential_file_path = wp_tempnam();
 
-		// save the tmp-file.
-		// TODO auch wieder löschen!
+		// get the file system object.
 		$wp_filesystem = Helper::get_wp_filesystem();
-		$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
+
+		try {
+			// save the tmp-file.
+			// TODO auch wieder löschen!
+			$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
+		} catch( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			$error_obj->set_result_text( __( 'Error occurred during requesting the credential file for Google Cloud Storage.', 'external-files-in-media-library' ) );
+			$error_obj->set_url( $this->get_url( '' ) );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred during requesting the credential file for Google Cloud Storage:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( '' ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
 
 		// set the tmp file for authentication.
 		putenv( 'GOOGLE_APPLICATION_CREDENTIALS=' . $credential_file_path );

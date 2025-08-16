@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\Services\WebDav;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -19,6 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\WebDav;
 use Sabre\HTTP\ClientHttpException;
+use Error;
 
 /**
  * Object to handle different protocols.
@@ -254,10 +253,11 @@ class Protocol extends Protocol_Base {
 
 			// return the resulting array as list of files (although it is only one).
 			return $listing;
-		} catch ( ClientHttpException $e ) {
+		} catch ( ClientHttpException|Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
-			$error_obj->set_result_text( __( 'Error occurred during requesting this file.', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
 			$error_obj->set_url( $this->get_url() );
 			$error_obj->set_error( true );
 

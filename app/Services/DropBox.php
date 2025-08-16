@@ -12,10 +12,13 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
+use Error;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -787,7 +790,25 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.jpg' );
 
 		// and save the file there.
-		$wp_filesystem->put_contents( $tmp_file, $content );
+		try {
+			$wp_filesystem->put_contents( $tmp_file, $content );
+		} catch( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url( '' ) ) ) );
+			$error_obj->set_url( $this->get_url( '' ) );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( '' ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
 
 		// return the path to the tmp file.
 		return $tmp_file;

@@ -78,7 +78,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_log_url( string $url = '' ): string {
-		return Settings::get_instance()->get_url( 'eml_logs', $url );
+		return Settings::get_instance()->get_url( 'eml_logs', '', $url );
 	}
 
 	/**

@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
+use Google\Cloud\Storage\StorageClient;
 
 /**
  * Object to handle different protocols.
@@ -100,6 +101,11 @@ class Protocol extends Protocol_Base {
 
 		// get storage object.
 		$storage = $google_cloud_storage_obj->get_storage_object();
+
+		// bail if storage could not be loaded.
+		if( ! $storage instanceof StorageClient ) {
+			return array();
+		}
 
 		// get our bucket as object.
 		$bucket = $storage->bucket( $google_cloud_storage_obj->get_bucket_name() );

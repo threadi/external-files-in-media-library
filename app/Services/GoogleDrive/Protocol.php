@@ -10,7 +10,10 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
@@ -151,8 +154,27 @@ class Protocol extends Protocol_Base {
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
+
 		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $response->getBody()->getContents() );
+		try {
+		    $wp_filesystem->put_contents( $results['tmp-file'], $response->getBody()->getContents() );
+		} catch( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
+
+			// do nothing more.
+			return array();
+		}
 
 		// set the file size.
 		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );
@@ -294,8 +316,27 @@ class Protocol extends Protocol_Base {
 
 			// set the file as tmp-file for import.
 			$entry['tmp-file'] = wp_tempnam();
+
 			// and save the file there.
-			$wp_filesystem->put_contents( $entry['tmp-file'], $response->getBody()->getContents() );
+			try {
+			    $wp_filesystem->put_contents( $entry['tmp-file'], $response->getBody()->getContents() );
+			} catch( Error $e ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+				$error_obj->set_url( $this->get_url() );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+
+				// add log entry.
+				Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
+
+				// do nothing more.
+				return array();
+			}
 
 			// set the file size.
 			$entry['filesize'] = $wp_filesystem->size( $entry['tmp-file'] );

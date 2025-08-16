@@ -10,8 +10,11 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Error;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use finfo;
 
 /**
@@ -501,7 +504,24 @@ class File {
 		$path = $this->get_cache_file();
 
 		// save the given content to the path.
+		try {
 		$wp_filesystem->put_contents( $path, $body );
+		} catch ( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			$error_obj->set_result_text( __( 'Error occurred during requesting this file.', 'external-files-in-media-library' ) );
+			$error_obj->set_url( $this->get_url( true ) );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
+
+			// do nothing more.
+			return;
+		}
 
 		// save that file has been cached.
 		update_post_meta( $this->get_id(), 'eml_proxied', time() );

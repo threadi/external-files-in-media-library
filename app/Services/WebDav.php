@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Sabre\DAV\Client;
 use Sabre\HTTP\ClientHttpException;
+use Error;
 use WP_Error;
 
 /**
@@ -297,7 +298,7 @@ class WebDav extends Directory_Listing_Base implements Service {
 		// get the directory listing for the given path from the external WebDAV.
 		try {
 			$directory_list = $client->propFind( $path, array(), 1 );
-		} catch ( ClientHttpException $e ) {
+		} catch ( ClientHttpException|Error $e ) {
 			// create an error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_webdav', __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );

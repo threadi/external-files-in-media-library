@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the main init-object for this plugin.
+ * This file contains the main initialization object for this plugin.
  *
  * @package external-files-in-media-library
  */

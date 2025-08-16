@@ -135,6 +135,10 @@ class Protocols {
 			return false;
 		}
 
+		// log this event.
+		/* translators: %1$s will be replaced by a protocol name (like SFTP). */
+		Log::get_instance()->create( sprintf( __( 'Using protocol %1$s for this URL.', 'external-files-in-media-library' ), $result->get_title() ), esc_html( $url ), 'success', 0, Import::get_instance()->get_identified() );
+
 		// return the resulting value.
 		return $result;
 	}

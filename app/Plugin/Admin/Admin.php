@@ -83,6 +83,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
 		add_action( 'admin_init', array( $this, 'check_php' ) );
 		add_action( 'admin_init', array( $this, 'check_gprd' ) );
+		add_action( 'admin_init', array( $this, 'check_fs_method' ) );
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
@@ -337,6 +338,43 @@ class Admin {
 		/* translators: %1$s will be replaced by a URL. */
 		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files for Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
 		$transient_obj->save();
+	}
+
+	/**
+	 * Check if constant "FS_METHOD" is set and if yes, it its configuration is complete.
+	 *
+	 * E.g. for the value ftpext we need also the constant "FS_CHMOD_FILE" to prevent errors.
+	 *
+	 * @return void
+	 */
+	public function check_fs_method(): void {
+		// bail if FS_METHOD is not set.
+		if( ! defined( 'FS_METHOD' ) ) {
+			return;
+		}
+
+		// if it has the value "ftpext" we also need "FS_CHMOD_FILE".
+		if( 'ftpext' === FS_METHOD && ! defined( 'FS_CHMOD_FILE' ) ) {
+			// show warning.
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_type( 'error' );
+			$transient_obj->set_name( 'eml_fs_method_faulty' );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is using an incorrect file system setting!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set to <em>ftpext</em>. At the same time, the constant <em>FS_CHMOD_FILE</em> is missing. This means that you will not be able to save files to your media library with the plugin External Files for Media Library.<br><br>Correct this by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->save();
+			return;
+		}
+
+		// if value is not "direct" show hint.
+		if( 'direct' !== FS_METHOD ) {
+			// show hint.
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_dismissible_days( 30 );
+			$transient_obj->set_type( 'hint' );
+			$transient_obj->set_name( 'eml_fs_method_faulty' );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin External Files for Media Library.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->save();
+			return;
+		}
 	}
 
 	/**
