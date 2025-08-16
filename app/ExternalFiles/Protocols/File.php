@@ -57,8 +57,11 @@ class File extends Protocol_Base {
 		// initialize list of files.
 		$files = array();
 
+		// get WP_Filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// check if given URL is a directory.
-		if ( is_dir( $this->get_url() ) ) {
+		if ( $wp_filesystem->is_dir( $this->get_url() ) ) {
 			/**
 			 * Run action on beginning of presumed directory import via file-protocol.
 			 *
@@ -69,7 +72,7 @@ class File extends Protocol_Base {
 			do_action( 'eml_file_directory_import_start', $this->get_url() );
 
 			// get the files.
-			$file_list = scandir( $this->get_url() );
+			$file_list = $wp_filesystem->dirlist( $this->get_url() );
 
 			// bail if list could not be loaded.
 			if ( ! is_array( $file_list ) ) {
@@ -93,7 +96,7 @@ class File extends Protocol_Base {
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
 			 * @param string $url   The URL to import.
-			 * @param array<int,string> $file_list List of files.
+			 * @param array<string,array<string,mixed>> $file_list List of files.
 			 */
 			do_action( 'eml_file_directory_import_files', $this->get_url(), $file_list );
 
@@ -102,17 +105,12 @@ class File extends Protocol_Base {
 			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $this->get_url() ), count( $file_list ) ) : '';
 
 			// loop through the directory.
-			foreach ( $file_list as $file ) {
-				// bail for "..".
-				if ( '..' === $file ) {
-					continue;
-				}
-
+			foreach ( $file_list as $file => $settings ) {
 				// get file path.
 				$file_path = $this->get_url() . $file;
 
 				// bail if this is not a file.
-				if ( ! is_file( $file_path ) ) {
+				if ( 'd' === $settings['type'] ) {
 					// show progress.
 					$progress ? $progress->tick() : '';
 
