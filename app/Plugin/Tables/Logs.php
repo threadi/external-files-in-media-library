@@ -45,7 +45,7 @@ class Logs extends WP_List_Table {
 		$state = 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
 
 		// get URL-filter.
-		$url = filter_input( INPUT_GET, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$url = filter_input( INPUT_GET, 's', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		if ( is_null( $url ) ) {
 			$url = '';
 		}

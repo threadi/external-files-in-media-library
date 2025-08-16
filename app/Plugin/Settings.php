@@ -118,7 +118,7 @@ class Settings {
 
 		// add URL, if set.
 		if ( ! empty( $url ) ) {
-			$array['url'] = $url;
+			$array['s'] = $url;
 		}
 
 		// return the URL.
@@ -570,10 +570,15 @@ class Settings {
 		?>
 		<div class="wrap eml-log-table">
 			<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
-			<?php
-			$log->views();
-			$log->display();
-			?>
+			<form method="get">
+				<input type="hidden" name="page" value="eml_settings">
+				<input type="hidden" name="tab" value="eml_logs">
+				<?php
+				$log->search_box( __( 'Search for URL' ), 'link' );
+				$log->views();
+				$log->display();
+				?>
+			</form>
 		</div>
 		<?php
 	}
