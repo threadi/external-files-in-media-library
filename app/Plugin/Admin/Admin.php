@@ -232,6 +232,7 @@ class Admin {
 		// add our custom links.
 		$row_meta = array(
 			'support' => '<a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank" title="' . esc_attr__( 'Support Forum', 'external-files-in-media-library' ) . '">' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '</a>',
+			'review' => '<a href="' . esc_url( Helper::get_plugin_review_url() ) . '" target="_blank" title="' . esc_attr__( 'Add your review', 'external-files-in-media-library' ) . '" class="efml-review"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></a>',
 		);
 
 		/**
