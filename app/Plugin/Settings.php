@@ -312,6 +312,18 @@ class Settings {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_add_user_agent' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Add plugin name on User Agent', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled the name of this plugin will be added to the User Agent on each outgoing request.', 'external-files-in-media-library' ),			)
+		);
+
 		// get user roles.
 		$user_roles = array();
 		if ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) {
