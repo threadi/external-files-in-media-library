@@ -206,7 +206,6 @@ class WebDav extends Directory_Listing_Base implements Service {
 	 * Enable WP CLI for Google Drive tasks.
 	 *
 	 * @return void
-	 * @noinspection PhpFullyQualifiedNameUsageInspection
 	 */
 	public function cli(): void {}
 
