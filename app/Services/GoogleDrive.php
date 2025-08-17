@@ -106,6 +106,14 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
 		$this->title = __( 'Choose file(s) from your Google Drive', 'external-files-in-media-library' );
 
 		// use hooks.
@@ -114,12 +122,10 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_action( 'admin_action_eml_google_drive_init', array( $this, 'initiate_connection' ) );
 		add_action( 'admin_action_eml_google_drive_disconnect', array( $this, 'disconnect' ) );
 		add_filter( 'template_include', array( $this, 'check_for_oauth_return_url' ), 10, 1 );
-		add_action( 'cli_init', array( $this, 'cli' ) );
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'eml_prevent_import', array( $this, 'check_url' ), 10, 2 );
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
 		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 	}
@@ -145,7 +151,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// get tab for services.
-		$services_tab = $settings_page->get_tab( 'services' );
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
 
 		// bail if tab does not exist.
 		if ( ! $services_tab instanceof Tab ) {
@@ -256,7 +262,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
 		$setting->prevent_export( true );
-		$setting->set_show_in_rest( false );
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
 		// add setting to show also shared files.
@@ -906,7 +911,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Go to Google Drive', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug() ) ) . '";',
+					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(

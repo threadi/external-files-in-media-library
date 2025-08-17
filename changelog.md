@@ -5,8 +5,11 @@
 ### Added
 
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
-- Added hook to import external URLs through third party plugins (for custom development)
+- Added support for AWS S3 as external source of files
 - Added DropBox support for import of external files into your media library
+- Added support for Google Cloud Storage as external source of files
+- Added support for WebDav, e.g. usable with your Nextcloud
+- Added hook to import external URLs through third party plugins (for custom development)
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
@@ -23,9 +26,15 @@
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 - Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
-- Added support for plugin "Folders" to import external files in its folders
-- Added support for plugin "Media Library Organizer" to import external files in its categories
-- Added support for plugin "iFolders" to import external files in its folders
+- Added support for plugin "Folders" to import external files in its folders incl. sync of them
+- Added support for plugin "Media Library Organizer" to import external files in its categories incl. sync of them
+- Added support for plugin "iFolders" to import external files in its folders incl. sync of them
+- Added support for plugin "Real Media Library Lite" to import external files in its folders incl. sync of them
+- Added support for plugin "Advanced Media Offloader" to prevent the offloading of already external files
+- Added support for plugin "Media Library Assistant" to import external files in its folders incl. sync of them
+- Added compatibility with plugin "Media Cloud Sync"
+-> do not sync external files with external clouds
+-> do sync real imported external files
 - Added new file type "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
@@ -33,6 +42,9 @@
 - Added privacy hint as checkbox in every import dialog, configurable in user settings
 - Added WordPress Importer entry
 - Added info in admin footer for pages provided by the plugin or for which it makes extensions
+- Added support for plugin "WP Extra File Types" to enabled additional possible file types to use as external files
+- Added option to load upload directory via local service
+- Added option to use our plugin name in each HTTP-header User Agent (default enabled)
 
 ### Changed
 
@@ -63,6 +75,12 @@
 - Hosting of files can now only be changed by users with the capability to upload external files
 - Synced files will be linked with its linked source in media library
 - Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
+- Using new transient object in backend for hints and errors
+- Cleanup the return value for external files via get_attached_file()
+- File protocol uses now WP_Filesystem for each file interaction
+- Enabled search field for URLs in logs
+- External sources are now saved user-specific
+  -> only administrators see all entries
 
 ### Fixed
 

@@ -71,7 +71,7 @@ class Synchronization {
 		// add setting.
 		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
 
-		// bail if synchronization support is not enabled.
+		// bail if synchronization support is not enabled or user is not allowed to use it.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return;
 		}
@@ -218,8 +218,16 @@ class Synchronization {
 	 * @return array<string,string>
 	 */
 	public function add_columns( array $columns ): array {
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_sync' ) ) {
+			return $columns;
+		}
+
+		// add the sync columns.
 		$columns['synced_files']    = __( 'Synchronized files', 'external-files-in-media-library' );
 		$columns['synchronization'] = __( 'Synchronization', 'external-files-in-media-library' );
+
+		// return the resulting columns.
 		return $columns;
 	}
 
@@ -457,6 +465,10 @@ class Synchronization {
 		add_action( 'eml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_s3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_s3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'eml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'eml_webdav_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
 
 		// update the sync title on each file.
@@ -478,6 +490,7 @@ class Synchronization {
 		// add the credentials.
 		$import->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
 		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
+		$import->set_api_key( $directory_listing_obj->get_api_key_from_archive_entry( $term_data ) );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info', 1 );

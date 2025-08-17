@@ -13,11 +13,14 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use Sabre\HTTP\ClientHttpException;
 
 /**
  * Object to handle the file protocol.
@@ -57,8 +60,11 @@ class File extends Protocol_Base {
 		// initialize list of files.
 		$files = array();
 
+		// get WP_Filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// check if given URL is a directory.
-		if ( is_dir( $this->get_url() ) ) {
+		if ( $wp_filesystem->is_dir( $this->get_url() ) ) {
 			/**
 			 * Run action on beginning of presumed directory import via file-protocol.
 			 *
@@ -69,7 +75,7 @@ class File extends Protocol_Base {
 			do_action( 'eml_file_directory_import_start', $this->get_url() );
 
 			// get the files.
-			$file_list = scandir( $this->get_url() );
+			$file_list = $wp_filesystem->dirlist( $this->get_url() );
 
 			// bail if list could not be loaded.
 			if ( ! is_array( $file_list ) ) {
@@ -93,7 +99,7 @@ class File extends Protocol_Base {
 			 * @since 5.0.0 Available since 5.0.0.
 			 *
 			 * @param string $url   The URL to import.
-			 * @param array<int,string> $file_list List of files.
+			 * @param array<string,array<string,mixed>> $file_list List of files.
 			 */
 			do_action( 'eml_file_directory_import_files', $this->get_url(), $file_list );
 
@@ -102,17 +108,12 @@ class File extends Protocol_Base {
 			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $this->get_url() ), count( $file_list ) ) : '';
 
 			// loop through the directory.
-			foreach ( $file_list as $file ) {
-				// bail for "..".
-				if ( '..' === $file ) {
-					continue;
-				}
-
+			foreach ( $file_list as $file => $settings ) {
 				// get file path.
 				$file_path = $this->get_url() . $file;
 
 				// bail if this is not a file.
-				if ( ! is_file( $file_path ) ) {
+				if ( 'd' === $settings['type'] ) {
 					// show progress.
 					$progress ? $progress->tick() : '';
 
@@ -163,7 +164,7 @@ class File extends Protocol_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 *
 				 * @param string $file_path   The filepath to import.
-				 * @param array<int,mixed> $file_list List of files.
+				 * @param array<int|string,mixed> $file_list List of files.
 				 */
 				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
@@ -257,8 +258,27 @@ class File extends Protocol_Base {
 		if ( is_string( $content ) ) {
 			// set the file as tmp-file for import.
 			$results['tmp-file'] = wp_tempnam();
+
 			// and save the file there.
-			$wp_filesystem->put_contents( $results['tmp-file'], $content );
+			try {
+				$wp_filesystem->put_contents( $results['tmp-file'], $content );
+			} catch ( Error $e ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $url ) ) );
+				$error_obj->set_url( $url );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+
+				// add log entry.
+				Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
+
+				// do nothing more.
+				return array();
+			}
 
 			// get the size.
 			$results['filesize'] = absint( $wp_filesystem->size( $results['tmp-file'] ) );
@@ -278,7 +298,7 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * Return whether this protocol could be used.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * This depends on the hosting, e.g. if necessary libraries are available.
 	 *

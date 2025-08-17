@@ -55,6 +55,13 @@ class Protocol_Base {
 	private string $password = '';
 
 	/**
+	 * The API Key.
+	 *
+	 * @var string
+	 */
+	private string $api_key = '';
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 *
 	 * @param string $url The URL to use.
@@ -239,6 +246,26 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Return the API Key.
+	 *
+	 * @return string
+	 */
+	public function get_api_key(): string {
+		return $this->api_key;
+	}
+
+	/**
+	 * Set the API key.
+	 *
+	 * @param string $api_key The API key.
+	 *
+	 * @return void
+	 */
+	public function set_api_key( string $api_key ): void {
+		$this->api_key = $api_key;
+	}
+
+	/**
 	 * Return whether given URL is already exists in media library, it is then a duplicate.
 	 *
 	 * @param string $url The URL to check.
@@ -301,7 +328,7 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Return whether this protocol could be used.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * This depends on the hosting, e.g. if necessary libraries are available.
 	 *

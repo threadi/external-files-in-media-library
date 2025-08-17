@@ -122,6 +122,7 @@ class ThirdPartySupport {
 	 */
 	private function get_third_party_support(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\ThirdParty\AdvancedMediaOffloader',
 			'ExternalFilesInMediaLibrary\ThirdParty\BlockEditor',
 			'ExternalFilesInMediaLibrary\ThirdParty\CatFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
@@ -134,10 +135,14 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Folders',
 			'ExternalFilesInMediaLibrary\ThirdParty\IFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
+			'ExternalFilesInMediaLibrary\ThirdParty\MediaCloudSync',
+			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryAssistant',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
+			'ExternalFilesInMediaLibrary\ThirdParty\RealMediaLibrary',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
+			'ExternalFilesInMediaLibrary\ThirdParty\WpExtraFileTypes',
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
 

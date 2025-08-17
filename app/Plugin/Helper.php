@@ -78,7 +78,7 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_log_url( string $url = '' ): string {
-		return Settings::get_instance()->get_url( 'eml_logs', $url );
+		return Settings::get_instance()->get_url( 'eml_logs', '', $url );
 	}
 
 	/**
@@ -766,5 +766,23 @@ class Helper {
 			return $plugin_data['Name'];
 		}
 		return '';
+	}
+
+	/**
+	 * Return the absolute local filesystem-path (already trailed with slash) to the plugin.
+	 *
+	 * @return string
+	 */
+	public static function get_plugin_path(): string {
+		return trailingslashit( plugin_dir_path( EFML_PLUGIN ) );
+	}
+
+	/**
+	 * Return whether block support is available in this WordPress project.
+	 *
+	 * @return bool
+	 */
+	public static function is_block_support_enabled(): bool {
+		return class_exists( 'WP_Block_Type_Registry' );
 	}
 }

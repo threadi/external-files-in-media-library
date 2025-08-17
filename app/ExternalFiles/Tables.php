@@ -10,8 +10,12 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Query;
+use WP_Term_Query;
+use WP_User;
 
 /**
  * Object which extends the attachment tables in backend.
@@ -58,8 +62,13 @@ class Tables {
 	public function init(): void {
 		add_action( 'restrict_manage_posts', array( $this, 'add_media_filter' ) );
 		add_action( 'pre_get_posts', array( $this, 'add_media_do_filter' ) );
+		add_action( 'pre_get_terms', array( $this, 'hide_services' ) );
+		add_action( 'pre_get_terms', array( $this, 'use_user_mark' ) );
 		add_filter( 'manage_upload_columns', array( $this, 'add_media_columns' ) );
 		add_action( 'manage_media_custom_column', array( $this, 'add_media_column_content' ), 10, 2 );
+		add_filter( 'efml_directory_listing_columns', array( $this, 'add_columns' ) );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_user' ), 10, 3 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_date' ), 10, 3 );
 	}
 
 	/**
@@ -172,6 +181,56 @@ class Tables {
 		 * @param WP_Query $query The WP_Query object.
 		 */
 		do_action_ref_array( 'efml_filter_query', array( &$query ) );
+	}
+
+	/**
+	 * Hide entries in table for services the actual user does not have access to.
+	 *
+	 * @param WP_Term_Query $query The query object for the term table.
+	 *
+	 * @return void
+	 */
+	public function hide_services( WP_Term_Query $query ): void {
+		// bail if this is not admin.
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		// bail if this is now our taxonomy.
+		if ( 'edlfw_archive' === $query->query_vars['taxonomy'] ) {
+			return;
+		}
+
+		// collect the names of the services the actual user could use.
+		$included_services = array();
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $directory_listings_object ) {
+			// bail if user has no capability.
+			if ( ! current_user_can( 'efml_cap_' . $directory_listings_object->get_name() ) ) {
+				continue;
+			}
+
+			// add to the list.
+			$included_services[] = $directory_listings_object->get_name();
+		}
+
+		// if list is empty, prevent usage of any query.
+		if ( empty( $included_services ) ) {
+			$query->meta_query->queries = array(
+				array(
+					'key'   => 'type',
+					'value' => 1,
+				),
+			);
+			return;
+		}
+
+		// extend the query.
+		$query->meta_query->queries['relation'] = 'AND';
+		$query->meta_query->queries[]           = array(
+			'key'     => 'type',
+			'value'   => $included_services,
+			'compare' => 'IN',
+		);
 	}
 
 	/**
@@ -293,5 +352,128 @@ class Tables {
 			 */
 			do_action( 'eml_table_column_source', $attachment_id );
 		}
+	}
+
+	/**
+	 * Only show entries from the actual user, unless he has the role of an administrator.
+	 *
+	 * @param WP_Term_Query $query The query object for the term table.
+	 *
+	 * @return void
+	 */
+	public function use_user_mark( WP_Term_Query $query ): void {
+		// bail if this is not admin.
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		// bail if this is now our taxonomy.
+		if ( 'edlfw_archive' === $query->query_vars['taxonomy'] ) {
+			return;
+		}
+
+		// bail if the user has the administrator role.
+		if ( Helper::has_current_user_role( 'administrator' ) ) {
+			return;
+		}
+
+		// extend the query.
+		$query->meta_query->queries['relation'] = 'AND';
+		$query->meta_query->queries[]           = array(
+			'key'     => 'user_id',
+			'value'   => get_current_user_id(),
+			'compare' => '=',
+		);
+	}
+
+	/**
+	 * Add column for the date the entry has been saved.
+	 * Add column for the user, only visible for administrators.
+	 *
+	 * @param array<string,string> $columns List of columns.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_columns( array $columns ): array {
+		// add the column to show the date this entry has been saved.
+		$columns['date'] = __( 'Date', 'external-files-in-media-library' );
+
+		// bail if user has not the administrator role.
+		if ( ! Helper::has_current_user_role( 'administrator' ) ) {
+			return $columns;
+		}
+
+		// add the column to show the user which saved these entry.
+		$columns['user'] = __( 'User', 'external-files-in-media-library' );
+
+		// return the resulting columns.
+		return $columns;
+	}
+
+	/**
+	 * Add info about the user which saved this entry.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 * @param int    $term_id The term ID used.
+	 *
+	 * @return string
+	 */
+	public function add_column_content_user( string $content, string $column_name, int $term_id ): string {
+		// bail if user has not the administrator role.
+		if ( ! Helper::has_current_user_role( 'administrator' ) ) {
+			return $content;
+		}
+
+		// bail if this is not the "user" column.
+		if ( 'user' !== $column_name ) {
+			return $content;
+		}
+
+		// get the user_id which saved this entry.
+		$user_id = absint( get_term_meta( $term_id, 'user_id', true ) );
+
+		// bail if no user_id is set.
+		if ( 0 === $user_id ) {
+			return '<em>' . __( 'No user set', 'external-files-in-media-library' ) . '</em>';
+		}
+
+		// get the user object by its ID.
+		$user = get_user_by( 'ID', $user_id );
+
+		// bail on not result.
+		if ( ! $user instanceof WP_User ) {
+			return '<em>' . __( 'Unknown user', 'external-files-in-media-library' ) . '</em>';
+		}
+
+		// return the linked user-name.
+		return '<a href="' . esc_url( get_edit_user_link( $user->ID ) ) . '">' . esc_html( $user->display_name ) . '</a>';
+	}
+
+	/**
+	 * Add info about the user which saved this entry.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 * @param int    $term_id The term ID used.
+	 *
+	 * @return string
+	 */
+	public function add_column_content_date( string $content, string $column_name, int $term_id ): string {
+		// bail if this is not the "date" column.
+		if ( 'date' !== $column_name ) {
+			return $content;
+		}
+
+		// get the date entry.
+		$date = absint( get_term_meta( $term_id, 'date', true ) );
+
+		// bail if date is not set.
+		if ( 0 === $date ) {
+			return '<em>' . __( 'Unknown date', 'external-files-in-media-library' ) . '</em>';
+		}
+
+		// return the formatted date.
+		return Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $date ) );
 	}
 }

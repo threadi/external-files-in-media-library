@@ -1,6 +1,8 @@
 <?php
 /**
- * File to handle support for plugin "Media Library Organizer".
+ * File to handle support for plugin "Real Media Library".
+ *
+ * @source https://docs.devowl.io/real-media-library/php/
  *
  * @package external-files-in-media-library
  */
@@ -11,12 +13,14 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use WP_Post;
 
 /**
  * Object to handle support for this plugin.
  */
-class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
+class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 
 	/**
 	 * The term ID used in a sync.
@@ -28,9 +32,9 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?MediaLibraryOrganizer
+	 * @var ?RealMediaLibrary
 	 */
-	private static ?MediaLibraryOrganizer $instance = null;
+	private static ?RealMediaLibrary $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -47,9 +51,9 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return MediaLibraryOrganizer
+	 * @return RealMediaLibrary
 	 */
-	public static function get_instance(): MediaLibraryOrganizer {
+	public static function get_instance(): RealMediaLibrary {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -64,7 +68,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if plugin is not enabled.
-		if ( ! Helper::is_plugin_active( 'media-library-organizer/media-library-organizer.php' ) ) {
+		if ( ! Helper::is_plugin_active( 'real-media-library-lite/index.php' ) ) {
 			return;
 		}
 
@@ -73,7 +77,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_folder_import' ) );
-		add_action( 'eml_after_file_save', array( $this, 'save_url_in_categories' ) );
+		add_action( 'eml_after_file_save', array( $this, 'save_url_in_folders' ) );
 	}
 
 	/**
@@ -94,32 +98,16 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	public function add_category_selection( string $form, int $term_id ): string {
-		// get the categories.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'mlo-category',
-				'hide_empty' => false,
-			)
-		);
-
-		// bail on any error.
-		if ( ! is_array( $terms ) ) {
-			return $form;
-		}
-
-		// bail if list is empty.
-		if ( empty( $terms ) ) {
+		// bail if wp_rml_dropdown does not exist.
+		if ( ! function_exists( 'wp_rml_dropdown' ) ) {
 			return $form;
 		}
 
 		// get the actual setting.
-		$assigned_categories = get_term_meta( $term_id, 'mlo_categories', true );
-		if ( ! is_array( $assigned_categories ) ) {
-			$assigned_categories = array();
-		}
+		$assigned_category = absint( get_term_meta( $term_id, 'rml_folder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="mlo_categories">' . __( 'Choose categories of plugin Media Library Organizer', 'external-files-in-media-library' ) . '</label>' . $this->get_category_selection( array_flip( $assigned_categories ) ) . '</div>';
+		$form .= '<div><label for="rml_folder">' . __( 'Choose folder of plugin Real Media Library:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -128,37 +116,21 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Return the HTML-code for a category selection.
 	 *
-	 * @param array<int,mixed> $mark The categories to mark in the selection.
+	 * @param int $mark The category to mark in the selection.
 	 *
 	 * @return string
 	 */
-	private function get_category_selection( array $mark ): string {
-		// get the categories.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => 'mlo-category',
-				'hide_empty' => false,
-			)
-		);
+	private function get_folder_selection( int $mark ): string {
+		// get the dropdown-list without select-element.
+		$folders = wp_rml_dropdown( $mark, array() );
 
-		// bail on any error.
-		if ( ! is_array( $terms ) ) {
+		// bail if folders is empty.
+		if ( empty( $folders ) ) {
 			return '';
 		}
 
-		// bail if list is empty.
-		if ( empty( $terms ) ) {
-			return '';
-		}
-
-		// create the HTML-code.
-		$form = '';
-		foreach ( $terms as $term ) {
-			$form .= '<label for="mlo_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="mlo_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="mlo_categories[]" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
-		}
-
-		// return the resulting HTML-code.
-		return $form;
+		// return the select field.
+		return '<select class="eml-use-for-import" id="rml_folder" name="rml_folder">' . $folders . '</select>';
 	}
 
 	/**
@@ -183,16 +155,16 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 		$term_id = absint( $fields['term_id'] );
 
 		// get our fields from request.
-		$categories = isset( $_POST['fields']['mlo_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['mlo_categories'] ) ) : array();
+		$rml_folder = isset( $_POST['fields']['rml_folder'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['fields']['rml_folder'] ) ) : 0;
 
 		// if folderly_categories is empty, just remove the setting.
-		if ( empty( $categories ) ) {
-			delete_term_meta( $term_id, 'mlo_categories' );
+		if ( 0 === $rml_folder ) {
+			delete_term_meta( $term_id, 'rml_folder' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'mlo_categories', array_flip( $categories ) );
+		update_term_meta( $term_id, 'rml_folder', $rml_folder );
 	}
 
 	/**
@@ -210,34 +182,32 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 		$this->term_id = $term_id;
 
 		// add hooks.
-		add_action( 'eml_after_file_save', array( $this, 'move_file_to_categories' ) );
+		add_action( 'eml_after_file_save', array( $this, 'move_file_to_folder' ) );
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move external file to a configured folder after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 */
-	public function move_file_to_categories( File $external_file_obj ): void {
+	public function move_file_to_folder( File $external_file_obj ): void {
 		// bail if term ID is missing.
 		if ( 0 === $this->get_term_id() ) {
 			return;
 		}
 
-		// get the folder setting from this term ID.
-		$categories = get_term_meta( $this->get_term_id(), 'mlo_categories', true );
+		// get the chosen folder.
+		$rml_folder = absint( get_term_meta( $this->get_term_id(), 'rml_folder', true ) );
 
-		// bail if no categories are set.
-		if ( empty( $categories ) ) {
+		// bail if it is 0.
+		if ( 0 === $rml_folder ) {
 			return;
 		}
 
-		// assign the file to the categories.
-		foreach ( $categories as $cat_id ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category', true );
-		}
+		// assign the file to the folder.
+		wp_rml_move( $rml_folder, array( $external_file_obj->get_id() ) );
 	}
 
 	/**
@@ -247,19 +217,22 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	 *
 	 * @return void
 	 */
-	public function save_url_in_categories( File $external_file_obj ): void {
+	public function save_url_in_folders( File $external_file_obj ): void {
 		// check for nonce.
 		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
 			return;
 		}
 
-		// get our fields from request.
-		$categories = isset( $_POST['mlo_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['mlo_categories'] ) ) : array();
+		// get the chosen folder.
+		$rml_folder = absint( filter_input( INPUT_POST, 'rml_folder', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// assign the file to the categories.
-		foreach ( $categories as $cat_id ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'mlo-category', true );
+		// bail if it is 0.
+		if ( 0 === $rml_folder ) {
+			return;
 		}
+
+		// assign the file to the folder.
+		wp_rml_move( $rml_folder, array( $external_file_obj->get_id() ) );
 	}
 
 	/**
@@ -270,7 +243,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to folder of plugin Real Media Library', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
 	}
 }

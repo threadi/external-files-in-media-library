@@ -135,6 +135,10 @@ class Protocols {
 			return false;
 		}
 
+		// log this event.
+		/* translators: %1$s will be replaced by a protocol name (like SFTP). */
+		Log::get_instance()->create( sprintf( __( 'Using protocol %1$s for this URL.', 'external-files-in-media-library' ), $result->get_title() ), esc_html( $url ), 'success', 0, Import::get_instance()->get_identified() );
+
 		// return the resulting value.
 		return $result;
 	}
@@ -156,8 +160,13 @@ class Protocols {
 			// create object.
 			$obj = new $protocol_name( $external_file->get_url( true ) );
 
-			// bail if object is not a Protocol_Base and not with the URL compatible.
-			if ( ! ( $obj instanceof Protocol_Base && $obj->is_url_compatible() ) ) {
+			// bail if object is not a Protocol_Base.
+			if ( ! $obj instanceof Protocol_Base ) {
+				continue;
+			}
+
+			// bail if URL is compatible.
+			if ( ! $obj->is_url_compatible() ) {
 				continue;
 			}
 

@@ -13,8 +13,11 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Filesystem_Base;
@@ -301,8 +304,27 @@ class Sftp extends Protocol_Base {
 
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
+
 		// and save the file there.
-		$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+		try {
+			$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+		} catch ( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $url ) ) );
+			$error_obj->set_url( $url );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
+
+			// do nothing more.
+			return array();
+		}
 
 		$response_headers = array();
 		/**
@@ -387,7 +409,7 @@ class Sftp extends Protocol_Base {
 	}
 
 	/**
-	 * Return whether this protocol could be used.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * This depends on the hosting, e.g. if necessary libraries are available.
 	 *

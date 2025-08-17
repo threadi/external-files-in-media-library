@@ -89,8 +89,17 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
+		$this->title = __( 'Choose file(s) from a FTP server', 'external-files-in-media-library' );
+
+		// use our own hooks.
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 	}
 
@@ -134,11 +143,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
 
-		// bail if connection failed.
-		if ( ! $ftp_connection ) {
-			return array();
-		}
-
 		// bail if connection is not an FTP-object.
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			return array();
@@ -164,17 +168,17 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// get list of directory.
 		$directory_list = $ftp_connection->dirlist( $parent_dir );
 
-		// bail if list is empty.
-		if ( empty( $directory_list ) ) {
-			return array();
-		}
-
 		// collect the content of this directory.
 		$listing = array(
 			'title' => basename( $directory ),
 			'files' => array(),
 			'dirs'  => array(),
 		);
+
+		// bail if list is empty.
+		if ( empty( $directory_list ) ) {
+			return $listing;
+		}
 
 		// get upload directory.
 		$upload_dir_data = wp_get_upload_dir();
@@ -210,7 +214,7 @@ class Ftp extends Directory_Listing_Base implements Service {
 				'title' => $item_name,
 			);
 
-			// if item is a directory, check its files.
+			// if item is a directory, add it to the list.
 			if ( $is_dir ) {
 				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {
@@ -426,4 +430,11 @@ class Ftp extends Directory_Listing_Base implements Service {
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

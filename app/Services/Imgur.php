@@ -203,4 +203,11 @@ class Imgur implements Service {
 		// return list of help.
 		return $help_list;
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

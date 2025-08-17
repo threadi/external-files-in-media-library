@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the main init-object for this plugin.
+ * This file contains the main initialization object for this plugin.
  *
  * @package external-files-in-media-library
  */
@@ -81,6 +81,9 @@ class Init {
 
 		// initialize statistics.
 		Statistics::get_instance()->init();
+
+		// initialize the roles.
+		Roles::get_instance()->init();
 
 		// plugin-actions.
 		register_activation_hook( EFML_PLUGIN, array( Install::get_instance(), 'activation' ) );

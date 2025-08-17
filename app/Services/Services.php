@@ -17,6 +17,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle support for specific services.
@@ -103,6 +104,7 @@ class Services {
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
 		add_action( 'init', array( $this, 'init_services' ) );
+		add_action( 'cli_init', array( $this, 'init_cli_services' ) );
 	}
 
 	/**
@@ -170,6 +172,40 @@ class Services {
 	}
 
 	/**
+	 * Initialize all services.
+	 *
+	 * @return void
+	 */
+	public function init_cli_services(): void {
+		// initiate each supported service.
+		foreach ( $this->get_services() as $service_class_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $service_class_name ) ) {
+				continue;
+			}
+
+			// get class name with method.
+			$class_name = $service_class_name . '::get_instance';
+
+			// bail if it is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
+			// initiate object.
+			$obj = $class_name();
+
+			// bail if object is not a service object.
+			if ( ! $obj instanceof Service ) {
+				continue;
+			}
+
+			// initialize this object.
+			$obj->cli();
+		}
+	}
+
+	/**
 	 * Return list of services support we implement.
 	 *
 	 * @return array<string>
@@ -180,9 +216,12 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
+			'ExternalFilesInMediaLibrary\Services\GoogleCloudStorage',
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Rest',
+			'ExternalFilesInMediaLibrary\Services\S3',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
+			'ExternalFilesInMediaLibrary\Services\WebDav',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 			'ExternalFilesInMediaLibrary\Services\Zip',
 		);
@@ -315,6 +354,11 @@ class Services {
 	 * @return array<string,mixed>
 	 */
 	public function add_service_hint_in_form( array $dialog, array $settings ): array {
+		// bail if block support does not exist.
+		if ( ! Helper::is_block_support_enabled() ) {
+			return $dialog;
+		}
+
 		// bail if "no_services" is set in settings.
 		if ( isset( $settings['no_services'] ) ) {
 			return $dialog;

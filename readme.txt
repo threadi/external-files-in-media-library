@@ -4,6 +4,7 @@ Tags: external files, media library, media, embed
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 8.1
+Requires CP:  2.0
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: @@VersionNumber@@
@@ -16,7 +17,7 @@ Add one or more files with their URLs under Media > "Add new media file". You ca
 
 == Feature ==
 
-Embed your files from Google Drive, DropBox, FTP, your local hosting, other WordPress REST APIs, YouTube or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
+Embed your files from AWS S3, DropBox, Google Drive, Google Cloud Storage, FTP, your local hosting, other WordPress REST APIs, YouTube or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
 
 Automatically synchronize external directories containing files with your media library at intervals you specify.
 
@@ -33,7 +34,7 @@ Use external URLs when importing products via CSV in a [WooCommerce](https://wor
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
-Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/) and [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/). You can import and synchronize them in these plugins.
+Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). You can import and synchronize them in these plugins.
 
 == REST API ==
 
@@ -58,6 +59,10 @@ You can use the following TCP-protocols to import external files in your media l
 * `file://`
 
 Some of them require credentials, for http(s) it is optional.
+
+== ClassicPress ==
+
+This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
 
 == Repository, documentation and reliability ==
 

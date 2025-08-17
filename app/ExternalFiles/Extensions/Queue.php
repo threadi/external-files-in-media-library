@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
@@ -23,7 +24,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Transients;
 use JsonException;
 use mysqli_result;
 use wpdb;
@@ -903,11 +903,11 @@ class Queue extends Extension_Base {
 
 		// create result object.
 		$result_obj = new Results\Url_Result();
+		$result_obj->set_url( $url );
 
 		// add the URL to the queue.
 		if ( ! $this->add_url( $url, $login, $password ) ) {
 			// define to result object.
-			$result_obj->set_url( $url );
 			$result_obj->set_result_text( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ) );
 
 			// add result to the list.
@@ -917,7 +917,6 @@ class Queue extends Extension_Base {
 			Log::get_instance()->create( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ), esc_url( $url ), 'error' );
 		} else {
 			// define to result object.
-			$result_obj->set_url( $url );
 			$result_obj->set_error( false );
 			$result_obj->set_result_text( __( 'Specified URL has been added to queue.', 'external-files-in-media-library' ) );
 

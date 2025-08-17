@@ -16,7 +16,6 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
-use ExternalFilesInMediaLibrary\Plugin\Transients;
 
 /**
  * Object to handle the different file types.
@@ -142,7 +141,7 @@ class File_Types {
 			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
-			$field->set_readonly( 'external' !== get_option( 'eml_video_mode', '' ) );
+			$field->set_readonly( 'external' !== get_option( 'eml_' . $name . '_mode', '' ) );
 			$setting->set_field( $field );
 			$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 

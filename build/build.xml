@@ -133,10 +133,16 @@
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" />
+            <zipfileset dir="${src.dir}/vendor/aws" prefix="${plugin.slug}/vendor/aws" />
             <zipfileset dir="${src.dir}/vendor/google" prefix="${plugin.slug}/vendor/google" />
+            <zipfileset dir="${src.dir}/vendor/mtdowling" prefix="${plugin.slug}/vendor/mtdowling" />
             <zipfileset dir="${src.dir}/vendor/ralouphie" prefix="${plugin.slug}/vendor/ralouphie" />
             <zipfileset dir="${src.dir}/vendor/symfony" prefix="${plugin.slug}/vendor/symfony" />
             <zipfileset dir="${src.dir}/vendor/guzzlehttp" prefix="${plugin.slug}/vendor/guzzlehttp" />
+            <zipfileset dir="${src.dir}/vendor/ramsey" prefix="${plugin.slug}/vendor/ramsey" />
+            <zipfileset dir="${src.dir}/vendor/brick" prefix="${plugin.slug}/vendor/brick" />
+            <zipfileset dir="${src.dir}/vendor/rize" prefix="${plugin.slug}/vendor/rize" />
+            <zipfileset dir="${src.dir}/vendor/firebase" prefix="${plugin.slug}/vendor/firebase" />
             <zipfileset dir="${src.dir}/vendor/phpseclib" prefix="${plugin.slug}/vendor/phpseclib" />
             <zipfileset dir="${src.dir}/vendor/monolog" prefix="${plugin.slug}/vendor/monolog" />
             <zipfileset dir="${src.dir}/vendor/psr" prefix="${plugin.slug}/vendor/psr" />

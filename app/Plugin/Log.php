@@ -127,18 +127,18 @@ class Log {
 		if ( ! empty( $url ) ) {
 			if ( ! empty( $state ) ) {
 				if ( ! empty( $identifier ) ) {
-					return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s AND `identifier` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state, $identifier ) ), ARRAY_A );
+					return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s AND `identifier` = %s ORDER BY `time` DESC, `id` DESC', array( 1, $url, $state, $identifier ) ), ARRAY_A );
 				}
-				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url, $state ) ), ARRAY_A );
+				return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s AND `state` = %s ORDER BY `time` DESC, `id` DESC', array( 1, $url, $state ) ), ARRAY_A );
 			}
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC LIMIT 1', array( 1, $url ) ), ARRAY_A );
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `url` = %s ORDER BY `time` DESC, `id` DESC', array( 1, $url ) ), ARRAY_A );
 		}
 
 		if ( ! empty( $state ) ) {
-			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A );
+			return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC, `id` DESC', array( 1, $state ) ), ARRAY_A );
 		}
 
-		return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A );
+		return $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `state`, `time` AS `date`, `log`, `url` FROM ' . $wpdb->prefix . 'eml_logs WHERE 1 = %s ORDER BY `time` DESC, `id` DESC', array( 1 ) ), ARRAY_A );
 	}
 
 	/**

@@ -99,19 +99,16 @@ class Http extends Protocol_Base {
 	 * @return bool true if file is available, false if not.
 	 */
 	public function check_availability( string $url ): bool {
-		// check if URL is available.
-		$response = wp_remote_head( $url, $this->get_header_args() );
-
-		// request resulted in an error.
-		if ( is_wp_error( $response ) ) {
-			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
-			return false;
-		}
+		// get the header-data of this url.
+		$response = $this->get_http_header( $url );
 
 		// URL returns not compatible HTTP-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
+			// log this event.
 			/* translators: %1$d will be replaced by the HTTP-Status. */
 			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+
+			// return false as file is not available.
 			return false;
 		}
 
@@ -128,7 +125,10 @@ class Http extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type_existence', $true, $url ) ) {
+			// log this event.
 			Log::get_instance()->create( __( 'Specified URL response without mime-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+
+			// return false as file has wrong content type.
 			return false;
 		}
 
@@ -144,14 +144,17 @@ class Http extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
+			// log this event.
 			/* translators: %1$s will be replaced by its Mime-Type */
 			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+
+			// return false as file has wrong content type.
 			return false;
 		}
 
 		$return = true;
 		/**
-		 * Filter the resulting for checking an external URL.
+		 * Filter the result of checking an external URL.
 		 *
 		 * @since 1.1.0 Available since 1.1.0
 		 *
@@ -181,17 +184,21 @@ class Http extends Protocol_Base {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function get_http_head( string $url ): array {
+	private function get_http_header( string $url ): array {
 		// bail if result is known.
 		if ( ! empty( $this->http_heads[ $url ] ) ) {
 			return $this->http_heads[ $url ];
 		}
 
 		// get the header-data of this url.
-		$response = wp_remote_head( $url, $this->get_header_args() );
+		$response = wp_safe_remote_head( $url, $this->get_header_args() );
 
-		// bail if response results in error.
+		// request resulted in an error.
 		if ( is_wp_error( $response ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
+
+			// return empty array.
 			return array();
 		}
 
@@ -212,7 +219,7 @@ class Http extends Protocol_Base {
 		$files = array();
 
 		// get the header-data of this url.
-		$response = $this->get_http_head( $this->get_url() );
+		$response = $this->get_http_header( $this->get_url() );
 
 		// bail if response is empty.
 		if ( empty( $response ) ) {
@@ -453,7 +460,7 @@ class Http extends Protocol_Base {
 		}
 
 		// get http head response for URL.
-		$response = $this->get_http_head( $url );
+		$response = $this->get_http_header( $url );
 
 		// bail if response is empty.
 		if ( empty( $response ) ) {
@@ -739,7 +746,7 @@ class Http extends Protocol_Base {
 	}
 
 	/**
-	 * Return whether this protocol could be used.
+	 * Return whether the file using this protocol is available.
 	 *
 	 * This depends on the hosting, e.g. if necessary libraries are available.
 	 *

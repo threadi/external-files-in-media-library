@@ -74,6 +74,11 @@ class Directory_Listing {
 	 * @return void
 	 */
 	public function init(): void {
+		// bail if block support does not exist.
+		if ( ! Helper::is_block_support_enabled() ) {
+			return;
+		}
+
 		// add the page in backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
@@ -81,6 +86,8 @@ class Directory_Listing {
 		// misc.
 		add_filter( 'get_edit_term_link', array( $this, 'prevent_edit_of_archive_terms' ), 10, 3 );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_edit_action_for_archive_terms' ) );
+		add_action( 'efml_directory_listing_added', array( $this, 'add_user_mark' ) );
+		add_action( 'efml_directory_listing_added', array( $this, 'add_date' ) );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 30 );
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
@@ -168,6 +175,11 @@ class Directory_Listing {
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+						// hide listing object if user has no capability for it.
+						if ( ! current_user_can( 'efml_cap_' . $obj->get_name() ) ) {
+							continue;
+						}
+
 						// show disabled listing object.
 						if ( $obj->is_disabled() ) {
 							// show enabled listing object.
@@ -190,7 +202,7 @@ class Directory_Listing {
 					}
 
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external source', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
 				</ul>
 			</div>
 			<?php
@@ -202,6 +214,13 @@ class Directory_Listing {
 
 		// bail if no object could be loaded.
 		if ( ! $directory_listing_obj ) {
+			$this->show_error( '<p>' . __( 'Requested service for external files could not be found!', 'external-files-in-media-library' ) . '</p>' );
+			return;
+		}
+
+		// bail if user has no capability for it.
+		if ( ! current_user_can( 'efml_cap_' . $directory_listing_obj->get_name() ) ) {
+			$this->show_error( '<p>' . __( 'Missing permission to use this service for external files! Contact your administrator for clarification.', 'external-files-in-media-library' ) . '</p>' );
 			return;
 		}
 
@@ -212,6 +231,15 @@ class Directory_Listing {
 		// get directory to connect to from request.
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 		if ( $term_id > 0 ) {
+			// get the user_id which saved this entry.
+			$user_id = absint( get_term_meta( $term_id, 'user_id', true ) );
+
+			// bail if ID is set, does not match the actual user and this is not an administrator.
+			if ( $user_id > 0 && get_current_user_id() !== $user_id && ! Helper::has_current_user_role( 'administrator' ) ) {
+				$this->show_error( '<p>' . __( 'Access not allowed. This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
+				return;
+			}
+
 			// set term in config.
 			$config['term'] = $term_id;
 
@@ -220,6 +248,7 @@ class Directory_Listing {
 
 			// bail if URL is not a string.
 			if ( ! is_string( $url ) ) {
+				$this->show_error( '<p>' . __( 'URL of saved external source could not be loaded.', 'external-files-in-media-library' ) . '</p>' );
 				return;
 			}
 
@@ -361,6 +390,25 @@ class Directory_Listing {
 				),
 				'save_credentials' => array(
 					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
+				),
+				'button'           => array(
+					'label' => __( 'Show directory', 'external-files-in-media-library' ),
+				),
+			),
+			'aws_s3_api'                    => array(
+				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
+				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you are using. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
+				'access_key'       => array(
+					'label' => __( 'Access Key', 'external-files-in-media-library' ),
+				),
+				'secret_key'       => array(
+					'label' => __( 'Secret Key', 'external-files-in-media-library' ),
+				),
+				'bucket'           => array(
+					'label' => __( 'Bucket', 'external-files-in-media-library' ),
+				),
+				'save_credentials' => array(
+					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
@@ -547,6 +595,52 @@ class Directory_Listing {
 			}
 		}
 
+		// get service by type.
+		$service_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// bail if type is unknown.
+		if ( ! $service_obj instanceof Directory_Listing_Base ) {
+			wp_send_json(
+				array(
+					'detail' =>
+						array(
+							'title'   => __( 'Error', 'external-files-in-media-library' ),
+							'texts'   => array( '<p>' . __( 'The type of source for this directory is unknown.', 'external-files-in-media-library' ) . '</p>' ),
+							'buttons' => array(
+								array(
+									'action'  => 'closeDialog();',
+									'variant' => 'primary',
+									'text'    => __( 'OK', 'external-files-in-media-library' ),
+								),
+							),
+						),
+				)
+			);
+		}
+
+		// check requirements for the service.
+		if ( $service_obj->is_login_required() ) {
+			// if no credentials are given, show error.
+			if ( empty( $login ) || empty( $password ) ) {
+				wp_send_json(
+					array(
+						'detail' =>
+							array(
+								'title'   => __( 'Error', 'external-files-in-media-library' ),
+								'texts'   => array( '<p>' . __( 'Credentials are missing for the requested service.', 'external-files-in-media-library' ) . '</p>' ),
+								'buttons' => array(
+									array(
+										'action'  => 'closeDialog();',
+										'variant' => 'primary',
+										'text'    => __( 'OK', 'external-files-in-media-library' ),
+									),
+								),
+							),
+					)
+				);
+			}
+		}
+
 		// add the archive.
 		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
 
@@ -571,5 +665,44 @@ class Directory_Listing {
 					),
 			)
 		);
+	}
+
+	/**
+	 * Show error.
+	 *
+	 * @param string $error The error text.
+	 *
+	 * @return void
+	 */
+	private function show_error( string $error ): void {
+		// output.
+		?>
+			<div class="wrap">
+				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Error loading external source', 'external-files-in-media-library' ); ?></h1>
+				<?php echo wp_kses_post( $error ); ?>
+			</div>
+		<?php
+	}
+
+	/**
+	 * Add user mark if new listing entry is added.
+	 *
+	 * @param int $term_id The term ID added.
+	 *
+	 * @return void
+	 */
+	public function add_user_mark( int $term_id ): void {
+		add_term_meta( $term_id, 'user_id', get_current_user_id() );
+	}
+
+	/**
+	 * Add user mark if new listing entry is added.
+	 *
+	 * @param int $term_id The term ID added.
+	 *
+	 * @return void
+	 */
+	public function add_date( int $term_id ): void {
+		add_term_meta( $term_id, 'date', time() );
 	}
 }

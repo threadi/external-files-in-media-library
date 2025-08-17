@@ -105,11 +105,15 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// set title for service.
 		$this->title = __( 'Choose video(s) from a Youtube channel', 'external-files-in-media-library' );
-
-		// add service.
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
 		// use our own hooks to allow import of YouTube videos and channels.
 		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
@@ -824,4 +828,11 @@ class Youtube extends Directory_Listing_Base implements Service {
 		// import YouTube videos local.
 		return false;
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }

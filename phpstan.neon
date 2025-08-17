@@ -19,6 +19,7 @@ parameters:
     - "#WP_REST_Request#"
     - "#WCP_Folders#"
     - "#iFolders#"
+    - "#wp_rml#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

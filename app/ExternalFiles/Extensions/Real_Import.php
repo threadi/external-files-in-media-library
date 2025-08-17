@@ -17,7 +17,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
-use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Query;
@@ -83,6 +82,7 @@ class Real_Import extends Extension_Base {
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 		add_action( 'eml_show_file_info', array( $this, 'add_option_to_real_import_file' ) );
+		add_filter( 'eml_external_files_infos', array( $this, 'check_for_duplicate' ) );
 
 		// sync tasks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
@@ -599,6 +599,42 @@ class Real_Import extends Extension_Base {
 	}
 
 	/**
+	 * Check each result for duplicate in media library.
+	 *
+	 * @param array<int,array<string,mixed>> $results List of resulting file checks.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function check_for_duplicate( array $results ): array {
+		// check nonce.
+		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
+			exit;
+		}
+
+		// get value from request.
+		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
+
+		// bail if it is not enabled during import.
+		if ( 1 !== $real_import ) {
+			return $results;
+		}
+
+		// check each file from results if it is already in media library.
+		foreach ( $results as $index => $file ) {
+			// run the check.
+			$check_result = $this->check_for_duplicate_during_sync( $file );
+
+			// remove file from list, if result is negativ (it's a duplicate).
+			if ( empty( $check_result ) ) {
+				unset( $results[ $index ] );
+			}
+		}
+
+		// return the resulting list.
+		return $results;
+	}
+
+	/**
 	 * Check for duplicate of real files during sync.
 	 *
 	 * @param array<string,mixed> $results The result with the file infos.
@@ -622,17 +658,11 @@ class Real_Import extends Extension_Base {
 		$existing_file = new WP_Query( $query );
 
 		// bail if another file with same name could be found.
-		if ( 1 === $existing_file->found_posts ) {
+		if ( $existing_file->found_posts >= 1 ) {
 			// log this event.
 			Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $results['url'], 'error', 0, Import::get_instance()->get_identified() );
 
-			// add the result to the list.
-			$result = new Results\Url_Result();
-			$result->set_url( $results['url'] );
-			$result->set_result_text( __( 'This file is already in your media library.', 'external-files-in-media-library' ) );
-			$result->set_error( true );
-			Results::get_instance()->add( $result );
-
+			// return empty array as this file is already on the media library.
 			return array();
 		}
 

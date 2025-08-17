@@ -90,7 +90,7 @@ class ImportDialog {
 		check_ajax_referer( 'efml-import-dialog-nonce', 'nonce' );
 
 		// get settings from request.
-		$settings = isset( $_POST['settings'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['settings'] ) ) : array();
+		$settings = isset( $_POST['settings'] ) ? array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) ) : array();
 
 		/**
 		 * Filter the given settings for the import dialog.
@@ -616,5 +616,95 @@ class ImportDialog {
 	public function set_dialog_settings( array $settings ): array {
 		$settings['no_privacy_hint'] = 1 === absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) );
 		return $settings;
+	}
+
+	/**
+	 * Show the form for static view without JS.
+	 *
+	 * @return void
+	 */
+	public function get_form(): void {
+		$dialog   = array(
+			'texts' => array(),
+		);
+		$settings = array();
+		/**
+		 * Filter the given settings for the import dialog.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param array<string,mixed> $settings The requested settings.
+		 */
+		$settings = apply_filters( 'eml_dialog_settings', $settings );
+
+		/**
+		 * Filter the dialog. This is the main handling to extend the import dialog.
+		 *
+		 * @since 3.0.0 Available since 3.0.0.
+		 * @param array<string,mixed> $dialog The dialog configuration.
+		 * @param array<string,mixed> $settings The requested settings.
+		 */
+		$dialog = apply_filters( 'eml_add_dialog', $dialog, $settings );
+
+		// allow necessary fields in kses.
+		$allowed_html = array(
+			'a'        => array(
+				'href'  => true,
+				'class' => true,
+			),
+			'details'  => array(),
+			'summary'  => array(),
+			'div'      => array(
+				'class' => true,
+				'style' => true,
+			),
+			'input'    => array(
+				'id'          => true,
+				'type'        => true,
+				'name'        => true,
+				'value'       => true,
+				'class'       => true,
+				'style'       => true,
+				'placeholder' => true,
+				'required'    => true,
+			),
+			'label'    => array(
+				'for' => true,
+			),
+			'textarea' => array(
+				'id'          => true,
+				'name'        => true,
+				'class'       => true,
+				'style'       => true,
+				'placeholder' => true,
+			),
+			'p'        => array(
+				'class' => true,
+			),
+		);
+
+		// add our own form.
+		echo '</form><form id="eml_add_external_files_form" action="' . esc_url( get_admin_url() . 'admin.php' ) . '" method="post">';
+		echo '<input type="hidden" name="action" value="eml_add_external_urls" />';
+		wp_nonce_field( 'efml-add-external-files', 'nonce' );
+
+		// show heading.
+		echo '<div><strong>' . esc_html__( 'Add external files', 'external-files-in-media-library' ) . '</strong></div>';
+
+		// show the fields.
+		foreach ( $dialog['texts'] as $field ) {
+			?>
+			<div>
+			<?php
+			echo wp_kses( $field, $allowed_html );
+			?>
+			</div>
+			<?php
+		}
+
+		// show buttons.
+		?>
+		<div><input type="submit" class="button button-primary" name="add_external_files_button" value="<?php echo esc_attr__( 'Add these URLs', 'external-files-in-media-library' ); ?>" /></div>
+		<?php
 	}
 }

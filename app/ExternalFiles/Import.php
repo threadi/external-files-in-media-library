@@ -96,6 +96,7 @@ class Import extends Directory_Listing_Base {
 		add_filter( 'eml_file_import_title', array( $this, 'optimize_file_title' ), 10, 3 );
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
 		add_action( 'eml_after_file_save', array( $this, 'set_external_source' ) );
+		add_action( 'efml_before_import', array( $this, 'add_task_to_set_user_agent' ) );
 	}
 
 	/**
@@ -146,20 +147,37 @@ class Import extends Directory_Listing_Base {
 		$false    = false;
 		$login    = $this->get_login();
 		$password = $this->get_password();
+		$api_key  = $this->get_api_key();
 		/**
 		 * Prevent import of this single URL.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
+		 *
 		 * @param bool $false Return true if normal import should not be started.
 		 * @param string $url The given URL.
 		 * @param string $login The login to use.
 		 * @param string $password The password to use.
+		 * @param string $api_key The API key to use.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password ) ) {
+		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password, $api_key ) ) {
 			return false;
 		}
+
+		/**
+		 * Run any task before we start to import a given URL.
+		 *
+		 * @since        5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $url      The given URL.
+		 * @param string $login    The login to use.
+		 * @param string $password The password to use.
+		 * @param string $api_key  The API key to use.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		do_action( 'efml_before_import', $url, $login, $password, $api_key );
 
 		// get the log object.
 		$log = Log::get_instance();
@@ -186,6 +204,7 @@ class Import extends Directory_Listing_Base {
 		 */
 		$protocol_handler_obj->set_login( $login );
 		$protocol_handler_obj->set_password( $password );
+		$protocol_handler_obj->set_api_key( $api_key );
 
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
@@ -396,6 +415,7 @@ class Import extends Directory_Listing_Base {
 			// save the credentials on the object, if set.
 			$external_file_obj->set_login( $this->get_login() );
 			$external_file_obj->set_password( $this->get_password() );
+			$external_file_obj->set_api_key( $this->get_api_key() );
 
 			// save file-type-specific meta data.
 			$external_file_obj->set_metadata();
@@ -597,5 +617,40 @@ class Import extends Directory_Listing_Base {
 
 		// assign the file to this archive.
 		wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
+	}
+
+	/**
+	 * Add task to set the user agent for any request.
+	 *
+	 * @return void
+	 */
+	public function add_task_to_set_user_agent(): void {
+		// bail if disabled.
+		if ( 1 !== absint( get_option( 'eml_add_user_agent' ) ) ) {
+			return;
+		}
+
+		// add the hook.
+		add_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
+	}
+
+	/**
+	 * Extend the user agent for requests with our plugin name.
+	 *
+	 * @param string $user_agent The user agent string.
+	 *
+	 * @return string
+	 */
+	public function add_user_agent( string $user_agent ): string {
+		$string_to_add = '; Plugin ' . Helper::get_plugin_name();
+
+		/**
+		 * Filter the User Agent string wie add to each User Agent header (if enabled in settings).
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $string_to_add The string to add.
+		 */
+		return $user_agent . apply_filters( 'efml_user_agent', $string_to_add );
 	}
 }

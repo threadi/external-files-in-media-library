@@ -155,7 +155,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// create the HTML-code.
-		return '<select class="eml-use-for-import" name="folder_for_media"><option value="0">' . __( 'Choose folder', 'external-files-in-media-library' ) . '</option>' . $options . '</select>';
+		return '<select class="eml-use-for-import" id="folder_for_media" name="folder_for_media"><option value="0">' . __( 'Choose folder', 'external-files-in-media-library' ) . '</option>' . $options . '</select>';
 	}
 
 	/**
@@ -180,16 +180,16 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		$term_id = absint( $fields['term_id'] );
 
 		// get our fields from request.
-		$folderly_categories = isset( $_POST['fields']['folders_folder'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folders_folder'] ) ) : array();
+		$folders_categories = isset( $_POST['fields']['folders_folder'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folders_folder'] ) ) : array();
 
 		// if folderly_categories is empty, just remove the setting.
-		if ( empty( $folderly_categories ) ) {
+		if ( empty( $folders_categories ) ) {
 			delete_term_meta( $term_id, 'folders_folder' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'folders_folder', $folderly_categories );
+		update_term_meta( $term_id, 'folders_folder', $folders_categories );
 	}
 
 	/**

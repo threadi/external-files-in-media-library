@@ -537,7 +537,7 @@ class Files {
 		}
 		if ( $external_file_obj->has_credentials() ) {
 			?>
-			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'File is protected with login and password.', 'external-files-in-media-library' ); ?></li>
+			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'External file is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
 		if ( current_user_can( 'manage_options' ) ) {
@@ -715,6 +715,12 @@ class Files {
 		// return nothing to prevent output as file is not available and extern hosted OR is using a not allowed mime type.
 		if ( false === $external_file_obj->is_mime_type_allowed() || ( false === $external_file_obj->is_available() && ! $external_file_obj->is_locally_saved() ) ) {
 			return false;
+		}
+
+		// if file is extern hosted, remove the upload basedir-path before the URL.
+		if ( is_string( $file ) && ! $external_file_obj->is_locally_saved() ) {
+			$uploads = wp_get_upload_dir();
+			$file    = str_replace( $uploads['basedir'] . '/', '', $file );
 		}
 
 		// return normal file-name.

@@ -27,4 +27,11 @@ interface Service {
 	 * @return void
 	 */
 	public function activation(): void;
+
+	/**
+	 * Run WP CLI initialisation.
+	 *
+	 * @return void
+	 */
+	public function cli(): void;
 }

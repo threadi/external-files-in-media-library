@@ -11,7 +11,10 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
@@ -81,10 +84,15 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
-
-		// add the directory listing.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
+		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
 
 		// use our own hooks.
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
@@ -276,9 +284,12 @@ class Zip extends Directory_Listing_Base implements Service {
 							'files' => array(),
 							'dirs'  => array(),
 						);
+					}
 
+					// add the directory if it does not exist atm in the main folder list.
+					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
 						// add the directory to the list.
-						$listing['dirs'][ $index ] = array(
+						$folders[ $last_dir ]['dirs'][ $index ] = array(
 							'title' => $dir,
 							'files' => array(),
 							'dirs'  => array(),
@@ -438,7 +449,25 @@ class Zip extends Directory_Listing_Base implements Service {
 		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
 
 		// and save the file there.
-		$wp_filesystem->put_contents( $tmp_file, $file_content );
+		try {
+			$wp_filesystem->put_contents( $tmp_file, $file_content );
+		} catch ( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $file ) ) );
+			$error_obj->set_url( $file );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $file, 'error' );
+
+			// do nothing more.
+			return array();
+		}
 
 		// add the path to the tmp file to the file infos.
 		$results['tmp-file'] = $tmp_file;
@@ -566,4 +595,11 @@ class Zip extends Directory_Listing_Base implements Service {
 	public function get_description(): string {
 		return '<span>' . __( 'PHP-Modul zip is missing!', 'external-files-in-media-library' ) . '</span>';
 	}
+
+	/**
+	 * Initialize WP CLI for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
 }
