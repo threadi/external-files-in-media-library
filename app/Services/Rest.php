@@ -102,13 +102,20 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
+		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
 
 		// use hooks.
 		add_action( 'init', array( $this, 'init_rest' ), 20 );
 
-		// use our own hooks to allow import of REST API media files.
+		// use our own hooks.
 		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
 		add_filter( 'eml_filter_url_response', array( $this, 'get_rest_api_files' ), 10, 3 );
 		add_filter( 'efml_service_rest_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
@@ -134,7 +141,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// get tab for services.
-		$services_tab = $settings_page->get_tab( 'services' );
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
 
 		// bail if tab does not exist.
 		if ( ! $services_tab instanceof Tab ) {
@@ -244,7 +251,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		 * Let the directories load with separate requests to prevent timeouts.
 		 * Prepare the resulting tree before directory listings own @Rest.php generates the tree.
 		 */
-		if( ! str_contains( $directory, 'per_page=' ) ) {
+		if ( ! str_contains( $directory, 'per_page=' ) ) {
 			// remove the possible REST API paths from the given URL.
 			foreach ( $this->get_rest_api_paths() as $path ) {
 				$directory = str_replace( $path, '', $directory );
@@ -304,12 +311,12 @@ class Rest extends Directory_Listing_Base implements Service {
 			$max_pages = absint( wp_remote_retrieve_header( $response, 'x-wp-totalpages' ) );
 
 			// if no max pages could be loaded, set it to 1 as we won't get endless loops.
-			if( 0 === $max_pages ) {
+			if ( 0 === $max_pages ) {
 				$max_pages = 1;
 			}
 
 			// add the pagination URLs to the list as directories.
-			for ( $p = 1; $p < $max_pages; $p ++ ) {
+			for ( $p = 1; $p < $max_pages; $p++ ) {
 				// extend the given URL.
 				$url = add_query_arg(
 					array(
@@ -323,11 +330,11 @@ class Rest extends Directory_Listing_Base implements Service {
 				$listing['dirs'][ $url ] = array(
 					'title' => $p,
 					'files' => array(),
-					'dirs' => array()
+					'dirs'  => array(),
 				);
 
 				// if this is the first entry, set is as directory URL to load.
-				if( 1 === $p ) {
+				if ( 1 === $p ) {
 					$directory = $url;
 				}
 			}
@@ -486,7 +493,7 @@ class Rest extends Directory_Listing_Base implements Service {
 				// add the entry to the list.
 				$listing['files'][] = $entry;
 			}
-		} catch ( JsonException|Error $e ) {
+		} catch ( JsonException | Error $e ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'Error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );
@@ -579,7 +586,7 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// add our custom translation.
-		$translations['form_file'] = array(
+		$translations['form_file']         = array(
 			'title'       => __( 'Enter the WordPress-URL', 'external-files-in-media-library' ),
 			'description' => __( 'Enter the URL of the WordPress project from which you want to integrate media files into your project via REST API.', 'external-files-in-media-library' ),
 			'url'         => array(
@@ -590,6 +597,7 @@ class Rest extends Directory_Listing_Base implements Service {
 			),
 		);
 		$translations['loading_directory'] = __( 'One page of pagination request is loading', 'external-files-in-media-library' );
+		/* translators: %1$s will be replaced by a number. */
 		$translations['loading_directories'] = __( '%1$d pages of pagination requests are loading', 'external-files-in-media-library' );
 
 		// return the resulting translations.
@@ -892,6 +900,11 @@ class Rest extends Directory_Listing_Base implements Service {
 			$url_to_use = $url_to_check;
 		}
 
+		// bail if no URL could be found.
+		if ( ! $url_to_use ) {
+			return false;
+		}
+
 		// return the result.
 		return $url_to_use . '/wp/v2/media';
 	}
@@ -1021,15 +1034,15 @@ class Rest extends Directory_Listing_Base implements Service {
 	/**
 	 * Rebuild the resulting list to remove the pagination folders for clean view of the files.
 	 *
-	 * @param array  $listing The resulting list.
-	 * @param string $url The called URL.
-	 * @param string $service The used service.
+	 * @param array<string,mixed> $listing The resulting list.
+	 * @param string              $url The called URL.
+	 * @param string              $service The used service.
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function prepare_tree_building( array $listing, string $url, string $service ): array {
 		// bail if this is not our service.
-		if( $this->get_name() !== $service ) {
+		if ( $this->get_name() !== $service ) {
 			return $listing;
 		}
 
@@ -1038,19 +1051,19 @@ class Rest extends Directory_Listing_Base implements Service {
 			$url => array(
 				'title' => $url,
 				'files' => array(),
-				'dirs' => array()
-			)
+				'dirs'  => array(),
+			),
 		);
 
 		// add the files from each pagination URL.
-		foreach( $listing as $page_url => $files ) {
+		foreach ( $listing as $page_url => $files ) {
 			// bail for main page URL.
-			if( $url === $page_url ) {
+			if ( $url === $page_url ) {
 				continue;
 			}
 
 			// bail if no files are set.
-			if( empty( $files['files'] ) ) {
+			if ( empty( $files['files'] ) ) {
 				continue;
 			}
 

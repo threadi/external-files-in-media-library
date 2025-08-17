@@ -105,7 +105,7 @@ class Protocol extends Protocol_Base {
 
 				// loop through all dirs and get infos about its files.
 				foreach ( $files as $dir => $dir_data ) {
-					$dir = (string)$dir;
+					$dir = (string) $dir;
 					/**
 					 * Run action just before the file check via AWS S3-protocol.
 					 *

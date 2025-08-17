@@ -266,8 +266,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		// if folderly_categories is empty, just remove the setting.
 		if ( empty( $categories ) ) {
 			delete_term_meta( $term_id, 'mla_categories' );
-		}
-		else {
+		} else {
 			// save the setting.
 			update_term_meta( $term_id, 'mla_categories', array_flip( $categories ) );
 		}
@@ -278,8 +277,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		// if folderly_categories is empty, just remove the setting.
 		if ( empty( $tags ) ) {
 			delete_term_meta( $term_id, 'mla_tags' );
-		}
-		else {
+		} else {
 			// save the setting.
 			update_term_meta( $term_id, 'mla_tags', array_flip( $tags ) );
 		}

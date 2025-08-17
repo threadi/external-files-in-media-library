@@ -77,9 +77,9 @@ class AdvancedMediaOffloader extends ThirdParty_Base implements ThirdParty {
 	 *
 	 * @return mixed
 	 */
-	public function prevent_offloading_for_external_files( mixed $return_value, int $object_id, string $meta_key): mixed {
+	public function prevent_offloading_for_external_files( mixed $return_value, int $object_id, string $meta_key ): mixed {
 		// bail if meta key is not "advmo_offloaded".
-		if( 'advmo_offloaded' !== $meta_key ) {
+		if ( 'advmo_offloaded' !== $meta_key ) {
 			return $return_value;
 		}
 
@@ -87,7 +87,7 @@ class AdvancedMediaOffloader extends ThirdParty_Base implements ThirdParty {
 		$external_file_obj = Files::get_instance()->get_file( $object_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $return_value;
 		}
 
@@ -104,9 +104,9 @@ class AdvancedMediaOffloader extends ThirdParty_Base implements ThirdParty {
 	 *
 	 * @return mixed
 	 */
-	public function show_external_files_as_provider( mixed $return_value, int $object_id, string $meta_key): mixed {
+	public function show_external_files_as_provider( mixed $return_value, int $object_id, string $meta_key ): mixed {
 		// bail if meta key is not "advmo_provider".
-		if( 'advmo_provider' !== $meta_key ) {
+		if ( 'advmo_provider' !== $meta_key ) {
 			return $return_value;
 		}
 
@@ -114,7 +114,7 @@ class AdvancedMediaOffloader extends ThirdParty_Base implements ThirdParty {
 		$external_file_obj = Files::get_instance()->get_file( $object_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $return_value;
 		}
 

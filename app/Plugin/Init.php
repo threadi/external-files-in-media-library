@@ -82,6 +82,9 @@ class Init {
 		// initialize statistics.
 		Statistics::get_instance()->init();
 
+		// initialize the roles.
+		Roles::get_instance()->init();
+
 		// plugin-actions.
 		register_activation_hook( EFML_PLUGIN, array( Install::get_instance(), 'activation' ) );
 		register_deactivation_hook( EFML_PLUGIN, array( Install::get_instance(), 'deactivation' ) );

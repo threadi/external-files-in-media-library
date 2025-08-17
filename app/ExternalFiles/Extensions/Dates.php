@@ -269,6 +269,7 @@ class Dates extends Extension_Base {
 		// add the option to the list.
 		$options['use_dates'] = absint( $_POST['use_dates'] );
 
+		// return the resulting options.
 		return $options;
 	}
 

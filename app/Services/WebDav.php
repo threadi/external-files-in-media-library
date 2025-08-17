@@ -108,6 +108,14 @@ class WebDav extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
 		$this->title = __( 'Choose file(s) from your WebDAV', 'external-files-in-media-library' );
 
 		// use hooks.
@@ -115,7 +123,6 @@ class WebDav extends Directory_Listing_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_service_webdav_client', array( $this, 'ignore_self_signed_ssl' ) );
 		add_filter( 'efml_service_webdav_path', array( $this, 'set_path' ), 10, 2 );
@@ -297,7 +304,7 @@ class WebDav extends Directory_Listing_Base implements Service {
 		// get the directory listing for the given path from the external WebDAV.
 		try {
 			$directory_list = $client->propFind( $path, array(), 1 );
-		} catch ( ClientHttpException|Error $e ) {
+		} catch ( ClientHttpException | Error $e ) {
 			// create an error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_webdav', __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );
@@ -596,9 +603,9 @@ class WebDav extends Directory_Listing_Base implements Service {
 	/**
 	 * Prevent visibility of not allowed mime types.
 	 *
-	 * @param bool   $result The result - should be true to prevent the usage.
-	 * @param array  $settings The settings for the WebDAV connection.
-	 * @param string $file The requested file.
+	 * @param bool                $result The result - should be true to prevent the usage.
+	 * @param array<string,mixed> $settings The settings for the WebDAV connection.
+	 * @param string              $file The requested file.
 	 *
 	 * @return bool
 	 * @noinspection PhpUnusedParameterInspection

@@ -505,7 +505,7 @@ class File {
 
 		// save the given content to the path.
 		try {
-		$wp_filesystem->put_contents( $path, $body );
+			$wp_filesystem->put_contents( $path, $body );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();

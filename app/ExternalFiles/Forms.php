@@ -208,7 +208,7 @@ class Forms {
 	 */
 	public function add_multi_form(): void {
 		// bail if user has not the capability for it.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_import' ) ) {
 			return;
 		}
 
@@ -264,7 +264,7 @@ class Forms {
 	 */
 	public function add_single_form(): void {
 		// bail if user has not the capability for it.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_import' ) ) {
 			return;
 		}
 

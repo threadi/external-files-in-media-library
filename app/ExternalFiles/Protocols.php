@@ -166,7 +166,7 @@ class Protocols {
 			}
 
 			// bail if URL is compatible.
-			if( ! $obj->is_url_compatible() ) {
+			if ( ! $obj->is_url_compatible() ) {
 				continue;
 			}
 

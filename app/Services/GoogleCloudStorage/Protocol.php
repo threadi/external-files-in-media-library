@@ -103,7 +103,7 @@ class Protocol extends Protocol_Base {
 		$storage = $google_cloud_storage_obj->get_storage_object();
 
 		// bail if storage could not be loaded.
-		if( ! $storage instanceof StorageClient ) {
+		if ( ! $storage instanceof StorageClient ) {
 			return array();
 		}
 

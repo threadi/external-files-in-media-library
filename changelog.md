@@ -79,6 +79,8 @@
 - Cleanup the return value for external files via get_attached_file()
 - File protocol uses now WP_Filesystem for each file interaction
 - Enabled search field for URLs in logs
+- External sources are now saved user-specific
+  -> only administrators see all entries
 
 ### Fixed
 

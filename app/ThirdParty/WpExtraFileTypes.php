@@ -76,24 +76,24 @@ class WpExtraFileTypes extends ThirdParty_Base implements ThirdParty {
 		$plugin_list_of_file_types = get_option( 'wpeft_types', array() );
 
 		// bail if list is empty.
-		if( empty( $plugin_list_of_file_types ) ) {
+		if ( empty( $plugin_list_of_file_types ) ) {
 			return $possible_file_types;
 		}
 
 		// bail if list is not an array.
-		if( ! is_array( $plugin_list_of_file_types ) ) {
+		if ( ! is_array( $plugin_list_of_file_types ) ) {
 			return $possible_file_types;
 		}
 
 		// add the additional types.
-		foreach( $plugin_list_of_file_types as $ext => $type ) {
+		foreach ( $plugin_list_of_file_types as $ext => $type ) {
 			// bail if entry already exist.
-			if( isset( $possible_file_types[$type] ) ) {
+			if ( isset( $possible_file_types[ $type ] ) ) {
 				continue;
 			}
 
 			// add file type to the list.
-			$possible_file_types[$type] = array(
+			$possible_file_types[ $type ] = array(
 				'label' => $type,
 				'ext'   => $ext,
 			);

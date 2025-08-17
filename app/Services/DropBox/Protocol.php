@@ -118,7 +118,7 @@ class Protocol extends Protocol_Base {
 		// and save this content als tmp-file.
 		try {
 			$wp_filesystem->put_contents( $results['tmp-file'], $content );
-		} catch( Error $e ) {
+		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */

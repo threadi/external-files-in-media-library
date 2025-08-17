@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -199,11 +200,6 @@ class Settings {
 		$general_tab_dialog->set_title( __( 'Options for saving external files', 'external-files-in-media-library' ) );
 		$general_tab_dialog->set_setting( $settings_obj );
 
-		// the files section.
-		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files', 10 );
-		$permissions_tab_files->set_title( __( 'Permissions for external files', 'external-files-in-media-library' ) );
-		$permissions_tab_files->set_setting( $settings_obj );
-
 		// the proxy section.
 		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy', 10 );
 		$proxy_tab_proxy->set_title( __( 'Proxy settings', 'external-files-in-media-library' ) );
@@ -321,54 +317,19 @@ class Settings {
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Add plugin name on User Agent', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled the name of this plugin will be added to the User Agent on each outgoing request.', 'external-files-in-media-library' ),			)
+				'description' => __( 'If this option is enabled the name of this plugin will be added to the User Agent on each outgoing request.', 'external-files-in-media-library' ),
+			)
 		);
-
-		// get user roles.
-		$user_roles = array();
-		if ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) {
-			foreach ( wp_roles()->roles as $slug => $role ) {
-				$user_roles[ $slug ] = $role['name'];
-			}
-		}
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_allowed_roles' );
-		$setting->set_section( $permissions_tab_files );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator', 'editor' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$field->set_sanitize_callback( array( $this, 'set_capabilities' ) );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		$users               = array();
-		$first_administrator = 0;
-		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'eml_settings' === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
-			foreach ( get_users() as $user ) {
-				// bail if user is not WP_User.
-				if ( ! $user instanceof WP_User ) {
-					continue;
-				}
-
-				// add to the list.
-				$users[ $user->ID ] = $user->display_name;
-			}
-			$first_administrator = Helper::get_first_administrator_user();
-		}
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'integer' );
-		$setting->set_default( $first_administrator );
+		$setting->set_default( Helper::get_first_administrator_user() );
 		$field = new Select();
-		$field->set_title( __( 'User new files should be assigned to', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Assign new files to this user', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g. via WP CLI import). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
-		$field->set_options( $users );
+		$field->set_options( Roles::get_instance()->get_user_for_settings() );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -482,18 +443,6 @@ class Settings {
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_user_settings_allowed_roles' );
-		$setting->set_section( $permissions_tab_files );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator', 'editor' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Use custom settings', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to use custom settings for the import of external URLs.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -766,5 +715,14 @@ class Settings {
 			return '';
 		}
 		return $dialog;
+	}
+
+	/**
+	 * Show hint for service permissions.
+	 *
+	 * @return void
+	 */
+	public function show_service_permission_hint(): void {
+		echo esc_html__( 'Select roles which should be allowed to use these services.', 'external-files-in-media-library' );
 	}
 }

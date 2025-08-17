@@ -176,7 +176,6 @@ class Import extends Directory_Listing_Base {
 		 * @param string $api_key  The API key to use.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
-		 *
 		 */
 		do_action( 'efml_before_import', $url, $login, $password, $api_key );
 
@@ -627,7 +626,7 @@ class Import extends Directory_Listing_Base {
 	 */
 	public function add_task_to_set_user_agent(): void {
 		// bail if disabled.
-		if( 1 !== absint( get_option( 'eml_add_user_agent' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_add_user_agent' ) ) ) {
 			return;
 		}
 

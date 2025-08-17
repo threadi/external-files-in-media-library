@@ -164,7 +164,7 @@ class File extends Protocol_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 *
 				 * @param string $file_path   The filepath to import.
-				 * @param array<int,mixed> $file_list List of files.
+				 * @param array<int|string,mixed> $file_list List of files.
 				 */
 				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
@@ -274,7 +274,7 @@ class File extends Protocol_Base {
 				Results::get_instance()->add( $error_obj );
 
 				// add log entry.
-				Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url,'error' );
+				Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 
 				// do nothing more.
 				return array();

@@ -232,7 +232,7 @@ class Admin {
 		// add our custom links.
 		$row_meta = array(
 			'support' => '<a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank" title="' . esc_attr__( 'Support Forum', 'external-files-in-media-library' ) . '">' . esc_html__( 'Support Forum', 'external-files-in-media-library' ) . '</a>',
-			'review' => '<a href="' . esc_url( Helper::get_plugin_review_url() ) . '" target="_blank" title="' . esc_attr__( 'Add your review', 'external-files-in-media-library' ) . '" class="efml-review"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></a>',
+			'review'  => '<a href="' . esc_url( Helper::get_plugin_review_url() ) . '" target="_blank" title="' . esc_attr__( 'Add your review', 'external-files-in-media-library' ) . '" class="efml-review"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></a>',
 		);
 
 		/**
@@ -350,12 +350,12 @@ class Admin {
 	 */
 	public function check_fs_method(): void {
 		// bail if FS_METHOD is not set.
-		if( ! defined( 'FS_METHOD' ) ) {
+		if ( ! defined( 'FS_METHOD' ) ) {
 			return;
 		}
 
 		// if it has the value "ftpext" we also need "FS_CHMOD_FILE".
-		if( 'ftpext' === FS_METHOD && ! defined( 'FS_CHMOD_FILE' ) ) {
+		if ( ! defined( 'FS_CHMOD_FILE' ) && 'ftpext' === get_filesystem_method() ) {
 			// show warning.
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_type( 'error' );
@@ -366,7 +366,7 @@ class Admin {
 		}
 
 		// if value is not "direct" show hint.
-		if( 'direct' !== FS_METHOD ) {
+		if ( 'direct' !== get_filesystem_method() ) {
 			// show hint.
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_dismissible_days( 30 );

@@ -88,11 +88,17 @@ class Local implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_import' ) ) {
+			return;
+		}
+
 		// add settings.
 		add_action( 'init', array( $this, 'init_local' ), 20 );
 
 		// use our own hooks.
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 		add_filter( 'efml_service_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
 	}
@@ -115,7 +121,7 @@ class Local implements Service {
 		}
 
 		// get tab for services.
-		$services_tab = $settings_page->get_tab( 'services' );
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
 
 		// bail if tab does not exist.
 		if ( ! $services_tab instanceof Tab ) {
@@ -130,7 +136,7 @@ class Local implements Service {
 		$section = $tab->add_section( 'section_local_main', 10 );
 		$section->set_title( __( 'Settings for local', 'external-files-in-media-library' ) );
 
-		// add setting to enable the uploads-loading
+		// add setting to enable the uploads-loading.
 		$setting = $settings_obj->add_setting( 'eml_local_load_upload_dir' );
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
@@ -248,20 +254,20 @@ class Local implements Service {
 	/**
 	 * Add the uploads directory to the list of all directories to show.
 	 *
-	 * @param bool   $directory_loading
-	 * @param array  $directory_list
-	 * @param string $directory
+	 * @param bool                $directory_loading Whether to load the directory.
+	 * @param array<string,mixed> $directory_list The list of directories to load.
+	 * @param string              $directory The actual requested directory.
 	 *
 	 * @return bool
 	 */
 	public function add_upload_dirs( bool $directory_loading, array $directory_list, string $directory ): bool {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_local_load_upload_dir' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_local_load_upload_dir' ) ) ) {
 			return $directory_loading;
 		}
 
 		// bail if directory loading is true.
-		if( false !== $directory_loading ) {
+		if ( false !== $directory_loading ) {
 			return true;
 		}
 
@@ -269,7 +275,7 @@ class Local implements Service {
 		$upload_dir = wp_get_upload_dir();
 
 		// bail if uploads-directory are in the list.
-		if( isset( $directory_list[ $upload_dir['basedir'] ] ) ) {
+		if ( isset( $directory_list[ $upload_dir['basedir'] ] ) ) {
 			return false;
 		}
 
@@ -277,13 +283,13 @@ class Local implements Service {
 		$directory_list[ trailingslashit( WP_CONTENT_DIR ) ] = array(
 			'title' => basename( WP_CONTENT_DIR ),
 			'files' => array(),
-			'dirs' => array(
+			'dirs'  => array(
 				trailingslashit( $upload_dir['basedir'] ) => array(
 					'title' => basename( $upload_dir['basedir'] ),
 					'files' => array(),
-					'dirs' => array()
-				)
-			)
+					'dirs'  => array(),
+				),
+			),
 		);
 
 		// update the setting.

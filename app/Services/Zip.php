@@ -84,10 +84,15 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
-
-		// add the directory listing.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
+		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
 
 		// use our own hooks.
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
@@ -446,7 +451,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		// and save the file there.
 		try {
 			$wp_filesystem->put_contents( $tmp_file, $file_content );
-		} catch( Error $e ) {
+		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */

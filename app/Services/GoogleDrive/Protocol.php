@@ -157,8 +157,8 @@ class Protocol extends Protocol_Base {
 
 		// and save the file there.
 		try {
-		    $wp_filesystem->put_contents( $results['tmp-file'], $response->getBody()->getContents() );
-		} catch( Error $e ) {
+			$wp_filesystem->put_contents( $results['tmp-file'], $response->getBody()->getContents() );
+		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */
@@ -319,8 +319,8 @@ class Protocol extends Protocol_Base {
 
 			// and save the file there.
 			try {
-			    $wp_filesystem->put_contents( $entry['tmp-file'], $response->getBody()->getContents() );
-			} catch( Error $e ) {
+				$wp_filesystem->put_contents( $entry['tmp-file'], $response->getBody()->getContents() );
+			} catch ( Error $e ) {
 				// create the error entry.
 				$error_obj = new Url_Result();
 				/* translators: %1$s will be replaced by a URL. */

@@ -106,10 +106,17 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
 		$this->title = __( 'Choose file(s) from your AWS S3 server', 'external-files-in-media-library' );
 
 		// add the directory listing.
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 
 		// use our own hooks.

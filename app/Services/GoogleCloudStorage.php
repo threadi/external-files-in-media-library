@@ -104,6 +104,14 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// bail if user has no capability for this service.
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// set title.
 		$this->title = __( 'Choose file(s) from your Google Cloud Storage', 'external-files-in-media-library' );
 
 		// use hooks.
@@ -111,7 +119,6 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 		add_filter( 'efml_service_googlecloudstorage_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 	}
 
@@ -330,9 +337,10 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 		$storage = $this->get_storage_object();
 
 		// bail if storage could not be loaded.
-		if( ! $storage instanceof StorageClient ) {
+		if ( ! $storage instanceof StorageClient ) {
 			// create an error object.
 			$error = new WP_Error();
+			/* translators: %1$s will be replaced by a URL. */
 			$error->add( 'efml_service_googlecloudstorage', sprintf( __( 'Google Cloud Storage object could not be loaded. Take a look at the <a href="%1$s" target="_blank">log</a> for more information.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
 			$this->add_error( $error );
 
@@ -584,7 +592,7 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 			// save the tmp-file.
 			// TODO auch wieder löschen!
 			$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
-		} catch( Error $e ) {
+		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			$error_obj->set_result_text( __( 'Error occurred during requesting the credential file for Google Cloud Storage.', 'external-files-in-media-library' ) );

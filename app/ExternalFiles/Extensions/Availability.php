@@ -241,7 +241,7 @@ class Availability extends Extension_Base {
 		}
 
 		// check and save its availability.
-		$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
+		$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url( true ) ) );
 
 		// return result depending on availability-value.
 		if ( $external_file_obj->is_available() ) {

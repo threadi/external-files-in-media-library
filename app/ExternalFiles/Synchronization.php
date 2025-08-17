@@ -71,7 +71,7 @@ class Synchronization {
 		// add setting.
 		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
 
-		// bail if synchronization support is not enabled.
+		// bail if synchronization support is not enabled or user is not allowed to use it.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return;
 		}
@@ -218,8 +218,16 @@ class Synchronization {
 	 * @return array<string,string>
 	 */
 	public function add_columns( array $columns ): array {
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_sync' ) ) {
+			return $columns;
+		}
+
+		// add the sync columns.
 		$columns['synced_files']    = __( 'Synchronized files', 'external-files-in-media-library' );
 		$columns['synchronization'] = __( 'Synchronization', 'external-files-in-media-library' );
+
+		// return the resulting columns.
 		return $columns;
 	}
 

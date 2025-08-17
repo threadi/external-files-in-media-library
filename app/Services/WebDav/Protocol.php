@@ -253,7 +253,7 @@ class Protocol extends Protocol_Base {
 
 			// return the resulting array as list of files (although it is only one).
 			return $listing;
-		} catch ( ClientHttpException|Error $e ) {
+		} catch ( ClientHttpException | Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */
