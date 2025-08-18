@@ -206,11 +206,11 @@ class Roles {
 	 */
 	public function install(): void {
 		// the global setting.
-		$this->set( get_option( 'eml_allowed_roles' ) );
+		$this->set( get_option( 'eml_allowed_roles', array( 'administrator', 'editor' ) ), EFML_CAP_NAME );
 
 		// add settings for each service.
 		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
-			$this->set( get_option( 'eml_service_' . $service->get_name() . '_allowed_roles' ), 'efml_cap_' . $service->get_name() );
+			$this->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
 		}
 	}
 
@@ -247,7 +247,7 @@ class Roles {
 	 *
 	 * @return void
 	 */
-	public function set( array $user_roles, string $cap = EFML_CAP_NAME ): void {
+	public function set( array $user_roles, string $cap ): void {
 		if ( ! ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) ) {
 			return;
 		}

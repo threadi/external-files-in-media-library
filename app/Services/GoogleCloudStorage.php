@@ -276,7 +276,7 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	private function get_authentication_json(): string {
-		return get_option( 'eml_google_cloud_storage_json' );
+		return (string) get_option( 'eml_google_cloud_storage_json' );
 	}
 
 	/**
@@ -285,7 +285,7 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_bucket_name(): string {
-		return get_option( 'eml_google_cloud_storage_bucket' );
+		return (string) get_option( 'eml_google_cloud_storage_bucket' );
 	}
 
 	/**

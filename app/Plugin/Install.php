@@ -57,6 +57,7 @@ class Install {
 	 * @return void
 	 */
 	public function activation(): void {
+		// mark that activation is running.
 		define( 'EFML_ACTIVATION_RUNNING', 1 );
 
 		// add option for version of this plugin.
