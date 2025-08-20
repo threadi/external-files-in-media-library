@@ -84,17 +84,23 @@ class Install {
 		// set capability on roles.
 		Roles::get_instance()->install();
 
-		// trigger a welcome message if it is not already set.
-		$transients_obj = Transients::get_instance();
-		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_set() ) {
-			$transient_obj = $transients_obj->add();
-			$transient_obj->set_dismissible_days( 2 );
-			$transient_obj->set_name( 'eml_welcome' );
-			/* translators: %1$s will be replaced by the URL where user can add media files. */
-			$transient_obj->set_message( sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) );
-			$transient_obj->set_type( 'success' );
-			$transient_obj->save();
+		// create the message.
+		/* translators: %1$s will be replaced by the URL where user can add media files. */
+		$message = sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) );
+
+		// add button for intro, if not already closed.
+		if( ! Intro::get_instance()->is_closed() ) {
+			$message .= '<br><br><a href="#" class="button button-primary efml-intro-start">' . __( 'Show me how it works', 'external-files-in-media-library' ) . '</a>';
 		}
+
+		// trigger a welcome message.
+		$transients_obj = Transients::get_instance();
+		$transient_obj = $transients_obj->add();
+		$transient_obj->set_dismissible_days( 2 );
+		$transient_obj->set_name( 'eml_welcome' );
+		$transient_obj->set_message( $message );
+		$transient_obj->set_type( 'success' );
+		$transient_obj->save();
 	}
 
 	/**

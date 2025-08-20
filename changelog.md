@@ -4,6 +4,7 @@
 
 ### Added
 
+- Added intro for first time users of this plugin
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added support for AWS S3 as external source of files
 - Added DropBox support for import of external files into your media library

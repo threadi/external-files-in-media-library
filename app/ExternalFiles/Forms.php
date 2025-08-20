@@ -570,6 +570,7 @@ class Forms {
 			$dialog = array(
 				'detail' => array(
 					'className' => 'eml',
+					'callback' => 'document.dispatchEvent(new Event("efml-import-finished"));',
 					'title'     => __( 'Import has been executed', 'external-files-in-media-library' ),
 					'texts'     => array( $text ),
 					'buttons'   => array(

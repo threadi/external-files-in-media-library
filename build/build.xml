@@ -149,6 +149,7 @@
             <zipfileset dir="${src.dir}/vendor/spatie" prefix="${plugin.slug}/vendor/spatie" />
             <zipfileset dir="${src.dir}/vendor/sabre" prefix="${plugin.slug}/vendor/sabre" />
             <zipfileset dir="${src.dir}/vendor/graham-campbell" prefix="${plugin.slug}/vendor/graham-campbell" />
+            <zipfileset dir="${src.dir}/node_modules/intro.js/minified/" prefix="${plugin.slug}/node_modules/intro.js/minified/" />
             <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
             <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
             <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
