@@ -436,3 +436,8 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 	align-content: space-between;
 	justify-content: space-between;
 }
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hint {
+	flex-basis: 100%;
+	font-size: 1.2em;
+}
