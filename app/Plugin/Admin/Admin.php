@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Intro;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -77,6 +78,9 @@ class Admin {
 
 		// initialize the directory listing support.
 		Directory_Listing::get_instance()->init();
+
+		// initialize the intro.
+		Intro::get_instance()->init();
 
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );

@@ -203,6 +203,12 @@ class Directory_Listing {
 
 					?>
 					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-hint">
+						<?php
+							/* translators: %1$s will be replaced by a URL. */
+							echo wp_kses_post( sprintf( __( 'Missing an external source like Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum</a>', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+						?>
+					</li>
 				</ul>
 			</div>
 			<?php
@@ -276,8 +282,8 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-						<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
-					<?php
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+				<?php
 			}
 			?>
 		</div>

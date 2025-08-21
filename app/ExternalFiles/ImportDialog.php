@@ -105,6 +105,7 @@ class ImportDialog {
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'eml efml-import-dialog',
+			'callback' => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
 			'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 			'texts'     => array(),
 			'buttons'   => array(
