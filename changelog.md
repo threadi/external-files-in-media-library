@@ -46,6 +46,7 @@
 - Added support for plugin "WP Extra File Types" to enabled additional possible file types to use as external files
 - Added option to load upload directory via local service
 - Added option to use our plugin name in each HTTP-header User Agent (default enabled)
+- Added success sound after import has been run (can be disabled)
 
 ### Changed
 

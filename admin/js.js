@@ -205,6 +205,17 @@ jQuery(document).ready(function($) {
     $('body.taxonomy-edlfw_archive #edittag input').each( function() {
         $(this).attr('readonly', true);
     });
+
+    /**
+     * Play sound after import has been finished.
+     */
+    if( $('body').hasClass( 'efml-play-found') ) {
+      document.addEventListener( "efml-import-finished", function () {
+        let audioElement = document.createElement( 'audio' );
+        audioElement.setAttribute( 'src', efmlJsVars.success_sound_file );
+        audioElement.play();
+      } );
+    }
 });
 
 /**

@@ -322,6 +322,20 @@ class Settings {
 		);
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_play_sound' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Play sound', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled a sound is played if an import is finished.', 'external-files-in-media-library' ),
+			)
+		);
+
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'integer' );
