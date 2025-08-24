@@ -100,7 +100,7 @@ class Local implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
-		add_filter( 'efml_service_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
+		add_filter( 'efml_directory_listing_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
 	}
 
 	/**
