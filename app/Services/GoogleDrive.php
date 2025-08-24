@@ -748,7 +748,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$query = array(
 			'fields'   => 'files(fileExtension,iconLink,id,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,parents,size,hasThumbnail,thumbnailLink),nextPageToken',
 			'pageSize' => 1000,
-			'orderBy'  => 'name_natural'
+			'orderBy'  => 'name_natural',
 		);
 
 		/**
@@ -1192,12 +1192,12 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		}
 
 		// bail if this is not a specific directory.
-		if( false !== stripos( $url, $this->get_directory() ) ) {
+		if ( false !== stripos( $url, $this->get_directory() ) ) {
 			return $listing;
 		}
 
 		// bail if requested directory is not in list.
-		if( empty( $listing[ $url ] ) ) {
+		if ( empty( $listing[ $url ] ) ) {
 			return array();
 		}
 

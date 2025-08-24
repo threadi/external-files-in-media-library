@@ -340,7 +340,7 @@ class Rest extends Directory_Listing_Base implements Service {
 			$max_pages_external = absint( wp_remote_retrieve_header( $response, 'x-wp-totalpages' ) );
 
 			// use the lower value.
-			if( $max_pages_external <= $max_pages ) {
+			if ( $max_pages_external <= $max_pages ) {
 				$max_pages = $max_pages_external;
 			}
 
@@ -351,12 +351,12 @@ class Rest extends Directory_Listing_Base implements Service {
 
 			// create the main query.
 			$query = array(
-				'per_page' => $this->get_page_limit()
+				'per_page' => $this->get_page_limit(),
 			);
 
 			// add search if set.
 			$search = get_option( 'eml_rest_search' );
-			if( ! empty( $search ) ) {
+			if ( ! empty( $search ) ) {
 				$query['search'] = $search;
 			}
 
@@ -453,8 +453,6 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// get the content.
 		$body = wp_remote_retrieve_body( $response );
-
-		error_log( 'next loop' );
 
 		// decode the JSON.
 		try {

@@ -69,7 +69,7 @@ class Update {
 	 */
 	public function run(): void {
 		// bail during uninstallation.
-		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			return;
 		}
 

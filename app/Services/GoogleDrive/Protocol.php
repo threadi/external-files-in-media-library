@@ -133,7 +133,7 @@ class Protocol extends Protocol_Base {
 		// get the file or directory.
 		try {
 			// get directory data.
-			if( str_ends_with( $file_id, '/' ) ) {
+			if ( str_ends_with( $file_id, '/' ) ) {
 				// get complete directory.
 				$directories = GoogleDrive::get_instance()->get_directory_listing( $file_id );
 
@@ -141,19 +141,19 @@ class Protocol extends Protocol_Base {
 				$results = array();
 
 				// loop through the result to get the requested directory with its files.
-				foreach( $directories as $directory => $settings ) {
+				foreach ( $directories as $directory => $settings ) {
 					// bail if directory does not match and if it is not the main directory.
-					if( $directory !== $file_id && false === stripos( $file_id, GoogleDrive::get_instance()->get_directory() ) ) {
+					if ( $directory !== $file_id && false === stripos( $file_id, GoogleDrive::get_instance()->get_directory() ) ) {
 						continue;
 					}
 
 					// add the files.
-					foreach( $settings['files'] as $file ) {
+					foreach ( $settings['files'] as $file ) {
 						// get the file data.
 						$entry = $this->get_file_data( $service, $file['file'] );
 
 						// bail if entry is empty.
-						if( empty( $entry ) ) {
+						if ( empty( $entry ) ) {
 							continue;
 						}
 
@@ -171,7 +171,7 @@ class Protocol extends Protocol_Base {
 
 			// return the resulting array as list of files (although it is only one).
 			return array(
-				$entry
+				$entry,
 			);
 		} catch ( Exception $e ) {
 			// log event.
@@ -352,8 +352,8 @@ class Protocol extends Protocol_Base {
 	 * @param Drive  $service The Drive object.
 	 * @param string $file_id The requested file ID.
 	 *
-	 * @return array
-	 * @throws Exception
+	 * @return array<string,mixed>
+	 * @throws Exception Could throw exception.
 	 */
 	private function get_file_data( Drive $service, string $file_id ): array {
 		// get file data.
@@ -399,7 +399,7 @@ class Protocol extends Protocol_Base {
 		$entry['filesize'] = $wp_filesystem->size( $entry['tmp-file'] );
 
 		// set the mime type.
-		$mime_type            = wp_check_filetype( $entry['title'] );
+		$mime_type          = wp_check_filetype( $entry['title'] );
 		$entry['mime-type'] = $mime_type['type'];
 
 		// return the entry.

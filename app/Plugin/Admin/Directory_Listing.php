@@ -316,6 +316,8 @@ class Directory_Listing {
 	private function get_translations(): array {
 		$translations = array(
 			'is_loading'                    => __( 'Directory is loading', 'external-files-in-media-library' ),
+			'cancel'                        => __( 'Cancel', 'external-files-in-media-library' ),
+			'please_wait'                   => __( 'Cancel loading, please wait', 'external-files-in-media-library' ),
 			'loading_directory'             => __( 'one sub-directory do load', 'external-files-in-media-library' ),
 			/* translators: %1$d will be replaced by a number. */
 			'loading_directories'           => __( '%1$d sub-directories do load', 'external-files-in-media-library' ),

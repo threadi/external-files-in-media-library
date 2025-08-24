@@ -160,7 +160,7 @@ class Uninstall {
 			'eml_schedules',
 			'eml_woocommerce',
 			'eml_woocommerce_login',
-			'eml_woocommerce_password'
+			'eml_woocommerce_password',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );
