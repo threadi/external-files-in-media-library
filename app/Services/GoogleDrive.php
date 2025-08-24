@@ -130,6 +130,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		add_filter( 'eml_prevent_import', array( $this, 'check_url' ), 10, 2 );
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
 		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
+		add_filter( 'efml_directory_listing_before_tree_building', array( $this, 'filter_on_directory_request' ), 10, 3 );
 	}
 
 	/**
@@ -745,9 +746,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// collect the request query.
 		$query = array(
-			'fields'   => 'files(capabilities(canEdit,canRename,canDelete,canShare,canTrash,canMoveItemWithinDrive),description,fileExtension,iconLink,id,driveId,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,ownedByMe,parents,size,hasThumbnail,thumbnailLink,trashed,videoMediaMetadata(height,width,durationMillis),webContentLink,webViewLink,exportLinks,permissions(id,type,role,domain),copyRequiresWriterPermission,shortcutDetails,resourceKey),nextPageToken',
+			'fields'   => 'files(fileExtension,iconLink,id,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,parents,size,hasThumbnail,thumbnailLink),nextPageToken',
 			'pageSize' => 1000,
-			'orderBy'  => 'name_natural',
+			'orderBy'  => 'name_natural'
 		);
 
 		/**
@@ -755,8 +756,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param array $query The list of params.
+		 * @param string $directory The requested directory.
 		 */
-		$query = apply_filters( 'eml_google_drive_query_params', $query );
+		$query = apply_filters( 'eml_google_drive_query_params', $query, $directory );
 
 		// get the files.
 		try {
@@ -924,7 +926,11 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "google-drive", actualDirectoryPath, "", "", "" );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
+				),
+				array(
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, "", "", "" );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -1168,5 +1174,51 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
+	}
+
+	/**
+	 * Return only the requested directory.
+	 *
+	 * @param array<string,mixed> $listing The resulting list.
+	 * @param string              $url The called URL.
+	 * @param string              $service The used service.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function filter_on_directory_request( array $listing, string $url, string $service ): array {
+		// bail if this is not our service.
+		if ( $this->get_name() !== $service ) {
+			return $listing;
+		}
+
+		// bail if this is not a specific directory.
+		if( false !== stripos( $url, $this->get_directory() ) ) {
+			return $listing;
+		}
+
+		// bail if requested directory is not in list.
+		if( empty( $listing[ $url ] ) ) {
+			return array();
+		}
+
+		// only return the list of dirs and files for the requested URL.
+		return array(
+			$url => array(
+				'title' => $url,
+				'files' => $listing[ $url ]['files'],
+				'dirs'  => $listing[ $url ]['dirs'],
+			),
+		);
+	}
+
+	/**
+	 * Return the Google Drive specific URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	public function get_url( string $url ): string {
+		return $this->get_url_mark() . $url;
 	}
 }

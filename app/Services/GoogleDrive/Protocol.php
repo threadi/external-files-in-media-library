@@ -130,63 +130,56 @@ class Protocol extends Protocol_Base {
 		// connect to Google Drive.
 		$service = new Drive( $client );
 
-		// get the file.
+		// get the file or directory.
 		try {
-			$response  = $service->files->get( $file_id, array( 'alt' => 'media' ) );
-			$file_data = $service->files->get( $file_id, array( 'fields' => 'createdTime,name' ) );
+			// get directory data.
+			if( str_ends_with( $file_id, '/' ) ) {
+				// get complete directory.
+				$directories = GoogleDrive::get_instance()->get_directory_listing( $file_id );
+
+				// collect the results.
+				$results = array();
+
+				// loop through the result to get the requested directory with its files.
+				foreach( $directories as $directory => $settings ) {
+					// bail if directory does not match and if it is not the main directory.
+					if( $directory !== $file_id && false === stripos( $file_id, GoogleDrive::get_instance()->get_directory() ) ) {
+						continue;
+					}
+
+					// add the files.
+					foreach( $settings['files'] as $file ) {
+						// get the file data.
+						$entry = $this->get_file_data( $service, $file['file'] );
+
+						// bail if entry is empty.
+						if( empty( $entry ) ) {
+							continue;
+						}
+
+						// add file to the list.
+						$results[] = $entry;
+					}
+				}
+
+				// return the resulting list of files to import.
+				return $results;
+			}
+
+			// get the single file data.
+			$entry = $this->get_file_data( $service, $file_id );
+
+			// return the resulting array as list of files (although it is only one).
+			return array(
+				$entry
+			);
 		} catch ( Exception $e ) {
 			// log event.
 			Log::get_instance()->create( __( 'Google Drive client could not download the requested file! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() ), 'error' );
 
+			// return an empty list as we could not analyse the file.
 			return array();
 		}
-
-		// initialize basic array for file data.
-		$results = array(
-			'title'         => $file_data->getName(),
-			'local'         => true,
-			'url'           => $this->get_url(),
-			'last-modified' => absint( strtotime( $file_data->getCreatedTime() ) ),
-		);
-
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// set the file as tmp-file for import.
-		$results['tmp-file'] = wp_tempnam();
-
-		// and save the file there.
-		try {
-			$wp_filesystem->put_contents( $results['tmp-file'], $response->getBody()->getContents() );
-		} catch ( Error $e ) {
-			// create the error entry.
-			$error_obj = new Url_Result();
-			/* translators: %1$s will be replaced by a URL. */
-			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
-			$error_obj->set_url( $this->get_url() );
-			$error_obj->set_error( true );
-
-			// add the error object to the list of errors.
-			Results::get_instance()->add( $error_obj );
-
-			// add log entry.
-			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
-
-			// do nothing more.
-			return array();
-		}
-
-		// set the file size.
-		$results['filesize'] = $wp_filesystem->size( $results['tmp-file'] );
-
-		// set the mime type.
-		$mime_type            = wp_check_filetype( $results['title'] );
-		$results['mime-type'] = $mime_type['type'];
-
-		// return the resulting array as list of files (although it is only one).
-		return array(
-			$results,
-		);
 	}
 
 	/**
@@ -351,5 +344,65 @@ class Protocol extends Protocol_Base {
 
 		// return resulting list of files.
 		return $list;
+	}
+
+	/**
+	 * Return the data-array for a single file from Google Drive.
+	 *
+	 * @param Drive  $service The Drive object.
+	 * @param string $file_id The requested file ID.
+	 *
+	 * @return array
+	 * @throws Exception
+	 */
+	private function get_file_data( Drive $service, string $file_id ): array {
+		// get file data.
+		$response  = $service->files->get( $file_id, array( 'alt' => 'media' ) );
+		$file_data = $service->files->get( $file_id, array( 'fields' => 'createdTime,name' ) );
+
+		// initialize basic array for file data.
+		$entry = array(
+			'title'         => $file_data->getName(),
+			'local'         => true,
+			'url'           => GoogleDrive::get_instance()->get_url_mark() . $file_id,
+			'last-modified' => absint( strtotime( $file_data->getCreatedTime() ) ),
+		);
+
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// set the file as tmp-file for import.
+		$entry['tmp-file'] = wp_tempnam();
+
+		// and save the file there.
+		try {
+			$wp_filesystem->put_contents( $entry['tmp-file'], $response->getBody()->getContents() );
+		} catch ( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
+
+			// do nothing more.
+			return array();
+		}
+
+		// set the file size.
+		$entry['filesize'] = $wp_filesystem->size( $entry['tmp-file'] );
+
+		// set the mime type.
+		$mime_type            = wp_check_filetype( $entry['title'] );
+		$entry['mime-type'] = $mime_type['type'];
+
+		// return the entry.
+		return $entry;
 	}
 }
