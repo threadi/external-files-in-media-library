@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
 
@@ -108,6 +109,9 @@ class S3 extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_aws_s3' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -121,9 +125,6 @@ class S3 extends Directory_Listing_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
-
-		// misc.
-		add_action( 'init', array( $this, 'init_aws_s3' ), 20 );
 	}
 
 	/**
@@ -481,6 +482,11 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_aws_s3(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -512,7 +518,7 @@ class S3 extends Directory_Listing_Base implements Service {
 		$setting = $settings_obj->add_setting( 'eml_s3_region' );
 		$setting->set_section( $section );
 		$setting->set_type( 'string' );
-		$setting->set_default( 'eu-central-1' );
+		$setting->set_default( $this->get_mapping_region() );
 		$field = new Select();
 		$field->set_title( __( 'Choose your region', 'external-files-in-media-library' ) );
 		$field->set_options( $this->get_regions() );
@@ -543,6 +549,14 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return array<string,string>
 	 */
 	private function get_regions(): array {
+		// get cached value.
+		$list = get_transient( 'eml_aws_s3_regions' );
+
+		// use them if they are set.
+		if ( ! empty( $list ) && is_array( $list ) ) {
+			return $list;
+		}
+
 		// get all partitions from AWS S3 SDK.
 		$partitions = EndpointDefinitionProvider::getPartitions();
 
@@ -563,6 +577,45 @@ class S3 extends Directory_Listing_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,string> $list List of regions.
 		 */
-		return apply_filters( 'efml_service_s3_regions', $list );
+		$list = apply_filters( 'efml_service_s3_regions', $list );
+
+		// save the list in cache.
+		set_transient( 'eml_aws_s3_regions', $list, WEEK_IN_SECONDS );
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Try to map the region according to the used WordPress language.
+	 *
+	 * @return string
+	 */
+	private function get_mapping_region(): string {
+		// get actual language.
+		$language = Languages::get_instance()->get_current_lang();
+
+		// use eu-central-1 for german.
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'eu-central-1';
+		}
+
+		// return 'eu-south-2' for spain.
+		if ( 'es' === $language ) {
+			return 'eu-south-2';
+		}
+
+		// return 'ap-northeast-1' for japanese.
+		if ( 'ja' === $language ) {
+			return 'ap-northeast-1';
+		}
+
+		// return 'il-central-1' for hebrew.
+		if ( 'he' === $language ) {
+			return 'il-central-1';
+		}
+
+		// return "aws-global" for all others.
+		return 'aws-global';
 	}
 }

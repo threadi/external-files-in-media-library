@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Mul
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use WP_Role;
 use WP_User;
@@ -185,6 +186,14 @@ class Roles {
 			return;
 		}
 
+		// get sync settings object.
+		$sync_settings = $settings_obj->get_setting( 'eml_sync' );
+
+		// bail if section could not be found.
+		if ( ! $sync_settings instanceof Setting ) {
+			return;
+		}
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_allow_roles' );
 		$setting->set_section( $sync_settings_section );
@@ -195,6 +204,7 @@ class Roles {
 		$field->set_title( __( 'Allow synchronisation', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to synchronize files from external sources.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
+		$field->add_depend( $sync_settings, 1 );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 	}

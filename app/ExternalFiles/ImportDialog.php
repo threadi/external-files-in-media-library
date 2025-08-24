@@ -105,7 +105,7 @@ class ImportDialog {
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'eml efml-import-dialog',
-			'callback' => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
+			'callback'  => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
 			'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 			'texts'     => array(),
 			'buttons'   => array(
@@ -485,8 +485,8 @@ class ImportDialog {
 
 		// add our setting.
 		$settings['no_privacy_hint'] = array(
-			'label'       => __( 'Hide privacy hint', 'external-files-in-media-library' ),
-			'description' => __( 'If enabled the privacy hint in the dialog will be hidden.', 'external-files-in-media-library' ),
+			'label'       => __( 'Hide copyright hint', 'external-files-in-media-library' ),
+			'description' => __( 'If enabled the copyright hint in the dialog will be hidden.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
 

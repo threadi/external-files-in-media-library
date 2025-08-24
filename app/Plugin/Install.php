@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
  * Object which handles the installation of this plugin.
@@ -66,6 +67,15 @@ class Install {
 		// initialize database-table for logs.
 		Log::get_instance()->install();
 
+		// initialize services.
+		Services::get_instance()->init_services();
+		Services::get_instance()->init_settings();
+
+		/**
+		 * Run the global init to initialize all components.
+		 */
+		do_action( 'init' );
+
 		// install settings.
 		Settings::get_instance()->activation();
 
@@ -89,24 +99,24 @@ class Install {
 		$message = sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
 
 		// add button for intro, if not already closed.
-		if( ! Intro::get_instance()->is_closed() ) {
+		if ( ! Intro::get_instance()->is_closed() ) {
 			$message .= '<a href="#" class="button button-primary efml-intro-start">' . __( 'Show me how it works', 'external-files-in-media-library' ) . '</a>';
 		}
 
 		// add button to go to "add new files".
-		$url = add_query_arg(
+		$url      = add_query_arg(
 			array(
-				'action' => 'efml_hide_welcome',
+				'action'  => 'efml_hide_welcome',
 				'forward' => urlencode( Helper::get_add_media_url() ),
 			),
 			get_admin_url() . 'admin.php'
 		);
 		$message .= '<a href="' . esc_url( $url ) . '" class="button button-primary">' . __( 'Add your first external file', 'external-files-in-media-library' ) . '</a>';
 
-		// add button to just hide this message and forward to media library
-		$url = add_query_arg(
+		// add button to just hide this message and forward to media library.
+		$url      = add_query_arg(
 			array(
-				'action' => 'efml_hide_welcome',
+				'action'  => 'efml_hide_welcome',
 				'forward' => urlencode( Helper::get_media_library_url() ),
 			),
 			get_admin_url() . 'admin.php'
@@ -115,12 +125,26 @@ class Install {
 
 		// trigger a welcome message.
 		$transients_obj = Transients::get_instance();
-		$transient_obj = $transients_obj->add();
+		$transient_obj  = $transients_obj->add();
 		$transient_obj->set_dismissible_days( 2 );
 		$transient_obj->set_name( 'eml_welcome' );
 		$transient_obj->set_message( $message );
 		$transient_obj->set_type( 'success' );
+		$transient_obj->set_prioritized( true );
 		$transient_obj->save();
+
+		// add info about enabled complete logging if development mode is enabled.
+		if( Helper::is_development_mode() ) {
+			// trigger a welcome message.
+			$transients_obj = Transients::get_instance();
+			$transient_obj  = $transients_obj->add();
+			$transient_obj->set_dismissible_days( 2 );
+			$transient_obj->set_name( 'eml_welcome' );
+			$transient_obj->set_message( sprintf( __( 'Logging of events is set to "all" as this project is running in development mode. You can change this setting <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_advanced' ) ) );
+			$transient_obj->set_type( 'success' );
+			$transient_obj->set_prioritized( true );
+			$transient_obj->save();
+		}
 	}
 
 	/**

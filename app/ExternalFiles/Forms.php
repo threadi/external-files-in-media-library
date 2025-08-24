@@ -201,7 +201,7 @@ class Forms {
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 				/* source of file: https://pixabay.com */
-				'success_sound_file'            => Helper::get_plugin_url() . 'gfx/success.mp3'
+				'success_sound_file'            => Helper::get_plugin_url() . 'gfx/success.mp3',
 			)
 		);
 	}
@@ -575,7 +575,7 @@ class Forms {
 			$dialog = array(
 				'detail' => array(
 					'className' => 'eml',
-					'callback' => 'document.dispatchEvent(new Event("efml-import-finished"));',
+					'callback'  => 'document.dispatchEvent(new Event("efml-import-finished"));',
 					'title'     => __( 'Import has been executed', 'external-files-in-media-library' ),
 					'texts'     => array( $text ),
 					'buttons'   => array(
@@ -944,7 +944,7 @@ class Forms {
 	 */
 	public function add_sound( string $classes ): string {
 		// bail if setting is not enabled.
-		if( 1 !== absint( get_option( 'eml_play_sound' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_play_sound' ) ) ) {
 			return $classes;
 		}
 

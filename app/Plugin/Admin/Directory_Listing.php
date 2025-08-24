@@ -403,7 +403,7 @@ class Directory_Listing {
 			),
 			'aws_s3_api'                    => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
-				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you are using. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
+				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you want to use. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
 				'access_key'       => array(
 					'label' => __( 'Access Key', 'external-files-in-media-library' ),
 				),

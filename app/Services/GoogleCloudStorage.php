@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use Error;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Textarea;
@@ -25,6 +24,7 @@ use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Google\Cloud\Storage\StorageClient;
+use Error;
 use WP_Error;
 
 /**
@@ -106,6 +106,9 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_google_cloud_storage' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -113,9 +116,6 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 
 		// set title.
 		$this->title = __( 'Choose file(s) from your Google Cloud Storage', 'external-files-in-media-library' );
-
-		// use hooks.
-		add_action( 'init', array( $this, 'init_google_cloud_storage' ), 20 );
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
@@ -128,6 +128,11 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_google_cloud_storage(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -255,10 +260,19 @@ class GoogleCloudStorage extends Directory_Listing_Base implements Service {
 		}
 
 		// decode the string.
-		json_decode( $json, true );
+		$array = json_decode( $json, true );
 
 		// bail on error.
 		if ( json_last_error() !== JSON_ERROR_NONE ) {
+			// show error.
+			add_settings_error( 'eml_google_cloud_storage_json', 'eml_google_cloud_storage_json', __( '<strong>Given JSON is not valid!</strong> Please use the JSON given to you by Google Cloud.', 'external-files-in-media-library' ) );
+
+			// return empty string.
+			return '';
+		}
+
+		// bail if necessary data for Google Cloud Storage are not included in the array.
+		if ( ! isset( $array['type'] ) ) {
 			// show error.
 			add_settings_error( 'eml_google_cloud_storage_json', 'eml_google_cloud_storage_json', __( '<strong>Given JSON is not valid!</strong> Please use the JSON given to you by Google Cloud.', 'external-files-in-media-library' ) );
 

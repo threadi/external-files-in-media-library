@@ -108,6 +108,9 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_google_drive' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -117,7 +120,6 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$this->title = __( 'Choose file(s) from your Google Drive', 'external-files-in-media-library' );
 
 		// use hooks.
-		add_action( 'init', array( $this, 'init_google_drive' ), 20 );
 		add_filter( 'query_vars', array( $this, 'set_query_vars' ) );
 		add_action( 'admin_action_eml_google_drive_init', array( $this, 'initiate_connection' ) );
 		add_action( 'admin_action_eml_google_drive_disconnect', array( $this, 'disconnect' ) );
@@ -136,6 +138,11 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_google_drive(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// add the endpoint for Google OAuth.
 		add_rewrite_rule( $this->get_oauth_slug() . '?$', 'index.php?' . $this->get_oauth_slug() . '=1', 'top' );
 
@@ -272,6 +279,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$field = new Checkbox();
 		$field->set_title( __( 'Show shared files', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
 
 		// add setting to show also trashed files.
@@ -282,6 +290,7 @@ class GoogleDrive extends Directory_Listing_Base implements Service {
 		$field = new Checkbox();
 		$field->set_title( __( 'Show trashed files', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
 	}
 

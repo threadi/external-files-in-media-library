@@ -334,7 +334,6 @@ class Settings {
 			)
 		);
 
-
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_tab_main );
@@ -524,7 +523,7 @@ class Settings {
 		}
 
 		// set capabilities.
-		Roles::get_instance()->set( $values );
+		Roles::get_instance()->set( $values, EFML_CAP_NAME );
 
 		// return given value.
 		return $values;

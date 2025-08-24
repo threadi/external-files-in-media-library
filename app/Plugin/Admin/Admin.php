@@ -476,7 +476,7 @@ class Admin {
 
 		// get URL from request.
 		$url = filter_input( INPUT_GET, 'forward', FILTER_SANITIZE_URL );
-		if( is_null( $url ) ) {
+		if ( is_null( $url ) ) {
 			$url = (string) wp_get_referer();
 		}
 

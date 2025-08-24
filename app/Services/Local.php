@@ -90,13 +90,13 @@ class Local implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_local' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_import' ) ) {
 			return;
 		}
-
-		// add settings.
-		add_action( 'init', array( $this, 'init_local' ), 20 );
 
 		// use our own hooks.
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
@@ -109,6 +109,11 @@ class Local implements Service {
 	 * @return void
 	 */
 	public function init_local(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_import' ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -142,8 +147,8 @@ class Local implements Service {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox();
-		$field->set_title( __( 'Load upload-directory', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'If enabled the local service will also load the upload directory. This might result in long loading times.', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Load WordPress upload directory', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled the local service will also load the WordPress upload directory. This might result in long loading times.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 	}
 

@@ -107,6 +107,9 @@ class DropBox extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_drop_box' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -116,7 +119,6 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$this->title = __( 'Choose file(s) from your DropBox', 'external-files-in-media-library' );
 
 		// use hooks.
-		add_action( 'init', array( $this, 'init_drop_box' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_js_admin' ) );
 		add_action( 'wp_ajax_efml_add_access_token', array( $this, 'add_access_token' ), 10, 0 );
 		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token' ), 10, 0 );
@@ -143,6 +145,11 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_drop_box(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 

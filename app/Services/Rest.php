@@ -104,6 +104,9 @@ class Rest extends Directory_Listing_Base implements Service {
 	public function init(): void {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_rest' ), 20 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -111,9 +114,6 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// set title.
 		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
-
-		// use hooks.
-		add_action( 'init', array( $this, 'init_rest' ), 20 );
 
 		// use our own hooks.
 		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
@@ -129,6 +129,11 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_rest(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
