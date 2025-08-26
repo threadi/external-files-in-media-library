@@ -185,6 +185,11 @@ class Service_Base extends Directory_Listing_Base {
 				// get actual value.
 				$value = Crypt::get_instance()->decrypt( get_user_meta( $user_id, 'efml_' . $name, true ) );
 
+				// if no value is set, use the default value, if set.
+				if ( empty( $value ) && ! empty( $setting['default'] ) ) {
+					$value = $setting['default'];
+				}
+
 				// output.
 				?>
 				<tr>
@@ -193,16 +198,16 @@ class Service_Base extends Directory_Listing_Base {
 						<?php
 						switch ( $setting['field'] ) {
 							case 'checkbox':
-								echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . '>';
+								echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . ( ! empty( $setting['readonly'] ) ? ' disabled="disabled"' : '' ) . '>';
 								break;
 							case 'textarea':
-								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '">' . esc_attr( $value ) . '</textarea>';
+								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>' . esc_attr( $value ) . '</textarea>';
 								break;
 							case 'text':
-								echo '<input type="text" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '">';
+								echo '<input type="text" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
 								break;
 							case 'select':
-								echo '<select id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '">';
+								echo '<select id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
 								foreach ( $setting['options'] as $key => $label ) {
 									echo '<option value="' . esc_attr( $key ) . '"' . ( $key === $value ? ' selected="selected"' : '' ) . '>' . esc_html( $label ) . '</option>';
 								}
@@ -273,7 +278,7 @@ class Service_Base extends Directory_Listing_Base {
 			}
 
 			// save the value in DB.
-			update_user_meta( $user_id, 'efml_' . $name, Crypt::get_instance()->encrypt( (string)$value ) );
+			update_user_meta( $user_id, 'efml_' . $name, Crypt::get_instance()->encrypt( (string) $value ) );
 		}
 	}
 

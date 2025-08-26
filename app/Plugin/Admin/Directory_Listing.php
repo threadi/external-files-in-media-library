@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
@@ -206,7 +207,12 @@ class Directory_Listing {
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo wp_kses_post( sprintf( __( 'Missing an external source like Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum</a>', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+							echo wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo ... ? Ask in our <a href="%1$s" target="_blank">supportforum</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+						if ( current_user_can( 'manage_options' ) ) {
+							?>
+									<br><br><a href="<?php echo esc_url( Settings::get_instance()->get_url() ); ?>" title="<?php echo esc_attr__( 'Go to settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+								<?php
+						}
 						?>
 					</li>
 				</ul>

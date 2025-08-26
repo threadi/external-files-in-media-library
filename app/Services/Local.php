@@ -139,7 +139,7 @@ class Local implements Service {
 
 		// add section for file statistics.
 		$section = $tab->add_section( 'section_local_main', 10 );
-		$section->set_title( __( 'Settings for local', 'external-files-in-media-library' ) );
+		$section->set_title( __( 'Settings for access to local hosting', 'external-files-in-media-library' ) );
 
 		// add setting to enable the uploads-loading.
 		$setting = $settings_obj->add_setting( 'eml_local_load_upload_dir' );

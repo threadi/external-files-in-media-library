@@ -180,7 +180,7 @@ class GoogleDrive extends Service_Base implements Service {
 		}
 
 		// add setting for button to connect.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_drive_connector' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -1247,6 +1247,7 @@ class GoogleDrive extends Service_Base implements Service {
 		}
 
 		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'GoogleDrive', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
 		<?php
 
 		// get the actual access token.
@@ -1267,6 +1268,10 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// show settings table.
 		$this->get_user_settings_table( absint( $user->ID ) );
+
+		?>
+		</div>
+		<?php
 	}
 
 	/**
@@ -1351,12 +1356,14 @@ class GoogleDrive extends Service_Base implements Service {
 	protected function get_user_settings(): array {
 		$list = array(
 			'google_drive_show_shared'  => array(
-				'label' => __( 'Show shared files', 'external-files-in-media-library' ),
-				'field' => 'checkbox',
+				'label'    => __( 'Show shared files', 'external-files-in-media-library' ),
+				'field'    => 'checkbox',
+				'readonly' => $this->is_disabled(),
 			),
 			'google_drive_show_trashed' => array(
-				'label' => __( 'Show trashed files', 'external-files-in-media-library' ),
-				'field' => 'checkbox',
+				'label'    => __( 'Show trashed files', 'external-files-in-media-library' ),
+				'field'    => 'checkbox',
+				'readonly' => $this->is_disabled(),
 			),
 		);
 

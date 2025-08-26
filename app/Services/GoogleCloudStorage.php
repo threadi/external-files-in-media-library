@@ -170,7 +170,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		}
 
 		// add setting for insert-field.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_cloud_storage_json' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -695,10 +695,15 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		}
 
 		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'Google Cloud Storage', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
 		<?php
 
 		// show settings table.
 		$this->get_user_settings_table( absint( $user->ID ) );
+
+		?>
+		</div>
+		<?php
 	}
 
 	/**

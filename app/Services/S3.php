@@ -546,7 +546,7 @@ class S3 extends Service_Base implements Service {
 		}
 
 		// add setting for region.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_s3_region' );
 			$setting->set_section( $section );
 			$setting->set_type( 'string' );
@@ -666,10 +666,15 @@ class S3 extends Service_Base implements Service {
 		}
 
 		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'AWS S3', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
 		<?php
 
 		// show settings table.
 		$this->get_user_settings_table( absint( $user->ID ) );
+
+		?>
+		</div>
+		<?php
 	}
 
 	/**
@@ -683,6 +688,7 @@ class S3 extends Service_Base implements Service {
 				'label'   => __( 'Choose your region', 'external-files-in-media-library' ),
 				'field'   => 'select',
 				'options' => $this->get_regions(),
+				'default' => $this->get_mapping_region(),
 			),
 		);
 

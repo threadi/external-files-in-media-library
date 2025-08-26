@@ -179,7 +179,7 @@ class DropBox extends Service_Base implements Service {
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
 		// add setting for button to connect.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_dropbox_connector' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -823,7 +823,7 @@ class DropBox extends Service_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( $this->get_config_url() ) ) );
 
 			// add error.
 			$this->add_error( $error );
@@ -844,7 +844,7 @@ class DropBox extends Service_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( $this->get_config_url() ) ) );
 
 			// add error.
 			$this->add_error( $error );
@@ -880,7 +880,9 @@ class DropBox extends Service_Base implements Service {
 			return;
 		}
 
-		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'Dropbox', 'external-files-in-media-library' ); ?></h3>
+		?>
+		<h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'Dropbox', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
 		<?php
 
 		// get the actual access token.
@@ -898,6 +900,9 @@ class DropBox extends Service_Base implements Service {
 			<p><?php echo wp_kses_post( $this->get_connect_info() ); ?></p>
 			<?php
 		}
+		?>
+		</div>
+		<?php
 	}
 
 	/**

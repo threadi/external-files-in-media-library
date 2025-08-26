@@ -24,4 +24,20 @@
 		repeatCount="indefinite"
 		begin="0.3"/>
   </circle>
+    <circle fill="#111" stroke="none" cx="66" cy="50" r="6">
+    <animate
+            attributeName="opacity"
+            dur="1s"
+            values="0;1;0"
+            repeatCount="indefinite"
+            begin="0.4"/>
+  </circle>
+    <circle fill="#111" stroke="none" cx="86" cy="50" r="6">
+    <animate
+            attributeName="opacity"
+            dur="1s"
+            values="0;1;0"
+            repeatCount="indefinite"
+            begin="0.5"/>
+  </circle>
 </svg>

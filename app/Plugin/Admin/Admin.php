@@ -437,7 +437,7 @@ class Admin {
 		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if this is not the listing or our page.
-		if ( 'efml_local_directories' !== $page && Taxonomy::get_instance()->get_name() !== $post_type ) {
+		if ( 'efml_local_directories' !== $page && 'eml_settings' !== $page && Taxonomy::get_instance()->get_name() !== $post_type ) {
 			return $content;
 		}
 
