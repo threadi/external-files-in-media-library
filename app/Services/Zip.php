@@ -84,6 +84,10 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
+		// use parent initialization.
+		parent::init();
+
+		// use our own hooks.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
 		// bail if user has no capability for this service.

@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -22,7 +21,7 @@ use WP_Image_Editor;
 /**
  * Object to handle support for FTP-based directory listing.
  */
-class Ftp extends Directory_Listing_Base implements Service {
+class Ftp extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -43,6 +42,13 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @var bool
 	 */
 	protected bool $requires_login = true;
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	protected string $settings_sub_tab = 'eml_ftp';
 
 	/**
 	 * Instance of actual object.
@@ -89,7 +95,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -101,18 +108,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**

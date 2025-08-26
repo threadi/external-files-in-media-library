@@ -83,6 +83,8 @@
 - Enabled search field for URLs in logs
 - External sources are now saved user-specific
   -> only administrators see all entries
+  -> advanced option allows to show all entries for alle users
+- Settings for most services are now saved on user and not global, but can be set to global
 
 ### Fixed
 

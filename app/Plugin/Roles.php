@@ -202,7 +202,7 @@ class Roles {
 		$setting->set_save_callback( array( $this, 'save_capabilities_for_sync' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Allow synchronisation', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select the roles that should be allowed to synchronize files from external sources.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Choose the roles that should be allowed to synchronize files from external sources.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$field->add_depend( $sync_settings, 1 );
 		$setting->set_field( $field );

@@ -13,9 +13,12 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -23,11 +26,12 @@ use Sabre\DAV\Client;
 use Sabre\HTTP\ClientHttpException;
 use Error;
 use WP_Error;
+use WP_User;
 
 /**
  * Object to handle support for this platform.
  */
-class WebDav extends Directory_Listing_Base implements Service {
+class WebDav extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -54,14 +58,7 @@ class WebDav extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'services';
-
-	/**
-	 * Slug of settings tab.
-	 *
-	 * @var string
-	 */
-	private string $settings_sub_tab = 'eml_webdav';
+	protected string $settings_sub_tab = 'eml_webdav';
 
 	/**
 	 * Instance of actual object.
@@ -108,10 +105,11 @@ class WebDav extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
 
 		// add settings.
-		add_action( 'init', array( $this, 'init_webdav' ), 20 );
+		add_action( 'init', array( $this, 'init_webdav' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -126,6 +124,9 @@ class WebDav extends Directory_Listing_Base implements Service {
 		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_service_webdav_client', array( $this, 'ignore_self_signed_ssl' ) );
 		add_filter( 'efml_service_webdav_path', array( $this, 'set_path' ), 10, 2 );
+
+		// use hooks.
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
 	}
 
 	/**
@@ -159,32 +160,55 @@ class WebDav extends Directory_Listing_Base implements Service {
 		}
 
 		// add new tab for settings.
-		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 100 );
-		$tab->set_title( __( 'WebDAV', 'external-files-in-media-library' ) );
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_webdav_main', 20 );
-		$section->set_title( __( 'Settings for WebDAV', 'external-files-in-media-library' ) );
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
+
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_webdav_path' );
-		$setting->set_section( $section );
-		$setting->set_type( 'string' );
-		$setting->set_default( '/remote.php/dav/files/' );
-		$field = new Text();
-		$field->set_title( __( 'Path', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is "/remote.php/dav/files/".', 'external-files-in-media-library' ) );
-		$setting->set_field( $field );
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_webdav_path' );
+			$setting->set_section( $section );
+			$setting->set_type( 'string' );
+			$setting->set_default( '/remote.php/dav/files/' );
+			$field = new Text();
+			$field->set_title( __( 'Path', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is "/remote.php/dav/files/".', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
 
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_webdav_ignore_ssl' );
-		$setting->set_section( $section );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
-		$field = new Checkbox();
-		$field->set_title( __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ) );
-		$setting->set_field( $field );
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_webdav_ignore_ssl' );
+			$setting->set_section( $section );
+			$setting->set_type( 'integer' );
+			$setting->set_default( 0 );
+			$field = new Checkbox();
+			$field->set_title( __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+		}
+
+		// show hint for user settings.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_webdav_credential_location_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo();
+			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$setting->set_field( $field );
+		}
 	}
 
 	/**
@@ -200,18 +224,6 @@ class WebDav extends Directory_Listing_Base implements Service {
 
 		// return the resulting list.
 		return $protocols;
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**
@@ -418,24 +430,6 @@ class WebDav extends Directory_Listing_Base implements Service {
 	}
 
 	/**
-	 * Return the settings slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_tab_slug(): string {
-		return $this->settings_tab;
-	}
-
-	/**
-	 * Return the settings sub tab slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_subtab_slug(): string {
-		return $this->settings_sub_tab;
-	}
-
-	/**
 	 * Ignore self-signed SSL-certificates for a WebDAV-connection.
 	 *
 	 * @param Client $client The client object.
@@ -626,5 +620,58 @@ class WebDav extends Directory_Listing_Base implements Service {
 
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
+	}
+
+	/**
+	 * Show option to connect to DropBox on user profile.
+	 *
+	 * @param WP_User $user The WP_User object for the actual user.
+	 *
+	 * @return void
+	 */
+	public function add_user_settings( WP_User $user ): void {
+		// bail if settings are not user-specific.
+		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return;
+		}
+
+		// bail if customization for this user is not allowed.
+		if ( ! ImportDialog::get_instance()->is_customization_allowed() ) {
+			return;
+		}
+
+		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'WebDav', 'external-files-in-media-library' ); ?></h3>
+		<?php
+
+		// show settings table.
+		$this->get_user_settings_table( absint( $user->ID ) );
+	}
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	protected function get_user_settings(): array {
+		$list = array(
+			'webdav_path'       => array(
+				'label'       => __( 'Path', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'description' => __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is "/remote.php/dav/files/".', 'external-files-in-media-library' ),
+			),
+			'webdav_ignore_ssl' => array(
+				'label'       => __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ),
+				'field'       => 'checkbox',
+				'description' => __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ),
+			),
+		);
+
+		/**
+		 * Filter the list of possible user settings for Google Drive.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<string,mixed> $list The list of settings.
+		 */
+		return apply_filters( 'eml_service_webdav_user_settings', $list );
 	}
 }

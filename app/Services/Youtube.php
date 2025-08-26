@@ -23,7 +23,7 @@ use WP_Error;
 /**
  * Object to handle support for this video plattform.
  */
-class Youtube extends Directory_Listing_Base implements Service {
+class Youtube extends Service_Base implements Service {
 
 	/**
 	 * The object name.
@@ -59,6 +59,13 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 * @var string
 	 */
 	private string $channel_url = 'https://www.youtube.com/channel/';
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	protected string $settings_sub_tab = 'eml_youtube';
 
 	/**
 	 * Instance of actual object.
@@ -105,7 +112,8 @@ class Youtube extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -129,18 +137,6 @@ class Youtube extends Directory_Listing_Base implements Service {
 		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**
