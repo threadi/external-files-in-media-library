@@ -310,10 +310,18 @@ class GoogleDrive extends Service_Base implements Service {
 			}
 
 			// get the value.
-			$access_token = get_user_meta( $user->ID, 'eml_google_drive_access_tokens', true );
+			$access_token_json = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_google_drive_access_tokens', true ) );
 
-			// return empty array, if it is not an array.
-			if ( ! is_array( $access_token ) ) {
+			// bail if string is empty.
+			if( empty( $access_token_json ) ) {
+				return array();
+			}
+
+			// convert JSON to array.
+			$access_token = json_decode( $access_token_json, true );
+
+			// bail if token is not an array.
+			if( ! is_array( $access_token ) ) {
 				return array();
 			}
 
@@ -366,7 +374,7 @@ class GoogleDrive extends Service_Base implements Service {
 			Log::get_instance()->create( sprintf( __( 'New Google Drive access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 			// save the token.
-			update_user_meta( $user_id, 'eml_google_drive_access_tokens', $access_token );
+			update_user_meta( $user_id, 'efml_google_drive_access_tokens', Crypt::get_instance()->encrypt( wp_json_encode( $access_token ) ) );
 		}
 	}
 
@@ -392,7 +400,7 @@ class GoogleDrive extends Service_Base implements Service {
 			$user_id = $user->ID;
 
 			// clear the user meta.
-			delete_user_meta( $user_id, 'eml_google_drive_access_tokens' );
+			delete_user_meta( $user_id, 'efml_google_drive_access_tokens' );
 		}
 
 		// return true as token has been removed.

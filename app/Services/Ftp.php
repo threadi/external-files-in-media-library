@@ -180,6 +180,9 @@ class Ftp extends Service_Base implements Service {
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
@@ -256,6 +259,9 @@ class Ftp extends Service_Base implements Service {
 									}
 								}
 							}
+
+							// delete the tmp file.
+							$wp_filesystem->delete( $filename );
 						}
 					}
 				}

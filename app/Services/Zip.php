@@ -449,12 +449,16 @@ class Zip extends Directory_Listing_Base implements Service {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get tmp file name.
+		$tmp_file_name = wp_tempnam();
+
 		// set the file as tmp-file for import.
-		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
 		// and save the file there.
 		try {
 			$wp_filesystem->put_contents( $tmp_file, $file_content );
+			$wp_filesystem->delete( $tmp_file_name );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();

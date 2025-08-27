@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use GuzzleHttp\Exception\ClientException;
@@ -387,7 +388,7 @@ class DropBox extends Service_Base implements Service {
 			}
 
 			// get and return the value.
-			return get_user_meta( $user->ID, 'eml_dropbox_access_tokens', true );
+			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
 		}
 
 		// return nothing.
@@ -435,7 +436,7 @@ class DropBox extends Service_Base implements Service {
 			Log::get_instance()->create( sprintf( __( 'New DropBox access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 			// save the token.
-			update_user_meta( $user_id, 'eml_dropbox_access_tokens', $access_token );
+			update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( $access_token ) );
 		}
 	}
 
@@ -461,7 +462,7 @@ class DropBox extends Service_Base implements Service {
 			$user_id = $user->ID;
 
 			// clear the user meta.
-			delete_user_meta( $user_id, 'eml_dropbox_access_tokens' );
+			delete_user_meta( $user_id, 'efml_dropbox_access_tokens' );
 		}
 
 		// return true as token has been removed.
@@ -611,6 +612,9 @@ class DropBox extends Service_Base implements Service {
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// add the entries to the list.
 		foreach ( $entries['entries'] as $dropbox_entry ) {
 			// collect the entry.
@@ -670,6 +674,9 @@ class DropBox extends Service_Base implements Service {
 										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 									}
 								}
+
+								// delete the temp file.
+								$wp_filesystem->delete( $filename );
 							}
 						}
 					} catch ( ClientException $e ) {
@@ -759,12 +766,16 @@ class DropBox extends Service_Base implements Service {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the temp file name.
+		$tmp_file_name = wp_tempnam();
+
 		// set the file as tmp-file for import.
-		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.jpg' );
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.jpg' );
 
 		// and save the file there.
 		try {
 			$wp_filesystem->put_contents( $tmp_file, $content );
+			$wp_filesystem->delete( $tmp_file_name );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();

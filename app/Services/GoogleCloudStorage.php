@@ -117,6 +117,8 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_service_googlecloudstorage_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
+		add_filter( 'efml_directory_listing', array( $this, 'cleanup_on_rest' ), 10, 3 );
+		add_action( 'eml_before_file_list', array( $this, 'cleanup_after_import' ) );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -283,7 +285,27 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	private function get_authentication_json(): string {
-		return (string) get_option( 'eml_google_cloud_storage_json' );
+		// get from global setting, if this is enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return (string) get_option( 'eml_google_cloud_storage_json' );
+		}
+
+		// get user-specific setting, if this is enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+
+			// get the value.
+			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_google_cloud_storage_json', true ) );
+		}
+
+		// return nothing.
+		return '';
 	}
 
 	/**
@@ -292,7 +314,27 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_bucket_name(): string {
-		return (string) get_option( 'eml_google_cloud_storage_bucket' );
+		// get from global setting, if this is enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return (string) get_option( 'eml_google_cloud_storage_bucket' );
+		}
+
+		// get user-specific setting, if this is enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+
+			// return the value.
+			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_google_cloud_storage_bucket', true ) );
+		}
+
+		// return nothing.
+		return '';
 	}
 
 	/**
@@ -606,7 +648,6 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		try {
 			// save the tmp-file.
-			// TODO auch wieder löschen!
 			$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
 		} catch ( Error $e ) {
 			// create the error entry.
@@ -733,5 +774,56 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @param array<string,mixed> $list The list of settings.
 		 */
 		return apply_filters( 'eml_serice_google_cloud_user_settings', $list );
+	}
+
+	/**
+	 * Cleanup after tree has been build.
+	 *
+	 * @param array<string,mixed>  $tree The tree.
+	 * @param string $directory The requested directory.
+	 * @param string $name The used service name.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function cleanup_on_rest( array $tree, string $directory, string $name ): array {
+		// bail if this is not our service.
+		if( $name !== $this->get_name() ) {
+			return $tree;
+		}
+
+		// get the env var.
+		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
+
+		// bail if path is not set.
+		if( empty( $path ) ) {
+			return $tree;
+		}
+
+		// delete the file.
+		$wp_filesystem = Helper::get_wp_filesystem();
+		$wp_filesystem->delete( $path );
+
+		// return tree.
+		return $tree;
+	}
+
+	/**
+	 * Cleanup after import of file from Google Cloud Storage.
+	 *
+	 * @return void
+	 */
+	public function cleanup_after_import(): void {
+		// get the env var.
+		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
+
+		// bail if path is not set.
+		if( empty( $path ) ) {
+			return;
+		}
+
+		// delete the file.
+		$wp_filesystem = Helper::get_wp_filesystem();
+		$wp_filesystem->delete( $path );
 	}
 }

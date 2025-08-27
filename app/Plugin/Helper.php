@@ -146,7 +146,7 @@ class Helper {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = self::get_wp_filesystem( 'local' );
+		$wp_filesystem = self::get_wp_filesystem();
 		$wp_filesystem->delete( $dir );
 	}
 

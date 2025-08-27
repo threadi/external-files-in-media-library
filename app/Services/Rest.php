@@ -451,6 +451,9 @@ class Rest extends Service_Base implements Service {
 		// get the content.
 		$body = wp_remote_retrieve_body( $response );
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// decode the JSON.
 		try {
 			$files = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
@@ -518,6 +521,9 @@ class Rest extends Service_Base implements Service {
 								$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 							}
 						}
+
+						// delete tmp file.
+						$wp_filesystem->delete( $filename );
 					}
 				}
 

@@ -326,7 +326,7 @@ class Import extends Directory_Listing_Base {
 				// delete the tmp file (if media_handle_sideload() does not have it already done).
 				if ( is_string( $file_data['tmp-file'] ) && file_exists( $file_data['tmp-file'] ) ) {
 					// get WP Filesystem-handler.
-					$wp_filesystem = Helper::get_wp_filesystem( 'local' );
+					$wp_filesystem = Helper::get_wp_filesystem();
 					$wp_filesystem->delete( $file_data['tmp-file'] );
 
 					// log this event.
