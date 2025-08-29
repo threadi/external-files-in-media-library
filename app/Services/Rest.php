@@ -10,10 +10,11 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -28,7 +29,7 @@ use WP_Image_Editor;
 /**
  * Object to handle support for REST-based directory listing.
  */
-class Rest extends Directory_Listing_Base implements Service {
+class Rest extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -48,14 +49,14 @@ class Rest extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'services';
+	protected string $settings_sub_tab = 'eml_rest';
 
 	/**
-	 * Slug of settings tab.
+	 * Marker that this service does not use any credentials.
 	 *
-	 * @var string
+	 * @var bool
 	 */
-	private string $settings_sub_tab = 'eml_rest';
+	protected bool $no_credentials = true;
 
 	/**
 	 * Instance of actual object.
@@ -102,7 +103,11 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
+
+		// add settings.
+		add_action( 'init', array( $this, 'init_rest' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -111,9 +116,6 @@ class Rest extends Directory_Listing_Base implements Service {
 
 		// set title.
 		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
-
-		// use hooks.
-		add_action( 'init', array( $this, 'init_rest' ), 20 );
 
 		// use our own hooks.
 		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
@@ -129,6 +131,11 @@ class Rest extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_rest(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -149,34 +156,50 @@ class Rest extends Directory_Listing_Base implements Service {
 		}
 
 		// add new tab for settings.
-		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
-		$tab->set_title( __( 'WordPress REST API', 'external-files-in-media-library' ) );
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_rest_main', 10 );
-		$section->set_title( __( 'Settings for WordPress REST API', 'external-files-in-media-library' ) );
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
+
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_rest_limit' );
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
-		$setting->set_default( 100 );
+		$setting->set_default( 5 );
 		$field = new Number();
 		$field->set_title( __( 'Limit per request', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the number of files requested per request. The higher the number, the higher the probability of timeouts during retrieval. The number is limited to a maximum of 100 by WordPress itself.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
-	}
 
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_rest_max_requests' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 100 );
+		$field = new Number();
+		$field->set_title( __( 'Max requests', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Sets the number of requests. The higher the number, the longer it will take to retrieve large media databases via REST API.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_rest_search' );
+		$setting->set_section( $section );
+		$setting->set_type( 'string' );
+		$setting->set_default( '' );
+		$field = new Text();
+		$field->set_title( __( 'Search', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'When set, the REST API searches for this string. This allows you to filter for specific file names, for example.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -307,22 +330,41 @@ class Rest extends Directory_Listing_Base implements Service {
 				return array();
 			}
 
+			// get the max pages from settings.
+			$max_pages = absint( get_option( 'eml_rest_max_requests' ) );
+
 			// get the max pages from header from response.
-			$max_pages = absint( wp_remote_retrieve_header( $response, 'x-wp-totalpages' ) );
+			$max_pages_external = absint( wp_remote_retrieve_header( $response, 'x-wp-totalpages' ) );
+
+			// use the lower value.
+			if ( $max_pages_external <= $max_pages ) {
+				$max_pages = $max_pages_external;
+			}
 
 			// if no max pages could be loaded, set it to 1 as we won't get endless loops.
 			if ( 0 === $max_pages ) {
 				$max_pages = 1;
 			}
 
+			// create the main query.
+			$query = array(
+				'per_page' => $this->get_page_limit(),
+			);
+
+			// add search if set.
+			$search = get_option( 'eml_rest_search' );
+			if ( ! empty( $search ) ) {
+				$query['search'] = $search;
+			}
+
 			// add the pagination URLs to the list as directories.
-			for ( $p = 1; $p < $max_pages; $p++ ) {
+			for ( $p = 1; $p <= $max_pages; $p++ ) {
+				// add the actual page to the query.
+				$query['page'] = $p;
+
 				// extend the given URL.
 				$url = add_query_arg(
-					array(
-						'page'     => $p,
-						'per_page' => $this->get_page_limit(),
-					),
+					$query,
 					$url_to_use
 				);
 
@@ -409,6 +451,9 @@ class Rest extends Directory_Listing_Base implements Service {
 		// get the content.
 		$body = wp_remote_retrieve_body( $response );
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// decode the JSON.
 		try {
 			$files = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
@@ -476,6 +521,9 @@ class Rest extends Directory_Listing_Base implements Service {
 								$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 							}
 						}
+
+						// delete tmp file.
+						$wp_filesystem->delete( $filename );
 					}
 				}
 
@@ -540,6 +588,10 @@ class Rest extends Directory_Listing_Base implements Service {
 		return array_merge(
 			parent::get_global_actions(),
 			array(
+				array(
+					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
+					'label'  => __( 'Settings', 'external-files-in-media-library' ),
+				),
 				array(
 					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
@@ -1082,24 +1134,6 @@ class Rest extends Directory_Listing_Base implements Service {
 	 */
 	private function get_page_limit(): int {
 		return absint( get_option( 'eml_rest_limit' ) );
-	}
-
-	/**
-	 * Return the settings slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_tab_slug(): string {
-		return $this->settings_tab;
-	}
-
-	/**
-	 * Return the settings sub tab slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_subtab_slug(): string {
-		return $this->settings_sub_tab;
 	}
 
 	/**

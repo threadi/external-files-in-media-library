@@ -105,7 +105,7 @@ class ImportDialog {
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'eml efml-import-dialog',
-			'callback' => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
+			'callback'  => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
 			'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
 			'texts'     => array(),
 			'buttons'   => array(
@@ -325,40 +325,42 @@ class ImportDialog {
 
 		?>
 		<h2 id="efml-settings"><?php echo esc_html__( 'Settings for External files in media library', 'external-files-in-media-library' ); ?></h2>
-		<p><?php echo esc_html__( 'These are the default values for the options for importing external URLs. They only apply to your WordPress account.', 'external-files-in-media-library' ); ?></p>
-		<table class="form-table" role="presentation">
-			<?php
-			foreach ( $settings as $name => $setting ) {
-				// get actual value.
-				$value = get_user_meta( $user->ID, 'efml_' . $name, true );
+		<div class="efml-user-settings">
+			<p><?php echo esc_html__( 'These are the default values for the options for importing external URLs. They only apply to your WordPress account.', 'external-files-in-media-library' ); ?></p>
+			<table class="form-table" role="presentation">
+				<?php
+				foreach ( $settings as $name => $setting ) {
+					// get actual value.
+					$value = get_user_meta( $user->ID, 'efml_' . $name, true );
 
-				// output.
-				?>
-						<tr>
-							<th scope="row"><label for="efml_<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $setting['label'] ); ?></label></th>
-							<td>
-							<?php
-							switch ( $setting['field'] ) {
-								case 'checkbox':
-									echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . '>';
-									break;
-								default:
-									break;
-							}
+					// output.
+					?>
+							<tr>
+								<th scope="row"><label for="efml_<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $setting['label'] ); ?></label></th>
+								<td>
+								<?php
+								switch ( $setting['field'] ) {
+									case 'checkbox':
+										echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . '>';
+										break;
+									default:
+										break;
+								}
 
-							// show description for this field, if given.
-							if ( isset( $setting['description'] ) ) {
+								// show description for this field, if given.
+								if ( isset( $setting['description'] ) ) {
+									?>
+										<p><?php echo esc_html( $setting['description'] ); ?></p>
+										<?php
+								}
 								?>
-									<p><?php echo esc_html( $setting['description'] ); ?></p>
-									<?php
-							}
-							?>
-							</td>
-						</tr>
-					<?php
-			}
-			?>
-		</table>
+								</td>
+							</tr>
+						<?php
+				}
+				?>
+			</table>
+		</div>
 		<?php
 	}
 
@@ -485,8 +487,8 @@ class ImportDialog {
 
 		// add our setting.
 		$settings['no_privacy_hint'] = array(
-			'label'       => __( 'Hide privacy hint', 'external-files-in-media-library' ),
-			'description' => __( 'If enabled the privacy hint in the dialog will be hidden.', 'external-files-in-media-library' ),
+			'label'       => __( 'Hide copyright hint', 'external-files-in-media-library' ),
+			'description' => __( 'If enabled the copyright hint in the dialog will be hidden.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
 

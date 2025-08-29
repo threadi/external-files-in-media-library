@@ -10,10 +10,10 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
@@ -22,7 +22,7 @@ use WP_Image_Editor;
 /**
  * Object to handle support for FTP-based directory listing.
  */
-class Ftp extends Directory_Listing_Base implements Service {
+class Ftp extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -43,6 +43,13 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @var bool
 	 */
 	protected bool $requires_login = true;
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	protected string $settings_sub_tab = 'eml_ftp';
 
 	/**
 	 * Instance of actual object.
@@ -89,7 +96,8 @@ class Ftp extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -101,18 +109,6 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**
@@ -133,6 +129,15 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// bail if the detected protocol handler is not FTP.
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more
 			return array();
 		}
 
@@ -145,14 +150,46 @@ class Ftp extends Directory_Listing_Base implements Service {
 
 		// bail if connection is not an FTP-object.
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more.
 			return array();
 		}
 
-		// get the staring directory.
+		// bail if absolute path could not be loaded.
+		if( ! is_string( $ftp_connection->abspath() ) ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more.
+			return array();
+		}
+
+		// get the starting directory.
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if scheme or host is not found in directory URL.
 		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more
 			return array();
 		}
 
@@ -184,6 +221,9 @@ class Ftp extends Directory_Listing_Base implements Service {
 		$upload_dir_data = wp_get_upload_dir();
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
+
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
@@ -261,6 +301,9 @@ class Ftp extends Directory_Listing_Base implements Service {
 									}
 								}
 							}
+
+							// delete the tmp file.
+							$wp_filesystem->delete( $filename );
 						}
 					}
 				}

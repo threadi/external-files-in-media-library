@@ -24,7 +24,7 @@ use WP_User_Query;
 class Helper {
 
 	/**
-	 * Get plugin dir of this plugin.
+	 * Get plugin dir of this plugin with trailing slash.
 	 *
 	 * @return string
 	 */
@@ -33,7 +33,7 @@ class Helper {
 	}
 
 	/**
-	 * Get plugin URL of this plugin.
+	 * Get plugin URL of this plugin with trailing slash.
 	 *
 	 * @return string
 	 */
@@ -146,7 +146,7 @@ class Helper {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = self::get_wp_filesystem( 'local' );
+		$wp_filesystem = self::get_wp_filesystem();
 		$wp_filesystem->delete( $dir );
 	}
 

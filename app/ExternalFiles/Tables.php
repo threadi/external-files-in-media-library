@@ -372,8 +372,8 @@ class Tables {
 			return;
 		}
 
-		// bail if the user has the administrator role.
-		if ( Helper::has_current_user_role( 'administrator' ) ) {
+		// bail if the user has the administrator role OR setting to show all is enabled.
+		if ( Helper::has_current_user_role( 'administrator' ) || 1 === absint( get_option( 'eml_show_all_external_sources' ) ) ) {
 			return;
 		}
 

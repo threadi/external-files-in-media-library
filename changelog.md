@@ -46,6 +46,7 @@
 - Added support for plugin "WP Extra File Types" to enabled additional possible file types to use as external files
 - Added option to load upload directory via local service
 - Added option to use our plugin name in each HTTP-header User Agent (default enabled)
+- Added success sound after import has been run (can be disabled)
 
 ### Changed
 
@@ -82,6 +83,8 @@
 - Enabled search field for URLs in logs
 - External sources are now saved user-specific
   -> only administrators see all entries
+  -> advanced option allows to show all entries for alle users
+- Settings for most services are now saved on user and not global, but can be set to global
 
 ### Fixed
 

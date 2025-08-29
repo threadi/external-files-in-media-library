@@ -322,6 +322,32 @@ class Settings {
 		);
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_show_all_external_sources' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Show all external sources', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled all saved external sources from each user will be visible to each other user. If disabled only administrators see all saved external sources.', 'external-files-in-media-library' ),
+			)
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_play_sound' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Play sound', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled a sound is played if an import is finished.', 'external-files-in-media-library' ),
+			)
+		);
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'integer' );
@@ -510,7 +536,7 @@ class Settings {
 		}
 
 		// set capabilities.
-		Roles::get_instance()->set( $values );
+		Roles::get_instance()->set( $values, EFML_CAP_NAME );
 
 		// return given value.
 		return $values;

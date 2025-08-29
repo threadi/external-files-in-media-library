@@ -90,6 +90,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'check_fs_method' ) );
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
+		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
 
 		// misc.
@@ -436,7 +437,7 @@ class Admin {
 		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if this is not the listing or our page.
-		if ( 'efml_local_directories' !== $page && Taxonomy::get_instance()->get_name() !== $post_type ) {
+		if ( 'efml_local_directories' !== $page && 'eml_settings' !== $page && Taxonomy::get_instance()->get_name() !== $post_type ) {
 			return $content;
 		}
 
@@ -459,5 +460,27 @@ class Admin {
 		$transients_obj->set_template( 'grouped.php' );
 		$transients_obj->set_display_method( 'grouped' );
 		$transients_obj->init();
+	}
+
+	/**
+	 * Hide welcome hint by request and forward user to target.
+	 *
+	 * Hint: we do not use a nonce here as this might also result from installing via WP CLI,
+	 * which as no WP-user env.
+	 *
+	 * @return void
+	 */
+	public function hide_welcome_by_request(): void {
+		// hide the welcome hint.
+		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
+
+		// get URL from request.
+		$url = filter_input( INPUT_GET, 'forward', FILTER_SANITIZE_URL );
+		if ( is_null( $url ) ) {
+			$url = (string) wp_get_referer();
+		}
+
+		// redirect the user.
+		wp_safe_redirect( $url );
 	}
 }

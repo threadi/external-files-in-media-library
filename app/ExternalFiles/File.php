@@ -1017,7 +1017,7 @@ class File {
 		}
 
 		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem( 'local' );
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the image meta data.
 		$image_meta_data = wp_get_attachment_metadata( $this->get_id(), true );

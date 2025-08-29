@@ -346,7 +346,11 @@ body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is
 	text-align: center;
 }
 
-body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading:after {
+body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading p {
+	margin: 0;
+}
+
+body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading p:first-child:after {
 	background-image: url(/wp-content/plugins/external-files-in-media-library/gfx/loading.svg);
 	content: "";
 	display: block;
@@ -440,4 +444,17 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hint {
 	flex-basis: 100%;
 	font-size: 1.2em;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hint span:before {
+	font-size: 1em;
+}
+
+#attachment_external_file a[target="_blank"]:after, body.settings_page_eml_settings a[target="_blank"]:after, .efml-user-settings a[target="_blank"]:after {
+	content: "\f504";
+	display: inline-block;
+	font-family: "dashicons", sans-serif;
+	font-size: .9em;
+	margin-left: 4px;
+	vertical-align: middle;
 }

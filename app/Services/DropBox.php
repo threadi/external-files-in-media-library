@@ -10,16 +10,19 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Init;
 use Error;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use GuzzleHttp\Exception\ClientException;
@@ -31,7 +34,7 @@ use WP_User;
 /**
  * Object to handle support for this platform.
  */
-class DropBox extends Directory_Listing_Base implements Service {
+class DropBox extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -51,14 +54,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'services';
-
-	/**
-	 * Slug of settings tab.
-	 *
-	 * @var string
-	 */
-	private string $settings_sub_tab = 'eml_dropbox';
+	protected string $settings_sub_tab = 'eml_dropbox';
 
 	/**
 	 * Instance of actual object.
@@ -105,7 +101,11 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
+
+		// add settings.
+		add_action( 'init', array( $this, 'init_drop_box' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -116,25 +116,13 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$this->title = __( 'Choose file(s) from your DropBox', 'external-files-in-media-library' );
 
 		// use hooks.
-		add_action( 'init', array( $this, 'init_drop_box' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_js_admin' ) );
-		add_action( 'wp_ajax_efml_add_access_token', array( $this, 'add_access_token' ), 10, 0 );
-		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token' ), 10, 0 );
+		add_action( 'wp_ajax_efml_add_access_token', array( $this, 'add_access_token_by_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token_by_ajax' ), 10, 0 );
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ), 10, 0 );
 
 		// use our own hooks.
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**
@@ -143,6 +131,11 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_drop_box(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -162,108 +155,74 @@ class DropBox extends Directory_Listing_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
-		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
-		$tab->set_title( __( 'DropBox', 'external-files-in-media-library' ) );
-		$tab->set_hide_save( true );
+		// get tab for settings.
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_dropbox_main', 10 );
-		$section->set_title( __( 'Settings for DropBox', 'external-files-in-media-library' ) );
+		$section = $tab->get_section( 'section_dropbox_main' );
 
-		// add invisible setting for access token.
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
+
+		// add invisible setting for access token global.
 		$setting = $settings_obj->add_setting( 'eml_dropbox_access_tokens' );
 		$setting->set_section( $section );
-		$setting->set_type( 'array' );
-		$setting->set_default( array() );
+		$setting->set_type( 'string' );
+		$setting->set_default( '' );
 		$setting->prevent_export( true );
-		$setting->set_show_in_rest( false );
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
 		// add setting for button to connect.
-		$setting = $settings_obj->add_setting( 'eml_dropbox_connector' );
-		$setting->set_section( $section );
-		$setting->set_autoload( false );
-		$setting->prevent_export( true );
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_dropbox_connector' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->prevent_export( true );
 
-		// get the access token of the actual user.
-		$access_token = $this->get_access_token();
+			// get the access token of the actual user.
+			$access_token = $this->get_access_token();
 
-		// show connect button if no token is set.
-		if ( empty( $access_token ) ) {
-			// create dialog.
-			$dialog = array(
-				'title'   => __( 'Connect DropBox', 'external-files-in-media-library' ),
-				'texts'   => array(
-					'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
-					'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value=""></div>',
-				),
-				'buttons' => array(
-					array(
-						'action'  => 'efml_dropbox_connect();',
-						'variant' => 'primary',
-						'text'    => __( 'Connect now', 'external-files-in-media-library' ),
-					),
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'secondary',
-						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-					),
-				),
-			);
+			// show connect button if no token is set.
+			if ( empty( $access_token ) ) {
+				// create dialog.
+				$dialog = $this->get_connect_dialog();
 
-			$field = new Button();
-			$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
-			$field->set_button_title( __( 'Connect now', 'external-files-in-media-library' ) );
-			$field->set_description( $this->get_help() );
-		} else {
-			// create dialog.
-			$dialog = array(
-				'title'   => __( 'Disconnect DropBox', 'external-files-in-media-library' ),
-				'texts'   => array(
-					'<p><strong>' . __( 'Click on the button below to disconnect your DropBox from your website.', 'external-files-in-media-library' ) . '</strong></p>',
-					'<p>' . __( 'Files you downloaded in the media library will still be there and usable.', 'external-files-in-media-library' ) . '</p>',
-				),
-				'buttons' => array(
-					array(
-						'action'  => 'efml_dropbox_disconnect();',
-						'variant' => 'primary',
-						'text'    => __( 'Disconnect now', 'external-files-in-media-library' ),
-					),
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'secondary',
-						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-					),
-				),
-			);
+				$field = new Button();
+				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
+				$field->set_button_title( __( 'Connect now', 'external-files-in-media-library' ) );
+				$field->set_description( $this->get_help() );
+			} else {
+				// create dialog.
+				$dialog = $this->get_disconnect_dialog();
 
-			$field = new Button();
-			$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
-			$field->set_button_title( __( 'Disconnect', 'external-files-in-media-library' ) );
-			$field->set_description( $this->get_connect_info() );
+				$field = new Button();
+				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
+				$field->set_button_title( __( 'Disconnect', 'external-files-in-media-library' ) );
+				$field->set_description( $this->get_connect_info() );
+			}
+			$field->add_class( 'easy-dialog-for-wordpress' );
+			$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
+			$setting->set_field( $field );
 		}
-		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
-		$setting->set_field( $field );
-	}
 
-	/**
-	 * Return the settings slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_tab_slug(): string {
-		return $this->settings_tab;
-	}
-
-	/**
-	 * Return the settings sub tab slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_subtab_slug(): string {
-		return $this->settings_sub_tab;
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_dropbox_credential_location_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo();
+			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$setting->set_field( $field );
+		}
 	}
 
 	/**
@@ -290,18 +249,31 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return '<a class="connect button button-secondary" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
+		// get the URL where the setting can be found.
+		$url = get_admin_url() . 'profile.php#efml-' . $this->get_name();
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// bail if user has no capability to load the global settings.
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return '';
+			}
+
+			// get the URL for the global settings.
+			$url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+		}
+
+		// return the description with link to settings.
+		return '<a class="connect button button-secondary" href="' . esc_url( $url ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
 	}
 
 	/**
 	 * Preserve the tokens value.
 	 *
-	 * @param array<string,mixed>|null $new_value The new value.
-	 * @param array<string,mixed>      $old_value The old value.
+	 * @param string|null $new_value The new value.
+	 * @param string      $old_value The old value.
 	 *
-	 * @return array<string,mixed>
+	 * @return string
 	 */
-	public function preserve_tokens_value( array|null $new_value, array $old_value ): array {
+	public function preserve_tokens_value( string|null $new_value, string $old_value ): string {
 		// if new value is null use the old value.
 		if ( is_null( $new_value ) ) {
 			return $old_value;
@@ -321,7 +293,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		wp_enqueue_script(
 			'eml-admin-dropbox',
 			plugins_url( '/admin/dropbox.js', EFML_PLUGIN ),
-			array( 'jquery' ),
+			array( 'jquery', 'eml-admin' ),
 			(string) filemtime( Helper::get_plugin_dir() . '/admin/dropbox.js' ),
 			true
 		);
@@ -343,7 +315,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 *
 	 * @return void
 	 */
-	public function add_access_token(): void {
+	public function add_access_token_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-dropbox-save-access-token', 'nonce' );
 
@@ -400,33 +372,31 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_access_token(): string {
-		// get all access tokens.
-		$access_tokens = get_option( 'eml_dropbox_access_tokens', array() );
-
-		// bail if no token are set.
-		if ( empty( $access_tokens ) ) {
-			return '';
+		// get it global, if this is enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return (string) get_option( 'eml_dropbox_access_tokens', '' );
 		}
 
-		// get current user.
-		$user = wp_get_current_user();
+		// save it user-specific, if this is enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
 
-		// bail if user is not available.
-		if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-			return '';
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+
+			// get and return the value.
+			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
 		}
 
-		// bail if no token for actual user is set.
-		if ( empty( $access_tokens[ $user->ID ] ) ) {
-			return '';
-		}
-
-		// return the access token for this user.
-		return $access_tokens[ $user->ID ];
+		// return nothing.
+		return '';
 	}
 
 	/**
-	 * Set the access token for the actual WordPress user.
+	 * Set the access token depending on actual setting.
 	 *
 	 * @param string $access_token The access token.
 	 * @param int    $user_id The user id (optional).
@@ -434,68 +404,66 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function set_access_token( string $access_token, int $user_id = 0 ): void {
-		// get actual access token list.
-		$access_tokens = get_option( 'eml_dropbox_access_tokens', array() );
+		// save it global, if this is enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'New DropBox access token saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
-		// if list is not an array, create one.
-		if ( ! is_array( $access_tokens ) ) {
-			$access_tokens = array();
+			// save the updated token.
+			update_option( 'eml_dropbox_access_tokens', $access_token );
 		}
 
-		// get the user_id from session if it is not set.
-		if ( 0 === $user_id ) {
-			// get the user.
-			$user = wp_get_current_user();
-			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-				return;
+		// save it user-specific, if this is enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get the user_id from session if it is not set.
+			if ( 0 === $user_id ) {
+				// get the user.
+				$user = wp_get_current_user();
+				if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+					return;
+				}
+				$user_id = $user->ID;
+			} else {
+				// get the user object.
+				$user = get_user_by( 'id', $user_id );
+				if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+					return;
+				}
 			}
-			$user_id = $user->ID;
-		} else {
-			// get the user object.
-			$user = get_user_by( 'id', $user_id );
-			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
-				return;
-			}
+
+			// log event.
+			/* translators: %1$s will be replaced by the username. */
+			Log::get_instance()->create( sprintf( __( 'New DropBox access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
+
+			// save the token.
+			update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( $access_token ) );
 		}
-
-		// add this token.
-		$access_tokens[ $user_id ] = $access_token;
-
-		// log event.
-		/* translators: %1$s will be replaced by the username. */
-		Log::get_instance()->create( sprintf( __( 'New DropBox access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
-
-		// save the updated token list.
-		update_option( 'eml_dropbox_access_tokens', $access_tokens );
 	}
 
 	/**
-	 * Delete the access token for the actual WordPress user.
+	 * Delete the access token.
 	 *
 	 * @return bool
 	 */
 	public function delete_access_token(): bool {
-		// get actual access token list.
-		$access_tokens = get_option( 'eml_dropbox_access_tokens' );
-
-		// get current user.
-		$user = wp_get_current_user();
-
-		// bail if user is not available.
-		if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-			return false;
+		// save it global, if this is enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// clear the global list.
+			update_option( 'eml_dropbox_access_tokens', '' );
 		}
 
-		// bail if user does not have a token.
-		if ( empty( $access_tokens[ $user->ID ] ) ) {
-			return false;
+		// save it user-specific, if this is enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get the user.
+			$user = wp_get_current_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return false;
+			}
+			$user_id = $user->ID;
+
+			// clear the user meta.
+			delete_user_meta( $user_id, 'efml_dropbox_access_tokens' );
 		}
-
-		// remove the token.
-		unset( $access_tokens[ $user->ID ] );
-
-		// save the updated token list.
-		update_option( 'eml_dropbox_access_tokens', $access_tokens );
 
 		// return true as token has been removed.
 		return true;
@@ -506,7 +474,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 *
 	 * @return void
 	 */
-	public function remove_access_token(): void {
+	public function remove_access_token_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-dropbox-remove-access-token', 'nonce' );
 
@@ -563,7 +531,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL:', 'external-files-in-media-library' ) . ' <code>' . get_option( 'home' ) . '</code></li>';
 		$help .= '<li>' . esc_html__( 'Copy the access token.', 'external-files-in-media-library' ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Click on the button "Connect" above here.', 'external-files-in-media-library' ) . '</li>';
-		$help .= '</ol>';
+		$help .= '</ol><p>';
 		return $help;
 	}
 
@@ -587,7 +555,6 @@ class DropBox extends Directory_Listing_Base implements Service {
 		// bail if account infos are empty.
 		if ( empty( $account_infos ) ) {
 			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';
-
 		}
 
 		// collect the text for return.
@@ -644,6 +611,9 @@ class DropBox extends Directory_Listing_Base implements Service {
 		$upload_dir_data = wp_get_upload_dir();
 		$upload_dir      = trailingslashit( $upload_dir_data['basedir'] ) . 'edlfw/';
 		$upload_url      = trailingslashit( $upload_dir_data['baseurl'] ) . 'edlfw/';
+
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// add the entries to the list.
 		foreach ( $entries['entries'] as $dropbox_entry ) {
@@ -704,6 +674,9 @@ class DropBox extends Directory_Listing_Base implements Service {
 										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 									}
 								}
+
+								// delete the temp file.
+								$wp_filesystem->delete( $filename );
 							}
 						}
 					} catch ( ClientException $e ) {
@@ -793,12 +766,16 @@ class DropBox extends Directory_Listing_Base implements Service {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the temp file name.
+		$tmp_file_name = wp_tempnam();
+
 		// set the file as tmp-file for import.
-		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.jpg' );
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.jpg' );
 
 		// and save the file there.
 		try {
 			$wp_filesystem->put_contents( $tmp_file, $content );
+			$wp_filesystem->delete( $tmp_file_name );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -857,7 +834,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token is not configured. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( $this->get_config_url() ) ) );
 
 			// add error.
 			$this->add_error( $error );
@@ -878,7 +855,7 @@ class DropBox extends Directory_Listing_Base implements Service {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
-			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) ) );
+			$error->add( 'efml_service_dropbox', sprintf( __( 'DropBox access token appears to be no longer valid. Please create a new one and <a href="%1$s">add it here</a>.', 'external-files-in-media-library' ), esc_url( $this->get_config_url() ) ) );
 
 			// add error.
 			$this->add_error( $error );
@@ -897,4 +874,99 @@ class DropBox extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Show option to connect to DropBox on user profile.
+	 *
+	 * @return void
+	 */
+	public function add_user_settings(): void {
+		// bail if settings are not user-specific.
+		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return;
+		}
+
+		// bail if customization for this user is not allowed.
+		if ( ! ImportDialog::get_instance()->is_customization_allowed() ) {
+			return;
+		}
+
+		?>
+		<h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'Dropbox', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
+		<?php
+
+		// get the actual access token.
+		$access_token = $this->get_access_token();
+
+		// if no token is set, show hint.
+		if ( empty( $access_token ) ) {
+			?>
+				<a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="<?php echo esc_attr( Helper::get_json( $this->get_connect_dialog() ) ); ?>"><?php echo esc_html__( 'Connect now', 'external-files-in-media-library' ); ?></a>
+				<p><?php echo wp_kses_post( $this->get_help() ); ?></p>
+			<?php
+		} else {
+			?>
+			<a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="<?php echo esc_attr( Helper::get_json( $this->get_disconnect_dialog() ) ); ?>"><?php echo esc_html__( 'Disconnect', 'external-files-in-media-library' ); ?></a>
+			<p><?php echo wp_kses_post( $this->get_connect_info() ); ?></p>
+			<?php
+		}
+		?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Return the connect dialog.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_connect_dialog(): array {
+		return array(
+			'title'   => __( 'Connect DropBox', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
+				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value=""></div>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'efml_dropbox_connect();',
+					'variant' => 'primary',
+					'text'    => __( 'Connect now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Return disconnect dialog.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_disconnect_dialog(): array {
+		return array(
+			'title'   => __( 'Disconnect DropBox', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Click on the button below to disconnect your DropBox from your website.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'Files you downloaded in the media library will still be there and usable.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'efml_dropbox_disconnect();',
+					'variant' => 'primary',
+					'text'    => __( 'Disconnect now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+	}
 }

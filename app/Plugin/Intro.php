@@ -161,7 +161,7 @@ class Intro {
 			'efml-intro',
 			$url . 'intro.min.js',
 			array(),
-			(string) filemtime( Helper::get_plugin_path() . 'intro.min.js' ),
+			(string) filemtime( $path . 'intro.min.js' ),
 			true
 		);
 
@@ -179,7 +179,7 @@ class Intro {
 			'efml-intro',
 			$url . 'introjs.min.css',
 			array(),
-			(string) filemtime( Helper::get_plugin_path() . 'introjs.min.css' ),
+			(string) filemtime( $path . 'introjs.min.css' ),
 		);
 
 		// embed the CSS-file.
@@ -193,14 +193,14 @@ class Intro {
 		// create URL for add new media file with intro marker.
 		$url_1 = add_query_arg(
 			array(
-				'efml-intro' => 'true'
+				'efml-intro' => 'true',
 			),
 			get_admin_url() . 'media-new.php'
 		);
 
 		// get the example URL.
 		// TODO !!!
-		$url_2 = "https://pdfobject.com/pdf/sample.pdf";
+		$url_2 = 'https://pdfobject.com/pdf/sample.pdf';
 
 		// create the forward URL after end of intro.
 		$url_3 = get_admin_url() . 'media-new.php';
@@ -210,31 +210,33 @@ class Intro {
 			'efml-intro-custom',
 			'efmlIntroJsVars',
 			array(
-				'ajax_url'                     => admin_url( 'admin-ajax.php' ),
-				'intro_closed_nonce'           => wp_create_nonce( 'efml-intro-closed' ),
+				'ajax_url'            => admin_url( 'admin-ajax.php' ),
+				'intro_closed_nonce'  => wp_create_nonce( 'efml-intro-closed' ),
 				'intro_started_nonce' => wp_create_nonce( 'efml-intro-started' ),
-				'button_title_next'            => __( 'Next', 'external-files-in-media-library' ),
-				'button_title_back'            => __( 'Back', 'external-files-in-media-library' ),
-				'button_title_done'            => __( 'Done', 'external-files-in-media-library' ),
-				'url_1' => $url_1,
-				'url_2' => $url_2,
-				'url_3' => $url_3,
-				'delay' => 50,
-				'step_1_title'                 => __( 'Intro', 'external-files-in-media-library' ),
-				'step_1_intro'                 => __( 'Thank you for installing External Files for Media Library. We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
-				'step_2_title'                 => __( 'Start adding URLs', 'external-files-in-media-library' ),
-				'step_2_intro'                 => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait a moment.', 'external-files-in-media-library' ),
-				'step_3_title'                 => __( 'Open import dialog', 'external-files-in-media-library' ),
-				'step_3_intro'                 => __( 'Click here to get the import dialog for external files. We will do this for you now.', 'external-files-in-media-library' ),
-				'step_4_title'                 => __( 'Add your URL', 'external-files-in-media-library' ),
-				'step_4_intro'                 => __( 'Enter the URL of the file you want to import. We will enter an example URL for you now.', 'external-files-in-media-library' ),
-				'step_5_title'                 => __( 'Submit the URL', 'external-files-in-media-library' ),
-				'step_5_intro'                 => __( 'Click to import the URL in your media library. We will to this for you now to demonstrate the function.', 'external-files-in-media-library' ),
-				'step_6_title'                 => __( 'Result of the import', 'external-files-in-media-library' ),
-				'step_6_intro'                 => __( 'The result of the import will be displayed. If successful, you can go directly to the URL(s) in the media database from here. If an error occurs, you will be given information about the reason.', 'external-files-in-media-library' ),
-				'step_7_title'                 => __( 'And now you!', 'external-files-in-media-library' ),
+				'button_title_next'   => __( 'Next', 'external-files-in-media-library' ),
+				'button_title_back'   => __( 'Back', 'external-files-in-media-library' ),
+				'button_title_done'   => __( 'Done', 'external-files-in-media-library' ),
+				'url_1'               => $url_1,
+				'url_2'               => $url_2,
+				'url_3'               => $url_3,
+				'delay'               => 50,
+				'step_1_title'        => __( 'Intro', 'external-files-in-media-library' ),
+				'step_1_intro'        => __( 'Thank you for installing External Files for Media Library. We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
+				'step_2_title'        => __( 'Start adding URLs', 'external-files-in-media-library' ),
+				'step_2_intro'        => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait a moment.', 'external-files-in-media-library' ),
+				'step_3_title'        => __( 'Open import dialog', 'external-files-in-media-library' ),
+				'step_3_intro'        => __( 'Click here to get the import dialog for external files. We will do this for you now.', 'external-files-in-media-library' ),
+				'step_4_title'        => __( 'Add your URL', 'external-files-in-media-library' ),
+				'step_4_intro'        => __( 'Enter the URL of the file you want to import. We will enter an example URL for you now.', 'external-files-in-media-library' ),
+				'step_5a_title'       => __( 'Acknowledge copyright', 'external-files-in-media-library' ),
+				'step_5a_intro'       => __( 'Enable the checkbox to acknowledge the copyright of the external file. We will set if for you now.', 'external-files-in-media-library' ),
+				'step_5b_title'       => __( 'Submit the URL', 'external-files-in-media-library' ),
+				'step_5b_intro'       => __( 'Click to import the URL in your media library. We will to this for you now to demonstrate the function.', 'external-files-in-media-library' ),
+				'step_6_title'        => __( 'Result of the import', 'external-files-in-media-library' ),
+				'step_6_intro'        => __( 'The result of the import will be displayed. If successful, you can go directly to the URL(s) in the media database from here. If an error occurs, you will be given information about the reason.', 'external-files-in-media-library' ),
+				'step_7_title'        => __( 'And now you!', 'external-files-in-media-library' ),
 				/* translators: %1$s and %1$s will be replaced by URLs. */
-				'step_7_intro'                 => sprintf( __( 'Now you can store URLs in your media database yourself. Just follow the steps we just showed you.<br><br>Under Media Library > <a href="%1$s" target="_blank">Add External Files</a>, you can discover many more options for importing files besides specifying their URLs.<br><br>If you have any questions, please feel free to <a href="%2$s" target="_blank">contact the support forum</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url(), Helper::get_plugin_support_url() ),
+				'step_7_intro'        => sprintf( __( 'Now you can store URLs in your media database yourself. Just follow the steps we just showed you.<br><br>Under Media Library > <a href="%1$s" target="_blank">Add External Files</a>, you can discover many more options for importing files besides specifying their URLs.<br><br>If you have any questions, please feel free to <a href="%2$s" target="_blank">contact the support forum</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url(), Helper::get_plugin_support_url() ),
 			)
 		);
 	}
@@ -298,7 +300,7 @@ class Intro {
 		$setting->prevent_export( true );
 		$field = new Button();
 		$field->set_title( __( 'Intro', 'external-files-in-media-library' ) );
-		if( $this->is_closed() ) {
+		if ( $this->is_closed() ) {
 			$field->set_button_title( __( 'Reset to run intro', 'external-files-in-media-library' ) );
 			$field->set_button_url(
 				add_query_arg(
@@ -309,8 +311,7 @@ class Intro {
 					get_admin_url() . 'admin.php'
 				)
 			);
-		}
-		else {
+		} else {
 			$field->set_button_title( __( 'Run intro', 'external-files-in-media-library' ) );
 			$field->add_class( 'efml-intro-start' );
 			$field->set_button_url( '#' );

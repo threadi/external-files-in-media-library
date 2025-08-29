@@ -68,6 +68,11 @@ class Update {
 	 * @return void
 	 */
 	public function run(): void {
+		// bail during uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return;
+		}
+
 		// get installed plugin-version (version of the actual files in this plugin).
 		$installed_plugin_version = EFML_PLUGIN_VERSION;
 
@@ -131,7 +136,7 @@ class Update {
 		}
 
 		// set capabilities.
-		Roles::get_instance()->set( $roles );
+		Roles::get_instance()->set( $roles, EFML_CAP_NAME );
 	}
 
 	/**

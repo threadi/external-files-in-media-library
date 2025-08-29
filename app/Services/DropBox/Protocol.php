@@ -40,7 +40,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not a DropBox URL.
-		if ( ! str_starts_with( $this->get_url(), DropBox::get_instance()->get_name() ) ) {
+		if ( ! str_starts_with( strtolower( $this->get_url() ), DropBox::get_instance()->get_name() ) ) {
 			return false;
 		}
 
@@ -72,7 +72,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.
-		$url = str_replace( DropBox::get_instance()->get_name(), '', $this->get_url() );
+		$url = str_replace( DropBox::get_instance()->get_name(), '', strtolower( $this->get_url() ) );
 
 		// get the client with the given token.
 		$client = new Client( DropBox::get_instance()->get_access_token() );
@@ -104,8 +104,11 @@ class Protocol extends Protocol_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the tmp file name.
+		$tmp_file_name = wp_tempnam();
+
 		// set the file as tmp-file for import.
-		$results['tmp-file'] = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+		$results['tmp-file'] = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
 		// get the file from DropBox.
 		$content = stream_get_contents( $client->download( $url ) );
@@ -118,6 +121,7 @@ class Protocol extends Protocol_Base {
 		// and save this content als tmp-file.
 		try {
 			$wp_filesystem->put_contents( $results['tmp-file'], $content );
+			$wp_filesystem->delete( $tmp_file_name );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();

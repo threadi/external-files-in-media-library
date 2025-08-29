@@ -475,7 +475,7 @@ class Files {
 			<?php
 			if ( ! empty( esc_url( $url ) ) ) {
 				?>
-					<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>"><?php echo esc_html( $url_to_show ); ?></a>
+					<a href="<?php echo esc_url( $url ); ?>" title="<?php echo esc_attr( $url ); ?>" target="_blank"><?php echo esc_html( $url_to_show ); ?></a>
 				<?php
 			} else {
 				echo '<code>' . esc_html( $url ) . '</code>';

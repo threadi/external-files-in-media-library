@@ -15,7 +15,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\S3;
-use WP_Error;
 
 /**
  * Object to handle different protocols.
@@ -88,6 +87,9 @@ class Protocol extends Protocol_Base {
 			// list of files.
 			$file_data = array();
 
+			// get the WP_Filesystem.
+			$wp_filesystem = Helper::get_wp_filesystem();
+
 			// if mime type check results with false values, it is a directory.
 			if ( ! empty( $mime_type ) && false === $mime_type['ext'] ) { // @phpstan-ignore empty.variable
 				// use the directory listing to get the dirs and files.
@@ -135,8 +137,14 @@ class Protocol extends Protocol_Base {
 						// get mime type.
 						$mime_type = wp_check_filetype( $file['title'] );
 
+						// get the tmp file name.
+						$tmp_file_name = wp_tempnam();
+
 						// generate tmp file path.
-						$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+						$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+						// delete the tmp file name.
+						$wp_filesystem->delete( $tmp_file_name );
 
 						// set query for the file and save it in tmp dir.
 						$query = array(
@@ -156,9 +164,14 @@ class Protocol extends Protocol_Base {
 					}
 				}
 			} else {
+				// get tmp file name.
+				$tmp_file_name = wp_tempnam();
 
 				// generate tmp file path.
-				$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $mime_type['ext'] );
+				$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+				// delete the tmp file.
+				$wp_filesystem->delete( $tmp_file_name );
 
 				// set query for the file and save it in tmp dir.
 				$query = array(

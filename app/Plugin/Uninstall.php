@@ -13,8 +13,11 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\Services\Services;
+use ExternalFilesInMediaLibrary\ThirdParty\WooCommerce;
 use WP_User;
 
 /**
@@ -57,12 +60,38 @@ class Uninstall {
 	/**
 	 * Run uninstallation of this plugin.
 	 *
+	 * Hint:
+	 * First set all settings as if the plugin is active.
+	 * Then delete all these settings from DB and disable all.
+	 *
 	 * @return void
 	 */
 	public function run(): void {
 		if ( ! defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			define( 'EFML_DEINSTALLATION_RUNNING', 1 );
 		}
+
+		/**
+		 * Set all settings.
+		 */
+
+		// initialize the plugin.
+		Init::get_instance()->init();
+
+		/**
+		 * Run the global init to initialize all components.
+		 */
+		do_action( 'init' );
+
+		// enable the settings.
+		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
+
+		/**
+		 * Remove them.
+		 */
+
+		// clean managed settings.
+		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();
@@ -114,12 +143,10 @@ class Uninstall {
 				delete_user_meta( $user->ID, 'efml_' . $extension_obj->get_name() );
 			}
 
-			// and also the "hide_dialog" setting.
+			// and also the "hide_dialog" and the copyright setting.
 			delete_user_meta( $user->ID, 'efml_hide_dialog' );
+			delete_user_meta( $user->ID, 'efml_no_privacy_hint' );
 		}
-
-		// run the uninstallation tasks for each file handling extension.
-		Extensions::get_instance()->uninstall();
 
 		// delete options this plugin has used.
 		$options = array(
@@ -130,16 +157,23 @@ class Uninstall {
 			'eml_sync_errors',
 			'eml_transients',
 			'efmlVersion',
+			'eml_schedules',
+			'eml_woocommerce',
+			'eml_woocommerce_login',
+			'eml_woocommerce_password',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );
 		}
 
+		// remove manual transients.
+		delete_transient( 'eml_aws_s3_regions' );
+
 		// remove capability from roles.
 		Roles::get_instance()->uninstall();
 
-		// clean managed settings.
-		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
+		// run the uninstallation tasks for each file handling extension.
+		Extensions::get_instance()->uninstall();
 
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();

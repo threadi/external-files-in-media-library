@@ -91,6 +91,9 @@ class Forms {
 		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
 		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
 		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
+
+		// misc.
+		add_filter( 'admin_body_class', array( $this, 'add_sound' ) );
 	}
 
 	/**
@@ -102,7 +105,7 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php' ), true ) ) {
+		if ( ! in_array( $hook, array( 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php' ), true ) ) {
 			// backend-JS.
 			wp_enqueue_script(
 				'eml-admin',
@@ -197,6 +200,8 @@ class Forms {
 				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
+				/* source of file: https://pixabay.com */
+				'success_sound_file'            => Helper::get_plugin_url() . 'gfx/success.mp3',
 			)
 		);
 	}
@@ -570,7 +575,7 @@ class Forms {
 			$dialog = array(
 				'detail' => array(
 					'className' => 'eml',
-					'callback' => 'document.dispatchEvent(new Event("efml-import-finished"));',
+					'callback'  => 'document.dispatchEvent(new Event("efml-import-finished"));',
 					'title'     => __( 'Import has been executed', 'external-files-in-media-library' ),
 					'texts'     => array( $text ),
 					'buttons'   => array(
@@ -928,5 +933,25 @@ class Forms {
 
 		// add the error object to the list of errors.
 		Results::get_instance()->add( $result_obj );
+	}
+
+	/**
+	 * Enabled to play a sound if import finishes.
+	 *
+	 * @param string $classes List of classes as string.
+	 *
+	 * @return string
+	 */
+	public function add_sound( string $classes ): string {
+		// bail if setting is not enabled.
+		if ( 1 !== absint( get_option( 'eml_play_sound' ) ) ) {
+			return $classes;
+		}
+
+		// add the class.
+		$classes .= ' efml-play-found';
+
+		// return resulting list of classes.
+		return $classes;
 	}
 }

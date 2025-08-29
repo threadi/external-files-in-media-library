@@ -552,11 +552,17 @@ class Ftp extends Protocol_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the tmp file name.
+		$tmp_file_name = wp_tempnam();
+
 		// set the file as tmp-file for import.
-		$tmp_file = str_replace( '.tmp', '', wp_tempnam() . '.' . $file_info['extension'] );
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
 		// get content of the file.
 		$content = $filesystem->get_contents( $file_path );
+
+		// delete the tmp file.
+		$wp_filesystem->delete( $tmp_file_name );
 
 		// bail if no content could be loaded.
 		if ( ! $content ) {

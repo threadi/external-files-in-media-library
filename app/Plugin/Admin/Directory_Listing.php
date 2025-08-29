@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
@@ -206,7 +207,12 @@ class Directory_Listing {
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo wp_kses_post( sprintf( __( 'Missing an external source like Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum</a>', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+							echo wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo ... ? Ask in our <a href="%1$s" target="_blank">supportforum</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+						if ( current_user_can( 'manage_options' ) ) {
+							?>
+									<br><br><a href="<?php echo esc_url( Settings::get_instance()->get_url() ); ?>" title="<?php echo esc_attr__( 'Go to settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+								<?php
+						}
 						?>
 					</li>
 				</ul>
@@ -240,8 +246,8 @@ class Directory_Listing {
 			// get the user_id which saved this entry.
 			$user_id = absint( get_term_meta( $term_id, 'user_id', true ) );
 
-			// bail if ID is set, does not match the actual user and this is not an administrator.
-			if ( $user_id > 0 && get_current_user_id() !== $user_id && ! Helper::has_current_user_role( 'administrator' ) ) {
+			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
+			if ( $user_id > 0 && get_current_user_id() !== $user_id && ! Helper::has_current_user_role( 'administrator' ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
 				$this->show_error( '<p>' . __( 'Access not allowed. This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
 				return;
 			}
@@ -262,27 +268,19 @@ class Directory_Listing {
 			$config['directory'] = $url;
 		}
 
-		// prepare config.
-		$config_json = wp_json_encode( $config );
-
-		// bail if config failed.
-		if ( ! $config_json ) {
-			return;
-		}
-
 		// output.
 		?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
 			<?php
-				// bail if directory is not set on loading a concrete listing.
+			// load nothing if directory is not set on loading a concrete listing.
 			if ( empty( $config['directory'] ) && isset( $config['term'] ) ) {
 				?>
 					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'External source could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
 					<?php
 			} else {
 				?>
-					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $config_json ); ?>"></div>
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config ) ); ?>"></div>
 				<?php
 			}
 			?>
@@ -316,6 +314,8 @@ class Directory_Listing {
 	private function get_translations(): array {
 		$translations = array(
 			'is_loading'                    => __( 'Directory is loading', 'external-files-in-media-library' ),
+			'cancel'                        => __( 'Cancel', 'external-files-in-media-library' ),
+			'please_wait'                   => __( 'Cancel loading, please wait', 'external-files-in-media-library' ),
 			'loading_directory'             => __( 'one sub-directory do load', 'external-files-in-media-library' ),
 			/* translators: %1$d will be replaced by a number. */
 			'loading_directories'           => __( '%1$d sub-directories do load', 'external-files-in-media-library' ),
@@ -403,7 +403,7 @@ class Directory_Listing {
 			),
 			'aws_s3_api'                    => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
-				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you are using. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
+				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you want to use. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
 				'access_key'       => array(
 					'label' => __( 'Access Key', 'external-files-in-media-library' ),
 				),

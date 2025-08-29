@@ -174,19 +174,42 @@ jQuery(document).ready(function($) {
 });
 
 /**
- * Part 4: click on submit.
+ * Part 4: set privacy checkbox and click on submit.
  */
 function efml_intro_part_4() {
-  // create the fourth intro dialog.
-  let intro = efml_intro_object( [
+  let settings = [
+    {
+      element: document.querySelector( '.efml-import-dialog .easy-dialog-for-wordpress-text:has(#privacy_hint)' ),
+      title: efmlIntroJsVars.step_5a_title,
+      intro: efmlIntroJsVars.step_5a_intro,
+    },
+    {
+      element: document.querySelector( '.efml-import-dialog button:first-of-type' ),
+      title: efmlIntroJsVars.step_5b_title,
+      intro: efmlIntroJsVars.step_5b_intro,
+      position: 'top'
+    },
+  ];
+  if( document.querySelector( '.efml-import-dialog .easy-dialog-for-wordpress-text:has(#privacy_hint)' ) === null ) {
+    settings = [
       {
         element: document.querySelector( '.efml-import-dialog button:first-of-type' ),
-        title: efmlIntroJsVars.step_5_title,
-        intro: efmlIntroJsVars.step_5_intro,
+        title: efmlIntroJsVars.step_5b_title,
+        intro: efmlIntroJsVars.step_5b_intro,
         position: 'top'
       },
-    ]
-  );
+    ];
+  }
+
+  // create the fourth intro dialog.
+  let intro = efml_intro_object( settings );
+
+  // open the media library submenu in admin menu left.
+  intro.onbeforechange(function () {
+    if (intro._currentStepSignal.rawVal === 1) {
+      jQuery('#privacy_hint').prop('checked', true);
+    }
+  });
 
   // trigger click on submit button in the import dialog.
   intro.oncomplete(function() {

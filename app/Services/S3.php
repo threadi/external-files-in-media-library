@@ -13,19 +13,23 @@ defined( 'ABSPATH' ) || exit;
 use Aws\EndpointV2\EndpointDefinitionProvider;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
+use WP_User;
 
 /**
  * Object to handle support for AWS S3-based directory listing.
  */
-class S3 extends Directory_Listing_Base implements Service {
+class S3 extends Service_Base implements Service {
 	/**
 	 * The object name.
 	 *
@@ -52,14 +56,7 @@ class S3 extends Directory_Listing_Base implements Service {
 	 *
 	 * @var string
 	 */
-	private string $settings_tab = 'services';
-
-	/**
-	 * Slug of settings tab.
-	 *
-	 * @var string
-	 */
-	private string $settings_sub_tab = 'eml_s3';
+	protected string $settings_sub_tab = 'eml_s3';
 
 	/**
 	 * Instance of actual object.
@@ -106,7 +103,11 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init(): void {
-		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+		// use parent initialization.
+		parent::init();
+
+		// add settings.
+		add_action( 'init', array( $this, 'init_aws_s3' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -116,26 +117,12 @@ class S3 extends Directory_Listing_Base implements Service {
 		// set title.
 		$this->title = __( 'Choose file(s) from your AWS S3 server', 'external-files-in-media-library' );
 
-		// add the directory listing.
-		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
-
 		// use our own hooks.
+		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 
-		// misc.
-		add_action( 'init', array( $this, 'init_aws_s3' ), 20 );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
+		// use hooks.
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
 	}
 
 	/**
@@ -406,13 +393,50 @@ class S3 extends Directory_Listing_Base implements Service {
 		return new S3Client(
 			array(
 				'version'     => 'latest',
-				'region'      => get_option( 'eml_s3_region', 'eu-central-1' ),
+				'region'      => $this->get_region(),
 				'credentials' => array(
 					'key'    => $this->get_login(),
 					'secret' => $this->get_password(),
 				),
 			)
 		);
+	}
+
+	/**
+	 * Return region from settings.
+	 *
+	 * @return string
+	 */
+	private function get_region(): string {
+		// get from global setting, if enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return get_option( 'eml_s3_region', 'eu-central-1' );
+		}
+
+		// get from user setting, if enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+
+			// get the setting.
+			$region = get_user_meta( $user->ID, 'eml_s3_region', true );
+
+			// bail if value is not a string.
+			if ( ! is_string( $region ) ) {
+				return '';
+			}
+
+			// return the region from settings.
+			return $region;
+		}
+
+		// return empty string.
+		return '';
 	}
 
 	/**
@@ -481,6 +505,11 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function init_aws_s3(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
@@ -501,40 +530,45 @@ class S3 extends Directory_Listing_Base implements Service {
 		}
 
 		// add new tab for settings.
-		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 100 );
-		$tab->set_title( __( 'AWS S3', 'external-files-in-media-library' ) );
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
 
 		// add section for file statistics.
-		$section = $tab->add_section( 'section_googledrive_main', 20 );
-		$section->set_title( __( 'Settings for AWS S3', 'external-files-in-media-library' ) );
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
-		// add setting for button to connect.
-		$setting = $settings_obj->add_setting( 'eml_s3_region' );
-		$setting->set_section( $section );
-		$setting->set_type( 'string' );
-		$setting->set_default( 'eu-central-1' );
-		$field = new Select();
-		$field->set_title( __( 'Choose your region', 'external-files-in-media-library' ) );
-		$field->set_options( $this->get_regions() );
-		$setting->set_field( $field );
-	}
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
 
-	/**
-	 * Return the settings slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_tab_slug(): string {
-		return $this->settings_tab;
-	}
+		// add setting for region.
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_s3_region' );
+			$setting->set_section( $section );
+			$setting->set_type( 'string' );
+			$setting->set_default( $this->get_mapping_region() );
+			$field = new Select();
+			$field->set_title( __( 'Choose your region', 'external-files-in-media-library' ) );
+			$field->set_options( $this->get_regions() );
+			$setting->set_field( $field );
+		}
 
-	/**
-	 * Return the settings sub tab slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_subtab_slug(): string {
-		return $this->settings_sub_tab;
+		// show hint for user settings.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_s3_credential_location_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo();
+			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$setting->set_field( $field );
+		}
 	}
 
 	/**
@@ -543,6 +577,14 @@ class S3 extends Directory_Listing_Base implements Service {
 	 * @return array<string,string>
 	 */
 	private function get_regions(): array {
+		// get cached value.
+		$list = get_transient( 'eml_aws_s3_regions' );
+
+		// use them if they are set.
+		if ( ! empty( $list ) && is_array( $list ) ) {
+			return $list;
+		}
+
 		// get all partitions from AWS S3 SDK.
 		$partitions = EndpointDefinitionProvider::getPartitions();
 
@@ -563,6 +605,99 @@ class S3 extends Directory_Listing_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,string> $list List of regions.
 		 */
-		return apply_filters( 'efml_service_s3_regions', $list );
+		$list = apply_filters( 'efml_service_s3_regions', $list );
+
+		// save the list in cache.
+		set_transient( 'eml_aws_s3_regions', $list, WEEK_IN_SECONDS );
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Try to map the region according to the used WordPress language.
+	 *
+	 * @return string
+	 */
+	private function get_mapping_region(): string {
+		// get actual language.
+		$language = Languages::get_instance()->get_current_lang();
+
+		// use eu-central-1 for german.
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'eu-central-1';
+		}
+
+		// return 'eu-south-2' for spain.
+		if ( 'es' === $language ) {
+			return 'eu-south-2';
+		}
+
+		// return 'ap-northeast-1' for japanese.
+		if ( 'ja' === $language ) {
+			return 'ap-northeast-1';
+		}
+
+		// return 'il-central-1' for hebrew.
+		if ( 'he' === $language ) {
+			return 'il-central-1';
+		}
+
+		// return "aws-global" for all others.
+		return 'aws-global';
+	}
+
+	/**
+	 * Show option to connect to DropBox on user profile.
+	 *
+	 * @param WP_User $user The WP_User object for the actual user.
+	 *
+	 * @return void
+	 */
+	public function add_user_settings( WP_User $user ): void {
+		// bail if settings are not user-specific.
+		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return;
+		}
+
+		// bail if customization for this user is not allowed.
+		if ( ! ImportDialog::get_instance()->is_customization_allowed() ) {
+			return;
+		}
+
+		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'AWS S3', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
+		<?php
+
+		// show settings table.
+		$this->get_user_settings_table( absint( $user->ID ) );
+
+		?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	protected function get_user_settings(): array {
+		$list = array(
+			's3_region' => array(
+				'label'   => __( 'Choose your region', 'external-files-in-media-library' ),
+				'field'   => 'select',
+				'options' => $this->get_regions(),
+				'default' => $this->get_mapping_region(),
+			),
+		);
+
+		/**
+		 * Filter the list of possible user settings for Google Drive.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<string,mixed> $list The list of settings.
+		 */
+		return apply_filters( 'eml_service_s3_user_settings', $list );
 	}
 }
