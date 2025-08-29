@@ -20,7 +20,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Filesystem_Base;
 use WP_Filesystem_FTPext;
 
@@ -152,7 +151,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'FTP-path does not look like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			return array();
 		}
 
@@ -340,6 +339,7 @@ class Ftp extends Protocol_Base {
 
 		// bail if connection is not available.
 		if ( ! $ftp_connection ) {
+			// log this event.
 			Log::get_instance()->create( __( 'Could not get FTP-connection.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we got not the file.
@@ -348,6 +348,7 @@ class Ftp extends Protocol_Base {
 
 		// get the file contents.
 		if ( ! $ftp_connection->is_readable( $parse_url['path'] ) ) {
+			// log this event.
 			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we got not the file.
@@ -438,6 +439,9 @@ class Ftp extends Protocol_Base {
 			'password'        => $this->get_password(),
 			'connection_type' => $parse_url['scheme'],
 		);
+
+		// log this settings.
+		Log::get_instance()->create( __( 'Using following settings for FTP-connection:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $connection_arguments ) . '</code>', $this->get_url(), 'info', 2, Import::get_instance()->get_identified() );
 
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {

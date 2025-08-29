@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -195,7 +196,7 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Do nothing if URL is using a not supported tcp protocol (event will be logged via @Protocols in detail).
 		 */
-		if ( ! $protocol_handler_obj ) {
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
 			return false;
 		}
 
@@ -302,6 +303,9 @@ class Import extends Directory_Listing_Base {
 			 */
 			do_action( 'eml_file_import_before_save', $file_url );
 
+			// log this event.
+			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );
+
 			/**
 			 * Save this file local if it is required.
 			 */
@@ -330,7 +334,7 @@ class Import extends Directory_Listing_Base {
 					$wp_filesystem->delete( $file_data['tmp-file'] );
 
 					// log this event.
-					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
+					$log->create( __( 'The temp file of this URL for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
 				}
 			} else {
 				// log this event.
@@ -344,6 +348,16 @@ class Import extends Directory_Listing_Base {
 
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( sprintf( __( 'The URL could not be saved in media library. Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
+				$error_obj->set_url( $file_url );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+
 				/* translators: %1$s will be replaced by a WP-error-message */
 				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identified() );
 
@@ -417,7 +431,7 @@ class Import extends Directory_Listing_Base {
 			$external_file_obj->set_password( $this->get_password() );
 			$external_file_obj->set_api_key( $this->get_api_key() );
 
-			// save file-type-specific meta data.
+			// save file-type-specific metadata.
 			$external_file_obj->set_metadata();
 
 			// add file to local cache, if necessary.
@@ -428,7 +442,6 @@ class Import extends Directory_Listing_Base {
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
-			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'success', 2, $this->get_identified() );
 
 			/**
 			 * Run additional tasks after new external file has been added.

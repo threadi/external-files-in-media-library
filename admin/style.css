@@ -450,7 +450,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	font-size: 1em;
 }
 
-#attachment_external_file a[target="_blank"]:after, body.settings_page_eml_settings a[target="_blank"]:after, .efml-user-settings a[target="_blank"]:after {
+#attachment_external_file a:not(.nav-tab-help)[target="_blank"]:after, body.settings_page_eml_settings a:not(.nav-tab-help)[target="_blank"]:after, .efml-user-settings a:not(.nav-tab-help)[target="_blank"]:after {
 	content: "\f504";
 	display: inline-block;
 	font-family: "dashicons", sans-serif;

@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Filesystem_Base;
 
 /**
@@ -144,9 +145,16 @@ class Http extends Protocol_Base {
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
-			// log this event.
+			// set text for log.
 			/* translators: %1$s will be replaced by its Mime-Type */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			$message = sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' );
+			if( current_user_can( 'manage_options' ) ) {
+				/* translators: %1$s will be replaced by its Mime-Type, %2$s by a URL. */
+				$message = sprintf( __( 'Specified URL response with a not allowed mime-type %1$s. Change this in <a href="%2$s">the settings</a>.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>', Settings::get_instance()->get_url() );
+			}
+
+			// log this event.
+			Log::get_instance()->create( $message, esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return false as file has wrong content type.
 			return false;
