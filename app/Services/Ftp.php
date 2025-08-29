@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
@@ -128,6 +129,15 @@ class Ftp extends Service_Base implements Service {
 
 		// bail if the detected protocol handler is not FTP.
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more
 			return array();
 		}
 
@@ -140,14 +150,46 @@ class Ftp extends Service_Base implements Service {
 
 		// bail if connection is not an FTP-object.
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more.
 			return array();
 		}
 
-		// get the staring directory.
+		// bail if absolute path could not be loaded.
+		if( ! is_string( $ftp_connection->abspath() ) ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more.
+			return array();
+		}
+
+		// get the starting directory.
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if scheme or host is not found in directory URL.
 		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ) );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// do nothing more
 			return array();
 		}
 
