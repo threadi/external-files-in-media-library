@@ -182,7 +182,7 @@ jQuery(document).ready(function($) {
     /**
      * Save sync changes via toggle.
      */
-    $('.eml-switch-toggle input').on("change", function() {
+    $('.synchronization .eml-switch-toggle input:not([readonly])').on("change", function() {
       // send request.
       jQuery.ajax( {
         url: efmlJsVars.ajax_url,

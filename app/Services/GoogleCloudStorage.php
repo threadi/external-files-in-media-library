@@ -779,16 +779,16 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	/**
 	 * Cleanup after tree has been build.
 	 *
-	 * @param array<string,mixed>  $tree The tree.
-	 * @param string $directory The requested directory.
-	 * @param string $name The used service name.
+	 * @param array<string,mixed> $tree The tree.
+	 * @param string              $directory The requested directory.
+	 * @param string              $name The used service name.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function cleanup_on_rest( array $tree, string $directory, string $name ): array {
 		// bail if this is not our service.
-		if( $name !== $this->get_name() ) {
+		if ( $name !== $this->get_name() ) {
 			return $tree;
 		}
 
@@ -796,7 +796,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
 
 		// bail if path is not set.
-		if( empty( $path ) ) {
+		if ( empty( $path ) ) {
 			return $tree;
 		}
 
@@ -818,7 +818,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
 
 		// bail if path is not set.
-		if( empty( $path ) ) {
+		if ( empty( $path ) ) {
 			return;
 		}
 

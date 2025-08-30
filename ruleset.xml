@@ -25,6 +25,8 @@
     <rule ref="WordPress-Docs"/>
     <rule ref="WordPress-Extra"/>
     <rule ref="WordPress">
+        <!-- Exclude slow query -->
+        <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_key"/>
         <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_meta_query"/>
         <exclude name="WordPress.DB.SlowDBQuery.slow_db_query_tax_query"/>
         <!-- Exclude direkt db query warnings -->

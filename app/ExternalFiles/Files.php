@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -68,6 +69,9 @@ class Files {
 		// initialize the synchronization.
 		Synchronization::get_instance()->init();
 
+		// initialize the export support.
+		Export::get_instance()->init();
+
 		// initialize REST API support.
 		Rest::get_instance()->init();
 
@@ -96,6 +100,7 @@ class Files {
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
 		add_filter( 'media_meta', array( $this, 'show_media_info_in_modal' ), 10, 2 );
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'prevent_images' ), 10, 2 );
 
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
@@ -1473,5 +1478,41 @@ class Files {
 
 		// return the attachment ID of the external file.
 		return $external_file_obj->get_id();
+	}
+
+	/**
+	 * Prevent usage of external images for non-image files.
+	 *
+	 * @param array<int,mixed>|false $image The given image to return for preview.
+	 * @param int                    $attachment_id The used attachment ID.
+	 *
+	 * @return array<int,mixed>|false
+	 */
+	public function prevent_images( array|false $image, int $attachment_id ): array|false {
+		// bail if image is not an array.
+		if ( ! is_array( $image ) ) {
+			return $image;
+		}
+
+		// get external file object.
+		$external_file_obj = $this->get_file( $attachment_id );
+
+		// bail if this is not an external file.
+		if ( ! $external_file_obj->is_valid() ) {
+			return $image;
+		}
+
+		// bail if file is hostet local.
+		if ( $external_file_obj->is_locally_saved() ) {
+			return $image;
+		}
+
+		// bail if file is an image.
+		if ( $external_file_obj->get_file_type_obj() instanceof Image ) {
+			return $image;
+		}
+
+		// return false to prevent any preview from external images.
+		return false;
 	}
 }

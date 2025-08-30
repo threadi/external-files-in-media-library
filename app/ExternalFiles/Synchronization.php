@@ -517,6 +517,10 @@ class Synchronization {
 						'key'     => 'eml_synced',
 						'compare' => 'NOT EXISTS',
 					),
+					array(
+						'key'     => 'eml_exported_file',
+						'compare' => 'NOT EXISTS',
+					),
 				),
 				'tax_query'      => array(
 					array(

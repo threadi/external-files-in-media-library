@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
@@ -298,7 +299,7 @@ class Local implements Service {
 		);
 
 		// update the setting.
-		set_transient( \easyDirectoryListingForWordPress\Init::get_instance()->get_prefix() . '_' . get_current_user_id() . '_' . md5( $directory ) . '_tree', $directory_list, DAY_IN_SECONDS );
+		set_transient( Init::get_instance()->get_prefix() . '_' . get_current_user_id() . '_' . md5( $directory ) . '_tree', $directory_list, DAY_IN_SECONDS );
 
 		// return true to force the loading of the upload dirs.
 		return true;
