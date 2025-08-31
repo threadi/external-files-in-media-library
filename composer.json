@@ -69,7 +69,7 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
-        "threadi/easy-directory-listing-for-wordpress": "^3.4.1",
+        "threadi/easy-directory-listing-for-wordpress": "^3.6.1",
         "threadi/easy-settings-for-wordpress": "^1.12.5",
         "threadi/easy-transients-for-wordpress": "^1.1.3",
         "google/apiclient": "^2.18",

@@ -465,6 +465,11 @@ class Export {
 		);
 		$terms = new WP_Term_Query( $query );
 
+		// bail on no results.
+		if( empty( $terms->terms ) ) {
+			return array();
+		}
+
 		// create the list.
 		$list = array();
 
