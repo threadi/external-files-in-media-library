@@ -170,10 +170,6 @@ class Forms {
 				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
 				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
-				'sync_nonce'                    => wp_create_nonce( 'eml-sync-nonce' ),
-				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
-				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
-				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
 				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
 				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
 				'change_term_name_nonce'        => wp_create_nonce( 'efml-change-term-name' ),
@@ -198,7 +194,6 @@ class Forms {
 				'info_timeout'                  => $info_timeout,
 				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
 				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
-				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 				/* source of file: https://pixabay.com */

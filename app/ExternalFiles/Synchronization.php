@@ -95,6 +95,7 @@ class Synchronization {
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
 
 		// misc.
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 		add_filter( 'admin_body_class', array( $this, 'add_sync_marker_on_edit_page' ) );
 		add_filter( 'media_row_actions', array( $this, 'remove_delete_action' ), 10, 2 );
 		add_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), 10, 2 );
@@ -199,6 +200,52 @@ class Synchronization {
 		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization for the external source as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), '<code>' . get_option( 'admin_email' ) . '</code>' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
+	}
+
+	/**
+	 * Add CSS- and JS-files for backend.
+	 *
+	 * @param string $hook The used hook.
+	 *
+	 * @return void
+	 */
+	public function add_styles_and_js_admin( string $hook ): void {
+		if( 'edit-tags.php' !== $hook ) {
+			return;
+		}
+
+		// backend-JS.
+		wp_enqueue_script(
+			'eml-sync-admin',
+			plugins_url( '/admin/sync.js', EFML_PLUGIN ),
+			array( 'jquery' ),
+			(string) filemtime( Helper::get_plugin_dir() . '/admin/sync.js' ),
+			true
+		);
+
+		$info_timeout = 200;
+		/**
+		 * Filter the timeout for the AJAX-info-request.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param int $info_timeout The timeout in ms (default 200ms).
+		 */
+		$info_timeout = apply_filters( 'eml_import_info_timeout', $info_timeout );
+
+		// add php-vars to our js-script.
+		wp_localize_script(
+			'eml-sync-admin',
+			'efmlJsSyncVars',
+			array(
+				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
+				'sync_nonce'                    => wp_create_nonce( 'eml-sync-nonce' ),
+				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
+				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
+				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'info_timeout'                  => $info_timeout,
+			)
+		);
 	}
 
 	/**
