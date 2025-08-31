@@ -22,7 +22,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-use ExternalFilesInMediaLibrary\Plugin\Crypt;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use GuzzleHttp\Exception\ClientException;
@@ -108,7 +108,7 @@ class DropBox extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_drop_box' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
 

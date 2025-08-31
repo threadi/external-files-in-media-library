@@ -147,12 +147,12 @@ function efml_sync_save_config() {
 
   // send request.
   jQuery.ajax({
-    url: efmlJsVars.ajax_url,
+    url: efmlJsSyncVars.ajax_url,
     type: 'post',
     data: {
       action: 'efml_sync_save_config',
       fields: fields,
-      nonce: efmlJsVars.sync_save_config_nonce,
+      nonce: efmlJsSyncVars.sync_save_config_nonce,
     },
     error: function( jqXHR, textStatus, errorThrown ) {
       efml_ajax_error_dialog( errorThrown )

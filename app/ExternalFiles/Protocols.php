@@ -68,6 +68,7 @@ class Protocols {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string> $list List of protocol handler.
 		 */
+		error_log( 'get_protocols' );
 		return apply_filters( 'eml_protocols', $list );
 	}
 

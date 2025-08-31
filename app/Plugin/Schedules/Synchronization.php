@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Schedules;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
@@ -52,9 +53,18 @@ class Synchronization extends Schedules_Base {
 	/**
 	 * Run this schedule.
 	 *
+	 * TODO:
+	 * Protokoll wird nicht angemeldet, wenn das durchlaufen wird.
+	 * Dadurch wird z.B. der Sync von GoogleDrive nicht ausgeführt.
+	 *
 	 * @return void
 	 */
 	public function run(): void {
+		// mark sync as running.
+		if( ! defined( 'EFML_SYNC_RUNNING' ) ) {
+			define( 'EFML_SYNC_RUNNING', 1 );
+		}
+
 		// log event.
 		Log::get_instance()->create( __( 'Synchronization schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
 
@@ -65,7 +75,7 @@ class Synchronization extends Schedules_Base {
 		$directory_listing_obj = Services::get_instance()->get_service_by_name( $args['method'] );
 
 		// bail if listing object could not be found.
-		if ( ! $directory_listing_obj ) {
+		if ( ! $directory_listing_obj instanceof Directory_Listing_Base ) {
 			Log::get_instance()->create( __( 'Synchronization listing object unknown:', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
 			return;
 		}
@@ -79,7 +89,7 @@ class Synchronization extends Schedules_Base {
 			return;
 		}
 
-		// get the URL.
+		// get the prepared URL.
 		$url = $directory_listing_obj->get_url( $term_data['directory'] );
 
 		// run the synchronization.

@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
-use ExternalFilesInMediaLibrary\Plugin\Crypt;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use finfo;

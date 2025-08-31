@@ -16,7 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
-use ExternalFilesInMediaLibrary\Plugin\Crypt;
+use easyDirectoryListingForWordPress\Crypt;
 
 /**
  * Object to handle support for this platform.
