@@ -1423,9 +1423,15 @@ class Files {
 			return;
 		}
 
+		// get the title.
+		$title = $term->name;
+		if( wp_http_validate_url( $title ) ) {
+			$title = Helper::shorten_url( $term->name );
+		}
+
 		// show info about sync time.
 		?>
-		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( Helper::shorten_url( $term->name ) ); ?></a></li>
+		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( $title ); ?></a></li>
 		<?php
 	}
 

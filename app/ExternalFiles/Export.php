@@ -537,8 +537,11 @@ class Export {
 				continue;
 			}
 
+			// get the base URL.
+			$term_url = get_term_meta( $term->term_id, 'path', true );
+
 			// create the import path of this file.
-			$import_path = trailingslashit( $term->name ) . basename( $file );
+			$import_path = trailingslashit( $term_url ) . basename( $file );
 
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term->term_id );
@@ -633,8 +636,11 @@ class Export {
 				continue;
 			}
 
+			// get the base URL.
+			$term_url = get_term_meta( $term->term_id, 'path', true );
+
 			// create the URL of this file.
-			$url = trailingslashit( $term->name ) . basename( $file );
+			$url = trailingslashit( $term_url ) . basename( $file );
 
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term->term_id );

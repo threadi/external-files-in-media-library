@@ -601,3 +601,28 @@ function efml_process_import_dialog() {
     }
   });
 }
+
+/**
+ * Change the name of a directory listing term via dialog.
+ */
+function efml_change_term_name() {
+  // get all form data.
+  let formData = jQuery('.efml-term-change-name :input').serializeArray();
+
+  // add data to process this request.
+  formData.push({ 'name': 'action', 'value': 'eml_change_term_name'});
+  formData.push({ 'name': 'nonce', 'value': efmlJsVars.change_term_name_nonce});
+
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: formData,
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function( response ) {
+      efml_create_dialog( response );
+    }
+  });
+}

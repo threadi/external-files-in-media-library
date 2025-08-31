@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 
@@ -166,7 +167,7 @@ class Availability extends Extension_Base {
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if no protocol handler could be loaded.
-		if ( ! $protocol_handler ) {
+		if ( ! $protocol_handler instanceof Protocol_Base ) {
 			return;
 		}
 
@@ -235,7 +236,7 @@ class Availability extends Extension_Base {
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if protocol handler could not be loaded.
-		if ( ! $protocol_handler ) {
+		if ( ! $protocol_handler instanceof Protocol_Base ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}

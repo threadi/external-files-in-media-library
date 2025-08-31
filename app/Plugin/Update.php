@@ -10,12 +10,15 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
+use WP_Term;
+use WP_Term_Query;
 
 /**
  * Helper-function for updates of this plugin.
@@ -239,6 +242,21 @@ class Update {
 		// migrate the image proxy setting.
 		update_option( 'eml_images_proxy', get_option( 'eml_proxy' ) );
 		update_option( 'eml_images_proxy_max_age', get_option( 'eml_proxy_max_age' ) );
+
+		// loop through all saved external sources and add their path meta.
+		$query = array(
+			'taxonomy'     => Taxonomy::get_instance()->get_name(),
+			'hide_empty'   => false,
+			'count'        => false,
+		);
+		$terms = new WP_Term_Query( $query );
+		foreach( $terms->terms as $term ) {
+			// bail if this is not a WP_Term.
+			if( ! $term instanceof WP_Term ) {
+				continue;
+			}
+			update_term_meta( $term->term_id, 'path', $term->name );
+		}
 
 		// add the file types settings.
 		File_Types::get_instance()->add_settings();

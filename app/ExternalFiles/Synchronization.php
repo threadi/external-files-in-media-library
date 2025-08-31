@@ -394,7 +394,7 @@ class Synchronization {
 
 		// add privacy hint, if it is not disabled.
 		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
-			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files:', 'external-files-in-media-library' ) . '</strong></label></div>';
+			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong></label></div>';
 		}
 
 		// create dialog for sync config.
@@ -1012,7 +1012,7 @@ class Synchronization {
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
 		// get the URL.
-		$url = $listing_obj->get_url( $term->name );
+		$url = $listing_obj->get_url( (string) get_term_meta( $term_id, 'path', true ) );
 
 		// remove all synced files from this URL.
 		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {

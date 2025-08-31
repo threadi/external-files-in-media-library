@@ -405,4 +405,24 @@ class Protocol extends Protocol_Base {
 		// return the entry.
 		return $entry;
 	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether URLs with this protocol are reachable via HTTP.
+	 *
+	 * This is not the availability of the URL.
+	 *
+	 * @return bool
+	 */
+	public function is_url_reachable(): bool {
+		return false;
+	}
 }
