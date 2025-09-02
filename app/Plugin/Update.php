@@ -245,14 +245,14 @@ class Update {
 
 		// loop through all saved external sources and add their path meta.
 		$query = array(
-			'taxonomy'     => Taxonomy::get_instance()->get_name(),
-			'hide_empty'   => false,
-			'count'        => false,
+			'taxonomy'   => Taxonomy::get_instance()->get_name(),
+			'hide_empty' => false,
+			'count'      => false,
 		);
 		$terms = new WP_Term_Query( $query );
-		foreach( $terms->terms as $term ) {
+		foreach ( $terms->terms as $term ) {
 			// bail if this is not a WP_Term.
-			if( ! $term instanceof WP_Term ) {
+			if ( ! $term instanceof WP_Term ) {
 				continue;
 			}
 			update_term_meta( $term->term_id, 'path', $term->name );

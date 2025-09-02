@@ -322,7 +322,7 @@ class WebDav extends Service_Base implements Service {
 		// get the directory listing for the given path from the external WebDAV.
 		try {
 			$directory_list = $client->propFind( $path, array(), 1 );
-		} catch ( \Sabre\HTTP\ClientHttpException |\Sabre\HTTP\ClientException | Error $e ) {
+		} catch ( \Sabre\HTTP\ClientHttpException | \Sabre\HTTP\ClientException | Error $e ) {
 			// create an error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_webdav', __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );

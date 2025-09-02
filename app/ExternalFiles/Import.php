@@ -50,6 +50,13 @@ class Import extends Directory_Listing_Base {
 	private string $identifier = '';
 
 	/**
+	 * The term ID used for this import.
+	 *
+	 * @var int
+	 */
+	private int $term_id = 0;
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Import
@@ -610,7 +617,12 @@ class Import extends Directory_Listing_Base {
 		// get the term_id.
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if no term_id is given.
+		// check the object config if no term ID is set until now.
+		if ( 0 === $term_id ) {
+			$term_id = $this->get_term_id();
+		}
+
+		// bail if no term ID is set.
 		if ( 0 === $term_id ) {
 			return;
 		}
@@ -652,5 +664,25 @@ class Import extends Directory_Listing_Base {
 		 * @param string $string_to_add The string to add.
 		 */
 		return $user_agent . apply_filters( 'efml_user_agent', $string_to_add );
+	}
+
+	/**
+	 * Return the term ID used for this import.
+	 *
+	 * @return int
+	 */
+	private function get_term_id(): int {
+		return $this->term_id;
+	}
+
+	/**
+	 * Set the term ID used for this import.
+	 *
+	 * @param int $term_id The term ID to use.
+	 *
+	 * @return void
+	 */
+	public function set_term_id( int $term_id ): void {
+		$this->term_id = $term_id;
 	}
 }

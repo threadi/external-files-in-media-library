@@ -12,9 +12,13 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive\Protocol;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_User;
 
 /**
  * Object for this schedule.
@@ -61,12 +65,12 @@ class Synchronization extends Schedules_Base {
 	 */
 	public function run(): void {
 		// mark sync as running.
-		if( ! defined( 'EFML_SYNC_RUNNING' ) ) {
+		if ( ! defined( 'EFML_SYNC_RUNNING' ) ) {
 			define( 'EFML_SYNC_RUNNING', 1 );
 		}
 
 		// log event.
-		Log::get_instance()->create( __( 'Synchronization schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
+		Log::get_instance()->create( __( 'Synchronization schedule starting.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// get the arguments.
 		$args = $this->get_args();
@@ -89,14 +93,28 @@ class Synchronization extends Schedules_Base {
 			return;
 		}
 
+		// get the user to use for this schedule, if set.
+		if ( $args['user_id'] > 0 ) {
+			// get the user object.
+			$user = get_user( $args['user_id'] );
+
+			// set the user.
+			if ( $user instanceof WP_User && method_exists( $directory_listing_obj, 'set_user' ) ) {
+				$directory_listing_obj->set_user( $user );
+			}
+		}
+
 		// get the prepared URL.
 		$url = $directory_listing_obj->get_url( $term_data['directory'] );
+
+		// register all services.
+		Services::get_instance()->init_services();
 
 		// run the synchronization.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, $directory_listing_obj, $term_data, $args['term_id'] );
 
 		// log event.
-		Log::get_instance()->create( __( 'Synchronization schedule ended.', 'external-files-in-media-library' ), '', 'success', 2 );
+		Log::get_instance()->create( __( 'Synchronization schedule ended.', 'external-files-in-media-library' ), '', 'info', 2 );
 	}
 
 	/**

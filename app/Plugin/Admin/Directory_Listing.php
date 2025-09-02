@@ -721,9 +721,9 @@ class Directory_Listing {
 	 * Add option to set name for this entry via dialog.
 	 *
 	 * @param array<string,string> $new_actions List of actions.
-	 * @param WP_Term $term The used term.
+	 * @param WP_Term              $term The used term.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function add_option_to_set_name( array $new_actions, WP_Term $term ): array {
 		// create the form.
@@ -733,11 +733,11 @@ class Directory_Listing {
 		// create dialog.
 		$dialog = array(
 			'className' => 'efml-term-change-name',
-			'title'   => __( 'Change name', 'external-files-in-media-library' ),
-			'texts'   => array(
-				$form
+			'title'     => __( 'Change name', 'external-files-in-media-library' ),
+			'texts'     => array(
+				$form,
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_change_term_name();',
 					'variant' => 'primary',
@@ -786,30 +786,34 @@ class Directory_Listing {
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if no term ID is given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			$dialog['texts'][] = __( 'Term is missing!', 'easy-settings-for-wordpress' );
 			wp_send_json( array( 'detail' => $dialog ) );
-			exit;
+			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
 		// get the new name.
 		$name = filter_input( INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if no name is given.
-		if( empty( $name ) ) {
+		if ( empty( $name ) ) {
 			$dialog['texts'][] = __( 'New name is missing!', 'easy-settings-for-wordpress' );
 			wp_send_json( array( 'detail' => $dialog ) );
-			exit;
+			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
 		// save the new name.
-		wp_update_term( $term_id, Taxonomy::get_instance()->get_name(), array(
-			'name' => $name
-		) );
+		wp_update_term(
+			$term_id,
+			Taxonomy::get_instance()->get_name(),
+			array(
+				'name' => $name,
+			)
+		);
 
 		// return OK-message.
-		$dialog['title'] = __( 'Name has been changed', 'easy-settings-for-wordpress' );
-		$dialog['texts'] = array(
+		$dialog['title']                = __( 'Name has been changed', 'easy-settings-for-wordpress' );
+		$dialog['texts']                = array(
 			'<p><strong>' . __( 'The new name has been saved!', 'easy-settings-for-wordpress' ) . '</strong></p>',
 		);
 		$dialog['buttons'][0]['action'] = 'location.reload();';

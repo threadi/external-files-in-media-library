@@ -210,7 +210,7 @@ class Synchronization {
 	 * @return void
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
-		if( 'edit-tags.php' !== $hook ) {
+		if ( 'edit-tags.php' !== $hook ) {
 			return;
 		}
 
@@ -237,13 +237,13 @@ class Synchronization {
 			'eml-sync-admin',
 			'efmlJsSyncVars',
 			array(
-				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
-				'sync_nonce'                    => wp_create_nonce( 'eml-sync-nonce' ),
-				'get_info_sync_nonce'           => wp_create_nonce( 'eml-sync-info_nonce' ),
-				'sync_state_nonce'              => wp_create_nonce( 'eml-sync-state-nonce' ),
-				'sync_save_config_nonce'        => wp_create_nonce( 'eml-sync-save-config-nonce' ),
-				'title_sync_progress'           => __( 'Synchronization in progress', 'external-files-in-media-library' ),
-				'info_timeout'                  => $info_timeout,
+				'ajax_url'               => admin_url( 'admin-ajax.php' ),
+				'sync_nonce'             => wp_create_nonce( 'eml-sync-nonce' ),
+				'get_info_sync_nonce'    => wp_create_nonce( 'eml-sync-info_nonce' ),
+				'sync_state_nonce'       => wp_create_nonce( 'eml-sync-state-nonce' ),
+				'sync_save_config_nonce' => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'info_timeout'           => $info_timeout,
 			)
 		);
 	}
@@ -378,6 +378,28 @@ class Synchronization {
 		// bail if no object could be found.
 		if ( ! $listing_obj ) {
 			return $content;
+		}
+
+		// bail if object does not allow sync.
+		if ( method_exists( $listing_obj, 'is_sync_disabled' ) && $listing_obj->is_sync_disabled() ) {
+			// create dialog for sync now.
+			$dialog = array(
+				'title'   => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
+				'texts'   => array(
+					/* translators: %1$s will be replaced by a title. */
+					'<p>' . sprintf( __( 'The synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+					/* translators: %1$s will be replaced by a URL. */
+					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			);
+			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
 		}
 
 		// get the sync schedule object for this term_id.
@@ -538,6 +560,7 @@ class Synchronization {
 		$import->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
 		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
 		$import->set_api_key( $directory_listing_obj->get_api_key_from_archive_entry( $term_data ) );
+		$import->set_term_id( $term_id );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info', 1 );
@@ -1247,7 +1270,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Add a schedule after a new archive term has been created, if this is enabled.
+	 * Add a schedule after a new archive term has been created, if this is enabled, or via request.
 	 *
 	 * @param int $term_id The ID of the term.
 	 *
@@ -1268,6 +1291,7 @@ class Synchronization {
 			array(
 				'term_id' => $term_id,
 				'method'  => (string) get_term_meta( $term_id, 'type', true ),
+				'user_id' => absint( get_term_meta( $term_id, 'user_id', true ) ),
 			)
 		);
 

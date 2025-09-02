@@ -426,4 +426,13 @@ class Protocol extends Protocol_Base {
 	public function is_url_reachable(): bool {
 		return false;
 	}
+
+	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return 'Google Drive';
+	}
 }

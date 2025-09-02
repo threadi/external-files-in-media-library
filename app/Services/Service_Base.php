@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
+use WP_User;
 
 /**
  * Object to handle support for this platform.
@@ -42,6 +43,20 @@ class Service_Base extends Directory_Listing_Base {
 	 * @var bool
 	 */
 	protected bool $no_credentials = false;
+
+	/**
+	 * Marker for sync support (false to enable it).
+	 *
+	 * @var bool
+	 */
+	protected bool $sync_disabled = false;
+
+	/**
+	 * The user.
+	 *
+	 * @var WP_User|false
+	 */
+	private WP_User|false $user = false;
 
 	/**
 	 * Initialize this object.
@@ -295,5 +310,40 @@ class Service_Base extends Directory_Listing_Base {
 			return \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
 		}
 		return get_admin_url() . 'profile.php#efml-' . $this->get_name();
+	}
+
+	/**
+	 * Return the user to use.
+	 *
+	 * @return WP_User|false
+	 */
+	protected function get_user(): WP_User|false {
+		// if no user is set, use the current one.
+		if ( empty( $this->user ) ) {
+			return wp_get_current_user();
+		}
+
+		// return the configured user.
+		return $this->user;
+	}
+
+	/**
+	 * Set user this object should use.
+	 *
+	 * @param WP_User $user The user object.
+	 *
+	 * @return void
+	 */
+	public function set_user( WP_User $user ): void {
+		$this->user = $user;
+	}
+
+	/**
+	 * Return whether this object does not allow sync.
+	 *
+	 * @return bool
+	 */
+	public function is_sync_disabled(): bool {
+		return $this->sync_disabled;
 	}
 }

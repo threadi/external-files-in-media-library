@@ -109,7 +109,7 @@ class Export {
 		$page = $settings_obj->get_page( 'eml_settings' );
 
 		// bail if page could not be found.
-		if( ! $page instanceof Page ) {
+		if ( ! $page instanceof Page ) {
 			return;
 		}
 
@@ -117,7 +117,7 @@ class Export {
 		$tab = $page->get_tab( 'eml_general' );
 
 		// bail if tab could not be found.
-		if( ! $tab instanceof Tab ) {
+		if ( ! $tab instanceof Tab ) {
 			return;
 		}
 
@@ -195,7 +195,24 @@ class Export {
 
 		// bail if object does not support export of files.
 		if ( ! $listing_obj->can_export_files() ) {
-			return __( 'Export not supported', 'external-files-in-media-library' );
+			// create dialog for sync now.
+			$dialog = array(
+				'title'   => __( 'Export not supported', 'external-files-in-media-library' ),
+				'texts'   => array(
+					/* translators: %1$s will be replaced by a title. */
+					'<p>' . sprintf( __( 'The export for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+					/* translators: %1$s will be replaced by a URL. */
+					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			);
+			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
 		}
 
 		// get actual state.
@@ -466,7 +483,7 @@ class Export {
 		$terms = new WP_Term_Query( $query );
 
 		// bail on no results.
-		if( empty( $terms->terms ) ) {
+		if ( empty( $terms->terms ) ) {
 			return array();
 		}
 
@@ -512,7 +529,7 @@ class Export {
 		$file = get_attached_file( $attachment_id, true );
 
 		// bail if file name could not be loaded.
-		if( ! is_string( $file ) ) {
+		if ( ! is_string( $file ) ) {
 			return;
 		}
 
@@ -619,7 +636,7 @@ class Export {
 		$file = get_attached_file( $attachment_id, true );
 
 		// bail if file name could not be loaded.
-		if( ! is_string( $file ) ) {
+		if ( ! is_string( $file ) ) {
 			return;
 		}
 
@@ -665,9 +682,9 @@ class Export {
 	/**
 	 * Add filter during sync to prevent import of exported external files.
 	 *
-	 * @param string $url The used URL.
-	 * @param array<string,mixed>  $term_data The term data.
-	 * @param int    $term_id The used term id for sync.
+	 * @param string              $url The used URL.
+	 * @param array<string,mixed> $term_data The term data.
+	 * @param int                 $term_id The used term id for sync.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection

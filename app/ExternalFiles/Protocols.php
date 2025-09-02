@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handle different protocols.
+ * File which handle the support for different protocols (like HTTP, FTP ...).
  *
  * @package external-files-in-media-library
  */
@@ -68,7 +68,6 @@ class Protocols {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string> $list List of protocol handler.
 		 */
-		error_log( 'get_protocols' );
 		return apply_filters( 'eml_protocols', $list );
 	}
 

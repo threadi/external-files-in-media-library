@@ -1425,7 +1425,7 @@ class Files {
 
 		// get the title.
 		$title = $term->name;
-		if( wp_http_validate_url( $title ) ) {
+		if ( wp_http_validate_url( $title ) ) {
 			$title = Helper::shorten_url( $term->name );
 		}
 

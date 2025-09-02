@@ -491,9 +491,9 @@ class Ftp extends Service_Base implements Service {
 	/**
 	 * Export a file to this service. Returns true if it was successfully.
 	 *
-	 * @param int    $attachment_id The attachment ID.
-	 * @param string $target The target.
-	 * @param array<string,mixed>  $credentials The credentials.
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $target The target.
+	 * @param array<string,mixed> $credentials The credentials.
 	 * @return bool
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): bool {
@@ -532,7 +532,7 @@ class Ftp extends Service_Base implements Service {
 		$file_path = get_attached_file( $attachment_id, true );
 
 		// bail if no file could be found.
-		if( ! is_string( $file_path ) ) {
+		if ( ! is_string( $file_path ) ) {
 			return false;
 		}
 
@@ -558,7 +558,7 @@ class Ftp extends Service_Base implements Service {
 		$content = $wp_filesystem_local->get_contents( $file_path );
 
 		// bail if no content could be loaded.
-		if( ! is_string( $content ) ) {
+		if ( ! is_string( $content ) ) {
 			return false;
 		}
 
@@ -574,8 +574,8 @@ class Ftp extends Service_Base implements Service {
 	/**
 	 * Delete an exported file.
 	 *
-	 * @param string $url The URL to delete.
-	 * @param array<string,mixed>  $credentials The credentials to use.
+	 * @param string              $url The URL to delete.
+	 * @param array<string,mixed> $credentials The credentials to use.
 	 *
 	 * @return bool
 	 */

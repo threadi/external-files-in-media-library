@@ -173,8 +173,8 @@ class Schedules {
 			}
 
 			// add args to object, if set.
-			if( isset( $our_events[ $obj->get_name() ] ) ) {
-				$obj->set_args( $our_events[ $obj->get_name() ]['settings'][array_key_first( $our_events[ $obj->get_name() ]['settings'] )]['args'] );
+			if ( isset( $our_events[ $obj->get_name() ] ) ) {
+				$obj->set_args( $our_events[ $obj->get_name() ]['settings'][ array_key_first( $our_events[ $obj->get_name() ]['settings'] ) ]['args'] );
 			}
 
 			// delete if schedule is in list of our events and not enabled.

@@ -301,11 +301,11 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// get current user.
-			$user = wp_get_current_user();
+			// get the user set on object.
+			$user = $this->get_user();
 
 			// bail if user is not available.
-			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+			if ( ! $user instanceof WP_User ) {
 				return array();
 			}
 

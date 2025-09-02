@@ -200,7 +200,7 @@ class Protocol extends Protocol_Base {
 			}
 			return $file_data;
 		} catch ( S3Exception $e ) {
-			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error',0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 			return array();
 		}
