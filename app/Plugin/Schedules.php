@@ -146,7 +146,15 @@ class Schedules {
 
 		// check the schedule objects if they are set.
 		foreach ( $this->get_schedule_object_names() as $object_name ) {
+			// bail if class name does not exist.
+			if ( ! class_exists( $object_name ) ) {
+				continue;
+			}
+
+			// get the object.
 			$obj = new $object_name();
+
+			// bail if object is not Schedules_Base.
 			if ( ! $obj instanceof Schedules_Base ) {
 				continue;
 			}
@@ -162,6 +170,11 @@ class Schedules {
 
 				// re-run the check for WP-cron-events.
 				$our_events = $this->get_wp_events();
+			}
+
+			// add args to object, if set.
+			if ( isset( $our_events[ $obj->get_name() ] ) ) {
+				$obj->set_args( $our_events[ $obj->get_name() ]['settings'][ array_key_first( $our_events[ $obj->get_name() ]['settings'] ) ]['args'] );
 			}
 
 			// delete if schedule is in list of our events and not enabled.

@@ -395,6 +395,11 @@ body.eml-file-synced #delete-action { display: none }
 	background:  green;
 }
 
+.eml-switch-toggle input[readonly] + label {
+	background: grey !important;
+	opacity: .4;
+}
+
 .easy-dialog-for-wordpress-text > div {
 	margin: 1em 0;
 }

@@ -294,7 +294,7 @@ class ImportDialog {
 		}
 
 		// add the fields.
-		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1"><input type="hidden" name="login" value="' . esc_attr( $settings['login'] ) . '"><input type="hidden" name="password" value="' . esc_attr( $settings['password'] ) . '">';
+		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1"><input type="hidden" name="login" value="' . esc_attr( $settings['login'] ) . '"><input type="hidden" name="password" value="' . esc_attr( $settings['password'] ) . '"><input type="hidden" name="api_key" value="' . esc_attr( $settings['api_key'] ) . '">';
 
 		// return the resulting dialog.
 		return $dialog;

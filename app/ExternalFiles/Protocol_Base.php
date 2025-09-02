@@ -452,4 +452,15 @@ class Protocol_Base {
 		 */
 		return apply_filters( 'eml_mime_type_for_multiple_files', $false, $mime_type, $url );
 	}
+
+	/**
+	 * Return whether URLs with this protocol are reachable via HTTP.
+	 *
+	 * This is not the availability of the URL.
+	 *
+	 * @return bool
+	 */
+	public function is_url_reachable(): bool {
+		return true;
+	}
 }

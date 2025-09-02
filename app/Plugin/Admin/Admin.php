@@ -269,7 +269,7 @@ class Admin {
 		$transients_obj = Transients::get_instance();
 		$transient_obj  = $transients_obj->add();
 		$transient_obj->set_name( 'eml_log_emptied' );
-		$transient_obj->set_message( '<strong>' . __( 'The log has been emptied.', 'external-files-in-media-library' ) . '</strong>' );
+		$transient_obj->set_message( '<strong>' . __( 'The log has been deleted.', 'external-files-in-media-library' ) . '</strong>' );
 		$transient_obj->set_type( 'success' );
 		$transient_obj->save();
 

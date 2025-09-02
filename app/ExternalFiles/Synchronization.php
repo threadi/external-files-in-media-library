@@ -95,6 +95,7 @@ class Synchronization {
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
 
 		// misc.
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 		add_filter( 'admin_body_class', array( $this, 'add_sync_marker_on_edit_page' ) );
 		add_filter( 'media_row_actions', array( $this, 'remove_delete_action' ), 10, 2 );
 		add_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), 10, 2 );
@@ -199,6 +200,52 @@ class Synchronization {
 		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization for the external source as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), '<code>' . get_option( 'admin_email' ) . '</code>' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
+	}
+
+	/**
+	 * Add CSS- and JS-files for backend.
+	 *
+	 * @param string $hook The used hook.
+	 *
+	 * @return void
+	 */
+	public function add_styles_and_js_admin( string $hook ): void {
+		if ( 'edit-tags.php' !== $hook ) {
+			return;
+		}
+
+		// backend-JS.
+		wp_enqueue_script(
+			'eml-sync-admin',
+			plugins_url( '/admin/sync.js', EFML_PLUGIN ),
+			array( 'jquery' ),
+			(string) filemtime( Helper::get_plugin_dir() . '/admin/sync.js' ),
+			true
+		);
+
+		$info_timeout = 200;
+		/**
+		 * Filter the timeout for the AJAX-info-request.
+		 *
+		 * @since 2.0.0 Available since 2.0.0.
+		 * @param int $info_timeout The timeout in ms (default 200ms).
+		 */
+		$info_timeout = apply_filters( 'eml_import_info_timeout', $info_timeout );
+
+		// add php-vars to our js-script.
+		wp_localize_script(
+			'eml-sync-admin',
+			'efmlJsSyncVars',
+			array(
+				'ajax_url'               => admin_url( 'admin-ajax.php' ),
+				'sync_nonce'             => wp_create_nonce( 'eml-sync-nonce' ),
+				'get_info_sync_nonce'    => wp_create_nonce( 'eml-sync-info_nonce' ),
+				'sync_state_nonce'       => wp_create_nonce( 'eml-sync-state-nonce' ),
+				'sync_save_config_nonce' => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'info_timeout'           => $info_timeout,
+			)
+		);
 	}
 
 	/**
@@ -333,6 +380,28 @@ class Synchronization {
 			return $content;
 		}
 
+		// bail if object does not allow sync.
+		if ( method_exists( $listing_obj, 'is_sync_disabled' ) && $listing_obj->is_sync_disabled() ) {
+			// create dialog for sync now.
+			$dialog = array(
+				'title'   => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
+				'texts'   => array(
+					/* translators: %1$s will be replaced by a title. */
+					'<p>' . sprintf( __( 'The synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+					/* translators: %1$s will be replaced by a URL. */
+					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			);
+			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
+		}
+
 		// get the sync schedule object for this term_id.
 		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
@@ -394,7 +463,7 @@ class Synchronization {
 
 		// add privacy hint, if it is not disabled.
 		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
-			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files:', 'external-files-in-media-library' ) . '</strong></label></div>';
+			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong></label></div>';
 		}
 
 		// create dialog for sync config.
@@ -491,6 +560,7 @@ class Synchronization {
 		$import->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
 		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
 		$import->set_api_key( $directory_listing_obj->get_api_key_from_archive_entry( $term_data ) );
+		$import->set_term_id( $term_id );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info', 1 );
@@ -515,6 +585,10 @@ class Synchronization {
 					),
 					array(
 						'key'     => 'eml_synced',
+						'compare' => 'NOT EXISTS',
+					),
+					array(
+						'key'     => 'eml_exported_file',
 						'compare' => 'NOT EXISTS',
 					),
 				),
@@ -1008,7 +1082,7 @@ class Synchronization {
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
 		// get the URL.
-		$url = $listing_obj->get_url( $term->name );
+		$url = $listing_obj->get_url( (string) get_term_meta( $term_id, 'path', true ) );
 
 		// remove all synced files from this URL.
 		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
@@ -1196,7 +1270,7 @@ class Synchronization {
 	}
 
 	/**
-	 * Add a schedule after a new archive term has been created, if this is enabled.
+	 * Add a schedule after a new archive term has been created, if this is enabled, or via request.
 	 *
 	 * @param int $term_id The ID of the term.
 	 *
@@ -1217,6 +1291,7 @@ class Synchronization {
 			array(
 				'term_id' => $term_id,
 				'method'  => (string) get_term_meta( $term_id, 'type', true ),
+				'user_id' => absint( get_term_meta( $term_id, 'user_id', true ) ),
 			)
 		);
 

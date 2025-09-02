@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\S3;
 defined( 'ABSPATH' ) || exit;
 
 use Aws\S3\Exception\S3Exception;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -176,7 +177,7 @@ class Protocol extends Protocol_Base {
 				// set query for the file and save it in tmp dir.
 				$query = array(
 					'Bucket' => $this->get_api_key(),
-					'Key'    => $url,
+					'Key'    => str_replace( $s3->get_label() . '/' . $this->get_api_key() . '/', '', $url ),
 					'SaveAs' => $tmp_file,
 				);
 
@@ -199,6 +200,7 @@ class Protocol extends Protocol_Base {
 			}
 			return $file_data;
 		} catch ( S3Exception $e ) {
+			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 			return array();
 		}
@@ -231,5 +233,25 @@ class Protocol extends Protocol_Base {
 	 */
 	public function get_title(): string {
 		return S3::get_instance()->get_label();
+	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether URLs with this protocol are reachable via HTTP.
+	 *
+	 * This is not the availability of the URL.
+	 *
+	 * @return bool
+	 */
+	public function is_url_reachable(): bool {
+		return false;
 	}
 }

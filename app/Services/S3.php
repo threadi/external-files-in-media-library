@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -303,7 +304,7 @@ class S3 extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "api_key": apiKey, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -424,7 +425,7 @@ class S3 extends Service_Base implements Service {
 			}
 
 			// get the setting.
-			$region = get_user_meta( $user->ID, 'eml_s3_region', true );
+			$region = get_user_meta( $user->ID, 'efml_s3_region', true );
 
 			// bail if value is not a string.
 			if ( ! is_string( $region ) ) {
@@ -432,7 +433,7 @@ class S3 extends Service_Base implements Service {
 			}
 
 			// return the region from settings.
-			return $region;
+			return Crypt::get_instance()->decrypt( $region );
 		}
 
 		// return empty string.
@@ -454,7 +455,7 @@ class S3 extends Service_Base implements Service {
 	public function get_directory(): string {
 		// bail if no bucket is set.
 		if ( empty( $this->get_api_key() ) ) {
-			return '';
+			return '/';
 		}
 
 		// return label and bucket name.

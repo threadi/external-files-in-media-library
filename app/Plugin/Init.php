@@ -10,6 +10,8 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Crypt;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -113,7 +115,7 @@ class Init {
 	 * @return array<string, array<string, int|string>>
 	 */
 	public function add_cron_intervals( array $intervals ): array {
-		$intervals['efml_10minutely'] = array(
+		$intervals['efml_15minutely'] = array(
 			'interval' => 60 * 15,
 			'display'  => __( 'every 15 Minutes', 'external-files-in-media-library' ),
 		);

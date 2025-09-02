@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 defined( 'ABSPATH' ) || exit;
 
 use Error;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -100,7 +101,7 @@ class Protocol extends Protocol_Base {
 		// bail if no file id could be loaded.
 		if ( empty( $file_id ) ) {
 			// log event.
-			Log::get_instance()->create( __( 'Specified URL does not contain a file ID from Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL does not contain a file ID from Google Drive!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return an empty list as we could not analyse the file.
 			return array();
@@ -108,7 +109,7 @@ class Protocol extends Protocol_Base {
 
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $this->get_url() ) ) {
-			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return an empty list as we could not analyse the file.
 			return array();
@@ -121,7 +122,7 @@ class Protocol extends Protocol_Base {
 		// bail if client is not a Client object.
 		if ( ! $client instanceof \Google\Client ) {
 			// log event.
-			Log::get_instance()->create( __( 'Google Drive client could not be initiated!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Google Drive client could not be initiated!', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 
 			// return an empty list as we could not analyse the file.
 			return array();
@@ -404,5 +405,34 @@ class Protocol extends Protocol_Base {
 
 		// return the entry.
 		return $entry;
+	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether URLs with this protocol are reachable via HTTP.
+	 *
+	 * This is not the availability of the URL.
+	 *
+	 * @return bool
+	 */
+	public function is_url_reachable(): bool {
+		return false;
+	}
+
+	/**
+	 * Return the title of this protocol object.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return 'Google Drive';
 	}
 }

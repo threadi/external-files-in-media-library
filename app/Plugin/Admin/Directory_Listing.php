@@ -17,6 +17,7 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_Term;
 
 /**
  * Initialize the directory listing support.
@@ -89,9 +90,13 @@ class Directory_Listing {
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_edit_action_for_archive_terms' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'add_user_mark' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'add_date' ) );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 30 );
+
+		// use AJAX hooks.
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
+		add_action( 'wp_ajax_eml_change_term_name', array( $this, 'save_new_listing_name_via_ajax' ) );
 
 		// initialize the serverside tasks object for directory listing.
 		$directory_listing_obj = Init::get_instance();
@@ -255,8 +260,8 @@ class Directory_Listing {
 			// set term in config.
 			$config['term'] = $term_id;
 
-			// get the term name (= URL).
-			$url = get_term_field( 'name', $term_id, Taxonomy::get_instance()->get_name() );
+			// get the path to load.
+			$url = get_term_meta( $term_id, 'path', true );
 
 			// bail if URL is not a string.
 			if ( ! is_string( $url ) ) {
@@ -710,5 +715,108 @@ class Directory_Listing {
 	 */
 	public function add_date( int $term_id ): void {
 		add_term_meta( $term_id, 'date', time() );
+	}
+
+	/**
+	 * Add option to set name for this entry via dialog.
+	 *
+	 * @param array<string,string> $new_actions List of actions.
+	 * @param WP_Term              $term The used term.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_option_to_set_name( array $new_actions, WP_Term $term ): array {
+		// create the form.
+		$form  = '<div><label for="name">' . __( 'Name:', 'external-files-in-media-library' ) . '</label><input type="text" name="name" id="name" value="' . esc_attr( $term->name ) . '"></div>';
+		$form .= '<input type="hidden" name="term_id" value="' . $term->term_id . '">';
+
+		// create dialog.
+		$dialog = array(
+			'className' => 'efml-term-change-name',
+			'title'     => __( 'Change name', 'external-files-in-media-library' ),
+			'texts'     => array(
+				$form,
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'efml_change_term_name();',
+					'variant' => 'primary',
+					'text'    => __( 'Save', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add the action.
+		$new_actions['rename'] = '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Rename', 'external-files-in-media-library' ) . '</a>';
+
+		// return list of actions.
+		return $new_actions;
+	}
+
+	/**
+	 * Save the new listing name via AJAX.
+	 *
+	 * @return void
+	 */
+	public function save_new_listing_name_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'efml-change-term-name', 'nonce' );
+
+		// create dialog for response.
+		$dialog = array(
+			'title'   => __( 'Error', 'easy-settings-for-wordpress' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'The new name could not be saved!', 'easy-settings-for-wordpress' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'easy-settings-for-wordpress' ),
+				),
+			),
+		);
+
+		// get the term ID.
+		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if no term ID is given.
+		if ( 0 === $term_id ) {
+			$dialog['texts'][] = __( 'Term is missing!', 'easy-settings-for-wordpress' );
+			wp_send_json( array( 'detail' => $dialog ) );
+			exit; // @phpstan-ignore deadCode.unreachable
+		}
+
+		// get the new name.
+		$name = filter_input( INPUT_POST, 'name', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no name is given.
+		if ( empty( $name ) ) {
+			$dialog['texts'][] = __( 'New name is missing!', 'easy-settings-for-wordpress' );
+			wp_send_json( array( 'detail' => $dialog ) );
+			exit; // @phpstan-ignore deadCode.unreachable
+		}
+
+		// save the new name.
+		wp_update_term(
+			$term_id,
+			Taxonomy::get_instance()->get_name(),
+			array(
+				'name' => $name,
+			)
+		);
+
+		// return OK-message.
+		$dialog['title']                = __( 'Name has been changed', 'easy-settings-for-wordpress' );
+		$dialog['texts']                = array(
+			'<p><strong>' . __( 'The new name has been saved!', 'easy-settings-for-wordpress' ) . '</strong></p>',
+		);
+		$dialog['buttons'][0]['action'] = 'location.reload();';
+		wp_send_json( array( 'detail' => $dialog ) );
 	}
 }

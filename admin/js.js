@@ -180,26 +180,6 @@ jQuery(document).ready(function($) {
     });
 
     /**
-     * Save sync changes via toggle.
-     */
-    $('.eml-switch-toggle input').on("change", function() {
-      // send request.
-      jQuery.ajax( {
-        url: efmlJsVars.ajax_url,
-        type: 'post',
-        data: {
-          term_id: $( this ).data( 'term-id' ),
-          state: $( this ).val(),
-          action: 'efml_change_sync_state',
-          nonce: efmlJsVars.sync_state_nonce
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          efml_ajax_error_dialog( errorThrown )
-        },
-      });
-    });
-
-    /**
      * Prevent editing of our own archive terms.
      */
     $('body.taxonomy-edlfw_archive #edittag input').each( function() {
@@ -344,140 +324,6 @@ function efml_reset_proxy() {
 }
 
 /**
- * Start sync of entries from given directory.
- *
- * @param method
- * @param term_id
- */
-function efml_sync_from_directory( method, term_id ) {
-  // send request.
-  jQuery.ajax({
-    url: efmlJsVars.ajax_url,
-    type: 'post',
-    data: {
-      action: 'efml_sync_from_directory',
-      method: method,
-      term: term_id,
-      nonce: efmlJsVars.sync_nonce,
-    },
-    error: function( jqXHR, textStatus, errorThrown ) {
-      efml_ajax_error_dialog( errorThrown )
-    },
-    beforeSend: function() {
-      // show progress.
-      let dialog_config = {
-        detail: {
-          className: 'eml',
-          title: efmlJsVars.title_sync_progress,
-          progressbar: {
-            active: true,
-            progress: 0,
-            id: 'progress',
-            label_id: 'progress_status'
-          },
-        }
-      }
-      efml_create_dialog( dialog_config );
-
-      // get info about progress.
-      setTimeout(function() { efml_sync_get_info() }, efmlJsVars.info_timeout);
-    }
-  });
-}
-
-/**
- * Get info about running sync of files.
- */
-function efml_sync_get_info() {
-  jQuery.ajax( {
-    type: "POST",
-    url: efmlJsVars.ajax_url,
-    data: {
-      'action': 'efml_get_sync_info',
-      'nonce': efmlJsVars.get_info_sync_nonce
-    },
-    error: function( jqXHR, textStatus, errorThrown ) {
-      efml_ajax_error_dialog( errorThrown )
-    },
-    success: function (data) {
-      let count = parseInt( data[0] );
-      let max = parseInt( data[1] );
-      let running = parseInt( data[2] );
-      let status = data[3];
-      let dialog_config = data[4];
-
-      // show progress.
-      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
-      jQuery( '#progress_status' ).html( status );
-
-      /**
-       * If import is still running, get next info in xy ms.
-       * If import is not running and error occurred, show the error.
-       * If import is not running and no error occurred, show ok-message.
-       */
-      if ( running >= 1 ) {
-        setTimeout( function () {
-          efml_sync_get_info()
-        }, efmlJsVars.info_timeout );
-      }
-      else {
-        efml_create_dialog( dialog_config );
-      }
-    }
-  });
-}
-
-/**
- * Update the synchronization config for single external directory.
- */
-function efml_sync_save_config() {
-  // bail if any required field is not checked.
-  let required_fields = jQuery( '.eml-sync-config :input[required]:visible' );
-  if( required_fields.length > 0 && ! required_fields.is(":checked") ) {
-    required_fields.parent().addClass( 'error' )
-    return;
-  }
-  required_fields.parent().removeClass( 'error' );
-
-  // get fields from the form.
-  let fields = {};
-  jQuery('.eml-sync-config select, .eml-sync-config input[type="date"], .eml-sync-config input[type="email"]').each(function(){
-    fields[jQuery(this).attr('id')] = jQuery(this).val();
-  });
-  jQuery('.eml-sync-config input[type="checkbox"]').each(function(){
-    if( jQuery(this).is(':checked') ) {
-      if( jQuery( this ).attr( 'name' ).indexOf('[') >= 0 ) {
-        if (!fields[jQuery( this ).attr( 'name' ).replace( '[', '' ).replace( ']', '' )]) {
-          fields[jQuery( this ).attr( 'name' ).replace( '[', '' ).replace( ']', '' )] = {};
-        }
-        fields[jQuery( this ).attr( 'name' ).replace( '[', '' ).replace( ']', '' )][jQuery( this ).val()] = 1;
-      }
-      else {
-        fields[jQuery( this ).attr( 'name' )] = 1;
-      }
-    }
-  });
-  fields['term_id'] = jQuery('#term_id').val();
-
-  // send request.
-  jQuery.ajax({
-    url: efmlJsVars.ajax_url,
-    type: 'post',
-    data: {
-      action: 'efml_sync_save_config',
-      fields: fields,
-      nonce: efmlJsVars.sync_save_config_nonce,
-    },
-    error: function( jqXHR, textStatus, errorThrown ) {
-      efml_ajax_error_dialog( errorThrown )
-    },
-    success: function (response) {
-      efml_create_dialog( response );
-    }
-  });
-}
-
-/**
  * Save a directory as directory archive.
  *
  * @param type The used type.
@@ -598,6 +444,31 @@ function efml_process_import_dialog() {
 
       // get info about progress.
       setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Change the name of a directory listing term via dialog.
+ */
+function efml_change_term_name() {
+  // get all form data.
+  let formData = jQuery('.efml-term-change-name :input').serializeArray();
+
+  // add data to process this request.
+  formData.push({ 'name': 'action', 'value': 'eml_change_term_name'});
+  formData.push({ 'name': 'nonce', 'value': efmlJsVars.change_term_name_nonce});
+
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: formData,
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function( response ) {
+      efml_create_dialog( response );
     }
   });
 }

@@ -22,7 +22,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-use ExternalFilesInMediaLibrary\Plugin\Crypt;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Google\Cloud\Storage\StorageClient;
@@ -107,7 +107,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_google_cloud_storage' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
 
@@ -293,7 +293,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		// get user-specific setting, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get current user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -321,8 +321,8 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		// get user-specific setting, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// get current user.
-			$user = wp_get_current_user();
+			// get the user set on object.
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -370,11 +370,11 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
-		return 'Google Storage Cloud Listing';
+		return 'Google Cloud Storage Listing';
 	}
 
 	/**
-	 * Return directory listing from Google Storage Cloud.
+	 * Return directory listing from Google Cloud Storage.
 	 *
 	 * @param string $directory The given directory.
 	 *
@@ -535,7 +535,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		}
 
 		// return the resulting listing.
-		return array_merge( array( 'completed' => true ), array( $this->get_api_key() => $listing ), $folders );
+		return array_merge( array( 'completed' => true ), array( $this->get_directory() => $listing ), $folders );
 	}
 
 	/**
@@ -575,7 +575,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, "", "", "" );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, "", "", "" );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -779,16 +779,16 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	/**
 	 * Cleanup after tree has been build.
 	 *
-	 * @param array<string,mixed>  $tree The tree.
-	 * @param string $directory The requested directory.
-	 * @param string $name The used service name.
+	 * @param array<string,mixed> $tree The tree.
+	 * @param string              $directory The requested directory.
+	 * @param string              $name The used service name.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function cleanup_on_rest( array $tree, string $directory, string $name ): array {
 		// bail if this is not our service.
-		if( $name !== $this->get_name() ) {
+		if ( $name !== $this->get_name() ) {
 			return $tree;
 		}
 
@@ -796,7 +796,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
 
 		// bail if path is not set.
-		if( empty( $path ) ) {
+		if ( empty( $path ) ) {
 			return $tree;
 		}
 
@@ -818,7 +818,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$path = getenv( 'GOOGLE_APPLICATION_CREDENTIALS' );
 
 		// bail if path is not set.
-		if( empty( $path ) ) {
+		if ( empty( $path ) ) {
 			return;
 		}
 

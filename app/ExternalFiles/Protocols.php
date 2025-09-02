@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handle different protocols.
+ * File which handle the support for different protocols (like HTTP, FTP ...).
  *
  * @package external-files-in-media-library
  */

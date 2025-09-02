@@ -59,6 +59,13 @@ class Rest extends Service_Base implements Service {
 	protected bool $no_credentials = true;
 
 	/**
+	 * Marker for sync support (false to enable it).
+	 *
+	 * @var bool
+	 */
+	protected bool $sync_disabled = true;
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Rest

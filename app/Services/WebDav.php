@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Sabre\DAV\Client;
@@ -321,7 +322,7 @@ class WebDav extends Service_Base implements Service {
 		// get the directory listing for the given path from the external WebDAV.
 		try {
 			$directory_list = $client->propFind( $path, array(), 1 );
-		} catch ( ClientHttpException | Error $e ) {
+		} catch ( \Sabre\HTTP\ClientHttpException | \Sabre\HTTP\ClientException | Error $e ) {
 			// create an error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_webdav', __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>' );
@@ -437,11 +438,32 @@ class WebDav extends Service_Base implements Service {
 	 * @return Client
 	 */
 	public function ignore_self_signed_ssl( Client $client ): Client {
+		// check if the setting is enabled.
+		$enabled = false;
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$enabled = 1 === absint( get_option( 'eml_webdav_ignore_ssl' ) );
+		}
+
+		// get from user setting, if enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return $client;
+			}
+
+			// get the user value.
+			$enabled = 1 === absint( Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_ignore_ssl', true ) ) );
+		}
+
 		// bail if setting is disabled.
-		if ( 1 !== absint( get_option( 'eml_webdav_ignore_ssl' ) ) ) {
+		if ( ! $enabled ) {
 			return $client;
 		}
 
+		// set the curl settings for ignore the SSL certificate.
 		$client->addCurlSetting( CURLOPT_SSL_VERIFYPEER, false );
 		$client->addCurlSetting( CURLOPT_SSL_VERIFYHOST, false );
 
@@ -567,8 +589,36 @@ class WebDav extends Service_Base implements Service {
 			return $path;
 		}
 
-		// return path from settings.
-		return get_option( 'eml_webdav_path' ) . $login . '/';
+		// get from global setting, if enabled.
+		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// return path from settings.
+			return get_option( 'eml_webdav_path' ) . $login . '/';
+		}
+
+		// get from user setting, if enabled.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// get current user.
+			$user = wp_get_current_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+
+			// get the setting.
+			$path = get_user_meta( $user->ID, 'efml_webdav_path', true );
+
+			// bail if value is not a string.
+			if ( ! is_string( $path ) ) {
+				return '';
+			}
+
+			// return the region from settings.
+			return Crypt::get_instance()->decrypt( $path ) . $login . '/';
+		}
+
+		// return nothing in other cases.
+		return '';
 	}
 
 	/**

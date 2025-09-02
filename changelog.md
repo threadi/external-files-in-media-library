@@ -13,6 +13,8 @@
 - Added hook to import external URLs through third party plugins (for custom development)
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
+- Added option to export each newly uploaded file in media library to external sources which are reachable via web
+-> only supported for local and FTP directories atm
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
@@ -36,7 +38,7 @@
 - Added compatibility with plugin "Media Cloud Sync"
 -> do not sync external files with external clouds
 -> do sync real imported external files
-- Added new file type "PDF" and "ZIP" for better supporting the handling of these files
+- Added new file types "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
 - Added option to import real files during synchronization (they are just imported if they are no duplicate)
@@ -85,6 +87,7 @@
   -> only administrators see all entries
   -> advanced option allows to show all entries for alle users
 - Settings for most services are now saved on user and not global, but can be set to global
+- External sources can now get an individual name
 
 ### Fixed
 

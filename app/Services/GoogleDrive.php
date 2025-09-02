@@ -20,7 +20,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-use ExternalFilesInMediaLibrary\Plugin\Crypt;
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
@@ -108,7 +108,7 @@ class GoogleDrive extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_google_drive' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
 
@@ -301,11 +301,11 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// get current user.
-			$user = wp_get_current_user();
+			// get the user set on object.
+			$user = $this->get_user();
 
 			// bail if user is not available.
-			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+			if ( ! $user instanceof WP_User ) {
 				return array();
 			}
 
@@ -313,7 +313,7 @@ class GoogleDrive extends Service_Base implements Service {
 			$access_token_json = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_google_drive_access_tokens', true ) );
 
 			// bail if string is empty.
-			if( empty( $access_token_json ) ) {
+			if ( empty( $access_token_json ) ) {
 				return array();
 			}
 
@@ -321,7 +321,7 @@ class GoogleDrive extends Service_Base implements Service {
 			$access_token = json_decode( $access_token_json, true );
 
 			// bail if token is not an array.
-			if( ! is_array( $access_token ) ) {
+			if ( ! is_array( $access_token ) ) {
 				return array();
 			}
 
@@ -374,7 +374,7 @@ class GoogleDrive extends Service_Base implements Service {
 			Log::get_instance()->create( sprintf( __( 'New Google Drive access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 			// save the token.
-			update_user_meta( $user_id, 'efml_google_drive_access_tokens', Crypt::get_instance()->encrypt( wp_json_encode( $access_token ) ) );
+			update_user_meta( $user_id, 'efml_google_drive_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $access_token ) ) );
 		}
 	}
 
