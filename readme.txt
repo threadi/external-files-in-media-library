@@ -62,6 +62,16 @@ You can use the following TCP-protocols to import external files in your media l
 
 Some of them require credentials, for http(s) it is optional.
 
+== Use cases ==
+
+Here are a few examples of how this plugin can help you:
+
+* Store particularly large files in a different storage location so that you save storage space on your hosting.
+* Import files that your graphic designer provides you in a shared directory.
+* Automatically synchronize photos from your vacation for display on your website.
+* Import regularly newly generated PDF files from a shared directory for output on your website.
+* Get images for your products from a central directory.
+
 == ClassicPress ==
 
 This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
