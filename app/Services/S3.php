@@ -732,7 +732,7 @@ class S3 extends Service_Base implements Service {
 		$index = trailingslashit( $this->get_url_mark() . $this->get_api_key() );
 
 		// bail if the entry with url_marker is not set.
-		if( ! isset( $listing[ $index ] ) ) {
+		if ( ! isset( $listing[ $index ] ) ) {
 			return $listing;
 		}
 

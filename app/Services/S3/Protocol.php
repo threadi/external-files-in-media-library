@@ -80,8 +80,6 @@ class Protocol extends Protocol_Base {
 		// get the S3Client.
 		$s3_client = $s3->get_s3_client();
 
-		error_log( $url );
-
 		// get list of directories and files in given bucket.
 		try {
 			// get mime type.
