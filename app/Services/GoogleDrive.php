@@ -356,7 +356,7 @@ class GoogleDrive extends Service_Base implements Service {
 			// get the user_id from session if it is not set.
 			if ( 0 === $user_id ) {
 				// get the user.
-				$user = wp_get_current_user();
+				$user = $this->get_user();
 				if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
 					return;
 				}
@@ -393,7 +393,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// save it user-specific, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get the user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
 				return false;
 			}
@@ -964,7 +964,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// get the user settings, if this is enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get current user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue

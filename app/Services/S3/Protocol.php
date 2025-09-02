@@ -37,7 +37,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_label() ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark() ) ) {
 			return false;
 		}
 
@@ -79,6 +79,8 @@ class Protocol extends Protocol_Base {
 
 		// get the S3Client.
 		$s3_client = $s3->get_s3_client();
+
+		error_log( $url );
 
 		// get list of directories and files in given bucket.
 		try {
