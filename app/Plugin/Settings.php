@@ -486,7 +486,6 @@ class Settings {
 	 * @param ?array<string> $values List of mime-types to check.
 	 *
 	 * @return       array<string>
-	 * @noinspection PhpUnused
 	 */
 	public function validate_allowed_mime_types( ?array $values ): array {
 		// check if value is null.
@@ -518,27 +517,6 @@ class Settings {
 		}
 
 		// return resulting list.
-		return $values;
-	}
-
-	/**
-	 * Set capabilities after saving settings.
-	 *
-	 * @param array<string>|null $values The setting.
-	 *
-	 * @return array<string>
-	 * @noinspection PhpUnused
-	 */
-	public function set_capabilities( ?array $values ): array {
-		// check if value is not an array.
-		if ( ! is_array( $values ) ) {
-			$values = array();
-		}
-
-		// set capabilities.
-		Roles::get_instance()->set( $values, EFML_CAP_NAME );
-
-		// return given value.
 		return $values;
 	}
 

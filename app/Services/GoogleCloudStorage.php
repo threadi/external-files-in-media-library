@@ -119,6 +119,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		add_filter( 'efml_service_googlecloudstorage_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing', array( $this, 'cleanup_on_rest' ), 10, 3 );
 		add_action( 'eml_before_file_list', array( $this, 'cleanup_after_import' ) );
+		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -825,5 +826,36 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		// delete the file.
 		$wp_filesystem = Helper::get_wp_filesystem();
 		$wp_filesystem->delete( $path );
+	}
+
+	/**
+	 * Rebuild the resulting list to remove the pagination folders for clean view of the files.
+	 *
+	 * @param array<string,mixed> $listing The resulting list.
+	 * @param string              $url The called URL.
+	 * @param string              $service The used service.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function prepare_tree_building( array $listing, string $url, string $service ): array {
+		// bail if this is not our service.
+		if ( $this->get_name() !== $service ) {
+			return $listing;
+		}
+
+		// create the key of the index we want to remove.
+		$index = trailingslashit( $this->get_url_mark() . $this->get_directory() );
+
+		// bail if the entry with url_marker is not set.
+		if ( ! isset( $listing[ $index ] ) ) {
+			return $listing;
+		}
+
+		// remove this entry.
+		unset( $listing[ $index ] );
+
+		// return resulting list.
+		return $listing;
 	}
 }

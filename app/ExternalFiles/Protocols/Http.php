@@ -812,15 +812,18 @@ class Http extends Protocol_Base {
 
 		// bail if error occurred.
 		if ( is_wp_error( $tmp_file ) ) {
-			// secure the file.
-			$file_json = wp_json_encode( $tmp_file );
-			if ( ! $file_json ) {
-				$file_json = '';
+			// show 404 hint.
+			if ( ! empty( $tmp_file->errors['http_404'] ) ) {
+				// temp file could not be saved.
+				Log::get_instance()->create( __( 'Given URL does not exist!', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
+
+				// return empty array as we got not the file.
+				return false;
 			}
 
 			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( $file_json ) . '</code>' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( Helper::get_json( $tmp_file ) ) . '</code>' ), $url, 'error', 0, Import::get_instance()->get_identified() );
 
 			// return empty array as we got not the file.
 			return false;

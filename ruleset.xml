@@ -44,6 +44,7 @@
             <!-- Configure custom capabilities. -->
             <property name="custom_capabilities" type="array">
                 <element value="efml_cap_import"/>
+                <element value="efml_cap_local"/>
                 <element value="efml_sync"/>
             </property>
         </properties>

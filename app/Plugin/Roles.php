@@ -109,7 +109,7 @@ class Roles {
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_service' ) );
+		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ) );
@@ -393,5 +393,26 @@ class Roles {
 
 		// return the resulting list.
 		return $allcaps;
+	}
+
+	/**
+	 * Set capabilities after saving settings.
+	 *
+	 * @param array<string>|null $values The setting.
+	 *
+	 * @return array<string>
+	 * @noinspection PhpUnused
+	 */
+	public function set_capabilities( ?array $values ): array {
+		// check if value is not an array.
+		if ( ! is_array( $values ) ) {
+			$values = array();
+		}
+
+		// set capabilities.
+		$this->set( $values, EFML_CAP_NAME );
+
+		// return given value.
+		return $values;
 	}
 }

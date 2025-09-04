@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Crypt;
-use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;

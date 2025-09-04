@@ -363,11 +363,10 @@ class Directory_Listing {
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
 			'form_file'                     => array(
-				'title'       => __( 'Enter the path to a ZIP-file', 'external-files-in-media-library' ),
-				/* translators: %1$s will be replaced by a file path. */
-				'description' => sprintf( __( 'Enter the path to a ZIP file on your hosting. Must start with "file://%1$s" and end with ".zip".', 'external-files-in-media-library' ), ABSPATH ),
+				'title'       => __( 'Enter the URL or path to a ZIP-file', 'external-files-in-media-library' ),
+				'description' => __( 'The URL or path must end with ".zip".', 'external-files-in-media-library' ),
 				'url'         => array(
-					'label' => __( 'Path to the ZIP-file', 'external-files-in-media-library' ),
+					'label' => __( 'URL or path to the ZIP-file', 'external-files-in-media-library' ),
 				),
 				'button'      => array(
 					'label' => __( 'Use this file', 'external-files-in-media-library' ),

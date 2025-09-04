@@ -447,7 +447,7 @@ class WebDav extends Service_Base implements Service {
 		// get from user setting, if enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get current user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -598,7 +598,7 @@ class WebDav extends Service_Base implements Service {
 		// get from user setting, if enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get current user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue

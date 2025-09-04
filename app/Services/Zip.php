@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use Error;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -132,20 +133,18 @@ class Zip extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
+			// log this event.
+			Log::get_instance()->create( __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ), $directory, 'error' );
+
 			// return empty array.
 			return array();
-		}
-
-		// prepend the string with file:// if it does not start with it.
-		if ( ! str_starts_with( $directory, 'file://' ) ) {
-			$directory = 'file://' . $directory;
 		}
 
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
-		// bail if handler is not File.
-		if ( ! $protocol_handler_obj instanceof Protocols\File ) {
+		// bail if handler is not a known protocol.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
 			return array();
 		}
 
@@ -167,18 +166,14 @@ class Zip extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// set variables.
-		$zip_file = $parse_url['path'];
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
-		if ( ! file_exists( $zip_file ) ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'Given file does not exist!', 'external-files-in-media-library' ) );
+		// get the file as temp file.
+		$zip_file = $protocol_handler_obj->get_temp_file( $directory, $wp_filesystem );
 
-			// add it to the list.
-			$this->add_error( $error );
-
-			// return an empty list as we could not analyse the file.
+		// bail if temp file could not be loaded.
+		if ( ! is_string( $zip_file ) ) {
 			return array();
 		}
 
@@ -187,7 +182,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
 
 		// bail if ZIP could not be opened.
-		if ( ! $opened ) {
+		if ( true !== $opened ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_zip', __( 'Given file is not a valid ZIP-file!', 'external-files-in-media-library' ) );
@@ -204,7 +199,7 @@ class Zip extends Directory_Listing_Base implements Service {
 
 		// collect the list of files.
 		$listing = array(
-			'title' => basename( $zip_file ),
+			'title' => basename( $directory ),
 			'files' => array(),
 			'dirs'  => array(),
 		);
@@ -280,7 +275,7 @@ class Zip extends Directory_Listing_Base implements Service {
 					$dir_path .= DIRECTORY_SEPARATOR . $dir;
 
 					// add the directory if it does not exist atm in the list.
-					$index = $parse_url['scheme'] . $zip_file . '/' . trailingslashit( $dir_path );
+					$index = $directory . '/' . trailingslashit( $dir_path );
 					if ( ! isset( $folders[ $index ] ) ) {
 						// add the directory to the list.
 						$folders[ $index ] = array(
@@ -312,8 +307,14 @@ class Zip extends Directory_Listing_Base implements Service {
 		// close the zip handle.
 		$zip->close();
 
+		$listing['dirs'][ array_key_first( $folders ) ] = array(
+			'title'   => array_key_first( $folders ),
+			'folders' => array(),
+			'dirs'    => array(),
+		);
+
 		// return the resulting list.
-		return array_merge( array( 'completed' => true ), array( $parse_url['scheme'] . $zip_file => $listing ), $folders );
+		return array_merge( array( 'completed' => true ), array( $directory => $listing ), $folders );
 	}
 
 	/**
@@ -501,6 +502,9 @@ class Zip extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
+			// log this event.
+			Log::get_instance()->create( __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ), $directory, 'error' );
+
 			// return false to prevent further processing.
 			return false;
 		}
@@ -514,6 +518,9 @@ class Zip extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
+			// log this event.
+			Log::get_instance()->create( __( 'No ZIP-file given!', 'external-files-in-media-library' ), $directory, 'error' );
+
 			// return false to prevent further processing.
 			return false;
 		}
@@ -526,6 +533,9 @@ class Zip extends Directory_Listing_Base implements Service {
 
 			// add it to the list.
 			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( __( 'The given path does not end with ".zip"!', 'external-files-in-media-library' ), $directory, 'error' );
 
 			// return false to prevent further processing.
 			return false;
@@ -541,35 +551,57 @@ class Zip extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
-			// return false to prevent further processing.
+			// log this event.
+			/* translators: %1$s will be replaced by a file path. */
+			Log::get_instance()->create( sprintf( __( 'The given path <code>%1$s</code> does not end with ".zip"!', 'external-files-in-media-library' ), $directory ), $directory, 'error' );
 
+			// return false to prevent further processing.
 			return false;
 		}
 
-		// get the path to the ZIP from path string.
-		$zip_file = substr( $directory, 0, absint( strpos( $directory, '.zip' ) ) ) . '.zip';
-		$zip_file = str_replace( 'file://', '', $zip_file );
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the used protocol.
+		$protocol_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
+
+		// bail if no protocol could be loaded.
+		if ( ! $protocol_obj instanceof Protocol_Base ) {
+			return false;
+		}
+
+		// download the ZIP-file to test it.
+		$zip_file = $protocol_obj->get_temp_file( $directory, $wp_filesystem );
+
+		// bail if temp file could not be loaded.
+		if ( ! is_string( $zip_file ) ) {
+			return false;
+		}
 
 		// bail if file does not exist.
 		if ( ! file_exists( $zip_file ) ) {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced by a file path. */
-			$error->add( 'efml_service_zip', sprintf( __( 'The given path <code>%1$s</code> does not exist on your server.', 'external-files-in-media-library' ), $zip_file ) );
+			$error->add( 'efml_service_zip', sprintf( __( 'The given URL <code>%1$s</code> does not exist.', 'external-files-in-media-library' ), $directory ) );
 
 			// add it to the list.
 			$this->add_error( $error );
+
+			// log this event.
+			/* translators: %1$s will be replaced by a file path. */
+			Log::get_instance()->create( sprintf( __( 'The given URL <code>%1$s</code> does not exist.', 'external-files-in-media-library' ), $directory ), $directory, 'error' );
 
 			// return false to prevent further processing.
 			return false;
 		}
 
-		// get the zip object.
+		// get the zip object and open it to test if it is valid.
 		$zip    = new ZipArchive();
 		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
 
 		// bail if file could not be opened.
-		if ( ! $opened ) {
+		if ( true !== $opened ) {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced by a file path. */

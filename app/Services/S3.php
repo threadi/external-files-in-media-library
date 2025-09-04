@@ -121,6 +121,7 @@ class S3 extends Service_Base implements Service {
 		// use our own hooks.
 		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -331,7 +332,7 @@ class S3 extends Service_Base implements Service {
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, login, password, "", config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -417,7 +418,7 @@ class S3 extends Service_Base implements Service {
 		// get from user setting, if enabled.
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			// get current user.
-			$user = wp_get_current_user();
+			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -700,5 +701,45 @@ class S3 extends Service_Base implements Service {
 		 * @param array<string,mixed> $list The list of settings.
 		 */
 		return apply_filters( 'eml_service_s3_user_settings', $list );
+	}
+
+	/**
+	 * Return the URL mark which identifies Google Cloud Storage URLs within this plugin.
+	 *
+	 * @return string
+	 */
+	public function get_url_mark(): string {
+		return 'https://console.aws.amazon.com/s3/buckets/';
+	}
+
+	/**
+	 * Rebuild the resulting list to remove the pagination folders for clean view of the files.
+	 *
+	 * @param array<string,mixed> $listing The resulting list.
+	 * @param string              $url The called URL.
+	 * @param string              $service The used service.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function prepare_tree_building( array $listing, string $url, string $service ): array {
+		// bail if this is not our service.
+		if ( $this->get_name() !== $service ) {
+			return $listing;
+		}
+
+		// create the key of the index we want to remove.
+		$index = trailingslashit( $this->get_url_mark() . $this->get_api_key() );
+
+		// bail if the entry with url_marker is not set.
+		if ( ! isset( $listing[ $index ] ) ) {
+			return $listing;
+		}
+
+		// remove this entry.
+		unset( $listing[ $index ] );
+
+		// return resulting list.
+		return $listing;
 	}
 }

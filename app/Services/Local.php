@@ -95,7 +95,7 @@ class Local implements Service {
 		add_action( 'init', array( $this, 'init_local' ), 20 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_import' ) ) {
+		if ( ! current_user_can( 'efml_cap_local' ) ) {
 			return;
 		}
 
@@ -111,7 +111,7 @@ class Local implements Service {
 	 */
 	public function init_local(): void {
 		// bail if user has no capability for this service.
-		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_import' ) ) {
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_local' ) ) {
 			return;
 		}
 

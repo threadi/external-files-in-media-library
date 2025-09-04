@@ -483,6 +483,8 @@ class Helper {
 			// if filename is not exact the path add the filename to the URL.
 			if ( $filename !== $parsed_url['path'] ) {
 				$shortened_url .= '/../' . basename( $parsed_url['path'] );
+			} else {
+				$shortened_url .= $filename;
 			}
 		}
 

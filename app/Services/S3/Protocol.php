@@ -37,7 +37,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_label() ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark() ) ) {
 			return false;
 		}
 
