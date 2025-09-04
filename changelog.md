@@ -88,6 +88,7 @@
   -> advanced option allows to show all entries for alle users
 - Settings for most services are now saved on user and not global, but can be set to global
 - External sources can now get an individual name
+- ZIP files can not also be opened via any supported TCP protocol
 
 ### Fixed
 
