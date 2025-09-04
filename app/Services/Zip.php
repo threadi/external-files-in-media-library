@@ -172,6 +172,11 @@ class Zip extends Directory_Listing_Base implements Service {
 		// get the file as temp file.
 		$zip_file = $protocol_handler_obj->get_temp_file( $directory, $wp_filesystem );
 
+		// bail if temp file could not be loaded.
+		if ( ! is_string( $zip_file ) ) {
+			return array();
+		}
+
 		// open zip file using ZipArchive as readonly.
 		$zip    = new ZipArchive();
 		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
@@ -302,10 +307,10 @@ class Zip extends Directory_Listing_Base implements Service {
 		// close the zip handle.
 		$zip->close();
 
-		$listing['dirs'][array_key_first($folders)] = array(
-			'title' => array_key_first($folders),
+		$listing['dirs'][ array_key_first( $folders ) ] = array(
+			'title'   => array_key_first( $folders ),
 			'folders' => array(),
-			'dirs' => array()
+			'dirs'    => array(),
 		);
 
 		// return the resulting list.
@@ -560,8 +565,18 @@ class Zip extends Directory_Listing_Base implements Service {
 		// get the used protocol.
 		$protocol_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
 
+		// bail if no protocol could be loaded.
+		if ( ! $protocol_obj instanceof Protocol_Base ) {
+			return false;
+		}
+
 		// download the ZIP-file to test it.
 		$zip_file = $protocol_obj->get_temp_file( $directory, $wp_filesystem );
+
+		// bail if temp file could not be loaded.
+		if ( ! is_string( $zip_file ) ) {
+			return false;
+		}
 
 		// bail if file does not exist.
 		if ( ! file_exists( $zip_file ) ) {
