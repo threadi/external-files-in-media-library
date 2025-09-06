@@ -258,6 +258,16 @@ class Update {
 			update_term_meta( $term->term_id, 'path', $term->name );
 		}
 
+		// if Google Drive is configured, set it to global.
+		if ( ! empty( get_option( 'eml_google_drive_access_tokens', array() ) ) ) {
+			update_option( 'eml_google-drive_credentials_vault', 'global' );
+		}
+
+		// set all external files to available, as it was buggy before 5.0.0.
+		foreach( Files::get_instance()->get_files() as $external_file_obj ) {
+			$external_file_obj->set_availability( true );
+		}
+
 		// add the file types settings.
 		File_Types::get_instance()->add_settings();
 
