@@ -459,11 +459,13 @@ class Admin {
 		$transients_obj->set_capability( 'manage_options' );
 		$transients_obj->set_template( 'grouped.php' );
 		$transients_obj->set_display_method( 'grouped' );
-		$transients_obj->set_translations( array(
-			/* translators: %1$d will be replaced by the days this message will be hidden. */
-			'hide_message' => __( 'Hide this message for %1$d days.', 'download-list-block-with-icons' ),
-			'dismiss' => __( 'Dismiss', 'download-list-block-with-icons' )
-		));
+		$transients_obj->set_translations(
+			array(
+				/* translators: %1$d will be replaced by the days this message will be hidden. */
+				'hide_message' => __( 'Hide this message for %1$d days.', 'external-files-in-media-library' ),
+				'dismiss'      => __( 'Dismiss', 'external-files-in-media-library' ),
+			)
+		);
 		$transients_obj->init();
 	}
 
