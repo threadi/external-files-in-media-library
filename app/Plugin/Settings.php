@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -24,7 +23,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
-use WP_User;
 
 /**
  * Object which handles the settings of this plugin.
@@ -147,6 +145,42 @@ class Settings {
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
+		$settings_obj->set_translations(
+			array(
+				'title_settings_import_file_missing' => __( 'Required file missing', 'external-files-in-media-library' ),
+				'text_settings_import_file_missing'  => __( 'Please choose a JSON-file with settings to import.', 'external-files-in-media-library' ),
+				'lbl_ok'                             => __( 'OK', 'external-files-in-media-library' ),
+				'lbl_cancel'                         => __( 'Cancel', 'external-files-in-media-library' ),
+				'import_title'                       => __( 'Import', 'external-files-in-media-library' ),
+				'dialog_import_title'                => __( 'Import plugin settings', 'external-files-in-media-library' ),
+				'dialog_import_text'                 => __( 'Click on the button below to chose your JSON-file with the settings.', 'external-files-in-media-library' ),
+				'dialog_import_button'               => __( 'Import now', 'external-files-in-media-library' ),
+				'dialog_import_error_title'          => __( 'Error during import', 'external-files-in-media-library' ),
+				'dialog_import_error_text'           => __( 'The file could not be imported!', 'external-files-in-media-library' ),
+				'dialog_import_error_no_file'        => __( 'No file was uploaded.', 'external-files-in-media-library' ),
+				'dialog_import_error_no_size'        => __( 'The uploaded file is no size.', 'external-files-in-media-library' ),
+				'dialog_import_error_no_json'        => __( 'The uploaded file is not a valid JSON-file.', 'external-files-in-media-library' ),
+				'dialog_import_error_no_json_ext'    => __( 'The uploaded file does not have the file extension <i>.json</i>.', 'external-files-in-media-library' ),
+				'dialog_import_error_not_saved'      => __( 'The uploaded file could not be saved. Contact your hoster about this problem.', 'external-files-in-media-library' ),
+				'dialog_import_error_not_our_json'   => __( 'The uploaded file is not a valid JSON-file with settings for this plugin.', 'external-files-in-media-library' ),
+				'dialog_import_success_title'        => __( 'Settings have been imported', 'external-files-in-media-library' ),
+				'dialog_import_success_text'         => __( 'Import has been run successfully.', 'external-files-in-media-library' ),
+				'dialog_import_success_text_2'       => __( 'The new settings are now active. Click on the button below to reload the page and see the settings.', 'external-files-in-media-library' ),
+				'export_title'                       => __( 'Export', 'external-files-in-media-library' ),
+				'dialog_export_title'                => __( 'Export plugin settings', 'external-files-in-media-library' ),
+				'dialog_export_text'                 => __( 'Click on the button below to export the actual settings.', 'external-files-in-media-library' ),
+				'dialog_export_text_2'               => __( 'You can import this JSON-file in other projects using this WordPress plugin or theme.', 'external-files-in-media-library' ),
+				'dialog_export_button'               => __( 'Export now', 'external-files-in-media-library' ),
+				'table_options'                      => __( 'Options', 'external-files-in-media-library' ),
+				'table_entry'                        => __( 'Entry', 'external-files-in-media-library' ),
+				'table_no_entries'                   => __( 'No entries found.', 'external-files-in-media-library' ),
+				'plugin_settings_title'              => __( 'Settings', 'external-files-in-media-library' ),
+				'file_add_file'                      => __( 'Add file', 'external-files-in-media-library' ),
+				'file_choose_file'                   => __( 'Choose file', 'external-files-in-media-library' ),
+				'file_choose_image'                  => __( 'Upload or choose image', 'external-files-in-media-library' ),
+				'drag_n_drop'                        => __( 'Hold to drag & drop', 'external-files-in-media-library' ),
+			)
+		);
 
 		/**
 		 * Add the settings page.
@@ -539,7 +573,7 @@ class Settings {
 				<input type="hidden" name="page" value="eml_settings">
 				<input type="hidden" name="tab" value="eml_logs">
 				<?php
-				$log->search_box( __( 'Search for URL' ), 'link' );
+				$log->search_box( __( 'Search for URL', 'external-files-in-media-library' ), 'link' );
 				$log->views();
 				$log->display();
 				?>

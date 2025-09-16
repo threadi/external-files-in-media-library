@@ -768,15 +768,15 @@ class Directory_Listing {
 
 		// create dialog for response.
 		$dialog = array(
-			'title'   => __( 'Error', 'easy-settings-for-wordpress' ),
+			'title'   => __( 'Error', 'external-files-in-media-library' ),
 			'texts'   => array(
-				'<p><strong>' . __( 'The new name could not be saved!', 'easy-settings-for-wordpress' ) . '</strong></p>',
+				'<p><strong>' . __( 'The new name could not be saved!', 'external-files-in-media-library' ) . '</strong></p>',
 			),
 			'buttons' => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
-					'text'    => __( 'OK', 'easy-settings-for-wordpress' ),
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
 				),
 			),
 		);
@@ -786,7 +786,7 @@ class Directory_Listing {
 
 		// bail if no term ID is given.
 		if ( 0 === $term_id ) {
-			$dialog['texts'][] = __( 'Term is missing!', 'easy-settings-for-wordpress' );
+			$dialog['texts'][] = __( 'Term is missing!', 'external-files-in-media-library' );
 			wp_send_json( array( 'detail' => $dialog ) );
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
@@ -796,7 +796,7 @@ class Directory_Listing {
 
 		// bail if no name is given.
 		if ( empty( $name ) ) {
-			$dialog['texts'][] = __( 'New name is missing!', 'easy-settings-for-wordpress' );
+			$dialog['texts'][] = __( 'New name is missing!', 'external-files-in-media-library' );
 			wp_send_json( array( 'detail' => $dialog ) );
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
@@ -811,9 +811,9 @@ class Directory_Listing {
 		);
 
 		// return OK-message.
-		$dialog['title']                = __( 'Name has been changed', 'easy-settings-for-wordpress' );
+		$dialog['title']                = __( 'Name has been changed', 'external-files-in-media-library' );
 		$dialog['texts']                = array(
-			'<p><strong>' . __( 'The new name has been saved!', 'easy-settings-for-wordpress' ) . '</strong></p>',
+			'<p><strong>' . __( 'The new name has been saved!', 'external-files-in-media-library' ) . '</strong></p>',
 		);
 		$dialog['buttons'][0]['action'] = 'location.reload();';
 		wp_send_json( array( 'detail' => $dialog ) );
