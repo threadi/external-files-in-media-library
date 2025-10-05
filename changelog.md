@@ -49,6 +49,7 @@
 - Added option to load upload directory via local service
 - Added option to use our plugin name in each HTTP-header User Agent (default enabled)
 - Added success sound after import has been run (can be disabled)
+- Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 
 ### Changed
 

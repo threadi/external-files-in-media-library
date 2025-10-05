@@ -67,9 +67,15 @@ class Settings {
 	 * @return void
 	 */
 	public function init(): void {
+		// set all settings for this plugin.
 		add_action( 'init', array( $this, 'add_settings' ) );
+
+		// misc.
 		add_filter( 'eml_help_tabs', array( $this, 'add_help' ) );
+
+		// set actions.
 		add_action( 'admin_action_eml_disable_gprd_hint', array( $this, 'disable_gprd_hint_by_request' ) );
+		add_action( 'admin_action_efml_reset', array( $this, 'reset_plugin_by_request' ) );
 	}
 
 	/**
@@ -435,9 +441,9 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add the import/export section in advanced.
-		$advanced_tab_importexport = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
-		$advanced_tab_importexport->set_title( __( 'Export & Import settings', 'external-files-in-media-library' ) );
-		$advanced_tab_importexport->set_setting( $settings_obj );
+		$advanced_plugin = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
+		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
+		$advanced_plugin->set_setting( $settings_obj );
 
 		// add setting.
 		$gprd_hint_setting = $settings_obj->add_setting( 'eml_disable_gprd_warning' );
@@ -507,8 +513,52 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add import/export settings.
-		Import::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
-		Export::get_instance()->add_settings( $settings_obj, $advanced_tab_importexport );
+		Import::get_instance()->add_settings( $settings_obj, $advanced_plugin );
+		Export::get_instance()->add_settings( $settings_obj, $advanced_plugin );
+
+		// create reset URL.
+		$reset_url = add_query_arg(
+			array(
+				'action' => 'efml_reset',
+				'nonce'  => wp_create_nonce( 'external-files-in-media-library-reset' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$reset_dialog = array(
+			'title'   => __( 'Reset plugin', 'external-files-in-media-library' ),
+			'texts'   => array(
+				/* translators: %1$s will be replaced by the plugin name. */
+				'<p><strong>' . sprintf( __( 'Do you really want to reset any settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
+				'<p>' . __( 'This will reset all settings and all external files in your media library.', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'We recommend creating a backup before resetting the plugin.', 'external-files-in-media-library' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $reset_url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, reset it', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_reset' );
+		$setting->set_section( $advanced_plugin );
+		$setting->prevent_export( true );
+		$field = new Button();
+		$field->set_title( __( 'Reset plugin', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Reset plugin', 'external-files-in-media-library' ) );
+		$field->set_button_url( $reset_url );
+		$field->add_data( 'dialog', Helper::get_json( $reset_dialog ) );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$setting->set_field( $field );
 
 		// initialize this settings object.
 		$settings_obj->init();
@@ -756,11 +806,21 @@ class Settings {
 	}
 
 	/**
-	 * Show hint for service permissions.
+	 * Reset the plugin by request.
 	 *
 	 * @return void
 	 */
-	public function show_service_permission_hint(): void {
-		echo esc_html__( 'Select roles which should be allowed to use these services.', 'external-files-in-media-library' );
+	public function reset_plugin_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'external-files-in-media-library-reset', 'nonce' );
+
+		// uninstall all.
+		Uninstall::get_instance()->run();
+
+		// run installer tasks.
+		Install::get_instance()->activation();
+
+		// forward user to dashboard.
+		wp_safe_redirect( get_admin_url() );
 	}
 }
