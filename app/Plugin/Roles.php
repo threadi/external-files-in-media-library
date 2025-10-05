@@ -415,4 +415,13 @@ class Roles {
 		// return given value.
 		return $values;
 	}
+
+	/**
+	 * Show hint for service permissions.
+	 *
+	 * @return void
+	 */
+	public function show_service_permission_hint(): void {
+		echo esc_html__( 'Select roles which should be allowed to use these services.', 'external-files-in-media-library' );
+	}
 }
