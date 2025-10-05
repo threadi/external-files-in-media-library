@@ -129,17 +129,13 @@ class Queue extends Extension_Base {
 			return;
 		}
 
-		// add interval setting on main tab.
-		$general_tab_main = $general_tab->get_section( 'settings_section_main' );
-
-		// bail if section could not be loaded.
-		if ( ! $general_tab_main instanceof Section ) {
-			return;
-		}
+		// add section for queue settings.
+		$queue_section = $general_tab->add_section( 'settings_section_queue', 20 );
+		$queue_section->set_title( __( 'Queue', 'external-files-in-media-library' ) );
 
 		// create interval setting.
 		$queue_interval_setting = $settings_obj->add_setting( 'eml_queue_interval' );
-		$queue_interval_setting->set_section( $general_tab_main );
+		$queue_interval_setting->set_section( $queue_section );
 		$queue_interval_setting->set_type( 'string' );
 		$queue_interval_setting->set_default( 'efml_hourly' );
 		$field = new Select();
@@ -152,7 +148,7 @@ class Queue extends Extension_Base {
 
 		// add setting for limit.
 		$setting = $settings_obj->add_setting( 'eml_queue_limit' );
-		$setting->set_section( $general_tab_main );
+		$setting->set_section( $queue_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 10 );
 		$field = new Number();
