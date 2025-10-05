@@ -136,7 +136,7 @@ class File_Types {
 			$setting = $settings_obj->add_setting( 'eml_' . $name . '_proxy' );
 			$setting->set_section( $section );
 			$setting->set_type( 'integer' );
-			$setting->set_default( 1 );
+			$setting->set_default( $file_type_obj->is_proxy_default_enabled() ? 1 : 0 );
 			$field = new Checkbox();
 			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
@@ -149,7 +149,7 @@ class File_Types {
 			$setting = $settings_obj->add_setting( 'eml_' . $name . '_proxy_max_age' );
 			$setting->set_section( $section );
 			$setting->set_type( 'integer' );
-			$setting->set_default( 24 );
+			$setting->set_default( $file_type_obj->get_default_proxy_max_age() );
 			$field = new Number();
 			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
 			$field->set_title( sprintf( __( 'Max age for cached %1$s in proxy in hours', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );

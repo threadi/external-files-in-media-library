@@ -37,6 +37,15 @@ class Audio extends File_Types_Base {
 	);
 
 	/**
+	 * Return whether files of this type are proxied by default.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_default_enabled(): bool {
+		return false;
+	}
+
+	/**
 	 * Return the file type title.
 	 *
 	 * @return string
