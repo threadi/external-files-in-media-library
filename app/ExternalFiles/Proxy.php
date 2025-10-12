@@ -132,7 +132,7 @@ class Proxy {
 
 		// get basename from request for sized images depending on its dimensions.
 		$dimensions = array();
-		if ( 1 === preg_match( '/(.*)-(.*)x(.*)\.(.*)/', $title, $matches ) ) {
+		if ( 1 === preg_match( '/(.*)-\d*x\d*\.(.*)/', $title, $matches ) ) {
 			$dimensions = array(
 				absint( $matches[2] ),
 				absint( $matches[3] ),
