@@ -10,7 +10,9 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive;
 use Google\Service\Exception;
 use JsonException;
 use WP_User;
@@ -158,5 +160,17 @@ class Cli {
 		foreach ( $check_results as $check_result ) {
 			\WP_CLI::success( $check_result );
 		}
+	}
+
+	/**
+	 * Run import of files from Google Drive.
+	 *
+	 * Hint: use WP CLIs own --user=xy to run this as specific user.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function import_from_google_drive(): void {
+		Import::get_instance()->add_url( GoogleDrive::get_instance()->get_url_mark() . 'eflm-import-all' );
 	}
 }

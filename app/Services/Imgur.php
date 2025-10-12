@@ -192,6 +192,8 @@ class Imgur implements Service {
 		$content .= '<li>' . __( 'Wait until you get an answer.', 'external-files-in-media-library' ) . '</li>';
 		$content .= '<li>' . __( 'Take a look at your added external files in the media library.', 'external-files-in-media-library' ) . '</li>';
 		$content .= '</ol>';
+		$content .= '<h3>' . __( 'Hints', 'external-files-in-media-library' ) . '</h3>';
+		$content .= '<p>' . __( 'Imgur images can not be used on local WordPress installations. Imgur recognizes this and rejects the requests.', 'external-files-in-media-library' ) . '</p>';
 
 		// add help for the settings of this plugin.
 		$help_list[] = array(

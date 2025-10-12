@@ -236,6 +236,15 @@ class Import extends Directory_Listing_Base {
 		$user_id = Helper::get_current_user_id();
 
 		/**
+		 * Get the load more marker, if set, and remove it from file list.
+		 */
+		$load_more = false;
+		if ( isset( $files['load_more'] ) ) {
+			$load_more = $files['load_more'];
+			unset( $files['load_more'] );
+		}
+
+		/**
 		 * Filter the user_id for a single file during import.
 		 *
 		 * @since 1.1.0 Available since 1.1.0
@@ -387,9 +396,9 @@ class Import extends Directory_Listing_Base {
 				 * @since 2.0.0 Available since 2.0.0.
 				 * @param File $external_file_obj The object of the external file.
 				 * @param array $file_data The array with the file data.
-				 * @param string $url The source URL.
+				 * @param string $file_url The source URL.
 				 */
-				do_action( 'eml_after_file_save', $external_file_obj, $file_data, $url );
+				do_action( 'eml_after_file_save', $external_file_obj, $file_data, $file_url );
 
 				// log event.
 				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
@@ -443,9 +452,9 @@ class Import extends Directory_Listing_Base {
 			 * @since 2.0.0 Available since 2.0.0.
 			 * @param File $external_file_obj The object of the external file.
 			 * @param array $file_data The array with the file data.
-			 * @param string $url The source URL.
+			 * @param string $file_url The source URL.
 			 */
-			do_action( 'eml_after_file_save', $external_file_obj, $file_data, $url );
+			do_action( 'eml_after_file_save', $external_file_obj, $file_data, $file_url );
 
 			// show progress.
 			$progress ? $progress->tick() : '';
@@ -453,6 +462,11 @@ class Import extends Directory_Listing_Base {
 
 		// finish the progress.
 		$progress ? $progress->finish() : '';
+
+		// mark to load more, if set.
+		if ( $load_more ) {
+			update_option( 'eml_import_url_loading_more_' . $user_id, 1 );
+		}
 
 		// return ok.
 		return true;

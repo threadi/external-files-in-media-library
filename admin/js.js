@@ -1,3 +1,6 @@
+// marker for progress timeout.
+let efml_progress_timeout = false;
+
 jQuery(document).ready(function($) {
     /**
      * Add rating hint and add file action.
@@ -199,7 +202,7 @@ jQuery(document).ready(function($) {
 });
 
 /**
- * Get info about running import of URLs.
+ * Get and show info about running import of URLs.
  */
 function efml_upload_files_get_info() {
   jQuery.ajax( {
@@ -229,7 +232,7 @@ function efml_upload_files_get_info() {
        * If import is not running and no error occurred, show ok-message.
        */
       if ( running >= 1 ) {
-        setTimeout( function () {
+        efml_progress_timeout = setTimeout( function () {
           efml_upload_files_get_info()
         }, efmlJsVars.info_timeout );
       }
@@ -418,6 +421,16 @@ function efml_process_import_dialog() {
   formData.push({ 'name': 'action', 'value': 'eml_add_external_urls'});
   formData.push({ 'name': 'nonce', 'value': efmlJsVars.urls_nonce});
 
+  // initiale the initial AJAX-request.
+  efml_process_import_dialog_ajax( formData );
+}
+
+/**
+ * Run the AJAX-process to import files, depending on settings.
+ *
+ * @param formData
+ */
+function efml_process_import_dialog_ajax( formData ) {
   // send request.
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
@@ -443,7 +456,13 @@ function efml_process_import_dialog() {
       efml_create_dialog( dialog_config );
 
       // get info about progress.
-      setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+      efml_progress_timeout = setTimeout(function() { efml_upload_files_get_info() }, efmlJsVars.info_timeout);
+    },
+    success: function( data ) {
+      if( data.load_more ) {
+        clearInterval(efml_progress_timeout);
+        efml_process_import_dialog_ajax( formData );
+      }
     }
   });
 }

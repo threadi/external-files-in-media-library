@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\S3;
 defined( 'ABSPATH' ) || exit;
 
 use Aws\S3\Exception\S3Exception;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -65,7 +66,7 @@ class Protocol extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string,mixed>> List of files with its infos.
+	 * @return array<int|string,array<string,mixed>|bool> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.
@@ -86,7 +87,7 @@ class Protocol extends Protocol_Base {
 			$mime_type = wp_check_filetype( basename( $url ) );
 
 			// list of files.
-			$file_data = array();
+			$results = array();
 
 			// get the WP_Filesystem.
 			$wp_filesystem = Helper::get_wp_filesystem();
@@ -123,12 +124,27 @@ class Protocol extends Protocol_Base {
 						continue;
 					}
 
+					// set counter for files which has been loaded from Google Drive.
+					$loaded_files = 0;
+
 					// add each file to the list.
 					foreach ( $dir_data['files'] as $file ) {
+						// bail if this an AJAX-request and the file already exist in media library.
+						if ( wp_doing_ajax() && Files::get_instance()->get_file_by_title( $file['title'] ) ) {
+							continue;
+						}
+
+						// bail if limit for loaded files has been reached and this is an AJAX-request.
+						if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_s3_import_limit', 10 ) ) ) {
+							// set marker to load more.
+							$results['load_more'] = true;
+							continue;
+						}
+
 						// create the array for the file data.
 						$entry = array(
 							'title'         => basename( $file['file'] ),
-							'local'         => true, // TODO abhängig von Erreichbarkeit des Bucket.
+							'local'         => true, // TODO depends on public availability of the bucket.
 							'url'           => $file['file'],
 							'last-modified' => $file['last-modified'],
 							'filesize'      => $file['filesize'],
@@ -160,8 +176,11 @@ class Protocol extends Protocol_Base {
 						// add tmp file to the list.
 						$entry['tmp-file'] = $tmp_file;
 
+						// update the counter.
+						++$loaded_files;
+
 						// add entry to the list of files.
-						$file_data[] = $entry;
+						$results[] = $entry;
 					}
 				}
 			} else {
@@ -196,9 +215,9 @@ class Protocol extends Protocol_Base {
 				);
 
 				// add entry to the list of files.
-				$file_data[] = $entry;
+				$results[] = $entry;
 			}
-			return $file_data;
+			return $results;
 		} catch ( S3Exception $e ) {
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );

@@ -569,7 +569,7 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return directory listing from Google Drive.
+	 * Return directory listing from Dropbox.
 	 *
 	 * @param string $directory The given directory.
 	 *
@@ -811,7 +811,7 @@ class DropBox extends Service_Base implements Service {
 			return $protocols;
 		}
 
-		// add the Google Drive protocol before the HTTPS-protocol and return resulting list of protocols.
+		// add the DropBox protocol before the HTTPS-protocol and return resulting list of protocols.
 		array_unshift( $protocols, 'ExternalFilesInMediaLibrary\Services\DropBox\Protocol' );
 
 		// return the resulting list.

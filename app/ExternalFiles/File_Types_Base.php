@@ -197,6 +197,24 @@ class File_Types_Base {
 	}
 
 	/**
+	 * Return whether files of this type are proxied by default.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_default_enabled(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the default proxy max age.
+	 *
+	 * @return int
+	 */
+	public function get_default_proxy_max_age(): int {
+		return 24;
+	}
+
+	/**
 	 * Return true if cache age has been reached its expiration.
 	 *
 	 * @return bool

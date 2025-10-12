@@ -19,6 +19,7 @@
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
 - Added option to choose a specific date for each file to import
+- Added paginated AJAX-import to prevent timeouts, supported for AWS S3 and Google Drive
 - Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added option to choose which of these extensions should be available for file handlings
 - Added file type specific icons in directory listings
@@ -50,6 +51,7 @@
 - Added option to use our plugin name in each HTTP-header User Agent (default enabled)
 - Added success sound after import has been run (can be disabled)
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
+- Added support to import Google Drive files via WP CLI (without any timeouts)
 
 ### Changed
 

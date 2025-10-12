@@ -111,7 +111,11 @@ Yes, you can [add them manually](https://github.com/threadi/external-files-in-me
 
 = Can I import complete directories? =
 
-Yes, you can. Just enter the directory to import or use the tools under Media > "Add external files".
+Yes, you can. Just enter the directory to import or use the tools under Media > "Add external files". All files in the directory will be imported.
+
+= Do the size limits for files apply in the same way as for a normally uploaded file? =
+
+No, there is no fixed size limit for external files. Limits are determined by the storage space available to you, depending on where the file is stored.
 
 = Can I import from my local server? =
 
