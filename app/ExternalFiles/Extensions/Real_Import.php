@@ -88,7 +88,7 @@ class Real_Import extends Extension_Base {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
-		add_action( 'eml_after_file_save', array( $this, 'delete_mark_as_synced' ), 20, 3 );
+		add_action( 'eml_after_file_save', array( $this, 'delete_mark_as_synced' ), 20 );
 
 		// misc.
 		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_action' ) );
@@ -574,14 +574,12 @@ class Real_Import extends Extension_Base {
 	/**
 	 * Mark as updated.
 	 *
-	 * @param File                $external_file_obj The external file object.
-	 * @param array<string,mixed> $file_data The file data.
-	 * @param string              $url The used main URL for the import.
+	 * @param File $external_file_obj The external file object.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function delete_mark_as_synced( File $external_file_obj, array $file_data, string $url ): void {
+	public function delete_mark_as_synced( File $external_file_obj ): void {
 		// check nonce.
 		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;

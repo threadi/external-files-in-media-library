@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -206,6 +207,18 @@ class Rest extends Service_Base implements Service {
 		$field = new Text();
 		$field->set_title( __( 'Search', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When set, the REST API searches for this string. This allows you to filter for specific file names, for example.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+
+		// add setting to show also trashed files.
+		$setting = $settings_obj->add_setting( 'eml_rest_import_limit' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 10 );
+		$field = new Number();
+		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
 	}
 
@@ -716,7 +729,7 @@ class Rest extends Service_Base implements Service {
 	 * @param string                         $url     The used URL.
 	 * @param Protocols\Http                 $http_obj The HTTP object.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_rest_api_files( array $results, string $url, Protocols\Http $http_obj ): array {
 		// get service from request.
@@ -742,7 +755,7 @@ class Rest extends Service_Base implements Service {
 	 * @param string $directory The given URL.
 	 * @param Http   $http_obj The HTTP object.
 	 *
-	 * @return array<int,array<string,mixed>>
+	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	private function get_rest_api_data( string $directory, Protocols\Http $http_obj ): array {
 		// collect the files.
@@ -821,10 +834,25 @@ class Rest extends Service_Base implements Service {
 					continue;
 				}
 
+				// set counter for files which has been loaded from Google Drive.
+				$loaded_files = 0;
+
 				// add each file from response to the list of all files.
 				foreach ( $files as $file ) {
 					// bail if source_url is not set.
 					if ( ! isset( $file['source_url'] ) ) {
+						continue;
+					}
+
+					// bail if this an AJAX-request and the file already exist in media library.
+					if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file['source_url'] ) ) {
+						continue;
+					}
+
+					// bail if limit for loaded files has been reached and this is an AJAX-request.
+					if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_rest_import_limit', 10 ) ) ) {
+						// set marker to load more.
+						$file_list['load_more'] = true;
 						continue;
 					}
 
@@ -858,6 +886,9 @@ class Rest extends Service_Base implements Service {
 					if ( empty( $entry ) ) {
 						continue;
 					}
+
+					// update the counter.
+					++$loaded_files;
 
 					// add entry to the list.
 					$file_list[] = $entry;

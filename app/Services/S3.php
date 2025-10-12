@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use Aws\EndpointV2\EndpointDefinitionProvider;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
@@ -328,7 +329,7 @@ class S3 extends Service_Base implements Service {
 					'label'  => __( 'Go to AWS S3 Bucket', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
@@ -571,6 +572,18 @@ class S3 extends Service_Base implements Service {
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
 			$setting->set_field( $field );
 		}
+
+		// add setting to show also trashed files.
+		$setting = $settings_obj->add_setting( 'eml_s3_import_limit' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 10 );
+		$field = new Number();
+		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
+		$setting->set_field( $field );
 	}
 
 	/**

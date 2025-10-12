@@ -135,7 +135,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string,mixed>> List of file-infos.
+	 * @return array<int|string,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
 		// initialize list of files.

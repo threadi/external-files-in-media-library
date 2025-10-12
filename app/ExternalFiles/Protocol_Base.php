@@ -190,7 +190,7 @@ class Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string,mixed>> List of files with its infos.
+	 * @return array<int|string,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
 		return array();

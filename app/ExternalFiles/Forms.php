@@ -305,6 +305,9 @@ class Forms {
 		// reset counter.
 		update_option( 'eml_import_url_count_' . $user_id, 0 );
 
+		// reset loading more.
+		update_option( 'eml_import_url_loading_more_' . $user_id, 0 );
+
 		// prepare the results.
 		Results::get_instance()->prepare();
 
@@ -482,6 +485,11 @@ class Forms {
 			if ( ! $url_added ) {
 				$errors[] = $url;
 			}
+		}
+
+		// is marker to load more is set, return this info via AJAX.
+		if ( 1 === absint( get_option( 'eml_import_url_loading_more_' . $user_id ) ) ) {
+			wp_send_json( array( 'load_more' => 1 ) );
 		}
 
 		/**

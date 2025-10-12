@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Init;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
@@ -249,6 +250,18 @@ class GoogleDrive extends Service_Base implements Service {
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
 			$setting->set_field( $field );
 		}
+
+		// add setting to show also trashed files.
+		$setting = $settings_obj->add_setting( 'eml_google_drive_limit' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 10 );
+		$field = new Number();
+		$field->set_title( __( 'Max. files to load per iteration', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
+		$setting->set_field( $field );
 
 		// add invisible setting for access token.
 		$setting = $settings_obj->add_setting( 'eml_google_drive_access_tokens' );

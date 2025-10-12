@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleDrive;
 defined( 'ABSPATH' ) || exit;
 
 use Error;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
@@ -71,7 +72,7 @@ class Protocol extends Protocol_Base {
 	/**
 	 * Return infos to each given URL.
 	 *
-	 * @return array<int,array<string,mixed>> List of files with its infos.
+	 * @return array<int|string,array<string,mixed>|bool> List of files with its infos.
 	 * @throws JsonException Could throw exception.
 	 */
 	public function get_url_infos(): array {
@@ -148,8 +149,23 @@ class Protocol extends Protocol_Base {
 						continue;
 					}
 
+					// set counter for files which has been loaded from Google Drive.
+					$loaded_files = 0;
+
 					// add the files.
 					foreach ( $settings['files'] as $file ) {
+						// bail if this an AJAX-request and the file already exist in media library.
+						if ( wp_doing_ajax() && Files::get_instance()->get_file_by_title( $file['title'] ) ) {
+							continue;
+						}
+
+						// bail if limit for loaded files has been reached and this is an AJAX-request.
+						if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_google_drive_limit', 10 ) ) ) {
+							// set marker to load more.
+							$results['load_more'] = true;
+							continue;
+						}
+
 						// get the file data.
 						$entry = $this->get_file_data( $service, $file['file'] );
 
@@ -157,6 +173,9 @@ class Protocol extends Protocol_Base {
 						if ( empty( $entry ) ) {
 							continue;
 						}
+
+						// update the counter.
+						++$loaded_files;
 
 						// add file to the list.
 						$results[] = $entry;
@@ -241,7 +260,7 @@ class Protocol extends Protocol_Base {
 
 		// collect the request query.
 		$query = array(
-			'fields'   => 'files(capabilities(canEdit,canRename,canDelete,canShare,canTrash,canMoveItemWithinDrive),shared,starred,sharedWithMeTime,description,fileExtension,iconLink,id,driveId,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,ownedByMe,parents,size,hasThumbnail,thumbnailLink,trashed,videoMediaMetadata(height,width,durationMillis),webContentLink,webViewLink,exportLinks,permissions(id,type,role,domain),copyRequiresWriterPermission,shortcutDetails,resourceKey),nextPageToken',
+			'fields'   => 'files(fileExtension,iconLink,id,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,parents,size,hasThumbnail,thumbnailLink),nextPageToken',
 			'pageSize' => 1000,
 			'orderBy'  => 'name_natural',
 		);
@@ -280,6 +299,11 @@ class Protocol extends Protocol_Base {
 				continue;
 			}
 
+			// bail if file has no extension.
+			if ( empty( $file_obj->getFileExtension() ) ) {
+				continue;
+			}
+
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() . $file_obj->getId() ) ) {
 				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
@@ -292,7 +316,7 @@ class Protocol extends Protocol_Base {
 				$response = $service->files->get( $file_obj->getId(), array( 'alt' => 'media' ) );
 			} catch ( Exception $e ) {
 				// log event.
-				Log::get_instance()->create( __( 'Google Drive client could not download a requested file during mass-import! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
+				Log::get_instance()->create( __( 'Google Drive client could not download a requested file during mass-import! Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code><br>' . __( 'Requested file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_obj ) . '</code>', esc_url( $this->get_url() . $file_obj->getId() ), 'error' );
 
 				continue;
 			}
