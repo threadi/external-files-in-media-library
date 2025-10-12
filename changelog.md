@@ -109,6 +109,7 @@
 - Fixed missing visible progress-bar during synchronization
 - Fixed missing saving of actual availability of each file (all were available any time)
 - Fixed missing loading of files via proxy if filename contains an "x"
+- Fixed missing deletion of 60x60 thumb from backend
 
 ### Removed
 

@@ -1022,10 +1022,21 @@ class File {
 		// get the image meta data.
 		$image_meta_data = wp_get_attachment_metadata( $this->get_id(), true );
 
-		// bail if no sizes are given.
-		if ( empty( $image_meta_data['sizes'] ) ) {
+		// bail if no meta data exist.
+		if ( empty( $image_meta_data ) ) {
 			return;
 		}
+
+		// create size array if it does not exist atm.
+		if ( ! isset( $image_meta_data['sizes'] ) ) {
+			$image_meta_data['sizes'] = array();
+		}
+
+		// add the 60x60 from backend to the list of possible thumb sizes.
+		$image_meta_data['sizes']['60x60'] = array(
+			'height' => 60,
+			'width' => 60
+		);
 
 		// get proxy-object.
 		$proxy_obj = Proxy::get_instance();
