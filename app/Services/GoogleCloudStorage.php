@@ -567,7 +567,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	protected function get_global_actions(): array {
 		// get the settings URL depending on actual settings.
 		$settings_url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
-		if( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$settings_url = $this->get_config_url();
 		}
 
@@ -781,7 +781,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_serice_google_cloud_user_settings', $list );
+		return apply_filters( 'eml_service_google_cloud_user_settings', $list );
 	}
 
 	/**
@@ -864,5 +864,27 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		// return resulting list.
 		return $listing;
+	}
+
+	/**
+	 * Return the public URL for a given file ID.
+	 *
+	 * @param string $bucket_name The bucket name.
+	 * @param string $file_name The file name.
+	 *
+	 * @return string
+	 */
+	public function get_public_url_for_file( string $bucket_name, string $file_name ): string {
+		$url = 'https://storage.googleapis.com/' . $bucket_name . '/' . $file_name;
+
+		/**
+		 * Filter the public URL for a given bucket and file name.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 * @param string $bucket_name The bucket name.
+		 * @param string $file_name The file name.
+		 */
+		return apply_filters( 'eml_service_google_cloud_storage_public_url', $url, $bucket_name, $file_name );
 	}
 }

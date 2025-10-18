@@ -1396,4 +1396,51 @@ class GoogleDrive extends Service_Base implements Service {
 		 */
 		return apply_filters( 'eml_service_google_drive_user_settings', $list );
 	}
+
+	/**
+	 * Check if a file is public.
+	 *
+	 * @param DriveFile $file         The DriveFile object.
+	 * @param Drive     $drive_service_obj The service object used.
+	 *
+	 * @return bool
+	 */
+	public function is_file_public( DriveFile $file, Drive $drive_service_obj ): bool {
+		try {
+			// get the permissions.
+			$permissions = $drive_service_obj->permissions->listPermissions( $file->getId() );
+
+			// check each permission.
+			foreach ( $permissions->getPermissions() as $permission ) {
+				if ( $permission->getType() === 'anyone' && $permission->getRole() === 'reader' ) {
+					return true;
+				}
+			}
+
+			return false;
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Error during loading of file permissions from Google Drive. Error:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $file->getName(), 'error', 1 );
+			return false;
+		}
+	}
+
+	/**
+	 * Return the public URL for a given file ID.
+	 *
+	 * @param string $file_id The file ID.
+	 *
+	 * @return string
+	 */
+	public function get_public_url_for_file_id( string $file_id ): string {
+		$url = 'https://drive.usercontent.google.com/download?id=' . $file_id . '&export=download';
+
+		/**
+		 * Filter the public URL for a given file ID.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 * @param string $file_id The file ID.
+		 */
+		return apply_filters( 'eml_service_google_drive_public_url', $url, $file_id );
+	}
 }

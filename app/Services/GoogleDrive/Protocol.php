@@ -381,15 +381,26 @@ class Protocol extends Protocol_Base {
 	 * @throws Exception Could throw exception.
 	 */
 	private function get_file_data( Drive $service, string $file_id ): array {
+		// get the Google Drive object.
+		$google_drive_object = GoogleDrive::get_instance();
+
 		// get file data.
+		$file_obj  = $service->files->get( $file_id );
 		$response  = $service->files->get( $file_id, array( 'alt' => 'media' ) );
 		$file_data = $service->files->get( $file_id, array( 'fields' => 'createdTime,name' ) );
+
+		// check if file could be saved local and set the URL.
+		$local = ! $google_drive_object->is_file_public( $file_obj, $service );
+		$url   = $google_drive_object->get_url_mark() . $file_id;
+		if ( ! $local ) {
+			$url = $google_drive_object->get_public_url_for_file_id( $file_id );
+		}
 
 		// initialize basic array for file data.
 		$entry = array(
 			'title'         => $file_data->getName(),
-			'local'         => true,
-			'url'           => GoogleDrive::get_instance()->get_url_mark() . $file_id,
+			'local'         => $local,
+			'url'           => $url,
 			'last-modified' => absint( strtotime( $file_data->getCreatedTime() ) ),
 		);
 

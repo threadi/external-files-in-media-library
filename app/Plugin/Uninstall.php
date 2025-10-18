@@ -161,7 +161,7 @@ class Uninstall {
 			'eml_woocommerce',
 			'eml_woocommerce_login',
 			'eml_woocommerce_password',
-			'efml_admin_id'
+			'efml_admin_id',
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );

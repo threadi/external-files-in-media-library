@@ -121,20 +121,19 @@ class Protocol extends Protocol_Base {
 
 		// check if public access is allowed in this bucket.
 		$public_access_allowed = false;
-		$iam = false;
+		$iam                   = false;
 		try {
 			$iam = $bucket->iam();
-		}
-		catch ( Exception $e ) {
+		} catch ( Exception $e ) {
 			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 		}
 
-		if( $iam ) {
+		if ( $iam ) {
 			try {
 				$policy = $iam->policy();
-				foreach( $policy['bindings'] as $binding ) {
+				foreach ( $policy['bindings'] as $binding ) {
 					// search for roles with allow public access.
-					if ( $binding['role'] === 'roles/storage.objectViewer' || $binding['role'] === 'roles/storage.legacyObjectReader' ) {
+					if ( in_array( $binding['role'], array( 'roles/storage.objectViewer', 'roles/storage.legacyObjectReader' ), true ) ) {
 						$public_access_allowed = true;
 					}
 				}
@@ -163,7 +162,7 @@ class Protocol extends Protocol_Base {
 		$results = array(
 			'title'         => basename( $file_data['name'] ),
 			'local'         => ! $public_access_allowed,
-			'url'           => $public_access_allowed ? 'https://storage.googleapis.com/' . $google_cloud_storage_obj->get_bucket_name() . '/' . basename( $file_data['name'] ) : $this->get_url(),
+			'url'           => $public_access_allowed ? GoogleCloudStorage::get_instance()->get_public_url_for_file( $google_cloud_storage_obj->get_bucket_name(), basename( $file_data['name'] ) ) : $this->get_url(),
 			'last-modified' => absint( strtotime( $file_data['updated'] ) ),
 		);
 

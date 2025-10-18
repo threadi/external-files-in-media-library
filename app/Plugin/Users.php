@@ -54,7 +54,7 @@ class Users {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'set_user_role', array( $this, 'reset_cache' ), 10, 2 );
+		add_action( 'set_user_role', array( $this, 'reset_cache' ), 10, 0 );
 	}
 
 	/**
@@ -67,7 +67,7 @@ class Users {
 		$user_id = absint( get_option( 'efml_admin_id', 0 ) );
 
 		// return the ID from cache, if given.
-		if( $user_id > 0 ) {
+		if ( $user_id > 0 ) {
 			return $user_id;
 		}
 
