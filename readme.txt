@@ -38,6 +38,8 @@ Sort your external files in folder of [CatFolders](https://wordpress.org/plugins
 
 And also compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
 
+The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
+
 == REST API ==
 
 You can manage your external files with REST API requests as documented [here](https://github.com/threadi/external-files-in-media-library/tree/master/docs/rest.md).
