@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Exception;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Textarea;
@@ -241,7 +242,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	public function validate_json( ?string $json ): string {
 		// convert to string.
 		if ( ! is_string( $json ) ) {
-			$json = '';
+			return '';
 		}
 
 		// bail if empty string is given.
@@ -564,6 +565,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return array<int,array<string,string>>
 	 */
 	protected function get_global_actions(): array {
+		// get the settings URL depending on actual settings.
+		$settings_url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+		if( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$settings_url = $this->get_config_url();
+		}
+
 		return array_merge(
 			parent::get_global_actions(),
 			array(
@@ -572,7 +579,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'label'  => __( 'Go to your bucket', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
+					'action' => 'location.href="' . esc_url( $settings_url ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
