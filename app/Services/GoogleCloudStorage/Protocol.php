@@ -310,4 +310,13 @@ class Protocol extends Protocol_Base {
 		// return the list of files.
 		return $files;
 	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
+	}
 }

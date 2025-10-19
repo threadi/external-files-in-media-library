@@ -205,9 +205,9 @@ class Protocol extends Protocol_Base {
 
 				// check the public permissions.
 				$public_access_allowed = $s3->is_file_public_available( $url, $s3_client );
-				$url = $this->get_url();
-				if( $public_access_allowed ) {
-					$url = $result->get( '@metadata' )['effectiveUri']; // TODO liefert beim laden über WP 400 zurück???
+				$url                   = $this->get_url();
+				if ( $public_access_allowed ) {
+					$url = $result->get( '@metadata' )['effectiveUri'];
 				}
 
 				// create the array for the file data.

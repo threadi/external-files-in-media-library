@@ -1187,8 +1187,17 @@ class Files {
 			return array();
 		}
 
-		// bail if mime type is not allowed.
-		if ( ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
+		$true = true;
+		/**
+		 * Filter whether we check the given mime type.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $true The return value.
+		 * @param string $url The URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( apply_filters( 'eml_files_check_content_type', $true, $url ) && ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 

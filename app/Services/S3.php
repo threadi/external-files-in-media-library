@@ -746,7 +746,7 @@ class S3 extends Service_Base implements Service {
 		}
 
 		// remove the slashed indexed array, if set.
-		if( ! isset( $listing[ $url ] ) ) {
+		if ( ! isset( $listing[ $url ] ) ) {
 			return $listing;
 		}
 
@@ -754,12 +754,12 @@ class S3 extends Service_Base implements Service {
 		unset( $listing[ $url ] );
 
 		// now move all folders in the first index => dir.
-		$count = 0;
+		$count       = 0;
 		$first_index = '';
-		foreach( $listing as $index => $item ) {
+		foreach ( $listing as $index => $item ) {
 			// bail if this is the first entry.
-			if( 0 === $count ) {
-				$count++;
+			if ( 0 === $count ) {
+				++$count;
 				$first_index = $index;
 				continue;
 			}
@@ -771,7 +771,7 @@ class S3 extends Service_Base implements Service {
 			unset( $listing[ $index ] );
 
 			// and update the counter.
-			$count++;
+			++$count;
 		}
 
 		// return resulting list.
@@ -789,19 +789,19 @@ class S3 extends Service_Base implements Service {
 	public function is_file_public_available( string $file_key, S3Client $s3 ): bool {
 		// get the permissions to check if file is public available.
 		$public_access_allowed = false;
-		$query = array(
+		$query                 = array(
 			'Bucket' => $this->get_api_key(),
-			'Key' => $file_key
+			'Key'    => $file_key,
 		);
-		$permissions = $s3->getObjectAcl( $query );
-		foreach( $permissions->get( 'Grants' ) as $grant ) {
+		$permissions           = $s3->getObjectAcl( $query );
+		foreach ( $permissions->get( 'Grants' ) as $grant ) {
 			// bail if URI is not for all users.
-			if( 'http://acs.amazonaws.com/groups/global/AllUsers' !== $grant['Grantee']['URI'] ) {
+			if ( 'http://acs.amazonaws.com/groups/global/AllUsers' !== $grant['Grantee']['URI'] ) {
 				continue;
 			}
 
 			// bail if permission is not read or write.
-			if( ! in_array( $grant['Permission'], array( 'READ', 'WRITE' ), true ) ) {
+			if ( ! in_array( $grant['Permission'], array( 'READ', 'WRITE' ), true ) ) {
 				continue;
 			}
 
@@ -817,8 +817,8 @@ class S3 extends Service_Base implements Service {
 	 * Remove the authorization header for requests on public Google Drive files as theire usage
 	 * would result in HTTP status 400 from Google Drive.
 	 *
-	 * @param array<string,mixed>         $args The arguments.
-	 * @param Protocol_Base $http The used protocol.
+	 * @param array<string,mixed> $args The arguments.
+	 * @param Protocol_Base       $http The used protocol.
 	 *
 	 * @return array<string,mixed>
 	 */

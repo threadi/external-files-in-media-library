@@ -169,20 +169,6 @@ class Ftp extends Service_Base implements Service {
 			return array();
 		}
 
-		// bail if absolute path could not be loaded.
-		if ( ! is_string( $ftp_connection->abspath() ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			// create an error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ) );
-			$this->add_error( $error );
-
-			// log this event.
-			Log::get_instance()->create( __( 'Could not load absolute path from FTP-connection.', 'external-files-in-media-library' ), $directory, 'error' );
-
-			// do nothing more.
-			return array();
-		}
-
 		// get the starting directory.
 		$parse_url = wp_parse_url( $directory );
 
