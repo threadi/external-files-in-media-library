@@ -703,13 +703,15 @@ class Http extends Protocol_Base {
 			);
 		}
 
+		$instance = $this;
 		/**
 		 * Filter the resulting header.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string,mixed> $args List of headers.
+		 * @param HTTP $instance The protocol object.
 		 */
-		return apply_filters( 'eml_http_header_args', $args );
+		return apply_filters( 'eml_http_header_args', $args, $instance );
 	}
 
 	/**

@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -129,6 +130,7 @@ class GoogleDrive extends Service_Base implements Service {
 		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
 		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing_before_tree_building', array( $this, 'filter_on_directory_request' ), 10, 3 );
+		add_filter( 'eml_http_header_args', array( $this, 'remove_authorization_header' ), 10, 2 );
 	}
 
 	/**
@@ -1442,5 +1444,27 @@ class GoogleDrive extends Service_Base implements Service {
 		 * @param string $file_id The file ID.
 		 */
 		return apply_filters( 'eml_service_google_drive_public_url', $url, $file_id );
+	}
+
+	/**
+	 * Remove the authorization header for requests on public Google Drive files as theire usage
+	 * would result in HTTP status 400 from Google Drive.
+	 *
+	 * @param array<string,mixed>         $args The arguments.
+	 * @param Protocol_Base $http The used protocol.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function remove_authorization_header( array $args, Protocol_Base $http ): array {
+		// bail if URL on protocol is not ours.
+		if ( ! str_contains( $http->get_url(), '.amazonaws.com' ) ) {
+			return $args;
+		}
+
+		// remove the authorization header.
+		unset( $args['headers']['Authorization'] );
+
+		// remove resulting arguments.
+		return $args;
 	}
 }
