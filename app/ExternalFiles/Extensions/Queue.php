@@ -88,9 +88,9 @@ class Queue extends Extension_Base {
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
 
 		// use our own hooks.
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
 		add_filter( 'eml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
-		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 10, 4 );
+		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 4 );
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
@@ -830,10 +830,11 @@ class Queue extends Extension_Base {
 	 * Add a checkbox to mark the fields to add them to queue.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The settings.
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function add_option_in_form( array $dialog ): array {
+	public function add_option_in_form( array $dialog, array $settings ): array {
 		// only add if it is enabled in settings.
 		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
@@ -852,8 +853,14 @@ class Queue extends Extension_Base {
 			$checked = true;
 		}
 
+		// detect count of URLs depending on slash at the end of the given URL.
+		$url_count = 1;
+		if( ! empty( $settings['urls'] ) & str_ends_with( $settings['urls'], '/' ) ) {
+			$url_count = 2;
+		}
+
 		// collect the entry.
-		$text = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Add these URLs to the queue that is processed in the background.', 'external-files-in-media-library' );
+		$text = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Add this URL to the queue, which will be processed in the background.', 'Add these URLs to the queue, which will be processed in the background.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
 		$url   = add_query_arg(

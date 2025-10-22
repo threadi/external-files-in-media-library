@@ -68,7 +68,7 @@ class Dates extends Extension_Base {
 
 		// use our own hooks.
 		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_date_option_in_form' ) );
+		add_filter( 'eml_add_dialog', array( $this, 'add_date_option_in_form' ), 10, 2 );
 		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
@@ -206,10 +206,11 @@ class Dates extends Extension_Base {
 	 * Add a checkbox to mark the files to use their external dates.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The settings.
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function add_date_option_in_form( array $dialog ): array {
+	public function add_date_option_in_form( array $dialog, array $settings ): array {
 		// only add if it is enabled in settings.
 		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
@@ -223,8 +224,14 @@ class Dates extends Extension_Base {
 			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
+		// detect count of URLs depending on slash at the end of the given URL.
+		$url_count = 1;
+		if( ! empty( $settings['urls'] ) & str_ends_with( $settings['urls'], '/' ) ) {
+			$url_count = 2;
+		}
+
 		// collect the entry.
-		$text = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Use dates of the external files.', 'external-files-in-media-library' );
+		$text = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Use the file date from the external file.', 'Use the file date of the external files.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
 		$url   = add_query_arg(
