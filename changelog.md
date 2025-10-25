@@ -62,7 +62,7 @@
 - Using fallback to default interval for each of our events if setting of not available
 - Show hide and rating on directory archive listing
 - Directory reload no shows the progress
-- Optimized ZIP service
+- Optimized ZIP service: no also allows to extract complete ZIP files in media library
 - Updated some unfavorable text descriptions
 - Updated dependencies
 - Active folder in directory listing is now marked

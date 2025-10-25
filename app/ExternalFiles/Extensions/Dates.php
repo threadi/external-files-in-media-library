@@ -226,7 +226,7 @@ class Dates extends Extension_Base {
 
 		// detect count of URLs depending on slash at the end of the given URL.
 		$url_count = 1;
-		if( ! empty( $settings['urls'] ) & str_ends_with( $settings['urls'], '/' ) ) {
+		if( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
 		}
 

@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Sabre\HTTP\ClientHttpException;
+use WP_Filesystem_Base;
 
 /**
  * Object to handle the file protocol.
@@ -59,6 +60,26 @@ class File extends Protocol_Base {
 	public function get_url_infos(): array {
 		// initialize list of files.
 		$files = array();
+
+		$instance = $this;
+		/**
+		 * Filter the file with custom import methods.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<int,array<string,mixed>> $array Result list with infos.
+		 * @param string $url The URL to import.
+		 * @param Http $instance The actual protocol object.
+		 */
+		$results = apply_filters( 'eml_filter_file_response', array(), $this->get_url(), $instance );
+		if ( ! empty( $results ) ) {
+			// return the result as array for import this as single URL.
+			if ( isset( $results['title'] ) ) { // @phpstan-ignore isset.offset
+				return array( $results );
+			}
+
+			// return the result as list of files.
+			return $results; // @phpstan-ignore return.type
+		}
 
 		// get WP_Filesystem object.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -342,5 +363,17 @@ class File extends Protocol_Base {
 	 */
 	public function get_link(): string {
 		return basename( $this->get_url() );
+	}
+
+	/**
+	 * Return the original local path of the file as temp file for it but without the protocol.
+	 *
+	 * @param string             $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		return str_replace( 'file://', '', $url );
 	}
 }

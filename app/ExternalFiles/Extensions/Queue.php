@@ -845,6 +845,11 @@ class Queue extends Extension_Base {
 			return $dialog;
 		}
 
+		// bail if the used service is "zip".
+		if( ! empty( $settings['service'] ) && 'zip' === $settings['service'] ) {
+			return $dialog;
+		}
+
 		// we have no global setting to enable the queue in dialog.
 		$checked = false;
 
@@ -855,7 +860,7 @@ class Queue extends Extension_Base {
 
 		// detect count of URLs depending on slash at the end of the given URL.
 		$url_count = 1;
-		if( ! empty( $settings['urls'] ) & str_ends_with( $settings['urls'], '/' ) ) {
+		if( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
 		}
 

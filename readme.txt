@@ -27,6 +27,7 @@ And even more:
 * Import them as real files instead of just linking to them in your media library. This allows you to import any number of files into your project.
 * Check their availability (only for HTTP connections) to ensure that the external files are actually available.
 * Configure which users in your project are allowed to use the external files options.
+* Extract ZIP files into your media library.
 
 == Support for other plugins ==
 
