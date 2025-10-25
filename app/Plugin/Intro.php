@@ -205,7 +205,7 @@ class Intro {
 
 		// get the example URL.
 		$url_2 = $this->get_example_pdf_url() . 'example_en.pdf';
-		if( Languages::get_instance()->is_german_language() ) {
+		if ( Languages::get_instance()->is_german_language() ) {
 			$url_2 = $this->get_example_pdf_url() . 'example_de.pdf';
 		}
 
@@ -360,7 +360,7 @@ class Intro {
 	 */
 	public function allow_intro_pdf( bool $return_value, string $url ): bool {
 		// bail if this is not our intro file URL.
-		if( ! str_starts_with( $url, $this->get_example_pdf_url() ) ) {
+		if ( ! str_starts_with( $url, $this->get_example_pdf_url() ) ) {
 			return $return_value;
 		}
 		return false;
@@ -369,19 +369,19 @@ class Intro {
 	/**
 	 * Change file infos for our intro PDF as wp.org returns the wrong mime type for it.
 	 *
-	 * @param array<int,mixed> $files
+	 * @param array<int,mixed> $files List of files.
 	 *
 	 * @return array<int,mixed>
 	 */
 	public function change_file_infos_for_intro_pdf( array $files ): array {
 		foreach ( $files as $index => $file ) {
 			// bail if this is not our intro file URL.
-			if( ! str_starts_with( $file['url'], $this->get_example_pdf_url() ) ) {
+			if ( ! str_starts_with( $file['url'], $this->get_example_pdf_url() ) ) {
 				continue;
 			}
 
 			// set application/pdf as content type.
-			$files[$index]['mime-type'] = 'application/pdf';
+			$files[ $index ]['mime-type'] = 'application/pdf';
 		}
 
 		// return the resulting list.

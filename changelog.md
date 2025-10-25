@@ -52,6 +52,7 @@
 - Added success sound after import has been run (can be disabled)
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 - Added support to import Google Drive files via WP CLI (without any timeouts)
+- Added option to unzip zip-files which are already saved in media library
 
 ### Changed
 

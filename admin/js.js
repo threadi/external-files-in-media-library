@@ -37,7 +37,12 @@ jQuery(document).ready(function($) {
      */
     $('.efml-import-dialog').on( 'click', function(e) {
       e.preventDefault();
-      efml_get_import_dialog();
+
+      // define the settings.
+      let settings = $(this).data('settings');
+
+      // get the dialog with the settings.
+      efml_get_import_dialog( settings );
     });
 
     /**
@@ -361,6 +366,8 @@ function efml_save_as_directory( type, url, login, password, api_key, term_id ) 
 
 /**
  * Get the import dialog via AJAX and show it.
+ *
+ * This is the main function to start the import dialog, also via links.
  */
 function efml_get_import_dialog( settings ) {
   if( typeof settings === "undefined" ) {

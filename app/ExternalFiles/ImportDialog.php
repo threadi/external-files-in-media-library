@@ -90,7 +90,10 @@ class ImportDialog {
 		check_ajax_referer( 'efml-import-dialog-nonce', 'nonce' );
 
 		// get settings from request.
-		$settings = isset( $_POST['settings'] ) ? array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) ) : array();
+		$settings = array();
+		if ( isset( $_POST['settings'] ) ) {
+			$settings = array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) );
+		}
 
 		/**
 		 * Filter the given settings for the import dialog.
@@ -103,10 +106,9 @@ class ImportDialog {
 
 		// check number of files.
 		$url_count = 1;
-		if( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
+		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
-		}
-		elseif( ! isset( $settings['urls'] ) ) {
+		} elseif ( ! isset( $settings['urls'] ) ) {
 			$url_count = 2;
 		}
 

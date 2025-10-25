@@ -68,7 +68,7 @@ class File extends Protocol_Base {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<int,array<string,mixed>> $array Result list with infos.
 		 * @param string $url The URL to import.
-		 * @param Http $instance The actual protocol object.
+		 * @param File $instance The actual protocol object.
 		 */
 		$results = apply_filters( 'eml_filter_file_response', array(), $this->get_url(), $instance );
 		if ( ! empty( $results ) ) {
