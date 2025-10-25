@@ -38,7 +38,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark() ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( $this->get_api_key() ) ) ) {
 			return false;
 		}
 
@@ -70,7 +70,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function get_url_infos(): array {
 		// remove our marker from the URL.
-		$url = str_replace( '/' . S3::get_instance()->get_label() . '/' . $this->get_api_key() . '/', '', $this->get_url() );
+		$url = str_replace( S3::get_instance()->get_url_mark( $this->get_api_key() ), '', $this->get_url() );
 
 		// get our own S3 object.
 		$s3 = S3::get_instance();
@@ -144,7 +144,7 @@ class Protocol extends Protocol_Base {
 						// create the array for the file data.
 						$entry = array(
 							'title'         => basename( $file['file'] ),
-							'local'         => true, // TODO depends on public availability of the bucket.
+							'local'         => ! $s3->is_file_public_available( $file['Key'], $s3_client ),
 							'url'           => $file['file'],
 							'last-modified' => $file['last-modified'],
 							'filesize'      => $file['filesize'],
@@ -166,7 +166,7 @@ class Protocol extends Protocol_Base {
 						// set query for the file and save it in tmp dir.
 						$query = array(
 							'Bucket' => $this->get_api_key(),
-							'Key'    => str_replace( $s3->get_label() . '/' . $this->get_api_key() . '/', '', $file['file'] ),
+							'Key'    => str_replace( S3::get_instance()->get_url_mark( $this->get_api_key() ), '', $file['file'] ),
 							'SaveAs' => $tmp_file,
 						);
 
@@ -196,18 +196,25 @@ class Protocol extends Protocol_Base {
 				// set query for the file and save it in tmp dir.
 				$query = array(
 					'Bucket' => $this->get_api_key(),
-					'Key'    => str_replace( $s3->get_label() . '/' . $this->get_api_key() . '/', '', $url ),
+					'Key'    => $url,
 					'SaveAs' => $tmp_file,
 				);
 
 				// try to load the requested bucket.
 				$result = $s3_client->getObject( $query );
 
+				// check the public permissions.
+				$public_access_allowed = $s3->is_file_public_available( $url, $s3_client );
+				$url                   = $this->get_url();
+				if ( $public_access_allowed ) {
+					$url = $result->get( '@metadata' )['effectiveUri'];
+				}
+
 				// create the array for the file data.
 				$entry = array(
 					'title'         => basename( $url ),
-					'local'         => true, // TODO abhängig von Erreichbarkeit des Bucket.
-					'url'           => $this->get_url(),
+					'local'         => ! $public_access_allowed,
+					'url'           => $url,
 					'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $result->get( 'LastModified' )->format( 'U' ) ) ) ),
 					'filesize'      => $result->get( 'ContentLength' ),
 					'mime-type'     => $result->get( 'ContentType' ),
@@ -219,8 +226,8 @@ class Protocol extends Protocol_Base {
 			}
 			return $results;
 		} catch ( S3Exception $e ) {
-			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
-			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
+			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
 			return array();
 		}
 	}
@@ -231,7 +238,6 @@ class Protocol extends Protocol_Base {
 	 * @return bool
 	 */
 	public function should_be_saved_local(): bool {
-		// TODO abhängig von Erreichbarkeit des Bucket.
 		return true;
 	}
 
@@ -241,7 +247,6 @@ class Protocol extends Protocol_Base {
 	 * @return bool
 	 */
 	public function can_change_hosting(): bool {
-		// TODO abhängig von Erreichbarkeit des Bucket.
 		return false;
 	}
 

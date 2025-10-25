@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -123,6 +124,7 @@ class S3 extends Service_Base implements Service {
 		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
+		add_filter( 'eml_http_header_args', array( $this, 'remove_authorization_header' ), 10, 2 );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -216,7 +218,7 @@ class S3 extends Service_Base implements Service {
 					}
 
 					// add settings for entry.
-					$entry['file']          = $this->get_directory() . '/' . $file['Key'];
+					$entry['file']          = $this->get_url_mark( $this->get_api_key() ) . $file['Key'];
 					$entry['filesize']      = absint( $file['Size'] );
 					$entry['mime-type']     = $mime_type['type'];
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
@@ -329,11 +331,11 @@ class S3 extends Service_Base implements Service {
 					'label'  => __( 'Go to AWS S3 Bucket', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark( $this->get_api_key() ) . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark( $this->get_api_key() ) . '" + actualDirectoryPath, login, password, "", config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -719,10 +721,12 @@ class S3 extends Service_Base implements Service {
 	/**
 	 * Return the URL mark which identifies Google Cloud Storage URLs within this plugin.
 	 *
+	 * @param string $bucket_name The bucket name.
+	 *
 	 * @return string
 	 */
-	public function get_url_mark(): string {
-		return 'https://console.aws.amazon.com/s3/buckets/';
+	public function get_url_mark( string $bucket_name ): string {
+		return trailingslashit( 'https://console.aws.amazon.com/s3/buckets/' . $bucket_name );
 	}
 
 	/**
@@ -741,18 +745,93 @@ class S3 extends Service_Base implements Service {
 			return $listing;
 		}
 
-		// create the key of the index we want to remove.
-		$index = trailingslashit( $this->get_url_mark() . $this->get_api_key() );
-
-		// bail if the entry with url_marker is not set.
-		if ( ! isset( $listing[ $index ] ) ) {
+		// remove the slashed indexed array, if set.
+		if ( ! isset( $listing[ $url ] ) ) {
 			return $listing;
 		}
 
-		// remove this entry.
-		unset( $listing[ $index ] );
+		// remove it.
+		unset( $listing[ $url ] );
+
+		// now move all folders in the first index => dir.
+		$count       = 0;
+		$first_index = '';
+		foreach ( $listing as $index => $item ) {
+			// bail if this is the first entry.
+			if ( 0 === $count ) {
+				++$count;
+				$first_index = $index;
+				continue;
+			}
+
+			// move it.
+			$listing[ $first_index ]['dirs'][ $index ] = $item;
+
+			// remove the original.
+			unset( $listing[ $index ] );
+
+			// and update the counter.
+			++$count;
+		}
 
 		// return resulting list.
 		return $listing;
+	}
+
+	/**
+	 * Return whether given file on bucket is public available.
+	 *
+	 * @param string   $file_key The file key.
+	 * @param S3Client $s3 The S3 client object.
+	 *
+	 * @return bool
+	 */
+	public function is_file_public_available( string $file_key, S3Client $s3 ): bool {
+		// get the permissions to check if file is public available.
+		$public_access_allowed = false;
+		$query                 = array(
+			'Bucket' => $this->get_api_key(),
+			'Key'    => $file_key,
+		);
+		$permissions           = $s3->getObjectAcl( $query );
+		foreach ( $permissions->get( 'Grants' ) as $grant ) {
+			// bail if URI is not for all users.
+			if ( 'http://acs.amazonaws.com/groups/global/AllUsers' !== $grant['Grantee']['URI'] ) {
+				continue;
+			}
+
+			// bail if permission is not read or write.
+			if ( ! in_array( $grant['Permission'], array( 'READ', 'WRITE' ), true ) ) {
+				continue;
+			}
+
+			// file is public available.
+			$public_access_allowed = true;
+		}
+
+		// return the result.
+		return $public_access_allowed;
+	}
+
+	/**
+	 * Remove the authorization header for requests on public Google Drive files as theire usage
+	 * would result in HTTP status 400 from Google Drive.
+	 *
+	 * @param array<string,mixed> $args The arguments.
+	 * @param Protocol_Base       $http The used protocol.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function remove_authorization_header( array $args, Protocol_Base $http ): array {
+		// bail if URL on protocol is not ours.
+		if ( ! str_contains( $http->get_url(), '.amazonaws.com' ) ) {
+			return $args;
+		}
+
+		// remove the authorization header.
+		unset( $args['headers']['Authorization'] );
+
+		// remove resulting arguments.
+		return $args;
 	}
 }

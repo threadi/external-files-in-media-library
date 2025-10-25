@@ -87,6 +87,11 @@ class Intro {
 		// add AJAX-actions.
 		add_action( 'wp_ajax_efml_intro_closed', array( $this, 'closed' ) );
 		add_action( 'wp_ajax_efml_intro_started', array( $this, 'started' ) );
+
+		// use our own hooks.
+		add_filter( 'eml_http_check_content_type', array( $this, 'allow_intro_pdf' ), 10, 2 );
+		add_filter( 'eml_files_check_content_type', array( $this, 'allow_intro_pdf' ), 10, 2 );
+		add_filter( 'eml_external_files_infos', array( $this, 'change_file_infos_for_intro_pdf' ) );
 	}
 
 	/**
@@ -199,8 +204,10 @@ class Intro {
 		);
 
 		// get the example URL.
-		// TODO !!!
-		$url_2 = 'https://pdfobject.com/pdf/sample.pdf';
+		$url_2 = $this->get_example_pdf_url() . 'example_en.pdf';
+		if ( Languages::get_instance()->is_german_language() ) {
+			$url_2 = $this->get_example_pdf_url() . 'example_de.pdf';
+		}
 
 		// create the forward URL after end of intro.
 		$url_3 = get_admin_url() . 'media-new.php';
@@ -324,5 +331,60 @@ class Intro {
 		$setting->set_show_in_rest( true );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
+	}
+
+	/**
+	 * Return the example PDF URL. Just the start, not the language-specific file name.
+	 *
+	 * @return string
+	 */
+	private function get_example_pdf_url(): string {
+		$url = 'https://plugins.svn.wordpress.org/external-files-in-media-library/assets/';
+
+		/**
+		 * Filter the intro PDF URL.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 */
+		return apply_filters( 'efml_intro_pdf_url', $url );
+	}
+
+	/**
+	 * Allow the intro PDF to import.
+	 *
+	 * @param bool   $return_value The return value (true to check the file type, so we return here false).
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	public function allow_intro_pdf( bool $return_value, string $url ): bool {
+		// bail if this is not our intro file URL.
+		if ( ! str_starts_with( $url, $this->get_example_pdf_url() ) ) {
+			return $return_value;
+		}
+		return false;
+	}
+
+	/**
+	 * Change file infos for our intro PDF as wp.org returns the wrong mime type for it.
+	 *
+	 * @param array<int,mixed> $files List of files.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function change_file_infos_for_intro_pdf( array $files ): array {
+		foreach ( $files as $index => $file ) {
+			// bail if this is not our intro file URL.
+			if ( ! str_starts_with( $file['url'], $this->get_example_pdf_url() ) ) {
+				continue;
+			}
+
+			// set application/pdf as content type.
+			$files[ $index ]['mime-type'] = 'application/pdf';
+		}
+
+		// return the resulting list.
+		return $files;
 	}
 }

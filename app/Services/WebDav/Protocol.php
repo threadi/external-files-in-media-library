@@ -298,4 +298,13 @@ class Protocol extends Protocol_Base {
 	public function get_title(): string {
 		return WebDav::get_instance()->get_label();
 	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
+	}
 }

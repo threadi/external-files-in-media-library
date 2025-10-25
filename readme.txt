@@ -27,6 +27,7 @@ And even more:
 * Import them as real files instead of just linking to them in your media library. This allows you to import any number of files into your project.
 * Check their availability (only for HTTP connections) to ensure that the external files are actually available.
 * Configure which users in your project are allowed to use the external files options.
+* Extract ZIP files into your media library.
 
 == Support for other plugins ==
 
@@ -37,6 +38,8 @@ Add external files on download lists of [Download Lists with Icons](https://word
 Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). You can import and synchronize them in these plugins.
 
 And also compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
+
+The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
 
 == REST API ==
 
@@ -113,7 +116,7 @@ Yes, you can [add them manually](https://github.com/threadi/external-files-in-me
 
 Yes, you can. Just enter the directory to import or use the tools under Media > "Add external files". All files in the directory will be imported.
 
-= Do the size limits for files apply in the same way as for a normally uploaded file? =
+= Do the upload size limits for files apply in the same way as for a normally uploaded file? =
 
 No, there is no fixed size limit for external files. Limits are determined by the storage space available to you, depending on where the file is stored.
 

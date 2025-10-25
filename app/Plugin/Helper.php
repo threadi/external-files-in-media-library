@@ -14,9 +14,7 @@ use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
 use WP_Query;
-use WP_Role;
 use WP_User;
-use WP_User_Query;
 
 /**
  * Initialize the helper for this plugin.
@@ -79,41 +77,6 @@ class Helper {
 	 */
 	public static function get_log_url( string $url = '' ): string {
 		return Settings::get_instance()->get_url( 'eml_logs', '', $url );
-	}
-
-	/**
-	 * Return the ID of the first administrator user.
-	 *
-	 * @return int
-	 */
-	public static function get_first_administrator_user(): int {
-		// get the first user with administrator role.
-		$query   = array(
-			'role'   => 'administrator',
-			'number' => 1,
-		);
-		$results = new WP_User_Query( $query );
-
-		// bail on no results.
-		if ( 0 === $results->get_total() ) {
-			return 0;
-		}
-
-		// get the results.
-		$roles = $results->get_results();
-
-		// bail if no results returned.
-		if ( empty( $roles ) ) {
-			return 0;
-		}
-
-		// bail if first entry does not exist.
-		if ( empty( $roles[0] ) ) {
-			return 0;
-		}
-
-		// return the ID of the first entry.
-		return absint( $roles[0]->ID );
 	}
 
 	/**
@@ -342,7 +305,7 @@ class Helper {
 
 		// Fallback: search for an administrator.
 		if ( ! $user_obj instanceof WP_User ) {
-			return self::get_first_administrator_user();
+			return Users::get_instance()->get_first_administrator_user();
 		}
 
 		// return resulting user ID.

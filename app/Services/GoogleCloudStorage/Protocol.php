@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -118,16 +119,34 @@ class Protocol extends Protocol_Base {
 			return array();
 		}
 
+		// check if public access is allowed in this bucket.
+		$public_access_allowed = false;
+		$iam                   = false;
+		try {
+			$iam = $bucket->iam();
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+		}
+
+		if ( $iam ) {
+			try {
+				$policy = $iam->policy();
+				foreach ( $policy['bindings'] as $binding ) {
+					// search for roles with allow public access.
+					if ( in_array( $binding['role'], array( 'roles/storage.objectViewer', 'roles/storage.legacyObjectReader' ), true ) ) {
+						$public_access_allowed = true;
+					}
+				}
+			} catch ( Exception $e ) {
+				Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+			}
+		}
+
 		// get the requested object.
 		$file = $bucket->object( $file_name );
 
 		// get the file infos.
-		$file_data = array();
-		try {
-			$file_data = $file->info();
-		} catch ( \Google\Cloud\Core\Exception\NotFoundException $e ) {
-			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage file infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
-		}
+		$file_data = $file->info();
 
 		// bail if file infos are empty.
 		if ( empty( $file_data ) ) {
@@ -142,8 +161,8 @@ class Protocol extends Protocol_Base {
 		// initialize basic array for file data.
 		$results = array(
 			'title'         => basename( $file_data['name'] ),
-			'local'         => true,
-			'url'           => $this->get_url(),
+			'local'         => ! $public_access_allowed,
+			'url'           => $public_access_allowed ? GoogleCloudStorage::get_instance()->get_public_url_for_file( $google_cloud_storage_obj->get_bucket_name(), basename( $file_data['name'] ) ) : $this->get_url(),
 			'last-modified' => absint( strtotime( $file_data['updated'] ) ),
 		);
 
@@ -290,5 +309,14 @@ class Protocol extends Protocol_Base {
 
 		// return the list of files.
 		return $files;
+	}
+
+	/**
+	 * Return whether this URL could be checked for availability.
+	 *
+	 * @return bool
+	 */
+	public function can_check_availability(): bool {
+		return false;
 	}
 }

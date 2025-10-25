@@ -12,6 +12,12 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use Error;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
@@ -19,12 +25,13 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
+use WP_Post;
 use ZipArchive;
 
 /**
  * Object to handle support of files from ZIP as directory listing.
  */
-class Zip extends Directory_Listing_Base implements Service {
+class Zip extends Service_Base implements Service {
 
 	/**
 	 * The object name.
@@ -39,6 +46,20 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'ZIP';
+
+	/**
+	 * Disable credentials for this service.
+	 *
+	 * @var bool
+	 */
+	protected bool $no_credentials = true;
+
+	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	protected string $settings_sub_tab = 'eml_zip';
 
 	/**
 	 * Instance of actual object.
@@ -91,6 +112,9 @@ class Zip extends Directory_Listing_Base implements Service {
 		// use our own hooks.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_zip' ), 30 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -102,6 +126,73 @@ class Zip extends Directory_Listing_Base implements Service {
 		// use our own hooks.
 		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
 		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
+		add_filter( 'eml_filter_url_response', array( $this, 'get_files_from_zip' ), 10, 2 );
+		add_filter( 'eml_filter_file_response', array( $this, 'get_files_from_zip' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
+		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
+		add_filter( 'eml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
+
+		// misc.
+		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
+	}
+
+	/**
+	 * Add settings for AWS S3 support.
+	 *
+	 * @return void
+	 */
+	public function init_zip(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
+		// add new tab for settings.
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
+
+		// add section for file statistics.
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
+
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
+
+		// add setting to show also trashed files.
+		$setting = $settings_obj->add_setting( 'eml_zip_import_limit' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 6 );
+		$field = new Number();
+		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -125,18 +216,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// bail if "ZipArchive" is not available.
-		if ( ! class_exists( 'ZipArchive' ) ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
-
-			// add it to the list.
-			$this->add_error( $error );
-
-			// log this event.
-			Log::get_instance()->create( __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ), $directory, 'error' );
-
-			// return empty array.
+		if ( ! $this->is_zip_archive_available( $directory ) ) {
 			return array();
 		}
 
@@ -148,7 +228,7 @@ class Zip extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// get the staring directory.
+		// get the starting directory.
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if given string is not a valid URL.
@@ -166,31 +246,11 @@ class Zip extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// get the file as temp file.
-		$zip_file = $protocol_handler_obj->get_temp_file( $directory, $wp_filesystem );
-
-		// bail if temp file could not be loaded.
-		if ( ! is_string( $zip_file ) ) {
-			return array();
-		}
-
 		// open zip file using ZipArchive as readonly.
-		$zip    = new ZipArchive();
-		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
+		$zip = $this->get_zip_object_by_file( $directory );
 
 		// bail if ZIP could not be opened.
-		if ( true !== $opened ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'Given file is not a valid ZIP-file!', 'external-files-in-media-library' ) );
-
-			// add it to the list.
-			$this->add_error( $error );
-
-			// return empty array.
+		if ( ! $zip instanceof ZipArchive) {
 			return array();
 		}
 
@@ -307,11 +367,13 @@ class Zip extends Directory_Listing_Base implements Service {
 		// close the zip handle.
 		$zip->close();
 
-		$listing['dirs'][ array_key_first( $folders ) ] = array(
-			'title'   => array_key_first( $folders ),
-			'folders' => array(),
-			'dirs'    => array(),
-		);
+		if ( ! empty( $folders ) ) {
+			$listing['dirs'][ array_key_first( $folders ) ] = array(
+				'title'   => array_key_first( $folders ),
+				'folders' => array(),
+				'dirs'    => array(),
+			);
+		}
 
 		// return the resulting list.
 		return array_merge( array( 'completed' => true ), array( $directory => $listing ), $folders );
@@ -328,7 +390,7 @@ class Zip extends Directory_Listing_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "file://" + url.replace("file://", "") + "/" + file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": url + "/" + file.file, "login": login, "password": password, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -360,14 +422,15 @@ class Zip extends Directory_Listing_Base implements Service {
 	}
 
 	/**
-	 * Return info about requested file from ZIP.
+	 * Return info about requested single file from a given ZIP.
 	 *
-	 * We save the unzipped file in tmp directory for import.
+	 * We save the unzipped file in tmp directory to get all data of this file. This is necessary for the import
+	 * of them.
 	 *
-	 * @param array<string,string> $results The result.
+	 * @param array<string,int|string> $results The result.
 	 * @param string               $file_path The path to the file (should contain and not end with '.zip').
 	 *
-	 * @return array<string,string>
+	 * @return array<string,int|string>
 	 */
 	public function get_file( array $results, string $file_path ): array {
 		// get service from request.
@@ -385,59 +448,58 @@ class Zip extends Directory_Listing_Base implements Service {
 
 		// bail if file path does not contain '.zip'.
 		if ( ! str_contains( $file_path, '.zip' ) ) {
-			return $results;
-		}
-
-		// bail if "ZipArchive" is not available.
-		if ( ! class_exists( 'ZipArchive' ) ) {
 			return array();
 		}
 
-		// get the path to the ZIP from path string.
-		$zip_file = substr( $file_path, 0, absint( strpos( $file_path, '.zip' ) ) ) . '.zip';
-		$zip_file = str_replace( 'file://', '', $zip_file );
-
-		// bail if file does not exist.
-		if ( ! file_exists( $zip_file ) ) {
-			// log event.
-			Log::get_instance()->create( __( 'ZIP-file to use for extracting a file does not exist.', 'external-files-in-media-library' ), $zip_file, 'error' );
-
-			// return empty array as we can not get infos about a file which does not exist.
+		// bail if PHP module "ZipArchive" is not available.
+		if ( ! $this->is_zip_archive_available( $file_path ) ) {
 			return array();
 		}
 
-		// get the path to the file in the ZIP (+4 for .zip and +1 for the starting "/").
+		// get the path to the file in the ZIP (+4 for .zip and +1 for the starting "/") we want to extract.
 		$file = substr( $file_path, strpos( $file_path, '.zip' ) + 5 );
 
 		// bail if no file could be found. This is not an error, but used for direct ZIP-upload.
 		if ( empty( $file ) ) {
-			return $results;
-		}
-
-		// get the zip object.
-		$zip    = new ZipArchive();
-		$opened = $zip->open( $zip_file, ZipArchive::RDONLY );
-
-		// bail if file could not be opened.
-		if ( ! $opened ) {
-			// log event.
-			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
-
-			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
 
-		// get info about the file to extract.
+		// get the zip object for the given file.
+		$zip = $this->get_zip_object_by_file( $file_path );
+
+		// bail if zip could not be opened.
+		if ( ! $zip instanceof ZipArchive) {
+			return array();
+		}
+
+		// get content of the file to extract.
 		$file_content = $zip->getFromName( $file );
 
 		// bail if no file data could be loaded.
 		if ( ! $file_content ) {
 			// log event.
-			Log::get_instance()->create( __( 'No data of the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $zip_file, 'error' );
+			Log::get_instance()->create( __( 'No data of the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $file_path, 'error' );
 
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
+
+		// get entry data.
+		$file_stat = $zip->statName( $file_path );
+
+		// bail if no stats could be loaded.
+		if( ! is_array( $file_stat ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'No stats for the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $file_path, 'error' );
+
+			return array();
+		}
+
+		// get file date from zip.
+		$results['last-modified'] = absint( $file_stat['mtime'] );
+
+		// get the file size.
+		$results['filesize'] = absint( $file_stat['size'] );
 
 		// get file infos.
 		$file_info = pathinfo( $file );
@@ -447,14 +509,14 @@ class Zip extends Directory_Listing_Base implements Service {
 			return array();
 		}
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
 		// get tmp file name.
 		$tmp_file_name = wp_tempnam();
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
+
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// and save the file there.
 		try {
@@ -486,6 +548,181 @@ class Zip extends Directory_Listing_Base implements Service {
 	}
 
 	/**
+	 * Return list of files in zip to import.
+	 *
+	 * @param array<int|string,array<string,mixed>|bool> $results The resulting list.
+	 * @param string                         $file_path The file path to check and import.
+	 *
+	 * @return array<int|string,array<string,mixed>|bool>
+	 */
+	public function get_files_from_zip( array $results, string $file_path ): array {
+		// bail if PHP module "ZipArchive" is not available.
+		if ( ! $this->is_zip_archive_available( $file_path ) ) {
+			return array();
+		}
+
+		// if given file is a single file in a ZIP, get its file infos.
+		if ( ! str_ends_with( $file_path, '/' ) ) {
+			// get the tmp file for this single file from the zip.
+			$tmp_file = $this->get_file( array(), $file_path );
+
+			// bail if no file could be loaded.
+			if ( empty( $tmp_file ) ) {
+				return array();
+			}
+
+			// set the mime type.
+			$mime_type = wp_check_filetype( basename( $file_path ) );
+
+			// bail if no mime type could be found.
+			if ( empty( $mime_type['ext'] ) ) {
+				return array();
+			}
+
+			// complete the entry and return it.
+			return array(
+				array(
+					'title'         => basename( $file_path ),
+					'local'         => true,
+					'url'           => $file_path,
+					'last-modified' => absint( $tmp_file['last-modified'] ),
+					'tmp-file'      => $tmp_file['tmp-file'],
+					'mime-type'     => $mime_type['type'],
+					'filesize'      => absint( $tmp_file['filesize'] ),
+				),
+			);
+		}
+
+		// get the zip file as object.
+		$zip = $this->get_zip_object_by_file( $file_path );
+
+		// bail if zip could not be opened.
+		if ( ! $zip instanceof ZipArchive) {
+			return array();
+		}
+
+		// get count of files.
+		$file_count = $zip->count();
+
+		// set counter for files which has been loaded from Google Drive.
+		$loaded_files = 0;
+
+		// loop through the files and create the list.
+		for ( $i = 0; $i < $file_count; $i++ ) {
+			// get the name.
+			$name = $zip->getNameIndex( $i );
+
+			// create a pseudo URL for this file.
+			$url = trailingslashit( $file_path ) . $name;
+
+			// get entry data.
+			$file_stat = $zip->statIndex( $i );
+
+			// bail if file_stat could not be read.
+			if ( ! is_array( $file_stat ) ) {
+				continue;
+			}
+
+			// bail if this an AJAX-request and the file already exist in media library.
+			if ( wp_doing_ajax() && Files::get_instance()->get_file_by_title( basename( $file_stat['name'] ) ) ) {
+				continue;
+			}
+
+			// bail if limit for loaded files has been reached and this is an AJAX-request.
+			if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_zip_import_limit', 10 ) ) ) {
+				// set marker to load more.
+				$results['load_more'] = true;
+				continue;
+			}
+
+			// bail if name could not be read.
+			if ( ! is_string( $name ) ) {
+				continue;
+			}
+
+			// get parts of the path.
+			$parts = explode( DIRECTORY_SEPARATOR, $name );
+
+			// if array contains more than 1 entry this file is in a directory.
+			if ( end( $parts ) ) {
+				// get content type of this file.
+				$mime_type = wp_check_filetype( $file_stat['name'] );
+
+				// bail if file is not allowed.
+				if ( empty( $mime_type['type'] ) ) {
+					continue;
+				}
+
+				// get tmp file name.
+				$tmp_file_name = wp_tempnam();
+
+				// set the file as tmp-file for import.
+				$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+				// get WP Filesystem-handler.
+				$wp_filesystem = Helper::get_wp_filesystem();
+
+				// get info about the file to extract.
+				$file_content = $zip->getFromName( $name );
+
+				// bail if no file data could be loaded.
+				if ( ! $file_content ) {
+					// log event.
+					Log::get_instance()->create( __( 'No data of the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $file_path, 'error' );
+
+					// return empty array as we can not get infos about a file which does not exist.
+					continue;
+				}
+
+				// and save the file there.
+				try {
+					$wp_filesystem->put_contents( $tmp_file, $file_content );
+					$wp_filesystem->delete( $tmp_file_name );
+				} catch ( Error $e ) {
+					// create the error entry.
+					$error_obj = new Url_Result();
+					/* translators: %1$s will be replaced by a URL. */
+					$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $file_path ) ) );
+					$error_obj->set_url( $file_path );
+					$error_obj->set_error( true );
+
+					// add the error object to the list of errors.
+					Results::get_instance()->add( $error_obj );
+
+					// add log entry.
+					Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $file_path, 'error' );
+
+					// do nothing more.
+					continue;
+				}
+
+				// collect the entry.
+				$entry = array(
+					'title'         => basename( $file_stat['name'] ),
+					'local'         => true,
+					'last-modified' => absint( $file_stat['mtime'] ),
+					'tmp-file'      => $tmp_file,
+					'mime-type'     => $mime_type['type'],
+					'url'           => $url,
+					'filesize'      => absint( $file_stat['size'] ),
+				);
+
+				// update the counter.
+				++$loaded_files;
+
+				// add the entry to the list.
+				$results[] = $entry;
+			}
+		}
+
+		// close the zip handle.
+		$zip->close();
+
+		// return the resulting list of files.
+		return $results;
+	}
+
+	/**
 	 * Check if given directory is a valid ZIP-file.
 	 *
 	 * @param string $directory The directory to check.
@@ -494,18 +731,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// bail if "ZipArchive" is not available.
-		if ( ! class_exists( 'ZipArchive' ) ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
-
-			// add it to the list.
-			$this->add_error( $error );
-
-			// log this event.
-			Log::get_instance()->create( __( 'PHP-Modul zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ), $directory, 'error' );
-
-			// return false to prevent further processing.
+		if ( ! $this->is_zip_archive_available( $directory ) ) {
 			return false;
 		}
 
@@ -520,22 +746,6 @@ class Zip extends Directory_Listing_Base implements Service {
 
 			// log this event.
 			Log::get_instance()->create( __( 'No ZIP-file given!', 'external-files-in-media-library' ), $directory, 'error' );
-
-			// return false to prevent further processing.
-			return false;
-		}
-
-		// bail if file path does not contain '.zip'.
-		if ( ! str_contains( $directory, '.zip' ) ) {
-			// create error object.
-			$error = new WP_Error();
-			$error->add( 'efml_service_zip', __( 'The given path does not end with ".zip"!', 'external-files-in-media-library' ) );
-
-			// add it to the list.
-			$this->add_error( $error );
-
-			// log this event.
-			Log::get_instance()->create( __( 'The given path does not end with ".zip"!', 'external-files-in-media-library' ), $directory, 'error' );
 
 			// return false to prevent further processing.
 			return false;
@@ -579,7 +789,7 @@ class Zip extends Directory_Listing_Base implements Service {
 		}
 
 		// bail if file does not exist.
-		if ( ! file_exists( $zip_file ) ) {
+		if ( ! $wp_filesystem->exists( $zip_file ) ) {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced by a file path. */
@@ -610,6 +820,9 @@ class Zip extends Directory_Listing_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
+			// log this event.
+			Log::get_instance()->create( __( 'ZIP-file could not be opened with following error code:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $opened ) . '</code>', $zip_file, 'error' );
+
 			// return empty array as we can not get infos about a file which does not exist.
 			return false;
 		}
@@ -633,7 +846,7 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
-		return '<span>' . __( 'PHP-Modul zip is missing!', 'external-files-in-media-library' ) . '</span>';
+		return '<span>' . __( 'PHP-Module zip is missing!', 'external-files-in-media-library' ) . '</span>';
 	}
 
 	/**
@@ -642,4 +855,191 @@ class Zip extends Directory_Listing_Base implements Service {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Return global actions.
+	 *
+	 * @return array<int,array<string,string>>
+	 */
+	protected function get_global_actions(): array {
+		// add our own actions.
+		$actions = array(
+			array(
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+				'label'  => __( 'Extract actual directory in media library', 'external-files-in-media-library' ),
+			),
+		);
+
+		// return the resulting actions.
+		return array_merge(
+			parent::get_global_actions(),
+			$actions
+		);
+	}
+
+	/**
+	 * Return whether the necessary PHP module ZipArchive is available.
+	 *
+	 * @param string $url The requested URL.
+	 *
+	 * @return bool
+	 */
+	private function is_zip_archive_available( string $url ): bool {
+		// bail if it is available.
+		if ( class_exists( 'ZipArchive' ) ) {
+			return true;
+		}
+
+		// create error object.
+		$error = new WP_Error();
+		$error->add( 'efml_service_zip', __( 'PHP-Module zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ) );
+
+		// add it to the list.
+		$this->add_error( $error );
+
+		// log this event.
+		Log::get_instance()->create( __( 'PHP-Module zip is missing! Please contact your hosting support about this problem.', 'external-files-in-media-library' ), $url, 'error' );
+
+		// return false to prevent further processing.
+		return false;
+	}
+
+	/**
+	 * Return an open zip object for a given file.
+	 *
+	 * @param string $file_path The file.
+	 *
+	 * @return bool|ZipArchive
+	 */
+	private function get_zip_object_by_file( string $file_path ): bool|ZipArchive {
+		// get the path to the ZIP from path string.
+		$zip_file = substr( $file_path, 0, absint( strpos( $file_path, '.zip' ) ) ) . '.zip';
+
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the protocol handler for this URL.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $zip_file );
+
+		// bail if protocol handler could not be loaded.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
+			return false;
+		}
+
+		// get the local tmp file of this zip.
+		$tmp_zip_file = $protocol_handler_obj->get_temp_file( $zip_file, $wp_filesystem );
+
+		// bail if no temp zip could be returned.
+		if( ! is_string( $tmp_zip_file ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'ZIP-file could not be saved as temp file.', 'external-files-in-media-library' ), $zip_file, 'error' );
+
+			return false;
+		}
+
+		// bail if file does not exist.
+		if ( ! $wp_filesystem->exists( $tmp_zip_file ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'ZIP-file to use for extracting a file does not exist.', 'external-files-in-media-library' ), $zip_file, 'error' );
+
+			// return empty array as we can not get infos about a file which does not exist.
+			return false;
+		}
+
+		// get the zip object.
+		$zip    = new ZipArchive();
+		$opened = $zip->open( $tmp_zip_file, ZipArchive::RDONLY );
+
+		// bail if file could not be opened.
+		if ( ! $opened ) {
+			// log event.
+			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
+
+			// return empty array as we can not get infos about a file which does not exist.
+			return false;
+		}
+
+		// return the opened zip as object.
+		return $zip;
+	}
+
+	/**
+	 * Change media row actions for URL-files.
+	 *
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Post              $post The Post.
+	 *
+	 * @return array<string,string>
+	 */
+	public function change_media_row_actions( array $actions, WP_Post $post ): array {
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $post->ID );
+
+		// bail if this is not an external file.
+		if ( ! $external_file_obj->is_valid() ) {
+			return $actions;
+		}
+
+		// bail if this is not a zip file.
+		if ( 'ZIP' !== $external_file_obj->get_file_type_obj()->get_name() ) {
+			return $actions;
+		}
+
+		// define settings for the import dialog.
+		$settings = array(
+			'service' => $this->get_name(),
+			'urls'    => trailingslashit( $external_file_obj->get_url( true ) ),
+			'unzip'   => true,
+		);
+
+		// add action to extract this file in media library.
+		$actions['eml-extract-zip'] = '<a href="#" class="efml-import-dialog" data-settings="' . esc_attr( Helper::get_json( $settings ) ) . '">' . __( 'Extract file', 'external-files-in-media-library' ) . '</a>';
+
+		// return the resulting list of action.
+		return $actions;
+	}
+
+	/**
+	 * Change the import dialog if we request the unzipping of a single file in media library.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The settings for the dialog.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function change_import_dialog( array $dialog, array $settings ): array {
+		// bail if "unzip" is not set.
+		if ( ! isset( $settings['unzip'] ) ) {
+			return $dialog;
+		}
+
+		// change the title.
+		$dialog['title'] = __( 'Unzip this file in your media library', 'external-files-in-media-library' );
+
+		// add marker for unzip task (this allows the magic).
+		$dialog['texts'][] = '<input type="hidden" name="unzip" value="1" />';
+
+		// return resulting dialog.
+		return $dialog;
+	}
+
+	/**
+	 * Prevent duplicate check if zip should be unzipped in media library.
+	 *
+	 * @param bool $return_value The return value.
+	 *
+	 * @return bool
+	 */
+	public function prevent_duplicate_check_for_unzip( bool $return_value ): bool {
+		// get unzip value from request.
+		$unzip = filter_input( INPUT_POST, 'unzip', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no unzip value is set.
+		if ( is_null( $unzip ) ) {
+			return $return_value;
+		}
+
+		// return true to prevent the duplicate check.
+		return true;
+	}
 }

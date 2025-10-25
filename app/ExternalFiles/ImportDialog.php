@@ -90,7 +90,10 @@ class ImportDialog {
 		check_ajax_referer( 'efml-import-dialog-nonce', 'nonce' );
 
 		// get settings from request.
-		$settings = isset( $_POST['settings'] ) ? array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) ) : array();
+		$settings = array();
+		if ( isset( $_POST['settings'] ) ) {
+			$settings = array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) );
+		}
 
 		/**
 		 * Filter the given settings for the import dialog.
@@ -101,18 +104,26 @@ class ImportDialog {
 		 */
 		$settings = apply_filters( 'eml_dialog_settings', $settings );
 
+		// check number of files.
+		$url_count = 1;
+		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
+			$url_count = 2;
+		} elseif ( ! isset( $settings['urls'] ) ) {
+			$url_count = 2;
+		}
+
 		// create dialog.
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'eml efml-import-dialog',
 			'callback'  => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
-			'title'     => __( 'Add URLs of external files', 'external-files-in-media-library' ),
+			'title'     => _n( 'Add this external file by its URL', 'Add external files by their URLs', $url_count, 'external-files-in-media-library' ),
 			'texts'     => array(),
 			'buttons'   => array(
 				array(
 					'action'  => 'efml_process_import_dialog();',
 					'variant' => 'primary',
-					'text'    => __( 'Add URLs', 'external-files-in-media-library' ),
+					'text'    => _n( 'Add URL', 'Add URLs', $url_count, 'external-files-in-media-library' ),
 				),
 				array(
 					'action'  => 'closeDialog();',
