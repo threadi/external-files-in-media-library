@@ -14,6 +14,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
@@ -362,6 +363,16 @@ class Import extends Directory_Listing_Base {
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
 				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identified() );
+
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( sprintf( __( 'Error occurred during saving this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $file_url ) ) );
+				$error_obj->set_url( $file_url );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
 
 				// show progress.
 				$progress ? $progress->tick() : '';

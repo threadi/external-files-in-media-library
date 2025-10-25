@@ -408,7 +408,7 @@ class Zip extends Service_Base implements Service {
 	 */
 	public function is_file_in_zip_file( bool $return_value, string $file_path ): bool {
 		// bail if file path does not contain '.zip'.
-		if ( ! str_contains( $file_path, '.zip' ) ) {
+		if ( ! $this->is_zip( $file_path ) ) {
 			return $return_value;
 		}
 
@@ -447,7 +447,7 @@ class Zip extends Service_Base implements Service {
 		}
 
 		// bail if file path does not contain '.zip'.
-		if ( ! str_contains( $file_path, '.zip' ) ) {
+		if ( ! $this->is_zip( $file_path ) ) {
 			return array();
 		}
 
@@ -485,7 +485,7 @@ class Zip extends Service_Base implements Service {
 		}
 
 		// get entry data.
-		$file_stat = $zip->statName( $file_path );
+		$file_stat = $zip->statName( $file );
 
 		// bail if no stats could be loaded.
 		if( ! is_array( $file_stat ) ) {
@@ -995,6 +995,20 @@ class Zip extends Service_Base implements Service {
 		// add action to extract this file in media library.
 		$actions['eml-extract-zip'] = '<a href="#" class="efml-import-dialog" data-settings="' . esc_attr( Helper::get_json( $settings ) ) . '">' . __( 'Extract file', 'external-files-in-media-library' ) . '</a>';
 
+		// create link to open this file.
+		$url = add_query_arg(
+			array(
+				'page' => 'efml_local_directories',
+				'method' => $this->get_name(),
+				'url' => $external_file_obj->get_url( true ),
+				'nonce' => wp_create_nonce( 'efml-open-zip-nonce' ),
+			),
+			get_admin_url() . 'upload.php'
+		);
+
+		// add action to open this file.
+		$actions['eml-open-zip'] = '<a href="' . esc_url( $url ) .'">' . __( 'Open file', 'external-files-in-media-library' ) . '</a>';
+
 		// return the resulting list of action.
 		return $actions;
 	}
@@ -1041,5 +1055,50 @@ class Zip extends Service_Base implements Service {
 
 		// return true to prevent the duplicate check.
 		return true;
+	}
+
+	/**
+	 * Return whether a given URL is a zip file based on its extension.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_zip( string $url ): bool {
+		return str_contains( $url, '.zip' );
+	}
+
+	/**
+	 * Change the directory listing object if a zip is requested.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_config(): array {
+		// get the base config.
+		$config = parent::get_config();
+
+		// get the URL from request.
+		$url = filter_input( INPUT_GET, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no url is set.
+		if( is_null( $url ) ) {
+			return $config;
+		}
+
+		// bail if nonce does not match.
+		if( ! check_admin_referer( 'efml-open-zip-nonce', 'nonce' ) ) {
+			return $config;
+		}
+
+		// bail if the requested URL is not a zip.
+		if( ! $this->is_zip( $url ) ) {
+			return $config;
+		}
+
+		// add the URL from the request.
+		$config['directory'] = $url;
+
+		// return the resulting config.
+		return $config;
 	}
 }
