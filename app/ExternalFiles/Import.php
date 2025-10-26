@@ -228,6 +228,15 @@ class Import extends Directory_Listing_Base {
 		 * Do nothing if check of URL resulted in empty file list.
 		 */
 		if ( empty( $files ) ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			$error_obj->set_result_text( __( 'No files to import found.', 'external-files-in-media-library' ) );
+			$error_obj->set_url( $url );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// do nothing more.
 			return false;
 		}
 

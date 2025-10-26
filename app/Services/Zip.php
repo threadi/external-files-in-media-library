@@ -2,6 +2,10 @@
 /**
  * File to handle the support of files from ZIP as directory listing.
  *
+ * Handling of ZIPs per request:
+ * - URL/path ending with "/" is a ZIP that should be extracted and its files should be imported in media library
+ * - URL/path ending with ".zip" is a file that should bei imported
+ *
  * @package external-files-in-media-library
  */
 
@@ -480,6 +484,16 @@ class Zip extends Service_Base implements Service {
 			// log event.
 			Log::get_instance()->create( __( 'No data of the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $file_path, 'error' );
 
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'No data of the file to extract from ZIP could not be loaded. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $file ) ) );
+			$error_obj->set_url( $file );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
@@ -492,6 +506,17 @@ class Zip extends Service_Base implements Service {
 			// log event.
 			Log::get_instance()->create( __( 'No stats for the file to extract from ZIP could not be loaded.', 'external-files-in-media-library' ), $file_path, 'error' );
 
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'No stats for the file to extract from ZIP could not be loaded. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $file ) ) );
+			$error_obj->set_url( $file );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
 
@@ -985,10 +1010,23 @@ class Zip extends Service_Base implements Service {
 			return $actions;
 		}
 
+		// bail if file is not hosted locally.
+		if( ! $external_file_obj->is_locally_saved() ) {
+			return $actions;
+		}
+
+		// get the local path of this file.
+		$path = wp_get_attachment_url( $external_file_obj->get_id() );
+
+		// bail if path could not be loaded.
+		if( ! is_string( $path ) ) {
+			return $actions;
+		}
+
 		// define settings for the import dialog.
 		$settings = array(
 			'service' => $this->get_name(),
-			'urls'    => trailingslashit( $external_file_obj->get_url( true ) ),
+			'urls'    => trailingslashit( $path ),
 			'unzip'   => true,
 		);
 
@@ -998,16 +1036,16 @@ class Zip extends Service_Base implements Service {
 		// create link to open this file.
 		$url = add_query_arg(
 			array(
-				'page' => 'efml_local_directories',
+				'page'   => 'efml_local_directories',
 				'method' => $this->get_name(),
-				'url' => $external_file_obj->get_url( true ),
-				'nonce' => wp_create_nonce( 'efml-open-zip-nonce' ),
+				'url'    => $path,
+				'nonce'  => wp_create_nonce( 'efml-open-zip-nonce' ),
 			),
 			get_admin_url() . 'upload.php'
 		);
 
 		// add action to open this file.
-		$actions['eml-open-zip'] = '<a href="' . esc_url( $url ) .'">' . __( 'Open file', 'external-files-in-media-library' ) . '</a>';
+		$actions['eml-open-zip'] = '<a href="' . esc_url( $url ) . '">' . __( 'Open file', 'external-files-in-media-library' ) . '</a>';
 
 		// return the resulting list of action.
 		return $actions;
