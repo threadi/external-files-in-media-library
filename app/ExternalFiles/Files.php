@@ -1234,7 +1234,7 @@ class Files {
 		}
 
 		// add infos about the external file.
-		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_html( $external_file_obj->get_url( true ) ) . '">' . Helper::shorten_url( $external_file_obj->get_url( true ) ) . '</span></div>';
+		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_attr( $external_file_obj->get_url( true ) ) . '">' . Helper::shorten_url( $external_file_obj->get_url( true ) ) . '</span></div>';
 
 		// get the protocol handler.
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();

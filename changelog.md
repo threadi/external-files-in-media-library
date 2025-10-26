@@ -56,6 +56,7 @@
 
 ### Changed
 
+- Compatibility with WordPress 6.9
 - Renamed "Directory Archive" to "Your external sources"
 - Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive

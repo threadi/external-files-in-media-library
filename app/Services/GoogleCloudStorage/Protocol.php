@@ -123,7 +123,6 @@ class Protocol extends Protocol_Base {
 
 		// check if public access is allowed in this bucket.
 		$public_access_allowed = false;
-		$iam                   = false;
 		try {
 			$iam = $bucket->iam();
 		} catch ( Exception $e ) {
@@ -143,12 +142,15 @@ class Protocol extends Protocol_Base {
 			return array();
 		}
 
-		if ( $iam ) {
+		if ( $iam ) { // @phpstan-ignore if.alwaysTrue
 			try {
 				$policy = $iam->policy();
 				foreach ( $policy['bindings'] as $binding ) {
 					// search for roles with allow public access.
-					if ( in_array( $binding['role'], array( 'roles/storage.objectViewer', 'roles/storage.legacyObjectReader' ), true ) ) {
+					if ( in_array( $binding['role'], array(
+						'roles/storage.objectViewer',
+						'roles/storage.legacyObjectReader'
+					), true ) ) {
 						$public_access_allowed = true;
 					}
 				}

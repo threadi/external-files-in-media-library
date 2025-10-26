@@ -645,22 +645,22 @@ class S3 extends Service_Base implements Service {
 			return 'eu-central-1';
 		}
 
-		// return 'eu-south-2' for spain.
+		// return the 'eu-south-2' slug for spain.
 		if ( 'es' === $language ) {
 			return 'eu-south-2';
 		}
 
-		// return 'ap-northeast-1' for japanese.
+		// return the 'ap-northeast-1' slug for japanese.
 		if ( 'ja' === $language ) {
 			return 'ap-northeast-1';
 		}
 
-		// return 'il-central-1' for hebrew.
+		// return the 'il-central-1' slug for hebrew.
 		if ( 'he' === $language ) {
 			return 'il-central-1';
 		}
 
-		// return "aws-global" for all others.
+		// return the 'aws-global' slug for all others.
 		return 'aws-global';
 	}
 

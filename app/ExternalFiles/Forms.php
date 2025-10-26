@@ -630,6 +630,7 @@ class Forms {
 		// bail if user is missing the capability.
 		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_safe_redirect( wp_get_referer() );
+			exit;
 		}
 
 		// get the URLs from request.
@@ -646,6 +647,7 @@ class Forms {
 
 			// forward user.
 			wp_safe_redirect( wp_get_referer() );
+			exit;
 		}
 
 		// convert the list from request to an array.
@@ -662,6 +664,7 @@ class Forms {
 
 			// forward user.
 			wp_safe_redirect( wp_get_referer() );
+			exit;
 		}
 
 		// get the credential marker.
@@ -692,6 +695,7 @@ class Forms {
 
 				// forward user.
 				wp_safe_redirect( wp_get_referer() );
+				exit;
 			}
 		}
 
