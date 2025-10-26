@@ -253,7 +253,7 @@ class Service_Base extends Directory_Listing_Base {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		return array();
 	}
 
@@ -346,4 +346,18 @@ class Service_Base extends Directory_Listing_Base {
 	public function is_sync_disabled(): bool {
 		return $this->sync_disabled;
 	}
+
+	/**
+	 * Initiate the WP CLI support for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
+
+	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {}
 }

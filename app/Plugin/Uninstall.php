@@ -86,10 +86,6 @@ class Uninstall {
 		// enable the settings.
 		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
 
-		/**
-		 * Remove them.
-		 */
-
 		// clean managed settings.
 		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
 
@@ -141,6 +137,14 @@ class Uninstall {
 			// loop through all extension and remove their settings.
 			foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
 				delete_user_meta( $user->ID, 'efml_' . $extension_obj->get_name() );
+			}
+
+			// loop through all services and remove their settings.
+			foreach( Services::get_instance()->get_services_as_objects() as $service_obj ) {
+
+				foreach( $service_obj->get_user_settings() as $user_setting_name => $user_setting ) {
+					delete_user_meta( $user->ID, 'efml_' . $user_setting_name );
+				}
 			}
 
 			// and also the "hide_dialog" and the copyright setting.

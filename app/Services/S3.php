@@ -699,7 +699,7 @@ class S3 extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		$list = array(
 			's3_region' => array(
 				'label'   => __( 'Choose your region', 'external-files-in-media-library' ),

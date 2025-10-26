@@ -969,4 +969,13 @@ class DropBox extends Service_Base implements Service {
 			),
 		);
 	}
+
+	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		$this->delete_access_token();
+	}
 }

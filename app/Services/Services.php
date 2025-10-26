@@ -143,29 +143,7 @@ class Services {
 	 * @return void
 	 */
 	public function init_services(): void {
-		// initiate each supported service.
-		foreach ( $this->get_services() as $service_class_name ) {
-			// bail if class does not exist.
-			if ( ! class_exists( $service_class_name ) ) {
-				continue;
-			}
-
-			// get class name with method.
-			$class_name = $service_class_name . '::get_instance';
-
-			// bail if it is not callable.
-			if ( ! is_callable( $class_name ) ) {
-				continue;
-			}
-
-			// initiate object.
-			$obj = $class_name();
-
-			// bail if object is not a service object.
-			if ( ! $obj instanceof Service ) {
-				continue;
-			}
-
+		foreach( $this->get_services_as_objects() as $obj ) {
 			// initialize this object.
 			$obj->init();
 		}
@@ -177,29 +155,7 @@ class Services {
 	 * @return void
 	 */
 	public function init_cli_services(): void {
-		// initiate each supported service.
-		foreach ( $this->get_services() as $service_class_name ) {
-			// bail if class does not exist.
-			if ( ! class_exists( $service_class_name ) ) {
-				continue;
-			}
-
-			// get class name with method.
-			$class_name = $service_class_name . '::get_instance';
-
-			// bail if it is not callable.
-			if ( ! is_callable( $class_name ) ) {
-				continue;
-			}
-
-			// initiate object.
-			$obj = $class_name();
-
-			// bail if object is not a service object.
-			if ( ! $obj instanceof Service ) {
-				continue;
-			}
-
+		foreach( $this->get_services_as_objects() as $obj ) {
 			// initialize this object.
 			$obj->cli();
 		}
@@ -233,6 +189,46 @@ class Services {
 		 * @param array<string> $list List of third party support.
 		 */
 		return apply_filters( 'eml_services_support', $list );
+	}
+
+	/**
+	 * Return all supported services as objects.
+	 *
+	 * @return array<int,Service_Base>
+	 */
+	public function get_services_as_objects(): array {
+		// create the list.
+		$list = array();
+
+		// initiate each supported service.
+		foreach ( $this->get_services() as $service_class_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $service_class_name ) ) {
+				continue;
+			}
+
+			// get class name with method.
+			$class_name = $service_class_name . '::get_instance';
+
+			// bail if it is not callable.
+			if ( ! is_callable( $class_name ) ) {
+				continue;
+			}
+
+			// initiate object.
+			$obj = $class_name();
+
+			// bail if object is not a service object.
+			if ( ! $obj instanceof Service ) {
+				continue;
+			}
+
+			// add object to the list.
+			$list[] = $obj;
+		}
+
+		// return the resulting list.
+		return $list;
 	}
 
 	/**

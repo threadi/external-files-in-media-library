@@ -184,7 +184,7 @@ class WebDav extends Service_Base implements Service {
 			$setting->set_default( '/remote.php/dav/files/' );
 			$field = new Text();
 			$field->set_title( __( 'Path', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is "/remote.php/dav/files/".', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is <code>/remote.php/dav/files/</code>.', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
 
 			// add setting.
@@ -707,12 +707,12 @@ class WebDav extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		$list = array(
 			'webdav_path'       => array(
 				'label'       => __( 'Path', 'external-files-in-media-library' ),
 				'field'       => 'text',
-				'description' => __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is "/remote.php/dav/files/".', 'external-files-in-media-library' ),
+				'description' => __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is <code>/remote.php/dav/files/</code>.', 'external-files-in-media-library' ),
 			),
 			'webdav_ignore_ssl' => array(
 				'label'       => __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ),

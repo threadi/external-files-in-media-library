@@ -1374,7 +1374,7 @@ class GoogleDrive extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		$list = array(
 			'google_drive_show_shared'  => array(
 				'label'    => __( 'Show shared files', 'external-files-in-media-library' ),

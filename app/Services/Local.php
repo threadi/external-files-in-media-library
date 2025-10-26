@@ -322,4 +322,20 @@ class Local implements Service {
 	private function get_settings_subtab_slug(): string {
 		return $this->settings_sub_tab;
 	}
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_user_settings(): array {
+		return array();
+	}
+
+	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {}
 }

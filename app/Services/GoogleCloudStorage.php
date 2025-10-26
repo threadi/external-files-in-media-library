@@ -786,7 +786,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		$list = array(
 			'google_cloud_storage_json'   => array(
 				'label'       => __( 'Authentication JSON', 'external-files-in-media-library' ),
