@@ -412,10 +412,23 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$bucket = $storage->bucket( $this->get_bucket_name() );
 
 		// bail if bucket does not exist.
-		if ( ! $bucket->exists() ) {
+		try {
+			if ( ! $bucket->exists() ) {
+				// create an error object.
+				$error = new WP_Error();
+				$error->add( 'efml_service_googlecloudstorage', __( 'Given bucket does not exist.', 'external-files-in-media-library' ) );
+				$this->add_error( $error );
+
+				// do nothing more.
+				return array();
+			}
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Google Cloud Storage bucket could not be loaded:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+
 			// create an error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_googlecloudstorage', __( 'Given bucket does not exist.', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$error->add( 'efml_service_googlecloudstorage', sprintf( __( 'Google Cloud Storage bucket could not be loaded. Take a look at the <a href="%1$s" target="_blank">log</a> for more information.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
 			$this->add_error( $error );
 
 			// do nothing more.
@@ -433,107 +446,120 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$folders = array();
 
 		// get the file list from bucket.
-		foreach ( $bucket->objects() as $file_obj ) {
-			// get the file data.
-			$file_data = $file_obj->info();
+		try {
+			foreach ( $bucket->objects() as $file_obj ) {
+				// get the file data.
+				$file_data = $file_obj->info();
 
-			$false = false;
-			/**
-			 * Filter whether given Google Cloud Storage file should be hidden.
-			 *
-			 * @since 5.0.0 Available since 5.0.0.
-			 *
-			 * @param bool $false True if it should be hidden.
-			 * @param array<string,mixed> $file_data The object with the file data.
-			 * @param string $directory The requested directory.
-			 *
-			 * @noinspection PhpConditionAlreadyCheckedInspection
-			 */
-			if ( apply_filters( 'efml_service_googlecloudstorage_hide_file', $false, $file_data, $directory ) ) {
-				continue;
-			}
-
-			// get directory-data for this file and add file in the given directories.
-			$parts = explode( '/', $file_data['name'] );
-
-			// collect the entry.
-			$entry = array(
-				'title' => basename( $file_data['name'] ),
-			);
-
-			// if array contains more than 1 entry this file is in a directory.
-			if ( end( $parts ) ) {
-				// get content type of this file.
-				$mime_type = wp_check_filetype( $file_data['name'] );
-
-				// bail if file type is not allowed.
-				if ( empty( $mime_type['type'] ) ) {
+				$false = false;
+				/**
+				 * Filter whether given Google Cloud Storage file should be hidden.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 *
+				 * @param bool $false True if it should be hidden.
+				 * @param array<string,mixed> $file_data The object with the file data.
+				 * @param string $directory The requested directory.
+				 *
+				 * @noinspection PhpConditionAlreadyCheckedInspection
+				 */
+				if ( apply_filters( 'efml_service_googlecloudstorage_hide_file', $false, $file_data, $directory ) ) {
 					continue;
 				}
 
-				// add settings for entry.
-				$entry['file']          = $file_data['name'];
-				$entry['filesize']      = absint( $file_data['size'] );
-				$entry['mime-type']     = $mime_type['type'];
-				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_data['updated'] ) ) ) );
-				$entry['preview']       = '';
-			}
+				// get directory-data for this file and add file in the given directories.
+				$parts = explode( '/', $file_data['name'] );
 
-			if ( count( $parts ) > 1 ) {
-				$the_keys = array_keys( $parts );
-				$last_key = end( $the_keys );
-				$last_dir = '';
-				$dir_path = '';
+				// collect the entry.
+				$entry = array(
+					'title' => basename( $file_data['name'] ),
+				);
 
-				// loop through all parent folders, add the directory if it does not exist in the list
-				// and add the file to each of them.
-				foreach ( $parts as $key => $dir ) {
-					// bail if dir is empty.
-					if ( empty( $dir ) ) {
+				// if array contains more than 1 entry this file is in a directory.
+				if ( end( $parts ) ) {
+					// get content type of this file.
+					$mime_type = wp_check_filetype( $file_data['name'] );
+
+					// bail if file type is not allowed.
+					if ( empty( $mime_type['type'] ) ) {
 						continue;
 					}
 
-					// bail for last entry (which is a file).
-					if ( $key === $last_key ) {
-						// add the file to the last iterated directory.
-						$folders[ $last_dir ]['files'][] = $entry;
-						continue;
-					}
-
-					// add the path.
-					$dir_path .= DIRECTORY_SEPARATOR . $dir;
-
-					// create the full path.
-					$index = $this->get_api_key() . trailingslashit( $dir_path );
-
-					// add the directory if it does not exist atm in the main folder list.
-					if ( ! isset( $folders[ $index ] ) ) {
-						// add the directory to the list.
-						$folders[ $index ] = array(
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// add the directory if it does not exist atm in the main folder list.
-					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
-						// add the directory to the list.
-						$folders[ $last_dir ]['dirs'][ $index ] = array(
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// mark this dir as last dir for file path.
-					$last_dir = $index;
+					// add settings for entry.
+					$entry['file']          = $file_data['name'];
+					$entry['filesize']      = absint( $file_data['size'] );
+					$entry['mime-type']     = $mime_type['type'];
+					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
+					$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_data['updated'] ) ) ) );
+					$entry['preview']       = '';
 				}
-			} else {
-				// simply add the entry to the list if no directory data exist.
-				$listing['files'][] = $entry;
+
+				if ( count( $parts ) > 1 ) {
+					$the_keys = array_keys( $parts );
+					$last_key = end( $the_keys );
+					$last_dir = '';
+					$dir_path = '';
+
+					// loop through all parent folders, add the directory if it does not exist in the list
+					// and add the file to each of them.
+					foreach ( $parts as $key => $dir ) {
+						// bail if dir is empty.
+						if ( empty( $dir ) ) {
+							continue;
+						}
+
+						// bail for last entry (which is a file).
+						if ( $key === $last_key ) {
+							// add the file to the last iterated directory.
+							$folders[ $last_dir ]['files'][] = $entry;
+							continue;
+						}
+
+						// add the path.
+						$dir_path .= DIRECTORY_SEPARATOR . $dir;
+
+						// create the full path.
+						$index = $this->get_api_key() . trailingslashit( $dir_path );
+
+						// add the directory if it does not exist atm in the main folder list.
+						if ( ! isset( $folders[ $index ] ) ) {
+							// add the directory to the list.
+							$folders[ $index ] = array(
+								'title' => $dir,
+								'files' => array(),
+								'dirs'  => array(),
+							);
+						}
+
+						// add the directory if it does not exist atm in the main folder list.
+						if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
+							// add the directory to the list.
+							$folders[ $last_dir ]['dirs'][ $index ] = array(
+								'title' => $dir,
+								'files' => array(),
+								'dirs'  => array(),
+							);
+						}
+
+						// mark this dir as last dir for file path.
+						$last_dir = $index;
+					}
+				} else {
+					// simply add the entry to the list if no directory data exist.
+					$listing['files'][] = $entry;
+				}
 			}
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Google Cloud Storage bucket could not be loaded:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+
+			// create an error object.
+			$error = new WP_Error();
+			/* translators: %1$s will be replaced by a URL. */
+			$error->add( 'efml_service_googlecloudstorage', sprintf( __( 'Google Cloud Storage bucket could not be loaded. Take a look at the <a href="%1$s" target="_blank">log</a> for more information.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
+			$this->add_error( $error );
+
+			// do nothing more.
+			return array();
 		}
 
 		// return the resulting listing.
@@ -760,7 +786,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		$list = array(
 			'google_cloud_storage_json'   => array(
 				'label'       => __( 'Authentication JSON', 'external-files-in-media-library' ),

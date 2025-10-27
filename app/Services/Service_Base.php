@@ -216,7 +216,7 @@ class Service_Base extends Directory_Listing_Base {
 								echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . ( ! empty( $setting['readonly'] ) ? ' disabled="disabled"' : '' ) . '>';
 								break;
 							case 'textarea':
-								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>' . esc_attr( $value ) . '</textarea>';
+								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>' . esc_html( $value ) . '</textarea>';
 								break;
 							case 'text':
 								echo '<input type="text" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
@@ -253,7 +253,7 @@ class Service_Base extends Directory_Listing_Base {
 	 *
 	 * @return array<string,mixed>
 	 */
-	protected function get_user_settings(): array {
+	public function get_user_settings(): array {
 		return array();
 	}
 
@@ -346,4 +346,18 @@ class Service_Base extends Directory_Listing_Base {
 	public function is_sync_disabled(): bool {
 		return $this->sync_disabled;
 	}
+
+	/**
+	 * Initiate the WP CLI support for this service.
+	 *
+	 * @return void
+	 */
+	public function cli(): void {}
+
+	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {}
 }

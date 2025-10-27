@@ -21,6 +21,7 @@ parameters:
     - "#iFolders#"
     - "#wp_rml#"
     - "#StorageObject#"
+    - "#IN_SECONDS#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

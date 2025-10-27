@@ -52,10 +52,11 @@
 - Added success sound after import has been run (can be disabled)
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 - Added support to import Google Drive files via WP CLI (without any timeouts)
-- Added option to unzip zip-files which are already saved in media library
+- Added options to open and unzip zip-files which are already saved in media library
 
 ### Changed
 
+- Compatibility with WordPress 6.9
 - Renamed "Directory Archive" to "Your external sources"
 - Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive

@@ -192,7 +192,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 				<p>
 				<?php
 					/* translators: %1$s will be replaced by our plugin name. */
-					echo wp_kses_post( sprintf( __( 'This option is provided by the plugin %1$s.', 'woocommerce' ), '<em>' . Helper::get_plugin_name() . '</em>' ) );
+					echo wp_kses_post( sprintf( __( 'This option is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' ) );
 				?>
 				</p>
 			</header>
@@ -243,7 +243,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 				});
 			</script>
 			<div class="wc-actions">
-				<button type="submit" class="button button-primary button-next" value="<?php esc_attr_e( 'Continue', 'woocommerce' ); ?>" name="save_step"><?php esc_html_e( 'Continue', 'woocommerce' ); ?></button>
+				<button type="submit" class="button button-primary button-next" value="<?php esc_attr_e( 'Continue', 'external-files-in-media-library' ); ?>" name="save_step"><?php esc_html_e( 'Continue', 'external-files-in-media-library' ); ?></button>
 				<?php wp_nonce_field( 'woocommerce-csv-importer-efml' ); ?>
 			</div>
 		</form>

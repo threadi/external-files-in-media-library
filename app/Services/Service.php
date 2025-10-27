@@ -29,9 +29,23 @@ interface Service {
 	public function activation(): void;
 
 	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void;
+
+	/**
 	 * Run WP CLI initialisation.
 	 *
 	 * @return void
 	 */
 	public function cli(): void;
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_user_settings(): array;
 }

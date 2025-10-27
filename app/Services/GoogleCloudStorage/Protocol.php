@@ -12,6 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
@@ -121,24 +123,52 @@ class Protocol extends Protocol_Base {
 
 		// check if public access is allowed in this bucket.
 		$public_access_allowed = false;
-		$iam                   = false;
 		try {
 			$iam = $bucket->iam();
 		} catch ( Exception $e ) {
 			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error during request of Google Cloud Storage IAM infos. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// do nothing more.
+			return array();
 		}
 
-		if ( $iam ) {
+		if ( $iam ) { // @phpstan-ignore if.alwaysTrue
 			try {
 				$policy = $iam->policy();
 				foreach ( $policy['bindings'] as $binding ) {
 					// search for roles with allow public access.
-					if ( in_array( $binding['role'], array( 'roles/storage.objectViewer', 'roles/storage.legacyObjectReader' ), true ) ) {
+					if ( in_array( $binding['role'], array(
+						'roles/storage.objectViewer',
+						'roles/storage.legacyObjectReader'
+					), true ) ) {
 						$public_access_allowed = true;
 					}
 				}
 			} catch ( Exception $e ) {
-				Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+				Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 1 );
+
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( sprintf( __( 'Error during request of Google Cloud Storage IAM binding data. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+				$error_obj->set_url( $this->get_url() );
+				$error_obj->set_error( true );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+
+				// do nothing more.
+				return array();
 			}
 		}
 
@@ -146,7 +176,24 @@ class Protocol extends Protocol_Base {
 		$file = $bucket->object( $file_name );
 
 		// get the file infos.
-		$file_data = $file->info();
+		try {
+			$file_data = $file->info();
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Error during request of file data from Google Cloud Storage:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 1 );
+
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error during request of file data from Google Cloud Storage. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// do nothing more.
+			return array();
+		}
 
 		// bail if file infos are empty.
 		if ( empty( $file_data ) ) {
@@ -169,8 +216,32 @@ class Protocol extends Protocol_Base {
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
 
+		// get the filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// download file to this location.
-		$file->downloadToFile( $results['tmp-file'] );
+		try {
+			// get the file content.
+			$content = $file->downloadAsString();
+
+			// write it to the tmp file.
+			$wp_filesystem->put_contents( $results['tmp-file'], $content );
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 1 );
+
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error during request of Google Cloud Storage IAM binding data. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// do nothing more.
+			return array();
+		}
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();

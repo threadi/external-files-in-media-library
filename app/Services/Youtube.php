@@ -21,7 +21,7 @@ use JsonException;
 use WP_Error;
 
 /**
- * Object to handle support for this video plattform.
+ * Object to handle support for this video platform.
  */
 class Youtube extends Service_Base implements Service {
 
