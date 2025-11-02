@@ -143,7 +143,7 @@ class Services {
 	 * @return void
 	 */
 	public function init_services(): void {
-		foreach( $this->get_services_as_objects() as $obj ) {
+		foreach ( $this->get_services_as_objects() as $obj ) {
 			// initialize this object.
 			$obj->init();
 		}
@@ -155,7 +155,7 @@ class Services {
 	 * @return void
 	 */
 	public function init_cli_services(): void {
-		foreach( $this->get_services_as_objects() as $obj ) {
+		foreach ( $this->get_services_as_objects() as $obj ) {
 			// initialize this object.
 			$obj->cli();
 		}
@@ -194,11 +194,11 @@ class Services {
 	/**
 	 * Return all supported services as objects.
 	 *
-	 * @return array<int,Service_Base>
+	 * @return array<int,Service>
 	 */
 	public function get_services_as_objects(): array {
 		// create the list.
-		$list = array();
+		$services = array();
 
 		// initiate each supported service.
 		foreach ( $this->get_services() as $service_class_name ) {
@@ -224,11 +224,11 @@ class Services {
 			}
 
 			// add object to the list.
-			$list[] = $obj;
+			$services[] = $obj;
 		}
 
 		// return the resulting list.
-		return $list;
+		return $services;
 	}
 
 	/**

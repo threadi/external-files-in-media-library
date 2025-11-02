@@ -20,7 +20,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Filesystem_Base;
 use WP_Filesystem_FTPext;
 

@@ -102,7 +102,7 @@ class Url_Result extends Result_Base {
 	 *
 	 * @return string
 	 */
-	private function get_result_text(): string {
+	public function get_result_text(): string {
 		return $this->error_text;
 	}
 

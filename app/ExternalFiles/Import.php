@@ -228,13 +228,19 @@ class Import extends Directory_Listing_Base {
 		 * Do nothing if check of URL resulted in empty file list.
 		 */
 		if ( empty( $files ) ) {
-			// create the error entry.
-			$error_obj = new Url_Result();
-			$error_obj->set_result_text( __( 'No files to import found.', 'external-files-in-media-library' ) );
-			$error_obj->set_url( $url );
+			// get the results.
+			$results = Results::get_instance()->get_results();
 
-			// add the error object to the list of errors.
-			Results::get_instance()->add( $error_obj );
+			// if they are empty, add our own hint.
+			if ( empty( $results ) ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				$error_obj->set_result_text( __( 'No files to import found.', 'external-files-in-media-library' ) );
+				$error_obj->set_url( $url );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+			}
 
 			// do nothing more.
 			return false;
@@ -277,6 +283,32 @@ class Import extends Directory_Listing_Base {
 		 * Loop through the results and save each in the media library.
 		 */
 		foreach ( $files as $file_data ) {
+			/**
+			 * Prevent the import of this file.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param bool $false Set to true to prevent the import.
+			 * @param array $file_data The file data.
+			 * @param string $url The used URL.
+			 */
+			if ( apply_filters( 'eml_prevent_file_import', $false, $file_data, $url ) ) {
+				// create the error entry.
+				$error_obj = new Url_Result();
+				/* translators: %1$s will be replaced by a URL. */
+				$error_obj->set_result_text( (string) wp_json_encode( $file_data ) );
+				$error_obj->set_url( $url );
+				$error_obj->set_error( false );
+
+				// add the error object to the list of errors.
+				Results::get_instance()->add( $error_obj );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// do nothing more.
+				continue;
+			}
+
 			/**
 			 * Run additional tasks before new external file will be added.
 			 *
@@ -393,7 +425,7 @@ class Import extends Directory_Listing_Base {
 			// get external file object to update its settings.
 			$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
-			// do not handle this file as external file it the option for it is enabled.
+			// do not handle this file as external file if the option for it is enabled.
 			$no_external_object = false;
 			/**
 			 * Filter whether we import no external files.
