@@ -147,10 +147,14 @@ class Protocol extends Protocol_Base {
 				$policy = $iam->policy();
 				foreach ( $policy['bindings'] as $binding ) {
 					// search for roles with allow public access.
-					if ( in_array( $binding['role'], array(
-						'roles/storage.objectViewer',
-						'roles/storage.legacyObjectReader'
-					), true ) ) {
+					if ( in_array(
+						$binding['role'],
+						array(
+							'roles/storage.objectViewer',
+							'roles/storage.legacyObjectReader',
+						),
+						true
+					) ) {
 						$public_access_allowed = true;
 					}
 				}

@@ -63,7 +63,7 @@ class ImportDialog {
 		add_filter( 'eml_add_dialog', array( $this, 'add_urls' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_credential_fields' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_settings_link' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'prevent_dialog_usage' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'prevent_dialog_usage' ), PHP_INT_MAX, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_term' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_credentials' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_privacy_hint' ), 200, 2 );
@@ -259,12 +259,24 @@ class ImportDialog {
 			return $dialog;
 		}
 
+		// get only the texts with input field.
+		$texts = array();
+		foreach ( $dialog['texts'] as $text ) {
+			// bail if text does not start with "<input".
+			if ( ! str_starts_with( $text, '<input' ) ) {
+				continue;
+			}
+
+			// add to the list.
+			$texts[] = $text;
+		}
+
 		// create minimal dialog which should trigger the automatic import process.
 		return array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'eml efml-import-dialog efml-import-dialog-process-now',
 			'title'     => __( 'Please wait', 'external-files-in-media-library' ),
-			'texts'     => $dialog['texts'],
+			'texts'     => $texts,
 			'buttons'   => array(),
 		);
 	}

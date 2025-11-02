@@ -53,6 +53,7 @@
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 - Added support to import Google Drive files via WP CLI (without any timeouts)
 - Added options to open and unzip zip-files which are already saved in media library
+- Added option to show what will be done in import dialog
 
 ### Changed
 

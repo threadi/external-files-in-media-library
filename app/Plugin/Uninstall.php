@@ -140,9 +140,9 @@ class Uninstall {
 			}
 
 			// loop through all services and remove their settings.
-			foreach( Services::get_instance()->get_services_as_objects() as $service_obj ) {
+			foreach ( Services::get_instance()->get_services_as_objects() as $service_obj ) {
 
-				foreach( $service_obj->get_user_settings() as $user_setting_name => $user_setting ) {
+				foreach ( $service_obj->get_user_settings() as $user_setting_name => $user_setting ) {
 					delete_user_meta( $user->ID, 'efml_' . $user_setting_name );
 				}
 			}
