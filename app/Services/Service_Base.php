@@ -73,7 +73,7 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Add this object to the list of listing objects.
+	 * Add this object to the list of directory listing objects.
 	 *
 	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
 	 *

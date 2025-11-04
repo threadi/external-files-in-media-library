@@ -50,11 +50,11 @@ class File_Types_Base {
 	private string $mime_type = '';
 
 	/**
-	 * The contructor for this object.
+	 * Initialize this object.
 	 *
 	 * @param File|false $external_file_obj The external file as object or false.
 	 */
-	public function __construct( File|false $external_file_obj ) {
+	public function __construct( false|File|string $external_file_obj ) {
 		if ( $external_file_obj instanceof File ) {
 			$this->external_file_obj = $external_file_obj;
 		}

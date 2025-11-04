@@ -142,6 +142,9 @@ class Protocol extends Protocol_Base {
 				// collect the results.
 				$results = array();
 
+				// get the user ID.
+				$user_id = get_current_user_id();
+
 				// loop through the result to get the requested directory with its files.
 				foreach ( $directories as $directory => $settings ) {
 					// bail if directory does not match and if it is not the main directory.
@@ -151,6 +154,9 @@ class Protocol extends Protocol_Base {
 
 					// set counter for files which has been loaded from Google Drive.
 					$loaded_files = 0;
+
+					// save count of URLs.
+					update_option( 'eml_import_url_max_' . $user_id, count( $settings['files'] ) );
 
 					// add the files.
 					foreach ( $settings['files'] as $file ) {
@@ -395,6 +401,16 @@ class Protocol extends Protocol_Base {
 		if ( ! $local ) {
 			$url = $google_drive_object->get_public_url_for_file_id( $file_id );
 		}
+
+		// get the actual user.
+		$user_id = get_current_user_id();
+
+		// update title for progress.
+		/* translators: %1$s will be replaced by the URL which is imported. */
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Get URL %1$s from Google Drive', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $file_data->getName() ) ) ) );
+
+		// update counter for URLs.
+		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id, 0 ) ) + 1 );
 
 		// initialize basic array for file data.
 		$entry = array(

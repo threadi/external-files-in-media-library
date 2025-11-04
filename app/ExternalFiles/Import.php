@@ -231,11 +231,14 @@ class Import extends Directory_Listing_Base {
 			// get the results.
 			$results = Results::get_instance()->get_results();
 
+			// get error logs for this URL.
+			$log_entries = Log::get_instance()->get_logs( $url, 'error', $this->get_identified() );
+
 			// if they are empty, add our own hint.
-			if ( empty( $results ) ) {
+			if ( empty( $results ) && empty( $log_entries ) ) {
 				// create the error entry.
 				$error_obj = new Url_Result();
-				$error_obj->set_result_text( __( 'No files to import found.', 'external-files-in-media-library' ) );
+				$error_obj->set_result_text( __( 'No files to import were found.', 'external-files-in-media-library' ) );
 				$error_obj->set_url( $url );
 
 				// add the error object to the list of errors.
@@ -421,6 +424,10 @@ class Import extends Directory_Listing_Base {
 				// bail to next file.
 				continue;
 			}
+
+			// update title for progress.
+			/* translators: %1$s will be replaced by the URL which is imported. */
+			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Import URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $file_url ) ) ) );
 
 			// get external file object to update its settings.
 			$external_file_obj = Files::get_instance()->get_file( $attachment_id );

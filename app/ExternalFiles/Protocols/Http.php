@@ -668,12 +668,12 @@ class Http extends Protocol_Base {
 		}
 
 		// get file type object for this URL by its mime type.
-		$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $mime_type );
+		$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $mime_type, $url );
 
 		// if setting enables local saving, file should be saved local.
 		$result = $file_type_obj->is_local();
 		/**
-		 * Filter if a http-file should be saved local or not.
+		 * Filter whether the HTTP-file should be saved local or not.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *

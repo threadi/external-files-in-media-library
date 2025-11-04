@@ -297,7 +297,7 @@ class Forms {
 		$log = Log::get_instance();
 
 		// log this event.
-		$log->create( __( 'AJAX-request to add external URLs has been called.', 'external-files-in-media-library' ), '', 'info', 2 );
+		$log->create( __( 'AJAX request to add external URLs was called.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// mark import as running.
 		update_option( 'eml_import_running_' . $user_id, time() );
@@ -312,7 +312,7 @@ class Forms {
 		Results::get_instance()->prepare();
 
 		// set initial title.
-		update_option( 'eml_import_title_' . $user_id, __( 'Import of URLs starting ..', 'external-files-in-media-library' ) );
+		update_option( 'eml_import_title_' . $user_id, __( 'Importing URLs will now begin ..', 'external-files-in-media-library' ) );
 
 		// get the URLs from request.
 		$urls = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
@@ -465,7 +465,7 @@ class Forms {
 
 			// update title for progress.
 			/* translators: %1$s will be replaced by the URL which is imported. */
-			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Importing URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
+			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Check URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
 			/**
 			 * Filter single URL before it will be added as external file.
@@ -866,7 +866,7 @@ class Forms {
 		$user_id = get_current_user_id();
 
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Checking URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Check URL %1$s ..', 'external-files-in-media-library' ), $url ) );
 		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 
@@ -882,7 +882,7 @@ class Forms {
 		$user_id = get_current_user_id();
 
 		/* translators: %1$s is replaced by a URL. */
-		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Saving URL %1$s ..', 'external-files-in-media-library' ), $url ) );
+		update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Save URL %1$s ..', 'external-files-in-media-library' ), $url ) );
 		update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id ) ) + 1 );
 	}
 

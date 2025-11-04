@@ -76,14 +76,14 @@ class Rest extends Service_Base implements Service {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {    }
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {    }
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -637,7 +637,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return list of translations.
+	 * Return list of translations for the directory listing.
 	 *
 	 * @param array<string,mixed> $translations List of translations.
 	 *
@@ -819,6 +819,7 @@ class Rest extends Service_Base implements Service {
 
 				// add the error to the list for response.
 				$this->add_error( $error );
+
 				return array();
 			}
 
@@ -834,8 +835,11 @@ class Rest extends Service_Base implements Service {
 					continue;
 				}
 
-				// set counter for files which has been loaded from Google Drive.
-				$loaded_files = 0;
+				// get the user ID.
+				$user_id = get_current_user_id();
+
+				// save count of URLs.
+				update_option( 'eml_import_url_max_' . $user_id, count( $files ) );
 
 				// add each file from response to the list of all files.
 				foreach ( $files as $file ) {
@@ -844,20 +848,15 @@ class Rest extends Service_Base implements Service {
 						continue;
 					}
 
-					// bail if this an AJAX-request and the file already exist in media library.
-					if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file['source_url'] ) ) {
-						continue;
-					}
+					// update title for progress.
+					/* translators: %1$s will be replaced by the URL which is imported. */
+					update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Get data for URL %1$s from REST API', 'external-files-in-media-library' ), '<em>' . esc_html( Helper::shorten_url( $file['source_url'] ) ) . '</em>' ) );
 
-					// bail if limit for loaded files has been reached and this is an AJAX-request.
-					if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_rest_import_limit', 10 ) ) ) {
-						// set marker to load more.
-						$file_list['load_more'] = true;
-						continue;
-					}
+					// update counter for URLs.
+					update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id, 0 ) ) + 1 );
 
 					// check whether to save this file local or let it extern.
-					$local = $http_obj->url_should_be_saved_local( $url, $file['mime_type'] );
+					$local = $http_obj->url_should_be_saved_local( $file['source_url'], $file['mime_type'] );
 
 					// collect the file data.
 					$entry = array(
@@ -886,9 +885,6 @@ class Rest extends Service_Base implements Service {
 					if ( empty( $entry ) ) {
 						continue;
 					}
-
-					// update the counter.
-					++$loaded_files;
 
 					// add entry to the list.
 					$file_list[] = $entry;
@@ -958,11 +954,16 @@ class Rest extends Service_Base implements Service {
 		// we check first which WordPress REST API URL is available.
 		$url_to_use = false;
 		foreach ( $this->get_rest_api_paths() as $path ) {
+			// bail if url is already set.
+			if( $url_to_use ) {
+				continue;
+			}
+
 			// build the URL to check.
 			$url_to_check = $directory . $path;
 
 			// request the external WordPress REST-API.
-			$response = wp_safe_remote_head( $url_to_check . '/wp/v2/media' );
+			$response = wp_safe_remote_head( $url_to_check . $this->get_default_endpoint() );
 
 			// bail general if error occurred.
 			if ( is_wp_error( $response ) ) {
@@ -996,7 +997,24 @@ class Rest extends Service_Base implements Service {
 		}
 
 		// return the result.
-		return $url_to_use . '/wp/v2/media';
+		return $url_to_use . $this->get_default_endpoint();
+	}
+
+	/**
+	 * Return the default REST API endpoint this service will be use.
+	 *
+	 * @return string
+	 */
+	private function get_default_endpoint(): string {
+		$default_endpoint = '/wp/v2/media';
+
+		/**
+		 * Filter the default REST API endpoint for service REST API.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $default_endpoint The default endpoint.
+		 */
+		return apply_filters( 'efml_service_rest_default_endpoint', $default_endpoint );
 	}
 
 	/**
@@ -1175,7 +1193,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add our own plugin name to the user agent for each request.
+	 * Add our own plugin name to the user agent for each request to a REST API endpoint.
 	 *
 	 * @param string $user_agent The user agent to use for each request.
 	 *

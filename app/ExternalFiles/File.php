@@ -1056,7 +1056,7 @@ class File {
 	 * @return File_Types_Base
 	 */
 	public function get_file_type_obj(): File_Types_Base {
-		return File_Types::get_instance()->get_type_object_for_file_obj( $this );
+		return File_Types::get_instance()->get_type_object_by_mime_type( $this->get_mime_type(), $this );
 	}
 
 	/**
