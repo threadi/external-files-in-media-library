@@ -107,7 +107,7 @@ class Availability extends Extension_Base {
 		$setting = $settings_obj->add_setting( 'eml_check_interval' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'string' );
-		$setting->set_default( 'daily' );
+		$setting->set_default( 'efml_24hourly' );
 		$setting->set_help( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
 		$field = new Select();
 		$field->set_title( __( 'Interval for availability check', 'external-files-in-media-library' ) );

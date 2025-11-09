@@ -57,10 +57,6 @@ class Synchronization extends Schedules_Base {
 	/**
 	 * Run this schedule.
 	 *
-	 * TODO:
-	 * Protokoll wird nicht angemeldet, wenn das durchlaufen wird.
-	 * Dadurch wird z.B. der Sync von GoogleDrive nicht ausgeführt.
-	 *
 	 * @return void
 	 */
 	public function run(): void {

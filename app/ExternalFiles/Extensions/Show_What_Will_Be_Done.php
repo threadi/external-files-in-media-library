@@ -12,19 +12,11 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use Exception;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
-use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Controller for queue tasks.
@@ -77,9 +69,6 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	 * @return void
 	 */
 	public function init(): void {
-		// add settings.
-		add_action( 'init', array( $this, 'add_settings' ), 20 );
-
 		// use our own hooks.
 		add_filter( 'eml_add_dialog', array( $this, 'add_info_in_dialog' ), 5, 2 );
 	}
@@ -94,37 +83,6 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	}
 
 	/**
-	 * Initialize the settings for this object.
-	 *
-	 * @return void
-	 */
-	public function add_settings(): void {
-		// get the settings object.
-		$settings_obj = Settings::get_instance();
-
-		// get the advanced section.
-		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );
-
-		// bail if section could not be loaded.
-		if ( ! $advanced_tab_advanced ) {
-			return;
-		}
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_swwbd_enabled' );
-		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_field(
-			array(
-				'type'        => 'Checkbox',
-				'title'       => $this->get_title(),
-				'description' => __( 'If this option is enabled you will be see an info about what will happen after import in the import dialog.', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
-	}
-
-	/**
 	 * Simulate the import and show the results in the import dialog.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
@@ -133,8 +91,8 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function add_info_in_dialog( array $dialog, array $settings ): array {
-		// bail if option is not enabled.
-		if ( 1 !== absint( get_option( 'eml_swwbd_enabled' ) ) ) {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
 		}
 
