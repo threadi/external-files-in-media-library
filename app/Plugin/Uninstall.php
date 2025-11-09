@@ -102,7 +102,7 @@ class Uninstall {
 			$transient_obj->delete();
 
 			// delete dismiss-marker for this transient.
-			delete_option( 'efiml-dismissed-' . md5( $transient_obj->get_name() ) );
+			delete_option( 'efml-dismissed-' . md5( $transient_obj->get_name() ) );
 
 			// backward-compatibility to < 2.0.0.
 			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
@@ -185,6 +185,9 @@ class Uninstall {
 
 		// cleanup saved external sources.
 		Taxonomy::get_instance()->uninstall();
+
+		// reset the intro.
+		Intro::get_instance()->reset_intro();
 
 		// delete Log-database-table.
 		Log::get_instance()->uninstall();

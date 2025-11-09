@@ -238,6 +238,9 @@ class File_Types {
 			return $this->files[ $external_file_obj->get_id() ];
 		}
 
+		// get the file URL for logging.
+		$url = $external_file_obj instanceof File ? $external_file_obj->get_url( true ) : $external_file_obj;
+
 		// check each file type for compatibility with the given file.
 		foreach ( $this->get_file_types_as_objects( $external_file_obj ) as $file_type_obj ) {
 			// set the mime type.
@@ -250,7 +253,7 @@ class File_Types {
 
 			// log this event.
 			/* translators: %1$s will be replaced by the type name (e.g. "Images"). */
-			Log::get_instance()->create( sprintf( __( 'File under this URL has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $external_file_obj instanceof File ? $external_file_obj->get_url( true ) : $external_file_obj, 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'File under this URL has the type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $url, 'info', 2 );
 
 			// add to the list.
 			if ( $external_file_obj instanceof File ) {
@@ -262,7 +265,7 @@ class File_Types {
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $external_file_obj ? $external_file_obj->get_url( true ) : '', 'info', 1 );
+		Log::get_instance()->create( __( 'File type could not be detected. Fallback to general file.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// get the default file object.
 		$file_type_obj = new File_Types\File( $external_file_obj );

@@ -227,7 +227,7 @@ function efml_intro_part_4() {
 /**
  * The exit handler: sends AJAX-request to server to mark intro as "has been run".
  */
-function efml_intro_exit_handler() {
+function efml_intro_exit_handler( forward ) {
   jQuery.ajax( {
     type: "POST",
     url: efmlIntroJsVars.ajax_url,
@@ -239,8 +239,10 @@ function efml_intro_exit_handler() {
       efml_ajax_error_dialog( errorThrown )
     },
     success: function() {
-      // forward user.
-      window.location.href = efmlIntroJsVars.url_3;
+      // forward user, if requested.
+      if( forward ) {
+        window.location.href = efmlIntroJsVars.url_3;
+      }
     }
   } )
 }
@@ -265,10 +267,13 @@ function efml_intro_object( steps ) {
   });
 
   // set skip handler.
-  intro.onSkip( () => efml_intro_exit_handler() );
+  intro.onSkip( () => {
+    efml_intro_exit_handler( false );
+    intro.onexit( () => { return true } );
+  } );
 
   // set exit handler.
-  intro.onexit( () => efml_intro_exit_handler() );
+  intro.onexit( () => efml_intro_exit_handler( true ) );
 
   return intro;
 }

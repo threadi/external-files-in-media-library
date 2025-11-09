@@ -18,6 +18,8 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -172,9 +174,14 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		$results = Results::get_instance()->get_results();
 
 		// add them to the list.
-		foreach ( $results as $result ) {
+		foreach ( $results as $index => $result ) {
 			// bail if object does not have "get_result_text".
 			if ( ! method_exists( $result, 'get_result_text' ) ) {
+				continue;
+			}
+
+			// bail if index is >= 10 to minimize the list in dialog.
+			if( $index >= 10 ) {
 				continue;
 			}
 
@@ -185,15 +192,37 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			try {
 				$file_data = json_decode( $file_data_string, true );
 
+				// bail if URL is missing.
+				if( empty( $file_data['url'] ) ) {
+					continue;
+				}
+
 				// add hints to the list.
 				if ( $file_data['local'] ) {
 					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will be saved local', 'external-files-in-media-library' ) . '</label>';
 				} else {
-					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will stay external hosted', 'external-files-in-media-library' ) . '</label>';
+					// get the file type object.
+					$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $file_data['mime-type'] );
+
+					// add proxy hint.
+					$proxy_info = __( 'and not use the proxy as its file type is not enabled for it', 'external-files-in-media-library' );
+					if( $file_type_obj->is_proxy_enabled() ) {
+						$proxy_info = __( 'and use the proxy as its file type is enabled for it', 'external-files-in-media-library' );
+					}
+
+					// add the info.
+					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will stay external hosted', 'external-files-in-media-library' ) . ' ' . $proxy_info . '</label>';
+
+
 				}
 			} catch ( Exception $e ) {
 				$text .= $e->getMessage();
 			}
+		}
+
+		// add hint about more files.
+		if( count( $results) >= 10 ) {
+			$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> ' . __( 'There are more files for which we do not provide any information about what exactly happens to them during import for performance reasons.', 'external-files-in-media-library' ) . '</label>';
 		}
 
 		// cleanup results.
