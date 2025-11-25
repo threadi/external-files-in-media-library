@@ -30,8 +30,8 @@
 	}
 }
 
-select.eml-field-width {
-    width: 240px;
+input[type="password"].eml-field-width, input[type="text"].eml-field-width, select.eml-field-width {
+    width: 320px;
 }
 
 .eml_settings_link {
@@ -82,7 +82,7 @@ body.settings_page_eml_settings .dashicons-yes { color: green }
 	font-weight: 600;
 }
 
-.eml .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
+.eml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;

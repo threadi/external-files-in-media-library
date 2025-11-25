@@ -588,150 +588,52 @@ class File {
 	}
 
 	/**
-	 * Save the login on object.
+	 * Save the fields on object.
 	 *
-	 * @param string $login The login.
+	 * @param array<string,array<string,mixed>> $fields The fields.
 	 *
 	 * @return void
 	 */
-	public function set_login( string $login ): void {
+	public function set_fields( array $fields ): void {
 		// bail if no login is given.
-		if ( empty( $login ) ) {
+		if ( empty( $fields ) ) {
 			return;
 		}
 
 		// save as encrypted value in db.
-		update_post_meta( $this->get_id(), 'eml_login', Crypt::get_instance()->encrypt( $login ) );
+		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
 	}
 
 	/**
-	 * Remove the login for this file.
+	 * Remove the fields for this file.
 	 *
 	 * @return void
 	 */
-	public function remove_login(): void {
-		delete_post_meta( $this->get_id(), 'eml_login' );
+	public function remove_fields(): void {
+		delete_post_meta( $this->get_id(), 'eml_fields' );
 	}
 
 	/**
-	 * Save the password for this file.
+	 * Return decrypted fields.
 	 *
-	 * @param string $password The password.
-	 *
-	 * @return void
+	 * @return array<string,array<string,mixed>>
 	 */
-	public function set_password( string $password ): void {
-		// bail if no password is given.
-		if ( empty( $password ) ) {
-			return;
-		}
-
-		// save as encrypted value in db.
-		update_post_meta( $this->get_id(), 'eml_password', Crypt::get_instance()->encrypt( $password ) );
-	}
-
-	/**
-	 * Remove the password for this file.
-	 *
-	 * @return void
-	 */
-	public function remove_password(): void {
-		delete_post_meta( $this->get_id(), 'eml_password' );
-	}
-
-	/**
-	 * Return decrypted API key.
-	 *
-	 * @return string
-	 */
-	public function get_api_key(): string {
-		// get the password for this file.
-		$api_key = get_post_meta( $this->get_id(), 'eml_api_key', true );
+	public function get_fields(): array {
+		// get the fields for this file.
+		$fields = get_post_meta( $this->get_id(), 'eml_fields', true );
 
 		// bail if no string returned.
-		if ( ! is_string( $api_key ) ) {
-			return '';
+		if ( ! is_string( $fields ) ) {
+			return array();
 		}
 
 		// bail if string is empty.
-		if ( empty( $api_key ) ) {
-			return '';
+		if ( empty( $fields ) ) {
+			return array();
 		}
 
 		// return decrypted string.
-		return Crypt::get_instance()->decrypt( $api_key );
-	}
-
-	/**
-	 * Save the API key for this file.
-	 *
-	 * @param string $api_key The API key.
-	 *
-	 * @return void
-	 */
-	public function set_api_key( string $api_key ): void {
-		// bail if no password is given.
-		if ( empty( $api_key ) ) {
-			return;
-		}
-
-		// save as encrypted value in db.
-		update_post_meta( $this->get_id(), 'eml_api_key', Crypt::get_instance()->encrypt( $api_key ) );
-	}
-
-	/**
-	 * Remove the password for this file.
-	 *
-	 * @return void
-	 */
-	public function remove_api_key(): void {
-		delete_post_meta( $this->get_id(), 'eml_api_key' );
-	}
-
-	/**
-	 * Return decrypted login.
-	 *
-	 * @return string
-	 */
-	public function get_login(): string {
-		// get the login for this file.
-		$login = get_post_meta( $this->get_id(), 'eml_login', true );
-
-		// bail if no string returned.
-		if ( ! is_string( $login ) ) {
-			return '';
-		}
-
-		// bail if string is empty.
-		if ( empty( $login ) ) {
-			return '';
-		}
-
-		// return decrypted string.
-		return Crypt::get_instance()->decrypt( $login );
-	}
-
-	/**
-	 * Return decrypted login.
-	 *
-	 * @return string
-	 */
-	public function get_password(): string {
-		// get the password for this file.
-		$password = get_post_meta( $this->get_id(), 'eml_password', true );
-
-		// bail if no string returned.
-		if ( ! is_string( $password ) ) {
-			return '';
-		}
-
-		// bail if string is empty.
-		if ( empty( $password ) ) {
-			return '';
-		}
-
-		// return decrypted string.
-		return Crypt::get_instance()->decrypt( $password );
+		return json_decode( Crypt::get_instance()->decrypt( $fields ), true );
 	}
 
 	/**
@@ -740,7 +642,7 @@ class File {
 	 * @return bool
 	 */
 	public function has_credentials(): bool {
-		return ! empty( $this->get_login() ) && ! empty( $this->get_password() );
+		return ! empty( $this->get_fields() );
 	}
 
 	/**
@@ -857,7 +759,7 @@ class File {
 		$this->set_is_local_saved( true );
 
 		// get the file path of the original.
-		$file = get_attached_file( $this->get_id() );
+		$file = wp_get_original_image_path( $this->get_id() );
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
@@ -917,7 +819,7 @@ class File {
 	 */
 	public function switch_to_external(): bool {
 		// bail if credentials are used.
-		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( $this->has_credentials() ) {
 			return false;
 		}
 
@@ -951,7 +853,7 @@ class File {
 		}
 
 		// get attached file.
-		$file = get_attached_file( $this->get_id() );
+		$file = wp_get_original_image_path( $this->get_id() );
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
@@ -1056,7 +958,7 @@ class File {
 	 * @return File_Types_Base
 	 */
 	public function get_file_type_obj(): File_Types_Base {
-		return File_Types::get_instance()->get_type_object_for_file_obj( $this );
+		return File_Types::get_instance()->get_type_object_by_mime_type( $this->get_mime_type(), $this );
 	}
 
 	/**

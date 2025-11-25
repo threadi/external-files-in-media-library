@@ -122,14 +122,8 @@ class Rest {
 		// get the import object.
 		$import_obj = Import::get_instance();
 
-		// add login, if set.
-		if ( isset( $params['login'] ) ) {
-			$import_obj->set_login( $params['login'] );
-		}
-		// add password, if set.
-		if ( isset( $params['password'] ) ) {
-			$import_obj->set_password( $params['password'] );
-		}
+		// add fields.
+		$import_obj->set_fields( isset( $params['fields'] ) ? $params['fields'] : array() );
 
 		// add the given URL and return success if it was successfully.
 		if ( $import_obj->add_url( $params['url'] ) ) {

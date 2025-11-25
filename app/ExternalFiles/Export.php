@@ -526,14 +526,14 @@ class Export {
 		}
 
 		// get the file name.
-		$file = get_attached_file( $attachment_id, true );
+		$file = wp_get_original_image_path( $attachment_id, true );
 
 		// bail if file name could not be loaded.
 		if ( ! is_string( $file ) ) {
 			return;
 		}
 
-		// check each term.
+		// check each external source term.
 		foreach ( $this->get_export_terms() as $term ) {
 			// get the type name.
 			$type = get_term_meta( $term->term_id, 'type', true );
@@ -589,9 +589,7 @@ class Export {
 			$external_file_obj->set_is_local_saved( false );
 
 			// save the credentials on the object, if set.
-			$external_file_obj->set_login( isset( $credentials['login'] ) ? $credentials['login'] : '' );
-			$external_file_obj->set_password( isset( $credentials['password'] ) ? $credentials['password'] : '' );
-			$external_file_obj->set_api_key( isset( $credentials['api_key'] ) ? $credentials['api_key'] : '' );
+			$external_file_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
 
 			// set date of import (this is not the attachment datetime).
 			$external_file_obj->set_date();
@@ -633,7 +631,7 @@ class Export {
 		}
 
 		// get the file name.
-		$file = get_attached_file( $attachment_id, true );
+		$file = wp_get_original_image_path( $attachment_id, true );
 
 		// bail if file name could not be loaded.
 		if ( ! is_string( $file ) ) {

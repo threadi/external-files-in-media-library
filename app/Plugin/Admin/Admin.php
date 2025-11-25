@@ -453,7 +453,7 @@ class Admin {
 	 */
 	public function configure_transients(): void {
 		$transients_obj = Transients::get_instance();
-		$transients_obj->set_slug( 'eml' );
+		$transients_obj->set_slug( 'efml' );
 		$transients_obj->set_url( Helper::get_plugin_url() . '/app/Dependencies/easyTransientsForWordPress/' );
 		$transients_obj->set_path( Helper::get_plugin_path() . '/app/Dependencies/easyTransientsForWordPress/' );
 		$transients_obj->set_capability( 'manage_options' );

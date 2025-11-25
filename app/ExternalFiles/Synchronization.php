@@ -557,9 +557,7 @@ class Synchronization {
 		$import = Import::get_instance();
 
 		// add the credentials.
-		$import->set_login( $directory_listing_obj->get_login_from_archive_entry( $term_data ) );
-		$import->set_password( $directory_listing_obj->get_password_from_archive_entry( $term_data ) );
-		$import->set_api_key( $directory_listing_obj->get_api_key_from_archive_entry( $term_data ) );
+		$import->set_fields( isset( $term_data['fields'] ) ? $term_data['fields'] : array() );
 		$import->set_term_id( $term_id );
 
 		// log this event.

@@ -10,8 +10,8 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
@@ -24,7 +24,6 @@ use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Sabre\DAV\Client;
-use Sabre\HTTP\ClientHttpException;
 use Error;
 use WP_Error;
 use WP_User;
@@ -46,13 +45,6 @@ class WebDav extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'WebDAV';
-
-	/**
-	 * Marker if login is required.
-	 *
-	 * @var bool
-	 */
-	protected bool $requires_login = true;
 
 	/**
 	 * Slug of settings tab.
@@ -131,7 +123,7 @@ class WebDav extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add settings for Google Drive support.
+	 * Add settings for WebDAV support.
 	 *
 	 * @return void
 	 */
@@ -178,6 +170,41 @@ class WebDav extends Service_Base implements Service {
 
 		// add setting.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_webdav_server' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$field = new Text();
+			$field->set_title( __( 'WebDAV Server', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'https://nextcloud.local', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_webdav_login' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Text();
+			$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_webdav_password' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Password();
+			$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
 			$setting = $settings_obj->add_setting( 'eml_webdav_path' );
 			$setting->set_section( $section );
 			$setting->set_type( 'string' );
@@ -185,16 +212,6 @@ class WebDav extends Service_Base implements Service {
 			$field = new Text();
 			$field->set_title( __( 'Path', 'external-files-in-media-library' ) );
 			$field->set_description( __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is <code>/remote.php/dav/files/</code>.', 'external-files-in-media-library' ) );
-			$setting->set_field( $field );
-
-			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_webdav_ignore_ssl' );
-			$setting->set_section( $section );
-			$setting->set_type( 'integer' );
-			$setting->set_default( 0 );
-			$field = new Checkbox();
-			$field->set_title( __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
 		}
 
@@ -210,6 +227,16 @@ class WebDav extends Service_Base implements Service {
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
 			$setting->set_field( $field );
 		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_webdav_ignore_ssl' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
 	}
 
 	/**
@@ -228,7 +255,7 @@ class WebDav extends Service_Base implements Service {
 	}
 
 	/**
-	 * Enable WP CLI for Google Drive tasks.
+	 * Enable WP CLI for WebDAV tasks.
 	 *
 	 * @return void
 	 */
@@ -275,14 +302,17 @@ class WebDav extends Service_Base implements Service {
 			return array();
 		}
 
+		// get the fields.
+		$fields = $this->get_fields();
+
 		// set the requested domain.
 		$domain = $parse_url['scheme'] . '://' . $parse_url['host'];
 
 		// create settings array for request.
 		$settings = array(
 			'baseUri'  => $domain,
-			'userName' => $this->get_login(),
-			'password' => $this->get_password(),
+			'userName' => $fields['login']['value'],
+			'password' => $fields['password']['value'],
 		);
 
 		// get the path.
@@ -299,11 +329,11 @@ class WebDav extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 *
 		 * @param string $path The path to use after the given domain.
-		 * @param string $login The login to use.
+		 * @param array $fields The fields to use.
 		 * @param string $domain The domain to use.
 		 * @param string $directory The requested URL.
 		 */
-		$path = apply_filters( 'efml_service_webdav_path', $path, $this->get_login(), $domain, $directory );
+		$path = apply_filters( 'efml_service_webdav_path', $path, $fields, $domain, $directory );
 
 		/**
 		 * Filter the WebDAV settings.
@@ -438,28 +468,8 @@ class WebDav extends Service_Base implements Service {
 	 * @return Client
 	 */
 	public function ignore_self_signed_ssl( Client $client ): Client {
-		// check if the setting is enabled.
-		$enabled = false;
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			$enabled = 1 === absint( get_option( 'eml_webdav_ignore_ssl' ) );
-		}
-
-		// get from user setting, if enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// get current user.
-			$user = $this->get_user();
-
-			// bail if user is not available.
-			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-				return $client;
-			}
-
-			// get the user value.
-			$enabled = 1 === absint( Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_ignore_ssl', true ) ) );
-		}
-
 		// bail if setting is disabled.
-		if ( ! $enabled ) {
+		if ( 1 !== absint( get_option( 'eml_webdav_ignore_ssl' ) ) ) {
 			return $client;
 		}
 
@@ -482,7 +492,7 @@ class WebDav extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -500,7 +510,7 @@ class WebDav extends Service_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -570,12 +580,12 @@ class WebDav extends Service_Base implements Service {
 	/**
 	 * Set the path, if string for it is empty, with value from settings.
 	 *
-	 * @param string $path The path to use.
-	 * @param string $login The used login.
+	 * @param string                            $path The path to use.
+	 * @param array<string,array<string,mixed>> $fields The used fields.
 	 *
 	 * @return string
 	 */
-	public function set_path( string $path, string $login ): string {
+	public function set_path( string $path, array $fields ): string {
 		// replace double slashes in path.
 		$path = str_replace( '//', '/', $path );
 
@@ -590,13 +600,13 @@ class WebDav extends Service_Base implements Service {
 		}
 
 		// get from global setting, if enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			// return path from settings.
-			return get_option( 'eml_webdav_path' ) . $login . '/';
+			return get_option( 'eml_webdav_path' ) . $fields['login']['value'] . '/';
 		}
 
 		// get from user setting, if enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get current user.
 			$user = $this->get_user();
 
@@ -614,7 +624,12 @@ class WebDav extends Service_Base implements Service {
 			}
 
 			// return the region from settings.
-			return Crypt::get_instance()->decrypt( $path ) . $login . '/';
+			return Crypt::get_instance()->decrypt( $path ) . $fields['login']['value'] . '/';
+		}
+
+		// use the field setting.
+		if ( ! empty( $fields['path']['value'] ) ) {
+			return $fields['path']['value'] . $fields['login']['value'] . '/';
 		}
 
 		// return nothing in other cases.
@@ -673,7 +688,7 @@ class WebDav extends Service_Base implements Service {
 	}
 
 	/**
-	 * Show option to connect to DropBox on user profile.
+	 * Show option to connect to WebDav on the user profile.
 	 *
 	 * @param WP_User $user The WP_User object for the actual user.
 	 *
@@ -709,24 +724,217 @@ class WebDav extends Service_Base implements Service {
 	 */
 	public function get_user_settings(): array {
 		$list = array(
-			'webdav_path'       => array(
+			'webdav_server'   => array(
+				'label'       => __( 'WebDAV Server', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'https://nextcloud.local', 'external-files-in-media-library' ),
+			),
+			'webdav_login'    => array(
+				'label'       => __( 'Login', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'Your login', 'external-files-in-media-library' ),
+			),
+			'webdav_password' => array(
+				'label'       => __( 'Password', 'external-files-in-media-library' ),
+				'field'       => 'password',
+				'placeholder' => __( 'Your password', 'external-files-in-media-library' ),
+			),
+			'webdav_path'     => array(
 				'label'       => __( 'Path', 'external-files-in-media-library' ),
 				'field'       => 'text',
 				'description' => __( 'Define the path added after the WebDAV-domain to load files. For Nextcloud-based WebDAV this is <code>/remote.php/dav/files/</code>.', 'external-files-in-media-library' ),
-			),
-			'webdav_ignore_ssl' => array(
-				'label'       => __( 'Ignore self-signed SSL-certificates', 'external-files-in-media-library' ),
-				'field'       => 'checkbox',
-				'description' => __( 'If enabled self-signed certificates will be acknowledged.', 'external-files-in-media-library' ),
+				'default'     => '/remote.php/dav/files/',
 			),
 		);
 
 		/**
-		 * Filter the list of possible user settings for Google Drive.
+		 * Filter the list of possible user settings for WebDAV.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
 		return apply_filters( 'eml_service_webdav_user_settings', $list );
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the prepared values for the fields.
+			$values = $this->get_field_values();
+
+			// set the fields.
+			$this->fields = array(
+				'server'   => array(
+					'name'        => 'server',
+					'type'        => 'url',
+					'label'       => __( 'Server', 'external-files-in-media-library' ),
+					'placeholder' => __( 'https://example.com', 'external-files-in-media-library' ),
+					'value'       => $values['server'],
+					'readonly'    => ! empty( $values['server'] ),
+				),
+				'login'    => array(
+					'name'        => 'login',
+					'type'        => 'text',
+					'label'       => __( 'Login', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your login', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['login'],
+					'readonly'    => ! empty( $values['login'] ),
+				),
+				'password' => array(
+					'name'        => 'password',
+					'type'        => 'password',
+					'label'       => __( 'Password', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your password', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['password'],
+					'readonly'    => ! empty( $values['password'] ),
+				),
+				'path'     => array(
+					'name'        => 'path',
+					'type'        => 'text',
+					'label'       => __( 'Path', 'external-files-in-media-library' ),
+					'placeholder' => __( '/remote.php/dav/files/', 'external-files-in-media-library' ),
+					'value'       => ! empty( $values['path'] ) ? $values['path'] : '/remote.php/dav/files/',
+					'readonly'    => ! empty( $values['path'] ),
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the directory to load from fields.
+	 *
+	 * @return string
+	 */
+	public function get_directory(): string {
+		// bail if no directory is set.
+		if ( empty( $this->fields['server']['value'] ) ) {
+			return '';
+		}
+
+		// return the directory.
+		return $this->fields['server']['value'];
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// bail if credentials are set.
+		if ( $this->has_credentials_set() ) {
+			return __( 'Connect to your WebDAV', 'external-files-in-media-library' );
+		}
+
+		// return the default title.
+		return __( 'Enter your credentials', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the fields.
+		$has_credentials_set = $this->has_credentials_set();
+
+		// if access token is set in plugin settings.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'The credentials has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'The credentials must be set by an administrator in the plugin settings.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your credentials <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your credentials are already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		// if authentication JSON is set per user.
+		if ( $this->is_mode( 'user' ) ) {
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your credentials <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your credentials are already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		return __( 'Enter your WebDAV credentials in this form.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the values depending on actual mode.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_field_values(): array {
+		// prepare the return array.
+		$values = array(
+			'server'   => '',
+			'login'    => '',
+			'password' => '',
+			'path'     => '',
+		);
+
+		// get it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			$values['server']   = get_option( 'eml_webdav_server', '' );
+			$values['login']    = Crypt::get_instance()->decrypt( get_option( 'eml_webdav_login', '' ) );
+			$values['password'] = Crypt::get_instance()->decrypt( get_option( 'eml_webdav_password', '' ) );
+			$values['path']     = get_option( 'eml_webdav_path', '' );
+		}
+
+		// save it user-specific, if this is enabled.
+		if ( $this->is_mode( 'user' ) ) {
+			// get the user set on object.
+			$user = $this->get_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) {
+				return array();
+			}
+
+			// get the values.
+			$values['server']   = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_server', true ) );
+			$values['login']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_login', true ) );
+			$values['password'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_password', true ) );
+			$values['path']     = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_webdav_path', true ) );
+		}
+
+		// return the resulting list of values.
+		return $values;
+	}
+
+	/**
+	 * Return whether credentials are set in the fields.
+	 *
+	 * @return bool
+	 */
+	private function has_credentials_set(): bool {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return whether both credentials are set.
+		return ! empty( $fields['server'] ) && ! empty( $fields['login'] ) && ! empty( $fields['password'] );
 	}
 }

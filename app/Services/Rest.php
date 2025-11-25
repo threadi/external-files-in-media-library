@@ -17,7 +17,6 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -53,13 +52,6 @@ class Rest extends Service_Base implements Service {
 	protected string $settings_sub_tab = 'eml_rest';
 
 	/**
-	 * Marker that this service does not use any credentials.
-	 *
-	 * @var bool
-	 */
-	protected bool $no_credentials = true;
-
-	/**
 	 * Marker for sync support (false to enable it).
 	 *
 	 * @var bool
@@ -76,14 +68,14 @@ class Rest extends Service_Base implements Service {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {    }
+	private function __construct() {}
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {    }
+	private function __clone() {}
 
 	/**
 	 * Return instance of this object as singleton.
@@ -134,7 +126,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add settings for DropBox support.
+	 * Add settings for REST API support.
 	 *
 	 * @return void
 	 */
@@ -238,6 +230,14 @@ class Rest extends Service_Base implements Service {
 	 * @throws \JsonException Could throw exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// get the requested URL from fields.
+		if ( empty( $directory ) ) {
+			$directory = $fields['server']['value'];
+		}
+
 		// bail if the requested URL is the own URL.
 		if ( false !== str_starts_with( $directory, get_option( 'home' ) ) ) {
 			// create error object.
@@ -268,6 +268,9 @@ class Rest extends Service_Base implements Service {
 			// add the error to the list for response.
 			$this->add_error( $error );
 
+			// log this event.
+			Log::get_instance()->create( __( 'Given path is not a HTTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
 			// return empty array to not load anything more.
 			return array();
 		}
@@ -283,13 +286,13 @@ class Rest extends Service_Base implements Service {
 
 		// prepare the response array.
 		$listing = array(
-			'title' => basename( $directory ),
+			'title' => $directory,
 			'files' => array(),
 			'dirs'  => array(),
 		);
 
 		/**
-		 * Get the max pages from external URL.
+		 * Get the max pages from the external REST API URL.
 		 * Set these pages as directories.
 		 * Let the directories load with separate requests to prevent timeouts.
 		 * Prepare the resulting tree before directory listings own @Rest.php generates the tree.
@@ -307,13 +310,13 @@ class Rest extends Service_Base implements Service {
 			if ( ! $url_to_use ) {
 				// create error object.
 				$error = new WP_Error();
-				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
+				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be available at the specified URL.', 'external-files-in-media-library' ) );
 
 				// add the error to the list for response.
 				$this->add_error( $error );
 
 				// log this event.
-				Log::get_instance()->create( __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ), $directory, 'error' );
+				Log::get_instance()->create( __( 'No WordPress REST API appears to be available at the specified URL.', 'external-files-in-media-library' ), $directory, 'error' );
 
 				// return empty array to not load anything more.
 				return array();
@@ -332,19 +335,19 @@ class Rest extends Service_Base implements Service {
 			$response = wp_safe_remote_head( $url );
 
 			// log this request.
-			Log::get_instance()->create( __( 'WordPress REST API request:', 'external-files-in-media-library' ) . '<br><br>' . __( 'URL:', 'external-files-in-media-library' ) . ' <code>' . $directory . '</code><br><br>' . __( 'Response:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $directory, 'info', 2 );
+			Log::get_instance()->create( __( 'WordPress REST API request:', 'external-files-in-media-library' ) . '<br><br>' . __( 'URL:', 'external-files-in-media-library' ) . ' <code>' . $directory . '</code><br><br>' . __( 'Response:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response ) . '</code>', $directory, 'info', 2 );
 
 			// bail general if error occurred.
 			if ( is_wp_error( $response ) ) {
 				// create error object.
 				$error = new WP_Error();
-				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response->get_error_messages() ) . '</code>' );
+				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>' );
 
 				// add the error to the list for response.
 				$this->add_error( $error );
 
 				// log this event.
-				Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response->get_error_messages() ) . '</code>', $directory, 'error' );
+				Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>', $directory, 'error' );
 
 				// return empty array to not load anything more.
 				return array();
@@ -406,19 +409,19 @@ class Rest extends Service_Base implements Service {
 		$response = wp_safe_remote_get( $directory );
 
 		// log this request.
-		Log::get_instance()->create( __( 'WordPress REST API request:', 'external-files-in-media-library' ) . '<br><br>' . __( 'URL:', 'external-files-in-media-library' ) . ' <code>' . $directory . '</code><br><br>' . __( 'Response:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $directory, 'info', 2 );
+		Log::get_instance()->create( __( 'WordPress REST API request:', 'external-files-in-media-library' ) . '<br><br>' . __( 'URL:', 'external-files-in-media-library' ) . ' <code>' . $directory . '</code><br><br>' . __( 'Response:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response ) . '</code>', $directory, 'info', 2 );
 
 		// bail general if error occurred.
 		if ( is_wp_error( $response ) ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response->get_error_messages() ) . '</code>' );
+			$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>' );
 
 			// add the error to the list for response.
 			$this->add_error( $error );
 
 			// log this event.
-			Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response->get_error_messages() ) . '</code>', $directory, 'error' );
+			Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>', $directory, 'error' );
 
 			// return empty array to not load anything more.
 			return array();
@@ -591,7 +594,7 @@ class Rest extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -613,11 +616,11 @@ class Rest extends Service_Base implements Service {
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "" );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -637,7 +640,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return list of translations.
+	 * Return list of translations for the directory listing.
 	 *
 	 * @param array<string,mixed> $translations List of translations.
 	 *
@@ -819,6 +822,7 @@ class Rest extends Service_Base implements Service {
 
 				// add the error to the list for response.
 				$this->add_error( $error );
+
 				return array();
 			}
 
@@ -834,8 +838,11 @@ class Rest extends Service_Base implements Service {
 					continue;
 				}
 
-				// set counter for files which has been loaded from Google Drive.
-				$loaded_files = 0;
+				// get the user ID.
+				$user_id = get_current_user_id();
+
+				// save count of URLs.
+				update_option( 'eml_import_url_max_' . $user_id, count( $files ) );
 
 				// add each file from response to the list of all files.
 				foreach ( $files as $file ) {
@@ -844,20 +851,15 @@ class Rest extends Service_Base implements Service {
 						continue;
 					}
 
-					// bail if this an AJAX-request and the file already exist in media library.
-					if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file['source_url'] ) ) {
-						continue;
-					}
+					// update title for progress.
+					/* translators: %1$s will be replaced by the URL which is imported. */
+					update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Get data for URL %1$s from REST API', 'external-files-in-media-library' ), '<em>' . esc_html( Helper::shorten_url( $file['source_url'] ) ) . '</em>' ) );
 
-					// bail if limit for loaded files has been reached and this is an AJAX-request.
-					if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_rest_import_limit', 10 ) ) ) {
-						// set marker to load more.
-						$file_list['load_more'] = true;
-						continue;
-					}
+					// update counter for URLs.
+					update_option( 'eml_import_url_count_' . $user_id, absint( get_option( 'eml_import_url_count_' . $user_id, 0 ) ) + 1 );
 
 					// check whether to save this file local or let it extern.
-					$local = $http_obj->url_should_be_saved_local( $url, $file['mime_type'] );
+					$local = $http_obj->url_should_be_saved_local( $file['source_url'], $file['mime_type'] );
 
 					// collect the file data.
 					$entry = array(
@@ -886,9 +888,6 @@ class Rest extends Service_Base implements Service {
 					if ( empty( $entry ) ) {
 						continue;
 					}
-
-					// update the counter.
-					++$loaded_files;
 
 					// add entry to the list.
 					$file_list[] = $entry;
@@ -958,11 +957,16 @@ class Rest extends Service_Base implements Service {
 		// we check first which WordPress REST API URL is available.
 		$url_to_use = false;
 		foreach ( $this->get_rest_api_paths() as $path ) {
+			// bail if url is already set.
+			if ( $url_to_use ) {
+				continue;
+			}
+
 			// build the URL to check.
-			$url_to_check = $directory . $path;
+			$url_to_check = rtrim( $directory, '/' ) . $path;
 
 			// request the external WordPress REST-API.
-			$response = wp_safe_remote_head( $url_to_check . '/wp/v2/media' );
+			$response = wp_safe_remote_head( $url_to_check . $this->get_default_endpoint() );
 
 			// bail general if error occurred.
 			if ( is_wp_error( $response ) ) {
@@ -996,7 +1000,24 @@ class Rest extends Service_Base implements Service {
 		}
 
 		// return the result.
-		return $url_to_use . '/wp/v2/media';
+		return $url_to_use . $this->get_default_endpoint();
+	}
+
+	/**
+	 * Return the default REST API endpoint this service will be use.
+	 *
+	 * @return string
+	 */
+	private function get_default_endpoint(): string {
+		$default_endpoint = '/wp/v2/media';
+
+		/**
+		 * Filter the default REST API endpoint for service REST API.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $default_endpoint The default endpoint.
+		 */
+		return apply_filters( 'efml_service_rest_default_endpoint', $default_endpoint );
 	}
 
 	/**
@@ -1175,7 +1196,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add our own plugin name to the user agent for each request.
+	 * Add our own plugin name to the user agent for each request to a REST API endpoint.
 	 *
 	 * @param string $user_agent The user agent to use for each request.
 	 *
@@ -1183,5 +1204,88 @@ class Rest extends Service_Base implements Service {
 	 */
 	public function add_user_agent( string $user_agent ): string {
 		return $user_agent . '; Plugin ' . Helper::get_plugin_name();
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			$this->fields = array(
+				'server'   => array(
+					'name'        => 'server',
+					'type'        => 'url',
+					'label'       => __( 'WordPress-URL', 'external-files-in-media-library' ),
+					'description' => __( 'Enter the URL of the WordPress project from which you want to integrate media files into your project via REST API.', 'external-files-in-media-library' ),
+					'placeholder' => __( 'https://example.com', 'external-files-in-media-library' ),
+				),
+				'login'    => array(
+					'name'         => 'login',
+					'type'         => 'text',
+					'label'        => __( 'Auth Basic Login (optional)', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Your login', 'external-files-in-media-library' ),
+					'not_required' => true,
+					'credential'   => true,
+				),
+				'password' => array(
+					'name'         => 'password',
+					'type'         => 'password',
+					'label'        => __( 'Auth Basic Password (optional)', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Your password', 'external-files-in-media-library' ),
+					'not_required' => true,
+					'credential'   => true,
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Allow all connections.
+	 *
+	 * @param string $directory The requested directory.
+	 *
+	 * @return bool
+	 */
+	public function do_login( string $directory ): bool {
+		return true;
+	}
+
+	/**
+	 * Return the directory to load from fields.
+	 *
+	 * @return string
+	 */
+	public function get_directory(): string {
+		// bail if no directory is set.
+		if ( empty( $this->fields['server']['value'] ) ) {
+			return '';
+		}
+
+		// return the directory.
+		return $this->fields['server']['value'];
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		return __( 'Enter the URL', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		return __( 'Enter the address of the WordPress website whose REST API data on media files you want to display in the URL field.', 'external-files-in-media-library' );
 	}
 }

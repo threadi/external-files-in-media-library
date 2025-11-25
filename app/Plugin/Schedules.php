@@ -69,6 +69,8 @@ class Schedules {
 		foreach ( $this->get_events() as $event ) {
 			// get the schedule object.
 			$schedule_obj = $this->get_schedule_object_by_name( $event['name'] );
+
+			// bail if object could not be loaded.
 			if ( ! $schedule_obj instanceof Schedules_Base ) {
 				continue;
 			}

@@ -38,7 +38,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( $this->get_api_key() ) ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( '' ) ) ) {
 			return false;
 		}
 
@@ -59,7 +59,7 @@ class Protocol extends Protocol_Base {
 			return false;
 		}
 
-		// return true as DropBox URLs are available.
+		// return true as AWS S3 URLs are available.
 		return true;
 	}
 
@@ -69,14 +69,15 @@ class Protocol extends Protocol_Base {
 	 * @return array<int|string,array<string,mixed>|bool> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
+		// get fields.
+		$fields = $this->get_fields();
+
 		// remove our marker from the URL.
-		$url = str_replace( S3::get_instance()->get_url_mark( $this->get_api_key() ), '', $this->get_url() );
+		$url = str_replace( S3::get_instance()->get_url_mark( $fields['bucket']['value'] ), '', $this->get_url() );
 
 		// get our own S3 object.
 		$s3 = S3::get_instance();
-		$s3->set_login( $this->get_login() );
-		$s3->set_password( $this->get_password() );
-		$s3->set_api_key( $this->get_api_key() );
+		$s3->set_fields( $fields );
 
 		// get the S3Client.
 		$s3_client = $s3->get_s3_client();
@@ -144,7 +145,7 @@ class Protocol extends Protocol_Base {
 						// create the array for the file data.
 						$entry = array(
 							'title'         => basename( $file['file'] ),
-							'local'         => ! $s3->is_file_public_available( $file['Key'], $s3_client ),
+							'local'         => ! $s3->is_file_public_available( $file['s3_key'], $s3_client ),
 							'url'           => $file['file'],
 							'last-modified' => $file['last-modified'],
 							'filesize'      => $file['filesize'],
@@ -165,8 +166,8 @@ class Protocol extends Protocol_Base {
 
 						// set query for the file and save it in tmp dir.
 						$query = array(
-							'Bucket' => $this->get_api_key(),
-							'Key'    => str_replace( S3::get_instance()->get_url_mark( $this->get_api_key() ), '', $file['file'] ),
+							'Bucket' => $this->get_fields()['bucket']['value'],
+							'Key'    => str_replace( S3::get_instance()->get_url_mark( $this->get_fields()['bucket']['value'] ), '', $file['file'] ),
 							'SaveAs' => $tmp_file,
 						);
 
@@ -195,7 +196,7 @@ class Protocol extends Protocol_Base {
 
 				// set query for the file and save it in tmp dir.
 				$query = array(
-					'Bucket' => $this->get_api_key(),
+					'Bucket' => $this->get_fields()['bucket']['value'],
 					'Key'    => $url,
 					'SaveAs' => $tmp_file,
 				);

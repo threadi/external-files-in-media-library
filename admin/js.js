@@ -336,12 +336,10 @@ function efml_reset_proxy() {
  *
  * @param type The used type.
  * @param url The URL of the directory.
- * @param login The login (optional).
- * @param password The password (optional).
- * @param api_key The API Key (optional).
+ * @param fields The fields used for this service.
  * @param term_id The used term (optional).
  */
-function efml_save_as_directory( type, url, login, password, api_key, term_id ) {
+function efml_save_as_directory( type, url, fields, term_id ) {
   jQuery.ajax({
     url: efmlJsVars.ajax_url,
     type: 'POST',
@@ -349,11 +347,32 @@ function efml_save_as_directory( type, url, login, password, api_key, term_id ) 
       action: 'efml_add_archive',
       type: type,
       url: url,
-      login: login,
-      password: password,
-      api_key: api_key,
+      fields: fields,
       term_id: term_id,
       nonce: efmlJsVars.add_archive_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function ( dialog_config ) {
+      efml_create_dialog( dialog_config );
+    }
+  });
+}
+
+/**
+ * Delete an archive.
+ *
+ * @param term_id
+ */
+function efml_delete_directory( term_id ) {
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: {
+      action: 'efml_delete_archive',
+      term_id: term_id,
+      nonce: efmlJsVars.delete_archive_nonce,
     },
     error: function( jqXHR, textStatus, errorThrown ) {
       efml_ajax_error_dialog( errorThrown )

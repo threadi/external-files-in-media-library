@@ -12,17 +12,11 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use Exception;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Controller for queue tasks.
@@ -75,9 +69,6 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	 * @return void
 	 */
 	public function init(): void {
-		// add settings.
-		add_action( 'init', array( $this, 'add_settings' ), 20 );
-
 		// use our own hooks.
 		add_filter( 'eml_add_dialog', array( $this, 'add_info_in_dialog' ), 5, 2 );
 	}
@@ -92,37 +83,6 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	}
 
 	/**
-	 * Initialize the settings for this object.
-	 *
-	 * @return void
-	 */
-	public function add_settings(): void {
-		// get the settings object.
-		$settings_obj = Settings::get_instance();
-
-		// get the advanced section.
-		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );
-
-		// bail if section could not be loaded.
-		if ( ! $advanced_tab_advanced ) {
-			return;
-		}
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_swwbd_enabled' );
-		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_field(
-			array(
-				'type'        => 'Checkbox',
-				'title'       => $this->get_title(),
-				'description' => __( 'If this option is enabled you will be see an info about what will happen after import in the import dialog.', 'external-files-in-media-library' ),
-			)
-		);
-		$setting->set_type( 'integer' );
-		$setting->set_default( 0 );
-	}
-
-	/**
 	 * Simulate the import and show the results in the import dialog.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
@@ -131,8 +91,8 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function add_info_in_dialog( array $dialog, array $settings ): array {
-		// bail if option is not enabled.
-		if ( 1 !== absint( get_option( 'eml_swwbd_enabled' ) ) ) {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ImportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $dialog;
 		}
 
@@ -152,9 +112,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		$import_obj = Import::get_instance();
 
 		// add the credentials.
-		$import_obj->set_login( (string) $settings['login'] );
-		$import_obj->set_password( (string) $settings['password'] );
-		$import_obj->set_api_key( (string) $settings['api_key'] );
+		$import_obj->set_fields( $settings['fields'] );
 
 		// simulate an import.
 		$test_import_result = $import_obj->add_url( $settings['urls'] );
@@ -172,9 +130,14 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		$results = Results::get_instance()->get_results();
 
 		// add them to the list.
-		foreach ( $results as $result ) {
+		foreach ( $results as $index => $result ) {
 			// bail if object does not have "get_result_text".
 			if ( ! method_exists( $result, 'get_result_text' ) ) {
+				continue;
+			}
+
+			// bail if index is >= 10 to minimize the list in dialog.
+			if ( $index >= 10 ) {
 				continue;
 			}
 
@@ -185,15 +148,36 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			try {
 				$file_data = json_decode( $file_data_string, true );
 
+				// bail if URL is missing.
+				if ( empty( $file_data['url'] ) ) {
+					continue;
+				}
+
 				// add hints to the list.
 				if ( $file_data['local'] ) {
 					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will be saved local', 'external-files-in-media-library' ) . '</label>';
 				} else {
-					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will stay external hosted', 'external-files-in-media-library' ) . '</label>';
+					// get the file type object.
+					$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $file_data['mime-type'] );
+
+					// add proxy hint.
+					$proxy_info = __( 'and not use the proxy as its file type is not enabled for it', 'external-files-in-media-library' );
+					if ( $file_type_obj->is_proxy_enabled() ) {
+						$proxy_info = __( 'and use the proxy as its file type is enabled for it', 'external-files-in-media-library' );
+					}
+
+					// add the info.
+					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will stay external hosted', 'external-files-in-media-library' ) . ' ' . $proxy_info . '</label>';
+
 				}
 			} catch ( Exception $e ) {
 				$text .= $e->getMessage();
 			}
+		}
+
+		// add hint about more files.
+		if ( count( $results ) >= 10 ) {
+			$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> ' . __( 'There are more files for which we do not provide any information about what exactly happens to them during import for performance reasons.', 'external-files-in-media-library' ) . '</label>';
 		}
 
 		// cleanup results.

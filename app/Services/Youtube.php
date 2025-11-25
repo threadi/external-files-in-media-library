@@ -10,15 +10,24 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Crypt;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
 use JsonException;
 use WP_Error;
+use WP_User;
 
 /**
  * Object to handle support for this video platform.
@@ -38,13 +47,6 @@ class Youtube extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'YouTube';
-
-	/**
-	 * Marker if simple API login is required.
-	 *
-	 * @var bool
-	 */
-	protected bool $requires_simple_api = true;
 
 	/**
 	 * The API URL.
@@ -115,6 +117,9 @@ class Youtube extends Service_Base implements Service {
 		// use parent initialization.
 		parent::init();
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_youtube' ), 30 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -137,6 +142,94 @@ class Youtube extends Service_Base implements Service {
 		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
+
+		// misc.
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
+	}
+
+	/**
+	 * Add settings for YouTube support.
+	 *
+	 * @return void
+	 */
+	public function init_youtube(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
+		// add new tab for settings.
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
+
+		// add section for file statistics.
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
+
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
+
+		// add setting.
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_youtube_channel_id' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$field = new Text();
+			$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Password();
+			$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+		}
+
+		// show hint for user settings.
+		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_youtube_credential_location_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo();
+			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$setting->set_field( $field );
+		}
 	}
 
 	/**
@@ -148,12 +241,25 @@ class Youtube extends Service_Base implements Service {
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_video_data( array $results, string $url ): array {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return $results;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return $results;
+		}
+
 		// bail if this is not a YouTube-URL.
 		if ( ! $this->is_youtube_video( $url ) ) {
 			return $results;
 		}
 
-		// check if given URL is a YouTube channel.
+		// bail if given URL is a YouTube channel (we do not import complete channels, just videos).
 		if ( $this->is_youtube_channel( $url ) ) {
 			return $results;
 		}
@@ -394,14 +500,20 @@ class Youtube extends Service_Base implements Service {
 	 * @throws JsonException Could throw exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
+		// get fields.
+		$fields = $this->get_fields();
+
+		// set the channel ID.
+		$directory = $fields['channel_id']['value'];
+
 		// set API key.
-		$api_key = $this->get_api_key();
+		$api_key = $fields['api_key']['value'];
 
 		// set max results.
 		$max_results = 100;
 
 		// create URL to request.
-		$youtube_channel_search_url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=' . $directory . '&maxResults=' . $max_results . '&key=' . $api_key;
+		$youtube_channel_search_url = $this->get_api_url() . $directory . '&maxResults=' . $max_results . '&key=' . $api_key;
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -445,6 +557,19 @@ class Youtube extends Service_Base implements Service {
 
 		// bail if array is empty.
 		if ( 0 === absint( $video_list['pageInfo']['totalResults'] ) ) {
+			return array();
+		}
+
+		// bail if no items are returned.
+		if ( empty( $video_list['items'] ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_youtube', __( 'Got no videos from YouTube API.', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// do nothing more.
 			return array();
 		}
 
@@ -496,7 +621,7 @@ class Youtube extends Service_Base implements Service {
 	public function get_actions(): array {
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 			),
 		);
@@ -512,11 +637,11 @@ class Youtube extends Service_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_channel_url() . '" + url, "login": url, "password": apiKey, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_channel_url() . '" + url, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, url, "", apiKey );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -531,8 +656,11 @@ class Youtube extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
+		// get fields.
+		$fields = $this->get_fields();
+
 		// bail if no ID (as directory) is given.
-		if ( empty( $directory ) ) {
+		if ( empty( $fields['channel_id']['value'] ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_youtube', __( 'Channel ID missing for Youtube channel', 'external-files-in-media-library' ) );
@@ -545,7 +673,7 @@ class Youtube extends Service_Base implements Service {
 		}
 
 		// bail if no key is given.
-		if ( empty( $this->get_api_key() ) ) {
+		if ( empty( $fields['api_key']['value'] ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_youtube', __( 'API Key missing for Youtube channel', 'external-files-in-media-library' ) );
@@ -558,7 +686,7 @@ class Youtube extends Service_Base implements Service {
 		}
 
 		// url to request.
-		$youtube_channel_search_url = $this->get_api_url() . $this->get_login() . '&maxResults=1&key=' . $this->get_api_key();
+		$youtube_channel_search_url = $this->get_api_url() . $fields['channel_id']['value'] . '&maxResults=1&key=' . $fields['api_key']['value'];
 
 		// send request to the URL.
 		$response = wp_safe_remote_get( $youtube_channel_search_url );
@@ -645,14 +773,17 @@ class Youtube extends Service_Base implements Service {
 			return $files;
 		}
 
+		// get fields.
+		$fields = $this->get_fields();
+
 		// empty the list of files as we do not import the channel itself as file.
 		$files = array();
 
 		// get channel ID.
-		$channel_id = $import_obj->get_login();
+		$channel_id = $fields['channel_id']['value'];
 
 		// get API key.
-		$api_key = $import_obj->get_password();
+		$api_key = $fields['api_key']['value'];
 
 		// create URL to request.
 		$youtube_channel_search_url = $this->get_api_url() . $channel_id . '&maxResults=100&key=' . $api_key;
@@ -831,4 +962,208 @@ class Youtube extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the prepared values for the fields.
+			$values = $this->get_field_values();
+
+			// set the fields.
+			$this->fields = array(
+				'channel_id' => array(
+					'name'        => 'channel_id',
+					'type'        => 'text',
+					'label'       => __( 'Channel ID', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your channel ID', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['channel_id'],
+					'readonly'    => ! empty( $values['channel_id'] ),
+				),
+				'api_key'    => array(
+					'name'        => 'api_key',
+					'type'        => 'password',
+					'label'       => __( 'API Key', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your API Key', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['api_key'],
+					'readonly'    => ! empty( $values['api_key'] ),
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// bail if credentials are set.
+		if ( $this->has_credentials_set() ) {
+			return __( 'Connect to your YouTube Channel', 'external-files-in-media-library' );
+		}
+
+		// return the default title.
+		return __( 'Enter your credentials', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the fields.
+		$has_credentials_set = $this->has_credentials_set();
+
+		// if access token is set in plugin settings.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'The credentials has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'The credentials must be set by an administrator in the plugin settings.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your credentials <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your credentials are already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		// if authentication JSON is set per user.
+		if ( $this->is_mode( 'user' ) ) {
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your credentials <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your credentials are already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		return __( 'Enter your WebDAV credentials in this form.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the values depending on actual mode.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_field_values(): array {
+		// prepare the return array.
+		$values = array(
+			'channel_id' => '',
+			'api_key'    => '',
+		);
+
+		// get it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			$values['channel_id'] = get_option( 'eml_youtube_channel_id', '' );
+			$values['api_key']    = Crypt::get_instance()->decrypt( get_option( 'eml_youtube_api_key', '' ) );
+		}
+
+		// save it user-specific, if this is enabled.
+		if ( $this->is_mode( 'user' ) ) {
+			// get the user set on object.
+			$user = $this->get_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) {
+				return array();
+			}
+
+			// get the values.
+			$values['channel_id'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_channel_id', true ) );
+			$values['api_key']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_api_key', true ) );
+		}
+
+		// return the resulting list of values.
+		return $values;
+	}
+
+	/**
+	 * Return whether credentials are set in the fields.
+	 *
+	 * @return bool
+	 */
+	private function has_credentials_set(): bool {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return whether both credentials are set.
+		return ! empty( $fields['channel_id'] ) && ! empty( $fields['api_key'] );
+	}
+
+	/**
+	 * Show option to connect to WebDav on the user profile.
+	 *
+	 * @param WP_User $user The WP_User object for the actual user.
+	 *
+	 * @return void
+	 */
+	public function add_user_settings( WP_User $user ): void {
+		// bail if settings are not user-specific.
+		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			return;
+		}
+
+		// bail if customization for this user is not allowed.
+		if ( ! ImportDialog::get_instance()->is_customization_allowed() ) {
+			return;
+		}
+
+		?>
+		<h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'YouTube', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
+			<?php
+
+			// show settings table.
+			$this->get_user_settings_table( absint( $user->ID ) );
+
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_user_settings(): array {
+		$list = array(
+			'youtube_channel_id' => array(
+				'label'       => __( 'Channel ID', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'Your Channel ID', 'external-files-in-media-library' ),
+			),
+			'youtube_api_key'    => array(
+				'label'       => __( 'API Key', 'external-files-in-media-library' ),
+				'field'       => 'password',
+				'placeholder' => __( 'Your API Key', 'external-files-in-media-library' ),
+			),
+		);
+
+		/**
+		 * Filter the list of possible user settings for YouTube.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<string,mixed> $list The list of settings.
+		 */
+		return apply_filters( 'eml_service_youtube_user_settings', $list );
+	}
 }

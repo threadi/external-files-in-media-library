@@ -170,9 +170,8 @@ class Protocols {
 				continue;
 			}
 
-			// configure its credentials, even it nothing are set.
-			$obj->set_login( $external_file->get_login() );
-			$obj->set_password( $external_file->get_password() );
+			// configure its fields, even it nothing are set.
+			$obj->set_fields( $external_file->get_fields() );
 
 			// return resulting object.
 			return $obj;

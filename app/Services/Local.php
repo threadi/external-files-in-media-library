@@ -141,6 +141,7 @@ class Local implements Service {
 		// add section for file statistics.
 		$section = $tab->add_section( 'section_local_main', 10 );
 		$section->set_title( __( 'Settings for access to local hosting', 'external-files-in-media-library' ) );
+		$section->set_callback( array( $this, 'show_hint_for_permissions' ) );
 
 		// add setting to enable the uploads-loading.
 		$setting = $settings_obj->add_setting( 'eml_local_load_upload_dir' );
@@ -195,7 +196,7 @@ class Local implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "local", "urls": file.file, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "local", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -338,4 +339,14 @@ class Local implements Service {
 	 * @return void
 	 */
 	public function uninstall(): void {}
+
+	/**
+	 * Show hint where to edit permissions to use this service.
+	 *
+	 * @return void
+	 */
+	public function show_hint_for_permissions(): void {
+		/* translators: %1$s will be replaced by a URL. */
+		echo wp_kses_post( sprintf( __( 'Set permission who could use this service <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) );
+	}
 }

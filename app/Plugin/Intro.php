@@ -64,12 +64,12 @@ class Intro {
 	 */
 	public function init(): void {
 		// add admin-actions.
-		add_action( 'admin_action_efml_intro_reset', array( $this, 'reset_intro' ) );
+		add_action( 'admin_action_efml_intro_reset', array( $this, 'reset_intro_by_request' ) );
 
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
-		$false = absint( get_option( 'efml_intro' ) ) > 0;
+		$false = $this->is_closed();
 		/**
 		 * Hide intro via hook.
 		 *
@@ -254,12 +254,12 @@ class Intro {
 	 * @return void
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
-	public function reset_intro(): void {
+	public function reset_intro_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'efml-intro-reset', 'nonce' );
 
 		// delete the actual setting.
-		delete_option( 'efml_intro' );
+		$this->reset_intro();
 
 		// redirect user to intro-start.
 		wp_safe_redirect( (string) wp_get_referer() );
@@ -386,5 +386,14 @@ class Intro {
 
 		// return the resulting list.
 		return $files;
+	}
+
+	/**
+	 * Reset the intro.
+	 *
+	 * @return void
+	 */
+	public function reset_intro(): void {
+		delete_option( 'efml_intro' );
 	}
 }

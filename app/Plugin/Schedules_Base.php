@@ -86,7 +86,7 @@ class Schedules_Base {
 	/**
 	 * Set the interval for this schedule.
 	 *
-	 * @param string $interval The interval to set (e.g. "daily").
+	 * @param string $interval The interval to set (e.g. "efml_24hourly").
 	 *
 	 * @return void
 	 */

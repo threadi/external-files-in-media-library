@@ -172,7 +172,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// add invisible setting for access token global.
-		$setting = $settings_obj->add_setting( 'eml_dropbox_access_tokens' );
+		$setting = $settings_obj->add_setting( 'efml_dropbox_access_tokens' );
 		$setting->set_section( $section );
 		$setting->set_type( 'string' );
 		$setting->set_default( '' );
@@ -180,7 +180,7 @@ class DropBox extends Service_Base implements Service {
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
 		// add setting for button to connect.
-		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_dropbox_connector' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -212,7 +212,7 @@ class DropBox extends Service_Base implements Service {
 			$setting->set_field( $field );
 		}
 
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_dropbox_credential_location_hint' );
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
@@ -240,6 +240,12 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function is_disabled(): bool {
+		// not disabled if mode is set to manually.
+		if ( $this->is_mode( 'manually' ) ) {
+			return false;
+		}
+
+		// otherwise check the access token.
 		return empty( $this->get_access_token() );
 	}
 
@@ -249,9 +255,14 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
+		// show no description on manual connection mode.
+		if ( $this->is_mode( 'manually' ) ) {
+			return '';
+		}
+
 		// get the URL where the setting can be found.
 		$url = get_admin_url() . 'profile.php#efml-' . $this->get_name();
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			// bail if user has no capability to load the global settings.
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return '';
@@ -373,12 +384,12 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function get_access_token(): string {
 		// get it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			return (string) get_option( 'eml_dropbox_access_tokens', '' );
+		if ( $this->is_mode( 'global' ) ) {
+			return (string) get_option( 'efml_dropbox_access_tokens', '' );
 		}
 
 		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get current user.
 			$user = $this->get_user();
 
@@ -389,6 +400,10 @@ class DropBox extends Service_Base implements Service {
 
 			// get and return the value.
 			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
+		}
+
+		if ( ! empty( $this->fields['access_token']['value'] ) ) {
+			return $this->fields['access_token']['value'];
 		}
 
 		// return nothing.
@@ -405,16 +420,16 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function set_access_token( string $access_token, int $user_id = 0 ): void {
 		// save it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			// log event.
 			Log::get_instance()->create( __( 'New DropBox access token saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			// save the updated token.
-			update_option( 'eml_dropbox_access_tokens', $access_token );
+			update_option( 'efml_dropbox_access_tokens', $access_token );
 		}
 
 		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get the user_id from session if it is not set.
 			if ( 0 === $user_id ) {
 				// get the user.
@@ -446,14 +461,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function delete_access_token(): bool {
-		// save it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// clear the global list.
-			update_option( 'eml_dropbox_access_tokens', '' );
-		}
+		// delete it global.
+		update_option( 'efml_dropbox_access_tokens', '' );
 
 		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get the user.
 			$user = $this->get_user();
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -721,7 +733,7 @@ class DropBox extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -745,6 +757,10 @@ class DropBox extends Service_Base implements Service {
 				array(
 					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
+				),
+				array(
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
+					'label'  => __( 'Save this DropBox as your external source', 'external-files-in-media-library' ),
 				),
 			)
 		);
@@ -806,11 +822,6 @@ class DropBox extends Service_Base implements Service {
 	 * @return array<string>
 	 */
 	public function add_protocol( array $protocols ): array {
-		// only add the protocol if access_token for actual user is set.
-		if ( empty( $this->get_access_token() ) ) {
-			return $protocols;
-		}
-
 		// add the DropBox protocol before the HTTPS-protocol and return resulting list of protocols.
 		array_unshift( $protocols, 'ExternalFilesInMediaLibrary\Services\DropBox\Protocol' );
 
@@ -826,8 +837,18 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
-		// bail if access token is empty.
-		if ( empty( $this->get_access_token() ) ) {
+		// check if all fields are set.
+		$counter = 0;
+		$fields  = 0;
+		foreach ( $this->fields as $field ) {
+			++$fields;
+			if ( ! empty( $field['value'] ) ) {
+				++$counter;
+			}
+		}
+
+		// bail if credentials are missing.
+		if ( $fields !== $counter ) {
 			// log this event.
 			Log::get_instance()->create( __( 'No access token for DropBox given!', 'external-files-in-media-library' ), '', 'error', 1 );
 
@@ -882,7 +903,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function add_user_settings(): void {
 		// bail if settings are not user-specific.
-		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( ! $this->is_mode( 'user' ) ) {
 			return;
 		}
 
@@ -976,6 +997,122 @@ class DropBox extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function uninstall(): void {
+		// TODO bei allen Nutzern löschen.
 		$this->delete_access_token();
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the fields.
+			$fields = $this->get_field_values();
+
+			// set the fields.
+			$this->fields = array(
+				'access_token' => array(
+					'name'        => 'access_token',
+					'type'        => $this->is_mode( 'global' ) || $this->is_mode( 'user' ) ? 'password' : 'text',
+					'label'       => __( 'Access Token', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Enter your access token', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $fields['access_token'],
+					'readonly'    => ! empty( $fields['access_token'] ) || $this->is_mode( 'global' ) || $this->is_mode( 'user' ),
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		return __( 'Enter your DropBox access token', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the token.
+		$token = $this->get_access_token();
+
+		// if access token is set in plugin settings.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( ! empty( $token ) && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An access token has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+			}
+
+			if ( empty( $token ) && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An access token must be set by an administrator in the plugin settings.', 'external-files-in-media-library' );
+			}
+
+			if ( empty( $token ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your access token <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your access token is already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		// if access token is set per user.
+		if ( $this->is_mode( 'user' ) ) {
+			if ( empty( $token ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your access token <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your access token is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		/* translators: %1$s will be replaced by a URL. */
+		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/developers/apps' );
+	}
+
+	/**
+	 * Return the values depending on actual mode.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_field_values(): array {
+		// prepare the return array.
+		$values = array(
+			'access_token' => '',
+		);
+
+		// get it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			$values['access_token'] = get_option( 'efml_dropbox_access_tokens', '' );
+		}
+
+		// save it user-specific, if this is enabled.
+		if ( $this->is_mode( 'user' ) ) {
+			// get the user set on object.
+			$user = $this->get_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) {
+				return array();
+			}
+
+			// get the values.
+			$values['access_token'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
+		}
+
+		// return the resulting list of values.
+		return $values;
 	}
 }

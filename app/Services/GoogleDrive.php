@@ -20,6 +20,8 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -181,7 +183,7 @@ class GoogleDrive extends Service_Base implements Service {
 		}
 
 		// add setting for button to connect.
-		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_drive_connector' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -215,7 +217,8 @@ class GoogleDrive extends Service_Base implements Service {
 			$field->add_class( 'easy-dialog-for-wordpress' );
 			$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
 			$setting->set_field( $field );
-
+		}
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || in_array( $this->get_mode(), array( 'global', 'manually' ), true ) ) {
 			// add setting to show also shared files.
 			$setting = $settings_obj->add_setting( 'eml_google_drive_show_shared' );
 			$setting->set_section( $section );
@@ -239,7 +242,7 @@ class GoogleDrive extends Service_Base implements Service {
 			$setting->set_field( $field );
 		}
 
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_drive_credential_location_hint' );
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
@@ -260,10 +263,9 @@ class GoogleDrive extends Service_Base implements Service {
 		$field->set_title( __( 'Max. files to load per iteration', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
-		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
 
-		// add invisible setting for access token.
+		// add invisible setting for global access token.
 		$setting = $settings_obj->add_setting( 'eml_google_drive_access_tokens' );
 		$setting->set_section( $section );
 		$setting->set_type( 'array' );
@@ -302,18 +304,18 @@ class GoogleDrive extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return access token for actual WordPress user.
+	 * Return access token depending on actual mode.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public function get_access_token(): array {
 		// get it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			return get_option( 'eml_google_drive_access_tokens', array() );
 		}
 
 		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( in_array( $this->get_mode(), array( 'user', 'manually' ), true ) ) {
 			// get the user set on object.
 			$user = $this->get_user();
 
@@ -356,7 +358,7 @@ class GoogleDrive extends Service_Base implements Service {
 	 */
 	public function set_access_token( array $access_token, int $user_id = 0 ): void {
 		// save it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			// log event.
 			Log::get_instance()->create( __( 'New Google Drive access token saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
@@ -365,7 +367,7 @@ class GoogleDrive extends Service_Base implements Service {
 		}
 
 		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( in_array( $this->get_mode(), array( 'user', 'manually' ), true ) ) {
 			// get the user_id from session if it is not set.
 			if ( 0 === $user_id ) {
 				// get the user.
@@ -397,14 +399,14 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function delete_access_token(): bool {
-		// save it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		// delete it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
 			// clear the global list.
 			update_option( 'eml_google_drive_access_tokens', array() );
 		}
 
-		// save it user-specific, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		// delete it user-specific, if this or manually mode is enabled.
+		if ( in_array( $this->get_mode(), array( 'user', 'manually' ), true ) ) {
 			// get the user.
 			$user = $this->get_user();
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -672,7 +674,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// save the token.
 		$this->set_access_token( $access_token );
 
-		// forward user to settings page.
+		// forward user.
 		wp_safe_redirect( $this->get_config_url() );
 		exit;
 	}
@@ -711,7 +713,7 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// collect the request query.
 		$query = array(
-			'fields'   => 'files(fileExtension,iconLink,id,imageMediaMetadata(height,rotation,width,time),mimeType,createdTime,modifiedTime,name,parents,size,hasThumbnail,thumbnailLink),nextPageToken',
+			'fields'   => 'files(id,name,mimeType,parents,fileExtension,hasThumbnail,iconLink,thumbnailLink,createdTime,modifiedTime,imageMediaMetadata(height,width,rotation,time),size),nextPageToken',
 			'pageSize' => 1000,
 			'orderBy'  => 'name_natural',
 		);
@@ -732,14 +734,24 @@ class GoogleDrive extends Service_Base implements Service {
 			// log event.
 			Log::get_instance()->create( __( 'List of files could not be loaded from Google Drive. Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', '', 'error' );
 
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'List of files could not be loaded from Google Drive. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url() ) );
+			$error_obj->set_url( $directory );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
 			// return an empty list as we could not analyse the file.
 			return array();
 		}
 
 		/**
-		 * Get list of files.
+		 * Get the list of files from Google Drive.
 		 *
-		 * This will be all files in the complete requested directory incl. subdirectories.
+		 * This will be all files depending on the query.
 		 */
 		$files = $results->getFiles();
 
@@ -865,7 +877,7 @@ class GoogleDrive extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -893,11 +905,11 @@ class GoogleDrive extends Service_Base implements Service {
 				'label'  => __( 'Settings', 'external-files-in-media-library' ),
 			),
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + actualDirectoryPath, "fields": config.fields, "term": config.term } );',
 				'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 			),
 			array(
-				'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, "", "", "" );',
+				'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 				'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 			),
 		);
@@ -929,6 +941,12 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function is_disabled(): bool {
+		// not disabled if mode is set 'manually'.
+		if ( $this->is_mode( 'manually' ) ) {
+			return false;
+		}
+
+		// otherwise check the access token.
 		return empty( $this->get_access_token() );
 	}
 
@@ -938,6 +956,11 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
+		// show no description on manual connection mode.
+		if ( $this->is_mode( 'manually' ) ) {
+			return '';
+		}
+
 		// get the config URL.
 		$config_url = $this->get_config_url();
 
@@ -958,11 +981,28 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return array<string,mixed>
 	 */
 	public function set_query_params( array $query ): array {
+		// get the fields.
+		$fields = $this->get_fields();
+
 		// collect settings for q.
 		$q = array();
 
+		// if directory on fields is set, use it.
+		if ( ! empty( $fields['folder_id']['value'] ) ) {
+			$q[]                                = "'" . $fields['folder_id']['value'] . "' in parents";
+			$query['includeItemsFromAllDrives'] = true;
+			$query['supportsAllDrives']         = true;
+		}
+
+		// if directory is set, use it.
+		if ( ! empty( $this->directory ) ) {
+			$q[]                                = "'" . str_replace( '/', '', $this->directory ) . "' in parents";
+			$query['includeItemsFromAllDrives'] = true;
+			$query['supportsAllDrives']         = true;
+		}
+
 		// get it global, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( in_array( $this->get_mode(), array( 'global', 'manually' ), true ) ) {
 			// do not query for trashed files.
 			if ( 1 !== absint( get_option( 'eml_google_drive_show_trashed' ) ) ) {
 				$q[] = 'trashed = false';
@@ -975,7 +1015,7 @@ class GoogleDrive extends Service_Base implements Service {
 		}
 
 		// get the user settings, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get current user.
 			$user = $this->get_user();
 
@@ -1250,7 +1290,7 @@ class GoogleDrive extends Service_Base implements Service {
 	}
 
 	/**
-	 * Show option to connect to DropBox on user profile.
+	 * Show option to connect to Google Drive on the user profile.
 	 *
 	 * @param WP_User $user The WP_User object for the actual user.
 	 *
@@ -1258,7 +1298,7 @@ class GoogleDrive extends Service_Base implements Service {
 	 */
 	public function add_user_settings( WP_User $user ): void {
 		// bail if settings are not user-specific.
-		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( ! $this->is_mode( 'user' ) ) {
 			return;
 		}
 
@@ -1442,5 +1482,110 @@ class GoogleDrive extends Service_Base implements Service {
 		 * @param string $file_id The file ID.
 		 */
 		return apply_filters( 'eml_service_google_drive_public_url', $url, $file_id );
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the token.
+			$token = $this->get_access_token();
+
+			// set the fields.
+			$this->fields = array(
+				'access_token' => array(
+					'name'        => 'access_token',
+					'type'        => ! empty( $token ) && ! $this->is_mode( 'manually' ) ? 'hidden' : 'textarea',
+					'label'       => __( 'Access Token', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Enter your access token', 'external-files-in-media-library' ),
+					'value'       => empty( $token ) ? '' : Helper::get_json( $token ),
+					'credential'  => true,
+				),
+				'folder_id'    => array(
+					'name'         => 'folder_id',
+					'type'         => 'text',
+					'label'        => __( 'Folder Id', 'external-files-in-media-library' ),
+					'description'  => __( 'You can find the folder Id in the URL when you show it in your browser.', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Enter a folder Id', 'external-files-in-media-library' ),
+					'not_required' => true,
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Run during uninstallation of the plugin.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		// TODO bei allen Nutzern löschen.
+		$this->delete_access_token();
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// get the token.
+		$token = $this->get_access_token();
+
+		// show other title if access token is set.
+		if ( ! empty( $token ) && ! $this->is_mode( 'manually' ) ) {
+			return __( 'Connect to your Google Drive', 'external-files-in-media-library' );
+		}
+
+		// return default hint.
+		return __( 'Enter your access token', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the token.
+		$token = $this->get_access_token();
+
+		// bail if token is set.
+		if ( ! empty( $token ) && ! $this->is_mode( 'manually' ) ) {
+			// if access token is set in plugin settings.
+			if ( $this->is_mode( 'global' ) ) {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return __( 'An access token has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+				}
+
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Your access token is already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			// if access token is set per user.
+			if ( $this->is_mode( 'user' ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Your access token is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+		}
+
+		// get URL to initiate the connection.
+		$url = add_query_arg(
+			array(
+				'action' => 'eml_google_drive_init',
+				'nonce'  => wp_create_nonce( 'eml-google-drive-initiate' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		/* translators: %1$s will be replaced by a URL. */
+		return sprintf( __( 'Get your access token <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url );
 	}
 }

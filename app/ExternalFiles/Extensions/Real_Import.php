@@ -129,7 +129,7 @@ class Real_Import extends Extension_Base {
 			array(
 				'type'        => 'Checkbox',
 				'title'       => $this->get_title(),
-				'description' => __( 'If this option is enabled each external URL will be imported as real file in your media library. They will not be "external files" in your media library.', 'external-files-in-media-library' ),
+				'description' => __( 'When this option is enabled, each external URL is imported as a real file into your media library. They are then no longer “external files” in your media library. If “User-specific settings” is enabled, this setting can be overridden by each user.', 'external-files-in-media-library' ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -409,8 +409,7 @@ class Real_Import extends Extension_Base {
 		$external_file_obj->remove_local_saved();
 
 		// remove the credentials.
-		$external_file_obj->remove_login();
-		$external_file_obj->remove_password();
+		$external_file_obj->remove_fields();
 
 		// clear the cache.
 		$external_file_obj->delete_cache();

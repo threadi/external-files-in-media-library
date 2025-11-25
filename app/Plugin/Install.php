@@ -139,7 +139,7 @@ class Install {
 			$transients_obj = Transients::get_instance();
 			$transient_obj  = $transients_obj->add();
 			$transient_obj->set_dismissible_days( 2 );
-			$transient_obj->set_name( 'eml_welcome' );
+			$transient_obj->set_name( 'eml_logging_hint' );
 			/* translators: %1$s will be replaced by a URL. */
 			$transient_obj->set_message( sprintf( __( 'Logging of events is set to "all" as this project is running in development mode. You can change this setting <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_advanced' ) ) );
 			$transient_obj->set_type( 'success' );

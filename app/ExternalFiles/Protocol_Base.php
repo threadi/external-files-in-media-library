@@ -41,25 +41,11 @@ class Protocol_Base {
 	protected array $tcp_protocols = array();
 
 	/**
-	 * The login.
+	 * The fields.
 	 *
-	 * @var string
+	 * @var array<string,array<string,mixed>>
 	 */
-	private string $login = '';
-
-	/**
-	 * The password.
-	 *
-	 * @var string
-	 */
-	private string $password = '';
-
-	/**
-	 * The API Key.
-	 *
-	 * @var string
-	 */
-	private string $api_key = '';
+	private array $fields = array();
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -206,63 +192,45 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Return the login.
+	 * Return the fields.
 	 *
-	 * @return string
+	 * @return array<string,array<string,mixed>>
 	 */
-	public function get_login(): string {
-		return $this->login;
+	public function get_fields(): array {
+		return $this->fields;
 	}
 
 	/**
-	 * Set the login.
+	 * Set the fields.
 	 *
-	 * @param string $login The login.
+	 * @param array<string,array<string,mixed>> $fields The fields.
 	 *
 	 * @return void
 	 */
-	public function set_login( string $login ): void {
-		$this->login = $login;
+	public function set_fields( array $fields ): void {
+		$this->fields = $fields;
 	}
 
 	/**
-	 * Return the password.
+	 * Return whether this object has credentials set on its fields.
 	 *
-	 * @return string
+	 * @return bool
 	 */
-	public function get_password(): string {
-		return $this->password;
-	}
+	protected function has_fields_with_credentials(): bool {
+		// count the fields and the fields with credentials.
+		$fields             = 0;
+		$credentials_fields = 0;
 
-	/**
-	 * Set the password.
-	 *
-	 * @param string $password The password.
-	 *
-	 * @return void
-	 */
-	public function set_password( string $password ): void {
-		$this->password = $password;
-	}
+		// loop through the fields.
+		foreach ( $this->get_fields() as $settings ) {
+			++$fields;
+			if ( ! empty( $settings['value'] ) ) {
+				++$credentials_fields;
+			}
+		}
 
-	/**
-	 * Return the API Key.
-	 *
-	 * @return string
-	 */
-	public function get_api_key(): string {
-		return $this->api_key;
-	}
-
-	/**
-	 * Set the API key.
-	 *
-	 * @param string $api_key The API key.
-	 *
-	 * @return void
-	 */
-	public function set_api_key( string $api_key ): void {
-		$this->api_key = $api_key;
+		// return true if all credentials fields have values set.
+		return $fields === $credentials_fields;
 	}
 
 	/**
@@ -324,7 +292,7 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	public function can_change_hosting(): bool {
-		return empty( $this->get_login() ) && empty( $this->get_password() );
+		return $this->has_fields_with_credentials();
 	}
 
 	/**

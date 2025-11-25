@@ -70,17 +70,12 @@ class Protocol extends Protocol_Base {
 	 * @return array<int|string,array<string,mixed>> List of files with its infos.
 	 */
 	public function get_url_infos(): array {
+		// get the fields.
+		$fields = $this->get_fields();
+
 		// get main object.
 		$google_cloud_storage_obj = GoogleCloudStorage::get_instance();
-
-		// bail if disabled.
-		if ( $google_cloud_storage_obj->is_disabled() ) {
-			// log event.
-			Log::get_instance()->create( __( 'Authorization JSON and/or bucket missing to connect to Google Cloud Storage!', 'external-files-in-media-library' ), esc_html( $this->get_url() ), 'error' );
-
-			// return an empty list as we could not analyse the file.
-			return array();
-		}
+		$google_cloud_storage_obj->set_fields( $fields );
 
 		// get the name from the URL.
 		$file_name = str_replace(
@@ -114,7 +109,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// get our bucket as object.
-		$bucket = $storage->bucket( $google_cloud_storage_obj->get_bucket_name() );
+		$bucket = $storage->bucket( $fields['bucket']['value'] );
 
 		// bail if bucket does not exist.
 		if ( ! $bucket->exists() ) {
@@ -300,6 +295,7 @@ class Protocol extends Protocol_Base {
 	private function get_list_of_files( GoogleCloudStorage $google_cloud_storage_obj ): array {
 		// get storage object.
 		$storage = $google_cloud_storage_obj->get_storage_object();
+		$google_cloud_storage_obj->set_fields( $this->get_fields() );
 
 		// bail if storage could not be loaded.
 		if ( ! $storage instanceof StorageClient ) {
