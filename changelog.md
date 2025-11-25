@@ -29,6 +29,7 @@
 - Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
+- Added check for compatibility with WordPress Plugin Checker on every release
 - Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
 - Added support for plugin "Folders" to import external files in its folders incl. sync of them
 - Added support for plugin "Media Library Organizer" to import external files in its categories incl. sync of them

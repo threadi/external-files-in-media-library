@@ -70,7 +70,9 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           exclude-directories:
-            app/Dependencies/
+            app/Dependencies/easyTransientsForWordPress/
+          ignore-codes:
+            WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
           include-experimental: false
           error-severity: 7
           warning-severity: 6
