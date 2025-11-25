@@ -448,7 +448,7 @@ class Forms {
 		$import_obj = Import::get_instance();
 
 		// add the fields.
-		$import_obj->set_fields( $fields );
+		$import_obj->set_fields( is_array( $fields ) ? $fields : array() );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {

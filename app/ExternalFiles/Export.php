@@ -577,7 +577,7 @@ class Export {
 			$fields = array();
 			if ( ! empty( $credentials['fields'] ) ) {
 				$fields = $credentials['fields'];
-				if ( ! is_array( $fields ) ) {
+				if ( ! is_array( $fields ) ) { // @phpstan-ignore function.impossibleType
 					$fields = array();
 				}
 			}
