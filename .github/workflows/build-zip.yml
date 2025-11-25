@@ -39,7 +39,6 @@ jobs:
           rm .editorconfig
           rm changelog.md
           rm readme.md
-          rm ruleset.xml
 
       - name: Generate autoloader
         run: composer dump-autoload -oa --no-dev
@@ -80,6 +79,7 @@ jobs:
 
       - name: Create ZIP release
         run: |
+          rm ruleset.xml
           cd ..
           zip -rq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/ruleset.xml" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig" "*/assets/*" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*"
           zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
