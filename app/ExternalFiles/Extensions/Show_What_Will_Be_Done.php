@@ -104,6 +104,12 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			return $dialog;
 		}
 
+		// get the fields.
+		$fields = array();
+		if( is_array( $settings['fields'] ) ) {
+			$fields = $settings['fields'];
+		}
+
 		// add filter to prevent the import.
 		add_filter( 'eml_prevent_file_import', '__return_true' );
 		add_filter( 'eml_save_temp_file', '__return_false', PHP_INT_MAX );
@@ -112,7 +118,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		$import_obj = Import::get_instance();
 
 		// add the credentials.
-		$import_obj->set_fields( $settings['fields'] );
+		$import_obj->set_fields( $fields );
 
 		// simulate an import.
 		$test_import_result = $import_obj->add_url( $settings['urls'] );
