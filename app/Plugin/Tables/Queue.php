@@ -287,13 +287,16 @@ class Queue extends WP_List_Table {
 		$url            = add_query_arg( array( 'errors' => 1 ) );
 		$list['errors'] = '<a href="' . esc_url( $url ) . '"' . ( 1 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'Errors', 'external-files-in-media-library' ) . '</a>';
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_queue_table_filter', array( $list ), '5.0.0', 'efml_queue_table_filter' );
+
 		/**
 		 * Filter the list before output.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string,string> $list List of filter.
 		 */
-		return apply_filters( 'eml_queue_table_filter', $list );
+		return apply_filters( 'efml_queue_table_filter', $list );
 	}
 
 	/**

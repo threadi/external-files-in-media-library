@@ -80,10 +80,10 @@ class Synchronization {
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_columns' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_synchronization' ), 10, 3 );
-		add_action( 'eml_show_file_info', array( $this, 'show_sync_info' ) );
-		add_action( 'eml_table_column_source', array( $this, 'show_sync_info_in_table' ) );
+		add_action( 'efml_show_file_info', array( $this, 'show_sync_info' ) );
+		add_action( 'efml_table_column_source', array( $this, 'show_sync_info_in_table' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'added_new_directory' ) );
-		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_sync_info_in_dialog' ), 10, 2 );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_sync_info_in_dialog' ), 10, 2 );
 
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
@@ -102,7 +102,7 @@ class Synchronization {
 		add_action( 'pre_delete_term', array( $this, 'delete_synced_files' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'delete_schedule' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'add_style' ) );
-		add_filter( 'eml_schedules', array( $this, 'add_schedule_obj' ) );
+		add_filter( 'efml_schedules', array( $this, 'add_schedule_obj' ) );
 	}
 
 	/**
@@ -223,14 +223,16 @@ class Synchronization {
 			true
 		);
 
-		$info_timeout = 200;
+		// show deprecated hint for old hook.
+		$info_timeout = apply_filters_deprecated( 'eml_import_info_timeout', array( 200 ), '5.0.0', 'efml_import_info_timeout' );
+
 		/**
 		 * Filter the timeout for the AJAX-info-request.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param int $info_timeout The timeout in ms (default 200ms).
 		 */
-		$info_timeout = apply_filters( 'eml_import_info_timeout', $info_timeout );
+		$info_timeout = apply_filters( 'efml_import_info_timeout', $info_timeout );
 
 		// add php-vars to our js-script.
 		wp_localize_script(
@@ -517,31 +519,31 @@ class Synchronization {
 		}
 
 		// disable duplicate check during synchronisation.
-		add_filter( 'eml_duplicate_check', array( $this, 'disable_duplicate_check' ) );
+		add_filter( 'efml_duplicate_check', array( $this, 'disable_duplicate_check' ) );
 
 		// and get the post_id of the existing file to update it.
-		add_filter( 'eml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
+		add_filter( 'efml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
 
 		// and mark each file as updated.
-		add_action( 'eml_after_file_save', array( $this, 'mark_as_synced' ) );
+		add_action( 'efml_after_file_save', array( $this, 'mark_as_synced' ) );
 
 		// add counter handling.
-		add_action( 'eml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_file_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'eml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_s3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_s3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'eml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'eml_webdav_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'eml_before_file_list', array( $this, 'change_process_title' ) );
+		add_action( 'efml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_file_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_ftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_s3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_s3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_webdav_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_before_file_list', array( $this, 'change_process_title' ) );
 
 		// update the sync title on each file.
-		add_action( 'eml_file_import_before_save', array( $this, 'update_sync_title' ) );
+		add_action( 'efml_file_import_before_save', array( $this, 'update_sync_title' ) );
 
 		/**
 		 * Allow to add additional tasks before sync is running.

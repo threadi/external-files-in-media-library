@@ -146,12 +146,15 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Yoast',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_third_party_support', array( $list ), '5.0.0', 'efml_third_party_support' );
+
 		/**
 		 * Filter the list of third party support.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string> $list List of third party support.
 		 */
-		return apply_filters( 'eml_third_party_support', $list );
+		return apply_filters( 'efml_third_party_support', $list );
 	}
 }

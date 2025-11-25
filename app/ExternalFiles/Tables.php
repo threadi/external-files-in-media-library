@@ -267,10 +267,16 @@ class Tables {
 				echo '<span class="dashicons dashicons-yes"></span>';
 			}
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0', 'efml_table_column_content' );
+
 			/**
 			 * Run additional tasks for show more infos here.
+			 *
+			 * @since 1.0.0 Available since 1.0.0.
+			 * @param int $attachment_id The ID of the attachment.
 			 */
-			do_action( 'eml_table_column_content', $attachment_id );
+			do_action( 'efml_table_column_content', $attachment_id );
 		}
 
 		// show additional infos about external files.
@@ -323,6 +329,9 @@ class Tables {
 				),
 			);
 
+			// show deprecated hint for old hook.
+			$dialog = apply_filters_deprecated( 'eml_table_column_file_source_dialog', array( $dialog, $external_file ), '5.0.0', 'efml_table_column_file_source_dialog' );
+
 			/**
 			 * Filter the dialog for this file info.
 			 *
@@ -330,10 +339,13 @@ class Tables {
 			 * @param array<string,mixed> $dialog The dialog.
 			 * @param File $external_file The external file object.
 			 */
-			$dialog = apply_filters( 'eml_table_column_file_source_dialog', $dialog, $external_file );
+			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file );
 
 			// get the title.
 			$title = $protocol_handler->get_title();
+
+			// show deprecated hint for old hook.
+			$title = apply_filters_deprecated( 'eml_table_column_source_title', array( $title, $attachment_id ), '5.0.0', 'efml_table_column_source_title' );
 
 			/**
 			 * Filter the title for show in source column in media table for external files.
@@ -342,15 +354,21 @@ class Tables {
 			 * @param string $title The title to use.
 			 * @param int $attachment_id The post ID of the attachment.
 			 */
-			$title = apply_filters( 'eml_table_column_source_title', $title, $attachment_id );
+			$title = apply_filters( 'efml_table_column_source_title', $title, $attachment_id );
 
 			// output.
 			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_table_column_source', array( $attachment_id ), '5.0.0', 'efml_table_column_source' );
+
 			/**
 			 * Run additional tasks for show more infos here.
+			 *
+			 * @since 1.0.0 Available since 1.0.0.
+			 * @param int $attachment_id The ID of the attachment.
 			 */
-			do_action( 'eml_table_column_source', $attachment_id );
+			do_action( 'efml_table_column_source', $attachment_id );
 		}
 	}
 

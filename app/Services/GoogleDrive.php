@@ -126,10 +126,10 @@ class GoogleDrive extends Service_Base implements Service {
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
 
 		// use our own hooks.
-		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
-		add_filter( 'eml_prevent_import', array( $this, 'check_url' ), 10, 2 );
-		add_filter( 'eml_google_drive_query_params', array( $this, 'set_query_params' ) );
-		add_filter( 'efml_service_googledrive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_prevent_import', array( $this, 'check_url' ), 10, 2 );
+		add_filter( 'efml_google_drive_query_params', array( $this, 'set_query_params' ) );
+		add_filter( 'efml_google_drive_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing_before_tree_building', array( $this, 'filter_on_directory_request' ), 10, 3 );
 	}
 
@@ -482,13 +482,16 @@ class GoogleDrive extends Service_Base implements Service {
 		// set our client ID.
 		$client_id = EFML_GOOGLE_OAUTH_CLIENT_ID;
 
+		// show deprecated warning for old hook name.
+		$client_id = apply_filters_deprecated( 'eml_google_drive_client_id', array( $client_id ), '5.0.0', 'efml_google_drive_client_id' );
+
 		/**
 		 * Filter the Google OAuth Client ID for the app used to connect Google Drive.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $client_id The client ID.
 		 */
-		return apply_filters( 'eml_google_drive_client_id', $client_id );
+		return apply_filters( 'efml_google_drive_client_id', $client_id );
 	}
 
 	/**
@@ -500,13 +503,16 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the token.
 		$real_redirect_uri = get_option( 'siteurl' ) . '/' . $this->get_oauth_slug() . '/';
 
+		// show deprecated warning for old hook name.
+		$real_redirect_uri = apply_filters_deprecated( 'eml_google_drive_real_redirect_uri', array( $real_redirect_uri ), '5.0.0', 'efml_google_drive_real_redirect_uri' );
+
 		/**
 		 * Filter the real redirect URI to connect the Google OAuth Client.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $real_redirect_uri The real redirect URI.
 		 */
-		return apply_filters( 'eml_google_drive_real_redirect_uri', $real_redirect_uri );
+		return apply_filters( 'efml_google_drive_real_redirect_uri', $real_redirect_uri );
 	}
 
 	/**
@@ -531,13 +537,16 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the state.
 		$state = Helper::get_plugin_slug() . ':' . base64_encode( $crypt_method->get_hash() ) . ':' . base64_encode( $this->get_real_redirect_uri() );
 
+		// show deprecated warning for old hook name.
+		$state = apply_filters_deprecated( 'eml_google_drive_state', array( $state ), '5.0.0', 'efml_google_drive_state' );
+
 		/**
 		 * Filter the token to connect the Google OAuth Client.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $state The token.
 		 */
-		return apply_filters( 'eml_google_drive_state', $state );
+		return apply_filters( 'efml_google_drive_state', $state );
 	}
 
 	/**
@@ -551,13 +560,16 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the redirect URI.
 		$redirect_uri = EFML_GOOGLE_OAUTH_SERVICE_URL;
 
+		// show deprecated warning for old hook name.
+		$redirect_uri = apply_filters_deprecated( 'eml_google_drive_redirect_uri', array( $redirect_uri ), '5.0.0', 'efml_google_drive_redirect_uri' );
+
 		/**
 		 * Filter the redirect URI to connect the Google OAuth Client.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $redirect_uri The redirect URI.
 		 */
-		return apply_filters( 'eml_google_drive_redirect_uri', $redirect_uri );
+		return apply_filters( 'efml_google_drive_redirect_uri', $redirect_uri );
 	}
 
 	/**
@@ -582,13 +594,16 @@ class GoogleDrive extends Service_Base implements Service {
 			'prompt'                  => 'select_account consent', // forces consent dialog for each user.
 		);
 
+		// show deprecated warning for old hook name.
+		$params = apply_filters_deprecated( 'eml_google_drive_connector_params', array( $params ), '5.0.0', 'efml_google_drive_connector_params' );
+
 		/**
 		 * Filter the params for Google OAuth request.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param array $params The list of params.
 		 */
-		$params = apply_filters( 'eml_google_drive_connector_params', $params );
+		$params = apply_filters( 'efml_google_drive_connector_params', $params );
 
 		// bail if params are empty.
 		if ( empty( $params ) ) {
@@ -718,6 +733,9 @@ class GoogleDrive extends Service_Base implements Service {
 			'orderBy'  => 'name_natural',
 		);
 
+		// show deprecated warning for old hook name.
+		$query = apply_filters_deprecated( 'eml_google_drive_query_params', array( $query, $directory ), '5.0.0', 'efml_google_drive_query_params' );
+
 		/**
 		 * Filter the query to get files from Google Drive.
 		 *
@@ -725,7 +743,7 @@ class GoogleDrive extends Service_Base implements Service {
 		 * @param array $query The list of params.
 		 * @param string $directory The requested directory.
 		 */
-		$query = apply_filters( 'eml_google_drive_query_params', $query, $directory );
+		$query = apply_filters( 'efml_google_drive_query_params', $query, $directory );
 
 		// get the files.
 		try {
@@ -767,13 +785,16 @@ class GoogleDrive extends Service_Base implements Service {
 			'dirs'  => array(),
 		);
 
+		// show deprecated warning for old hook name.
+		$files = apply_filters_deprecated( 'eml_google_drive_files', array( $files ), '5.0.0', 'efml_google_drive_files' );
+
 		/**
 		 * Filter the list of files we got from Google Drive.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param array<DriveFile> $files List of files.
 		 */
-		$files = apply_filters( 'eml_google_drive_files', $files );
+		$files = apply_filters( 'efml_google_drive_files', $files );
 
 		// collect list of folders.
 		$folders = array();
@@ -781,6 +802,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// loop through the files and add them to the list.
 		foreach ( $files as $file_obj ) {
 			$false = false;
+
 			/**
 			 * Filter whether given GoogleDrive file should be hidden.
 			 *
@@ -792,7 +814,7 @@ class GoogleDrive extends Service_Base implements Service {
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
-			if ( apply_filters( 'efml_service_googledrive_hide_file', $false, $file_obj, $directory ) ) {
+			if ( apply_filters( 'efml_google_drive_hide_file', $false, $file_obj, $directory ) ) {
 				continue;
 			}
 
@@ -1069,13 +1091,16 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the refresh URI.
 		$refresh_uri = EFML_GOOGLE_OAUTH_REFRESH_URL;
 
+		// show deprecated warning for old hook name.
+		$refresh_uri = apply_filters_deprecated( 'eml_google_drive_refresh_uri', array( $refresh_uri ), '5.0.0', 'efml_google_drive_refresh_uri' );
+
 		/**
 		 * Filter the redirect URI to connect the Google OAuth Client.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $refresh_uri The redirect URI.
 		 */
-		return apply_filters( 'eml_google_drive_refresh_uri', $refresh_uri );
+		return apply_filters( 'efml_google_drive_refresh_uri', $refresh_uri );
 	}
 
 	/**
@@ -1434,7 +1459,7 @@ class GoogleDrive extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_google_drive_user_settings', $list );
+		return apply_filters( 'efml_service_google_drive_user_settings', $list );
 	}
 
 	/**
@@ -1481,7 +1506,7 @@ class GoogleDrive extends Service_Base implements Service {
 		 * @param string $url The URL.
 		 * @param string $file_id The file ID.
 		 */
-		return apply_filters( 'eml_service_google_drive_public_url', $url, $file_id );
+		return apply_filters( 'efml_service_google_drive_public_url', $url, $file_id );
 	}
 
 	/**

@@ -73,8 +73,8 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_folder_selection' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_for_folder_import' ) );
-		add_action( 'eml_after_file_save', array( $this, 'save_url_in_folder' ) );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_for_folder_import' ) );
+		add_action( 'efml_after_file_save', array( $this, 'save_url_in_folder' ) );
 	}
 
 	/**
@@ -187,7 +187,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		$this->term_id = $term_id;
 
 		// add hooks.
-		add_action( 'eml_after_file_save', array( $this, 'move_file_to_folder' ) );
+		add_action( 'efml_after_file_save', array( $this, 'move_file_to_folder' ) );
 	}
 
 	/**

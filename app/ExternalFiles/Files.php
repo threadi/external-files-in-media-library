@@ -106,14 +106,14 @@ class Files {
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
 
 		// use our own hooks.
-		add_filter( 'eml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
-		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
-		add_filter( 'eml_external_file_infos', array( $this, 'prevent_not_allowed_mime_type' ), 10, 2 );
+		add_filter( 'efml_http_directory_regex', array( $this, 'use_link_regex' ), 10, 2 );
+		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 20 );
+		add_filter( 'efml_external_file_infos', array( $this, 'prevent_not_allowed_mime_type' ), 10, 2 );
 		add_filter( 'efml_filter_options', array( $this, 'add_filter_options' ) );
 		add_action( 'efml_filter_query', array( $this, 'use_filter_options' ) );
-		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_external_source' ), 10, 2 );
-		add_filter( 'eml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
-		add_action( 'eml_show_file_info', array( $this, 'show_external_source_info' ) );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_external_source' ), 10, 2 );
+		add_filter( 'efml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
+		add_action( 'efml_show_file_info', array( $this, 'show_external_source_info' ) );
 		add_filter( 'efml_add_url', array( $this, 'add_urls_by_hook' ), 10, 3 );
 
 		// add admin actions.
@@ -167,7 +167,9 @@ class Files {
 	 * @return string
 	 */
 	public function get_attachment_link( string $url, ?int $attachment_id ): string {
-		$false = false;
+		// show deprecated warning for old hook name.
+		$false = apply_filters_deprecated( 'eml_attachment_link', array( false, $url, $attachment_id ), '5.0.0', 'efml_attachment_link' );
+
 		/**
 		 * Filter if attachment link should not be changed.
 		 *
@@ -179,7 +181,7 @@ class Files {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( false !== apply_filters( 'eml_attachment_link', $false, $url, $attachment_id ) ) {
+		if ( false !== apply_filters( 'efml_attachment_link', $false, $url, $attachment_id ) ) {
 			return $url;
 		}
 
@@ -219,13 +221,16 @@ class Files {
 			'fields'         => 'ids',
 		);
 
+		// show deprecated warning for old hook name.
+		$query = apply_filters_deprecated( 'eml_files_query', array( $query ), '5.0.0', 'efml_files_query' );
+
 		/**
 		 * Filter the query to load all external files.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $query The query.
 		 */
-		$query = apply_filters( 'eml_files_query', $query );
+		$query = apply_filters( 'efml_files_query', $query );
 
 		// run the query.
 		$result = new WP_Query( $query );
@@ -282,13 +287,16 @@ class Files {
 			return;
 		}
 
+		// show deprecated warning for old hook name.
+		do_action_deprecated( 'eml_file_delete', array( $external_file_obj ), '5.0.0', 'efml_file_delete' );
+
 		/**
 		 * Run additional tasks for URL deletion.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param File $external_file_obj The object which has been deleted.
 		 */
-		do_action( 'eml_file_delete', $external_file_obj );
+		do_action( 'efml_file_delete', $external_file_obj );
 
 		// log deletion.
 		Log::get_instance()->create( __( 'URL has been deleted from media library.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'success', 1 );
@@ -558,13 +566,17 @@ class Files {
 		?>
 			<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Mime type:', 'external-files-in-media-library' ); ?><br><code><?php echo esc_html( $external_file_obj->get_mime_type() ); ?></code></li>
 			<?php
+
+			// show deprecated warning for old hook name.
+			do_action_deprecated( 'eml_show_file_info', array( $external_file_obj ), '5.0.0', 'efml_show_file_info' );
+
 			/**
 			 * Add additional infos about this file.
 			 *
 			 * @since 4.0.0 Available since 4.0.0.
 			 * @param File $external_file_obj The external file object.
 			 */
-			do_action( 'eml_show_file_info', $external_file_obj );
+			do_action( 'efml_show_file_info', $external_file_obj );
 			?>
 		</ul>
 		<?php
@@ -893,7 +905,7 @@ class Files {
 	 */
 	public function import_end(): void {
 		add_filter(
-			'eml_files_query',
+			'efml_files_query',
 			function ( array $query ) {
 				// extend the query to only get files we imported.
 				$query['meta_query'][] = array(
@@ -1187,17 +1199,17 @@ class Files {
 			return array();
 		}
 
-		$true = true;
+		// show deprecated warning for old hook name.
+		$true = apply_filters_deprecated( 'eml_files_check_content_type', array( true, $url ), '5.0.0', 'efml_files_check_content_type' );
+
 		/**
 		 * Filter whether we check the given mime type.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param bool $true The return value.
 		 * @param string $url The URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_files_check_content_type', $true, $url ) && ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
+		if ( apply_filters( 'efml_files_check_content_type', $true, $url ) && ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 

@@ -59,19 +59,19 @@ class ImportDialog {
 		add_action( 'wp_ajax_efml_get_import_dialog', array( $this, 'get_import_dialog' ) );
 
 		// use our own hooks to extend or change the dialog.
-		add_filter( 'eml_add_dialog', array( $this, 'add_textarea' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_urls' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_credential_fields' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_settings_link' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'prevent_dialog_usage' ), PHP_INT_MAX, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_term' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_fields' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_privacy_hint' ), 200, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
-		add_action( 'eml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
+		add_filter( 'efml_add_dialog', array( $this, 'add_textarea' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_urls' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_credential_fields' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_settings_link' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'prevent_dialog_usage' ), PHP_INT_MAX, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_term' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_fields' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_privacy_hint' ), 200, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
+		add_action( 'efml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ), 100 );
-		add_filter( 'eml_dialog_after_adding', array( $this, 'add_log_button' ) );
-		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings' ) );
+		add_filter( 'efml_dialog_after_adding', array( $this, 'add_log_button' ) );
+		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings' ) );
 
 		// add user-specific configuration.
 		add_action( 'edit_user_profile', array( $this, 'add_user_settings' ) );
@@ -95,6 +95,9 @@ class ImportDialog {
 			$settings = map_deep( wp_unslash( $_POST['settings'] ), 'wp_kses_post' );
 		}
 
+		// show deprecated warning for old hook name.
+		$settings = apply_filters_deprecated( 'eml_dialog_settings', array( $settings ), '5.0.0', 'efml_dialog_settings' );
+
 		/**
 		 * Filter the given settings for the import dialog.
 		 *
@@ -102,7 +105,7 @@ class ImportDialog {
 		 *
 		 * @param array<string,mixed> $settings The requested settings.
 		 */
-		$settings = apply_filters( 'eml_dialog_settings', $settings );
+		$settings = apply_filters( 'efml_dialog_settings', $settings );
 
 		// check number of files.
 		$url_count = 1;
@@ -139,6 +142,9 @@ class ImportDialog {
 			),
 		);
 
+		// show deprecated warning for old hook name.
+		$dialog = apply_filters_deprecated( 'eml_add_dialog', array( $dialog, $settings ), '5.0.0', 'efml_add_dialog' );
+
 		/**
 		 * Filter the dialog. This is the main handling to extend the import dialog.
 		 *
@@ -146,7 +152,7 @@ class ImportDialog {
 		 * @param array<string,mixed> $dialog The dialog configuration.
 		 * @param array<string,mixed> $settings The requested settings.
 		 */
-		$dialog = apply_filters( 'eml_add_dialog', $dialog, $settings );
+		$dialog = apply_filters( 'efml_add_dialog', $dialog, $settings );
 
 		// return the dialog.
 		wp_send_json( array( 'detail' => $dialog ) );
@@ -658,6 +664,10 @@ class ImportDialog {
 			'texts' => array(),
 		);
 		$settings = array();
+
+		// show deprecated warning for old hook name.
+		$settings = apply_filters_deprecated( 'eml_dialog_settings', array( $settings ), '5.0.0', 'efml_dialog_settings' );
+
 		/**
 		 * Filter the given settings for the import dialog.
 		 *
@@ -665,7 +675,10 @@ class ImportDialog {
 		 *
 		 * @param array<string,mixed> $settings The requested settings.
 		 */
-		$settings = apply_filters( 'eml_dialog_settings', $settings );
+		$settings = apply_filters( 'efml_dialog_settings', $settings );
+
+		// show deprecated warning for old hook name.
+		$dialog = apply_filters_deprecated( 'eml_add_dialog', array( $dialog, $settings ), '5.0.0', 'efml_add_dialog' );
 
 		/**
 		 * Filter the dialog. This is the main handling to extend the import dialog.
@@ -674,7 +687,7 @@ class ImportDialog {
 		 * @param array<string,mixed> $dialog The dialog configuration.
 		 * @param array<string,mixed> $settings The requested settings.
 		 */
-		$dialog = apply_filters( 'eml_add_dialog', $dialog, $settings );
+		$dialog = apply_filters( 'efml_add_dialog', $dialog, $settings );
 
 		// allow necessary fields in kses.
 		$allowed_html = array(

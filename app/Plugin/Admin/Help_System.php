@@ -110,12 +110,15 @@ class Help_System {
 	private function get_help_tabs(): array {
 		$list = array();
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_help_tabs', array( $list ), '5.0.0', 'efml_help_tabs' );
+
 		/**
 		 * Filter the list of help tabs with its contents.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string,mixed> $list List of help tabs.
 		 */
-		return apply_filters( 'eml_help_tabs', $list );
+		return apply_filters( 'efml_help_tabs', $list );
 	}
 }

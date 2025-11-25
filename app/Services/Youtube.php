@@ -129,14 +129,14 @@ class Youtube extends Service_Base implements Service {
 		$this->title = __( 'Choose video(s) from a Youtube channel', 'external-files-in-media-library' );
 
 		// use our own hooks to allow import of YouTube videos and channels.
-		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
-		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
-		add_filter( 'eml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
+		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'efml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
 		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
-		add_filter( 'eml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
-		add_filter( 'eml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
-		add_filter( 'eml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
-		add_filter( 'eml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
+		add_filter( 'efml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
+		add_filter( 'efml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
+		add_filter( 'efml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
+		add_filter( 'efml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
 
 		// change handling of media files.
 		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
@@ -843,13 +843,16 @@ class Youtube extends Service_Base implements Service {
 	private function get_api_url(): string {
 		$api_url = $this->api_url;
 
+		// show deprecated warning for old hook name.
+		$api_url = apply_filters_deprecated( 'eml_youtube_api_url', array( $api_url ), '5.0.0', 'efml_youtube_api_url' );
+
 		/**
 		 * Filter the YouTube API URL to use.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param string $api_url The API URL.
 		 */
-		return apply_filters( 'eml_youtube_api_url', $api_url );
+		return apply_filters( 'efml_youtube_api_url', $api_url );
 	}
 
 	/**
@@ -860,13 +863,16 @@ class Youtube extends Service_Base implements Service {
 	private function get_channel_url(): string {
 		$channel_url = $this->channel_url;
 
+		// show deprecated warning for old hook name.
+		$channel_url = apply_filters_deprecated( 'eml_youtube_channel_url', array( $channel_url ), '5.0.0', 'efml_youtube_channel_url' );
+
 		/**
 		 * Filter the YouTube channel URL to use.
 		 *
 		 * @since 4.0.0 Available since 4.0.0.
 		 * @param string $channel_url The API URL.
 		 */
-		return apply_filters( 'eml_youtube_channel_url', $channel_url );
+		return apply_filters( 'efml_youtube_channel_url', $channel_url );
 	}
 
 	/**
@@ -1164,6 +1170,6 @@ class Youtube extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_youtube_user_settings', $list );
+		return apply_filters( 'efml_service_youtube_user_settings', $list );
 	}
 }

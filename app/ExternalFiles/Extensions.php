@@ -132,13 +132,16 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_extensions', array( $list ), '5.0.0', 'efml_extensions' );
+
 		/**
 		 * Filter the list of available file handling extensions.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<int,string> $list List of extensions.
 		 */
-		return apply_filters( 'eml_extensions', $list );
+		return apply_filters( 'efml_extensions', $list );
 	}
 
 	/**
@@ -154,12 +157,15 @@ class Extensions {
 			'real_import',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_extensions_default', array( $list ), '5.0.0', 'efml_extensions_default' );
+
 		/**
 		 * Filter the list of default extensions.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<int,string> $list List of names of the default extensions.
 		 */
-		return apply_filters( 'eml_extensions_default', $list );
+		return apply_filters( 'efml_extensions_default', $list );
 	}
 }

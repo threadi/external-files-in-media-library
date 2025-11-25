@@ -121,13 +121,13 @@ class Zip extends Service_Base implements Service {
 		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
 
 		// use our own hooks.
-		add_filter( 'eml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
-		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
-		add_filter( 'eml_filter_url_response', array( $this, 'get_files_from_zip' ), 10, 2 );
-		add_filter( 'eml_filter_file_response', array( $this, 'get_files_from_zip' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
-		add_filter( 'eml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
-		add_filter( 'eml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
+		add_filter( 'efml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
+		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_files_from_zip' ), 10, 2 );
+		add_filter( 'efml_filter_file_response', array( $this, 'get_files_from_zip' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
+		add_filter( 'efml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
+		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );

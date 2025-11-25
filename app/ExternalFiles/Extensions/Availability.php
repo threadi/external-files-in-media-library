@@ -74,7 +74,7 @@ class Availability extends Extension_Base {
 		add_action( 'wp_ajax_eml_check_availability', array( $this, 'check_file_availability_via_ajax' ), 10, 0 );
 
 		// use our own hooks.
-		add_action( 'eml_show_file_info', array( $this, 'show_availability' ) );
+		add_action( 'efml_show_file_info', array( $this, 'show_availability' ) );
 	}
 
 	/**

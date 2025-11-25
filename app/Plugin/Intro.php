@@ -90,8 +90,8 @@ class Intro {
 
 		// use our own hooks.
 		add_filter( 'eml_http_check_content_type', array( $this, 'allow_intro_pdf' ), 10, 2 );
-		add_filter( 'eml_files_check_content_type', array( $this, 'allow_intro_pdf' ), 10, 2 );
-		add_filter( 'eml_external_files_infos', array( $this, 'change_file_infos_for_intro_pdf' ) );
+		add_filter( 'efml_files_check_content_type', array( $this, 'allow_intro_pdf' ), 10, 2 );
+		add_filter( 'efml_external_files_infos', array( $this, 'change_file_infos_for_intro_pdf' ) );
 	}
 
 	/**

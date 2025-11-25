@@ -86,6 +86,9 @@ class File_Types_Base {
 		// check the mime types.
 		$result = in_array( $mime_type, $this->get_mime_types(), true );
 
+		// show deprecated warning for old hook name.
+		$result = apply_filters_deprecated( 'eml_file_type_compatibility_result', array( $result, $external_file_obj, $mime_type ), '5.0.0', 'efml_file_type_compatibility_result' );
+
 		/**
 		 * Filter the result of file type compatibility check.
 		 *
@@ -95,7 +98,7 @@ class File_Types_Base {
 		 * @param File|false $external_file_obj The external file object.
 		 * @param string $mime_type The used mime type (added in 3.0.0).
 		 */
-		return apply_filters( 'eml_file_type_compatibility_result', $result, $external_file_obj, $mime_type );
+		return apply_filters( 'efml_file_type_compatibility_result', $result, $external_file_obj, $mime_type );
 	}
 
 	/**
@@ -123,6 +126,9 @@ class File_Types_Base {
 		$mime_type         = $this->mime_types;
 		$external_file_obj = $this->get_file();
 
+		// show deprecated warning for old hook name.
+		$mime_type = apply_filters_deprecated( 'eml_file_type_supported_mime_types', array( $mime_type, $external_file_obj ), '5.0.0', 'efml_file_type_supported_mime_types' );
+
 		/**
 		 * Filter the supported mime types of single file type.
 		 *
@@ -130,7 +136,7 @@ class File_Types_Base {
 		 * @param array $mime_type List of mime types.
 		 * @param File|false $external_file_obj The file object.
 		 */
-		return apply_filters( 'eml_file_type_supported_mime_types', $mime_type, $external_file_obj );
+		return apply_filters( 'efml_file_type_supported_mime_types', $mime_type, $external_file_obj );
 	}
 
 	/**

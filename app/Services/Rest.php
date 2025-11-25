@@ -119,9 +119,9 @@ class Rest extends Service_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
-		add_filter( 'eml_filter_url_response', array( $this, 'get_rest_api_files' ), 10, 3 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_rest_api_files' ), 10, 3 );
 		add_filter( 'efml_service_rest_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
-		add_filter( 'eml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
+		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 		add_filter( 'efml_directory_listing_before_tree_building', array( $this, 'prepare_tree_building' ), 10, 3 );
 	}
 
@@ -276,7 +276,7 @@ class Rest extends Service_Base implements Service {
 		}
 
 		// disable the check for unsafe URLs.
-		add_filter( 'eml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 		add_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
 
 		// get upload directory.
@@ -873,6 +873,10 @@ class Rest extends Service_Base implements Service {
 					);
 
 					$response_headers = array();
+
+					// show deprecated hint for old hook.
+					$entry = apply_filters_deprecated( 'eml_external_file_infos', array( $entry, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
+
 					/**
 					 * Filter the data of a single file during import.
 					 *
@@ -882,7 +886,7 @@ class Rest extends Service_Base implements Service {
 					 * @param string $url     The requested external URL.
 					 * @param array<string,mixed> $response_headers The response header.
 					 */
-					$entry = apply_filters( 'eml_external_file_infos', $entry, $url, $response_headers );
+					$entry = apply_filters( 'efml_external_file_infos', $entry, $url, $response_headers );
 
 					// bail if entry is empty.
 					if ( empty( $entry ) ) {

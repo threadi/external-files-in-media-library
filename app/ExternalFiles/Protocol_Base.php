@@ -92,6 +92,10 @@ class Protocol_Base {
 		$tcp_protocols = $this->tcp_protocols;
 
 		$instance = $this;
+
+		// show deprecated hint for old hook.
+		$tcp_protocols = apply_filters_deprecated( 'eml_tcp_protocols', array( $tcp_protocols, $instance ), '5.0.0', 'efml_tcp_protocols' );
+
 		/**
 		 * Filter the protocols.
 		 *
@@ -99,7 +103,7 @@ class Protocol_Base {
 		 * @param array<string,int> $tcp_protocols List of protocols of this object (e.g. 'http' or 'ftp').
 		 * @param Protocol_Base $instance The actual object.
 		 */
-		return apply_filters( 'eml_tcp_protocols', $tcp_protocols, $instance );
+		return apply_filters( 'efml_tcp_protocols', $tcp_protocols, $instance );
 	}
 
 	/**
@@ -241,17 +245,17 @@ class Protocol_Base {
 	 * @return bool True if duplicate has been found.
 	 */
 	public function check_for_duplicate( string $url ): bool {
-		$false = false;
+		// show deprecated hint for old hook.
+		$false = apply_filters_deprecated( 'eml_duplicate_check', array( false, $url ), '5.0.0', 'efml_duplicate_check' );
+
 		/**
 		 * Filter to prevent duplicate check.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_duplicate_check', $false, $url ) ) {
+		if ( apply_filters( 'efml_duplicate_check', $false, $url ) ) {
 			return false;
 		}
 
@@ -409,6 +413,10 @@ class Protocol_Base {
 	 */
 	protected function is_content_type_for_multiple_files( string $mime_type, string $url ): bool {
 		$false = 'text/html' === $mime_type;
+
+		// show deprecated hint for old hook.
+		$false = apply_filters_deprecated( 'eml_mime_type_for_multiple_files', array( $false, $mime_type, $url ), '5.0.0', 'efml_mime_type_for_multiple_files' );
+
 		/**
 		 * Filter whether the given mime type could provide multiple files.
 		 *
@@ -418,7 +426,7 @@ class Protocol_Base {
 		 * @param string $mime_type The given mime type.
 		 * @param string $url       The used URL.
 		 */
-		return apply_filters( 'eml_mime_type_for_multiple_files', $false, $mime_type, $url );
+		return apply_filters( 'efml_mime_type_for_multiple_files', $false, $mime_type, $url );
 	}
 
 	/**

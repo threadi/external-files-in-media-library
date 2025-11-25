@@ -112,18 +112,19 @@ class File {
 			return $this->url;
 		}
 
-		$true     = true;
 		$instance = $this;
+
+		// show deprecated warning for old hook name.
+		$true = apply_filters_deprecated( 'eml_file_prevent_proxied_url', array( true, $instance ), '5.0.0', 'efml_file_prevent_proxied_url' );
+
 		/**
 		 * Filter whether file should be proxied.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $true False to disable proxy-URL.
 		 * @param File $instance The external file object.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( ! apply_filters( 'eml_file_prevent_proxied_url', $true, $instance ) ) {
+		if ( ! apply_filters( 'efml_file_prevent_proxied_url', $true, $instance ) ) {
 			return $this->url;
 		}
 
@@ -246,6 +247,10 @@ class File {
 		}
 
 		$instance = $this;
+
+		// show deprecated warning for old hook name.
+		$this->availability = apply_filters_deprecated( 'eml_file_availability', array( $this->availability, $instance ), '5.0.0', 'efml_file_availability' );
+
 		/**
 		 * Filter and return the availability of an external file.
 		 *
@@ -254,7 +259,7 @@ class File {
 		 * @param bool $availability The given availability.
 		 * @param File $instance The file object.
 		 */
-		return apply_filters( 'eml_file_availability', $this->availability, $instance );
+		return apply_filters( 'efml_file_availability', $this->availability, $instance );
 	}
 
 	/**
@@ -671,15 +676,17 @@ class File {
 		}
 
 		// prevent duplicate check for this file.
-		add_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
-		add_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ), 10, 2 );
+		add_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
+		add_filter( 'efml_locale_file_check', array( $this, 'prevent_checks' ), 10, 2 );
 
 		// get external file infos.
 		$file_data = $protocol_handler_obj->get_url_infos();
 
 		// remove prevent duplicate check for this file.
 		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ) );
+		remove_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ) );
 		remove_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ) );
+		remove_filter( 'efml_locale_file_check', array( $this, 'prevent_checks' ) );
 
 		// bail if no file data could be loaded.
 		if ( empty( $file_data ) ) {

@@ -72,13 +72,16 @@ class Cli {
 		// set the fields.
 		$import->set_fields( $fields );
 
+		// show deprecated warning for old hook name.
+		do_action_deprecated( 'eml_cli_arguments', array( $arguments ), '5.0.0', 'efml_cli_arguments' );
+
 		/**
 		 * Run additional tasks from extensions.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array $arguments List of CLI arguments.
 		 */
-		do_action( 'eml_cli_arguments', $arguments );
+		do_action( 'efml_cli_arguments', $arguments );
 
 		// show progress.
 		$progress = \WP_CLI\Utils\make_progress_bar( _n( 'Import files from a specific URL', 'Import files from given URLs', count( $urls ), 'external-files-in-media-library' ), count( $urls ) );

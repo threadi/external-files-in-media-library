@@ -59,6 +59,7 @@
 
 ### Changed
 
+- Changed ALL hooks to prefix with 4 characters to match WordPress Coding Standards
 - Compatibility with WordPress 6.9
 - Renamed "Directory Archive" to "Your external sources"
 - Show processed file URLs during manual started synchronization

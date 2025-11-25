@@ -87,10 +87,10 @@ class Queue extends Extension_Base {
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
 
 		// use our own hooks.
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
-		add_filter( 'eml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
-		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 3 );
-		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
+		add_filter( 'efml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
+		add_filter( 'efml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 3 );
+		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
 
@@ -291,7 +291,9 @@ class Queue extends Extension_Base {
 			return true;
 		}
 
-		$options = array();
+		// show deprecated hint for old hook.
+		$options = apply_filters_deprecated( 'eml_import_options', array( array(), $url ), '5.0.0', 'efml_import_options' );
+
 		/**
 		 * Filter the options used for import of this URL via queue.
 		 *
@@ -299,7 +301,7 @@ class Queue extends Extension_Base {
 		 * @param array $options List of options.
 		 * @param string $url The used URL.
 		 */
-		$options = apply_filters( 'eml_import_options', $options, $url );
+		$options = apply_filters( 'efml_import_options', $options, $url );
 
 		// convert options to JSON.
 		$options_json = wp_json_encode( $options );
@@ -345,13 +347,19 @@ class Queue extends Extension_Base {
 		/* translators: %1$d will be replaced by a number. */
 		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
 
+		// show deprecated hint for old hook.
+		$urls_to_import = apply_filters_deprecated( 'eml_queue_urls', array( $urls_to_import ), '5.0.0', 'efml_queue_urls' );
+
 		/**
 		 * Filter the list of URLs from queue before they are processed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $urls_to_import List of URLs to import from queue.
 		 */
-		$urls_to_import = apply_filters( 'eml_queue_urls', $urls_to_import );
+		$urls_to_import = apply_filters( 'efml_queue_urls', $urls_to_import );
+
+		// show deprecated hint for old hook.
+		do_action_deprecated( 'eml_queue_before_process', array( $urls_to_import ), '5.0.0', 'efml_queue_before_process' );
 
 		/**
 		 * Run action before queue is processed.
@@ -359,7 +367,7 @@ class Queue extends Extension_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $urls_to_import List of URLs to import from queue which will be processed.
 		 */
-		do_action( 'eml_queue_before_process', $urls_to_import );
+		do_action( 'efml_queue_before_process', $urls_to_import );
 
 		// loop through the queue.
 		foreach ( $urls_to_import as $url_data ) {
@@ -377,13 +385,16 @@ class Queue extends Extension_Base {
 		// show end of process.
 		$progress ? $progress->finish() : '';
 
+		// show deprecated hint for old hook.
+		do_action_deprecated( 'eml_queue_after_process', array( $urls_to_import ), '5.0.0', 'efml_queue_after_process' );
+
 		/**
 		 * Run action after queue is processed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $urls_to_import List of URLs to import from queue which has been processed.
 		 */
-		do_action( 'eml_queue_after_process', $urls_to_import );
+		do_action( 'efml_queue_after_process', $urls_to_import );
 
 		// log event.
 		/* translators: %1$d will be replaced by a number. */

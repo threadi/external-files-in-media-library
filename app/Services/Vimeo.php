@@ -65,8 +65,8 @@ class Vimeo implements Service {
 	 */
 	public function init(): void {
 		add_shortcode( 'eml_vimeo', array( $this, 'render_video_shortcode' ) );
-		add_filter( 'eml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
-		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
+		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
 	}

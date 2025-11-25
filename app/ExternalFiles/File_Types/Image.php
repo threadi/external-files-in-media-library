@@ -146,6 +146,9 @@ class Image extends File_Types_Base {
 			wp_update_post( $query );
 		}
 
+		// show deprecated hint for old hook.
+		do_action_deprecated( 'eml_image_meta_data', array( $external_file_obj, $image_meta ), '5.0.0', 'efml_image_meta_data' );
+
 		/**
 		 * Run additional tasks to add custom meta data on external hostet files.
 		 *
@@ -153,7 +156,7 @@ class Image extends File_Types_Base {
 		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 * @param array $image_meta The image meta data.
 		 */
-		do_action( 'eml_image_meta_data', $external_file_obj, $image_meta );
+		do_action( 'efml_image_meta_data', $external_file_obj, $image_meta );
 	}
 
 	/**

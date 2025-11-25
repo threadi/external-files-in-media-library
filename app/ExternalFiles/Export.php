@@ -709,7 +709,7 @@ class Export {
 		$this->sync_running = true;
 
 		// use hooks.
-		add_filter( 'eml_external_file_infos', array( $this, 'prevent_sync_of_exported_file' ), 20, 2 );
+		add_filter( 'efml_external_file_infos', array( $this, 'prevent_sync_of_exported_file' ), 20, 2 );
 	}
 
 	/**

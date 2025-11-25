@@ -221,13 +221,16 @@ class Logs extends WP_List_Table {
 			$list['url'] = '<span class="current">' . esc_html( Helper::shorten_url( $requested_url ) ) . '</span>';
 		}
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_log_table_filter', array( $list ), '5.0.0', 'efml_log_table_filter' );
+
 		/**
 		 * Filter the list before output.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $list List of filter.
 		 */
-		return apply_filters( 'eml_log_table_filter', $list );
+		return apply_filters( 'efml_log_table_filter', $list );
 	}
 
 	/**

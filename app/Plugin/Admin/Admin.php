@@ -240,13 +240,16 @@ class Admin {
 			'review'  => '<a href="' . esc_url( Helper::get_plugin_review_url() ) . '" target="_blank" title="' . esc_attr__( 'Add your review', 'external-files-in-media-library' ) . '" class="efml-review"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></a>',
 		);
 
+		// show deprecated warning for old hook name.
+		$row_meta = apply_filters_deprecated( 'eml_plugin_row_meta', array( $row_meta ), '5.0.0', 'efml_plugin_row_meta' );
+
 		/**
 		 * Filter the links in row meta of our plugin in plugin list.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
 		 * @param array $row_meta List of links.
 		 */
-		$row_meta = apply_filters( 'eml_plugin_row_meta', $row_meta );
+		$row_meta = apply_filters( 'efml_plugin_row_meta', $row_meta );
 
 		// return the resulting list of links.
 		return array_merge( $links, $row_meta );

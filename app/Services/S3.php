@@ -117,10 +117,10 @@ class S3 extends Service_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_s3_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
-		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
-		add_filter( 'eml_http_header_args', array( $this, 'remove_authorization_header' ), 10, 2 );
-		add_filter( 'eml_aws_s3_query_params', array( $this, 'change_file_query' ) );
+		add_filter( 'efml_http_header_args', array( $this, 'remove_authorization_header' ), 10, 2 );
+		add_filter( 'efml_aws_s3_query_params', array( $this, 'change_file_query' ) );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -151,7 +151,7 @@ class S3 extends Service_Base implements Service {
 			 * @param array $query The query.
 			 * @param string $directory The URL.
 			 */
-			$query = apply_filters( 'eml_aws_s3_query_params', $query, $directory );
+			$query = apply_filters( 'efml_aws_s3_query_params', $query, $directory );
 
 			// try to load the requested bucket.
 			$result = $s3->listObjectsV2( $query );
@@ -787,7 +787,7 @@ class S3 extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_s3_user_settings', $list );
+		return apply_filters( 'efml_service_s3_user_settings', $list );
 	}
 
 	/**

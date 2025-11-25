@@ -870,7 +870,7 @@ class Ftp extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_ftp_user_settings', $list );
+		return apply_filters( 'efml_service_ftp_user_settings', $list );
 	}
 
 	/**

@@ -62,13 +62,16 @@ class Protocols {
 			'ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Sftp',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_protocols', array( $list ), '5.0.0', 'efml_protocols' );
+
 		/**
 		 * Filter the list of available protocols.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array<string> $list List of protocol handler.
 		 */
-		return apply_filters( 'eml_protocols', $list );
+		return apply_filters( 'efml_protocols', $list );
 	}
 
 	/**

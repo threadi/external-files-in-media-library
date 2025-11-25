@@ -122,7 +122,7 @@ class DropBox extends Service_Base implements Service {
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ), 10, 0 );
 
 		// use our own hooks.
-		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 	}
 
 	/**

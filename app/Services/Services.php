@@ -74,10 +74,10 @@ class Services {
 	 */
 	public function init(): void {
 		// use our own hooks.
-		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 20 );
-		add_filter( 'eml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
-		add_filter( 'eml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
+		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 20 );
+		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
+		add_filter( 'efml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
 
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
@@ -149,13 +149,16 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Zip',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_services_support', array( $list ), '5.0.0', 'efml_services_support' );
+
 		/**
 		 * Filter the list of third party support.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param array<string> $list List of third party support.
 		 */
-		return apply_filters( 'eml_services_support', $list );
+		return apply_filters( 'efml_services_support', $list );
 	}
 
 	/**

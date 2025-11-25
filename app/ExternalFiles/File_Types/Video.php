@@ -150,12 +150,15 @@ class Video extends File_Types_Base {
 			return;
 		}
 
+		// show deprecated hint for old hook.
+		do_action_deprecated( 'eml_video_meta_data', array( $external_file_obj ), '5.0.0', 'efml_video_meta_data' );
+
 		/**
 		 * Run additional tasks to add custom meta data on external hostet files.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
 		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 */
-		do_action( 'eml_video_meta_data', $external_file_obj );
+		do_action( 'efml_video_meta_data', $external_file_obj );
 	}
 }
