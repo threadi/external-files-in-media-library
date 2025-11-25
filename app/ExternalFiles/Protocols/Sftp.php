@@ -124,6 +124,9 @@ class Sftp extends Protocol_Base {
 
 		// if SFTP-path is a directory, import all files from there.
 		if ( $ssh_connection->is_dir( $path ) ) {
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_sftp_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_sftp_directory_import_start' );
+
 			/**
 			 * Run action on beginning of presumed directory import.
 			 *
@@ -131,7 +134,7 @@ class Sftp extends Protocol_Base {
 			 *
 			 * @param string $url   The URL to import.
 			 */
-			do_action( 'eml_sftp_directory_import_start', $this->get_url() );
+			do_action( 'efml_sftp_directory_import_start', $this->get_url() );
 
 			// get the files from SFTP directory as list.
 			$file_list = $ssh_connection->dirlist( $path );
@@ -141,6 +144,9 @@ class Sftp extends Protocol_Base {
 				return array();
 			}
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_sftp_directory_import_files', array( $this->get_url(), $file_list ), '5.0.0', 'efml_sftp_directory_import_files' );
+
 			/**
 			 * Run action if we have files to check.
 			 *
@@ -149,7 +155,7 @@ class Sftp extends Protocol_Base {
 			 * @param string $url   The URL to import.
 			 * @param array $file_list List of files.
 			 */
-			do_action( 'eml_sftp_directory_import_files', $this->get_url(), $file_list );
+			do_action( 'efml_sftp_directory_import_files', $this->get_url(), $file_list );
 
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */
@@ -174,6 +180,9 @@ class Sftp extends Protocol_Base {
 					continue;
 				}
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_sftp_directory_import_file_check', array( $file_url ), '5.0.0', 'efml_sftp_directory_import_file_check' );
+
 				/**
 				 * Run action just before the file check via SFTP-protocol.
 				 *
@@ -181,7 +190,7 @@ class Sftp extends Protocol_Base {
 				 *
 				 * @param string $file_url   The URL to import.
 				 */
-				do_action( 'eml_sftp_directory_import_file_check', $file_url );
+				do_action( 'efml_sftp_directory_import_file_check', $file_url );
 
 				// get the file data.
 				$results = $this->get_url_info( $file_path );
@@ -197,6 +206,9 @@ class Sftp extends Protocol_Base {
 				// add the URL to the results.
 				$results['url'] = $file_url;
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_sftp_directory_import_file_before_to_list', array( $file_url, $file_list ), '5.0.0', 'efml_sftp_directory_import_file_before_to_list' );
+
 				/**
 				 * Run action just before the file is added to the list.
 				 *
@@ -205,7 +217,7 @@ class Sftp extends Protocol_Base {
 				 * @param string $file_url   The URL to import.
 				 * @param array $file_list List of files.
 				 */
-				do_action( 'eml_sftp_directory_import_file_before_to_list', $file_url, $file_list );
+				do_action( 'efml_sftp_directory_import_file_before_to_list', $file_url, $file_list );
 
 				// add file to the list.
 				$files[] = $results;
@@ -227,6 +239,10 @@ class Sftp extends Protocol_Base {
 		}
 
 		$instance = $this;
+
+		// show deprecated hint for old hook.
+		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
+
 		/**
 		 * Filter list of files during this import.
 		 *
@@ -234,7 +250,7 @@ class Sftp extends Protocol_Base {
 		 * @param array<int,array<string,mixed>> $files List of files.
 		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $instance );
+		return apply_filters( 'efml_external_files_infos', $files, $instance );
 	}
 
 	/**
@@ -327,6 +343,10 @@ class Sftp extends Protocol_Base {
 		}
 
 		$response_headers = array();
+
+		// show deprecated hint for old hook.
+		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
+
 		/**
 		 * Filter the data of a single file during import.
 		 *
@@ -336,7 +356,7 @@ class Sftp extends Protocol_Base {
 		 * @param string $url     The requested external URL.
 		 * @param array $response_headers The response header.
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $file_path, $response_headers );
+		return apply_filters( 'efml_external_file_infos', $results, $file_path, $response_headers );
 	}
 
 	/**

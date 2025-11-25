@@ -74,6 +74,9 @@ class Languages {
 	public function get_current_lang(): string {
 		$wp_language = substr( get_bloginfo( 'language' ), 0, 2 );
 
+		// show deprecated warning for old hook name.
+		$wp_language = apply_filters_deprecated( 'eml_current_language', array( $wp_language ), '5.0.0', 'efml_current_language' );
+
 		/**
 		 * Filter the resulting language.
 		 *
@@ -81,6 +84,6 @@ class Languages {
 		 *
 		 * @param string $wp_language The language-name (e.g. "en").
 		 */
-		return apply_filters( 'eml_current_language', $wp_language );
+		return apply_filters( 'efml_current_language', $wp_language );
 	}
 }

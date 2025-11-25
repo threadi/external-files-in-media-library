@@ -74,21 +74,21 @@ class Real_Import extends Extension_Base {
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
 		// use our own hooks.
-		add_filter( 'eml_http_save_local', array( $this, 'import_local_on_real_import' ) );
-		add_filter( 'eml_file_import_attachment', array( $this, 'add_title_on_real_import' ), 10, 3 );
-		add_filter( 'eml_import_no_external_file', array( $this, 'save_file_local' ), 10, 0 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
-		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
-		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_filter( 'efml_http_save_local', array( $this, 'import_local_on_real_import' ) );
+		add_filter( 'efml_file_import_attachment', array( $this, 'add_title_on_real_import' ), 10, 3 );
+		add_filter( 'efml_import_no_external_file', array( $this, 'save_file_local' ), 10, 0 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
+		add_filter( 'efml_import_options', array( $this, 'add_import_option_to_list' ) );
+		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
-		add_action( 'eml_show_file_info', array( $this, 'add_option_to_real_import_file' ) );
-		add_filter( 'eml_external_files_infos', array( $this, 'check_for_duplicate' ) );
+		add_action( 'efml_show_file_info', array( $this, 'add_option_to_real_import_file' ) );
+		add_filter( 'efml_external_files_infos', array( $this, 'check_for_duplicate' ) );
 
 		// sync tasks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
-		add_action( 'eml_after_file_save', array( $this, 'delete_mark_as_synced' ), 20 );
+		add_action( 'efml_after_file_save', array( $this, 'delete_mark_as_synced' ), 20 );
 
 		// misc.
 		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_action' ) );
@@ -574,7 +574,7 @@ class Real_Import extends Extension_Base {
 		$_POST['real_import'] = 1;
 
 		// add filter.
-		add_filter( 'eml_external_file_infos', array( $this, 'check_for_duplicate_during_sync' ) );
+		add_filter( 'efml_external_file_infos', array( $this, 'check_for_duplicate_during_sync' ) );
 	}
 
 	/**

@@ -92,7 +92,7 @@ class Directory_Listing {
 		add_action( 'efml_directory_listing_added', array( $this, 'add_date' ) );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
-		add_filter( 'eml_help_tabs', array( $this, 'add_help' ), 30 );
+		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 30 );
 
 		// use AJAX hooks.
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
@@ -439,13 +439,16 @@ class Directory_Listing {
 			$translations = $obj->get_translations( $translations );
 		}
 
+		// show deprecated warning for old hook name.
+		$translations = apply_filters_deprecated( 'eml_directory_translations', array( $translations ), '5.0.0', 'efml_directory_translations' );
+
 		/**
 		 * Filter the translations to use for directory listings.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $translations List of translations.
 		 */
-		return apply_filters( 'eml_directory_translations', $translations );
+		return apply_filters( 'efml_directory_translations', $translations );
 	}
 
 	/**

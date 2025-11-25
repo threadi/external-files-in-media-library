@@ -79,18 +79,18 @@ class Forms {
 		add_action( 'admin_action_eml_add_external_urls', array( $this, 'add_urls_by_request' ) );
 
 		// use our own actions.
-		add_action( 'eml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );
-		add_action( 'eml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
-		add_action( 'eml_http_directory_import_file_check', array( $this, 'set_import_file_check' ) );
-		add_action( 'eml_sftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
-		add_action( 'eml_s3_directory_import_file_check', array( $this, 'set_import_file_check' ) );
-		add_action( 'eml_file_import_before_save', array( $this, 'set_import_file_save' ) );
-		add_action( 'eml_ftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
-		add_action( 'eml_http_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
-		add_action( 'eml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
-		add_action( 'eml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
-		add_filter( 'eml_import_urls', array( $this, 'filter_urls' ) );
-		add_action( 'eml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
+		add_action( 'efml_http_directory_import_start', array( $this, 'set_http_import_title_start' ) );
+		add_action( 'efml_ftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'efml_http_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'efml_sftp_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'efml_s3_directory_import_file_check', array( $this, 'set_import_file_check' ) );
+		add_action( 'efml_file_import_before_save', array( $this, 'set_import_file_save' ) );
+		add_action( 'efml_ftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'efml_http_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'efml_sftp_directory_import_files', array( $this, 'set_import_max' ), 10, 2 );
+		add_action( 'efml_before_file_list', array( $this, 'set_import_max' ), 10, 2 );
+		add_filter( 'efml_import_urls', array( $this, 'filter_urls' ) );
+		add_action( 'efml_after_file_save', array( $this, 'add_imported_url_to_list' ), 10, 3 );
 
 		// misc.
 		add_filter( 'admin_body_class', array( $this, 'add_sound' ) );
@@ -150,14 +150,16 @@ class Forms {
 			(string) filemtime( Helper::get_plugin_dir() . '/admin/style.css' ),
 		);
 
-		$info_timeout = 200;
+		// show deprecated hint for old hook.
+		$info_timeout = apply_filters_deprecated( 'eml_import_info_timeout', array( 200 ), '5.0.0', 'efml_import_info_timeout' );
+
 		/**
 		 * Filter the timeout for the AJAX-info-request.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param int $info_timeout The timeout in ms (default 200ms).
 		 */
-		$info_timeout = apply_filters( 'eml_import_info_timeout', $info_timeout );
+		$info_timeout = apply_filters( 'efml_import_info_timeout', $info_timeout );
 
 		// add php-vars to our js-script.
 		wp_localize_script(
@@ -422,16 +424,22 @@ class Forms {
 		// collect errors.
 		$errors = array();
 
+		// show deprecated warning for old hook name.
+		do_action_deprecated( 'eml_import_ajax_start', array( $url_array ), '5.0.0', 'efml_import_ajax_start' );
+
 		/**
 		 * Run additional tasks just before AJAX-related import of URLs is starting.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array List of URLs to import.
 		 */
-		do_action( 'eml_import_ajax_start', $url_array );
+		do_action( 'efml_import_ajax_start', $url_array );
 
 		// log this event.
 		$log->create( __( 'URLs has been transferred via AJAX and will now be checked and imported.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+		// show deprecated warning for old hook name.
+		$url_array = apply_filters_deprecated( 'eml_import_urls', array( $url_array ), '5.0.0', 'efml_import_urls' );
 
 		/**
 		 * Filter the URLs for use for this import.
@@ -439,7 +447,7 @@ class Forms {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array The list of URLs to add.
 		 */
-		$url_array = apply_filters( 'eml_import_urls', $url_array );
+		$url_array = apply_filters( 'efml_import_urls', $url_array );
 
 		// save count of URLs.
 		update_option( 'eml_import_url_max_' . $user_id, count( $url_array ) );
@@ -467,13 +475,16 @@ class Forms {
 			/* translators: %1$s will be replaced by the URL which is imported. */
 			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Check URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
+			// show deprecated warning for old hook name.
+			$url = apply_filters_deprecated( 'eml_import_url', array( $url ), '5.0.0', 'efml_import_url' );
+
 			/**
 			 * Filter single URL before it will be added as external file.
 			 *
 			 * @since 3.0.0 Available since 3.0.0.
 			 * @param string $url The URL.
 			 */
-			$url = apply_filters( 'eml_import_url', $url );
+			$url = apply_filters( 'efml_import_url', $url );
 
 			// import the given URL in media library.
 			$url_added = $import_obj->add_url( $url );
@@ -492,13 +503,16 @@ class Forms {
 			wp_send_json( array( 'load_more' => 1 ) );
 		}
 
+		// show deprecated warning for old hook name.
+		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );
+
 		/**
 		 * Filter the errors during an AJAX-request to add URLs.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $errors List of errors.
 		 */
-		$errors = apply_filters( 'eml_import_urls_errors', $errors );
+		$errors = apply_filters( 'efml_import_urls_errors', $errors );
 
 		// loop through the errors and add them as URL_Error-objects to the list.
 		foreach ( $errors as $url ) {
@@ -523,13 +537,16 @@ class Forms {
 			}
 		}
 
+		// show deprecated warning for old hook name.
+		do_action_deprecated( 'eml_import_ajax_end', array( $url_array ), '5.0.0', 'efml_import_ajax_end' );
+
 		/**
 		 * Run additional tasks just before AJAX-related import of URLs is marked as completed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array List of URLs to import.
 		 */
-		do_action( 'eml_import_ajax_end', $url_array );
+		do_action( 'efml_import_ajax_end', $url_array );
 
 		// log this event.
 		$log->create( __( 'End of AJAX-request to import URLs.', 'external-files-in-media-library' ), '', 'info', 2 );
@@ -597,13 +614,16 @@ class Forms {
 				),
 			);
 
+			// show deprecated warning for old hook name.
+			$dialog = apply_filters_deprecated( 'eml_dialog_after_adding', array( $dialog ), '5.0.0', 'efml_dialog_after_adding' );
+
 			/**
 			 * Filter the dialog after adding files.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 * @param array<string,mixed> $dialog The dialog configuration.
 			 */
-			$dialog = apply_filters( 'eml_dialog_after_adding', $dialog );
+			$dialog = apply_filters( 'efml_dialog_after_adding', $dialog );
 		}
 
 		// return import info.
@@ -743,13 +763,16 @@ class Forms {
 			// cleanup the JS-URL.
 			$url = str_replace( '&amp;', '&', $url );
 
+			// show deprecated warning for old hook name.
+			$url = apply_filters_deprecated( 'eml_import_url', array( $url ), '5.0.0', 'efml_import_url' );
+
 			/**
 			 * Filter single URL before it will be added as external file.
 			 *
 			 * @since 3.0.0 Available since 3.0.0.
 			 * @param string $url The URL.
 			 */
-			$url = apply_filters( 'eml_import_url', $url );
+			$url = apply_filters( 'efml_import_url', $url );
 
 			// import the given URL in media library.
 			$url_added = $import_obj->add_url( $url );
@@ -760,13 +783,16 @@ class Forms {
 			}
 		}
 
+		// show deprecated warning for old hook name.
+		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );
+
 		/**
 		 * Filter the errors during an AJAX-request to add URLs.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $errors List of errors.
 		 */
-		$errors = apply_filters( 'eml_import_urls_errors', $errors );
+		$errors = apply_filters( 'efml_import_urls_errors', $errors );
 
 		// loop through the errors and add them as URL_Error-objects to the list.
 		foreach ( $errors as $url ) {

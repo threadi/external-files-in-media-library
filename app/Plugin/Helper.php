@@ -191,13 +191,16 @@ class Helper {
 			),
 		);
 
+		// show deprecated warning for old hook name.
+		$mime_types = apply_filters_deprecated( 'eml_supported_mime_types', array( $mime_types ), '5.0.0', 'efml_supported_mime_types' );
+
 		/**
 		 * Filter the possible mime types this plugin could support. This is the list used for the setting in backend.
 		 *
 		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
 		 * ```
-		 * add_filter( 'eml_supported_mime_types', function( $list ) {
+		 * add_filter( 'efml_supported_mime_types', function( $list ) {
 		 *  $list['your/mime'] = array(
 		 *      'label' => 'Title of your mime',
 		 *      'ext' => 'yourmime'
@@ -210,7 +213,7 @@ class Helper {
 		 *
 		 * @param array<string,array<string,string>> $mime_types List of supported mime types.
 		 */
-		return apply_filters( 'eml_supported_mime_types', $mime_types );
+		return apply_filters( 'efml_supported_mime_types', $mime_types );
 	}
 
 	/**
@@ -232,6 +235,9 @@ class Helper {
 			return array();
 		}
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_get_mime_types', array( $list ), '5.0.0', 'efml_get_mime_types' );
+
 		/**
 		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks
 		 * and is not visible or editable in backend.
@@ -239,7 +245,7 @@ class Helper {
 		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
 		 *  ```
-		 *  add_filter( 'eml_get_mime_types', function( $list ) {
+		 *  add_filter( 'efml_get_mime_types', function( $list ) {
 		 *   $list[] = 'your/mime';
 		 *  } );
 		 *  ```
@@ -248,7 +254,7 @@ class Helper {
 		 *
 		 * @param array<string> $list List of mime types.
 		 */
-		return apply_filters( 'eml_get_mime_types', $list );
+		return apply_filters( 'efml_get_mime_types', $list );
 	}
 
 	/**

@@ -191,7 +191,7 @@ class Protocol extends Protocol_Base {
 			 * @param string $url   The URL to import.
 			 * @param array<string> $directory_list List of matches (the URLs).
 			 */
-			do_action( 'eml_webdav_directory_import_files', $url, $directory_list );
+			do_action( 'efml_webdav_directory_import_files', $url, $directory_list );
 
 			// loop through the results and add each to the response.
 			foreach ( $directory_list as $file_name => $setting ) {
@@ -202,7 +202,7 @@ class Protocol extends Protocol_Base {
 				 *
 				 * @param string $file_url   The URL to import.
 				 */
-				do_action( 'eml_webdav_directory_import_file_check', $domain . $file_name );
+				do_action( 'efml_webdav_directory_import_file_check', $domain . $file_name );
 
 				// bail if resource type is not null.
 				if ( ! is_null( $setting['{DAV:}resourcetype'] ) ) {

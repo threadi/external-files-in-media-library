@@ -63,11 +63,11 @@ class Specific_Date extends Extension_Base {
 	 */
 	public function init(): void {
 		// use our own hooks.
-		add_filter( 'eml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_date_option_in_form' ) );
-		add_filter( 'eml_import_options', array( $this, 'add_import_option_to_list' ) );
+		add_filter( 'efml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_date_option_in_form' ) );
+		add_filter( 'efml_import_options', array( $this, 'add_import_option_to_list' ) );
 		add_filter( 'efml_service_rest_file_data', array( $this, 'add_file_date_from_rest_api' ), 10, 3 );
-		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
+		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 
 		// sync tasks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );

@@ -116,10 +116,10 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		$this->title = __( 'Choose file(s) from your Google Cloud Storage', 'external-files-in-media-library' );
 
 		// use our own hooks.
-		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_service_googlecloudstorage_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing', array( $this, 'cleanup_on_rest' ), 10, 3 );
-		add_action( 'eml_before_file_list', array( $this, 'cleanup_after_import' ) );
+		add_action( 'efml_before_file_list', array( $this, 'cleanup_after_import' ) );
 		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
 
 		// use hooks.
@@ -734,7 +734,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_google_cloud_user_settings', $list );
+		return apply_filters( 'efml_service_google_cloud_user_settings', $list );
 	}
 
 	/**
@@ -838,7 +838,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @param string $bucket_name The bucket name.
 		 * @param string $file_name The file name.
 		 */
-		return apply_filters( 'eml_service_google_cloud_storage_public_url', $url, $bucket_name, $file_name );
+		return apply_filters( 'efml_service_google_cloud_storage_public_url', $url, $bucket_name, $file_name );
 	}
 
 	/**
@@ -955,6 +955,6 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param string $url The URL.
 		 */
-		return apply_filters( 'eml_service_google_cloud_storage_console_url', $url );
+		return apply_filters( 'efml_service_google_cloud_storage_console_url', $url );
 	}
 }

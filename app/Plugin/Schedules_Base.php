@@ -71,8 +71,11 @@ class Schedules_Base {
 	 * @return string
 	 */
 	public function get_interval(): string {
-		$interval = $this->interval;
 		$instance = $this;
+
+		// show deprecated warning for old hook name.
+		$interval = apply_filters_deprecated( 'eml_current_language', array( $this->interval, $instance ), '5.0.0', 'efml_schedule_interval' );
+
 		/**
 		 * Filter the interval for a single schedule.
 		 *
@@ -80,7 +83,7 @@ class Schedules_Base {
 		 * @param string $interval The interval.
 		 * @param Schedules_Base $instance The schedule-object.
 		 */
-		return apply_filters( 'eml_schedule_interval', $interval, $instance );
+		return apply_filters( 'efml_schedule_interval', $interval, $instance );
 	}
 
 	/**
@@ -184,8 +187,11 @@ class Schedules_Base {
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		$false    = false;
 		$instance = $this;
+
+		// show deprecated warning for old hook name.
+		$false = apply_filters_deprecated( 'eml_schedule_enabling', array( false, $instance ), '5.0.0', 'efml_schedule_enabling' );
+
 		/**
 		 * Filter whether to activate this schedule.
 		 *
@@ -193,10 +199,8 @@ class Schedules_Base {
 		 *
 		 * @param bool $false True if this object should NOT be enabled.
 		 * @param Schedules_Base $instance Actual object.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_schedule_enabling', $false, $instance ) ) {
+		if ( apply_filters( 'efml_schedule_enabling', $false, $instance ) ) {
 			return false;
 		}
 

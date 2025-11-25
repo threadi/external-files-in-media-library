@@ -113,7 +113,7 @@ class WebDav extends Service_Base implements Service {
 		$this->title = __( 'Choose file(s) from your WebDAV', 'external-files-in-media-library' );
 
 		// use our own hooks.
-		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_service_webdav_client', array( $this, 'ignore_self_signed_ssl' ) );
 		add_filter( 'efml_service_webdav_path', array( $this, 'set_path' ), 10, 2 );
@@ -753,7 +753,7 @@ class WebDav extends Service_Base implements Service {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
 		 */
-		return apply_filters( 'eml_service_webdav_user_settings', $list );
+		return apply_filters( 'efml_service_webdav_user_settings', $list );
 	}
 
 	/**

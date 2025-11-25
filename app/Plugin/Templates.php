@@ -70,6 +70,9 @@ class Templates {
 		// set the directory for template to use.
 		$directory = EFML_PLUGIN;
 
+		// show deprecated warning for old hook name.
+		$directory = apply_filters_deprecated( 'eml_set_template_directory', array( $directory ), '5.0.0', 'efml_set_template_directory' );
+
 		/**
 		 * Set template directory.
 		 *
@@ -79,7 +82,7 @@ class Templates {
 		 *
 		 * @param string $directory The directory to use.
 		 */
-		$plugin_template = plugin_dir_path( apply_filters( 'eml_set_template_directory', $directory ) ) . 'templates/' . $template;
+		$plugin_template = plugin_dir_path( apply_filters( 'efml_set_template_directory', $directory ) ) . 'templates/' . $template;
 		if ( file_exists( $plugin_template ) ) {
 			return $plugin_template;
 		}

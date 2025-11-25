@@ -56,7 +56,7 @@ class Schedules {
 		add_action( 'shutdown', array( $this, 'check_events_on_shutdown' ) );
 
 		// use our own hooks.
-		add_filter( 'eml_schedule_our_events', array( $this, 'check_events' ) );
+		add_filter( 'efml_schedule_our_events', array( $this, 'check_events' ) );
 	}
 
 	/**
@@ -94,6 +94,9 @@ class Schedules {
 		// get our own events from events list in WordPress.
 		$our_events = $this->get_wp_events();
 
+		// show deprecated warning for old hook name.
+		$our_events = apply_filters_deprecated( 'eml_schedule_our_events', array( $our_events ), '5.0.0', 'efml_schedule_our_events' );
+
 		/**
 		 * Filter the list of our own events,
 		 * e.g. to check if all which are enabled in setting are active.
@@ -102,7 +105,7 @@ class Schedules {
 		 *
 		 * @param array<string,array<string,mixed>> $our_events List of our own events in WP-cron.
 		 */
-		return apply_filters( 'eml_schedule_our_events', $our_events );
+		return apply_filters( 'efml_schedule_our_events', $our_events );
 	}
 
 	/**
@@ -117,17 +120,16 @@ class Schedules {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function check_events( array $our_events ): array {
-		// bail if check should be disabled.
-		$false = false;
+		// show deprecated warning for old hook name.
+		$false = apply_filters_deprecated( 'eml_disable_cron_check', array( false ), '5.0.0', 'efml_disable_cron_check' );
+
 		/**
 		 * Disable the additional cron check.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $false True if check should be disabled.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_disable_cron_check', $false ) ) {
+		if ( apply_filters( 'efml_disable_cron_check', $false ) ) {
 			return $our_events;
 		}
 
@@ -247,6 +249,9 @@ class Schedules {
 			'\ExternalFilesInMediaLibrary\Plugin\Schedules\Queue',
 		);
 
+		// show deprecated warning for old hook name.
+		$list_of_schedules = apply_filters_deprecated( 'eml_schedules', array( $list_of_schedules ), '5.0.0', 'efml_schedules' );
+
 		/**
 		 * Add custom schedule-objects to use.
 		 *
@@ -256,7 +261,7 @@ class Schedules {
 		 *
 		 * @param array<string> $list_of_schedules List of additional schedules.
 		 */
-		return apply_filters( 'eml_schedules', $list_of_schedules );
+		return apply_filters( 'efml_schedules', $list_of_schedules );
 	}
 
 	/**

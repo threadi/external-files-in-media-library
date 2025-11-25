@@ -57,8 +57,8 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		add_filter( 'wpmcs_get_relative_file_path_from_upload_directory', array( $this, 'prevent_usage_of_external_files' ), 10, 2 );
-		add_filter( 'eml_is_import_running_for_mcs', array( $this, 'allow_real_import' ), 20 );
-		add_filter( 'eml_is_import_running_for_mcs', array( $this, 'is_import_running' ) );
+		add_filter( 'efml_is_import_running_for_mcs', array( $this, 'allow_real_import' ), 20 );
+		add_filter( 'efml_is_import_running_for_mcs', array( $this, 'is_import_running' ) );
 	}
 
 	/**
@@ -80,7 +80,7 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_is_import_running_for_mcs', $prevent_import, $url ) ) {
+		if ( apply_filters( 'efml_is_import_running_for_mcs', $prevent_import, $url ) ) {
 			return '';
 		}
 

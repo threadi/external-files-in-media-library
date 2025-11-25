@@ -70,7 +70,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	 */
 	public function init(): void {
 		// use our own hooks.
-		add_filter( 'eml_add_dialog', array( $this, 'add_info_in_dialog' ), 5, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_info_in_dialog' ), 5, 2 );
 	}
 
 	/**
@@ -111,8 +111,8 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		}
 
 		// add filter to prevent the import.
-		add_filter( 'eml_prevent_file_import', '__return_true' );
-		add_filter( 'eml_save_temp_file', '__return_false', PHP_INT_MAX );
+		add_filter( 'efml_prevent_file_import', '__return_true' );
+		add_filter( 'efml_save_temp_file', '__return_false', PHP_INT_MAX );
 
 		// get the import object.
 		$import_obj = Import::get_instance();

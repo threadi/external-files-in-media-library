@@ -106,7 +106,7 @@ class Protocol extends Protocol_Base {
 				 * @param string $url   The URL to import.
 				 * @param array<int|string,mixed> $files List of matches (the URLs).
 				 */
-				do_action( 'eml_s3_directory_import_files', $url, $files );
+				do_action( 'efml_s3_directory_import_files', $url, $files );
 
 				// loop through all dirs and get infos about its files.
 				foreach ( $files as $dir => $dir_data ) {
@@ -118,7 +118,7 @@ class Protocol extends Protocol_Base {
 					 *
 					 * @param string $file_url   The URL to import.
 					 */
-					do_action( 'eml_s3_directory_import_file_check', $dir );
+					do_action( 'efml_s3_directory_import_file_check', $dir );
 
 					// bail if files is empty.
 					if ( empty( $dir_data['files'] ) ) {

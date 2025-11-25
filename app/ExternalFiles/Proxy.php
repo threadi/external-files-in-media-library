@@ -87,7 +87,7 @@ class Proxy {
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
 
 		// misc.
-		add_filter( 'eml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 	}
 
 	/**
@@ -224,6 +224,9 @@ class Proxy {
 	public function get_slug(): string {
 		$slug = $this->slug;
 
+		// show deprecated warning for old hook name.
+		$slug = apply_filters_deprecated( 'eml_proxy_slug', array( $slug ), '5.0.0', 'efml_proxy_slug' );
+
 		/**
 		 * Filter the slug for the proxy-URL.
 		 *
@@ -231,7 +234,7 @@ class Proxy {
 		 *
 		 * @param string $slug The slug.
 		 */
-		return apply_filters( 'eml_proxy_slug', $slug );
+		return apply_filters( 'efml_proxy_slug', $slug );
 	}
 
 	/**
@@ -247,13 +250,16 @@ class Proxy {
 		// create string with path for directory.
 		$path = trailingslashit( WP_CONTENT_DIR ) . $path_part;
 
+		// show deprecated warning for old hook name.
+		$path = apply_filters_deprecated( 'eml_proxy_path', array( $path ), '5.0.0', 'efml_proxy_path' );
+
 		/**
 		 * Filter the cache directory.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param string $path The absolute path to the directory.
 		 */
-		$path = apply_filters( 'eml_proxy_path', $path );
+		$path = apply_filters( 'efml_proxy_path', $path );
 
 		// create it if necessary.
 		$this->create_cache_directory( $path );

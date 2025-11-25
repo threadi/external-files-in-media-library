@@ -71,7 +71,7 @@ class Settings {
 		add_action( 'init', array( $this, 'add_settings' ) );
 
 		// misc.
-		add_filter( 'eml_help_tabs', array( $this, 'add_help' ) );
+		add_filter( 'efml_help_tabs', array( $this, 'add_help' ) );
 
 		// set actions.
 		add_action( 'admin_action_eml_disable_gprd_hint', array( $this, 'disable_gprd_hint_by_request' ) );
@@ -255,13 +255,17 @@ class Settings {
 		 */
 		// set description for disabling the attachment pages.
 		$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
+
+		// show deprecated warning for old hook name.
+		$description = apply_filters_deprecated( 'eml_setting_description_attachment_pages', array( $description ), '5.0.0', 'efml_setting_description_attachment_pages' );
+
 		/**
 		 * Filter the description to setting to disable the attachment pages.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param string $description The description.
 		 */
-		$description = apply_filters( 'eml_setting_description_attachment_pages', $description );
+		$description = apply_filters( 'efml_setting_description_attachment_pages', $description );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_disable_attachment_pages' );

@@ -61,7 +61,12 @@ class File extends Protocol_Base {
 		// initialize list of files.
 		$files = array();
 
+		// get actual object for hooks.
 		$instance = $this;
+
+		// show deprecated hint for old hook.
+		$files = apply_filters_deprecated( 'eml_filter_file_response', array( $files, $this->get_url(), $instance ), '5.0.0', 'efml_filter_file_response' );
+
 		/**
 		 * Filter the file with custom import methods.
 		 *
@@ -70,7 +75,7 @@ class File extends Protocol_Base {
 		 * @param string $url The URL to import.
 		 * @param File $instance The actual protocol object.
 		 */
-		$results = apply_filters( 'eml_filter_file_response', array(), $this->get_url(), $instance );
+		$results = apply_filters( 'efml_filter_file_response', array(), $this->get_url(), $instance );
 		if ( ! empty( $results ) ) {
 			// return the result as array for import this as single URL.
 			if ( isset( $results['title'] ) ) { // @phpstan-ignore isset.offset
@@ -86,6 +91,9 @@ class File extends Protocol_Base {
 
 		// check if given URL is a directory.
 		if ( $wp_filesystem->is_dir( $this->get_url() ) ) {
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_file_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_file_directory_import_start' );
+
 			/**
 			 * Run action on beginning of presumed directory import via file-protocol.
 			 *
@@ -93,7 +101,7 @@ class File extends Protocol_Base {
 			 *
 			 * @param string $url   The URL to import.
 			 */
-			do_action( 'eml_file_directory_import_start', $this->get_url() );
+			do_action( 'efml_file_directory_import_start', $this->get_url() );
 
 			// get the files.
 			$file_list = $wp_filesystem->dirlist( $this->get_url() );
@@ -114,6 +122,9 @@ class File extends Protocol_Base {
 				return array();
 			}
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_file_directory_import_files', array( $this->get_url(), $file_list ), '5.0.0', 'efml_file_directory_import_files' );
+
 			/**
 			 * Run action if we have files to check via FILE-protocol.
 			 *
@@ -122,7 +133,7 @@ class File extends Protocol_Base {
 			 * @param string $url   The URL to import.
 			 * @param array<string,array<string,mixed>> $file_list List of files.
 			 */
-			do_action( 'eml_file_directory_import_files', $this->get_url(), $file_list );
+			do_action( 'efml_file_directory_import_files', $this->get_url(), $file_list );
 
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */
@@ -158,6 +169,9 @@ class File extends Protocol_Base {
 					continue;
 				}
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_file_directory_import_file_check', array( $file_path ), '5.0.0', 'efml_file_directory_import_file_check' );
+
 				/**
 				 * Run action just before the file check via file-protocol.
 				 *
@@ -165,7 +179,7 @@ class File extends Protocol_Base {
 				 *
 				 * @param string $file_path   The filepath to import.
 				 */
-				do_action( 'eml_file_directory_import_file_check', $file_path );
+				do_action( 'efml_file_directory_import_file_check', $file_path );
 
 				// get file data.
 				$results = $this->get_url_info( $file_path );
@@ -179,6 +193,9 @@ class File extends Protocol_Base {
 					continue;
 				}
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_file_directory_import_file_before_to_list', array( $file_path, $file_list ), '5.0.0', 'efml_file_directory_import_file_before_to_list' );
+
 				/**
 				 * Run action just before the file is added to the list via file-protocol.
 				 *
@@ -187,7 +204,7 @@ class File extends Protocol_Base {
 				 * @param string $file_path   The filepath to import.
 				 * @param array<int|string,mixed> $file_list List of files.
 				 */
-				do_action( 'eml_file_directory_import_file_before_to_list', $file_path, $file_list );
+				do_action( 'efml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
 				// add file to the list.
 				$files[] = $results;
@@ -214,7 +231,9 @@ class File extends Protocol_Base {
 			$files[] = $results;
 		}
 
-		$instance = $this;
+		// show deprecated hint for old hook.
+		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
+
 		/**
 		 * Filter list of files during this import.
 		 *
@@ -222,7 +241,7 @@ class File extends Protocol_Base {
 		 * @param array<int,array<string,mixed>> $files List of files.
 		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $instance );
+		return apply_filters( 'efml_external_files_infos', $files, $instance );
 	}
 
 	/**
@@ -247,17 +266,17 @@ class File extends Protocol_Base {
 			'last-modified' => '',
 		);
 
-		$true = true;
+		// show deprecated hint for old hook.
+		$true = apply_filters_deprecated( 'eml_file_check_existence', array( true, $file_path ), '5.0.0', 'efml_file_check_existence' );
+
 		/**
 		 * Filter the check if local file exist.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $true True if filter should be used.
 		 * @param string $file_path The absolute file path.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
+		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
 			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
@@ -306,6 +325,10 @@ class File extends Protocol_Base {
 		}
 
 		$response_headers = array();
+
+		// show deprecated hint for old hook.
+		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $file_path, $response_headers ), '5.0.0', 'efml_external_file_infos' );
+
 		/**
 		 * Filter the data of a single file during import.
 		 *
@@ -315,7 +338,7 @@ class File extends Protocol_Base {
 		 * @param string $url     The requested external URL.
 		 * @param array<string,mixed> $response_headers The response header.
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $file_path, $response_headers );
+		return apply_filters( 'efml_external_file_infos', $results, $file_path, $response_headers );
 	}
 
 	/**

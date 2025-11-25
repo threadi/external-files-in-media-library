@@ -174,6 +174,9 @@ class File_Types {
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Zip',
 		);
 
+		// show deprecated warning for old hook name.
+		$list = apply_filters_deprecated( 'eml_file_types', array( $list ), '5.0.0', 'efml_file_types' );
+
 		/**
 		 * Filter the list of supported file types.
 		 *
@@ -181,7 +184,7 @@ class File_Types {
 		 *
 		 * @param array<int,string> $list List of class names for the file type handlers.
 		 */
-		return apply_filters( 'eml_file_types', $list );
+		return apply_filters( 'efml_file_types', $list );
 	}
 
 	/**

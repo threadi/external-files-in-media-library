@@ -77,7 +77,8 @@ class Http extends Protocol_Base {
 		}
 
 		// all ok with the url.
-		$return = true;
+		$return = apply_filters_deprecated( 'eml_check_url', array( true, $url ), '5.0.0', 'efml_check_url' );
+
 		/**
 		 * Filter the resulting for checking an external URL.
 		 *
@@ -88,7 +89,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		return apply_filters( 'eml_check_url', $return, $url );
+		return apply_filters( 'efml_check_url', $return, $url );
 	}
 
 	/**
@@ -114,7 +115,7 @@ class Http extends Protocol_Base {
 
 		// request does not have a content-type header.
 		$response_headers_obj = $response['http_response']->get_headers();
-		$true                 = true;
+		$true                 = apply_filters_deprecated( 'eml_http_check_content_type_existence', array( true, $url ), '5.0.0', 'efml_http_check_content_type_existence' );
 		/**
 		 * Filter for check if file has content-type given.
 		 *
@@ -124,7 +125,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'eml_http_check_content_type_existence', $true, $url ) ) {
+		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'efml_http_check_content_type_existence', $true, $url ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Specified URL response without mime-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
 
@@ -134,6 +135,8 @@ class Http extends Protocol_Base {
 
 		// request does not have a valid content-type.
 		$response_headers = $response_headers_obj->getAll();
+		$true             = apply_filters_deprecated( 'eml_http_check_content_type', array( true, $url ), '5.0.0', 'efml_http_check_content_type' );
+
 		/**
 		 * Filter for check of file content type during availability check.
 		 *
@@ -143,7 +146,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'eml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
+		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'efml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by its Mime-Type */
 			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
@@ -152,7 +155,9 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		$return = true;
+		// show deprecated hint for old hook.
+		$return = apply_filters_deprecated( 'eml_check_url_availability', array( true, $url ), '5.0.0', 'efml_check_url_availability' );
+
 		/**
 		 * Filter the result of checking an external URL.
 		 *
@@ -163,7 +168,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_check_url_availability', $return, $url ) ) {
+		if ( apply_filters( 'efml_check_url_availability', $return, $url ) ) {
 			// file is available.
 			Log::get_instance()->create( __( 'The specified URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2, Import::get_instance()->get_identified() );
 
@@ -233,6 +238,10 @@ class Http extends Protocol_Base {
 		// if content-type is "text/html" it could be a directory listing.
 		if ( ! empty( $response_headers['content-type'] ) && $this->is_content_type_for_multiple_files( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_url() ) ) {
 			$instance = $this;
+
+			// show deprecated hint for old hook.
+			$results = apply_filters_deprecated( 'eml_filter_url_response', array( array(), $this->get_url(), $instance ), '5.0.0', 'efml_filter_url_response' );
+
 			/**
 			 * Filter the URL with custom import methods.
 			 *
@@ -241,7 +250,7 @@ class Http extends Protocol_Base {
 			 * @param string $url The URL to import.
 			 * @param Http $instance The actual protocol object.
 			 */
-			$results = apply_filters( 'eml_filter_url_response', array(), $this->get_url(), $instance );
+			$results = apply_filters( 'efml_filter_url_response', $results, $this->get_url(), $instance );
 			if ( ! empty( $results ) ) {
 				// bail if URL is already in media library.
 				if ( $this->check_for_duplicate( $this->get_url() ) ) {
@@ -260,6 +269,9 @@ class Http extends Protocol_Base {
 				return $results; // @phpstan-ignore return.type
 			}
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_http_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_http_directory_import_start' );
+
 			/**
 			 * Run action on beginning of presumed directory import.
 			 *
@@ -267,7 +279,7 @@ class Http extends Protocol_Base {
 			 *
 			 * @param string $url   The URL to import.
 			 */
-			do_action( 'eml_http_directory_import_start', $this->get_url() );
+			do_action( 'efml_http_directory_import_start', $this->get_url() );
 
 			// get WP Filesystem-handler.
 			$wp_filesystem = Helper::get_wp_filesystem();
@@ -295,6 +307,9 @@ class Http extends Protocol_Base {
 			// get the URL.
 			$url = $this->get_url();
 
+			// show deprecated hint for old hook.
+			$matches = apply_filters_deprecated( 'eml_http_directory_regex', array( array(), $content, $url ), '5.0.0', 'efml_http_directory_regex' );
+
 			/**
 			 * Filter the content with regex via HTTP-protocol.
 			 *
@@ -306,7 +321,7 @@ class Http extends Protocol_Base {
 			 *
 			 * @paaram string $url The URL used.
 			 */
-			$matches = apply_filters( 'eml_http_directory_regex', array(), $content, $url );
+			$matches = apply_filters( 'efml_http_directory_regex', $matches, $content, $url );
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
@@ -318,6 +333,9 @@ class Http extends Protocol_Base {
 			/* translators: %1$s is replaced by a URL. */
 			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory URL %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $matches[1] ) ) : '';
 
+			// show deprecated hint for old hook.
+			do_action_deprecated( 'eml_http_directory_import_files', array( $this->get_url(), $matches[1] ), '5.0.0', 'efml_http_directory_import_files' );
+
 			/**
 			 * Run action if we have files to check via HTTP-protocol.
 			 *
@@ -326,7 +344,7 @@ class Http extends Protocol_Base {
 			 * @param string $url   The URL to import.
 			 * @param array<string> $matches List of matches (the URLs).
 			 */
-			do_action( 'eml_http_directory_import_files', $this->get_url(), $matches[1] );
+			do_action( 'efml_http_directory_import_files', $this->get_url(), $matches[1] );
 
 			// loop through the matches.
 			foreach ( $matches[1] as $url ) {
@@ -370,6 +388,9 @@ class Http extends Protocol_Base {
 					continue;
 				}
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_http_directory_import_file_check', array( $file_url ), '5.0.0', 'efml_http_directory_import_file_check' );
+
 				/**
 				 * Run action just before the file check via HTTP-protocol.
 				 *
@@ -377,7 +398,7 @@ class Http extends Protocol_Base {
 				 *
 				 * @param string $file_url   The URL to import.
 				 */
-				do_action( 'eml_http_directory_import_file_check', $file_url );
+				do_action( 'efml_http_directory_import_file_check', $file_url );
 
 				// get file data.
 				$file = $this->get_url_info( $file_url );
@@ -390,6 +411,9 @@ class Http extends Protocol_Base {
 					continue;
 				}
 
+				// show deprecated hint for old hook.
+				do_action_deprecated( 'eml_http_directory_import_file_before_to_list', array( $file_url, $matches[1] ), '5.0.0', 'efml_http_directory_import_file_before_to_list' );
+
 				/**
 				 * Run action just before the file is added to the list via HTTP-protocol.
 				 *
@@ -398,7 +422,7 @@ class Http extends Protocol_Base {
 				 * @param string $file_url   The URL to import.
 				 * @param array $files List of files.
 				 */
-				do_action( 'eml_http_directory_import_file_before_to_list', $file_url, $matches[1] );
+				do_action( 'efml_http_directory_import_file_before_to_list', $file_url, $matches[1] );
 
 				// add the file with its data to the list.
 				$files[] = $file;
@@ -432,6 +456,10 @@ class Http extends Protocol_Base {
 		}
 
 		$instance = $this;
+
+		// show deprecated hint for old hook.
+		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
+
 		/**
 		 * Filter list of files during this import.
 		 *
@@ -439,7 +467,7 @@ class Http extends Protocol_Base {
 		 * @param array<int,array<string,mixed>> $files List of files.
 		 * @param Protocol_Base $instance The import object.
 		 */
-		return apply_filters( 'eml_external_files_infos', $files, $instance );
+		return apply_filters( 'efml_external_files_infos', $files, $instance );
 	}
 
 	/**
@@ -515,6 +543,9 @@ class Http extends Protocol_Base {
 			$results['tmp-file'] = $this->get_temp_file( $url, $wp_filesystem );
 		}
 
+		// show deprecated hint for old hook.
+		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
+
 		/**
 		 * Filter the data of a single file during import.
 		 *
@@ -524,7 +555,7 @@ class Http extends Protocol_Base {
 		 * @param string $url     The requested external URL.
 		 * @param array<string,mixed> $response_headers The response header.
 		 */
-		return apply_filters( 'eml_external_file_infos', $results, $url, $response_headers );
+		return apply_filters( 'efml_external_file_infos', $results, $url, $response_headers );
 	}
 
 	/**
@@ -597,8 +628,10 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		$url  = $this->get_url();
-		$true = true;
+		$url = $this->get_url();
+
+		// show deprecated hint for old hook.
+		$true = apply_filters_deprecated( 'eml_http_ssl', array( true, $url ), '5.0.0', 'efml_http_ssl' );
 
 		/**
 		 * Filter whether files should be forced to save local
@@ -611,7 +644,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'eml_http_ssl', $true, $url ) ) {
+		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'efml_http_ssl', $true, $url ) ) {
 			return true;
 		}
 
@@ -625,14 +658,18 @@ class Http extends Protocol_Base {
 
 		// if setting enables local, file should be saved local.
 		$result = ! $external_file_obj->is_locally_saved() && $external_file_obj->get_file_type_obj()->is_proxy_enabled();
+
+		// show deprecated hint for old hook.
+		$result = apply_filters_deprecated( 'eml_http_save_local', array( $result, $url ), '5.0.0', 'efml_http_save_local' );
+
 		/**
-		 * Filter if a http-file should be saved local or not.
+		 * Filter if an HTTP-file should be saved local or not.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $result True if file should be saved local.
 		 * @param string $url The used URL.
 		 */
-		return apply_filters( 'eml_http_save_local', $result, $url );
+		return apply_filters( 'efml_http_save_local', $result, $url );
 	}
 
 	/**
@@ -651,7 +688,9 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		$true = true;
+		// show deprecated hint for old hook.
+		$true = apply_filters_deprecated( 'eml_http_ssl', array( true, $url ), '5.0.0', 'efml_http_ssl' );
+
 		/**
 		 * Filter whether files should be forced to save local
 		 * if URL is using SSL but the website not.
@@ -663,7 +702,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'eml_http_ssl', $true, $url ) ) {
+		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'efml_http_ssl', $true, $url ) ) {
 			return true;
 		}
 
@@ -672,6 +711,10 @@ class Http extends Protocol_Base {
 
 		// if setting enables local saving, file should be saved local.
 		$result = $file_type_obj->is_local();
+
+		// show deprecated hint for old hook.
+		$result = apply_filters_deprecated( 'eml_http_save_local', array( $result, $url ), '5.0.0', 'efml_http_save_local' );
+
 		/**
 		 * Filter whether the HTTP-file should be saved local or not.
 		 *
@@ -680,7 +723,7 @@ class Http extends Protocol_Base {
 		 * @param bool   $result True if file should be saved local.
 		 * @param string $url    The used URL.
 		 */
-		return apply_filters( 'eml_http_save_local', $result, $url );
+		return apply_filters( 'efml_http_save_local', $result, $url );
 	}
 
 	/**
@@ -708,6 +751,10 @@ class Http extends Protocol_Base {
 		}
 
 		$instance = $this;
+
+		// show deprecated hint for old hook.
+		$args = apply_filters_deprecated( 'eml_http_header_args', array( $args, $instance ), '5.0.0', 'efml_http_header_args' );
+
 		/**
 		 * Filter the resulting header.
 		 *
@@ -715,7 +762,7 @@ class Http extends Protocol_Base {
 		 * @param array<string,mixed> $args List of headers.
 		 * @param HTTP $instance The protocol object.
 		 */
-		return apply_filters( 'eml_http_header_args', $args, $instance );
+		return apply_filters( 'efml_http_header_args', $args, $instance );
 	}
 
 	/**
@@ -741,6 +788,9 @@ class Http extends Protocol_Base {
 	private function get_allowed_http_states( string $url ): array {
 		$list = array( 200 );
 
+		// show deprecated hint for old hook.
+		$list = apply_filters_deprecated( 'eml_http_states', array( $list, $url ), '5.0.0', 'efml_http_states' );
+
 		/**
 		 * Filter the list of allowed http states.
 		 *
@@ -748,7 +798,7 @@ class Http extends Protocol_Base {
 		 * @param array<integer> $list List of http states.
 		 * @param string $url The requested URL.
 		 */
-		return apply_filters( 'eml_http_states', $list, $url );
+		return apply_filters( 'efml_http_states', $list, $url );
 	}
 
 	/**
@@ -770,7 +820,9 @@ class Http extends Protocol_Base {
 	 * @return bool
 	 */
 	private function is_local_file( string $url ): bool {
-		$false = false;
+		// show deprecated hint for old hook.
+		$false = apply_filters_deprecated( 'eml_locale_file_check', array( false, $url ), '5.0.0', 'efml_locale_file_check' );
+
 		/**
 		 * Filter to prevent locale file check.
 		 *
@@ -780,7 +832,7 @@ class Http extends Protocol_Base {
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_locale_file_check', $false, $url ) ) {
+		if ( apply_filters( 'efml_locale_file_check', $false, $url ) ) {
 			return false;
 		}
 
@@ -797,17 +849,17 @@ class Http extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
-		$true = true;
+		// show deprecated hint for old hook.
+		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
+
 		/**
 		 * Filter whether the given URL should be saved as local temp file.
 		 *
 		 * @since 4.0.0 Available since 4.0.0.
 		 * @param bool $true Should be false to prevent the temp generation.
 		 * @param string $url The given URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( ! apply_filters( 'eml_save_temp_file', $true, $url ) ) {
+		if ( ! apply_filters( 'efml_save_temp_file', $true, $url ) ) {
 			return false;
 		}
 
