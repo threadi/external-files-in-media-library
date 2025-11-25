@@ -620,20 +620,28 @@ class File {
 	 */
 	public function get_fields(): array {
 		// get the fields for this file.
-		$fields = get_post_meta( $this->get_id(), 'eml_fields', true );
+		$field_encoded_json = get_post_meta( $this->get_id(), 'eml_fields', true );
 
 		// bail if no string returned.
-		if ( ! is_string( $fields ) ) {
+		if ( ! is_string( $field_encoded_json ) ) {
 			return array();
 		}
 
 		// bail if string is empty.
-		if ( empty( $fields ) ) {
+		if ( empty( $field_encoded_json ) ) {
 			return array();
 		}
 
 		// return decrypted string.
-		return json_decode( Crypt::get_instance()->decrypt( $fields ), true );
+		$fields = json_decode( Crypt::get_instance()->decrypt( $field_encoded_json ), true );
+
+		// bail if fields is not an array.
+		if ( ! is_array( $fields ) ) {
+			return array();
+		}
+
+		// return the fields.
+		return $fields;
 	}
 
 	/**
