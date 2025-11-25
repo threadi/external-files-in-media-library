@@ -573,6 +573,15 @@ class Export {
 				continue;
 			}
 
+			// get fields.
+			$fields = array();
+			if ( ! empty( $credentials['fields'] ) ) {
+				$fields = $credentials['fields'];
+				if ( ! is_array( $fields ) ) {
+					$fields = array();
+				}
+			}
+
 			// create the URL.
 			$url = $base_url . basename( $file );
 
@@ -589,7 +598,7 @@ class Export {
 			$external_file_obj->set_is_local_saved( false );
 
 			// save the credentials on the object, if set.
-			$external_file_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
+			$external_file_obj->set_fields( $fields );
 
 			// set date of import (this is not the attachment datetime).
 			$external_file_obj->set_date();

@@ -158,23 +158,23 @@ class Protocols {
 			}
 
 			// create object.
-			$obj = new $protocol_name( $external_file->get_url( true ) );
+			$protocol_obj = new $protocol_name( $external_file->get_url( true ) );
 
 			// bail if object is not a Protocol_Base.
-			if ( ! $obj instanceof Protocol_Base ) {
+			if ( ! $protocol_obj instanceof Protocol_Base ) {
 				continue;
 			}
 
 			// bail if URL is compatible.
-			if ( ! $obj->is_url_compatible() ) {
+			if ( ! $protocol_obj->is_url_compatible() ) {
 				continue;
 			}
 
 			// configure its fields, even it nothing are set.
-			$obj->set_fields( $external_file->get_fields() );
+			$protocol_obj->set_fields( $external_file->get_fields() );
 
 			// return resulting object.
-			return $obj;
+			return $protocol_obj;
 		}
 
 		// return false if no protocol could be found.
