@@ -132,7 +132,7 @@ class Youtube extends Service_Base implements Service {
 		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'efml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
-		add_filter( 'eml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
+		add_filter( 'efml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
 		add_filter( 'efml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
 		add_filter( 'efml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
 		add_filter( 'efml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );

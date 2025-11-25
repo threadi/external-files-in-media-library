@@ -61,7 +61,7 @@ class WpExtraFileTypes extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// use hooks.
-		add_filter( 'eml_supported_mime_types', array( $this, 'add_file_types' ) );
+		add_filter( 'efml_supported_mime_types', array( $this, 'add_file_types' ) );
 	}
 
 	/**

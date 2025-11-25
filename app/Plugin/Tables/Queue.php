@@ -249,7 +249,7 @@ class Queue extends WP_List_Table {
 	 * Message to be displayed when there are no items.
 	 */
 	public function no_items(): void {
-		echo esc_html__( 'No entries in queue found.', 'external-files-in-media-library' );
+		echo esc_html__( 'The queue for import external files in your media library is empty.', 'external-files-in-media-library' );
 	}
 
 	/**

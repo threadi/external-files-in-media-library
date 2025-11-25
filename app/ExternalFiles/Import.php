@@ -166,8 +166,6 @@ class Import extends Directory_Listing_Base {
 		 * @param bool $false Return true if normal import should not be started.
 		 * @param string $url The given URL.
 		 * @param array $fields List of fields necessary for the connection.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_prevent_import', $false, $url, $fields ) ) {
 			return false;
@@ -180,8 +178,6 @@ class Import extends Directory_Listing_Base {
 		 *
 		 * @param string $url      The given URL.
 		 * @param array $fields List of fields.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		do_action( 'efml_before_import', $url, $fields );
 
@@ -228,7 +224,7 @@ class Import extends Directory_Listing_Base {
 			$results = Results::get_instance()->get_results();
 
 			// get error logs for this URL.
-			$log_entries = Log::get_instance()->get_logs( $url, 'error', $this->get_identified() );
+			$log_entries = Log::get_instance()->get_logs( $url, 'error', $this->get_identifier() );
 
 			// if they are empty, add our own hint.
 			if ( empty( $results ) && empty( $log_entries ) ) {
@@ -392,7 +388,7 @@ class Import extends Directory_Listing_Base {
 			 */
 			if ( false !== $file_data['local'] ) {
 				// log this event.
-				$log->create( __( 'The URL will be saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
+				$log->create( __( 'The URL will be saved locally.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identifier() );
 
 				// import file as attachment via WP-own functions, if ID is not already set.
 				if ( empty( $post_array['ID'] ) ) {
@@ -415,11 +411,11 @@ class Import extends Directory_Listing_Base {
 					$wp_filesystem->delete( $file_data['tmp-file'] );
 
 					// log this event.
-					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identified() );
+					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identifier() );
 				}
 			} else {
 				// log this event.
-				$log->create( __( 'The URL will remain external, we simply save the link to the file in the media library.', 'external-files-in-media-library' ), $url, 'info', 2, $this->get_identified() );
+				$log->create( __( 'The URL will remain external, we simply save the link to the file in the media library.', 'external-files-in-media-library' ), $url, 'info', 2, $this->get_identifier() );
 
 				/**
 				 * For all other files: simply create the attachment.
@@ -430,7 +426,7 @@ class Import extends Directory_Listing_Base {
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
-				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identified() );
+				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identifier() );
 
 				// create the error entry.
 				$error_obj = new Url_Result();
@@ -486,7 +482,7 @@ class Import extends Directory_Listing_Base {
 				do_action( 'efml_after_file_save', $external_file_obj, $file_data, $file_url );
 
 				// log event.
-				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
+				$log->create( __( 'File from URL has been saved as local file. It will not be handled as external file.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identifier() );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -526,8 +522,8 @@ class Import extends Directory_Listing_Base {
 			$external_file_obj->set_date();
 
 			// log that URL has been added as file in media library.
-			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identified() );
-			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'info', 2, $this->get_identified() );
+			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identifier() );
+			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'info', 2, $this->get_identifier() );
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_after_file_save', array( $external_file_obj, $file_data, $file_url ), '5.0.0', 'efml_after_file_save' );
@@ -613,7 +609,7 @@ class Import extends Directory_Listing_Base {
 		// cancel process if runtime is nearly reached.
 		if ( $runtime >= $max_execution_time ) {
 			// log the event.
-			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported have been saved in the queue and will now be imported automatically in the background.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identified() );
+			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported have been saved in the queue and will now be imported automatically in the background.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identifier() );
 
 			// kill process.
 			exit;
@@ -696,7 +692,7 @@ class Import extends Directory_Listing_Base {
 	 *
 	 * @return string
 	 */
-	public function get_identified(): string {
+	public function get_identifier(): string {
 		// create a new identifier if none exist atm.
 		if ( empty( $this->identifier ) ) {
 			$this->identifier = uniqid( '', true );

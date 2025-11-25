@@ -91,7 +91,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if no credentials are set.
 		if ( ! $this->has_fields_with_credentials() ) {
-			Log::get_instance()->create( __( 'Missing credentials for import from SFTP-URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Missing credentials for import from SFTP-URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			return array();
 		}
@@ -101,7 +101,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'SFTP-URL looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			return array();
 		}
@@ -139,7 +139,7 @@ class Sftp extends Protocol_Base {
 			// get the files from SFTP directory as list.
 			$file_list = $ssh_connection->dirlist( $path );
 			if ( empty( $file_list ) ) {
-				Log::get_instance()->create( __( 'SFTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'SFTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 				return array();
 			}
@@ -171,7 +171,7 @@ class Sftp extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error', 0, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $file_path ), 'error', 0, Import::get_instance()->get_identifier() );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -280,7 +280,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if connection failed.
 		if ( ! $ssh_connection ) {
-			Log::get_instance()->create( __( 'SFTP-Connection failed.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'SFTP-Connection failed.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return array();
@@ -288,7 +288,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if file does not exist.
 		if ( ! $ssh_connection->is_readable( $file_path ) ) {
-			Log::get_instance()->create( __( 'SFTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'SFTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return array();
@@ -309,7 +309,7 @@ class Sftp extends Protocol_Base {
 
 		// bail if file content could not be read.
 		if ( ! $file_content ) {
-			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return array();
@@ -420,7 +420,7 @@ class Sftp extends Protocol_Base {
 		// bail if connection was not successfully.
 		if ( ! $connection->connect() ) {
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'SSH/SFTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'SSH/SFTP-Connection failed. Check the server-name %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), $connection_arguments['hostname'], '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 			return false;
 		}
 

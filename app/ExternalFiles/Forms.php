@@ -353,37 +353,54 @@ class Forms {
 		// get the credentials, if enabled.
 		$fields = array();
 		if ( 1 === $eml_use_credentials ) {
+			// get login from request.
 			$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 			if ( ! is_string( $login ) ) {
 				$login = '';
 			}
+
+			// get password from request.
 			$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 			if ( ! is_string( $password ) ) {
 				$password = '';
 			}
 			$password = html_entity_decode( $password );
 
-			// bail if no credentials are given.
-			if ( empty( $login ) || empty( $password ) ) {
-				// add this error to the list.
-				Results::get_instance()->add( new No_Credentials() );
+			// get the fields JSON string.
+			$fields_json = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
 
-				// mark import as not running.
-				delete_option( 'eml_import_running_' . $user_id );
-
-				// send empty response as JSON.
-				wp_send_json( array() );
+			// if fields is not empty, convert it from JSON to array.
+			if( ! empty( $fields_json ) ) {
+				$fields = json_decode( $fields_json, true );
+				if( ! is_array( $fields ) ) {
+					$fields = array();
+				}
 			}
 
-			// create the fields array with the credentials.
-			$fields = array(
-				'login'    => array(
-					'value' => $login,
-				),
-				'password' => array(
-					'value' => $password,
-				),
-			);
+			// if fields is empty, try to use login and password.
+			if( empty( $fields ) ) {
+				// bail if no credentials are given.
+				if ( empty( $login ) || empty( $password ) ) {
+					// add this error to the list.
+					Results::get_instance()->add( new No_Credentials() );
+
+					// mark import as not running.
+					delete_option( 'eml_import_running_' . $user_id );
+
+					// send empty response as JSON.
+					wp_send_json( array() );
+				}
+
+				// create the fields array with the credentials.
+				$fields = array(
+					'login'    => array(
+						'value' => $login,
+					),
+					'password' => array(
+						'value' => $password,
+					),
+				);
+			}
 		}
 
 		// get the term for credentials from Directory Listing Archive, if set.
@@ -517,7 +534,7 @@ class Forms {
 		// loop through the errors and add them as URL_Error-objects to the list.
 		foreach ( $errors as $url ) {
 			// get log entries for this URL.
-			$log_entries = $log->get_logs( $url, 'error', Import::get_instance()->get_identified() );
+			$log_entries = $log->get_logs( $url, 'error', Import::get_instance()->get_identifier() );
 
 			// bail if log is empty.
 			if ( empty( $log_entries ) ) {
@@ -797,7 +814,7 @@ class Forms {
 		// loop through the errors and add them as URL_Error-objects to the list.
 		foreach ( $errors as $url ) {
 			// get log entries for this URL.
-			$log_entries = Log::get_instance()->get_logs( $url, 'error', Import::get_instance()->get_identified() );
+			$log_entries = Log::get_instance()->get_logs( $url, 'error', Import::get_instance()->get_identifier() );
 
 			// bail if log is empty.
 			if ( empty( $log_entries ) ) {

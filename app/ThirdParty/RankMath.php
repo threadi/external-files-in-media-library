@@ -64,7 +64,7 @@ class RankMath extends ThirdParty_Base implements ThirdParty {
 		// use our hooks.
 		add_filter( 'efml_attachment_link', array( $this, 'do_not_touch_attachment_links' ) );
 		add_filter( 'efml_setting_description_attachment_pages', array( $this, 'change_description_for_attachment_pages_setting' ), 10, 0 );
-		add_filter( 'eml_setting_readonly', array( $this, 'change_readonly_for_attachment_pages_setting' ), 10, 2 );
+		add_filter( 'efml_setting_readonly', array( $this, 'change_readonly_for_attachment_pages_setting' ), 10, 2 );
 	}
 
 	/**

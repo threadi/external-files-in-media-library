@@ -287,7 +287,7 @@ class Queue extends Extension_Base {
 
 		// bail if given URL is already in queue.
 		if ( ! empty( $this->get_url( $url ) ) ) {
-			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 			return true;
 		}
 
@@ -436,7 +436,7 @@ class Queue extends Extension_Base {
 					}
 				}
 			} catch ( JsonException $e ) {
-				Log::get_instance()->create( __( 'Error decoding options to import this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Error decoding options to import this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identifier() );
 			}
 		}
 

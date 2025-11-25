@@ -389,7 +389,7 @@ class Synchronization {
 				'title'   => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
 				'texts'   => array(
 					/* translators: %1$s will be replaced by a title. */
-					'<p>' . sprintf( __( 'The synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+					'<p>' . sprintf( __( 'Synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
 				),

@@ -70,7 +70,7 @@ class Http extends Protocol_Base {
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
-			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return that given string is not a valid URL.
 			return false;
@@ -107,7 +107,7 @@ class Http extends Protocol_Base {
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			// log this event.
 			/* translators: %1$d will be replaced by the HTTP-Status. */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file is not available.
 			return false;
@@ -122,12 +122,10 @@ class Http extends Protocol_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $true True if content type check should be run.
 		 * @param string $url The used URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false === $response_headers_obj->offsetExists( 'content-type' ) && apply_filters( 'efml_http_check_content_type_existence', $true, $url ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Specified URL response without mime-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Specified URL response without mime-type.', 'external-files-in-media-library' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file has wrong content type.
 			return false;
@@ -149,7 +147,7 @@ class Http extends Protocol_Base {
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'efml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by its Mime-Type */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file has wrong content type.
 			return false;
@@ -170,7 +168,7 @@ class Http extends Protocol_Base {
 		 */
 		if ( apply_filters( 'efml_check_url_availability', $return, $url ) ) {
 			// file is available.
-			Log::get_instance()->create( __( 'The specified URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'The specified URL is available.', 'external-files-in-media-library' ), esc_url( $url ), 'success', 2, Import::get_instance()->get_identifier() );
 
 			// return true as file is available.
 			return true;
@@ -201,7 +199,7 @@ class Http extends Protocol_Base {
 		// request resulted in an error.
 		if ( is_wp_error( $response ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array.
 			return array();
@@ -254,7 +252,7 @@ class Http extends Protocol_Base {
 			if ( ! empty( $results ) ) {
 				// bail if URL is already in media library.
 				if ( $this->check_for_duplicate( $this->get_url() ) ) {
-					Log::get_instance()->create( __( 'The specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'The specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 
 					// return empty array to prevent import of this URL.
 					return array();
@@ -300,7 +298,7 @@ class Http extends Protocol_Base {
 
 			// bail if saving has been failed.
 			if ( ! $content ) {
-				Log::get_instance()->create( __( 'The presumed directory URL could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'The presumed directory URL could not be loaded.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
@@ -325,7 +323,7 @@ class Http extends Protocol_Base {
 
 			// bail if no matches where found.
 			if ( empty( $matches ) || empty( $matches[1] ) ) {
-				Log::get_instance()->create( __( 'The presumed directory URL does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'The presumed directory URL does not contain any linked files.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
@@ -368,7 +366,7 @@ class Http extends Protocol_Base {
 
 				// check if given file is a local file which exist in media library.
 				if ( $this->is_local_file( $file_url ) ) {
-					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identifier() );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -379,7 +377,7 @@ class Http extends Protocol_Base {
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
-					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error', 0, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $file_url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 					// show progress.
 					$progress ? $progress->tick() : '';
@@ -433,13 +431,13 @@ class Http extends Protocol_Base {
 		} else {
 			// check if given file is a local file which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
@@ -873,7 +871,7 @@ class Http extends Protocol_Base {
 			// show 404 hint.
 			if ( ! empty( $tmp_file->errors['http_404'] ) ) {
 				// temp file could not be saved.
-				Log::get_instance()->create( __( 'Specified URL does not exist or is not accessible. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $tmp_file->errors ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Specified URL does not exist or is not accessible. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $tmp_file->errors ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 				// return empty array as we got not the file.
 				return false;
@@ -881,7 +879,7 @@ class Http extends Protocol_Base {
 
 			// temp file could not be saved.
 			/* translators: %1$s by the error in JSON-format. */
-			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( Helper::get_json( $tmp_file ) ) . '</code>' ), $url, 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( sprintf( __( 'Temp file could not be created because of the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_strip_all_tags( Helper::get_json( $tmp_file ) ) . '</code>' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return false;

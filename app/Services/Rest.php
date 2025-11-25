@@ -118,7 +118,7 @@ class Rest extends Service_Base implements Service {
 		$this->title = __( 'Get file(s) from WordPress REST API', 'external-files-in-media-library' );
 
 		// use our own hooks.
-		add_filter( 'eml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
+		add_filter( 'efml_mime_type_for_multiple_files', array( $this, 'allow_json_response' ), 10, 3 );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_rest_api_files' ), 10, 3 );
 		add_filter( 'efml_service_rest_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
