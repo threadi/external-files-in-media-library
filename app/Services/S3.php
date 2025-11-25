@@ -14,7 +14,9 @@ use Aws\EndpointV2\EndpointDefinitionProvider;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
@@ -46,13 +48,6 @@ class S3 extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'AWS S3';
-
-	/**
-	 * Marker if login is required.
-	 *
-	 * @var bool
-	 */
-	protected bool $requires_3fields_api = true;
 
 	/**
 	 * Slug of settings tab.
@@ -125,6 +120,7 @@ class S3 extends Service_Base implements Service {
 		add_filter( 'eml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
 		add_filter( 'eml_http_header_args', array( $this, 'remove_authorization_header' ), 10, 2 );
+		add_filter( 'eml_aws_s3_query_params', array( $this, 'change_file_query' ) );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -145,8 +141,17 @@ class S3 extends Service_Base implements Service {
 		try {
 			// create the query to load the list of files.
 			$query = array(
-				'Bucket' => $this->get_api_key(),
+				'Bucket' => $this->get_bucket(),
 			);
+
+			/**
+			 * Filter the query for files in AWS S3.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param array $query The query.
+			 * @param string $directory The URL.
+			 */
+			$query = apply_filters( 'eml_aws_s3_query_params', $query, $directory );
 
 			// try to load the requested bucket.
 			$result = $s3->listObjectsV2( $query );
@@ -218,7 +223,8 @@ class S3 extends Service_Base implements Service {
 					}
 
 					// add settings for entry.
-					$entry['file']          = $this->get_url_mark( $this->get_api_key() ) . $file['Key'];
+					$entry['s3_key']        = $file['Key'];
+					$entry['file']          = $this->get_url_mark( $this->get_bucket() ) . $file['Key'];
 					$entry['filesize']      = absint( $file['Size'] );
 					$entry['mime-type']     = $mime_type['type'];
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
@@ -251,7 +257,7 @@ class S3 extends Service_Base implements Service {
 						$dir_path .= DIRECTORY_SEPARATOR . $dir;
 
 						// create the full path.
-						$index = $this->get_api_key() . trailingslashit( $dir_path );
+						$index = $this->get_bucket() . trailingslashit( $dir_path );
 
 						// add the directory if it does not exist atm in the main folder list.
 						if ( ! isset( $folders[ $index ] ) ) {
@@ -283,12 +289,12 @@ class S3 extends Service_Base implements Service {
 			}
 
 			// return the resulting file list.
-			return array_merge( array( 'completed' => true ), array( $this->get_api_key() => $listing ), $folders );
+			return array_merge( array( 'completed' => true ), array( $this->get_bucket() => $listing ), $folders );
 		} catch ( S3Exception $e ) {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$d will be replaced by an HTTP-status code like 403. */
-			$error->add( 'efml_service_s3', sprintf( __( 'Credentials are not valid. AWS S3 returns with HTTP-Status %1$d!', 'external-files-in-media-library' ), $e->getStatusCode() ) );
+			$error->add( 'efml_service_s3', sprintf( __( 'Credentials and/or bucket are not valid. AWS S3 returns with HTTP-Status %1$d!', 'external-files-in-media-library' ), $e->getStatusCode() ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -308,7 +314,7 @@ class S3 extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "api_key": apiKey, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -325,17 +331,16 @@ class S3 extends Service_Base implements Service {
 		return array_merge(
 			parent::get_global_actions(),
 			array(
-
 				array(
 					'action' => 'location.href="https://console.aws.amazon.com/s3/buckets/";',
 					'label'  => __( 'Go to AWS S3 Bucket', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark( $this->get_api_key() ) . '" + actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark( $this->get_bucket() ) . '" + actualDirectoryPath, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark( $this->get_api_key() ) . '" + actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark( $this->get_bucket() ) . '" + actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -351,7 +356,7 @@ class S3 extends Service_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// bail if credentials are missing.
-		if ( empty( $this->get_login() ) || empty( $this->get_password() || empty( $this->get_api_key() ) ) ) {
+		if ( empty( $this->get_fields() ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_s3', __( 'No credentials set for this AWS S3 connection!', 'external-files-in-media-library' ) );
@@ -367,7 +372,7 @@ class S3 extends Service_Base implements Service {
 		$s3 = $this->get_s3_client();
 		try {
 			// try to load the requested bucket.
-			$s3->listObjectsV2( array( 'Bucket' => $this->get_api_key() ) );
+			$s3->listObjectsV2( array( 'Bucket' => $this->get_bucket() ) );
 
 			// return true if it could be loaded.
 			return true;
@@ -375,14 +380,14 @@ class S3 extends Service_Base implements Service {
 			// create error object.
 			$error = new WP_Error();
 			/* translators: %1$d will be replaced by an HTTP-status code like 403. */
-			$error->add( 'efml_service_s3', sprintf( __( 'Credentials are not valid. AWS S3 returns with HTTP-Status %1$d!', 'external-files-in-media-library' ), $e->getStatusCode() ) );
+			$error->add( 'efml_service_s3', sprintf( __( 'Credentials and/or bucket are not valid. AWS S3 returns with HTTP-Status %1$d!', 'external-files-in-media-library' ), $e->getStatusCode() ) );
 
 			// add it to the list.
 			$this->add_error( $error );
 
 			// add log entry.
 			/* translators: %1$d will be replaced by a HTTP-status (like 301). */
-			Log::get_instance()->create( sprintf( __( 'Credentials are not valid. AWS S3 returns with HTTP-Status %1$d! Error:', 'external-files-in-media-library' ), $e->getStatusCode() ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+			Log::get_instance()->create( sprintf( __( 'Credentials and/or bucket are not valid. AWS S3 returns with HTTP-Status %1$d! Error:', 'external-files-in-media-library' ), $e->getStatusCode() ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 
 			// return false to prevent any further actions.
 			return false;
@@ -395,13 +400,17 @@ class S3 extends Service_Base implements Service {
 	 * @return S3Client
 	 */
 	public function get_s3_client(): S3Client {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// create and return the AWS S3 client object.
 		return new S3Client(
 			array(
 				'version'     => 'latest',
 				'region'      => $this->get_region(),
 				'credentials' => array(
-					'key'    => $this->get_login(),
-					'secret' => $this->get_password(),
+					'key'    => $fields['access_key']['value'],
+					'secret' => $fields['secret']['value'],
 				),
 			)
 		);
@@ -414,7 +423,7 @@ class S3 extends Service_Base implements Service {
 	 */
 	private function get_region(): string {
 		// get from global setting, if enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( in_array( get_option( 'eml_' . $this->get_name() . '_credentials_vault' ), array( 'global', 'manually' ), true ) ) {
 			return get_option( 'eml_s3_region', 'eu-central-1' );
 		}
 
@@ -458,12 +467,12 @@ class S3 extends Service_Base implements Service {
 	 */
 	public function get_directory(): string {
 		// bail if no bucket is set.
-		if ( empty( $this->get_api_key() ) ) {
+		if ( empty( $this->get_bucket() ) ) {
 			return '/';
 		}
 
 		// return label and bucket name.
-		return $this->get_label() . '/' . $this->get_api_key();
+		return $this->get_label() . '/' . $this->get_bucket();
 	}
 
 	/**
@@ -552,12 +561,49 @@ class S3 extends Service_Base implements Service {
 
 		// add setting for region.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_s3_access_key' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Text();
+			$field->set_title( __( 'Access key', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ) );
+			$field->set_placeholder( __( 'The access key', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_s3_secret_key' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Password();
+			$field->set_title( __( 'Secret key', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'The secret key', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_s3_bucket' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->set_type( 'string' );
+			$field = new Text();
+			$field->set_title( __( 'Bucket', 'external-files-in-media-library' ) );
+			$field->set_placeholder( __( 'The bucket you want to use.', 'external-files-in-media-library' ) );
+			$setting->set_field( $field );
+
+			// add setting.
 			$setting = $settings_obj->add_setting( 'eml_s3_region' );
 			$setting->set_section( $section );
 			$setting->set_type( 'string' );
 			$setting->set_default( $this->get_mapping_region() );
 			$field = new Select();
-			$field->set_title( __( 'Choose your region', 'external-files-in-media-library' ) );
+			$field->set_title( __( 'Choose the region', 'external-files-in-media-library' ) );
 			$field->set_options( $this->get_regions() );
 			$setting->set_field( $field );
 		}
@@ -640,6 +686,9 @@ class S3 extends Service_Base implements Service {
 		// get actual language.
 		$language = Languages::get_instance()->get_current_lang();
 
+		// set the 'aws-global' as default slug for the region.
+		$default_region = 'aws-global';
+
 		// use eu-central-1 for german.
 		if ( Languages::get_instance()->is_german_language() ) {
 			return 'eu-central-1';
@@ -660,12 +709,18 @@ class S3 extends Service_Base implements Service {
 			return 'il-central-1';
 		}
 
-		// return the 'aws-global' slug for all others.
-		return 'aws-global';
+		/**
+		 * Filter the default AWS S3 region.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $default_region The default region.
+		 * @param string $language The actual language.
+		 */
+		return apply_filters( 'efml_service_s3_default_region', $default_region, $language );
 	}
 
 	/**
-	 * Show option to connect to DropBox on user profile.
+	 * Show option to connect to AWS S3 on the user profile.
 	 *
 	 * @param WP_User $user The WP_User object for the actual user.
 	 *
@@ -673,7 +728,7 @@ class S3 extends Service_Base implements Service {
 	 */
 	public function add_user_settings( WP_User $user ): void {
 		// bail if settings are not user-specific.
-		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( ! $this->is_mode( 'user' ) ) {
 			return;
 		}
 
@@ -701,7 +756,24 @@ class S3 extends Service_Base implements Service {
 	 */
 	public function get_user_settings(): array {
 		$list = array(
-			's3_region' => array(
+			's3_access_key' => array(
+				'label'       => __( 'Access key', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
+				'description' => sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ),
+				'field'       => 'text',
+				'placeholder' => __( 'The access key', 'external-files-in-media-library' ),
+			),
+			's3_secret_key' => array(
+				'label'       => __( 'Secret key', 'external-files-in-media-library' ),
+				'field'       => 'password',
+				'placeholder' => __( 'The secret key', 'external-files-in-media-library' ),
+			),
+			's3_bucket'     => array(
+				'label'       => __( 'Bucket', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'The bucket you want to use', 'external-files-in-media-library' ),
+			),
+			's3_region'     => array(
 				'label'   => __( 'Choose your region', 'external-files-in-media-library' ),
 				'field'   => 'select',
 				'options' => $this->get_regions(),
@@ -790,7 +862,7 @@ class S3 extends Service_Base implements Service {
 		// get the permissions to check if file is public available.
 		$public_access_allowed = false;
 		$query                 = array(
-			'Bucket' => $this->get_api_key(),
+			'Bucket' => $this->get_bucket(),
 			'Key'    => $file_key,
 		);
 		$permissions           = $s3->getObjectAcl( $query );
@@ -833,5 +905,237 @@ class S3 extends Service_Base implements Service {
 
 		// remove resulting arguments.
 		return $args;
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the prepared values for the fields.
+			$values = $this->get_field_values();
+
+			// set the fields.
+			$this->fields = array(
+				'access_key' => array(
+					'name'        => 'access_key',
+					'type'        => 'text',
+					'label'       => __( 'Access key', 'external-files-in-media-library' ),
+					'placeholder' => __( 'The access key', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['access_key'],
+					'readonly'    => ! empty( $values['access_key'] ),
+				),
+				'secret'     => array(
+					'name'        => 'secret',
+					'type'        => 'password',
+					'label'       => __( 'Secret key', 'external-files-in-media-library' ),
+					'placeholder' => __( 'The secret key', 'external-files-in-media-library' ),
+					'credential'  => true,
+					'value'       => $values['secret_key'],
+					'readonly'    => ! empty( $values['secret_key'] ),
+				),
+				'bucket'     => array(
+					'name'        => 'bucket',
+					'type'        => 'text',
+					'label'       => __( 'Bucket', 'external-files-in-media-library' ),
+					'placeholder' => __( 'The bucket you want to use', 'external-files-in-media-library' ),
+					'value'       => $values['bucket'],
+					'readonly'    => ! empty( $values['bucket'] ),
+				),
+				'region'     => array(
+					'name'        => 'region',
+					'type'        => 'select',
+					'label'       => __( 'Region', 'external-files-in-media-library' ),
+					'placeholder' => __( 'The region the bucket is located in', 'external-files-in-media-library' ),
+					'options'     => $this->get_regions_for_react(),
+					'value'       => $values['region'],
+					'readonly'    => ! empty( $values['region'] ),
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the bucket from fields.
+	 *
+	 * @return string
+	 */
+	private function get_bucket(): string {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return nothing if no bucket is set.
+		if ( ! isset( $fields['bucket']['value'] ) ) {
+			return '';
+		}
+
+		// return the bucket from fields.
+		return $fields['bucket']['value'];
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// bail if credentials are set.
+		if ( $this->has_credentials_set() ) {
+			return __( 'Connect to your Google Cloud Storage', 'external-files-in-media-library' );
+		}
+
+		// return default title.
+		return __( 'Enter your credentials', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the fields.
+		$has_credentials_set = $this->has_credentials_set();
+
+		// if access token is set in plugin settings.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An authentication JSON has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An authentication JSON must be set by an administrator in the plugin settings.', 'external-files-in-media-library' );
+			}
+
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your authentication JSON <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your access token is already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		// if authentication JSON is set per user.
+		if ( $this->is_mode( 'user' ) ) {
+			if ( ! $has_credentials_set ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your authentication JSON <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your authentication JSON is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		/* translators: %1$s will be replaced by a URL. */
+		return sprintf( __( 'Enter your AWS S3 credentials in this form. How to obtain them is described <a href="%1$s">here</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' );
+	}
+
+	/**
+	 * Return whether credentials are set in the fields.
+	 *
+	 * @return bool
+	 */
+	private function has_credentials_set(): bool {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return whether both credentials are set.
+		return ! empty( $fields['access_key'] ) && ! empty( $fields['secret_key'] );
+	}
+
+	/**
+	 * Change the query for files.
+	 *
+	 * @param array<string,mixed> $query The query.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function change_file_query( array $query ): array {
+		// bail if directory is not set.
+		if ( empty( $this->directory ) ) {
+			return $query;
+		}
+
+		// add the query for the directory.
+		$query['Prefix']    = str_replace( $this->get_url_mark( $this->get_bucket() ), '', $this->directory );
+		$query['Delimiter'] = '/';
+
+		// return the resulting query.
+		return $query;
+	}
+
+	/**
+	 * Return the values depending on actual mode.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_field_values(): array {
+		// prepare the return array.
+		$values = array(
+			'access_key' => '',
+			'secret_key' => '',
+			'bucket'     => '',
+			'region'     => '',
+		);
+
+		// get it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			$values['access_key'] = Crypt::get_instance()->decrypt( get_option( 'eml_s3_access_key', '' ) );
+			$values['secret_key'] = Crypt::get_instance()->decrypt( get_option( 'eml_s3_secret_key', '' ) );
+			$values['bucket']     = get_option( 'eml_s3_bucket', '' );
+			$values['region']     = get_option( 'eml_s3_region', '' );
+		}
+
+		// save it user-specific, if this is enabled.
+		if ( $this->is_mode( 'user' ) ) {
+			// get the user set on object.
+			$user = $this->get_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) {
+				return array();
+			}
+
+			// get the values.
+			$values['access_key'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_s3_access_key', true ) );
+			$values['secret_key'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_s3_secret_key', true ) );
+			$values['bucket']     = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_s3_bucket', true ) );
+			$values['region']     = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_s3_region', true ) );
+		}
+
+		// return the resulting list of values.
+		return $values;
+	}
+
+	/**
+	 * Convert the region list to a react-compatible array.
+	 *
+	 * @return array<int,array<string,string>>
+	 */
+	private function get_regions_for_react(): array {
+		// get the regions.
+		$regions = $this->get_regions();
+
+		// create list for react.
+		$regions_for_react = array();
+
+		// add each region to the list.
+		foreach ( $regions as $key => $value ) {
+			$regions_for_react[] = array(
+				'value' => $key,
+				'label' => $value,
+			);
+		}
+
+		// return the resulting list.
+		return $regions_for_react;
 	}
 }

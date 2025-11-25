@@ -114,7 +114,7 @@ class Files {
 		add_filter( 'eml_table_column_file_source_dialog', array( $this, 'show_external_source' ), 10, 2 );
 		add_filter( 'eml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
 		add_action( 'eml_show_file_info', array( $this, 'show_external_source_info' ) );
-		add_filter( 'efml_add_url', array( $this, 'add_urls_by_hook' ), 10, 4 );
+		add_filter( 'efml_add_url', array( $this, 'add_urls_by_hook' ), 10, 3 );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -1448,17 +1448,16 @@ class Files {
 	 * Add URLs by using our hook.
 	 *
 	 * Example:
-	 * apply_filters( 'efml_add_url', 0, 'https://example.com/sample.pdf', 'login', 'password', 'apikey' );
+	 * apply_filters( 'efml_add_url', 0, 'https://example.com/sample.pdf', 'login', 'password' );
 	 *
 	 * @param int    $attachment_id The resulting attachment ID.
 	 * @param string $url           The URL to add.
 	 * @param string $login         The login to access the URL (optional).
 	 * @param string $password      The password to access the URL (optional).
-	 * @param string $api_key       The API-Key to access the URL (optional).
 	 *
 	 * @return int
 	 */
-	public function add_urls_by_hook( int $attachment_id, string $url, string $login = '', string $password = '', string $api_key = '' ): int {
+	public function add_urls_by_hook( int $attachment_id, string $url, string $login = '', string $password = '' ): int {
 		// bail if attachment ID is set.
 		if ( $attachment_id > 0 ) {
 			return $attachment_id;
@@ -1475,10 +1474,18 @@ class Files {
 		// get the import-object.
 		$import_obj = Import::get_instance();
 
+		// create the fields-array, we assume it is an HTTP- or FTP-connection.
+		$fields = array(
+			'login'    => array(
+				'value' => $login,
+			),
+			'password' => array(
+				'value' => $password,
+			),
+		);
+
 		// add the credentials.
-		$import_obj->set_login( $login );
-		$import_obj->set_password( $password );
-		$import_obj->set_api_key( $api_key );
+		$import_obj->set_fields( $fields );
 
 		// run the import.
 		$import_obj->add_url( $url );

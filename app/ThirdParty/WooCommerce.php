@@ -313,8 +313,15 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$import = Import::get_instance();
 
 		// set credentials, if given.
-		$import->set_login( get_option( 'eml_woocommerce_login' ) );
-		$import->set_password( get_option( 'eml_woocommerce_password' ) );
+		$fields = array(
+			'login'    => array(
+				'values' => get_option( 'eml_woocommerce_login' ),
+			),
+			'password' => array(
+				'values' => get_option( 'eml_woocommerce_password' ),
+			),
+		);
+		$import->set_fields( $fields );
 
 		// add the image and bail if it was not successfully.
 		if ( ! $import->add_url( (string) $data['raw_image_id'] ) ) {

@@ -112,9 +112,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		$import_obj = Import::get_instance();
 
 		// add the credentials.
-		$import_obj->set_login( (string) $settings['login'] );
-		$import_obj->set_password( (string) $settings['password'] );
-		$import_obj->set_api_key( (string) $settings['api_key'] );
+		$import_obj->set_fields( $settings['fields'] );
 
 		// simulate an import.
 		$test_import_result = $import_obj->add_url( $settings['urls'] );
@@ -139,7 +137,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			}
 
 			// bail if index is >= 10 to minimize the list in dialog.
-			if( $index >= 10 ) {
+			if ( $index >= 10 ) {
 				continue;
 			}
 
@@ -151,7 +149,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 				$file_data = json_decode( $file_data_string, true );
 
 				// bail if URL is missing.
-				if( empty( $file_data['url'] ) ) {
+				if ( empty( $file_data['url'] ) ) {
 					continue;
 				}
 
@@ -164,13 +162,12 @@ class Show_What_Will_Be_Done extends Extension_Base {
 
 					// add proxy hint.
 					$proxy_info = __( 'and not use the proxy as its file type is not enabled for it', 'external-files-in-media-library' );
-					if( $file_type_obj->is_proxy_enabled() ) {
+					if ( $file_type_obj->is_proxy_enabled() ) {
 						$proxy_info = __( 'and use the proxy as its file type is enabled for it', 'external-files-in-media-library' );
 					}
 
 					// add the info.
 					$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> <em>' . esc_html( $file_data['url'] ) . '</em> ' . __( 'will stay external hosted', 'external-files-in-media-library' ) . ' ' . $proxy_info . '</label>';
-
 
 				}
 			} catch ( Exception $e ) {
@@ -179,7 +176,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		}
 
 		// add hint about more files.
-		if( count( $results) >= 10 ) {
+		if ( count( $results ) >= 10 ) {
 			$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> ' . __( 'There are more files for which we do not provide any information about what exactly happens to them during import for performance reasons.', 'external-files-in-media-library' ) . '</label>';
 		}
 

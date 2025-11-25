@@ -87,7 +87,7 @@ class Protocol extends Protocol_Base {
 			return false;
 		}
 
-		// return true as DropBox URLs are available.
+		// return true as WebDav URLs are available.
 		return true;
 	}
 
@@ -123,23 +123,24 @@ class Protocol extends Protocol_Base {
 		// get the path.
 		$path = isset( $parse_url['path'] ) ? $parse_url['path'] : '';
 
+		$fields = $this->get_fields();
 		/**
 		 * Filter the WebDAV path.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 *
 		 * @param string $path The path to use after the given domain.
-		 * @param string $login The login to use.
+		 * @param array $fields The login to use.
 		 * @param string $domain The domain to use.
 		 * @param string $directory The requested URL.
 		 */
-		$path = apply_filters( 'efml_service_webdav_path', $path, $this->get_login(), $domain, $directory );
+		$path = apply_filters( 'efml_service_webdav_path', $path, $fields, $domain, $directory );
 
 		// create settings array for request.
 		$settings = array(
 			'baseUri'  => $domain . $path,
-			'userName' => $this->get_login(),
-			'password' => $this->get_password(),
+			'userName' => $fields['login']['value'],
+			'password' => $fields['password']['value'],
 		);
 
 		/**
@@ -234,8 +235,8 @@ class Protocol extends Protocol_Base {
 				// set settings for new sabre-client object.
 				$settings = array(
 					'baseUri'  => $domain . $file_name,
-					'userName' => $this->get_login(),
-					'password' => $this->get_password(),
+					'userName' => $fields['login']['value'],
+					'password' => $fields['password']['value'],
 				);
 
 				// get a new client.

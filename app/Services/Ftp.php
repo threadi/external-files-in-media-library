@@ -10,7 +10,15 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Init;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -18,6 +26,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
+use WP_User;
 
 /**
  * Object to handle support for FTP-based directory listing.
@@ -36,13 +45,6 @@ class Ftp extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'FTP';
-
-	/**
-	 * Marker if login is required.
-	 *
-	 * @var bool
-	 */
-	protected bool $requires_login = true;
 
 	/**
 	 * Slug of settings tab.
@@ -106,6 +108,9 @@ class Ftp extends Service_Base implements Service {
 		// use parent initialization.
 		parent::init();
 
+		// add settings.
+		add_action( 'init', array( $this, 'init_ftp' ), 30 );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -116,6 +121,111 @@ class Ftp extends Service_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_ftp_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
+
+		// misc.
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
+	}
+
+	/**
+	 * Add settings for Google Drive support.
+	 *
+	 * @return void
+	 */
+	public function init_ftp(): void {
+		// bail if user has no capability for this service.
+		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+			return;
+		}
+
+		// get the settings object.
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get tab for services.
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return;
+		}
+
+		// add new tab for settings.
+		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $tab instanceof Tab ) {
+			return;
+		}
+
+		// add section for file statistics.
+		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
+
+		// bail if tab does not exist.
+		if ( ! $section instanceof Section ) {
+			return;
+		}
+
+		// add setting for button to connect.
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
+			// add setting to show also shared files.
+			$setting = $settings_obj->add_setting( 'efml_ftp_server' );
+			$setting->set_section( $section );
+			$setting->set_type( 'string' );
+			$setting->set_default( '' );
+			$field = new Text();
+			$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
+			$field->set_setting( $setting );
+			$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
+			$field->set_readonly( $this->is_disabled() );
+			$setting->set_field( $field );
+
+			// add setting to show also shared files.
+			$setting = $settings_obj->add_setting( 'efml_ftp_login' );
+			$setting->set_section( $section );
+			$setting->set_type( 'string' );
+			$setting->set_default( '' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Text();
+			$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
+			$field->set_setting( $setting );
+			$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
+			$field->set_readonly( $this->is_disabled() );
+			$setting->set_field( $field );
+
+			// add setting to show also shared files.
+			$setting = $settings_obj->add_setting( 'efml_ftp_password' );
+			$setting->set_section( $section );
+			$setting->set_type( 'string' );
+			$setting->set_default( '' );
+			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+			$field = new Password();
+			$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
+			$field->set_setting( $setting );
+			$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
+			$field->set_readonly( $this->is_disabled() );
+			$setting->set_field( $field );
+		}
+
+		if ( $this->is_mode( 'user' ) ) {
+			$setting = $settings_obj->add_setting( 'eml_ftp_credential_location_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo();
+			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a URL. */
+			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$setting->set_field( $field );
+		}
 	}
 
 	/**
@@ -149,8 +259,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// set the login.
-		$protocol_handler_obj->set_login( $this->get_login() );
-		$protocol_handler_obj->set_password( $this->get_password() );
+		$protocol_handler_obj->set_fields( $this->get_fields() );
 
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
@@ -196,11 +305,11 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// get list of directory.
-		$directory_list = $ftp_connection->dirlist( $parent_dir );
+		$directory_list = $ftp_connection->dirlist( $parent_dir, true, true );
 
 		// collect the content of this directory.
 		$listing = array(
-			'title' => basename( $directory ),
+			'title' => $directory,
 			'files' => array(),
 			'dirs'  => array(),
 		);
@@ -221,7 +330,7 @@ class Ftp extends Service_Base implements Service {
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $item_name => $item_settings ) {
 			// get path for item.
-			$path      = $parse_url['scheme'] . '://' . $parse_url['host'] . $parent_dir . $item_name;
+			$path      = trailingslashit( $listing['title'] ) . $item_name;
 			$path_only = $parent_dir . $item_name;
 
 			$false  = false;
@@ -329,7 +438,7 @@ class Ftp extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -347,11 +456,11 @@ class Ftp extends Service_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import active directory', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, login, password, "", config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -366,8 +475,18 @@ class Ftp extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
+		// check if all fields are set.
+		$counter = 0;
+		$fields  = 0;
+		foreach ( $this->fields as $field ) {
+			++$fields;
+			if ( ! empty( $field['value'] ) ) {
+				++$counter;
+			}
+		}
+
 		// bail if credentials are missing.
-		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+		if ( $fields !== $counter ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_ftp', __( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
@@ -378,6 +497,9 @@ class Ftp extends Service_Base implements Service {
 			// return false to login check.
 			return false;
 		}
+
+		// set the directory.
+		$directory = $this->fields['server']['value'];
 
 		// prepend directory with ftp:// if that is not given.
 		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
@@ -401,8 +523,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// set the login.
-		$protocol_handler_obj->set_login( $this->get_login() );
-		$protocol_handler_obj->set_password( $this->get_password() );
+		$protocol_handler_obj->set_fields( $this->get_fields() );
 
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $directory );
@@ -499,8 +620,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// set the login.
-		$protocol_handler_obj->set_login( isset( $credentials['login'] ) ? $credentials['login'] : '' );
-		$protocol_handler_obj->set_password( isset( $credentials['password'] ) ? $credentials['password'] : '' );
+		$protocol_handler_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
 
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $target );
@@ -515,7 +635,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// get the file path.
-		$file_path = get_attached_file( $attachment_id, true );
+		$file_path = wp_get_original_image_path( $attachment_id, true );
 
 		// bail if no file could be found.
 		if ( ! is_string( $file_path ) ) {
@@ -579,8 +699,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// set the login.
-		$protocol_handler_obj->set_login( isset( $credentials['login'] ) ? $credentials['login'] : '' );
-		$protocol_handler_obj->set_password( isset( $credentials['password'] ) ? $credentials['password'] : '' );
+		$protocol_handler_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
 
 		// get the FTP-connection.
 		$ftp_connection = $protocol_handler_obj->get_connection( $url );
@@ -622,5 +741,224 @@ class Ftp extends Service_Base implements Service {
 
 		// return true as file has been deleted.
 		return true;
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the prepared values for the fields.
+			$values = $this->get_field_values();
+
+			// set the fields.
+			$this->fields = array(
+				'server'   => array(
+					'name'        => 'server',
+					'type'        => 'url',
+					'label'       => __( 'Server', 'external-files-in-media-library' ),
+					'placeholder' => __( 'ftps://example.com', 'external-files-in-media-library' ),
+					'value'       => $values['server'],
+					'readonly'    => ! empty( $values['server'] ),
+					'credential'  => true,
+				),
+				'login'    => array(
+					'name'        => 'login',
+					'type'        => 'text',
+					'label'       => __( 'Login', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your login', 'external-files-in-media-library' ),
+					'value'       => $values['login'],
+					'readonly'    => ! empty( $values['login'] ),
+					'credential'  => true,
+				),
+				'password' => array(
+					'name'        => 'password',
+					'type'        => 'password',
+					'label'       => __( 'Password', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your password', 'external-files-in-media-library' ),
+					'value'       => $values['password'],
+					'readonly'    => ! empty( $values['password'] ),
+					'credential'  => true,
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the directory to load from fields.
+	 *
+	 * @return string
+	 */
+	public function get_directory(): string {
+		// bail if directory is set on object.
+		if ( ! empty( $this->directory ) ) {
+			return $this->directory;
+		}
+
+		// bail if no directory is set.
+		if ( empty( $this->fields['server']['value'] ) ) {
+			return '';
+		}
+
+		// return the directory.
+		return $this->fields['server']['value'];
+	}
+
+	/**
+	 * Show option to connect to FTP on the user profile.
+	 *
+	 * @param WP_User $user The WP_User object for the actual user.
+	 *
+	 * @return void
+	 */
+	public function add_user_settings( WP_User $user ): void {
+		// bail if settings are not user-specific.
+		if ( ! $this->is_mode( 'user' ) ) {
+			return;
+		}
+
+		// bail if customization for this user is not allowed.
+		if ( ! ImportDialog::get_instance()->is_customization_allowed() ) {
+			return;
+		}
+
+		?><h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'FTP', 'external-files-in-media-library' ); ?></h3>
+		<div class="efml-user-settings">
+			<?php
+
+			// show settings table.
+			$this->get_user_settings_table( absint( $user->ID ) );
+
+			?>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Return list of user settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_user_settings(): array {
+		$list = array(
+			'ftp_server'   => array(
+				'label'       => __( 'Server', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'ftps://example.com', 'external-files-in-media-library' ),
+			),
+			'ftp_login'    => array(
+				'label'       => __( 'Login', 'external-files-in-media-library' ),
+				'field'       => 'text',
+				'placeholder' => __( 'Your login', 'external-files-in-media-library' ),
+			),
+			'ftp_password' => array(
+				'label'       => __( 'Password', 'external-files-in-media-library' ),
+				'field'       => 'password',
+				'placeholder' => __( 'Your password', 'external-files-in-media-library' ),
+			),
+		);
+
+		/**
+		 * Filter the list of possible user settings for FTP.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<string,mixed> $list The list of settings.
+		 */
+		return apply_filters( 'eml_service_ftp_user_settings', $list );
+	}
+
+	/**
+	 * Return the values depending on actual mode.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_field_values(): array {
+		// prepare the return array.
+		$values = array(
+			'server'   => '',
+			'login'    => '',
+			'password' => '',
+		);
+
+		// get it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			$values['server']   = get_option( 'efml_ftp_server', '' );
+			$values['login']    = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_login', '' ) );
+			$values['password'] = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_password', '' ) );
+		}
+
+		// save it user-specific, if this is enabled.
+		if ( $this->is_mode( 'user' ) ) {
+			// get the user set on object.
+			$user = $this->get_user();
+
+			// bail if user is not available.
+			if ( ! $user instanceof WP_User ) {
+				return array();
+			}
+
+			// get the values.
+			$values['server']   = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_server', true ) );
+			$values['login']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_login', true ) );
+			$values['password'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_password', true ) );
+		}
+
+		// return the resulting list of values.
+		return $values;
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// get the values.
+		$values = $this->get_field_values();
+
+		// show other title if credentials are already set.
+		if ( ! empty( $values['server'] ) && ! $this->is_mode( 'manually' ) ) {
+			return __( 'Connect to your FTP directory', 'external-files-in-media-library' );
+		}
+
+		return __( 'Enter your FTP connection details', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the values.
+		$values = $this->get_field_values();
+
+		// bail if token is set.
+		if ( ! empty( $values['server'] ) && ! $this->is_mode( 'manually' ) ) {
+			// if access token is set in plugin settings.
+			if ( $this->is_mode( 'global' ) ) {
+				if ( ! current_user_can( 'manage_options' ) ) {
+					return __( 'The FTP credentials have already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+				}
+
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'The FTP credentials are already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			// if access token is set per user.
+			if ( $this->is_mode( 'user' ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'The FTP credentials are already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+		}
+
+		// return the hint.
+		return __( 'Enter your FTP credentials in the following fields.', 'external-files-in-media-library' );
 	}
 }

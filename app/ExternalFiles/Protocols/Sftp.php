@@ -90,7 +90,7 @@ class Sftp extends Protocol_Base {
 		$files = array();
 
 		// bail if no credentials are set.
-		if ( empty( $this->get_login() ) || empty( $this->get_password() ) ) {
+		if ( ! $this->has_fields_with_credentials() ) {
 			Log::get_instance()->create( __( 'Missing credentials for import from SFTP-URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
 
 			return array();
@@ -355,12 +355,15 @@ class Sftp extends Protocol_Base {
 			return false;
 		}
 
+		// get the fields.
+		$fields = $this->get_fields();
+
 		// define ssh/sftp connection parameter.
 		$connection_arguments = array(
 			'port'     => $this->get_port_by_protocol( $parse_url['scheme'] ),
 			'hostname' => $parse_url['host'],
-			'username' => $this->get_login(),
-			'password' => $this->get_password(),
+			'username' => $fields['login']['value'],
+			'password' => $fields['password']['value'],
 		);
 
 		// bail if hostname is not set.

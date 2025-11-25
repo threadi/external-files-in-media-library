@@ -196,7 +196,7 @@ class Local implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "local", "urls": file.file, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "local", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',

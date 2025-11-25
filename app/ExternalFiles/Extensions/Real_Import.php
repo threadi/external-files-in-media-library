@@ -409,8 +409,7 @@ class Real_Import extends Extension_Base {
 		$external_file_obj->remove_local_saved();
 
 		// remove the credentials.
-		$external_file_obj->remove_login();
-		$external_file_obj->remove_password();
+		$external_file_obj->remove_fields();
 
 		// clear the cache.
 		$external_file_obj->delete_cache();

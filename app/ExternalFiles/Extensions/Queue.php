@@ -89,7 +89,7 @@ class Queue extends Extension_Base {
 		// use our own hooks.
 		add_filter( 'eml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
 		add_filter( 'eml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
-		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 4 );
+		add_filter( 'eml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 3 );
 		add_action( 'eml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 	}
@@ -251,8 +251,7 @@ class Queue extends Extension_Base {
 		    `id` mediumint(9) NOT NULL AUTO_INCREMENT,
             `time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
             `url` text DEFAULT '' NOT NULL,
-            `login` text DEFAULT '' NOT NULL,
-            `password` text DEFAULT '' NOT NULL,
+            `fields` text DEFAULT '' NOT NULL,
             `state` text DEFAULT '' NOT NULL,
             `options` text DEFAULT '' NOT NULL,
             UNIQUE KEY id (id)
@@ -268,13 +267,12 @@ class Queue extends Extension_Base {
 	/**
 	 * Add a URL to the queue.
 	 *
-	 * @param string $url The URL to add.
-	 * @param string $login The login to use.
-	 * @param string $password The password to use.
+	 * @param string                            $url The URL to add.
+	 * @param array<string,array<string,mixed>> $fields List of fields.
 	 *
 	 * @return bool
 	 */
-	private function add_url( string $url, string $login, string $password ): bool {
+	private function add_url( string $url, array $fields ): bool {
 		global $wpdb;
 
 		// bail if $wpdb is not.
@@ -313,12 +311,11 @@ class Queue extends Extension_Base {
 		$result = $wpdb->insert(
 			$wpdb->prefix . 'eml_queue',
 			array(
-				'time'     => gmdate( 'Y-m-d H:i:s' ),
-				'url'      => $url,
-				'login'    => ! empty( $login ) ? Crypt::get_instance()->encrypt( $login ) : '',
-				'password' => ! empty( $password ) ? Crypt::get_instance()->encrypt( $password ) : '',
-				'state'    => 'new',
-				'options'  => $options_json,
+				'time'    => gmdate( 'Y-m-d H:i:s' ),
+				'url'     => $url,
+				'fields'  => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) : '',
+				'state'   => 'new',
+				'options' => $options_json,
 			)
 		);
 
@@ -412,9 +409,8 @@ class Queue extends Extension_Base {
 		// get the files object.
 		$import = Import::get_instance();
 
-		// set the credentials.
-		$import->set_login( Crypt::get_instance()->decrypt( $url_data['login'] ) );
-		$import->set_password( Crypt::get_instance()->decrypt( $url_data['password'] ) );
+		// set the fields.
+		$import->set_fields( json_decode( Crypt::get_instance()->decrypt( $url_data['fields'] ), true ) );
 
 		// set the options, if set.
 		if ( ! empty( $url_data['options'] ) ) {
@@ -593,21 +589,21 @@ class Queue extends Extension_Base {
 			// run query to unlimited list.
 			if ( $unlimited ) {
 				// return all URLs for requested state.
-				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC', array( 1 ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 			}
 
 			// return limited URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s ORDER BY `time` DESC LIMIT %d', array( 1, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
 		// run query to unlimited list.
 		if ( $unlimited ) {
 			// return all URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC', array( 1, $state ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 		}
 
 		// get limited URLs for requested state.
-		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `login`, `password`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `state` = %s ORDER BY `time` DESC LIMIT %d', array( 1, $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -626,7 +622,7 @@ class Queue extends Extension_Base {
 		}
 
 		// return the data of the single URL.
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `url` = %s', array( 1, $url ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -645,7 +641,7 @@ class Queue extends Extension_Base {
 		}
 
 		// return the data of the single URL.
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `login`, `password`, `options` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields`, `options` FROM ' . $wpdb->prefix . 'eml_queue WHERE 1 = %s AND `id` = %d', array( 1, $id ) ), ARRAY_A ) ); // @phpstan-ignore argument.type
 	}
 
 	/**
@@ -891,14 +887,13 @@ class Queue extends Extension_Base {
 	/**
 	 * Add single URL to queue if request for it is set.
 	 *
-	 * @param bool   $results The return value to use (true to prevent normal import).
-	 * @param string $url     The used URL.
-	 * @param string $login   The login to use.
-	 * @param string $password The password to use.
+	 * @param bool                              $results The return value to use (true to prevent normal import).
+	 * @param string                            $url The URL to use.
+	 * @param array<string,array<string,mixed>> $fields  List of fields necessary for the connection.
 	 *
 	 * @return bool
 	 */
-	public function add_urls_to_queue( bool $results, string $url, string $login, string $password ): bool {
+	public function add_urls_to_queue( bool $results, string $url, array $fields ): bool {
 		// check nonce.
 		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;
@@ -913,7 +908,7 @@ class Queue extends Extension_Base {
 		$result_obj->set_url( $url );
 
 		// add the URL to the queue.
-		if ( ! $this->add_url( $url, $login, $password ) ) {
+		if ( ! $this->add_url( $url, $fields ) ) {
 			// define to result object.
 			$result_obj->set_result_text( __( 'Specified URL could not be added to queue.', 'external-files-in-media-library' ) );
 

@@ -65,7 +65,7 @@ class ImportDialog {
 		add_filter( 'eml_add_dialog', array( $this, 'add_settings_link' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'prevent_dialog_usage' ), PHP_INT_MAX, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_term' ), 10, 2 );
-		add_filter( 'eml_add_dialog', array( $this, 'add_credentials' ), 10, 2 );
+		add_filter( 'eml_add_dialog', array( $this, 'add_fields' ), 10, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_privacy_hint' ), 200, 2 );
 		add_filter( 'eml_add_dialog', array( $this, 'add_show_dialog_option' ), 100, 2 );
 		add_action( 'eml_import_ajax_start', array( $this, 'save_hide_dialog_option' ) );
@@ -92,7 +92,7 @@ class ImportDialog {
 		// get settings from request.
 		$settings = array();
 		if ( isset( $_POST['settings'] ) ) {
-			$settings = array_map( 'wp_kses_post', wp_unslash( $_POST['settings'] ) );
+			$settings = map_deep( wp_unslash( $_POST['settings'] ), 'wp_kses_post' );
 		}
 
 		/**
@@ -310,14 +310,18 @@ class ImportDialog {
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function add_credentials( array $dialog, array $settings ): array {
-		// bail if 'login' and 'password' are not set in settings.
-		if ( empty( $settings['login'] ) && empty( $settings['password'] ) ) {
+	public function add_fields( array $dialog, array $settings ): array {
+		// bail if 'fields' is not set in settings.
+		if ( empty( $settings['fields'] ) ) {
 			return $dialog;
 		}
 
+		// add marker to use credentials.
+		// TODO nötig?
+		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1">';
+
 		// add the fields.
-		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1"><input type="hidden" name="login" value="' . esc_attr( $settings['login'] ) . '"><input type="hidden" name="password" value="' . esc_attr( $settings['password'] ) . '"><input type="hidden" name="api_key" value="' . esc_attr( $settings['api_key'] ) . '">';
+		$dialog['texts'][] = '<input type="hidden" name="fields" value="' . esc_attr( Helper::get_json( $settings['fields'] ) ) . '">';
 
 		// return the resulting dialog.
 		return $dialog;

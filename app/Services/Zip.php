@@ -52,13 +52,6 @@ class Zip extends Service_Base implements Service {
 	protected string $label = 'ZIP';
 
 	/**
-	 * Disable credentials for this service.
-	 *
-	 * @var bool
-	 */
-	protected bool $no_credentials = true;
-
-	/**
 	 * Slug of settings tab.
 	 *
 	 * @var string
@@ -394,7 +387,7 @@ class Zip extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": url + "/" + file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": config.directory + file.file, "fields": config.fields, "term": config.term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -474,6 +467,20 @@ class Zip extends Service_Base implements Service {
 		// bail if zip could not be opened.
 		if ( ! $zip instanceof ZipArchive ) {
 			return array();
+		}
+
+		// get the fields JSON from request.
+		$fields_json = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
+
+		// decode the fields-JSON to an array.
+		$fields = array();
+		if ( is_string( $fields_json ) ) {
+			$fields = json_decode( $fields_json, true );
+		}
+
+		// if password is set, set if on the zip object.
+		if ( is_array( $fields ) && ! empty( $fields['zip_password']['value'] ) ) {
+			$zip->setPassword( $fields['zip_password']['value'] );
 		}
 
 		// get content of the file to extract.
@@ -581,6 +588,19 @@ class Zip extends Service_Base implements Service {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_files_from_zip( array $results, string $file_path ): array {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return $results;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return $results;
+		}
+
 		// bail if PHP module "ZipArchive" is not available.
 		if ( ! $this->is_zip_archive_available( $file_path ) ) {
 			return array();
@@ -890,8 +910,12 @@ class Zip extends Service_Base implements Service {
 		// add our own actions.
 		$actions = array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "login": login, "password": password, "term": config.term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": actualDirectoryPath, "fields": config.fields, "term": config.term } );',
 				'label'  => __( 'Extract actual directory in media library', 'external-files-in-media-library' ),
+			),
+			array(
+				'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
+				'label'  => __( 'Save this file as your external source', 'external-files-in-media-library' ),
 			),
 		);
 
@@ -1138,5 +1162,84 @@ class Zip extends Service_Base implements Service {
 
 		// return the resulting config.
 		return $config;
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			$this->fields = array(
+				'server'       => array(
+					'name'        => 'server',
+					'type'        => 'url',
+					'label'       => __( 'URL of the ZIP-file', 'external-files-in-media-library' ),
+					'placeholder' => __( 'https://example.com', 'external-files-in-media-library' ),
+				),
+				'login'        => array(
+					'name'         => 'login',
+					'type'         => 'text',
+					'label'        => __( 'Auth Basic Login (optional)', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Your login', 'external-files-in-media-library' ),
+					'not_required' => true,
+					'credential'   => true,
+				),
+				'password'     => array(
+					'name'         => 'password',
+					'type'         => 'password',
+					'label'        => __( 'Auth Basic Password (optional)', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Your password', 'external-files-in-media-library' ),
+					'not_required' => true,
+					'credential'   => true,
+				),
+				'zip_password' => array(
+					'name'         => 'zip_password',
+					'type'         => 'password',
+					'label'        => __( 'Password for the ZIP-file (optional)', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'The ZIP password', 'external-files-in-media-library' ),
+					'not_required' => true,
+					'credential'   => true,
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the directory to load from fields.
+	 *
+	 * @return string
+	 */
+	public function get_directory(): string {
+		// bail if no directory is set.
+		if ( empty( $this->fields['server']['value'] ) ) {
+			return '';
+		}
+
+		// return the directory.
+		return $this->fields['server']['value'];
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		return __( 'Enter the URL', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		return __( 'Enter the URL of the ZIP file your want to open. This can also be a local file in your hosting starting with <em>file://</em>.', 'external-files-in-media-library' );
 	}
 }

@@ -66,7 +66,7 @@ class Http extends Protocol_Base {
 	 * @return bool
 	 */
 	public function check_url( string $url ): bool {
-		// given string is not an url.
+		// given string is not a url.
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
@@ -245,7 +245,7 @@ class Http extends Protocol_Base {
 			if ( ! empty( $results ) ) {
 				// bail if URL is already in media library.
 				if ( $this->check_for_duplicate( $this->get_url() ) ) {
-					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'The specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identified() );
 
 					// return empty array to prevent import of this URL.
 					return array();
@@ -593,7 +593,7 @@ class Http extends Protocol_Base {
 	 */
 	public function should_be_saved_local(): bool {
 		// if credentials are set, file should be saved local.
-		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( $this->has_fields_with_credentials() ) {
 			return true;
 		}
 
@@ -647,7 +647,7 @@ class Http extends Protocol_Base {
 	 */
 	public function url_should_be_saved_local( string $url, string $mime_type ): bool {
 		// if credentials are set, file should be saved local.
-		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( $this->has_fields_with_credentials() ) {
 			return true;
 		}
 
@@ -697,9 +697,13 @@ class Http extends Protocol_Base {
 		);
 
 		// add credentials if set.
-		if ( ! empty( $this->get_login() ) && ! empty( $this->get_password() ) ) {
+		if ( $this->has_fields_with_credentials() ) {
+			// get the fields.
+			$fields = $this->get_fields();
+
+			// set the header with the credentials for AuthBasic.
 			$args['headers'] = array(
-				'Authorization' => 'Basic ' . base64_encode( $this->get_login() . ':' . $this->get_password() ),
+				'Authorization' => 'Basic ' . base64_encode( $fields['login']['value'] . ':' . $fields['password']['value'] ),
 			);
 		}
 
@@ -817,7 +821,7 @@ class Http extends Protocol_Base {
 			// show 404 hint.
 			if ( ! empty( $tmp_file->errors['http_404'] ) ) {
 				// temp file could not be saved.
-				Log::get_instance()->create( __( 'Given URL does not exist!', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Specified URL does not exist or is not accessible. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $tmp_file->errors ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identified() );
 
 				// return empty array as we got not the file.
 				return false;
@@ -833,5 +837,18 @@ class Http extends Protocol_Base {
 
 		// return the temp file.
 		return $tmp_file;
+	}
+
+	/**
+	 * Return whether this object has credentials set on its fields.
+	 *
+	 * @return bool
+	 */
+	protected function has_fields_with_credentials(): bool {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return true if login and password for AuthBasic are set.
+		return ! empty( $fields['login']['value'] ) && ! empty( $fields['password']['value'] );
 	}
 }

@@ -74,8 +74,11 @@ class Protocol extends Protocol_Base {
 		// remove our marker from the URL.
 		$url = str_replace( DropBox::get_instance()->get_name(), '', strtolower( $this->get_url() ) );
 
+		// get the fields.
+		$fields = $this->get_fields();
+
 		// get the client with the given token.
-		$client = new Client( DropBox::get_instance()->get_access_token() );
+		$client = new Client( $fields['access_token']['value'] );
 
 		// get the file data.
 		$file_data = array();

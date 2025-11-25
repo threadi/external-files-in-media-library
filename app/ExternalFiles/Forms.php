@@ -171,6 +171,7 @@ class Forms {
 				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
 				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
 				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
+				'delete_archive_nonce'          => wp_create_nonce( 'eml-delete-archive-nonce' ),
 				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
 				'change_term_name_nonce'        => wp_create_nonce( 'efml-change-term-name' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
@@ -348,8 +349,7 @@ class Forms {
 		$eml_use_credentials = absint( filter_input( INPUT_POST, 'use_credentials', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// get the credentials, if enabled.
-		$login    = '';
-		$password = '';
+		$fields = array();
 		if ( 1 === $eml_use_credentials ) {
 			$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 			if ( ! is_string( $login ) ) {
@@ -372,12 +372,16 @@ class Forms {
 				// send empty response as JSON.
 				wp_send_json( array() );
 			}
-		}
 
-		// get the API key, if set.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( ! is_string( $api_key ) ) {
-			$api_key = '';
+			// create the fields array with the credentials.
+			$fields = array(
+				'login'    => array(
+					'value' => $login,
+				),
+				'password' => array(
+					'value' => $password,
+				),
+			);
 		}
 
 		// get the term for credentials from Directory Listing Archive, if set.
@@ -406,9 +410,7 @@ class Forms {
 				}
 
 				// get the credentials.
-				$login    = $term_data['login'];
-				$password = $term_data['password'];
-				$api_key  = $term_data['api_key'];
+				$fields = $term_data['fields'];
 			}
 		}
 
@@ -445,10 +447,8 @@ class Forms {
 		// get the import-object.
 		$import_obj = Import::get_instance();
 
-		// add the credentials.
-		$import_obj->set_login( $login );
-		$import_obj->set_password( $password );
-		$import_obj->set_api_key( $api_key );
+		// add the fields.
+		$import_obj->set_fields( $fields );
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -671,21 +671,13 @@ class Forms {
 		$eml_use_credentials = absint( filter_input( INPUT_POST, 'use_credentials', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// get the credentials, if enabled.
-		$login    = '';
-		$password = '';
+		$fields = array();
 		if ( 1 === $eml_use_credentials ) {
-			$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-			if ( ! is_string( $login ) ) {
-				$login = '';
-			}
-			$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-			if ( ! is_string( $password ) ) {
-				$password = '';
-			}
-			$password = html_entity_decode( $password );
+			// get the fields.
+			$fields = isset( $_POST['fields'] ) ? map_deep( wp_unslash( $_POST['fields'] ), 'sanitize_text_field' ) : array();
 
 			// bail if no credentials are given.
-			if ( empty( $login ) || empty( $password ) ) {
+			if ( empty( $fields ) ) {
 				// show error.
 				$transient_obj = Transients::get_instance()->add();
 				$transient_obj->set_name( 'efml_url_import_error' );
@@ -697,12 +689,6 @@ class Forms {
 				wp_safe_redirect( wp_get_referer() );
 				exit;
 			}
-		}
-
-		// get the API key, if set.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( ! is_string( $api_key ) ) {
-			$api_key = '';
 		}
 
 		// get the term for credentials from Directory Listing Archive, if set.
@@ -731,9 +717,7 @@ class Forms {
 				}
 
 				// get the credentials.
-				$login    = $term_data['login'];
-				$password = $term_data['password'];
-				$api_key  = $term_data['api_key'];
+				$fields = $term_data['fields'];
 			}
 		}
 
@@ -747,9 +731,7 @@ class Forms {
 		$import_obj = Import::get_instance();
 
 		// add the credentials.
-		$import_obj->set_login( $login );
-		$import_obj->set_password( $password );
-		$import_obj->set_api_key( $api_key );
+		$import_obj->set_fields( $fields );
 
 		// loop through the list of URLs to add them.
 		foreach ( (array) $url_array as $url ) {

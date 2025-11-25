@@ -58,8 +58,19 @@ class Cli {
 
 		// get the import object.
 		$import = Import::get_instance();
-		$import->set_login( ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '' );
-		$import->set_password( ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '' );
+
+		// create the fields-array, we assume it is an HTTP- or FTP-connection.
+		$fields = array(
+			'login'    => array(
+				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '',
+			),
+			'password' => array(
+				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '',
+			),
+		);
+
+		// set the fields.
+		$import->set_fields( $fields );
 
 		/**
 		 * Run additional tasks from extensions.

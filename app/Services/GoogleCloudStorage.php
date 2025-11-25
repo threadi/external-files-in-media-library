@@ -174,7 +174,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		}
 
 		// add setting for insert-field.
-		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_cloud_storage_json' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -184,7 +184,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			$field = new Textarea();
 			$field->set_title( __( 'Authentication JSON', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here</a>.', 'external-files-in-media-library' ), 'https://console.cloud.google.com/apis/credentials' ) );
+			$field->set_description( sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ) );
 			$field->set_sanitize_callback( array( $this, 'validate_json' ) );
 			$setting->set_field( $field );
 
@@ -196,23 +196,21 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			$setting->set_default( '' );
 			$field = new Text();
 			$field->set_title( __( 'Bucket', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'Set the name of the bucket to use for external files.', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Set the name of the bucket to use for external files. Leave this field empty if you want to connect to different buckets.', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
 
-			// show button to go to the files if auth JSON is set.
-			if ( ! $this->is_disabled() ) {
-				$setting = $settings_obj->add_setting( 'eml_google_cloud_storage_goto' );
-				$setting->set_section( $section );
-				$setting->prevent_export( true );
-				$field = new Button();
-				$field->set_title( __( 'Files in storage', 'external-files-in-media-library' ) );
-				$field->set_button_title( __( 'View and import files', 'external-files-in-media-library' ) );
-				$field->set_button_url( Directory_Listing::get_instance()->get_view_directory_url( $this ) );
-				$setting->set_field( $field );
-			}
+			// show button to go to the files.
+			$setting = $settings_obj->add_setting( 'eml_google_cloud_storage_goto' );
+			$setting->set_section( $section );
+			$setting->prevent_export( true );
+			$field = new Button();
+			$field->set_title( __( 'Files in storage', 'external-files-in-media-library' ) );
+			$field->set_button_title( __( 'View and import files', 'external-files-in-media-library' ) );
+			$field->set_button_url( Directory_Listing::get_instance()->get_view_directory_url( $this ) );
+			$setting->set_field( $field );
 		}
 
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_cloud_credential_location_hint' );
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
@@ -288,12 +286,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 */
 	private function get_authentication_json(): string {
 		// get from global setting, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'eml_google_cloud_storage_json' );
 		}
 
 		// get user-specific setting, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get current user.
 			$user = $this->get_user();
 
@@ -317,12 +315,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 */
 	public function get_bucket_name(): string {
 		// get from global setting, if this is enabled.
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'eml_google_cloud_storage_bucket' );
 		}
 
 		// get user-specific setting, if this is enabled.
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			// get the user set on object.
 			$user = $this->get_user();
 
@@ -337,33 +335,6 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		// return nothing.
 		return '';
-	}
-
-	/**
-	 * Return whether this listing object is disabled.
-	 *
-	 * @return bool
-	 */
-	public function is_disabled(): bool {
-		return empty( $this->get_authentication_json() ) || empty( $this->get_bucket_name() );
-	}
-
-	/**
-	 * Return the description for this listing object.
-	 *
-	 * @return string
-	 */
-	public function get_description(): string {
-		// get the config URL.
-		$config_url = $this->get_config_url();
-
-		// bail if URL is empty.
-		if ( empty( $config_url ) ) {
-			return '';
-		}
-
-		// return the description with link to settings.
-		return '<a class="connect button button-secondary" href="' . esc_url( $config_url ) . '">' . __( 'Connect', 'external-files-in-media-library' ) . '</a>';
 	}
 
 	/**
@@ -383,15 +354,13 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
-		// bail if it is disabled.
-		if ( $this->is_disabled() ) {
-			return array();
-		}
-
 		// load necessary classes.
 		if ( ! function_exists( 'wp_tempnam' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
 		}
+
+		// get fields.
+		$fields = $this->get_fields();
 
 		// get the storage object.
 		$storage = $this->get_storage_object();
@@ -409,11 +378,14 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		}
 
 		// get our bucket as object.
-		$bucket = $storage->bucket( $this->get_bucket_name() );
+		$bucket = $storage->bucket( $fields['bucket']['value'] );
 
 		// bail if bucket does not exist.
 		try {
 			if ( ! $bucket->exists() ) {
+				// log this event.
+				Log::get_instance()->create( __( 'Google Cloud Storage bucket does not exist.', 'external-files-in-media-library' ), '', 'info' );
+
 				// create an error object.
 				$error = new WP_Error();
 				$error->add( 'efml_service_googlecloudstorage', __( 'Given bucket does not exist.', 'external-files-in-media-library' ) );
@@ -423,6 +395,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 				return array();
 			}
 		} catch ( Exception $e ) {
+			// log this event.
 			Log::get_instance()->create( __( 'Google Cloud Storage bucket could not be loaded:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 
 			// create an error object.
@@ -519,7 +492,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 						$dir_path .= DIRECTORY_SEPARATOR . $dir;
 
 						// create the full path.
-						$index = $this->get_api_key() . trailingslashit( $dir_path );
+						$index = $fields['bucket']['value'] . trailingslashit( $dir_path );
 
 						// add the directory if it does not exist atm in the main folder list.
 						if ( ! isset( $folders[ $index ] ) ) {
@@ -577,7 +550,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + file.file, "login": login, "password": password, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -593,7 +566,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	protected function get_global_actions(): array {
 		// get the settings URL depending on actual settings.
 		$settings_url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
-		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( $this->is_mode( 'user' ) ) {
 			$settings_url = $this->get_config_url();
 		}
 
@@ -609,7 +582,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, "", "", "" );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -656,11 +629,6 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return array<string>
 	 */
 	public function add_protocol( array $protocols ): array {
-		// only add the protocol if it is not disabled.
-		if ( $this->is_disabled() ) {
-			return $protocols;
-		}
-
 		// add the Google Cloud Storage protocol before the HTTPS-protocol and return resulting list of protocols.
 		array_unshift( $protocols, 'ExternalFilesInMediaLibrary\Services\GoogleCloudStorage\Protocol' );
 
@@ -680,9 +648,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		// get the file system object.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the authentification JSON.
+		$authentication_json = $this->get_fields()['authentication_json']['value'];
+
 		try {
 			// save the tmp-file.
-			$wp_filesystem->put_contents( $credential_file_path, $this->get_authentication_json() );
+			$wp_filesystem->put_contents( $credential_file_path, $authentication_json );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -708,51 +679,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	}
 
 	/**
-	 * Encrypt a given value.
-	 *
-	 * @param string|null $value The value.
-	 *
-	 * @return string
-	 */
-	public function encrypt_value( ?string $value ): string {
-		// bail if value is not a string.
-		if ( ! is_string( $value ) ) {
-			return '';
-		}
-
-		// bail if string is empty.
-		if ( empty( $value ) ) {
-			return '';
-		}
-
-		// return encrypted string.
-		return Crypt::get_instance()->encrypt( $value );
-	}
-
-	/**
-	 * Decrypt a given value.
-	 *
-	 * @param string|null $value The value.
-	 *
-	 * @return string
-	 */
-	public function decrypt_value( ?string $value ): string {
-		// bail if value is not a string.
-		if ( ! is_string( $value ) ) {
-			return '';
-		}
-
-		// bail if string is empty.
-		if ( empty( $value ) ) {
-			return '';
-		}
-
-		// return encrypted string.
-		return Crypt::get_instance()->decrypt( $value );
-	}
-
-	/**
-	 * Show option to connect to DropBox on user profile.
+	 * Show option to connect to Google Cloud Storage on the user profile.
 	 *
 	 * @param WP_User $user The WP_User object for the actual user.
 	 *
@@ -760,7 +687,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 */
 	public function add_user_settings( WP_User $user ): void {
 		// bail if settings are not user-specific.
-		if ( 'user' !== get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		if ( ! $this->is_mode( 'user' ) ) {
 			return;
 		}
 
@@ -791,12 +718,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			'google_cloud_storage_json'   => array(
 				'label'       => __( 'Authentication JSON', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here</a>.', 'external-files-in-media-library' ), 'https://console.cloud.google.com/apis/credentials' ),
+				'description' => sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ),
 				'field'       => 'textarea',
 			),
 			'google_cloud_storage_bucket' => array(
 				'label'       => __( 'Bucket', 'external-files-in-media-library' ),
-				'description' => __( 'Set the name of the bucket to use for external files.', 'external-files-in-media-library' ),
+				'description' => __( 'Set the name of the bucket to use for external files. Leave this field empty if you want to connect to different buckets.', 'external-files-in-media-library' ),
 				'field'       => 'text',
 			),
 		);
@@ -912,5 +839,122 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @param string $file_name The file name.
 		 */
 		return apply_filters( 'eml_service_google_cloud_storage_public_url', $url, $bucket_name, $file_name );
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// set fields, if they are empty atm.
+		if ( empty( $this->fields ) ) {
+			// get the JSON.
+			$authentication_json = $this->get_authentication_json();
+
+			// get the bucket name.
+			$bucket = $this->get_bucket_name();
+
+			$this->fields = array(
+				'authentication_json' => array(
+					'name'        => 'authentication_json',
+					'type'        => 'textarea',
+					'label'       => __( 'Authentication JSON', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Enter your authentication JSON here', 'external-files-in-media-library' ),
+					'readonly'    => $this->is_mode( 'user' ) || $this->is_mode( 'global' ),
+					'value'       => $authentication_json,
+					'credential'  => true,
+				),
+				'bucket'              => array(
+					'name'        => 'bucket',
+					'type'        => 'text',
+					'label'       => __( 'Bucket', 'external-files-in-media-library' ),
+					'placeholder' => __( 'Your bucket', 'external-files-in-media-library' ),
+					'readonly'    => ! empty( $bucket ),
+					'value'       => $bucket,
+				),
+			);
+		}
+
+		// return the list of fields.
+		return parent::get_fields();
+	}
+
+	/**
+	 * Return the form title.
+	 *
+	 * @return string
+	 */
+	public function get_form_title(): string {
+		// get the JSON.
+		$authentication_json = $this->get_authentication_json();
+
+		// show other title if access token is set.
+		if ( ! empty( $authentication_json ) && ! $this->is_mode( 'manually' ) ) {
+			return __( 'Connect to your Google Cloud Storage', 'external-files-in-media-library' );
+		}
+
+		// return default title.
+		return __( 'Enter your access credentials', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the form description.
+	 *
+	 * @return string
+	 */
+	public function get_form_description(): string {
+		// get the JSON.
+		$authentication_json = $this->get_authentication_json();
+
+		// if access token is set in plugin settings.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( ! empty( $authentication_json ) && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An authentication JSON has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+			}
+
+			if ( empty( $authentication_json ) && ! current_user_can( 'manage_options' ) ) {
+				return __( 'An authentication JSON must be set by an administrator in the plugin settings.', 'external-files-in-media-library' );
+			}
+
+			if ( empty( $authentication_json ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your authentication JSON <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your access token is already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		// if authentication JSON is set per user.
+		if ( $this->is_mode( 'user' ) ) {
+			if ( empty( $authentication_json ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				return sprintf( __( 'Set your authentication JSON <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
+			}
+
+			/* translators: %1$s will be replaced by a URL. */
+			return sprintf( __( 'Your authentication JSON is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+		}
+
+		/* translators: %1$s will be replaced by a URL. */
+		return sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here</a> and enter the name of the bucket you want to connect to.', 'external-files-in-media-library' ), $this->get_console_url() );
+	}
+
+	/**
+	 * Return the URL for the Google Cloud Console where credentials can be managed.
+	 *
+	 * @return string
+	 */
+	private function get_console_url(): string {
+		$url = 'https://console.cloud.google.com/apis/credentials';
+
+		/**
+		 * Filter the URL for the Google Cloud Console where credentials can be managed.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 */
+		return apply_filters( 'eml_service_google_cloud_storage_console_url', $url );
 	}
 }

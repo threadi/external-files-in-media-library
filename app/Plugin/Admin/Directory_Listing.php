@@ -96,6 +96,7 @@ class Directory_Listing {
 
 		// use AJAX hooks.
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
+		add_action( 'wp_ajax_efml_delete_archive', array( $this, 'delete_archive_via_ajax' ) );
 		add_action( 'wp_ajax_eml_change_term_name', array( $this, 'save_new_listing_name_via_ajax' ) );
 
 		// initialize the serverside tasks object for directory listing.
@@ -260,7 +261,7 @@ class Directory_Listing {
 			// set term in config.
 			$config['term'] = $term_id;
 
-			// get the path to load.
+			// get the URL to load.
 			$url = get_term_meta( $term_id, 'path', true );
 
 			// bail if URL is not a string.
@@ -285,7 +286,7 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config ) ); ?>"></div>
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ); ?>"></div>
 				<?php
 			}
 			?>
@@ -362,6 +363,7 @@ class Directory_Listing {
 				'password'        => __( 'Password', 'external-files-in-media-library' ),
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
+			// TODO aufräumen!
 			'form_file'                     => array(
 				'title'       => __( 'Enter the URL or path to a ZIP-file', 'external-files-in-media-library' ),
 				'description' => __( 'The URL or path must end with ".zip".', 'external-files-in-media-library' ),
@@ -548,48 +550,35 @@ class Directory_Listing {
 		// check nonce.
 		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
 
+		// create initial response dialog.
+		$result_dialog = array(
+			'detail' =>
+				array(
+					'title'   => __( 'Error', 'external-files-in-media-library' ),
+					'texts'   => array(),
+					'buttons' => array(
+						array(
+							'action'  => 'closeDialog();',
+							'variant' => 'primary',
+							'text'    => __( 'OK', 'external-files-in-media-library' ),
+						),
+					),
+				),
+		);
+
+		// get the url.
+		$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
 		// get the type.
 		$type = filter_input( INPUT_POST, 'type', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
-		// get the URL.
-		$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		// get the fields.
+		$fields = isset( $_POST['fields'] ) ? map_deep( wp_unslash( $_POST['fields'] ), 'sanitize_text_field' ) : array();
 
 		// bail if type or URL is not given.
-		if ( is_null( $type ) || is_null( $url ) ) {
-			wp_send_json(
-				array(
-					'detail' =>
-						array(
-							'title'   => __( 'Error', 'external-files-in-media-library' ),
-							'texts'   => array( '<p>' . __( 'The directory could not be saved as external source.', 'external-files-in-media-library' ) . '</p>' ),
-							'buttons' => array(
-								array(
-									'action'  => 'closeDialog();',
-									'variant' => 'primary',
-									'text'    => __( 'OK', 'external-files-in-media-library' ),
-								),
-							),
-						),
-				)
-			);
-		}
-
-		// get the login.
-		$login = filter_input( INPUT_POST, 'login', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $login ) ) {
-			$login = '';
-		}
-
-		// get the password.
-		$password = filter_input( INPUT_POST, 'password', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $password ) ) {
-			$password = '';
-		}
-
-		// get the API key.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $api_key ) ) {
-			$api_key = '';
+		if ( is_null( $type ) || is_null( $fields ) ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'The directory could not be saved as external source.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
 		}
 
 		// get the credentials from the used term.
@@ -598,11 +587,16 @@ class Directory_Listing {
 			// get the term.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
+			// get the term data.
 			if ( ! empty( $term_data ) ) {
-				$login    = $term_data['login'];
-				$password = $term_data['password'];
-				$api_key  = $term_data['api_key'];
+				$url    = $term_data['directory'];
+				$fields = $term_data['fields'];
 			}
+		}
+
+		// convert to array.
+		if ( ! is_array( $fields ) ) {
+			$fields = array();
 		}
 
 		// get service by type.
@@ -610,71 +604,83 @@ class Directory_Listing {
 
 		// bail if type is unknown.
 		if ( ! $service_obj instanceof Directory_Listing_Base ) {
-			wp_send_json(
-				array(
-					'detail' =>
-						array(
-							'title'   => __( 'Error', 'external-files-in-media-library' ),
-							'texts'   => array( '<p>' . __( 'The type of source for this directory is unknown.', 'external-files-in-media-library' ) . '</p>' ),
-							'buttons' => array(
-								array(
-									'action'  => 'closeDialog();',
-									'variant' => 'primary',
-									'text'    => __( 'OK', 'external-files-in-media-library' ),
-								),
-							),
-						),
-				)
-			);
-		}
-
-		// check requirements for the service.
-		if ( $service_obj->is_login_required() ) {
-			// if no credentials are given, show error.
-			if ( empty( $login ) || empty( $password ) ) {
-				wp_send_json(
-					array(
-						'detail' =>
-							array(
-								'title'   => __( 'Error', 'external-files-in-media-library' ),
-								'texts'   => array( '<p>' . __( 'Credentials are missing for the requested service.', 'external-files-in-media-library' ) . '</p>' ),
-								'buttons' => array(
-									array(
-										'action'  => 'closeDialog();',
-										'variant' => 'primary',
-										'text'    => __( 'OK', 'external-files-in-media-library' ),
-									),
-								),
-							),
-					)
-				);
-			}
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'The type of source for this directory is unknown.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
 		}
 
 		// add the archive.
-		Taxonomy::get_instance()->add( $type, $url, $login, $password, $api_key );
+		$term_id = Taxonomy::get_instance()->add( $type, $url, $fields );
+
+		// bail if entry could not be saved.
+		if ( 0 === $term_id ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'Entry could not be saved.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
 
 		// return OK.
-		wp_send_json(
-			array(
-				'detail' =>
-					array(
-						'title'   => __( 'External source saved', 'external-files-in-media-library' ),
-						'texts'   => array(
-							'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
-							/* translators: %1$s will be replaced by a URL. */
-							'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), self::get_instance()->get_url() ) . '</p>',
-						),
-						'buttons' => array(
-							array(
-								'action'  => 'closeDialog();',
-								'variant' => 'primary',
-								'text'    => __( 'OK', 'external-files-in-media-library' ),
-							),
+		$result_dialog['detail']['title']     = __( 'External source saved', 'external-files-in-media-library' );
+		$result_dialog['detail']['texts']     = array(
+			'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
+			/* translators: %1$s will be replaced by a URL. */
+			'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), self::get_instance()->get_url() ) . '</p>',
+		);
+		$result_dialog['detail']['buttons'][] = array(
+			'action'  => 'efml_delete_directory(' . $term_id . ');',
+			'variant' => 'secondary',
+			'text'    => __( 'Undo', 'external-files-in-media-library' ),
+		);
+		wp_send_json( $result_dialog );
+	}
+
+	/**
+	 * Delete single archive via AJAX-request.
+	 *
+	 * @return void
+	 */
+	public function delete_archive_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'eml-delete-archive-nonce', 'nonce' );
+
+		// create initial response dialog.
+		$result_dialog = array(
+			'detail' =>
+				array(
+					'title'   => __( 'Error', 'external-files-in-media-library' ),
+					'texts'   => array(),
+					'buttons' => array(
+						array(
+							'action'  => 'closeDialog();',
+							'variant' => 'primary',
+							'text'    => __( 'OK', 'external-files-in-media-library' ),
 						),
 					),
-			)
+				),
 		);
+
+		// get the term ID.
+		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if term ID is not given.
+		if ( 0 === $term_id ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'No entry given.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
+
+		// delete the term.
+		$delete_result = Taxonomy::get_instance()->delete( $term_id );
+
+		// bail if entry could not be saved.
+		if ( ! $delete_result ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'Entry could not be deleted.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
+
+		// return OK.
+		$result_dialog['detail']['title'] = __( 'External source deleted', 'external-files-in-media-library' );
+		$result_dialog['detail']['texts'] = array(
+			'<p><strong>' . __( 'The directory has been deleted from your external source.', 'external-files-in-media-library' ) . '</strong></p>',
+		);
+		wp_send_json( $result_dialog );
 	}
 
 	/**

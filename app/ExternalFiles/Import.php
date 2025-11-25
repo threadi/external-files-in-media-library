@@ -105,6 +105,7 @@ class Import extends Directory_Listing_Base {
 		add_filter( 'eml_file_import_title', array( $this, 'set_file_title' ), 10, 3 );
 		add_action( 'eml_after_file_save', array( $this, 'set_external_source' ) );
 		add_action( 'efml_before_import', array( $this, 'add_task_to_set_user_agent' ) );
+		add_filter( 'eml_file_import_file_url', array( $this, 'set_url_decoded' ) );
 	}
 
 	/**
@@ -152,10 +153,8 @@ class Import extends Directory_Listing_Base {
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
 	public function add_url( string $url ): bool {
-		$false    = false;
-		$login    = $this->get_login();
-		$password = $this->get_password();
-		$api_key  = $this->get_api_key();
+		$false  = false;
+		$fields = $this->get_fields();
 		/**
 		 * Prevent import of this single URL.
 		 *
@@ -163,13 +162,11 @@ class Import extends Directory_Listing_Base {
 		 *
 		 * @param bool $false Return true if normal import should not be started.
 		 * @param string $url The given URL.
-		 * @param string $login The login to use.
-		 * @param string $password The password to use.
-		 * @param string $api_key The API key to use.
+		 * @param array $fields List of fields necessary for the connection.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		if ( apply_filters( 'eml_prevent_import', $false, $url, $login, $password, $api_key ) ) {
+		if ( apply_filters( 'eml_prevent_import', $false, $url, $fields ) ) {
 			return false;
 		}
 
@@ -179,13 +176,11 @@ class Import extends Directory_Listing_Base {
 		 * @since        5.0.0 Available since 5.0.0.
 		 *
 		 * @param string $url      The given URL.
-		 * @param string $login    The login to use.
-		 * @param string $password The password to use.
-		 * @param string $api_key  The API key to use.
+		 * @param array $fields List of fields.
 		 *
 		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
-		do_action( 'efml_before_import', $url, $login, $password, $api_key );
+		do_action( 'efml_before_import', $url, $fields );
 
 		// get the log object.
 		$log = Log::get_instance();
@@ -210,9 +205,7 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Add the given credentials, even if none are set.
 		 */
-		$protocol_handler_obj->set_login( $login );
-		$protocol_handler_obj->set_password( $password );
-		$protocol_handler_obj->set_api_key( $api_key );
+		$protocol_handler_obj->set_fields( $fields );
 
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
@@ -334,6 +327,16 @@ class Import extends Directory_Listing_Base {
 			 * @param array<string,mixed>  $file_data List of file settings detected by importer.
 			 */
 			$title = apply_filters( 'eml_file_import_title', $title, $file_url, $file_data );
+
+			/**
+			 * Filter the URL for a single file during import.
+			 *
+			 * @since 5.0.0 Available since 5.0.0
+			 *
+			 * @param string $file_url     The file URL.
+			 * @param array<string,mixed>  $file_data List of file settings detected by importer.
+			 */
+			$file_url = apply_filters( 'eml_file_import_file_url', $file_url, $file_data );
 
 			/**
 			 * Prepare attachment-post-settings.
@@ -488,11 +491,9 @@ class Import extends Directory_Listing_Base {
 			$external_file_obj->set_is_local_saved( (bool) $file_data['local'] );
 
 			// save the credentials on the object, if set.
-			$external_file_obj->set_login( $this->get_login() );
-			$external_file_obj->set_password( $this->get_password() );
-			$external_file_obj->set_api_key( $this->get_api_key() );
+			$external_file_obj->set_fields( $this->get_fields() );
 
-			// save file-type-specific meta data.
+			// save file-type-specific meta-data.
 			$external_file_obj->set_metadata();
 
 			// add file to local cache, if necessary.
@@ -757,5 +758,16 @@ class Import extends Directory_Listing_Base {
 	 */
 	public function set_term_id( int $term_id ): void {
 		$this->term_id = $term_id;
+	}
+
+	/**
+	 * Decode the file URL just before it is saved in media library.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	public function set_url_decoded( string $url ): string {
+		return urldecode( $url );
 	}
 }

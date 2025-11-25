@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use WP_User;
 
 /**
@@ -36,13 +37,6 @@ class Service_Base extends Directory_Listing_Base {
 	 * @var string
 	 */
 	protected string $settings_sub_tab = '';
-
-	/**
-	 * Marker that this service does not use any credentials.
-	 *
-	 * @var bool
-	 */
-	protected bool $no_credentials = false;
 
 	/**
 	 * Marker for sync support (false to enable it).
@@ -119,24 +113,63 @@ class Service_Base extends Directory_Listing_Base {
 		$section->set_title( sprintf( __( 'Settings for %1$s', 'external-files-in-media-library' ), $this->get_label() ) );
 		$section->set_callback( array( $this, 'show_hint_for_permissions' ) );
 
-		// add setting where to save the credentials for this service, if enabled.
-		if ( ! $this->has_no_credentials() ) {
+		// show mode selection if this service is using credentials.
+		if ( $this->has_credentials() ) {
+			// add setting where to save the credentials for this service, if enabled.
 			$setting = $settings_obj->add_setting( 'eml_' . $this->get_name() . '_credentials_vault' );
 			$setting->set_type( 'string' );
-			$setting->set_default( 'user' );
+			$setting->set_default( 'manually' );
 			$setting->set_section( $section );
 			$field = new Select();
 			$field->set_title( __( 'Location where credentials are stored', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
-			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the stored access data can be used by all users equally or only by individual users. This only affects the import of files. It does not affect the use of files in the media library.', 'external-files-in-media-library' ), $this->get_label() ) );
-			$field->set_options(
-				array(
-					'user'   => __( 'User-specific', 'external-files-in-media-library' ),
-					'global' => __( 'One for this website', 'external-files-in-media-library' ),
-				)
-			);
+			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made or it can be stored for each individual user or all users in this project. This only affects the import of files. The use of files in the media library is not affected.', 'external-files-in-media-library' ), $this->get_label() ) );
+			$field->set_options( $this->get_modes() );
 			$setting->set_field( $field );
 		}
+	}
+
+	/**
+	 * Return list of possible modes this service can be run.
+	 *
+	 * @return array<string,string>
+	 */
+	private function get_modes(): array {
+		$modes = array(
+			'manually' => __( 'Enter on each connection', 'external-files-in-media-library' ),
+			'user'     => __( 'User-specific', 'external-files-in-media-library' ),
+			'global'   => __( 'One for this website', 'external-files-in-media-library' ),
+		);
+
+		$instance = $this;
+		/**
+		 * Filter the list of possible modes of this service.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array $modes List of modes.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'eml_service_modes', $modes, $instance );
+	}
+
+	/**
+	 * Return whether a specific service is used.
+	 *
+	 * @param string $mode The name of the service.
+	 *
+	 * @return bool
+	 */
+	protected function is_mode( string $mode ): bool {
+		return $mode === $this->get_mode();
+	}
+
+	/**
+	 * Return the actual mode this service is using.
+	 *
+	 * @return string
+	 */
+	protected function get_mode(): string {
+		return get_option( 'eml_' . $this->get_name() . '_credentials_vault' );
 	}
 
 	/**
@@ -145,8 +178,8 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return void
 	 */
 	public function show_hint_for_permissions(): void {
-		/* translators: %1$s will be replaced by a URL. */
-		echo wp_kses_post( sprintf( __( 'Set permission who could use this service <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) );
+		/* translators: %1$s will be replaced by the service name, %2$s by a URL. */
+		echo wp_kses_post( sprintf( __( 'Set permission who could use the %1$s service <a href="%2$s">here</a>.', 'external-files-in-media-library' ), $this->get_label(), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) );
 	}
 
 	/**
@@ -165,15 +198,6 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	protected function get_settings_subtab_slug(): string {
 		return $this->settings_sub_tab;
-	}
-
-	/**
-	 * Return whether this service is using credentials.
-	 *
-	 * @return bool
-	 */
-	private function has_no_credentials(): bool {
-		return $this->no_credentials;
 	}
 
 	/**
@@ -205,6 +229,12 @@ class Service_Base extends Directory_Listing_Base {
 					$value = $setting['default'];
 				}
 
+				// get the placeholder for this field.
+				$placeholder = '';
+				if ( ! empty( $setting['placeholder'] ) ) {
+					$placeholder = $setting['placeholder'];
+				}
+
 				// output.
 				?>
 				<tr>
@@ -215,11 +245,14 @@ class Service_Base extends Directory_Listing_Base {
 							case 'checkbox':
 								echo '<input type="checkbox" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="1"' . ( 1 === absint( $value ) ? ' checked="checked"' : '' ) . ( ! empty( $setting['readonly'] ) ? ' disabled="disabled"' : '' ) . '>';
 								break;
+							case 'password':
+								echo '<input type="password" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" placeholder="' . esc_attr( $placeholder ) . '" value="' . esc_attr( $value ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
+								break;
 							case 'textarea':
-								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>' . esc_html( $value ) . '</textarea>';
+								echo '<textarea id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . ' placeholder="' . esc_attr( $placeholder ) . '">' . esc_html( $value ) . '</textarea>';
 								break;
 							case 'text':
-								echo '<input type="text" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
+								echo '<input type="text" id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '" value="' . esc_attr( $value ) . '" placeholder="' . esc_attr( $placeholder ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
 								break;
 							case 'select':
 								echo '<select id="efml_' . esc_attr( $name ) . '" name="efml_' . esc_attr( $name ) . '"' . ( ! empty( $setting['readonly'] ) ? ' readonly="readonly"' : '' ) . '>';
@@ -303,12 +336,20 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return string
 	 */
 	protected function get_config_url(): string {
-		if ( 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
+		// use the directory URL in manual mode.
+		if ( $this->is_mode( 'manually' ) ) {
+			return Directory_Listing::get_instance()->get_view_directory_url( $this );
+		}
+
+		// use the global settings in global mode.
+		if ( $this->is_mode( 'global' ) ) {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return '';
 			}
 			return \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
 		}
+
+		// use the profile in user mode.
 		return get_admin_url() . 'profile.php#efml-' . $this->get_name();
 	}
 
@@ -360,4 +401,76 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return void
 	 */
 	public function uninstall(): void {}
+
+	/**
+	 * Encrypt a given value.
+	 *
+	 * @param string|null $value The value.
+	 *
+	 * @return string
+	 */
+	public function encrypt_value( ?string $value ): string {
+		// bail if value is not a string.
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		// bail if string is empty.
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// return encrypted string.
+		return Crypt::get_instance()->encrypt( $value );
+	}
+
+	/**
+	 * Decrypt a given value.
+	 *
+	 * @param string|null $value The value.
+	 *
+	 * @return string
+	 */
+	public function decrypt_value( ?string $value ): string {
+		// bail if value is not a string.
+		if ( ! is_string( $value ) ) {
+			return '';
+		}
+
+		// bail if string is empty.
+		if ( empty( $value ) ) {
+			return '';
+		}
+
+		// return encrypted string.
+		return Crypt::get_instance()->decrypt( $value );
+	}
+
+	/**
+	 * Return whether this service is using credentials by checking its field configuration.
+	 *
+	 * @return bool
+	 */
+	private function has_credentials(): bool {
+		// set initial value.
+		$has_credentials = false;
+
+		// check fields for credentials fields.
+		foreach ( $this->get_fields() as $setting ) {
+			// bail if field has not the credential marker.
+			if ( empty( $setting['credential'] ) ) {
+				continue;
+			}
+
+			// bail if it is a credential field but not required.
+			if ( ! empty( $setting['not_required'] ) ) {
+				continue;
+			}
+
+			$has_credentials = true;
+		}
+
+		// return the result.
+		return $has_credentials;
+	}
 }

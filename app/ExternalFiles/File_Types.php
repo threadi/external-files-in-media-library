@@ -221,7 +221,7 @@ class File_Types {
 	/**
 	 * Return the file type object by given URL and mime type.
 	 *
-	 * @param string     $mime_type The mime type.
+	 * @param string            $mime_type The mime type.
 	 * @param false|File|string $external_file_obj The external file object or simply false.
 	 *
 	 * @return File_Types_Base
@@ -239,7 +239,7 @@ class File_Types {
 		}
 
 		// get the file URL for logging.
-		$url = $external_file_obj instanceof File ? $external_file_obj->get_url( true ) : $external_file_obj;
+		$url = (string) ( $external_file_obj instanceof File ? $external_file_obj->get_url( true ) : $external_file_obj );
 
 		// check each file type for compatibility with the given file.
 		foreach ( $this->get_file_types_as_objects( $external_file_obj ) as $file_type_obj ) {
