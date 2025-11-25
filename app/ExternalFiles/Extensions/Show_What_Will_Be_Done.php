@@ -106,7 +106,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 
 		// get the fields.
 		$fields = array();
-		if( is_array( $settings['fields'] ) ) {
+		if ( is_array( $settings['fields'] ) ) {
 			$fields = $settings['fields'];
 		}
 
