@@ -89,6 +89,10 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 
 `vendor/bin/phpcs --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/* --standard=WordPress-VIP-Go .`
 
+## Check PHP compatibility
+
+`vendor/bin/phpcs -p app --standard=PHPCompatibilityWP`
+
 ## Analyse with PHPStan
 
 `vendor/bin/phpstan analyse`

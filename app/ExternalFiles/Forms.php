@@ -370,15 +370,15 @@ class Forms {
 			$fields_json = filter_input( INPUT_POST, 'fields', FILTER_UNSAFE_RAW );
 
 			// if fields is not empty, convert it from JSON to array.
-			if( ! empty( $fields_json ) ) {
+			if ( ! empty( $fields_json ) ) {
 				$fields = json_decode( $fields_json, true );
-				if( ! is_array( $fields ) ) {
+				if ( ! is_array( $fields ) ) {
 					$fields = array();
 				}
 			}
 
 			// if fields is empty, try to use login and password.
-			if( empty( $fields ) ) {
+			if ( empty( $fields ) ) {
 				// bail if no credentials are given.
 				if ( empty( $login ) || empty( $password ) ) {
 					// add this error to the list.

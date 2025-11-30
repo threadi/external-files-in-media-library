@@ -400,6 +400,7 @@ class Settings {
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Hide begging for review', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
 				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
 			)
 		);

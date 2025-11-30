@@ -9,7 +9,7 @@ License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: @@VersionNumber@@
 
-Add external files to your media library to link or embed them in your website. They will be integrated as if they were locally available.
+Add external files to your media library to use them in your website. They will be integrated as if they were locally available.
 
 == Description ==
 
@@ -81,7 +81,7 @@ This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
 
 == Repository, documentation and reliability ==
 
-You find some documentations [here](https://github.com/threadi/external-files-in-media-library/tree/master/docs).
+You find some documentations [on this plugin page](https://plugins.thomaszwirner.de/en/plugin/externe-dateien-in-der-mediathek/) and [in GitHub](https://github.com/threadi/external-files-in-media-library/tree/master/docs).
 
 The development repository is on [GitHub](https://github.com/threadi/external-files-in-media-library/).
 
@@ -89,6 +89,7 @@ Each release of this plugin will only be published if it fulfills the following 
 
 * PHPStan check for possible bugs
 * Compliance with WordPress Coding Standards
+* No failures during PHP Compatibility check
 
 ---
 
@@ -101,8 +102,7 @@ Each release of this plugin will only be published if it fulfills the following 
 
 = Can I prevent other WordPress-users from adding external files? =
 
-Yes, you can select under Settings > "External files in Media Library" > Permissions which roles gets the
-ability to add or delete external URLs in your media library.
+Yes, you can select under Settings > "External files in Media Library" > Permissions which roles gets the ability to add or delete external URLs in your media library.
 
 = Can I also embed password-protected external files? =
 

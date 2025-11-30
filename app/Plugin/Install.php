@@ -127,7 +127,7 @@ class Install {
 		$message .= '<a href="' . esc_url( $url ) . '" class="button button-secondary">' . __( 'Hide this message', 'external-files-in-media-library' ) . '</a>';
 
 		// trigger a welcome message, if it is not hidden.
-		if( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
+		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
 			$transient_obj = $transients_obj->add();
 			$transient_obj->set_dismissible_days( 2 );
 			$transient_obj->set_name( 'eml_welcome' );
@@ -140,7 +140,7 @@ class Install {
 		// add info about enabled complete logging if development mode is enabled.
 		if ( Helper::is_development_mode() && ! $transients_obj->get_transient_by_name( 'eml_logging_hint' )->is_dismissed() ) {
 			// trigger a welcome message.
-			$transient_obj  = $transients_obj->add();
+			$transient_obj = $transients_obj->add();
 			$transient_obj->set_dismissible_days( 2 );
 			$transient_obj->set_name( 'eml_logging_hint' );
 			/* translators: %1$s will be replaced by a URL. */

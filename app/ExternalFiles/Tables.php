@@ -141,7 +141,7 @@ class Tables {
 		}
 
 		// bail if this is not the attachment post type.
-		if( 'attachment' !== $query->query_vars['post_type'] ) {
+		if ( 'attachment' !== $query->query_vars['post_type'] ) {
 			return;
 		}
 
