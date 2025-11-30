@@ -392,6 +392,19 @@ class Settings {
 		);
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_hide_begging_for_review' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Hide begging for review', 'external-files-in-media-library' ),
+				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
+			)
+		);
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'integer' );

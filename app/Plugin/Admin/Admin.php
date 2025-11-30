@@ -88,6 +88,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'check_php' ) );
 		add_action( 'admin_init', array( $this, 'check_gprd' ) );
 		add_action( 'admin_init', array( $this, 'check_fs_method' ) );
+		add_filter( 'admin_body_class', array( $this, 'add_hide_review_hint' ) );
 		add_action( 'admin_action_eml_empty_log', array( $this, 'empty_log' ) );
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
 		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
@@ -492,5 +493,25 @@ class Admin {
 
 		// redirect the user.
 		wp_safe_redirect( $url );
+	}
+
+	/**
+	 * Enabled to play a sound if import finishes.
+	 *
+	 * @param string $classes List of classes as string.
+	 *
+	 * @return string
+	 */
+	public function add_hide_review_hint( string $classes ): string {
+		// bail if setting is not enabled.
+		if ( 1 !== absint( get_option( 'eml_hide_begging_for_review' ) ) ) {
+			return $classes;
+		}
+
+		// add the class.
+		$classes .= ' efml-hide-review-hint';
+
+		// return resulting list of classes.
+		return $classes;
 	}
 }

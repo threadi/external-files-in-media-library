@@ -57,6 +57,7 @@
 - Added options to open and unzip zip-files which are already saved in media library
 - Added option to show what will be done in import dialog
 - Added support for filenames in other writing systems (like Farsi)
+- Added option to hide the review begging
 
 ### Changed
 

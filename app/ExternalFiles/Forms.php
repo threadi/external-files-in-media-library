@@ -179,7 +179,7 @@ class Forms {
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
-				'title_rate_us'                 => __( 'Rate this plugin', 'external-files-in-media-library' ),
+				'title_rate_us'                 => __( 'Add your review for this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
 				'text_import_ended'             => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
