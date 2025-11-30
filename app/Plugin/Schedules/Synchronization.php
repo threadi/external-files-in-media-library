@@ -60,6 +60,11 @@ class Synchronization extends Schedules_Base {
 	 * @return void
 	 */
 	public function run(): void {
+		// bail if uninstallation is running.
+		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return;
+		}
+
 		// mark sync as running.
 		if ( ! defined( 'EFML_SYNC_RUNNING' ) ) {
 			define( 'EFML_SYNC_RUNNING', 1 );

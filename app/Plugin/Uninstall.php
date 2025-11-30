@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transient;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
@@ -96,13 +97,15 @@ class Uninstall {
 		$external_files_obj = Files::get_instance();
 
 		// delete transients.
-		$transients_obj = Transients::get_instance();
-		foreach ( $transients_obj->get_transients() as $transient_obj ) {
+		foreach ( Transients::get_instance()->get_transients( false, true ) as $transient_obj ) {
+			// bail if the object is not ours.
+			if ( ! $transient_obj instanceof Transient ) { // @phpstan-ignore instanceof.alwaysTrue
+				continue;
+			}
+
 			// delete transient-data.
 			$transient_obj->delete();
-
-			// delete dismiss-marker for this transient.
-			delete_option( 'efml-dismissed-' . md5( $transient_obj->get_name() ) );
+			$transient_obj->delete_dismiss();
 
 			// backward-compatibility to < 2.0.0.
 			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
@@ -162,9 +165,6 @@ class Uninstall {
 			'eml_transients',
 			'efmlVersion',
 			'eml_schedules',
-			'eml_woocommerce',
-			'eml_woocommerce_login',
-			'eml_woocommerce_password',
 			'efml_admin_id',
 		);
 		foreach ( $options as $option ) {

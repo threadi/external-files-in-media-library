@@ -53,6 +53,11 @@ class Queue extends Schedules_Base {
 	 * @return void
 	 */
 	public function run(): void {
+		// bail if uninstallation is running.
+		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return;
+		}
+
 		// log event.
 		Log::get_instance()->create( __( 'Queue schedule starting.', 'external-files-in-media-library' ), '', 'success', 2 );
 
