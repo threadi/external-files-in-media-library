@@ -143,7 +143,7 @@ class Settings {
 		 * Configure the basic settings object.
 		 */
 		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
-		$settings_obj->set_slug( 'eml' );
+		$settings_obj->set_slug( 'efml' );
 		$settings_obj->set_plugin_slug( EFML_PLUGIN );
 		$settings_obj->set_path( Helper::get_plugin_dir() . '/app/Dependencies/easySettingsForWordPress/' );
 		$settings_obj->set_url( Helper::get_plugin_url() . '/app/Dependencies/easySettingsForWordPress/' );
@@ -201,25 +201,25 @@ class Settings {
 		$general_tab->set_name( 'eml_general' );
 		$general_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 
-		// the permissions tab.
-		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 20 );
-		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
-
 		// the proxy tab.
 		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 40 );
 		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
 
+		// the permissions tab.
+		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 80 );
+		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
+
 		// the advanced tab.
-		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 50 );
+		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 90 );
 		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
 
 		// the logs tab.
-		$logs_tab = $settings_page->add_tab( 'eml_logs', 60 );
+		$logs_tab = $settings_page->add_tab( 'eml_logs', 100 );
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 
 		// the helper tab.
-		$helper_tab = $settings_page->add_tab( 'eml_helper', 70 );
+		$helper_tab = $settings_page->add_tab( 'eml_helper', 1000 );
 		$helper_tab->set_url( Helper::get_plugin_support_url() );
 		$helper_tab->set_url_target( '_blank' );
 		$helper_tab->set_tab_class( 'nav-tab-help dashicons dashicons-editor-help' );
@@ -388,6 +388,20 @@ class Settings {
 				'type'        => 'Checkbox',
 				'title'       => __( 'Play sound', 'external-files-in-media-library' ),
 				'description' => __( 'If enabled a sound is played if an import is finished.', 'external-files-in-media-library' ),
+			)
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_hide_begging_for_review' );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Hide begging for review', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
+				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
 			)
 		);
 

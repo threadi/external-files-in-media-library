@@ -104,7 +104,7 @@ class Services {
 		}
 
 		// add new tab for services.
-		$tab = $settings_page->add_tab( 'services', 110 );
+		$tab = $settings_page->add_tab( 'services', 20 );
 		$tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 

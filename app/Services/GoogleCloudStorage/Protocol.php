@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
 defined( 'ABSPATH' ) || exit;
 
 use Exception;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -94,7 +95,7 @@ class Protocol extends Protocol_Base {
 
 		// check for duplicate.
 		if ( $this->check_for_duplicate( $this->get_url() ) ) {
-			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_html( $this->get_url() ), 'error' );
+			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return an empty list as we could not analyse the file.
 			return array();

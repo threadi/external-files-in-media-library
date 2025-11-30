@@ -46,6 +46,9 @@ jobs:
       - name: Run PHPStan analyse
         run: vendor/bin/phpstan analyse
 
+      - name: PHP Compatibility check
+        run: vendor/bin/phpcs -p app --standard=PHPCompatibilityWP
+
       - name: Run WordPress Coding Standard fixes
         run: vendor/bin/phpcbf --standard=ruleset.xml .
 
@@ -70,7 +73,9 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           exclude-directories:
-            app/Dependencies/
+            app/Dependencies/easyTransientsForWordPress/
+          ignore-codes:
+            WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
           include-experimental: false
           error-severity: 7
           warning-severity: 6

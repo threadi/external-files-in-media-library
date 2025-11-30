@@ -132,7 +132,7 @@ class Protocols {
 		// bail if no supported protocol could be found for this URL.
 		if ( ! $result ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Specified URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'Specified URL is using a not supported TCP protocol. You will not be able to use this URL for external files in media library.', 'external-files-in-media-library' ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false in this case.
 			return false;
@@ -140,7 +140,7 @@ class Protocols {
 
 		// log this event.
 		/* translators: %1$s will be replaced by a protocol name (like SFTP). */
-		Log::get_instance()->create( sprintf( __( 'Using protocol %1$s for this URL.', 'external-files-in-media-library' ), '<em>' . $result->get_title() . '</em>' ), esc_html( $url ), 'success', 0, Import::get_instance()->get_identified() );
+		Log::get_instance()->create( sprintf( __( 'Using protocol %1$s for this URL.', 'external-files-in-media-library' ), '<em>' . $result->get_title() . '</em>' ), esc_html( $url ), 'success', 0, Import::get_instance()->get_identifier() );
 
 		// return the resulting value.
 		return $result;

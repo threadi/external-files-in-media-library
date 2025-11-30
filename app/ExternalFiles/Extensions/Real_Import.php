@@ -664,7 +664,7 @@ class Real_Import extends Extension_Base {
 		// bail if another file with same name could be found.
 		if ( $existing_file->found_posts >= 1 ) {
 			// log this event.
-			Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $results['url'], 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $results['url'], 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as this file is already on the media library.
 			return array();

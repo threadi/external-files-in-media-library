@@ -140,6 +140,11 @@ class Tables {
 			return;
 		}
 
+		// bail if this is not the attachment post type.
+		if ( 'attachment' !== $query->query_vars['post_type'] ) {
+			return;
+		}
+
 		// get filter value.
 		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -196,8 +201,8 @@ class Tables {
 			return;
 		}
 
-		// bail if this is now our taxonomy.
-		if ( 'edlfw_archive' === $query->query_vars['taxonomy'] ) {
+		// bail if this is not our taxonomy.
+		if ( 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
 			return;
 		}
 
@@ -385,8 +390,8 @@ class Tables {
 			return;
 		}
 
-		// bail if this is now our taxonomy.
-		if ( 'edlfw_archive' === $query->query_vars['taxonomy'] ) {
+		// bail if this is not our taxonomy.
+		if ( 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
 			return;
 		}
 

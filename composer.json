@@ -3,12 +3,10 @@
     "version": "5.0.0",
     "scripts": {
         "post-install-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs",
             "\"vendor/bin/mozart\" compose",
             "composer dump-autoload"
         ],
         "post-update-cmd": [
-            "\"vendor/bin/phpcs\" --config-set installed_paths vendor/wp-coding-standards/wpcs,vendor/phpcsstandards/phpcsutils,vendor/phpcsstandards/phpcsextra,vendor/sirbrillig/phpcs-variable-analysis,vendor/automattic/vipwpcs",
             "\"vendor/bin/mozart\" compose",
             "composer dump-autoload"
         ],
@@ -59,7 +57,9 @@
         "szepeviktor/phpstan-wordpress": "^2.0",
         "phpstan/extension-installer": "^1.4",
         "php-stubs/wp-cli-stubs": "^2.11",
-        "coenjacobs/mozart": "^0.7.1"
+        "coenjacobs/mozart": "^0.7.1",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.2"
     },
     "require": {
         "php": "^8.0",

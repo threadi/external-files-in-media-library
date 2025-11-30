@@ -3,33 +3,26 @@ let efml_progress_timeout = false;
 
 jQuery(document).ready(function($) {
     /**
-     * Add rating hint and add file action.
+     * Add rating hint
      */
-    $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
-      let review_button = document.createElement('a');
+    $('body.settings_page_eml_settings:not(.efml-hide-review-hint) h1.wp-heading-inline, body.taxonomy-edlfw_archive:not(.efml-hide-review-hint) h1.wp-heading-inline, body.media_page_efml_local_directories:not(.efml-hide-review-hint) h1.wp-heading-inline').each(function() {
+      let review_button = document.createElement( 'a' );
       review_button.className = 'review-hint-button page-title-action';
       review_button.href = efmlJsVars.review_url;
       review_button.innerHTML = efmlJsVars.title_rate_us;
       review_button.target = '_blank';
-      this.after(review_button);
+      this.after( review_button );
+    });
 
+    /**
+     * Add file action.,
+     */
+    $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
       let add_file_button = document.createElement('a');
       add_file_button.className = 'page-title-action';
       add_file_button.href = efmlJsVars.directory_listing_url;
       add_file_button.innerHTML = efmlJsVars.title_add_file;
       this.after(add_file_button);
-    });
-
-    /**
-     * Add rating hint.
-     */
-    $('body.media_page_efml_local_directories h1.wp-heading-inline').each(function() {
-      let review_button = document.createElement('a');
-      review_button.className = 'review-hint-button page-title-action';
-      review_button.href = efmlJsVars.review_url;
-      review_button.innerHTML = efmlJsVars.title_rate_us;
-      review_button.target = '_blank';
-      this.after(review_button);
     });
 
     /**

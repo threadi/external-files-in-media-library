@@ -109,7 +109,7 @@ class File extends Protocol_Base {
 			// bail if list could not be loaded.
 			if ( ! is_array( $file_list ) ) {
 				// log this event.
-				Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 				// add the result to the list.
 				$result = new Results\Url_Result();
@@ -156,7 +156,7 @@ class File extends Protocol_Base {
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_path ) ) {
 					// log this event.
-					Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $file_path, 'error', 0, Import::get_instance()->get_identified() );
+					Log::get_instance()->create( __( 'This file is already in your media library.', 'external-files-in-media-library' ), $file_path, 'error', 0, Import::get_instance()->get_identifier() );
 
 					// add the result to the list.
 					$result = new Results\Url_Result();
@@ -215,7 +215,7 @@ class File extends Protocol_Base {
 		} else {
 			// check for duplicate.
 			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
@@ -277,7 +277,7 @@ class File extends Protocol_Base {
 		 * @param string $file_path The absolute file path.
 		 */
 		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
-			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identified() );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
