@@ -156,7 +156,7 @@ class Queue extends Extension_Base {
 		$setting->set_field( $field );
 
 		// add tab for queue table.
-		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 70 );
+		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 60 );
 		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
 		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
 	}

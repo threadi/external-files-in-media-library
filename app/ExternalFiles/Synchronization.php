@@ -123,7 +123,7 @@ class Synchronization {
 		}
 
 		// add settings tab for WooCommerce.
-		$sync_settings_tab = $settings_page->add_tab( 'synchronization', 80 );
+		$sync_settings_tab = $settings_page->add_tab( 'synchronization', 40 );
 		$sync_settings_tab->set_title( __( 'Synchronization', 'external-files-in-media-library' ) );
 
 		// add section for WooCommerce settings.
