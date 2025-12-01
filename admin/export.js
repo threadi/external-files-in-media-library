@@ -26,7 +26,7 @@ jQuery(document).ready(function($) {
   /**
    * Save export changes via toggle.
    */
-  $('.export_files .eml-switch-toggle input:not([readonly])').on("change", function() {
+  $('.export .eml-switch-toggle input:not([readonly])').on("change", function() {
     // send request.
     jQuery.ajax( {
       url: efmlJsExportVars.ajax_url,

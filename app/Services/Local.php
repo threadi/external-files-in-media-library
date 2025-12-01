@@ -21,7 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle local import support.
  */
-class Local implements Service {
+class Local extends Service_Base implements Service {
 
 	/**
 	 * The object name.
@@ -31,18 +31,11 @@ class Local implements Service {
 	protected string $name = 'local';
 
 	/**
-	 * Slug of settings tab.
+	 * Marker for export files.
 	 *
-	 * @var string
+	 * @var bool
 	 */
-	private string $settings_tab = 'services';
-
-	/**
-	 * Slug of settings tab.
-	 *
-	 * @var string
-	 */
-	private string $settings_sub_tab = 'eml_local';
+	protected bool $export_files = true;
 
 	/**
 	 * Instance of actual object.
@@ -102,6 +95,7 @@ class Local implements Service {
 		// use our own hooks.
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 		add_filter( 'efml_directory_listing_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
+		add_filter( 'efml_export_object', array( $this, 'change_export_object' ) );
 	}
 
 	/**
@@ -307,33 +301,6 @@ class Local implements Service {
 	}
 
 	/**
-	 * Return the settings slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_tab_slug(): string {
-		return $this->settings_tab;
-	}
-
-	/**
-	 * Return the settings sub tab slug.
-	 *
-	 * @return string
-	 */
-	private function get_settings_subtab_slug(): string {
-		return $this->settings_sub_tab;
-	}
-
-	/**
-	 * Return list of user settings.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function get_user_settings(): array {
-		return array();
-	}
-
-	/**
 	 * Run during uninstallation of the plugin.
 	 *
 	 * @return void
@@ -348,5 +315,84 @@ class Local implements Service {
 	public function show_hint_for_permissions(): void {
 		/* translators: %1$s will be replaced by a URL. */
 		echo wp_kses_post( sprintf( __( 'Set permission who could use this service <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) );
+	}
+
+	/**
+	 * Export a file to this service. Returns true if it was successfully.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 * @param string $target The target.
+	 * @param array $credentials The credentials.
+	 * @return bool
+	 */
+	public function export_file( int $attachment_id, string $target, array $credentials ): bool {
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// get the file path.
+		$file_path = get_attached_file( $attachment_id );
+
+		// bail if source file does not exist.
+		if( ! $wp_filesystem->exists( $file_path ) ) {
+			return false;
+		}
+
+		// bail if target file does already exist.
+		if( $wp_filesystem->exists( $target ) ) {
+			return false;
+		}
+
+		// copy file to the given local directory.
+		if( ! $wp_filesystem->copy( $file_path, $target ) ) {
+			return false;
+		}
+
+		// return true as file has been saved extern.
+		return true;
+	}
+
+	/**
+	 * Delete an exported file.
+	 *
+	 * @param string $url
+	 * @param array  $credentials
+	 *
+	 * @return bool
+	 */
+	public function delete_exported_file( string $url, array $credentials ): bool {
+		// get WP Filesystem-handler.
+		require_once ABSPATH . '/wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
+		\WP_Filesystem();
+		global $wp_filesystem;
+
+		// bail if file does not exist.
+		if( ! $wp_filesystem->exists( $url ) ) {
+			return false;
+		}
+
+		// delete the file.
+		$wp_filesystem->delete( $url );
+
+		// return true as file has been deleted.
+		return true;
+	}
+
+	/**
+	 * Change the export object if the local object is called.
+	 *
+	 * @param object $service_object The given object.
+	 *
+	 * @return object
+	 */
+	public function change_export_object( object $service_object ): object {
+		// bail if this is not the local object from directory listing.
+		if( ! $service_object instanceof \easyDirectoryListingForWordPress\Listings\Local ) {
+			return $service_object;
+		}
+
+		// return the actual object.
+		return $this;
 	}
 }
