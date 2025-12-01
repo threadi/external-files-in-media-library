@@ -117,9 +117,11 @@ class DropBox extends Service_Base implements Service {
 
 		// use hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_js_admin' ) );
+		add_action( 'show_user_profile', array( $this, 'add_user_settings' ), 10, 0 );
+
+		// use AJAX hook.
 		add_action( 'wp_ajax_efml_add_access_token', array( $this, 'add_access_token_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token_by_ajax' ), 10, 0 );
-		add_action( 'show_user_profile', array( $this, 'add_user_settings' ), 10, 0 );
 
 		// use our own hooks.
 		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
@@ -383,6 +385,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_access_token(): string {
+		// get the access token from settings.
+		if ( ! empty( $this->fields['access_token']['value'] ) ) {
+			return $this->fields['access_token']['value'];
+		}
+
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'efml_dropbox_access_tokens', '' );
@@ -400,10 +407,6 @@ class DropBox extends Service_Base implements Service {
 
 			// get and return the value.
 			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
-		}
-
-		if ( ! empty( $this->fields['access_token']['value'] ) ) {
-			return $this->fields['access_token']['value'];
 		}
 
 		// return nothing.
@@ -561,7 +564,7 @@ class DropBox extends Service_Base implements Service {
 		try {
 			$account_infos = $client->getAccountInfo();
 		} catch ( ClientException $e ) {
-			Log::get_instance()->create( __( 'Error during request of DropBox account infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+			Log::get_instance()->create( __( 'Error during request of DropBox account infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 		}
 
 		// bail if account infos are empty.

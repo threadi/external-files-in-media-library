@@ -1003,18 +1003,8 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return array<string,mixed>
 	 */
 	public function set_query_params( array $query ): array {
-		// get the fields.
-		$fields = $this->get_fields();
-
 		// collect settings for q.
 		$q = array();
-
-		// if directory on fields is set, use it.
-		if ( ! empty( $fields['folder_id']['value'] ) ) {
-			$q[]                                = "'" . $fields['folder_id']['value'] . "' in parents";
-			$query['includeItemsFromAllDrives'] = true;
-			$query['supportsAllDrives']         = true;
-		}
 
 		// if directory is set, use it.
 		if ( ! empty( $this->directory ) ) {

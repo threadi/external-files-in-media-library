@@ -250,12 +250,14 @@ class Update {
 			'count'      => false,
 		);
 		$terms = new WP_Term_Query( $query );
-		foreach ( $terms->terms as $term ) {
-			// bail if this is not a WP_Term.
-			if ( ! $term instanceof WP_Term ) {
-				continue;
+		if( is_array( $terms->terms ) ) {
+			foreach ( $terms->terms as $term ) {
+				// bail if this is not a WP_Term.
+				if ( ! $term instanceof WP_Term ) {
+					continue;
+				}
+				update_term_meta( $term->term_id, 'path', $term->name );
 			}
-			update_term_meta( $term->term_id, 'path', $term->name );
 		}
 
 		// add the file types settings.
