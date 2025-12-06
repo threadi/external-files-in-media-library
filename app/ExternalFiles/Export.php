@@ -731,7 +731,8 @@ class Export {
 			$credentials = Taxonomy::get_instance()->get_entry( $term->term_id );
 
 			// export the file via this listing object.
-			if ( ! $listing_obj->export_file( $attachment_id, $import_path, $credentials ) ) {
+			$url = $listing_obj->export_file( $attachment_id, $import_path, $credentials );
+			if ( ! is_string( $url ) ) {
 				continue;
 			}
 
@@ -743,9 +744,6 @@ class Export {
 					$fields = array();
 				}
 			}
-
-			// create the URL.
-			$url = $base_url . basename( $file );
 
 			// mark this attachment as one of our own plugin through setting the URL.
 			$external_file_obj->set_url( $url );

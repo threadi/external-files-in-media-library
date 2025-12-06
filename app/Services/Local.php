@@ -318,14 +318,14 @@ class Local extends Service_Base implements Service {
 	}
 
 	/**
-	 * Export a file to this service. Returns true if it was successfully.
+	 * Export a file to this service. Returns the external URL if it was successfully and false if not.
 	 *
 	 * @param int $attachment_id The attachment ID.
 	 * @param string $target The target.
 	 * @param array $credentials The credentials.
-	 * @return bool
+	 * @return string|bool
 	 */
-	public function export_file( int $attachment_id, string $target, array $credentials ): bool {
+	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
 		// get WP Filesystem-handler.
 		require_once ABSPATH . '/wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
 		\WP_Filesystem();

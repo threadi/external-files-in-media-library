@@ -596,17 +596,14 @@ class Ftp extends Service_Base implements Service {
 	public function cli(): void {}
 
 	/**
-	 * Export a file to this service. Returns true if it was successfully.
+	 * Export a file to this service. Returns the external URL if it was successfully and false if not.
 	 *
 	 * @param int                 $attachment_id The attachment ID.
 	 * @param string              $target The target.
 	 * @param array<string,mixed> $credentials The credentials.
-	 * @return bool
+	 * @return string|bool
 	 */
-	public function export_file( int $attachment_id, string $target, array $credentials ): bool {
-		// get the local WP_Filesystem.
-		$wp_filesystem_local = Helper::get_wp_filesystem();
-
+	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $target );
 
@@ -642,6 +639,9 @@ class Ftp extends Service_Base implements Service {
 			return false;
 		}
 
+		// get the local WP_Filesystem.
+		$wp_filesystem_local = Helper::get_wp_filesystem();
+
 		// bail if source file does not exist.
 		if ( ! $wp_filesystem_local->exists( $file_path ) ) {
 			return false;
@@ -673,8 +673,8 @@ class Ftp extends Service_Base implements Service {
 			return false;
 		}
 
-		// return true as file has been saved extern.
-		return true;
+		// return the URL of this file.
+		return $target;
 	}
 
 	/**

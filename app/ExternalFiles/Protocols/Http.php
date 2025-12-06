@@ -87,7 +87,6 @@ class Http extends Protocol_Base {
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
 		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		return apply_filters( 'efml_check_url', $return, $url );
 	}
@@ -142,7 +141,6 @@ class Http extends Protocol_Base {
 		 * @param bool $true True if content type check should be run.
 		 * @param string $url The used URL.
 		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'efml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
@@ -164,7 +162,6 @@ class Http extends Protocol_Base {
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
 		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_check_url_availability', $return, $url ) ) {
 			// file is available.
@@ -698,7 +695,6 @@ class Http extends Protocol_Base {
 		 * @param bool   $true Use false to disable this.
 		 * @param string $url  The URL to check.
 		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'efml_http_ssl', $true, $url ) ) {
 			return true;
