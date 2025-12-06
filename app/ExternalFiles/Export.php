@@ -15,7 +15,6 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
@@ -119,17 +118,14 @@ class Export {
 			return;
 		}
 
-		// get main settings tab.
-		$tab = $page->get_tab( 'eml_general' );
-
-		// bail if tab could not be found.
-		if ( ! $tab instanceof Tab ) {
-			return;
-		}
+		// add a settings tab.
+		$tab = $page->add_tab( 'eml_export', 40 );
+		$tab->set_title( __( 'Export', 'external-files-in-media-library' ) );
 
 		// add export section.
-		$section = $tab->add_section( 'settings_section_export', 30 );
+		$section = $tab->add_section( 'settings_section_export', 10 );
 		$section->set_title( __( 'Export of files', 'external-files-in-media-library' ) );
+		$section->set_callback( array( $this, 'export_description' ) );
 
 		// create URL.
 		$url = add_query_arg(
@@ -1009,5 +1005,14 @@ class Export {
 		 * @param object|false $listing_obj The object.
 		 */
 		return apply_filters( 'efml_export_object', $listing_obj );
+	}
+
+	/**
+	 * Show description for synchronisation.
+	 *
+	 * @return void
+	 */
+	public function export_description(): void {
+		echo '<p>' . wp_kses_post( __( '<strong>Automatically upload local files uploaded to your media library to an external source.</strong> The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) ) .'</p>';
 	}
 }

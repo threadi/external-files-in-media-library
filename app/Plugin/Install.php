@@ -97,37 +97,37 @@ class Install {
 		// get the transients object.
 		$transients_obj = Transients::get_instance();
 
-		// create the message.
-		/* translators: %1$s will be replaced by the URL where user can add media files. */
-		$message = sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
-
-		// add button for intro, if not already closed.
-		if ( ! Intro::get_instance()->is_closed() ) {
-			$message .= '<a href="#" class="button button-primary efml-intro-start">' . __( 'Show me how it works', 'external-files-in-media-library' ) . '</a>';
-		}
-
-		// add button to go to "add new files".
-		$url      = add_query_arg(
-			array(
-				'action'  => 'efml_hide_welcome',
-				'forward' => urlencode( Helper::get_add_media_url() ),
-			),
-			get_admin_url() . 'admin.php'
-		);
-		$message .= '<a href="' . esc_url( $url ) . '" class="button button-primary">' . __( 'Add your first external file', 'external-files-in-media-library' ) . '</a>';
-
-		// add button to just hide this message and forward to media library.
-		$url      = add_query_arg(
-			array(
-				'action'  => 'efml_hide_welcome',
-				'forward' => urlencode( Helper::get_media_library_url() ),
-			),
-			get_admin_url() . 'admin.php'
-		);
-		$message .= '<a href="' . esc_url( $url ) . '" class="button button-secondary">' . __( 'Hide this message', 'external-files-in-media-library' ) . '</a>';
-
 		// trigger a welcome message, if it is not hidden.
 		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
+			// create the message.
+			/* translators: %1$s will be replaced by the URL where user can add media files. */
+			$message = sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
+
+			// add button for intro, if not already closed.
+			if ( ! Intro::get_instance()->is_closed() ) {
+				$message .= '<a href="#" class="button button-primary efml-intro-start">' . __( 'Show me how it works', 'external-files-in-media-library' ) . '</a>';
+			}
+
+			// add button to go to "add new files".
+			$url      = add_query_arg(
+				array(
+					'action'  => 'efml_hide_welcome',
+					'forward' => urlencode( Helper::get_add_media_url() ),
+				),
+				get_admin_url() . 'admin.php'
+			);
+			$message .= '<a href="' . esc_url( $url ) . '" class="button button-primary">' . __( 'Add your first external file', 'external-files-in-media-library' ) . '</a>';
+
+			// add button to just hide this message and forward to media library.
+			$url      = add_query_arg(
+				array(
+					'action'  => 'efml_hide_welcome',
+					'forward' => urlencode( Helper::get_media_library_url() ),
+				),
+				get_admin_url() . 'admin.php'
+			);
+			$message .= '<a href="' . esc_url( $url ) . '" class="button button-secondary">' . __( 'Hide this message', 'external-files-in-media-library' ) . '</a>';
+
 			$transient_obj = $transients_obj->add();
 			$transient_obj->set_dismissible_days( 2 );
 			$transient_obj->set_name( 'eml_welcome' );

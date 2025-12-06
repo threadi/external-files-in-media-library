@@ -124,12 +124,13 @@ class Synchronization {
 		}
 
 		// add settings tab for WooCommerce.
-		$sync_settings_tab = $settings_page->add_tab( 'synchronization', 40 );
+		$sync_settings_tab = $settings_page->add_tab( 'synchronization', 45 );
 		$sync_settings_tab->set_title( __( 'Synchronization', 'external-files-in-media-library' ) );
 
 		// add section for WooCommerce settings.
 		$sync_settings_section = $sync_settings_tab->add_section( 'eml_synchronisation_settings', 10 );
 		$sync_settings_section->set_title( __( 'Synchronization', 'external-files-in-media-library' ) );
+		$sync_settings_section->set_callback( array( $this, 'sync_description' ) );
 
 		// add setting to enable sync support.
 		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync' );
@@ -1605,5 +1606,14 @@ class Synchronization {
 
 		// return the list of actions.
 		return $actions;
+	}
+
+	/**
+	 * Show description for synchronisation.
+	 *
+	 * @return void
+	 */
+	public function sync_description(): void {
+		echo '<p>' . wp_kses_post( __( '<strong>Automatically load files from external sources into your media library.</strong> Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) ) .'</p>';
 	}
 }
