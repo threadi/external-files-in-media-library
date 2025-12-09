@@ -76,6 +76,9 @@ class Protocol extends Protocol_Base {
 	 * @throws JsonException Could throw exception.
 	 */
 	public function get_url_infos(): array {
+		// get the URL.
+		$url = $this->get_url();
+
 		// get the Google Drive object.
 		$google_drive_obj = GoogleDrive::get_instance();
 
@@ -92,7 +95,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// get the ID from the URL.
-		$file_id = str_replace( $google_drive_obj->get_url_mark(), '', $this->get_url() );
+		$file_id = str_replace( $google_drive_obj->get_url_mark(), '', $url );
 
 		// if file id is "eflm-import-all" do this.
 		if ( 'eflm-import-all' === $file_id ) {
@@ -109,7 +112,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// check for duplicate.
-		if ( $this->check_for_duplicate( $this->get_url() ) ) {
+		if ( $this->check_for_duplicate( $url ) ) {
 			Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return an empty list as we could not analyse the file.
@@ -145,12 +148,31 @@ class Protocol extends Protocol_Base {
 				// get the user ID.
 				$user_id = get_current_user_id();
 
+				/**
+				 * Run action if we have files to check via Google Drive-protocol.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 *
+				 * @param string $url   The URL to import.
+				 * @param array<int|string,mixed> $entries List of matches (the URLs).
+				 */
+				do_action( 'efml_google_drive_directory_import_files', $url, $directories );
+
 				// loop through the result to get the requested directory with its files.
 				foreach ( $directories as $directory => $settings ) {
 					// bail if directory does not match and if it is not the main directory.
 					if ( $directory !== $file_id && false === stripos( $file_id, GoogleDrive::get_instance()->get_directory() ) ) {
 						continue;
 					}
+
+					/**
+					 * Run action just before the file check via Google Drive-protocol.
+					 *
+					 * @since 5.0.0 Available since 5.0.0.
+					 *
+					 * @param int|string $directory   The URL to import.
+					 */
+					do_action( 'efml_google_drive_directory_import_file_check', $directory );
 
 					// set counter for files which has been loaded from Google Drive.
 					$loaded_files = 0;

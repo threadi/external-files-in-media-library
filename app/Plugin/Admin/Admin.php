@@ -163,7 +163,7 @@ class Admin {
 			'easy-dialog-for-wordpress',
 			$admin_css,
 			array( 'wp-components' ),
-			(string) filemtime( $admin_css_path )
+			Helper::get_file_version( $admin_css_path )
 		);
 	}
 

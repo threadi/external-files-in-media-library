@@ -151,16 +151,21 @@ class Proxy {
 		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'error' );
 
 			// fallback to 404.
 			return $template;
 		}
 
+		/**
+		 * Run additional tasks before proxy tries to load a cached external file.
+		 */
+		do_action( 'efml_proxy_before', $external_file_obj );
+
 		// if original file is not cached, do it now.
 		if ( ! $external_file_obj->is_cached() ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Proxy will create cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+			Log::get_instance()->create( __( 'The proxy creates a cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 
 			// add it to cache.
 			$external_file_obj->add_to_cache();
@@ -173,7 +178,7 @@ class Proxy {
 		if ( ! file_exists( $cached_file_path ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Proxy could not load the cached file %1$s.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
+			Log::get_instance()->create( sprintf( __( 'Requested file %1$s for proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
 			// return the template.
 			return $template;
@@ -182,6 +187,9 @@ class Proxy {
 		// get the object of this file type.
 		$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $external_file_obj->get_mime_type(), $external_file_obj );
 		$file_type_obj->set_dimensions( $dimensions );
+
+		// log this event.
+		Log::get_instance()->create( __( 'Proxy will now output the cached filed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 
 		// output the proxied file.
 		$file_type_obj->get_proxied_file();

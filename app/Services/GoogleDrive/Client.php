@@ -62,7 +62,6 @@ class Client {
 	 * @param int $user_id The WordPress user ID (optional).
 	 *
 	 * @return \Google\Client|false
-	 * @throws JsonException Could throw exception.
 	 */
 	public function get_client( int $user_id = 0 ): \Google\Client|false {
 		// get Google Drive object.

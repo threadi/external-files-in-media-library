@@ -250,7 +250,7 @@ class Update {
 			'count'      => false,
 		);
 		$terms = new WP_Term_Query( $query );
-		if( is_array( $terms->terms ) ) {
+		if ( is_array( $terms->terms ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			foreach ( $terms->terms as $term ) {
 				// bail if this is not a WP_Term.
 				if ( ! $term instanceof WP_Term ) {

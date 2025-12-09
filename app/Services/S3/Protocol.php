@@ -167,7 +167,7 @@ class Protocol extends Protocol_Base {
 						// set query for the file and save it in tmp dir.
 						$query = array(
 							'Bucket' => $this->get_fields()['bucket']['value'],
-							'Key'    => str_replace( S3::get_instance()->get_url_mark( $this->get_fields()['bucket']['value'] ), '', $file['file'] ),
+							'Key'    => $file['s3_key'],
 							'SaveAs' => $tmp_file,
 						);
 

@@ -463,3 +463,12 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	margin-left: 4px;
 	vertical-align: middle;
 }
+
+body.settings_page_eml_settings .ui-sortable-handle:before {
+	background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 7h2V5H8v2zm0 6h2v-2H8v2zm0 6h2v-2H8v2zm6-14v2h2V5h-2zm0 8h2v-2h-2v2zm0 6h2v-2h-2v2z"></path></svg>');
+	background-repeat: no-repeat;
+	content: '';
+	display: inline-block;
+	padding: 13px;
+	vertical-align: middle;
+}

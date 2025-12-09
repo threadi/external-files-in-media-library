@@ -426,11 +426,16 @@ class File {
 	}
 
 	/**
-	 * Add file to cache.
+	 * Add file to cache for proxy.
 	 *
 	 * @return void
 	 */
 	public function add_to_cache(): void {
+		// bail if finfo is not available.
+		if ( ! class_exists( 'finfo' ) ) {
+			return;
+		}
+
 		// bail if file type should not be cached in proxy.
 		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
 			return;
@@ -440,6 +445,8 @@ class File {
 		if ( $this->is_locally_saved() ) {
 			return;
 		}
+
+		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 		/**
 		 * Get the handler for this URL depending on its protocol.
@@ -452,11 +459,6 @@ class File {
 		if ( ! $protocol_handler_obj ) {
 			return;
 		}
-
-		/**
-		 * Get used WP Filesystem handler.
-		 */
-		$wp_filesystem = Helper::get_wp_filesystem();
 
 		/**
 		 * Get info about the external file.
@@ -474,6 +476,11 @@ class File {
 			return;
 		}
 
+		/**
+		 * Get used WP Filesystem handler.
+		 */
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// get temp file.
 		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
@@ -482,16 +489,11 @@ class File {
 			return;
 		}
 
-		// get the body.
+		// get the content of this file.
 		$body = $wp_filesystem->get_contents( $tmp_file );
 
 		// bail if no contents returned.
 		if ( ! $body ) {
-			return;
-		}
-
-		// bail if finfo is not available.
-		if ( ! class_exists( 'finfo' ) ) {
 			return;
 		}
 
@@ -954,7 +956,7 @@ class File {
 				continue;
 			}
 
-			// get file path.
+			// create the file path.
 			$file = $proxy_obj->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), absint( $size_data['width'] ), absint( $size_data['height'] ), $this->get_file_extension() );
 
 			// bail if file does not exist.
@@ -1073,5 +1075,17 @@ class File {
 			'local_saved' => $this->get_file_type_obj()->is_local(),
 			'proxied'     => $this->get_file_type_obj()->is_proxy_enabled(),
 		);
+	}
+
+	/**
+	 * Disable the check for unsafe URLs.
+	 *
+	 * @param array<string,mixed> $parsed_args List of args for URL request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function disable_check_for_unsafe_urls( array $parsed_args ): array {
+		$parsed_args['reject_unsafe_urls'] = false;
+		return $parsed_args;
 	}
 }

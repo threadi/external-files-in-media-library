@@ -18,13 +18,16 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\DropBox\Export;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
 use WP_Error;
@@ -55,6 +58,13 @@ class DropBox extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $settings_sub_tab = 'eml_dropbox';
+
+	/**
+	 * Marker for export files.
+	 *
+	 * @var bool
+	 */
+	protected bool $export_files = true;
 
 	/**
 	 * Instance of actual object.
@@ -125,6 +135,9 @@ class DropBox extends Service_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
+		add_filter( 'efml_http_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
+		add_filter( 'efml_files_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
+		add_filter( 'efml_http_header_response', array( $this, 'get_real_request_headers' ), 10, 3 );
 	}
 
 	/**
@@ -233,6 +246,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// bail if directory is set on object.
+		if ( ! empty( $this->directory ) ) {
+			return $this->directory;
+		}
+
 		return 'DropBox';
 	}
 
@@ -305,9 +323,9 @@ class DropBox extends Service_Base implements Service {
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-admin-dropbox',
-			plugins_url( '/admin/dropbox.js', EFML_PLUGIN ),
+			Helper::get_plugin_url() . 'admin/dropbox.js',
 			array( 'jquery', 'eml-admin' ),
-			(string) filemtime( Helper::get_plugin_dir() . '/admin/dropbox.js' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/dropbox.js' ),
 			true
 		);
 
@@ -601,10 +619,16 @@ class DropBox extends Service_Base implements Service {
 			'dirs'  => array(),
 		);
 
+		// get the requested subdirectory.
+		$subdirectory = '/';
+		if ( str_contains( $directory, '/' ) ) {
+			$subdirectory = str_replace( 'DropBox', '', $directory );
+		}
+
 		// get the entries (files and folders).
 		$entries = array();
 		try {
-			$entries = $client->listFolder( '/', true );
+			$entries = $client->listFolder( $subdirectory, true );
 		} catch ( ClientException $e ) {
 			Log::get_instance()->create( __( 'Error during request of DropBox entries:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
 		}
@@ -1117,5 +1141,59 @@ class DropBox extends Service_Base implements Service {
 
 		// return the resulting list of values.
 		return $values;
+	}
+
+	/**
+	 * Do not check for content type if a Dropbox-URL is given.
+	 *
+	 * Reason: a bug in Dropbox API regarding header requests which results in "application/json" instead the correct
+	 * content type.
+	 *
+	 * @param bool   $results The result.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function allow_wrong_content_type( bool $results, string $url ): bool {
+		// bail if this is not a Dropbox URL.
+		if ( ! str_contains( $url, 'dropboxusercontent.com' ) ) {
+			return $results;
+		}
+
+		// do not check for content type.
+		return false;
+	}
+
+	/**
+	 * Return the export object for this service.
+	 *
+	 * Dropbox is only usable in development mode.
+	 * Reason: bugs in Dropbox API regarding HTTP header requests.
+	 *
+	 * @return Export_Base|false
+	 */
+	public function get_export_object(): Export_Base|false {
+		return Export::get_instance();
+	}
+
+	/**
+	 * Return the real HTTP request headers for an DropBox content URL.
+	 *
+	 * Reason: Dropbox does return "application/json" for each HTTP header request.
+	 *
+	 * @param array<string,mixed>|WP_Error $response The response.
+	 * @param Http                         $http_object The HTTP-object.
+	 * @param string                       $url The requested URL.
+	 *
+	 * @return array<string,mixed>|WP_Error
+	 */
+	public function get_real_request_headers( array|WP_Error $response, HTTP $http_object, string $url ): array|WP_Error {
+		// bail if URL is not a Dropbox content URL.
+		if ( ! str_contains( $url, 'dropboxusercontent.com' ) ) {
+			return $response;
+		}
+
+		// send a second request for all data to get the real HTTP answer.
+		return wp_safe_remote_get( $url, $http_object->get_header_args() );
 	}
 }

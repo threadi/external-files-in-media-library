@@ -18,11 +18,13 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Tex
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Services\Ftp\Export;
 use WP_Error;
 use WP_Filesystem_FTPext;
 use WP_Image_Editor;
@@ -52,13 +54,6 @@ class Ftp extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $settings_sub_tab = 'eml_ftp';
-
-	/**
-	 * Marker for export files.
-	 *
-	 * @var bool
-	 */
-	protected bool $export_files = true;
 
 	/**
 	 * Instance of actual object.
@@ -596,154 +591,6 @@ class Ftp extends Service_Base implements Service {
 	public function cli(): void {}
 
 	/**
-	 * Export a file to this service. Returns true if it was successfully.
-	 *
-	 * @param int                 $attachment_id The attachment ID.
-	 * @param string              $target The target.
-	 * @param array<string,mixed> $credentials The credentials.
-	 * @return bool
-	 */
-	public function export_file( int $attachment_id, string $target, array $credentials ): bool {
-		// get the local WP_Filesystem.
-		$wp_filesystem_local = Helper::get_wp_filesystem();
-
-		// get the protocol handler for this URL.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $target );
-
-		// bail if the detected protocol handler is not FTP.
-		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ), $target, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// set the login.
-		$protocol_handler_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
-
-		// get the FTP-connection.
-		$ftp_connection = $protocol_handler_obj->get_connection( $target );
-
-		// bail if connection is not an FTP-object.
-		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ), $target, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// get the file path.
-		$file_path = wp_get_original_image_path( $attachment_id, true );
-
-		// bail if no file could be found.
-		if ( ! is_string( $file_path ) ) {
-			return false;
-		}
-
-		// bail if source file does not exist.
-		if ( ! $wp_filesystem_local->exists( $file_path ) ) {
-			return false;
-		}
-
-		// get the URL parts.
-		$parse_url = wp_parse_url( $target );
-
-		// bail if path could not be found.
-		if ( empty( $parse_url['path'] ) ) {
-			return false;
-		}
-
-		// bail if target file does already exist.
-		if ( $ftp_connection->exists( $parse_url['path'] ) ) {
-			return false;
-		}
-
-		// get the file content.
-		$content = $wp_filesystem_local->get_contents( $file_path );
-
-		// bail if no content could be loaded.
-		if ( ! is_string( $content ) ) {
-			return false;
-		}
-
-		// put the content to FTP.
-		if ( ! $ftp_connection->put_contents( $parse_url['path'], $content ) ) {
-			return false;
-		}
-
-		// return true as file has been saved extern.
-		return true;
-	}
-
-	/**
-	 * Delete an exported file.
-	 *
-	 * @param string              $url The URL to delete.
-	 * @param array<string,mixed> $credentials The credentials to use.
-	 *
-	 * @return bool
-	 */
-	public function delete_exported_file( string $url, array $credentials ): bool {
-		// get the protocol handler for this URL.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
-
-		// bail if the detected protocol handler is not FTP.
-		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// set the login.
-		$protocol_handler_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
-
-		// get the FTP-connection.
-		$ftp_connection = $protocol_handler_obj->get_connection( $url );
-
-		// bail if connection is not an FTP-object.
-		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Got wrong object to load FTP-data.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// get the URL parts.
-		$parse_url = wp_parse_url( $url );
-
-		// bail if path could not be found.
-		if ( empty( $parse_url['path'] ) ) {
-			return false;
-		}
-
-		// bail if file does not exist.
-		if ( ! $ftp_connection->exists( $parse_url['path'] ) ) {
-			// log this event.
-			Log::get_instance()->create( __( 'File to delete does not exist in FTP directory.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// delete the file.
-		if ( ! $ftp_connection->delete( $parse_url['path'] ) ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Could not delete file from FTP.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// return true as file has been deleted.
-		return true;
-	}
-
-	/**
 	 * Return list of fields we need for this listing.
 	 *
 	 * @return array<string,array<string,mixed>>
@@ -960,5 +807,14 @@ class Ftp extends Service_Base implements Service {
 
 		// return the hint.
 		return __( 'Enter your FTP credentials in the following fields.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the export object for this service.
+	 *
+	 * @return Export_Base|false
+	 */
+	public function get_export_object(): Export_Base|false {
+		return Export::get_instance();
 	}
 }

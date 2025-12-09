@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Error;
 use WP_Filesystem_Base;
 
 /**
@@ -86,8 +87,6 @@ class Http extends Protocol_Base {
 		 *
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		return apply_filters( 'efml_check_url', $return, $url );
 	}
@@ -103,11 +102,16 @@ class Http extends Protocol_Base {
 		// get the header-data of this url.
 		$response = $this->get_http_header( $url );
 
+		// bail if http_response is not set.
+		if ( empty( $response['http_response'] ) ) {
+			return false;
+		}
+
 		// URL returns not compatible HTTP-state.
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			// log this event.
 			/* translators: %1$d will be replaced by the HTTP-Status. */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), $response['http_response']->get_status() ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), '<em>' . $response['http_response']->get_status() . '</em>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file is not available.
 			return false;
@@ -141,8 +145,6 @@ class Http extends Protocol_Base {
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param bool $true True if content type check should be run.
 		 * @param string $url The used URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'efml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
@@ -163,8 +165,6 @@ class Http extends Protocol_Base {
 		 *
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_check_url_availability', $return, $url ) ) {
 			// file is available.
@@ -196,10 +196,21 @@ class Http extends Protocol_Base {
 		// get the header-data of this url.
 		$response = wp_safe_remote_head( $url, $this->get_header_args() );
 
+		$instance = $this;
+		/**
+		 * Filter the HTTP header response for an external URL.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array|WP_Error $response The response.
+		 * @param HTTP $instance The actual object.
+		 * @param string $url The requested URL.
+		 */
+		$response = apply_filters( 'efml_http_header_response', $response, $instance, $url );
+
 		// request resulted in an error.
 		if ( is_wp_error( $response ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Error during check of availability of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'Error during request the HTTP header data of URL:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $response ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array.
 			return array();
@@ -697,8 +708,6 @@ class Http extends Protocol_Base {
 		 *
 		 * @param bool   $true Use false to disable this.
 		 * @param string $url  The URL to check.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'efml_http_ssl', $true, $url ) ) {
 			return true;
@@ -729,7 +738,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function get_header_args(): array {
+	public function get_header_args(): array {
 		// define basic header.
 		$args = array(
 			'timeout'     => get_option( 'eml_timeout' ),
@@ -781,7 +790,7 @@ class Http extends Protocol_Base {
 	 *
 	 * @param string $url The used URL.
 	 *
-	 * @return array<integer>
+	 * @return array<int,int>
 	 */
 	private function get_allowed_http_states( string $url ): array {
 		$list = array( 200 );
@@ -793,7 +802,7 @@ class Http extends Protocol_Base {
 		 * Filter the list of allowed http states.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array<integer> $list List of http states.
+		 * @param array<int,int> $list List of http states.
 		 * @param string $url The requested URL.
 		 */
 		return apply_filters( 'efml_http_states', $list, $url );
@@ -827,8 +836,6 @@ class Http extends Protocol_Base {
 		 * @since 3.0.0 Available since 3.0.0.
 		 * @param bool $false Must be true to prevent check.
 		 * @param string $url The used URL.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_locale_file_check', $false, $url ) ) {
 			return false;
@@ -858,6 +865,10 @@ class Http extends Protocol_Base {
 		 * @param string $url The given URL.
 		 */
 		if ( ! apply_filters( 'efml_save_temp_file', $true, $url ) ) {
+			// temp file could not be saved.
+			Log::get_instance()->create( __( 'Creation of a temporary file for the requested URL was prevented by a setting.', 'external-files-in-media-library' ), $url, 'info', 2, Import::get_instance()->get_identifier() );
+
+			// do nothing more.
 			return false;
 		}
 

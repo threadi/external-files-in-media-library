@@ -40,7 +40,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not a Google Cloud Storage URL.
-		if ( ! str_starts_with( $this->get_url(), GoogleCloudStorage::get_instance()->get_url_mark() ) ) {
+		if ( ! str_starts_with( $this->get_url(), 'https://www.googleapis.com/storage/' ) ) {
 			return false;
 		}
 
@@ -82,7 +82,7 @@ class Protocol extends Protocol_Base {
 		$file_name = str_replace(
 			array(
 				$google_cloud_storage_obj->get_url_mark(),
-				$google_cloud_storage_obj->get_directory() . '/',
+				$google_cloud_storage_obj->get_directory(),
 			),
 			'',
 			$this->get_url()
@@ -117,61 +117,6 @@ class Protocol extends Protocol_Base {
 			return array();
 		}
 
-		// check if public access is allowed in this bucket.
-		$public_access_allowed = false;
-		try {
-			$iam = $bucket->iam();
-		} catch ( Exception $e ) {
-			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
-
-			// create the error entry.
-			$error_obj = new Url_Result();
-			/* translators: %1$s will be replaced by a URL. */
-			$error_obj->set_result_text( sprintf( __( 'Error during request of Google Cloud Storage IAM infos. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
-			$error_obj->set_url( $this->get_url() );
-			$error_obj->set_error( true );
-
-			// add the error object to the list of errors.
-			Results::get_instance()->add( $error_obj );
-
-			// do nothing more.
-			return array();
-		}
-
-		if ( $iam ) { // @phpstan-ignore if.alwaysTrue
-			try {
-				$policy = $iam->policy();
-				foreach ( $policy['bindings'] as $binding ) {
-					// search for roles with allow public access.
-					if ( in_array(
-						$binding['role'],
-						array(
-							'roles/storage.objectViewer',
-							'roles/storage.legacyObjectReader',
-						),
-						true
-					) ) {
-						$public_access_allowed = true;
-					}
-				}
-			} catch ( Exception $e ) {
-				Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 1 );
-
-				// create the error entry.
-				$error_obj = new Url_Result();
-				/* translators: %1$s will be replaced by a URL. */
-				$error_obj->set_result_text( sprintf( __( 'Error during request of Google Cloud Storage IAM binding data. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
-				$error_obj->set_url( $this->get_url() );
-				$error_obj->set_error( true );
-
-				// add the error object to the list of errors.
-				Results::get_instance()->add( $error_obj );
-
-				// do nothing more.
-				return array();
-			}
-		}
-
 		// get the requested object.
 		$file = $bucket->object( $file_name );
 
@@ -204,6 +149,9 @@ class Protocol extends Protocol_Base {
 		if ( ! isset( $file_data['name'], $file_data['updated'] ) ) {
 			return array();
 		}
+
+		// get public state of the bucket.
+		$public_access_allowed = $google_cloud_storage_obj->is_bucket_public( $bucket );
 
 		// initialize basic array for file data.
 		$results = array(
