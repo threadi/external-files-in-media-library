@@ -138,6 +138,7 @@ class Intro {
 		check_ajax_referer( 'efml-intro-started', 'nonce' );
 
 		// remove the transient after installation.
+		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
 
 		// response with success message.

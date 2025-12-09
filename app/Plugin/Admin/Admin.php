@@ -482,7 +482,8 @@ class Admin {
 	 * @return void
 	 */
 	public function hide_welcome_by_request(): void {
-		// hide the welcome hint.
+		// dismiss the welcome hint.
+		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
 
 		// get URL from request.
