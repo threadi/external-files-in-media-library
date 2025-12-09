@@ -88,6 +88,7 @@ class Proxy {
 
 		// misc.
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_cache_state_in_info_dialog' ), 10, 2 );
 	}
 
 	/**
@@ -391,5 +392,18 @@ class Proxy {
 
 		// return the result of proxy setting on file type of this file.
 		return $external_file_object->get_file_type_obj()->is_proxy_enabled();
+	}
+
+	/**
+	 * Add info about proxy cache usage in info dialog for single external file.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param File  $external_file The external file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_cache_state_in_info_dialog( array $dialog, File $external_file ): array {
+		$dialog['texts'][] = '<p><strong>' . __( 'Proxied', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file->is_cached() ? __( 'will be used.', 'external-files-in-media-library' ) : __( 'will not be used.', 'external-files-in-media-library' ) ) . '</p>';
+		return $dialog;
 	}
 }

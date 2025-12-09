@@ -247,7 +247,6 @@ class Tables {
 	 */
 	public function add_media_columns( array $columns ): array {
 		$columns['external_files']        = __( 'External file', 'external-files-in-media-library' );
-		$columns['external_files_source'] = __( 'Source', 'external-files-in-media-library' );
 		return $columns;
 	}
 
@@ -265,29 +264,17 @@ class Tables {
 
 		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
-			// bail if it is not an external file.
+			// show no-icon if it is not an external file.
 			if ( ! $external_file->is_valid() ) {
 				echo '<span class="dashicons dashicons-no"></span>';
-			} else {
-				echo '<span class="dashicons dashicons-yes"></span>';
+				return;
 			}
 
+			// show yes-icon as it is an external file.
+			echo '<span class="dashicons dashicons-yes"></span>';
+
 			// show deprecated hint for old hook.
-			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0', 'efml_table_column_content' );
-
-			/**
-			 * Run additional tasks for show more infos here.
-			 *
-			 * @since 1.0.0 Available since 1.0.0.
-			 * @param int $attachment_id The ID of the attachment.
-			 */
-			do_action( 'efml_table_column_content', $attachment_id );
-		}
-
-		// show additional infos about external files.
-		if ( 'external_files_source' === $column_name && $external_file->is_valid() ) {
-			// get the unproxied URL.
-			$url = $external_file->get_url( true );
+			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0' );
 
 			// get protocol handler.
 			$protocol_handler = $external_file->get_protocol_handler_obj();
@@ -296,6 +283,9 @@ class Tables {
 			if ( ! $protocol_handler instanceof Protocol_Base ) {
 				return;
 			}
+
+			// get the unproxied URL.
+			$url = $external_file->get_url( true );
 
 			// get URL for show depending on used protocol.
 			$url_to_show = $protocol_handler->get_link();
