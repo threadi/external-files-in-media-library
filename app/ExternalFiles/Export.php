@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use AgileStoreLocator\Admin\Manager;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -18,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
@@ -78,6 +78,7 @@ class Export {
 	public function init(): void {
 		// add the settings.
 		add_action( 'init', array( $this, 'init_export' ), 20 );
+		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
 
 		// bail if not enabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
@@ -135,15 +136,6 @@ class Export {
 		$section->set_title( __( 'Export of files', 'external-files-in-media-library' ) );
 		$section->set_callback( array( $this, 'export_description' ) );
 
-		// create URL.
-		$url = add_query_arg(
-			array(
-				'taxonomy'  => 'edlfw_archive',
-				'post_type' => 'attachment',
-			),
-			get_admin_url() . 'edit-tags.php'
-		);
-
 		// add setting.
 		$setting_export = $settings_obj->add_setting( 'eml_export' );
 		$setting_export->set_section( $section );
@@ -152,7 +144,7 @@ class Export {
 		$field = new Checkbox();
 		$field->set_title( __( 'Enable export', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
-		$field->set_description( sprintf( __( 'If enabled you have to configure one or more of <a href="%1$s">your external sources</a> as export target. Every new file in media library will be exported to the configured source and used as external file.', 'external-files-in-media-library' ), $url ) );
+		$field->set_description( sprintf( __( 'If enabled you have to configure one or more of <a href="%1$s">your external sources</a> as export target. Every new file in media library will be exported to the configured source and used as external file.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) );
 		$field->set_setting( $setting_export );
 		$setting_export->set_field( $field );
 
@@ -169,24 +161,7 @@ class Export {
 		$setting->set_field( $field );
 
 		// collect the external sources.
-		$external_sources = array();
-		$terms            = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				// bail if no export is enabled.
-				if ( 0 === absint( get_term_meta( $term->term_id, 'efml_export', true ) ) ) {
-					continue;
-				}
-
-				// add this source.
-				$external_sources[ $term->term_id ] = $term->name;
-			}
-		}
+		$external_sources = $this->get_external_sources_as_name_list();
 
 		// create URL.
 		$url = add_query_arg(
@@ -1444,5 +1419,84 @@ class Export {
 		if ( $term_id === $main_export_source_term_id ) {
 			update_option( 'eml_export_main_source', 0 );
 		}
+	}
+
+	/**
+	 * Show hint to export files on /wp-admin/media-new.php.
+	 *
+	 * @return void
+	 */
+	public function show_export_hint_on_file_add_page(): void {
+		// show simple messages if user has not the capability for settings.
+		if( ! current_user_can( 'manage_options' ) ) {
+			if( 1 === absint( get_option( 'eml_export' ) ) ) {
+				// get the external sources with enabled export option.
+				$external_sources = $this->get_external_sources_as_name_list();
+
+				// bail if no external sources are set.
+				if( ! empty( $external_sources ) ) {
+					echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong></p></div>';
+					return;
+				}
+				return;
+			}
+			return;
+		}
+
+		// if export is already enabled, show where the files will be exported.
+		if( 1 === absint( get_option( 'eml_export' ) ) ) {
+			// get the external sources with enabled export option.
+			$external_sources = $this->get_external_sources_as_name_list();
+
+			// bail if no external sources are set.
+			if( empty( $external_sources ) ) {
+				echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( __( 'You have enabled the export for new media files but not configured an external source for it.', 'external-files-in-media-library' ) ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
+				return;
+			}
+
+			// show the hint with the list.
+			echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
+			return;
+		}
+
+		// show the hint.
+		echo '<div class="efml_export-hint"><p>' . wp_kses_post( sprintf( __( '<strong>Export your media files to external servers to save storage space.</strong> Enable this option <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) ) . '</p></div>';
+	}
+
+	/**
+	 * Return a list of names of the external sources with enabled export option.
+	 *
+	 * @return array
+	 */
+	private function get_external_sources_as_name_list(): array {
+		// get all terms.
+		$terms            = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
+
+		// bail if no terms could be loaded.
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+
+		// create the list.
+		$external_sources = array();
+
+		// add all terms to the list with enabled export.
+		foreach ( $terms as $term ) {
+			// bail if no export is enabled.
+			if ( 0 === absint( get_term_meta( $term->term_id, 'efml_export', true ) ) ) {
+				continue;
+			}
+
+			// add this source.
+			$external_sources[ $term->term_id ] = $term->name;
+		}
+
+		// return the resulting list.
+		return $external_sources;
 	}
 }

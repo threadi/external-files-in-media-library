@@ -81,7 +81,7 @@ class Export extends Export_Base {
 		$upload_dir = wp_get_upload_dir();
 
 		// if upload dir is not in this path, add it.
-		if ( ! str_contains( $upload_dir['basedir'], $file_path ) ) {
+		if ( ! str_contains( $file_path, $upload_dir['basedir'] ) ) {
 			$file_path = trailingslashit( $upload_dir['basedir'] ) . $file_path;
 		}
 

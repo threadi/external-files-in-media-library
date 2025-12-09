@@ -822,4 +822,19 @@ class Directory_Listing {
 		// return resulting list.
 		return $hidden;
 	}
+
+	/**
+	 * Return the listing URL.
+	 *
+	 * @return string
+	 */
+	public function get_listing_url(): string {
+		return add_query_arg(
+			array(
+				'taxonomy'  => 'edlfw_archive',
+				'post_type' => 'attachment',
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
+	}
 }
