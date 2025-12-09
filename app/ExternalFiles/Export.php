@@ -79,6 +79,7 @@ class Export {
 		// add the settings.
 		add_action( 'init', array( $this, 'init_export' ), 20 );
 		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 
 		// bail if not enabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
@@ -1498,5 +1499,21 @@ class Export {
 
 		// return the resulting list.
 		return $external_sources;
+	}
+
+	/**
+	 * Add info about proxy cache usage in info dialog for single external file.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param File  $external_file_obj The external file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_export_state_in_info_dialog( array $dialog, File $external_file_obj ): array {
+		// add the export state of this file.
+		$dialog['texts'][] = '<p><strong>' . __( 'Exported', 'external-files-in-media-library' ) . ':</strong> ' . ( absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) > 0 ? __( 'File is exported.', 'external-files-in-media-library' ) : __( 'File is not exported.', 'external-files-in-media-library' ) ) . '</p>';
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 }
