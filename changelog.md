@@ -14,7 +14,8 @@
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
 - Added option to export each newly uploaded file in media library to external sources which are reachable via web
--> only supported for local and FTP directories atm
+-> supported for Dropbox, FTP, Google Drive, Google Cloud Storage, local, AWS S3 and WebDav
+-> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)

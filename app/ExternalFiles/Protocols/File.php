@@ -397,6 +397,86 @@ class File extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
-		return str_replace( 'file://', '', $url );
+		// bail if URL is empty.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// show deprecated hint for old hook.
+		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
+
+		/**
+		 * Filter whether the given URL should be saved as local temp file.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param bool $true Should be false to prevent the temp generation.
+		 * @param string $url The given URL.
+		 */
+		if ( ! apply_filters( 'efml_save_temp_file', $true, $url ) ) {
+			return false;
+		}
+
+		// remove protocol and domain from URL.
+		$url_info = wp_parse_url( $url );
+
+		// bail if path could not be loaded.
+		if ( ! isset( $url_info['path'] ) ) {
+			return false;
+		}
+
+		// get the file path.
+		$file_path = $url_info['path'];
+
+		// get file infos.
+		$file_info = pathinfo( $file_path );
+
+		// bail if extension could not be loaded.
+		if ( ! isset( $file_info['extension'] ) ) {
+			return false;
+		}
+
+		// get local WP Filesystem-handler for temp file.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the tmp file name.
+		$tmp_file_name = wp_tempnam();
+
+		// set the file as tmp-file for import.
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
+
+		// get content of the file.
+		$content = $wp_filesystem->get_contents( $file_path );
+
+		// delete the tmp file.
+		$wp_filesystem->delete( $tmp_file_name );
+
+		// bail if no content could be loaded.
+		if ( ! $content ) {
+			return false;
+		}
+
+		// and save the file there.
+		try {
+			$wp_filesystem->put_contents( $tmp_file, $content );
+		} catch ( Error $e ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			/* translators: %1$s will be replaced by a URL. */
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
+			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// add log entry.
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// return the path to the tmp file.
+		return $tmp_file;
 	}
 }

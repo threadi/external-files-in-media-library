@@ -20,6 +20,8 @@
     <exclude-pattern>*/svn/*</exclude-pattern>
     <exclude-pattern>*/languages/*</exclude-pattern>
     <exclude-pattern>*/app/Dependencies/*</exclude-pattern>
+    <exclude-pattern>*/app/Services/DropBox/Export.php</exclude-pattern>
+    <exclude-pattern>*/app/Services/GoogleDrive/Export.php</exclude-pattern>
 
     <!-- Use additional rulesets -->
     <rule ref="WordPress-Docs"/>

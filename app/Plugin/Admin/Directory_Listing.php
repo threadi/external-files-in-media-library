@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term;
@@ -274,6 +275,9 @@ class Directory_Listing {
 			$config['directory'] = $url;
 		}
 
+		// log the used credentials in debug mode.
+		Log::get_instance()->create( __( 'Used configuration for directory listing:', 'external-files-in-media-library' ) . ' <code>' . wp_strip_all_tags( Helper::get_json( $config ) ) . '</code>', '', 'info', 2 );
+
 		// output.
 		?>
 		<div class="wrap">
@@ -363,32 +367,6 @@ class Directory_Listing {
 				'password'        => __( 'Password', 'external-files-in-media-library' ),
 				'api_key'         => __( 'API Key', 'external-files-in-media-library' ),
 			),
-			// TODO aufräumen!
-			'form_file'                     => array(
-				'title'       => __( 'Enter the URL or path to a ZIP-file', 'external-files-in-media-library' ),
-				'description' => __( 'The URL or path must end with ".zip".', 'external-files-in-media-library' ),
-				'url'         => array(
-					'label' => __( 'URL or path to the ZIP-file', 'external-files-in-media-library' ),
-				),
-				'button'      => array(
-					'label' => __( 'Use this file', 'external-files-in-media-library' ),
-				),
-			),
-			'form_api'                      => array(
-				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
-				'url'              => array(
-					'label' => __( 'Channel-ID', 'external-files-in-media-library' ),
-				),
-				'key'              => array(
-					'label' => __( 'API Key', 'external-files-in-media-library' ),
-				),
-				'save_credentials' => array(
-					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
-				),
-				'button'           => array(
-					'label' => __( 'Show directory', 'external-files-in-media-library' ),
-				),
-			),
 			'form_login'                    => array(
 				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
 				'url'              => array(
@@ -402,25 +380,6 @@ class Directory_Listing {
 				),
 				'save_credentials' => array(
 					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
-				),
-				'button'           => array(
-					'label' => __( 'Show directory', 'external-files-in-media-library' ),
-				),
-			),
-			'aws_s3_api'                    => array(
-				'title'            => __( 'Enter your credentials', 'external-files-in-media-library' ),
-				'description'      => __( 'Use the login details for your IAM user who has permissions for the bucket you want to use. See:', 'external-files-in-media-library' ) . ' <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html" target="_blank">https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-iam.html</a>',
-				'access_key'       => array(
-					'label' => __( 'Access Key', 'external-files-in-media-library' ),
-				),
-				'secret_key'       => array(
-					'label' => __( 'Secret Key', 'external-files-in-media-library' ),
-				),
-				'bucket'           => array(
-					'label' => __( 'Bucket', 'external-files-in-media-library' ),
-				),
-				'save_credentials' => array(
-					'label' => __( 'Save this credentials in directory archive', 'external-files-in-media-library' ),
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
@@ -592,7 +551,6 @@ class Directory_Listing {
 
 			// get the term data.
 			if ( ! empty( $term_data ) ) {
-				$url    = $term_data['directory'];
 				$fields = $term_data['fields'];
 			}
 		}
@@ -620,12 +578,21 @@ class Directory_Listing {
 			wp_send_json( $result_dialog );
 		}
 
+		// get the term.
+		$term = get_term( $term_id, Taxonomy::get_instance()->get_name() );
+
+		// bail if term could not be loaded.
+		if ( ! $term instanceof WP_Term ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'Entry saved, but its term could not be loaded.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
+
 		// return OK.
 		$result_dialog['detail']['title']     = __( 'External source saved', 'external-files-in-media-library' );
 		$result_dialog['detail']['texts']     = array(
 			'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
-			/* translators: %1$s will be replaced by a URL. */
-			'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), self::get_instance()->get_url() ) . '</p>',
+			/* translators: %1$s will be replaced by a URL, %2$s by a title. */
+			'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a> with the name %2$s.', 'external-files-in-media-library' ), self::get_instance()->get_url(), '<em>' . $term->name . '</em>' ) . '</p>',
 		);
 		$result_dialog['detail']['buttons'][] = array(
 			'action'  => 'efml_delete_directory(' . $term_id . ');',

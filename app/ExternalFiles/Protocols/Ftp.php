@@ -339,7 +339,7 @@ class Ftp extends Protocol_Base {
 			'filesize'      => 0,
 			'mime-type'     => '',
 			'tmp-file'      => '',
-			'local'         => true,
+			'local'         => false, // TODO einstellbar machen!
 			'url'           => $file_path,
 			'last-modified' => '',
 		);
@@ -573,7 +573,7 @@ class Ftp extends Protocol_Base {
 			return false;
 		}
 
-		// get WP Filesystem-handler.
+		// get local WP Filesystem-handler for temp file.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the tmp file name.
@@ -582,8 +582,14 @@ class Ftp extends Protocol_Base {
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
+		// get the ftp connection.
+		$ftp_filesystem = $this->get_connection( $url );
+		if ( ! $ftp_filesystem ) {
+			$ftp_filesystem = $filesystem;
+		}
+
 		// get content of the file.
-		$content = $filesystem->get_contents( $file_path );
+		$content = $ftp_filesystem->get_contents( $file_path );
 
 		// delete the tmp file.
 		$wp_filesystem->delete( $tmp_file_name );

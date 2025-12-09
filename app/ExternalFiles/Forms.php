@@ -109,17 +109,17 @@ class Forms {
 			// backend-JS.
 			wp_enqueue_script(
 				'eml-admin',
-				plugins_url( '/admin/public.js', EFML_PLUGIN ),
+				Helper::get_plugin_url() . 'admin/public.js',
 				array( 'jquery' ),
-				(string) filemtime( Helper::get_plugin_dir() . '/admin/public.js' ),
+				Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.js' ),
 				true
 			);
 			// admin-specific styles.
 			wp_enqueue_style(
 				'eml-public-admin',
-				plugins_url( '/admin/public.css', EFML_PLUGIN ),
+				Helper::get_plugin_url() . 'admin/public.css',
 				array(),
-				(string) filemtime( Helper::get_plugin_dir() . '/admin/public.css' ),
+				Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.css' ),
 			);
 			// add php-vars to our js-script.
 			wp_localize_script(
@@ -136,18 +136,18 @@ class Forms {
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-admin',
-			plugins_url( '/admin/js.js', EFML_PLUGIN ),
+			Helper::get_plugin_url() . 'admin/js.js',
 			array( 'jquery' ),
-			(string) filemtime( Helper::get_plugin_dir() . '/admin/js.js' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/js.js' ),
 			true
 		);
 
 		// admin-specific styles.
 		wp_enqueue_style(
 			'eml-admin',
-			plugins_url( '/admin/style.css', EFML_PLUGIN ),
+			Helper::get_plugin_url() . 'admin/style.css',
 			array(),
-			(string) filemtime( Helper::get_plugin_dir() . '/admin/style.css' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/style.css' ),
 		);
 
 		// show deprecated hint for old hook.
@@ -292,6 +292,9 @@ class Forms {
 		if ( false === current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
 		}
+
+		// set marker for running import of files.
+		define( 'EFML_URL_IMPORT_RUNNING', true );
 
 		// get the current user ID.
 		$user_id = get_current_user_id();
@@ -669,6 +672,9 @@ class Forms {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
+
+		// set marker for running import of files.
+		define( 'EFML_URL_IMPORT_RUNNING', true );
 
 		// get the URLs from request.
 		$urls = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );

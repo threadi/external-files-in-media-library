@@ -134,9 +134,9 @@ class Availability extends Extension_Base {
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-availability-admin',
-			plugins_url( '/admin/availability.js', EFML_PLUGIN ),
+			Helper::get_plugin_url() . 'admin/availability.js',
 			array( 'jquery' ),
-			(string) filemtime( Helper::get_plugin_dir() . '/admin/availability.js' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/availability.js' ),
 			true
 		);
 
@@ -304,7 +304,7 @@ class Availability extends Extension_Base {
 	 */
 	public function sanitize_interval_setting( string $value ): string {
 		// get option.
-		$option = str_replace( 'sanitize_option_', '', current_filter() );
+		$option = str_replace( 'sanitize_option_', '', (string) current_filter() );
 
 		// bail if value is empty.
 		if ( empty( $value ) ) {

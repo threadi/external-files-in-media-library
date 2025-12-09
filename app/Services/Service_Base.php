@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
@@ -44,13 +45,6 @@ class Service_Base extends Directory_Listing_Base {
 	 * @var bool
 	 */
 	protected bool $sync_disabled = false;
-
-	/**
-	 * Marker for export files.
-	 *
-	 * @var bool
-	 */
-	protected bool $export_files = false;
 
 	/**
 	 * The user.
@@ -488,32 +482,9 @@ class Service_Base extends Directory_Listing_Base {
 	/**
 	 * Return whether this listing could also be used to export files.
 	 *
-	 * @return bool
+	 * @return Export_Base|bool
 	 */
-	public function can_export_files(): bool {
-		return $this->export_files;
-	}
-
-	/**
-	 * Export a file to this service. Returns the external URL if it was successfully and false if not.
-	 *
-	 * @param int $attachment_id The attachment ID.
-	 * @param string $target The target.
-	 * @param array $credentials The credentials.
-	 * @return string|bool
-	 */
-	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
-		return false;
-	}
-
-	/**
-	 * Delete an exported file.
-	 *
-	 * @param string $url The given URL to delete.
-	 * @param array $credentials The credentials.
-	 * @return bool
-	 */
-	public function delete_exported_file( string $url, array $credentials ): bool {
+	public function get_export_object(): Export_Base|bool {
 		return false;
 	}
 }

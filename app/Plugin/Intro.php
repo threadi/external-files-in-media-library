@@ -166,7 +166,7 @@ class Intro {
 			'efml-intro',
 			$url . 'intro.min.js',
 			array(),
-			(string) filemtime( $path . 'intro.min.js' ),
+			Helper::get_file_version( $path . 'intro.min.js' ),
 			true
 		);
 
@@ -175,7 +175,7 @@ class Intro {
 			'efml-intro-custom',
 			Helper::get_plugin_url() . 'admin/intro.js',
 			array( 'efml-intro' ),
-			(string) filemtime( Helper::get_plugin_path() . '/admin/intro.js' ),
+			Helper::get_file_version( Helper::get_plugin_path() . 'admin/intro.js' ),
 			true
 		);
 
@@ -184,7 +184,7 @@ class Intro {
 			'efml-intro',
 			$url . 'introjs.min.css',
 			array(),
-			(string) filemtime( $path . 'introjs.min.css' ),
+			Helper::get_file_version( $path . 'introjs.min.css' ),
 		);
 
 		// embed the CSS-file.
@@ -192,7 +192,7 @@ class Intro {
 			'efml-intro-custom',
 			Helper::get_plugin_url() . 'admin/intro.css',
 			array(),
-			(string) filemtime( Helper::get_plugin_path() . '/admin/intro.css' ),
+			Helper::get_file_version( Helper::get_plugin_path() . 'admin/intro.css' ),
 		);
 
 		// create URL for add new media file with intro marker.

@@ -170,7 +170,7 @@ class Queue extends Extension_Base {
 	 */
 	public function sanitize_interval_setting( null|string $value ): string {
 		// get option.
-		$option = str_replace( 'sanitize_option_', '', current_filter() );
+		$option = str_replace( 'sanitize_option_', '', (string) current_filter() );
 
 		// bail if value is empty.
 		if ( empty( $value ) ) {

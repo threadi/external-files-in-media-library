@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -26,6 +27,8 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage\Export;
+use Google\Cloud\Storage\Bucket;
 use Google\Cloud\Storage\StorageClient;
 use Error;
 use WP_Error;
@@ -314,6 +317,11 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_bucket_name(): string {
+		// use the setting from fields, if set.
+		if ( ! empty( $this->fields['bucket']['value'] ) ) {
+			return $this->fields['bucket']['value'];
+		}
+
 		// get from global setting, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'eml_google_cloud_storage_bucket' );
@@ -343,7 +351,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
-		return 'Google Cloud Storage Listing';
+		if ( empty( $this->get_bucket_name() ) ) {
+			return 'https://www.googleapis.com/storage/';
+		}
+
+		// return the directory URL.
+		return 'https://www.googleapis.com/storage/v1/b/' . $this->get_bucket_name() . '/';
 	}
 
 	/**
@@ -448,7 +461,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'title' => basename( $file_data['name'] ),
 				);
 
-				// if array contains more than 1 entry this file is in a directory.
+				// if array contains more than 1 entry, this entry is in a directory.
 				if ( end( $parts ) ) {
 					// get content type of this file.
 					$mime_type = wp_check_filetype( $file_data['name'] );
@@ -467,6 +480,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					$entry['preview']       = '';
 				}
 
+				// collect the directories.
 				if ( count( $parts ) > 1 ) {
 					$the_keys = array_keys( $parts );
 					$last_key = end( $the_keys );
@@ -550,7 +564,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_url_mark() . '" + file.file, "fields": config.fields, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": config.directory + file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -564,12 +578,6 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return array<int,array<string,string>>
 	 */
 	protected function get_global_actions(): array {
-		// get the settings URL depending on actual settings.
-		$settings_url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
-		if ( $this->is_mode( 'user' ) ) {
-			$settings_url = $this->get_config_url();
-		}
-
 		return array_merge(
 			parent::get_global_actions(),
 			array(
@@ -578,7 +586,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'label'  => __( 'Go to your bucket', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( $settings_url ) . '";',
+					'action' => 'location.href="' . esc_url( $this->get_config_url() ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
@@ -956,5 +964,61 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		 * @param string $url The URL.
 		 */
 		return apply_filters( 'efml_service_google_cloud_storage_console_url', $url );
+	}
+
+	/**
+	 * Return the export object for this service.
+	 *
+	 * @return Export_Base|false
+	 */
+	public function get_export_object(): Export_Base|false {
+		return Export::get_instance();
+	}
+
+	/**
+	 * Return true if a given bucket is public, false if not.
+	 *
+	 * @param Bucket $bucket The bucket to check.
+	 *
+	 * @return bool
+	 */
+	public function is_bucket_public( Bucket $bucket ): bool {
+		// check if public access is allowed in this bucket.
+		$public_access_allowed = false;
+		try {
+			$iam = $bucket->iam();
+		} catch ( Exception $e ) {
+			Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+
+			// do nothing more.
+			return false;
+		}
+
+		if ( $iam ) { // @phpstan-ignore if.alwaysTrue
+			try {
+				$policy = $iam->policy();
+				foreach ( $policy['bindings'] as $binding ) {
+					// search for roles with allow public access.
+					if ( in_array(
+						$binding['role'],
+						array(
+							'roles/storage.objectViewer',
+							'roles/storage.legacyObjectReader',
+						),
+						true
+					) ) {
+						$public_access_allowed = true;
+					}
+				}
+			} catch ( Exception $e ) {
+				Log::get_instance()->create( __( 'Error during request of Google Cloud Storage IAM binding data:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error', 1 );
+
+				// do nothing more.
+				return false;
+			}
+		}
+
+		// return the result.
+		return $public_access_allowed;
 	}
 }

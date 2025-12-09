@@ -89,17 +89,16 @@ class Protocol extends Protocol_Base {
 		$url = str_replace( $dropbox_obj->get_name(), '', strtolower( $this->get_url() ) );
 
 		// if the URL is only "/", get all files from dropbox.
-		if( '/' === $url ) {
+		if ( '/' === $url ) {
 			$files_from_dropbox = $client->listFolder( '/', true );
-			if( ! empty( $files_from_dropbox['entries'] ) ) {
+			if ( ! empty( $files_from_dropbox['entries'] ) ) {
 				$entries = $files_from_dropbox['entries'];
 			}
-		}
-		else {
+		} else {
 			// get the file data.
 			try {
 				$entries[] = $client->getMetadata( $url );
-			} catch ( ClientException|\Spatie\Dropbox\Exceptions\BadRequest $e ) {
+			} catch ( ClientException | \Spatie\Dropbox\Exceptions\BadRequest $e ) {
 				// log this event.
 				Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e ) . '</code>', '', 'error' );
 
@@ -120,9 +119,19 @@ class Protocol extends Protocol_Base {
 			return array();
 		}
 
+		/**
+		 * Run action if we have files to check via Dropbox-protocol.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $url   The URL to import.
+		 * @param array<int|string,mixed> $entries List of matches (the URLs).
+		 */
+		do_action( 'efml_dropbox_directory_import_files', $url, $entries );
+
 		// loop through all files and add them with their URL infos to the list of all files.
 		$files = array();
-		foreach( $entries as $file_data ) {
+		foreach ( $entries as $file_data ) {
 			// bail if this is an error.
 			if ( 'folder' === $file_data['.tag'] ) {
 				continue;
@@ -130,6 +139,15 @@ class Protocol extends Protocol_Base {
 
 			// set file URL.
 			$file_url = $dropbox_obj->get_name() . $file_data['path_display'];
+
+			/**
+			 * Run action just before the file check via Dropbox-protocol.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 *
+			 * @param string $file_url   The URL to import.
+			 */
+			do_action( 'efml_dropbox_directory_import_file_check', $file_url );
 
 			// bail if this an AJAX-request and the file already exist in media library.
 			if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file_url ) ) {

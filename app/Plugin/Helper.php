@@ -756,4 +756,33 @@ class Helper {
 	public static function is_block_support_enabled(): bool {
 		return class_exists( 'WP_Block_Type_Registry' );
 	}
+
+	/**
+	 * Return the version of the given file.
+	 *
+	 * With WP_DEBUG or plugin-debug enabled its @filemtime().
+	 * Without this it's the plugin-version.
+	 *
+	 * @param string $filepath The absolute path to the requested file.
+	 *
+	 * @return string
+	 */
+	public static function get_file_version( string $filepath ): string {
+		// check for WP_DEBUG.
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			return (string) filemtime( $filepath );
+		}
+
+		$plugin_version = EFML_PLUGIN;
+
+		/**
+		 * Filter the used file version (for JS- and CSS-files which get enqueued).
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $plugin_version The plugin-version.
+		 * @param string $filepath The absolute path to the requested file.
+		 */
+		return apply_filters( 'efml_enqueued_file_version', $plugin_version, $filepath );
+	}
 }

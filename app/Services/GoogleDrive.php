@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
@@ -27,6 +28,7 @@ use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive\Client;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive\Export;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
 use Google\Service\Exception;
@@ -710,8 +712,6 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @param string $directory The given directory.
 	 *
 	 * @return array<int|string,mixed>
-	 * @throws Exception Could be thrown an exception.
-	 * @throws JsonException Could be thrown an exception.
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// get the client.
@@ -854,7 +854,15 @@ class GoogleDrive extends Service_Base implements Service {
 					// add the directory if it does not exist atm in the list.
 					if ( ! isset( $folders[ trailingslashit( $parent_folder_id ) ] ) ) {
 						// get directory data.
-						$parent_folder_obj = $service->files->get( $parent_folder_id );
+						try {
+							$parent_folder_obj = $service->files->get( $parent_folder_id );
+						} catch ( Exception $e ) {
+							// log event.
+							Log::get_instance()->create( __( 'Loading folder data results in an error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e->getErrors() ) . '</code>', '', 'error' );
+
+							// do nothing more.
+							continue;
+						}
 
 						// add the directory to the list.
 						$folders[ trailingslashit( $parent_folder_id ) ] = array(
@@ -1099,7 +1107,6 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @param \Google\Client $client The Google client object.
 	 *
 	 * @return array<string,mixed>
-	 * @throws JsonException Could throw exception.
 	 */
 	public function get_refreshed_token( \Google\Client $client ): array {
 		// create the URL.
@@ -1135,7 +1142,7 @@ class GoogleDrive extends Service_Base implements Service {
 			}
 
 			// decode the response.
-			$access_token = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
+			$access_token = json_decode( $body, true );
 
 			// bail if access token is empty.
 			if ( empty( $access_token ) ) {
@@ -1602,5 +1609,14 @@ class GoogleDrive extends Service_Base implements Service {
 
 		/* translators: %1$s will be replaced by a URL. */
 		return sprintf( __( 'Get your access token <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url );
+	}
+
+	/**
+	 * Return the export object for this service.
+	 *
+	 * @return Export_Base|false
+	 */
+	public function get_export_object(): Export_Base|false {
+		return Export::get_instance();
 	}
 }

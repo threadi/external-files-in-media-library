@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -219,9 +218,9 @@ class Synchronization {
 		// backend-JS.
 		wp_enqueue_script(
 			'eml-sync-admin',
-			plugins_url( '/admin/sync.js', EFML_PLUGIN ),
+			Helper::get_plugin_url() . 'admin/sync.js',
 			array( 'jquery' ),
-			(string) filemtime( Helper::get_plugin_dir() . '/admin/sync.js' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/sync.js' ),
 			true
 		);
 
@@ -499,14 +498,13 @@ class Synchronization {
 	/**
 	 * Run synchronization.
 	 *
-	 * @param string                 $url                   The URL to sync.
-	 * @param Directory_Listing_Base $directory_listing_obj The directory listing base object we use.
-	 * @param array<string,mixed>    $term_data             The term data.
-	 * @param int                    $term_id               The used term ID.
+	 * @param string              $url                   The URL to sync.
+	 * @param array<string,mixed> $term_data             The term data.
+	 * @param int                 $term_id               The used term ID.
 	 *
 	 * @return void
 	 */
-	public function sync( string $url, Directory_Listing_Base $directory_listing_obj, array $term_data, int $term_id ): void {
+	public function sync( string $url, array $term_data, int $term_id ): void {
 		// remove the update marker on all existing synced files for this URL.
 		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
 			delete_post_meta( $post_id, 'eml_synced' );
@@ -530,6 +528,10 @@ class Synchronization {
 		add_action( 'efml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'efml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'efml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_dropbox_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_dropbox_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efml_google_drive_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efml_google_drive_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'efml_s3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'efml_s3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'efml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
@@ -557,7 +559,7 @@ class Synchronization {
 		$import->set_term_id( $term_id );
 
 		// log this event.
-		Log::get_instance()->create( __( 'Synchronization startet.', 'external-files-in-media-library' ), $url, 'info', 1 );
+		Log::get_instance()->create( __( 'Synchronization started.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// and run the import of this directory.
 		$import->add_url( $url );
@@ -658,20 +660,20 @@ class Synchronization {
 		$log = Log::get_instance();
 
 		// get method.
-		$method = filter_input( INPUT_POST, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$service_name = filter_input( INPUT_POST, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if no method is given.
-		if ( is_null( $method ) ) {
-			$log->create( __( 'No method given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+		if ( is_null( $service_name ) ) {
+			$log->create( __( 'No service given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
 			wp_send_json_error();
 		}
 
 		// get the method object by its name.
-		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
+		$directory_listing_obj = Services::get_instance()->get_service_by_name( $service_name );
 
 		// bail if no service could be found.
 		if ( ! $directory_listing_obj ) {
-			$log->create( __( 'Requested method is unknown: ', 'external-files-in-media-library' ) . ' <code>' . $method . '</code>', '', 'error' );
+			$log->create( __( 'Requested service is unknown:', 'external-files-in-media-library' ) . ' <code>' . $service_name . '</code>', '', 'error' );
 			wp_send_json_error();
 		}
 
@@ -707,7 +709,7 @@ class Synchronization {
 		update_option( 'eml_sync_title', __( 'Sync of files starting ..', 'external-files-in-media-library' ) );
 
 		// run the synchronization.
-		$this->sync( $url, $directory_listing_obj, $term_data, $term_id );
+		$this->sync( $url, $term_data, $term_id );
 
 		// mark sync as not running.
 		delete_option( 'eml_sync_running' );
@@ -735,7 +737,7 @@ class Synchronization {
 				'title'     => __( 'Synchronization has been executed', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<p><strong>' . __( 'The files in this external source are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
-					'<p>' . __( 'You can now use them on your website.', 'external-files-in-media-library' ) . '</p>',
+					'<p>' . __( 'When new files have been synchronized, you can now use them on your website.', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
 					array(
@@ -1061,6 +1063,14 @@ class Synchronization {
 			return;
 		}
 
+		/**
+		 * Allow to add additional tasks before sync is running.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param int $term_id The used term ID.
+		 */
+		do_action( 'efml_before_deleting_synced_files', $term_id );
+
 		// get the type name.
 		$type = get_term_meta( $term_id, 'type', true );
 
@@ -1317,7 +1327,7 @@ class Synchronization {
 	 */
 	public function sanitize_interval_setting( null|string $value ): string {
 		// get option.
-		$option = str_replace( 'sanitize_option_', '', current_filter() );
+		$option = str_replace( 'sanitize_option_', '', (string) current_filter() );
 
 		// bail if value is empty.
 		if ( empty( $value ) ) {
@@ -1585,10 +1595,10 @@ class Synchronization {
 	/**
 	 * Remove the delete action from settings if files are synced.
 	 *
-	 * @param array   $actions List of action.
-	 * @param WP_Term $term The requested WP_Term object.
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Term              $term The requested WP_Term object.
 	 *
-	 * @return array
+	 * @return array<string,string>
 	 */
 	public function remove_listing_delete_action( array $actions, WP_Term $term ): array {
 		// bail if delete option is not set.
@@ -1597,7 +1607,7 @@ class Synchronization {
 		}
 
 		// bail if no files are synced.
-		if( 0 === count( $this->get_synced_files_by_term( $term->term_id ) ) ) {
+		if ( 0 === count( $this->get_synced_files_by_term( $term->term_id ) ) ) {
 			return $actions;
 		}
 
@@ -1614,6 +1624,6 @@ class Synchronization {
 	 * @return void
 	 */
 	public function sync_description(): void {
-		echo '<p>' . wp_kses_post( __( '<strong>Automatically load files from external sources into your media library.</strong> Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) ) .'</p>';
+		echo '<p>' . wp_kses_post( __( '<strong>Automatically load files from external sources into your media library.</strong> Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) ) . '</p>';
 	}
 }

@@ -18,11 +18,14 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\WebDav\Export;
 use Sabre\DAV\Client;
 use Error;
 use WP_Error;
@@ -117,6 +120,8 @@ class WebDav extends Service_Base implements Service {
 		add_filter( 'efml_service_webdav_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_service_webdav_client', array( $this, 'ignore_self_signed_ssl' ) );
 		add_filter( 'efml_service_webdav_path', array( $this, 'set_path' ), 10, 2 );
+		add_action( 'efml_export_before_on_service', array( $this, 'enable_unsafe_urls_for_export' ) );
+		add_action( 'efml_proxy_before', array( $this, 'enable_unsafe_urls_for_proxy' ) );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -288,7 +293,7 @@ class WebDav extends Service_Base implements Service {
 			return array();
 		}
 
-		// get the staring directory.
+		// get the starting directory.
 		$parse_url = wp_parse_url( $directory );
 
 		// bail if scheme or host is not found in directory URL.
@@ -515,49 +520,6 @@ class WebDav extends Service_Base implements Service {
 				),
 			)
 		);
-	}
-
-	/**
-	 * Return list of translations.
-	 *
-	 * @param array<string,mixed> $translations List of translations.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function get_translations( array $translations ): array {
-		// get the method.
-		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if no method is called.
-		if ( is_null( $method ) ) {
-			return $translations;
-		}
-
-		// bail if called method is not ours.
-		if ( $this->get_name() !== $method ) {
-			return $translations;
-		}
-
-		// add our custom translation.
-		$translations['form_login'] = array(
-			'title'       => __( 'Enter the connection details for your WebDAV', 'external-files-in-media-library' ),
-			'description' => '',
-			'url'         => array(
-				'label' => __( 'Enter the URL of your WebDAV (starting with https://).', 'external-files-in-media-library' ),
-			),
-			'login'       => array(
-				'label' => __( 'WebDAV-Username', 'external-files-in-media-library' ),
-			),
-			'password'    => array(
-				'label' => __( 'Password', 'external-files-in-media-library' ),
-			),
-			'button'      => array(
-				'label' => __( 'Use this URL', 'external-files-in-media-library' ),
-			),
-		);
-
-		// return the resulting translations.
-		return $translations;
 	}
 
 	/**
@@ -936,5 +898,68 @@ class WebDav extends Service_Base implements Service {
 
 		// return whether both credentials are set.
 		return ! empty( $fields['server'] ) && ! empty( $fields['login'] ) && ! empty( $fields['password'] );
+	}
+
+	/**
+	 * Return the export object for this service.
+	 *
+	 * @return Export_Base|false
+	 */
+	public function get_export_object(): Export_Base|false {
+		return Export::get_instance();
+	}
+
+	/**
+	 * Enable the usage of unsafe URLs for export.
+	 *
+	 * @param Service_Base $service The used service.
+	 *
+	 * @return void
+	 */
+	public function enable_unsafe_urls_for_export( Service_Base $service ): void {
+		// bail if the given service is not ours.
+		if ( $this->get_name() !== $service->get_name() ) {
+			return;
+		}
+
+		// add filter.
+		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+	}
+
+	/**
+	 * Disable the check for unsafe URLs.
+	 *
+	 * @param array<string,mixed> $parsed_args List of args for URL request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function disable_check_for_unsafe_urls( array $parsed_args ): array {
+		$parsed_args['reject_unsafe_urls'] = false;
+		return $parsed_args;
+	}
+
+	/**
+	 * Add filter to use unsafe URLs in proxy if WebDav-URLs are used.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function enable_unsafe_urls_for_proxy( File $external_file_obj ): void {
+		// get the fields.
+		$fields = $external_file_obj->get_fields();
+
+		// bail if fields does not contain a path.
+		if ( empty( $fields['path'] ) ) {
+			return;
+		}
+
+		// bail if path is not in file URL.
+		if ( ! str_contains( $external_file_obj->get_url( true ), $fields['path']['value'] ) ) {
+			return;
+		}
+
+		// set filter to enabled unsafe URL.
+		add_filter( 'http_request_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 	}
 }

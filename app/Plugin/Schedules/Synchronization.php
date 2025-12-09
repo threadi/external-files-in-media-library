@@ -61,7 +61,7 @@ class Synchronization extends Schedules_Base {
 	 */
 	public function run(): void {
 		// bail if uninstallation is running.
-		if( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			return;
 		}
 
@@ -112,7 +112,7 @@ class Synchronization extends Schedules_Base {
 		Services::get_instance()->init_services();
 
 		// run the synchronization.
-		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, $directory_listing_obj, $term_data, $args['term_id'] );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, $term_data, $args['term_id'] );
 
 		// log event.
 		Log::get_instance()->create( __( 'Synchronization schedule ended.', 'external-files-in-media-library' ), '', 'info', 2 );
