@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Che
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
@@ -69,6 +70,8 @@ class Synchronization {
 	public function init(): void {
 		// add setting.
 		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
+		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
 
 		// bail if synchronization support is not enabled or user is not allowed to use it.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
@@ -261,6 +264,26 @@ class Synchronization {
 	}
 
 	/**
+	 * Add column for hint if export is not enabled.
+	 *
+	 * @param array<string,string> $columns
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_column_for_hint( array $columns ): array {
+		// bail if export is enabled.
+		if ( 1 === absint( get_option( 'eml_sync' ) ) ) {
+			return $columns;
+		}
+
+		// add the column.
+		$columns['efml_sync_hint'] = __( 'Synchronisation', 'external-files-in-media-library' );
+
+		// return the list of columns.
+		return $columns;
+	}
+
+	/**
 	 * Add columns to handle synchronization.
 	 *
 	 * @param array<string,string> $columns The columns.
@@ -347,6 +370,44 @@ class Synchronization {
 
 		// show count and link it to the media library and option to delete all of them.
 		return '<a href="' . esc_url( $url ) . '">' . absint( count( $files ) ) . '</a> | <a href="' . esc_url( $url_delete ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Delete', 'external-files-in-media-library' ) . '</a>';
+	}
+
+	/**
+	 * Show hint to enabled sync.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 *
+	 * @return string
+	 */
+	public function add_column_hint_content( string $content, string $column_name ): string {
+		// bail if column is not 'efml_sync_hint'.
+		if( 'efml_sync_hint' !== $column_name ) {
+			return $content;
+		}
+
+		// show simple hint for users without capability to change settings.
+		$dialog = array(
+			'title'   => __( 'Synchronize your media files', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		// extend the hint for all others.
+		if( current_user_can( 'manage_options' ) ) {
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '</p>';
+		}
+
+		// show extended hint for all others.
+		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '"></a>';
 	}
 
 	/**
@@ -1624,6 +1685,6 @@ class Synchronization {
 	 * @return void
 	 */
 	public function sync_description(): void {
-		echo '<p>' . wp_kses_post( __( '<strong>Automatically load files from external sources into your media library.</strong> Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the source of these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
 	}
 }

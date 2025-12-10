@@ -46,16 +46,14 @@ class Export {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() { }
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() { }
 
 	/**
 	 * Return instance of this object as singleton.
@@ -80,6 +78,8 @@ class Export {
 		add_action( 'init', array( $this, 'init_export' ), 20 );
 		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
+		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
 
 		// bail if not enabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
@@ -195,6 +195,26 @@ class Export {
 	}
 
 	/**
+	 * Add column for hint if export is not enabled.
+	 *
+	 * @param array<string,string> $columns
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_column_for_hint( array $columns ): array {
+		// bail if export is enabled.
+		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+			return $columns;
+		}
+
+		// add the column.
+		$columns['efml_export_hint'] = __( 'Export', 'external-files-in-media-library' );
+
+		// return the list of columns.
+		return $columns;
+	}
+
+	/**
 	 * Add columns to handle synchronization.
 	 *
 	 * @param array<string,string> $columns The columns.
@@ -208,11 +228,52 @@ class Export {
 		}
 
 		// add the export columns.
-		$columns['export_files'] = __( 'Exported files', 'external-files-in-media-library' );
-		$columns['export']       = __( 'Export', 'external-files-in-media-library' );
+		$columns['efml_export_files'] = __( 'Exported files', 'external-files-in-media-library' );
+		$columns['efml_export']       = __( 'Export', 'external-files-in-media-library' );
 
 		// return the resulting columns.
 		return $columns;
+	}
+
+	/**
+	 * Show hint to enabled export.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 *
+	 * @return string
+	 */
+	public function add_column_hint_content( string $content, string $column_name ): string {
+		// bail if column is not 'efml_export_hint'.
+		if( 'efml_export_hint' !== $column_name ) {
+			return $content;
+		}
+
+		// show simple hint for users without capability to change settings.
+		$dialog = array(
+			'title'   => __( 'Export media files', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Export your media files to this external source.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		// extend the hint for all others.
+		if( current_user_can( 'manage_options' ) ) {
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
+
+			// show extended hint for all others.
+			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
+		}
+
+		// show simple hint.
+		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="#"></a>';
 	}
 
 	/**
@@ -225,8 +286,8 @@ class Export {
 	 * @return string
 	 */
 	public function add_column_content_options( string $content, string $column_name, int $term_id ): string {
-		// bail if this is not the "synchronization" column.
-		if ( 'export' !== $column_name ) {
+		// bail if this is not the "efml_export" column.
+		if ( 'efml_export' !== $column_name ) {
 			return $content;
 		}
 
@@ -1275,7 +1336,7 @@ class Export {
 	 * @return void
 	 */
 	public function export_description(): void {
-		echo '<p>' . wp_kses_post( __( '<strong>Automatically upload local files uploaded to your media library to an external source.</strong> The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
 	}
 
 	/**
