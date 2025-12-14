@@ -23,6 +23,13 @@ use ExternalFilesInMediaLibrary\Services\S3;
  */
 class Protocol extends Protocol_Base {
 	/**
+	 * The internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 's3';
+
+	/**
 	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
@@ -38,7 +45,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( '' ) ) ) {
+		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( '' ) ) && ! str_contains( $this->get_url(), 'amazonaws.com' ) ) {
 			return false;
 		}
 

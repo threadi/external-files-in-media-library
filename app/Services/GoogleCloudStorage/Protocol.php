@@ -25,6 +25,13 @@ use Google\Cloud\Storage\StorageClient;
  */
 class Protocol extends Protocol_Base {
 	/**
+	 * The internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'google-cloud-storage';
+
+	/**
 	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool

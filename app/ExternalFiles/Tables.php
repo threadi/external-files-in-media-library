@@ -260,24 +260,24 @@ class Tables {
 	 */
 	public function add_media_column_content( string $column_name, int $attachment_id ): void {
 		// get the external object for this file.
-		$external_file = Files::get_instance()->get_file( $attachment_id );
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
 		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
 			// show no-icon if it is not an external file.
-			if ( ! $external_file->is_valid() ) {
-				echo '<span class="dashicons dashicons-no"></span>';
+			if ( ! $external_file_obj->is_valid() ) {
+				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) .'"></span>';
 				return;
 			}
 
 			// show yes-icon as it is an external file.
-			echo '<span class="dashicons dashicons-yes"></span>';
+			echo '<span class="dashicons dashicons-yes" title="' . esc_html__( 'external file', 'external-files-in-media-library' ) .'"></span>';
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0' );
 
 			// get protocol handler.
-			$protocol_handler = $external_file->get_protocol_handler_obj();
+			$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 			// bail if handler could not be found.
 			if ( ! $protocol_handler instanceof Protocol_Base ) {
@@ -285,7 +285,7 @@ class Tables {
 			}
 
 			// get the unproxied URL.
-			$url = $external_file->get_url( true );
+			$url = $external_file_obj->get_url( true );
 
 			// get URL for show depending on used protocol.
 			$url_to_show = $protocol_handler->get_link();
@@ -297,7 +297,7 @@ class Tables {
 			}
 
 			// get URL.
-			$edit_url = get_edit_post_link( $external_file->get_id() );
+			$edit_url = get_edit_post_link( $external_file_obj->get_id() );
 			if ( ! is_string( $edit_url ) ) {
 				$edit_url = '#';
 			}
@@ -307,8 +307,8 @@ class Tables {
 				'title'   => __( 'File info', 'external-files-in-media-library' ),
 				'texts'   => array(
 					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
-					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file->get_date() . '</p>',
-					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
+					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file_obj->get_date() . '</p>',
+					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file_obj->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
 				),
 				'buttons' => array(
 					array(
@@ -324,23 +324,17 @@ class Tables {
 				),
 			);
 
-			// show deprecated hint for old hook.
-			$dialog = apply_filters_deprecated( 'eml_table_column_file_source_dialog', array( $dialog, $external_file ), '5.0.0', 'efml_table_column_file_source_dialog' );
-
 			/**
 			 * Filter the dialog for this file info.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 * @param array<string,mixed> $dialog The dialog.
-			 * @param File $external_file The external file object.
+			 * @param File $external_file_obj The external file object.
 			 */
-			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file );
+			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file_obj );
 
 			// get the title.
-			$title = $protocol_handler->get_title();
-
-			// show deprecated hint for old hook.
-			$title = apply_filters_deprecated( 'eml_table_column_source_title', array( $title, $attachment_id ), '5.0.0', 'efml_table_column_source_title' );
+			$title = '<span class="efml-icon efml-' . esc_attr( $protocol_handler->get_name() ) . '" title="' . esc_attr( $protocol_handler->get_title() ) .'"></span>';
 
 			/**
 			 * Filter the title for show in source column in media table for external files.
@@ -352,7 +346,7 @@ class Tables {
 			$title = apply_filters( 'efml_table_column_source_title', $title, $attachment_id );
 
 			// output.
-			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '"></a>' );
+			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_html__( 'File info', 'external-files-in-media-library' ) .'"></a>' );
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_table_column_source', array( $attachment_id ), '5.0.0', 'efml_table_column_source' );
