@@ -275,7 +275,7 @@ body.post-type-attachment .external_files .efml-icon:before {
 	vertical-align: middle;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before, body.post-type-attachment .external_files .efml-file:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before, body.post-type-attachment .external_files .efml-file:before, body.post-type-attachment .external_files .efml-local:before {
 	content: "\f163";
 }
 
