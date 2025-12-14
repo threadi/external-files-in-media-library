@@ -266,7 +266,7 @@ class Synchronization {
 	/**
 	 * Add column for hint if export is not enabled.
 	 *
-	 * @param array<string,string> $columns
+	 * @param array<string,string> $columns The columns.
 	 *
 	 * @return array<string,string>
 	 */
@@ -382,7 +382,7 @@ class Synchronization {
 	 */
 	public function add_column_hint_content( string $content, string $column_name ): string {
 		// bail if column is not 'efml_sync_hint'.
-		if( 'efml_sync_hint' !== $column_name ) {
+		if ( 'efml_sync_hint' !== $column_name ) {
 			return $content;
 		}
 
@@ -402,12 +402,13 @@ class Synchronization {
 			),
 		);
 		// extend the hint for all others.
-		if( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			/* translators: %1$s will be replaced by a URL. */
 			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '</p>';
 		}
 
 		// show extended hint for all others.
-		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '"></a>';
+		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '"></a>';
 	}
 
 	/**
@@ -1685,6 +1686,7 @@ class Synchronization {
 	 * @return void
 	 */
 	public function sync_description(): void {
+		/* translators: %1$s will be replaced by a URL. */
 		echo '<p><strong>' . esc_html__( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the source of these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
 	}
 }

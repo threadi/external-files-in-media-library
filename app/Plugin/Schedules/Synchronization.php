@@ -77,7 +77,7 @@ class Synchronization extends Schedules_Base {
 		$args = $this->get_args();
 
 		// bail if no method is set.
-		if( empty( $args['method'] ) ) {
+		if ( empty( $args['method'] ) ) {
 			Log::get_instance()->create( __( 'Synchronization listing object not set.', 'external-files-in-media-library' ), '', 'error' );
 			return;
 		}

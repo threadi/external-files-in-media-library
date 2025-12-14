@@ -246,7 +246,7 @@ class Tables {
 	 * @return array<string,string>
 	 */
 	public function add_media_columns( array $columns ): array {
-		$columns['external_files']        = __( 'External file', 'external-files-in-media-library' );
+		$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );
 		return $columns;
 	}
 

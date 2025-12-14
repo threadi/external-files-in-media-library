@@ -398,7 +398,7 @@ class Proxy {
 	 * Add info about proxy cache usage in info dialog for single external file.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
-	 * @param File  $external_file The external file object.
+	 * @param File                $external_file The external file object.
 	 *
 	 * @return array<string,mixed>
 	 */

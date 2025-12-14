@@ -197,7 +197,7 @@ class Export {
 	/**
 	 * Add column for hint if export is not enabled.
 	 *
-	 * @param array<string,string> $columns
+	 * @param array<string,string> $columns The columns.
 	 *
 	 * @return array<string,string>
 	 */
@@ -215,7 +215,7 @@ class Export {
 	}
 
 	/**
-	 * Add columns to handle synchronization.
+	 * Add columns to handle exports.
 	 *
 	 * @param array<string,string> $columns The columns.
 	 *
@@ -245,7 +245,7 @@ class Export {
 	 */
 	public function add_column_hint_content( string $content, string $column_name ): string {
 		// bail if column is not 'efml_export_hint'.
-		if( 'efml_export_hint' !== $column_name ) {
+		if ( 'efml_export_hint' !== $column_name ) {
 			return $content;
 		}
 
@@ -265,15 +265,16 @@ class Export {
 			),
 		);
 		// extend the hint for all others.
-		if( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'manage_options' ) ) {
+			/* translators: %1$s will be replaced by a URL. */
 			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
 
 			// show extended hint for all others.
-			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
+			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
 		}
 
 		// show simple hint.
-		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) .'" href="#"></a>';
+		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="#"></a>';
 	}
 
 	/**
@@ -1336,6 +1337,7 @@ class Export {
 	 * @return void
 	 */
 	public function export_description(): void {
+		/* translators: %1$s will be replaced by a URL. */
 		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
 	}
 
@@ -1366,7 +1368,7 @@ class Export {
 			return $data;
 		}
 
-		// get the meta data.
+		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $attachment_id );
 
 		// bail if meta-data could not be loaded.
@@ -1490,13 +1492,14 @@ class Export {
 	 */
 	public function show_export_hint_on_file_add_page(): void {
 		// show simple messages if user has not the capability for settings.
-		if( ! current_user_can( 'manage_options' ) ) {
-			if( 1 === absint( get_option( 'eml_export' ) ) ) {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			if ( 1 === absint( get_option( 'eml_export' ) ) ) {
 				// get the external sources with enabled export option.
 				$external_sources = $this->get_external_sources_as_name_list();
 
 				// bail if no external sources are set.
-				if( ! empty( $external_sources ) ) {
+				if ( ! empty( $external_sources ) ) {
+					/* translators: %1$s will be replaced by a URL. */
 					echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong></p></div>';
 					return;
 				}
@@ -1506,33 +1509,36 @@ class Export {
 		}
 
 		// if export is already enabled, show where the files will be exported.
-		if( 1 === absint( get_option( 'eml_export' ) ) ) {
+		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
 			// get the external sources with enabled export option.
 			$external_sources = $this->get_external_sources_as_name_list();
 
 			// bail if no external sources are set.
-			if( empty( $external_sources ) ) {
+			if ( empty( $external_sources ) ) {
+				/* translators: %1$s will be replaced by a URL. */
 				echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( __( 'You have enabled the export for new media files but not configured an external source for it.', 'external-files-in-media-library' ) ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
 				return;
 			}
 
 			// show the hint with the list.
+			/* translators: %1$s will be replaced by a URL. */
 			echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
 			return;
 		}
 
 		// show the hint.
+		/* translators: %1$s will be replaced by a URL. */
 		echo '<div class="efml_export-hint"><p>' . wp_kses_post( sprintf( __( '<strong>Export your media files to external servers to save storage space.</strong> Enable this option <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) ) . '</p></div>';
 	}
 
 	/**
 	 * Return a list of names of the external sources with enabled export option.
 	 *
-	 * @return array
+	 * @return array<int,string>
 	 */
 	private function get_external_sources_as_name_list(): array {
 		// get all terms.
-		$terms            = get_terms(
+		$terms = get_terms(
 			array(
 				'taxonomy'   => Taxonomy::get_instance()->get_name(),
 				'hide_empty' => false,
@@ -1566,7 +1572,7 @@ class Export {
 	 * Add info about proxy cache usage in info dialog for single external file.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
-	 * @param File  $external_file_obj The external file object.
+	 * @param File                $external_file_obj The external file object.
 	 *
 	 * @return array<string,mixed>
 	 */

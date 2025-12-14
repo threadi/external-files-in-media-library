@@ -807,7 +807,7 @@ class Directory_Listing {
 	 * @return array<int,string>
 	 */
 	public function hide_columns( array $hidden, WP_Screen $screen, bool $use_defaults ): array {
-		if( ! $use_defaults ) {
+		if ( ! $use_defaults ) {
 			return $hidden;
 		}
 

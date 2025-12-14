@@ -264,10 +264,10 @@ class S3 extends Service_Base implements Service {
 						}
 
 						// add the path.
-						$dir_path .= DIRECTORY_SEPARATOR . $dir;
+						$dir_path .= trailingslashit( $dir );
 
 						// create the full path.
-						$index = $this->get_bucket_name() . trailingslashit( $dir_path );
+						$index = $this->get_directory() . $dir_path;
 
 						// add the directory if it does not exist atm in the main folder list.
 						if ( ! isset( $folders[ $index ] ) ) {
@@ -299,7 +299,7 @@ class S3 extends Service_Base implements Service {
 			}
 
 			// return the resulting file list.
-			return array_merge( array( 'completed' => true ), array( $this->get_bucket_name() => $listing ), $folders );
+			return array_merge( array( 'completed' => true ), array( $this->get_directory() => $listing ), $folders );
 		} catch ( S3Exception $e ) {
 			// create error object.
 			$error = new WP_Error();
@@ -432,6 +432,14 @@ class S3 extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_region(): string {
+		// get the fields.
+		$fields = $this->get_fields();
+
+		// return the region from fields.
+		if ( ! empty( $fields['region']['value'] ) ) {
+			return $fields['region']['value'];
+		}
+
 		// get from global setting, if enabled.
 		if ( in_array( get_option( 'eml_' . $this->get_name() . '_credentials_vault' ), array( 'global', 'manually' ), true ) ) {
 			return get_option( 'eml_s3_region', 'eu-central-1' );
@@ -808,7 +816,7 @@ class S3 extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_url_mark( string $bucket_name ): string {
-		return trailingslashit( 'https://console.aws.amazon.com/s3/buckets/' . $bucket_name );
+		return 'https://console.aws.amazon.com/s3/buckets/' . trailingslashit( $bucket_name );
 	}
 
 	/**
@@ -827,36 +835,55 @@ class S3 extends Service_Base implements Service {
 			return $listing;
 		}
 
-		// remove the slashed indexed array, if set.
-		if ( ! isset( $listing[ $url ] ) ) {
-			return $listing;
-		}
-
-		// remove it.
-		unset( $listing[ $url ] );
-
-		// now move all folders in the first index => dir.
-		$count       = 0;
-		$first_index = '';
-		foreach ( $listing as $index => $item ) {
-			// bail if this is the first entry.
-			if ( 0 === $count ) {
-				++$count;
-				$first_index = $index;
+		// move all directories in the tree.
+		foreach ( $listing as $key => $value ) {
+			// bail for the main entry.
+			if ( $key === $url ) {
 				continue;
 			}
 
-			// move it.
-			$listing[ $first_index ]['dirs'][ $index ] = $item;
+			// remove the used URL from key to get the directory hierarchy of this entry.
+			$stripped_key = str_replace( trailingslashit( $url ), '', $key );
 
-			// remove the original.
-			unset( $listing[ $index ] );
+			// get the hierarchy.
+			$parts = explode( '/', $stripped_key );
 
-			// and update the counter.
-			++$count;
+			// clean the URL.
+			$cleaned_url = str_replace( $key, '', $url );
+
+			// move the entry to the target entry in tree.
+			foreach ( $parts as $part ) {
+				// bail on empty part.
+				if ( empty( $part ) ) {
+					continue;
+				}
+
+				// create the index key.
+				$index = $cleaned_url . trailingslashit( $part );
+
+				// copy this to the main tree.
+				$listing[ $url ]['dirs'][ $index ] = $value;
+			}
+
+			// remove the original entry.
+			unset( $listing[ $key ] );
 		}
 
-		// return resulting list.
+		// if the main directory is not requested, search in the tree for the real target.
+		if ( $this->directory !== $this->get_directory() ) {
+			// search for the tree.
+			$searched_tree = $this->get_real_tree( $listing, $this->directory );
+
+			// return the complete tree if search directory none has been found.
+			if ( empty( $searched_tree ) ) {
+				return $listing;
+			}
+
+			// return the found tree.
+			return $searched_tree;
+		}
+
+		// return the resulting tree.
 		return $listing;
 	}
 
@@ -1243,5 +1270,32 @@ class S3 extends Service_Base implements Service {
 			$this->get_region(),
 			$key
 		);
+	}
+
+	/**
+	 * Return the real tree from given directory.
+	 *
+	 * @param array<string,mixed> $tree The tree.
+	 * @param string              $directory The searched directory path.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_real_tree( array $tree, string $directory ): array {
+		// create the return value.
+		$real_tree = array();
+
+		// loop through the tree.
+		foreach ( $tree as $key => $value ) {
+			// bail if directory has been found.
+			if ( $key === $directory ) {
+				return array( $key => $value );
+			}
+
+			// check the deeper tree entries.
+			$real_tree = $this->get_real_tree( $value['dirs'], $directory );
+		}
+
+		// return the found directory.
+		return $real_tree;
 	}
 }

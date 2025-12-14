@@ -138,6 +138,7 @@ class DropBox extends Service_Base implements Service {
 		add_filter( 'efml_http_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
 		add_filter( 'efml_files_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
 		add_filter( 'efml_http_header_response', array( $this, 'get_real_request_headers' ), 10, 3 );
+		add_filter( 'efml_directory_listing', array( $this, 'resort_for_subdirectories' ), 10, 3 );
 	}
 
 	/**
@@ -251,6 +252,7 @@ class DropBox extends Service_Base implements Service {
 			return $this->directory;
 		}
 
+		// just return the name.
 		return 'DropBox';
 	}
 
@@ -623,6 +625,7 @@ class DropBox extends Service_Base implements Service {
 		$subdirectory = '/';
 		if ( str_contains( $directory, '/' ) ) {
 			$subdirectory = str_replace( 'DropBox', '', $directory );
+			$directory    = 'DropBox';
 		}
 
 		// get the entries (files and folders).
@@ -1195,5 +1198,34 @@ class DropBox extends Service_Base implements Service {
 
 		// send a second request for all data to get the real HTTP answer.
 		return wp_safe_remote_get( $url, $http_object->get_header_args() );
+	}
+
+	/**
+	 * Cleanup after tree has been build for a subdirectory.
+	 *
+	 * @param array<string,mixed> $tree The tree.
+	 * @param string              $directory The requested directory.
+	 * @param string              $name The used service name.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function resort_for_subdirectories( array $tree, string $directory, string $name ): array {
+		// bail if this is not our service.
+		if ( $name !== $this->get_name() ) {
+			return $tree;
+		}
+
+		// bail if no subdirectory was requested.
+		if ( ! str_contains( $directory, '/' ) ) {
+			return $tree;
+		}
+
+		// bail if requested directory is not in list.
+		if ( empty( $tree['DropBox/']['dirs'][ $directory ] ) ) {
+			return $tree;
+		}
+
+		// return only the subdirectory.
+		return array( $directory => $tree['DropBox/']['dirs'][ $directory ] );
 	}
 }
