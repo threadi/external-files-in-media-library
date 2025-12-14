@@ -1013,7 +1013,7 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
-	 * Change media row actions for URL-files.
+	 * Change media row actions for URL-files: add unzip option.
 	 *
 	 * @param array<string,string> $actions List of action.
 	 * @param WP_Post              $post The Post.
