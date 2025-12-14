@@ -379,7 +379,7 @@ class Export {
 	 */
 	public function add_column_content_files( string $content, string $column_name, int $term_id ): string {
 		// bail if this is not the "synchronization" column.
-		if ( 'export_files' !== $column_name ) {
+		if ( 'efml_export_files' !== $column_name ) {
 			return $content;
 		}
 
