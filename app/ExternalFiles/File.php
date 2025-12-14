@@ -1088,4 +1088,37 @@ class File {
 		$parsed_args['reject_unsafe_urls'] = false;
 		return $parsed_args;
 	}
+
+	/**
+	 * Return the name of the used service.
+	 *
+	 * @return string
+	 */
+	public function get_service_name(): string {
+		// get the service name.
+		$service_name = get_post_meta( $this->get_id(), 'eml_service', true );
+
+		// if service name is empty, try to detect it via protocol handler.
+		if( empty( $service_name ) ) {
+			// get the protocol handler for this file.
+			$protocol_handler_obj  = $this->get_protocol_handler_obj();
+
+			// get its name.
+			$service_name = $protocol_handler_obj->get_name();
+		}
+
+		// return the resulting service name.
+		return $service_name;
+	}
+
+	/**
+	 * Set the name of the used service.
+	 *
+	 * @param string $service_name The service name.
+	 *
+	 * @return void
+	 */
+	public function set_service_name( string $service_name ): void {
+		update_post_meta( $this->get_id(), 'eml_service', $service_name );
+	}
 }

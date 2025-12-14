@@ -12,7 +12,10 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Query;
 use WP_Term_Query;
 use WP_User;
@@ -287,7 +290,7 @@ class Tables {
 			// get the unproxied URL.
 			$url = $external_file_obj->get_url( true );
 
-			// get URL for show depending on used protocol.
+			// get URL to show depending on used protocol.
 			$url_to_show = $protocol_handler->get_link();
 
 			// get link or string for the URL.
@@ -302,11 +305,22 @@ class Tables {
 				$edit_url = '#';
 			}
 
+			// get the service name used for this file.
+			$service_name = $external_file_obj->get_service_name();
+
+			// get the service object.
+			$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+			$service_title = $protocol_handler->get_title();
+			if ( $service_obj instanceof Service_Base ) {
+				$service_title = $service_obj->get_label();
+			}
+
 			// create dialog.
 			$dialog = array(
 				'title'   => __( 'File info', 'external-files-in-media-library' ),
 				'texts'   => array(
-					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
+					'<p><strong>' . __( 'URL', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
+					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $service_title . '</p>',
 					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file_obj->get_date() . '</p>',
 					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file_obj->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
 				),
@@ -334,7 +348,7 @@ class Tables {
 			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file_obj );
 
 			// get the title.
-			$title = '<span class="efml-icon efml-' . esc_attr( $protocol_handler->get_name() ) . '" title="' . esc_attr( $protocol_handler->get_title() ) .'"></span>';
+			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) .'"></span>';
 
 			/**
 			 * Filter the title for show in source column in media table for external files.

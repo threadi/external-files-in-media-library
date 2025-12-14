@@ -279,7 +279,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f163";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before, body.post-type-attachment .external_files .efml-import:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before, body.post-type-attachment .external_files .efml-http:before {
 	content: "\f317";
 }
 
@@ -317,11 +317,11 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 
 body.post-type-attachment .external_files .efml-dropbox:before {
 	background-image: url(../gfx/dropbox_icon.svg);
+	background-size: contain;
+	background-repeat: no-repeat;
 	content: "";
 	width: 16px;
 	height: 16px;
-	background-size: contain;
-	background-repeat: no-repeat;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-s3 a:before, body.post-type-attachment .external_files .efml-s3:before {
@@ -338,6 +338,8 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 
 body.post-type-attachment .external_files .efml-webdav:before {
 	background-image: url(../gfx/webdav.svg);
+	background-repeat: no-repeat;
+	background-size: contain;
 	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
 	content: '';
 	height: 16px;
