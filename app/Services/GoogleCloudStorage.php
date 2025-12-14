@@ -123,7 +123,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 		add_filter( 'efml_service_googlecloudstorage_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 3 );
 		add_filter( 'efml_directory_listing', array( $this, 'cleanup_on_rest' ), 10, 3 );
 		add_action( 'efml_before_file_list', array( $this, 'cleanup_after_import' ) );
-		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 10, 3 );
+		add_filter( 'efml_directory_listing', array( $this, 'prepare_tree_building' ), 20, 3 );
 
 		// use hooks.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -351,6 +351,12 @@ class GoogleCloudStorage extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// bail if directory is set on object.
+		if ( ! empty( $this->directory ) ) {
+			return $this->directory;
+		}
+
+		// use default URL if no bucket is given.
 		if ( empty( $this->get_bucket_name() ) ) {
 			return 'https://www.googleapis.com/storage/';
 		}
@@ -471,8 +477,17 @@ class GoogleCloudStorage extends Service_Base implements Service {
 						continue;
 					}
 
+					// create the directory structure for the file download URL.
+					$subdir = '';
+					foreach ( $parts as $part ) {
+						if ( empty( $part ) ) {
+							continue;
+						}
+						$subdir .= DIRECTORY_SEPARATOR . $part;
+					}
+
 					// add settings for entry.
-					$entry['file']          = $file_data['name'];
+					$entry['file']          = $this->get_url_mark() . $this->get_bucket_name() . $subdir;
 					$entry['filesize']      = absint( $file_data['size'] );
 					$entry['mime-type']     = $mime_type['type'];
 					$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
@@ -502,11 +517,11 @@ class GoogleCloudStorage extends Service_Base implements Service {
 							continue;
 						}
 
-						// add the path.
-						$dir_path .= DIRECTORY_SEPARATOR . $dir;
+						// extend the directory path.
+						$dir_path .= trailingslashit( $dir );
 
 						// create the full path.
-						$index = $fields['bucket']['value'] . trailingslashit( $dir_path );
+						$index = $dir_path;
 
 						// add the directory if it does not exist atm in the main folder list.
 						if ( ! isset( $folders[ $index ] ) ) {
@@ -564,7 +579,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 
 		return array(
 			array(
-				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": config.directory + file.file, "fields": config.fields, "term": term } );',
+				'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": file.file, "fields": config.fields, "term": term } );',
 				'label'  => __( 'Import', 'external-files-in-media-library' ),
 				'show'   => 'let mimetypes = "' . $mimetypes . '";mimetypes.includes( file["mime-type"] )',
 				'hint'   => '<span class="dashicons dashicons-editor-help" title="' . esc_attr__( 'File-type is not supported', 'external-files-in-media-library' ) . '"></span>',
@@ -590,7 +605,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", "' . $this->get_url_mark() . '" + actualDirectoryPath, config.fields, config.term );',
+					'action' => 'efml_save_as_directory( "' . $this->get_name() . '", actualDirectoryPath, config.fields, config.term );',
 					'label'  => __( 'Save active directory as your external source', 'external-files-in-media-library' ),
 				),
 			)
@@ -812,18 +827,42 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			return $listing;
 		}
 
-		// create the key of the index we want to remove.
-		$index = trailingslashit( $this->get_url_mark() . $this->get_directory() );
+		// move all directories in the tree.
+		foreach ( $listing as $key => $value ) {
+			// bail for the main entry.
+			if ( $key === $url ) {
+				continue;
+			}
 
-		// bail if the entry with url_marker is not set.
-		if ( ! isset( $listing[ $index ] ) ) {
-			return $listing;
+			// get the hierarchy.
+			$parts = explode( '/', $key );
+
+			// clean the URL.
+			$cleaned_url = str_replace( $key, '', $url );
+
+			// move the entry to the target entry in tree.
+			foreach ( $parts as $part ) {
+				// bail on empty part.
+				if ( empty( $part ) ) {
+					continue;
+				}
+
+				// copy this to the main tree.
+				$listing[ $url ]['dirs'][ $cleaned_url . trailingslashit( $part ) ] = $value;
+
+				// if this entry is identical to the main entry, use only this.
+				if ( $url === $cleaned_url . trailingslashit( $part ) ) {
+					return array(
+						$url => $value,
+					);
+				}
+			}
+
+			// remove the original entry.
+			unset( $listing[ $key ] );
 		}
 
-		// remove this entry.
-		unset( $listing[ $index ] );
-
-		// return resulting list.
+		// return the resulting listing.
 		return $listing;
 	}
 

@@ -25,6 +25,13 @@ use Google\Cloud\Storage\StorageClient;
  */
 class Protocol extends Protocol_Base {
 	/**
+	 * The internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'google-cloud-storage';
+
+	/**
 	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
@@ -40,7 +47,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not a Google Cloud Storage URL.
-		if ( ! str_starts_with( $this->get_url(), 'https://www.googleapis.com/storage/' ) ) {
+		if ( ! str_starts_with( $this->get_url(), GoogleCloudStorage::get_instance()->get_url_mark() ) ) {
 			return false;
 		}
 
@@ -81,7 +88,7 @@ class Protocol extends Protocol_Base {
 		// get the name from the URL.
 		$file_name = str_replace(
 			array(
-				$google_cloud_storage_obj->get_url_mark(),
+				$google_cloud_storage_obj->get_url_mark() . $google_cloud_storage_obj->get_bucket_name() . '/',
 				$google_cloud_storage_obj->get_directory(),
 			),
 			'',

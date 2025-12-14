@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use AgileStoreLocator\Admin\Manager;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -18,9 +17,11 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
+use WP_Post;
 use WP_Query;
 use WP_Term;
 use WP_Term_Query;
@@ -46,16 +47,14 @@ class Export {
 	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
-	private function __construct() {
-	}
+	private function __construct() { }
 
 	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
 	 */
-	private function __clone() {
-	}
+	private function __clone() { }
 
 	/**
 	 * Return instance of this object as singleton.
@@ -78,6 +77,10 @@ class Export {
 	public function init(): void {
 		// add the settings.
 		add_action( 'init', array( $this, 'init_export' ), 20 );
+		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
+		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
 
 		// bail if not enabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
@@ -95,6 +98,7 @@ class Export {
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_exported_files', array( $this, 'delete_exported_file_via_request' ) );
+		add_action( 'admin_action_efml_export_file', array( $this, 'export_file_via_request' ) );
 
 		// use AJAX.
 		add_action( 'wp_ajax_efml_get_export_config_dialog', array( $this, 'get_export_config_dialog' ) );
@@ -103,10 +107,14 @@ class Export {
 
 		// use hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
-		add_action( 'add_attachment', array( $this, 'export_file' ) );
+		add_action( 'add_attachment', array( $this, 'export_file_by_upload' ) );
+		add_filter( 'wp_unique_filename', array( $this, 'check_for_exported_filenames' ), 10, 3 );
 		add_action( 'delete_attachment', array( $this, 'delete_exported_file' ) );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'update_attachment_metadata' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'on_delete_archive_term' ), 10, 2 );
+		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
+		add_filter( 'bulk_actions-upload', array( $this, 'add_bulk_action' ) );
+		add_filter( 'handle_bulk_actions-upload', array( $this, 'run_bulk_action' ), 10, 3 );
 	}
 
 	/**
@@ -135,15 +143,6 @@ class Export {
 		$section->set_title( __( 'Export of files', 'external-files-in-media-library' ) );
 		$section->set_callback( array( $this, 'export_description' ) );
 
-		// create URL.
-		$url = add_query_arg(
-			array(
-				'taxonomy'  => 'edlfw_archive',
-				'post_type' => 'attachment',
-			),
-			get_admin_url() . 'edit-tags.php'
-		);
-
 		// add setting.
 		$setting_export = $settings_obj->add_setting( 'eml_export' );
 		$setting_export->set_section( $section );
@@ -152,7 +151,7 @@ class Export {
 		$field = new Checkbox();
 		$field->set_title( __( 'Enable export', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
-		$field->set_description( sprintf( __( 'If enabled you have to configure one or more of <a href="%1$s">your external sources</a> as export target. Every new file in media library will be exported to the configured source and used as external file.', 'external-files-in-media-library' ), $url ) );
+		$field->set_description( sprintf( __( 'If enabled you have to configure one or more of <a href="%1$s">your external sources</a> as export target. Every new file in media library will be exported to the configured source and used as external file.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) );
 		$field->set_setting( $setting_export );
 		$setting_export->set_field( $field );
 
@@ -169,24 +168,7 @@ class Export {
 		$setting->set_field( $field );
 
 		// collect the external sources.
-		$external_sources = array();
-		$terms            = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				// bail if no export is enabled.
-				if ( 0 === absint( get_term_meta( $term->term_id, 'efml_export', true ) ) ) {
-					continue;
-				}
-
-				// add this source.
-				$external_sources[ $term->term_id ] = $term->name;
-			}
-		}
+		$external_sources = $this->get_external_sources_as_name_list();
 
 		// create URL.
 		$url = add_query_arg(
@@ -216,10 +198,42 @@ class Export {
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_export_local_files' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Show option to export local files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'When enabled, you will be able to export local saved files to an external service.', 'external-files-in-media-library' ) );
+		$field->add_depend( $setting_export, 1 );
+		$field->set_setting( $setting );
+		$setting->set_field( $field );
 	}
 
 	/**
-	 * Add columns to handle synchronization.
+	 * Add column for hint if export is not enabled.
+	 *
+	 * @param array<string,string> $columns The columns.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_column_for_hint( array $columns ): array {
+		// bail if export is enabled.
+		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+			return $columns;
+		}
+
+		// add the column.
+		$columns['efml_export_hint'] = __( 'Export', 'external-files-in-media-library' );
+
+		// return the list of columns.
+		return $columns;
+	}
+
+	/**
+	 * Add columns to handle exports.
 	 *
 	 * @param array<string,string> $columns The columns.
 	 *
@@ -232,11 +246,53 @@ class Export {
 		}
 
 		// add the export columns.
-		$columns['export_files'] = __( 'Exported files', 'external-files-in-media-library' );
-		$columns['export']       = __( 'Export', 'external-files-in-media-library' );
+		$columns['efml_export_files'] = __( 'Exported files', 'external-files-in-media-library' );
+		$columns['efml_export']       = __( 'Export', 'external-files-in-media-library' );
 
 		// return the resulting columns.
 		return $columns;
+	}
+
+	/**
+	 * Show hint to enabled export.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 *
+	 * @return string
+	 */
+	public function add_column_hint_content( string $content, string $column_name ): string {
+		// bail if column is not 'efml_export_hint'.
+		if ( 'efml_export_hint' !== $column_name ) {
+			return $content;
+		}
+
+		// show simple hint for users without capability to change settings.
+		$dialog = array(
+			'title'   => __( 'Export media files', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Export your media files to this external source.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		// extend the hint for all others.
+		if ( current_user_can( 'manage_options' ) ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
+
+			// show extended hint for all others.
+			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
+		}
+
+		// show simple hint.
+		return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="#"></a>';
 	}
 
 	/**
@@ -249,8 +305,8 @@ class Export {
 	 * @return string
 	 */
 	public function add_column_content_options( string $content, string $column_name, int $term_id ): string {
-		// bail if this is not the "synchronization" column.
-		if ( 'export' !== $column_name ) {
+		// bail if this is not the "efml_export" column.
+		if ( 'efml_export' !== $column_name ) {
 			return $content;
 		}
 
@@ -864,19 +920,39 @@ class Export {
 	 * Export a fresh uploaded and saved media library attachment on external hostings and configure the file data
 	 * to use them as external files.
 	 *
+	 * Does not run if:
+	 * - synchronisation is running.
+	 * - import of an external URL is running.
+	 * - the given attachment is already an external file.
+	 *
+	 * Loops through all for export enabled external sources and export the file to these sources.
+	 * The last external source is the primary source to host the file. All others are backups.
+	 *
 	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return void
 	 */
-	public function export_file( int $attachment_id ): void {
+	public function export_file_by_upload( int $attachment_id ): void {
 		// bail if sync is running.
 		if ( defined( 'EFML_URL_IMPORT_RUNNING' ) || $this->is_sync_running() ) {
 			return;
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'Checking if file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
+		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
+		// export the file.
+		$this->export_file( $attachment_id );
+	}
+
+	/**
+	 * Run export of a given single file.
+	 *
+	 * @param int $attachment_id The attachment ID to export.
+	 *
+	 * @return void
+	 */
+	private function export_file( int $attachment_id ): void {
 		// get external file object for the given attachment ID.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -906,9 +982,8 @@ class Export {
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param int $attachment_id The attachment ID.
-		 * @param string $file The absolute path to the file.
 		 */
-		do_action( 'efml_export_before', $attachment_id, $file );
+		do_action( 'efml_export_before', $attachment_id );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Check which service could be used to export the given file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
@@ -1239,6 +1314,7 @@ class Export {
 		// bail if no term is given.
 		if ( 0 === $term_id ) {
 			wp_safe_redirect( $referer );
+			exit;
 		}
 
 		// get all files which are assigned to this term.
@@ -1247,6 +1323,7 @@ class Export {
 		// bail if no files could be found.
 		if ( empty( $files ) ) {
 			wp_safe_redirect( $referer );
+			exit;
 		}
 
 		// remove the prevent-deletion for this moment.
@@ -1258,6 +1335,7 @@ class Export {
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			wp_safe_redirect( $referer );
+			exit;
 		}
 
 		// loop through the files and delete them.
@@ -1299,7 +1377,8 @@ class Export {
 	 * @return void
 	 */
 	public function export_description(): void {
-		echo '<p>' . wp_kses_post( __( '<strong>Automatically upload local files uploaded to your media library to an external source.</strong> The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) ) . '</p>';
+		/* translators: %1$s will be replaced by a URL. */
+		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
 	}
 
 	/**
@@ -1329,7 +1408,7 @@ class Export {
 			return $data;
 		}
 
-		// get the meta data.
+		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $attachment_id );
 
 		// bail if meta-data could not be loaded.
@@ -1352,6 +1431,9 @@ class Export {
 		if ( ! is_string( $file ) ) {
 			return $data;
 		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'Cleanup the attachment files.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
 
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
@@ -1444,5 +1526,367 @@ class Export {
 		if ( $term_id === $main_export_source_term_id ) {
 			update_option( 'eml_export_main_source', 0 );
 		}
+	}
+
+	/**
+	 * Show hint to export files on /wp-admin/media-new.php.
+	 *
+	 * @return void
+	 */
+	public function show_export_hint_on_file_add_page(): void {
+		// show simple messages if user has not the capability for settings.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+				// get the external sources with enabled export option.
+				$external_sources = $this->get_external_sources_as_name_list();
+
+				// bail if no external sources are set.
+				if ( ! empty( $external_sources ) ) {
+					/* translators: %1$s will be replaced by a URL. */
+					echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong></p></div>';
+					return;
+				}
+				return;
+			}
+			return;
+		}
+
+		// if export is already enabled, show where the files will be exported.
+		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+			// get the external sources with enabled export option.
+			$external_sources = $this->get_external_sources_as_name_list();
+
+			// bail if no external sources are set.
+			if ( empty( $external_sources ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( __( 'You have enabled the export for new media files but not configured an external source for it.', 'external-files-in-media-library' ) ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
+				return;
+			}
+
+			// show the hint with the list.
+			/* translators: %1$s will be replaced by a URL. */
+			echo '<div class="efml_export-hint"><p><strong>' . wp_kses_post( sprintf( _n( 'New media files will be exported to the external source %1$s.', 'New media files will be exported to external sources %1$s.', count( $external_sources ), 'external-files-in-media-library' ), '<em>' . implode( ', ', $external_sources ) ) . '</em>' ) . '</strong> ' . wp_kses_post( sprintf( __( 'Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p></div>';
+			return;
+		}
+
+		// show the hint.
+		/* translators: %1$s will be replaced by a URL. */
+		echo '<div class="efml_export-hint"><p>' . wp_kses_post( sprintf( __( '<strong>Export your media files to external servers to save storage space.</strong> Enable this option <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) ) . '</p></div>';
+	}
+
+	/**
+	 * Return a list of names of the external sources with enabled export option.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_external_sources_as_name_list(): array {
+		// get all terms.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
+
+		// bail if no terms could be loaded.
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+
+		// create the list.
+		$external_sources = array();
+
+		// add all terms to the list with enabled export.
+		foreach ( $terms as $term ) {
+			// bail if no export is enabled.
+			if ( 0 === absint( get_term_meta( $term->term_id, 'efml_export', true ) ) ) {
+				continue;
+			}
+
+			// add this source.
+			$external_sources[ $term->term_id ] = $term->name;
+		}
+
+		// return the resulting list.
+		return $external_sources;
+	}
+
+	/**
+	 * Add info about proxy cache usage in info dialog for single external file.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param File                $external_file_obj The external file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_export_state_in_info_dialog( array $dialog, File $external_file_obj ): array {
+		// add the export state of this file.
+		$dialog['texts'][] = '<p><strong>' . __( 'Exported', 'external-files-in-media-library' ) . ':</strong> ' . ( absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) > 0 ? __( 'File is exported.', 'external-files-in-media-library' ) : __( 'File is not exported.', 'external-files-in-media-library' ) ) . '</p>';
+
+		// return the resulting dialog.
+		return $dialog;
+	}
+
+	/**
+	 * Return a unique filename for an exported file.
+	 *
+	 * We check if the filename has been used for another file.
+	 * If so, we add a suffix to the filename as WordPress it does with local hostet files.
+	 *
+	 * Difference to @wp_unique_filename(): we check the DB-entry, not the filesystem, as this is the place where
+	 * exported and local files are managed.
+	 *
+	 * Does not run if export is not enabled OR no external sources are configured for export.
+	 *
+	 * @param string $filename The filename WordPress would use.
+	 * @param string $ext The extension of the file (incl. ".").
+	 * @param string $dir The absolute path to the directory where the file would be saved locally.
+	 *
+	 * @return string
+	 */
+	public function check_for_exported_filenames( string $filename, string $ext, string $dir ): string {
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return $filename;
+		}
+
+		// get the external sources with enabled export option.
+		$external_sources = $this->get_external_sources_as_name_list();
+
+		// bail if no export is enabled.
+		if( empty( $external_sources ) ) {
+			return $filename;
+		}
+
+		// get the upload dir.
+		$upload_dir = wp_upload_dir();
+
+		// build the relative path.
+		$dir = str_replace( trailingslashit( $upload_dir['basedir'] ), '', $dir ) . DIRECTORY_SEPARATOR;
+
+		// prepare marker to check for unique filename.
+		$having_unique_filename = false;
+
+		// loop until we found a unique filename.
+		$i = 0;
+		while ( ! $having_unique_filename ) {
+			// generate a file name to check.
+			$filename_to_check = $filename;
+			if( $i > 0 ) {
+				$filename_to_check = (string) str_replace( $ext, '-' . $i . $ext, $filename );
+			}
+
+			// search for any files in DB with this name.
+			$query   = array(
+				'post_type'   => 'attachment',
+				'post_status' => array( 'inherit', 'trash' ),
+				'meta_query'  => array(
+					'relation' => 'AND',
+					array(
+						'key'   => '_wp_attached_file',
+						'value' => $dir . $filename_to_check
+					),
+				)
+			);
+			$results = new WP_Query( $query );
+
+			// bail on no results.
+			if ( 0 === $results->found_posts ) {
+				// mark that we have a unique filename.
+				$having_unique_filename = true;
+				$filename = $filename_to_check;
+				continue;
+			}
+
+			// update counter.
+			++$i;
+		}
+
+		// return the resulting filename.
+		return $filename;
+	}
+
+	/**
+	 * Change media row actions for URL-files: add export option for local files.
+	 *
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Post              $post The Post.
+	 *
+	 * @return array<string,string>
+	 */
+	public function change_media_row_actions( array $actions, WP_Post $post ): array {
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return $actions;
+		}
+
+		// bail if option is disabled.
+		if( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			return $actions;
+		}
+
+		// collect the external sources.
+		$external_sources = $this->get_external_sources_as_name_list();
+
+		// bail if no external source is enabled for export.
+		if( empty( $external_sources ) ) {
+			return $actions;
+		}
+
+		// create URL to export this file.
+		$url = add_query_arg(
+			array(
+				'action' => 'efml_export_file',
+				'post' => $post->ID,
+				'nonce' => wp_create_nonce( 'efml-export-file' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			'title'   => __( 'Export media file', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Do you really want to export this file?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s. It will handled as external file after this.', 'external-files-in-media-library' ), '<em>' . end( $external_sources ) . '</em>' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add the option.
+		$actions['eml-export-file'] = '<a href="' . esc_url( $url ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Export file', 'external-files-in-media-library' ) . '</a>';
+
+		// return resulting list of actions.
+		return $actions;
+	}
+
+	/**
+	 * Export single local file via request as external file.
+	 *
+	 * @return void
+	 */
+	public function export_file_via_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-export-file', 'nonce' );
+
+		// get referer.
+		$referer = wp_get_referer();
+
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// bail if option is disabled.
+		if( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// get the post ID.
+		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if no ID is given.
+		if( 0 === $attachment_id ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'Checking if local file should be exported by request.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+		// export the file.
+		$this->export_file( $attachment_id );
+
+		// forward user.
+		wp_safe_redirect( $referer );
+	}
+
+	/**
+	 * Add bulk option to export files to external source.
+	 *
+	 * @param array<string,string> $actions List of actions.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_bulk_action( array $actions ): array {
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return $actions;
+		}
+
+		// bail if option is disabled.
+		if( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			return $actions;
+		}
+
+		// collect the external sources.
+		$external_sources = $this->get_external_sources_as_name_list();
+
+		// bail if no external source is enabled for export.
+		if( empty( $external_sources ) ) {
+			return $actions;
+		}
+
+		// add our bulk action.
+		$actions['efml-export'] = __( 'Export to external source', 'external-files-in-media-library' );
+
+		// return resulting list of actions.
+		return $actions;
+	}
+
+	/**
+	 * If our bulk action is run, export each marked file if it is not already exported.
+	 *
+	 * @param string         $sendback The return value.
+	 * @param string         $doaction The action used.
+	 * @param array<int,int> $items The items to take action.
+	 *
+	 * @return string
+	 */
+	public function run_bulk_action( string $sendback, string $doaction, array $items ): string {
+		// bail if action is not ours.
+		if ( 'efml-export' !== $doaction ) {
+			return $sendback;
+		}
+
+		// bail if option is disabled.
+		if( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			return $sendback;
+		}
+
+		// bail if item list is empty.
+		if ( empty( $items ) ) {
+			return $sendback;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'Checking if file should be exported by bulk request.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+		// check the files and change its state.
+		foreach ( $items as $attachment_id ) {
+			// bail if file is already exported.
+			if ( 1 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) ) {
+				continue;
+			}
+
+			// export the file.
+			$this->export_file( $attachment_id );
+		}
+
+		// return the given value.
+		return $sendback;
 	}
 }

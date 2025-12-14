@@ -274,6 +274,11 @@ class WebDav extends Service_Base implements Service {
 	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
+		// use subdirectory, if it is requested (has a longer path than the default one).
+		if ( $directory !== $this->directory && strlen( $directory ) < strlen( $this->directory ) ) {
+			$directory = $this->directory;
+		}
+
 		// add https:// before the directory if it is not set.
 		if ( ! str_starts_with( $directory, 'https://' ) ) {
 			$directory = 'https://' . $directory;

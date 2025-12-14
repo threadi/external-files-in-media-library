@@ -427,8 +427,11 @@ class Admin {
 	public function show_plugin_hint_in_footer( string $content ): string {
 		global $pagenow;
 
+		// get requested page.
+		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
 		// show specific text on media pages.
-		if ( in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
+		if ( 'efml_local_directories' !== $page && 'eml_settings' !== $page && in_array( $pagenow, array( 'media-new.php', 'upload.php' ), true ) ) {
 			// show hint for our plugin.
 			/* translators: %1$s will be replaced by the plugin name. */
 			return $content . ' ' . sprintf( __( 'This page has been expanded by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
@@ -436,9 +439,6 @@ class Admin {
 
 		// get requested taxonomy.
 		$post_type = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// get requested page.
-		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if this is not the listing or our page.
 		if ( 'efml_local_directories' !== $page && 'eml_settings' !== $page && Taxonomy::get_instance()->get_name() !== $post_type ) {
@@ -482,7 +482,8 @@ class Admin {
 	 * @return void
 	 */
 	public function hide_welcome_by_request(): void {
-		// hide the welcome hint.
+		// dismiss the welcome hint.
+		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
 
 		// get URL from request.

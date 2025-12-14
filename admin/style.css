@@ -258,26 +258,36 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li spa
 	margin-top: 24px;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li span:before {
+body.post-type-attachment .external_files span {
+	margin-right: .2em;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li span:before, body.post-type-attachment .external_files .efml-icon:before {
 	display: block;
 	font-family: dashicons, sans-serif;
 	font-size: 52px;
 	margin: 0 auto 10px;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before {
+body.post-type-attachment .external_files .efml-icon:before {
+	display: inline-block;
+	font-size: 16px;
+	vertical-align: middle;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before, body.post-type-attachment .external_files .efml-file:before {
 	content: "\f163";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before, body.post-type-attachment .external_files .efml-http:before {
 	content: "\f317";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before, body.post-type-attachment .external_files .efml-ftp:before {
 	content: "\f504";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-youtube a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-youtube a:before, body.post-type-attachment .external_files .efml-youtube:before {
 	content: "\f19b";
 }
 
@@ -285,19 +295,19 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f501";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip span:first-child:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip span:first-child:before, body.post-type-attachment .external_files .efml-zip:before {
 	content: "\f498";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive span:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive span:before, body.post-type-attachment .external_files .efml-google-drive:before {
 	content: "\f18b";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:before, body.post-type-attachment .external_files .efml-google-cloud-storage:before {
 	content: "\f18b";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before, body.post-type-attachment .external_files .efml-rest:before {
 	content: "\f120";
 }
 
@@ -305,7 +315,16 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: url(../gfx/dropbox_icon.svg);
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-s3 a:before {
+body.post-type-attachment .external_files .efml-dropbox:before {
+	background-image: url(../gfx/dropbox_icon.svg);
+	background-size: contain;
+	background-repeat: no-repeat;
+	content: "";
+	width: 16px;
+	height: 16px;
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-s3 a:before, body.post-type-attachment .external_files .efml-s3:before {
 	content: "\f162";
 }
 
@@ -315,6 +334,16 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: '';
 	height: 50px;
 	width: 50px;
+}
+
+body.post-type-attachment .external_files .efml-webdav:before {
+	background-image: url(../gfx/webdav.svg);
+	background-repeat: no-repeat;
+	background-size: contain;
+	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
+	content: '';
+	height: 16px;
+	width: 16px;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {

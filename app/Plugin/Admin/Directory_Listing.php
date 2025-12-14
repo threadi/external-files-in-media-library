@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_Screen;
 use WP_Term;
 
 /**
@@ -85,6 +86,7 @@ class Directory_Listing {
 		// add the page in backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
+		add_filter( 'hidden_columns', array( $this, 'hide_columns' ), 10, 3 );
 
 		// misc.
 		add_filter( 'get_edit_term_link', array( $this, 'prevent_edit_of_archive_terms' ), 10, 3 );
@@ -179,7 +181,7 @@ class Directory_Listing {
 		if ( is_null( $method ) ) {
 			?>
 			<div class="wrap">
-				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
+				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source for your external files', 'external-files-in-media-library' ); ?></h1>
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
@@ -793,5 +795,46 @@ class Directory_Listing {
 		);
 		$dialog['buttons'][0]['action'] = 'location.reload();';
 		wp_send_json( array( 'detail' => $dialog ) );
+	}
+
+	/**
+	 * Hide some columns in the taxonomy-table for archives.
+	 *
+	 * @param array<int,string> $hidden List of columns to hide.
+	 * @param WP_Screen         $screen Actual screen-object.
+	 * @param bool              $use_defaults If defaults should be used.
+	 *
+	 * @return array<int,string>
+	 */
+	public function hide_columns( array $hidden, WP_Screen $screen, bool $use_defaults ): array {
+		if ( ! $use_defaults ) {
+			return $hidden;
+		}
+
+		// bail if this is not our own taxonomy.
+		if ( Taxonomy::get_instance()->get_name() !== $screen->taxonomy ) {
+			return $hidden;
+		}
+
+		// hide the connect column.
+		$hidden[] = 'connect';
+
+		// return resulting list.
+		return $hidden;
+	}
+
+	/**
+	 * Return the listing URL.
+	 *
+	 * @return string
+	 */
+	public function get_listing_url(): string {
+		return add_query_arg(
+			array(
+				'taxonomy'  => 'edlfw_archive',
+				'post_type' => 'attachment',
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
 	}
 }

@@ -302,6 +302,12 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// bail if directory is set on object.
+		if ( ! empty( $this->directory ) ) {
+			return $this->directory;
+		}
+
+		// return the main directory name.
 		return 'Google Drive Directory Listing';
 	}
 

@@ -27,6 +27,13 @@ use Spatie\Dropbox\Client;
  */
 class Protocol extends Protocol_Base {
 	/**
+	 * The internal protocol name.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'dropbox';
+
+	/**
 	 * Return whether the file using this protocol is available.
 	 *
 	 * @return bool
