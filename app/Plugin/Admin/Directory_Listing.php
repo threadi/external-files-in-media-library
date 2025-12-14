@@ -400,9 +400,6 @@ class Directory_Listing {
 			$translations = $obj->get_translations( $translations );
 		}
 
-		// show deprecated warning for old hook name.
-		$translations = apply_filters_deprecated( 'eml_directory_translations', array( $translations ), '5.0.0', 'efml_directory_translations' );
-
 		/**
 		 * Filter the translations to use for directory listings.
 		 *

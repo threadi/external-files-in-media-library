@@ -14,7 +14,6 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use Error;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
@@ -128,6 +127,7 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
+		add_filter( 'efml_directory_translations', array( $this, 'change_translations' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
@@ -190,18 +190,6 @@ class Zip extends Service_Base implements Service {
 		$field->set_setting( $setting );
 		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
-	}
-
-	/**
-	 * Add this object to the list of listing objects.
-	 *
-	 * @param array<Directory_Listing_Base> $directory_listing_objects List of directory listing objects.
-	 *
-	 * @return array<Directory_Listing_Base>
-	 */
-	public function add_directory_listing( array $directory_listing_objects ): array {
-		$directory_listing_objects[] = $this;
-		return $directory_listing_objects;
 	}
 
 	/**
@@ -983,6 +971,7 @@ class Zip extends Service_Base implements Service {
 			// log event.
 			Log::get_instance()->create( __( 'ZIP-file could not be saved as temp file.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
+			// do nothing more.
 			return false;
 		}
 
@@ -1013,7 +1002,9 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
-	 * Change media row actions for URL-files: add unzip option.
+	 * Change media row actions for URL-files:
+	 * - add extract option.
+	 * - add open option.
 	 *
 	 * @param array<string,string> $actions List of action.
 	 * @param WP_Post              $post The Post.
@@ -1158,7 +1149,7 @@ class Zip extends Service_Base implements Service {
 		}
 
 		// add the URL from the request.
-		$config['directory'] = $url;
+		$config['fields']['server']['value'] = $url;
 
 		// return the resulting config.
 		return $config;
@@ -1240,6 +1231,27 @@ class Zip extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_form_description(): string {
-		return __( 'Enter the URL of the ZIP file your want to open. This can also be a local file in your hosting starting with <em>file://</em>.', 'external-files-in-media-library' );
+		return __( 'Enter the URL of the ZIP file you want to open. This can also be a local file on your hosting that starts with <em>file://</em>.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Change some translations on directory listing.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function change_translations( array $translations ): array {
+		// get requested method.
+		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if method is not "zip".
+		if( $this->get_name() !== $method ) {
+			return $translations;
+		}
+
+		// change translations.
+		$translations['form_login']['button']['label'] = __( 'Open ZIP', 'external-files-in-media-library' );
+
+		// return the resulting list of translations.
+		return $translations;
 	}
 }
