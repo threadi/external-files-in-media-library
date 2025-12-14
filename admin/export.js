@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
   /**
    * Add AJAX-functionality to show config settings for export.
    */
-  $( ".efml-export" ).on( 'click', function (e) {
+  $( "a.efml-export" ).on( 'click', function (e) {
     e.preventDefault();
 
     // send request
@@ -26,7 +26,7 @@ jQuery(document).ready(function($) {
   /**
    * Save export changes via toggle.
    */
-  $('.export .eml-switch-toggle input:not([readonly])').on("change", function() {
+  $('td.efml_export .eml-switch-toggle input:not([readonly])').on("change", function() {
     // send request.
     jQuery.ajax( {
       url: efmlJsExportVars.ajax_url,

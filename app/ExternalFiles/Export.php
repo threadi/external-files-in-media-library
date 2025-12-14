@@ -106,6 +106,7 @@ class Export {
 		// use hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 		add_action( 'add_attachment', array( $this, 'export_file' ) );
+		add_filter( 'wp_unique_filename', array( $this, 'check_for_exported_filenames' ), 10, 3 );
 		add_action( 'delete_attachment', array( $this, 'delete_exported_file' ) );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'update_attachment_metadata' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'on_delete_archive_term' ), 10, 2 );
@@ -902,6 +903,14 @@ class Export {
 	 * Export a fresh uploaded and saved media library attachment on external hostings and configure the file data
 	 * to use them as external files.
 	 *
+	 * Does not run if:
+	 * - synchronisation is running.
+	 * - import of an external URL is running.
+	 * - the given attachment is already an external file.
+	 *
+	 * Loops through all for export enabled external sources and export the file to these sources.
+	 * The last external source is the primary source to host the file. All others are backups.
+	 *
 	 * @param int $attachment_id The attachment ID.
 	 *
 	 * @return void
@@ -1392,6 +1401,9 @@ class Export {
 			return $data;
 		}
 
+		// log this event.
+		Log::get_instance()->create( __( 'Cleanup the attachment files.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
+
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
 
@@ -1582,5 +1594,84 @@ class Export {
 
 		// return the resulting dialog.
 		return $dialog;
+	}
+
+	/**
+	 * Return a unique filename for an exported file.
+	 *
+	 * We check if the filename has been used for another file.
+	 * If so, we add a suffix to the filename as WordPress it does with local hostet files.
+	 *
+	 * Difference to @wp_unique_filename(): we check the DB-entry, not the filesystem, as this is the place where
+	 * exported and local files are managed.
+	 *
+	 * Does not run if export is not enabled OR no external sources are configured for export.
+	 *
+	 * @param string $filename The filename WordPress would use.
+	 * @param string $ext The extension of the file (incl. ".").
+	 * @param string $dir The absolute path to the directory where the file would be saved locally.
+	 *
+	 * @return string
+	 */
+	public function check_for_exported_filenames( string $filename, string $ext, string $dir ): string {
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return $filename;
+		}
+
+		// get the external sources with enabled export option.
+		$external_sources = $this->get_external_sources_as_name_list();
+
+		// bail if no export is enabled.
+		if( empty( $external_sources ) ) {
+			return $filename;
+		}
+
+		// get the upload dir.
+		$upload_dir = wp_upload_dir();
+
+		// build the relative path.
+		$dir = str_replace( trailingslashit( $upload_dir['basedir'] ), '', $dir ) . DIRECTORY_SEPARATOR;
+
+		// prepare marker to check for unique filename.
+		$having_unique_filename = false;
+
+		// loop until we found a unique filename.
+		$i = 0;
+		while ( ! $having_unique_filename ) {
+			// generate a file name to check.
+			$filename_to_check = $filename;
+			if( $i > 0 ) {
+				$filename_to_check = (string) str_replace( $ext, '-' . $i . $ext, $filename );
+			}
+
+			// search for any files in DB with this name.
+			$query   = array(
+				'post_type'   => 'attachment',
+				'post_status' => array( 'inherit', 'trash' ),
+				'meta_query'  => array(
+					'relation' => 'AND',
+					array(
+						'key'   => '_wp_attached_file',
+						'value' => $dir . $filename_to_check
+					),
+				)
+			);
+			$results = new WP_Query( $query );
+
+			// bail on no results.
+			if ( 0 === $results->found_posts ) {
+				// mark that we have a unique filename.
+				$having_unique_filename = true;
+				$filename = $filename_to_check;
+				continue;
+			}
+
+			// update counter.
+			++$i;
+		}
+
+		// return the resulting filename.
+		return $filename;
 	}
 }
