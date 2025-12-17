@@ -466,8 +466,19 @@ class Forms {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 * @param array $url_array The list of URLs to add.
+		 * @param string $urls The original list of URLs from request (since 5.0.0).
 		 */
-		$url_array = apply_filters( 'efml_import_urls', $url_array );
+		$url_array = apply_filters( 'efml_import_urls', $url_array, $urls );
+
+		/**
+		 * Filter the given fields array to import URLs.
+		 *
+		 * @since 5.0.0 Available 5.0.0.
+		 * @param array<string,mixed> $fields List of fields.
+		 * @param array<int,string> $url_array List of URLs to import.
+		 * @param string $urls The original list of URLs from request.
+		 */
+		$fields = apply_filters( 'efml_import_fields', $fields, $url_array, $urls );
 
 		// save count of URLs.
 		update_option( 'eml_import_url_max_' . $user_id, count( $url_array ) );
