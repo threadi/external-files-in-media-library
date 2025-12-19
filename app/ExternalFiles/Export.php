@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Sel
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -95,6 +96,9 @@ class Export {
 		add_action( 'efml_before_deleting_synced_files', array( $this, 'add_sync_filter_during_deletion' ) );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_listing_delete_action' ), 10, 2 );
 		add_action( 'efml_show_file_info', array( $this, 'add_info_about_export' ) );
+		add_action( 'efml_real_import_local', array( $this, 'delete_exported_file_during_import' ) );
+		add_action( 'efml_switch_to_local_before', array( $this, 'prevent_export_checks_on_local_switch' ), 10, 2 );
+		add_action( 'efml_switch_to_local_after', array( $this, 'cleanup_exported_file' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_exported_files', array( $this, 'delete_exported_file_via_request' ) );
@@ -375,7 +379,7 @@ class Export {
 	 */
 	public function add_column_content_files( string $content, string $column_name, int $term_id ): string {
 		// bail if this is not the "synchronization" column.
-		if ( 'export_files' !== $column_name ) {
+		if ( 'efml_export_files' !== $column_name ) {
 			return $content;
 		}
 
@@ -941,18 +945,24 @@ class Export {
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
-		// export the file.
+		// export the file (we do not use the response as we are not in user-env atm).
 		$this->export_file( $attachment_id );
 	}
 
 	/**
 	 * Run export of a given single file.
 	 *
+	 * This is the main handling to request the export through an Export_Base object of external sources.
+	 *
+	 * Loops through all external sources with enabled export option. The last one is the main export target.
+	 *
+	 * If successfully the file will be converted to an external @File object.
+	 *
 	 * @param int $attachment_id The attachment ID to export.
 	 *
-	 * @return void
+	 * @return bool Return true if the file export was successfully, false it not.
 	 */
-	private function export_file( int $attachment_id ): void {
+	private function export_file( int $attachment_id ): bool {
 		// get external file object for the given attachment ID.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -962,7 +972,7 @@ class Export {
 			Log::get_instance()->create( __( 'Given file for export is already saved as external file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error', 0 );
 
 			// do nothing more.
-			return;
+			return false;
 		}
 
 		// get the file name.
@@ -974,7 +984,7 @@ class Export {
 			Log::get_instance()->create( __( 'Path for given file to export could not be found.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error', 0 );
 
 			// do nothing more.
-			return;
+			return false;
 		}
 
 		/**
@@ -1005,6 +1015,9 @@ class Export {
 		if ( $main_export_source_term_id > 0 ) {
 			$export_source_terms[] = $main_export_source_term_id;
 		}
+
+		// create result marker.
+		$successfully_exported = false;
 
 		// export the file to each external source.
 		foreach ( $export_source_terms as $term_id ) {
@@ -1081,6 +1094,9 @@ class Export {
 				continue;
 			}
 
+			// mark export as successfully.
+			$successfully_exported = true;
+
 			// get fields.
 			$fields = array();
 			if ( ! empty( $credentials['fields'] ) ) {
@@ -1111,6 +1127,9 @@ class Export {
 			// add file to local cache, if necessary.
 			$external_file_obj->add_to_cache();
 
+			// set the used service.
+			$external_file_obj->set_service_name( $listing_obj->get_name() );
+
 			// assign the file to this term.
 			wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
 
@@ -1129,6 +1148,9 @@ class Export {
 			/* translators: %1$s will be replaced by the external source title. */
 			Log::get_instance()->create( sprintf( __( 'File exported to external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
 		}
+
+		// return the result.
+		return $successfully_exported;
 	}
 
 	/**
@@ -1160,6 +1182,9 @@ class Export {
 			return;
 		}
 
+		// create successfully marker.
+		$successfully_deleted = true;
+
 		// check each term.
 		foreach ( $this->get_export_terms() as $term_id ) {
 			// get the listing object by this name.
@@ -1186,11 +1211,19 @@ class Export {
 			if ( ! $export_obj->delete_exported_file( $url, $credentials, $attachment_id ) ) {
 				// log this event.
 				Log::get_instance()->create( __( 'Exported file could not be deleted.', 'external-files-in-media-library' ), $url, 'error' );
+
+				// mark as not successfully.
+				$successfully_deleted = false;
 				continue;
 			}
 
 			// log this event.
 			Log::get_instance()->create( __( 'Exported file has been deleted.', 'external-files-in-media-library' ), $url, 'info', 2 );
+		}
+
+		// cleanup after a successfully deletion.
+		if( $successfully_deleted ) {
+			$this->cleanup_exported_file( $attachment_id );
 		}
 	}
 
@@ -1725,6 +1758,19 @@ class Export {
 			return $actions;
 		}
 
+		// bail if file is already an external file.
+		if ( absint( get_post_meta( $post->ID, 'eml_exported_file', true ) ) > 0 ) {
+			return $actions;
+		}
+
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $post->ID );
+
+		// bail if file is already an external file.
+		if( $external_file_obj->is_valid() ) {
+			return $actions;
+		}
+
 		// collect the external sources.
 		$external_sources = $this->get_external_sources_as_name_list();
 
@@ -1808,7 +1854,26 @@ class Export {
 		Log::get_instance()->create( __( 'Checking if local file should be exported by request.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// export the file.
-		$this->export_file( $attachment_id );
+		$result = $this->export_file( $attachment_id );
+
+		// trigger hint depending on result.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'eml_file_export' );
+		if( $result ) {
+			$transient_obj->set_message( '<strong>' . __( 'The file has been export.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is now stored in the external source and used from there.', 'external-files-in-media-library' ) );
+			$transient_obj->set_type( 'success' );
+		}
+		else {
+			if( current_user_can( 'manage_options' ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				$transient_obj->set_message( '<strong>' . __( 'The file could not be exported.', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Check <a href="%1$s">the log</a> to see what happened.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_logs' ) ) );
+			}
+			else {
+				$transient_obj->set_message( '<strong>' . __( 'The file could not be exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'Talk to your project administration about this.', 'external-files-in-media-library' ) );
+			}
+			$transient_obj->set_type( 'error' );
+		}
+		$transient_obj->save();
 
 		// forward user.
 		wp_safe_redirect( $referer );
@@ -1875,6 +1940,9 @@ class Export {
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if file should be exported by bulk request.', 'external-files-in-media-library' ), '', 'info', 2 );
 
+		// set marker for successfully export.
+		$successfully_exported = false;
+
 		// check the files and change its state.
 		foreach ( $items as $attachment_id ) {
 			// bail if file is already exported.
@@ -1883,10 +1951,72 @@ class Export {
 			}
 
 			// export the file.
-			$this->export_file( $attachment_id );
+			$result = $this->export_file( $attachment_id );
+
+			// if export was successfully, save this state.
+			if( $result ) {
+				$successfully_exported = true;
+			}
 		}
+
+		// trigger hint depending on result.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'eml_files_export' );
+		if( $successfully_exported ) {
+			$transient_obj->set_message( '<strong>' . __( 'The files have been exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'They are now stored in the external source and used from there.', 'external-files-in-media-library' ) );
+			$transient_obj->set_type( 'success' );
+		}
+		else {
+			if( current_user_can( 'manage_options' ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				$transient_obj->set_message( '<strong>' . __( 'The files could not be exported.', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Check <a href="%1$s">the log</a> to see what happened.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_logs' ) ) );
+			}
+			else {
+				$transient_obj->set_message( '<strong>' . __( 'The files could not be exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'Talk to your project administration about this.', 'external-files-in-media-library' ) );
+			}
+			$transient_obj->set_type( 'error' );
+		}
+		$transient_obj->save();
 
 		// return the given value.
 		return $sendback;
+	}
+
+	/**
+	 * Delete an exported external file on external source if it is imported as real media file.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function delete_exported_file_during_import( File $external_file_obj ): void {
+		// bail if file is not exported.
+		if ( 0 === absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) ) {
+			return;
+		}
+
+		// delete the exported file.
+		$this->delete_exported_file( $external_file_obj->get_id() );
+	}
+
+	/**
+	 * Prevent usage of export functions during hosting switch to local.
+	 *
+	 * @return void
+	 */
+	public function prevent_export_checks_on_local_switch(): void {
+		remove_action( 'add_attachment', array( $this, 'export_file_by_upload' ) );
+	}
+
+	/**
+	 * Cleanup exported files after switching them to local hosting.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function cleanup_exported_file( int $attachment_id ): void {
+		delete_post_meta( $attachment_id, 'eml_exported_file' );
+		delete_post_meta( $attachment_id, 'efml_export_sources' );
 	}
 }

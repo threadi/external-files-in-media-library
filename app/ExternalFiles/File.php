@@ -677,6 +677,13 @@ class File {
 			return false;
 		}
 
+		/**
+		 * Run tasks before we switch a file to local.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 */
+		do_action( 'efml_switch_to_local_before' );
+
 		// prevent duplicate check for this file.
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_checks' ), 10, 2 );
@@ -821,6 +828,14 @@ class File {
 		// clear cache.
 		$this->delete_cache();
 		$this->delete_thumbs();
+
+		/**
+		 * Run tasks after we switch a file to local.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param int $attachment_id The attachment ID.
+		 */
+		do_action( 'efml_switch_to_local_after', $attachment_id );
 
 		// return true if switch was successfully.
 		return true;

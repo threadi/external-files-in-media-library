@@ -126,6 +126,7 @@ class Extensions {
 		$list = array(
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Import_Export',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',

@@ -14,10 +14,12 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use WP_Term;
 
 /**
  * Object to handle support for specific services.
@@ -78,6 +80,11 @@ class Services {
 		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_export_in_directory_listing' ), 10, 2 );
+
+		// add actions.
+		add_action( 'admin_action_efml_export_external_source', array( $this, 'export_external_source' ), 10, 2 );
+		add_action( 'wp_ajax_import_external_source_json', array( $this, 'import_external_source_json_via_ajax' ) );
 
 		// misc.
 		add_action( 'init', array( $this, 'init_settings' ), 15 );
@@ -357,5 +364,206 @@ class Services {
 
 		// return the resulting dialog.
 		return $dialog;
+	}
+
+	/**
+	 * Add option to export the settings for this specific external source.
+	 *
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Term              $term The requested WP_Term object.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_export_in_directory_listing( array $actions, WP_Term $term ): array {
+		// bail if user is not allowed to export this.
+		if( ! current_user_can( 'manage_options' ) ) {
+			return $actions;
+		}
+
+		// create the import URL.
+		$url = add_query_arg(
+			array(
+				'action' => 'efml_export_external_source',
+				'nonce'  => wp_create_nonce( 'eml-export-external-source' ),
+				'term'   => $term->term_id
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			/* translators: %1$s will be replaced by the file name. */
+			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
+			'texts'   => array(
+				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project which is using the plugin "External Files in Media Library".', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add the action.
+		$actions['export'] = '<a href="' . esc_url( $url ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Export', 'external-files-in-media-library' ) . '</a>';
+
+		// return the list of actions.
+		return $actions;
+	}
+
+	/**
+	 * Return a single service configuration as JSON.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function export_external_source(): void {
+		// check nonce.
+		check_admin_referer( 'eml-export-external-source', 'nonce' );
+
+		// get the term ID.
+		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if ID is not given.
+		if( 0 === $term_id ) {
+			wp_redirect( (string) wp_get_referer() );
+		}
+
+		// get the entry.
+		$entry = Taxonomy::get_instance()->get_entry( $term_id );
+
+		// add the type to the entry.
+		$entry['type'] = get_term_meta( $term_id, 'type', true );
+
+		// create filename for JSON-download-file.
+		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_external_source_' . basename( get_term_field( 'name', $term_id, Taxonomy::get_instance()->get_name() ) ) .  '.json';
+		/**
+		 * File the filename for JSON-download of single file.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $filename The generated filename.
+		 */
+		$filename = apply_filters( 'efml_export_file_filename', $filename );
+
+		// set header for response as JSON-download.
+		header( 'Content-type: application/json' );
+		header( 'Content-Disposition: attachment; filename=' . sanitize_file_name( $filename ) );
+		echo wp_json_encode( $entry );
+		exit;
+	}
+
+	/**
+	 * Import a JSON for an external source service via AJAX.
+	 *
+	 * @return void
+	 */
+	public function import_external_source_json_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'efml-import-external-source', 'nonce' );
+
+		// create dialog for response.
+		$dialog = array(
+			'detail' => array(
+				'title'   => __( 'Error', 'external-files-in-media-library' ),
+				'texts'   => array(
+					'<p><strong>' . __( 'An error occurred during the import of the JSON file.', 'external-files-in-media-library' ) . '</strong></p>',
+				),
+				'buttons' => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' )
+					),
+				),
+			),
+		);
+
+		// bail if no file is given.
+		if ( ! isset( $_FILES ) ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'No file given.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// bail if file has no size.
+		if ( isset( $_FILES['file']['size'] ) && 0 === $_FILES['file']['size'] ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file does not have a size.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// bail if file type is not JSON.
+		if ( isset( $_FILES['file']['type'] ) && 'application/json' !== $_FILES['file']['type'] ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// allow JSON-files.
+		add_filter( 'upload_mimes', array( $this, 'allow_json' ) );
+
+		// bail if file type is not JSON.
+		if ( isset( $_FILES['file']['name'] ) ) {
+			$filetype = wp_check_filetype( sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ) );
+			if ( 'json' !== $filetype['ext'] ) {
+				$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
+				wp_send_json( $dialog );
+			}
+		}
+
+		// bail if no tmp_name is available.
+		if ( ! isset( $_FILES['file']['tmp_name'] ) ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file could not be saved.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// bail if uploaded file is not readable.
+		if ( isset( $_FILES['file']['tmp_name'] ) && ! file_exists( sanitize_text_field( $_FILES['file']['tmp_name'] ) ) ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not readable.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// get WP Filesystem-handler for read the file.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the content of the file.
+		$file_content = $wp_filesystem->get_contents( sanitize_text_field( wp_unslash( $_FILES['file']['tmp_name'] ) ) );
+
+		// convert JSON to array.
+		$settings_array = json_decode( $file_content, ARRAY_A );
+
+		// bail if necessary entries are missing.
+		if( empty( $settings_array['type'] ) || empty( $settings_array['title'] ) || empty( $settings_array['directory'] ) || empty( $settings_array['fields'] ) ) {
+			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not compatible with external sources.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $dialog );
+		}
+
+		// add the external source.
+		Taxonomy::get_instance()->add( $settings_array['type'], $settings_array['directory'], $settings_array['fields'] );
+
+		// return that import was successfully.
+		$dialog['detail']['title']                = __( 'External source has been added', 'external-files-in-media-library' );
+		$dialog['detail']['texts'][0]             = '<p><strong>' . __( 'You will find the external source in the list.', 'external-files-in-media-library' ) . '</strong></p>';
+		$dialog['detail']['buttons'][0]['action'] = 'location.reload();';
+		wp_send_json( $dialog );
+	}
+
+	/**
+	 * Allow SVG as file-type.
+	 *
+	 * @param array $file_types List of file types.
+	 *
+	 * @return array
+	 */
+	public function allow_json( array $file_types ): array {
+		$new_filetypes         = array();
+		$new_filetypes['json'] = 'application/json';
+		return array_merge( $file_types, $new_filetypes );
 	}
 }
