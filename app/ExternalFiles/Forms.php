@@ -161,6 +161,31 @@ class Forms {
 		 */
 		$info_timeout = apply_filters( 'efml_import_info_timeout', $info_timeout );
 
+		// create import dialog.
+		$import_dialog = array(
+			'detail' => array(
+				'title' => __( 'Add external source', 'external-files-in-media-library' ),
+				'texts' => array(
+					/* translators: %1$s will be replaced by a URL. */
+					'<p>' . sprintf( __( 'Add a new external source <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url() ) . '</p>',
+					'<p>' . __( 'Or select a JSON file with the configuration of an external source in the following field:', 'external-files-in-media-library' ) . '</p>',
+					'<input type="file" accept="application/json" name="import_external_source_json" id="import_external_source_json">',
+				),
+				'buttons' => array(
+					array(
+						'action' => 'import_external_source_json();',
+						'variant' => 'primary',
+						'text' => __( 'Import this JSON', 'external-files-in-media-library' ),
+					),
+					array(
+						'action' => 'closeDialog();',
+						'variant' => 'primary',
+						'text' => __( 'Cancel', 'external-files-in-media-library' ),
+					)
+				)
+			)
+		);
+
 		// add php-vars to our js-script.
 		wp_localize_script(
 			'eml-admin',
@@ -176,12 +201,15 @@ class Forms {
 				'delete_archive_nonce'          => wp_create_nonce( 'eml-delete-archive-nonce' ),
 				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
 				'change_term_name_nonce'        => wp_create_nonce( 'efml-change-term-name' ),
+				'import_external_source_nonce'  => wp_create_nonce( 'efml-import-external-source' ),
 				'review_url'                    => Helper::get_plugin_review_url(),
 				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
 				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
 				'title_rate_us'                 => __( 'Add your review for this plugin', 'external-files-in-media-library' ),
 				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
 				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
+				'title_add_external_source'     => __( 'Add external source', 'external-files-in-media-library' ),
+				'add_external_source_dialog'    => $import_dialog,
 				'text_import_ended'             => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
 				'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
 				'lbl_cancel'                    => __( 'Cancel', 'external-files-in-media-library' ),
@@ -201,6 +229,8 @@ class Forms {
 				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 				/* source of file: https://pixabay.com */
 				'success_sound_file'            => Helper::get_plugin_url() . 'gfx/success.mp3',
+				'title_settings_import_file_missing' => __( 'Error', 'external-files-in-media-library' ),
+				'text_settings_import_file_missing' => __( 'You have not selected a file to upload.', 'external-files-in-media-library' ),
 			)
 		);
 	}

@@ -3,7 +3,7 @@ let efml_progress_timeout = false;
 
 jQuery(document).ready(function($) {
     /**
-     * Add rating hint
+     * Add rating hint.
      */
     $('body.settings_page_eml_settings:not(.efml-hide-review-hint) h1.wp-heading-inline, body.taxonomy-edlfw_archive:not(.efml-hide-review-hint) h1.wp-heading-inline, body.media_page_efml_local_directories:not(.efml-hide-review-hint) h1.wp-heading-inline').each(function() {
       let review_button = document.createElement( 'a' );
@@ -15,13 +15,29 @@ jQuery(document).ready(function($) {
     });
 
     /**
-     * Add file action.,
+     * Add file action.
      */
     $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
       let add_file_button = document.createElement('a');
       add_file_button.className = 'page-title-action';
       add_file_button.href = efmlJsVars.directory_listing_url;
       add_file_button.innerHTML = efmlJsVars.title_add_file;
+      this.after(add_file_button);
+    });
+
+    /**
+     * Add external source action.
+     */
+    $('body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
+      let add_file_button = document.createElement('a');
+      add_file_button.className = 'page-title-action easy-dialog-for-wordpress';
+      add_file_button.href = '#';
+      add_file_button.innerHTML = efmlJsVars.title_add_external_source;
+      add_file_button.onclick = function(e) {
+        e.preventDefault();
+        console.log(efmlJsVars.add_external_source_dialog);
+        efml_create_dialog( efmlJsVars.add_external_source_dialog );
+      }
       this.after(add_file_button);
     });
 
@@ -508,5 +524,47 @@ function efml_change_term_name() {
     success: function( response ) {
       efml_create_dialog( response );
     }
+  });
+}
+
+/**
+ * Import a JSON with external source configuration.
+ */
+function import_external_source_json() {
+  let file = jQuery('#import_external_source_json')[0].files[0];
+  if( undefined === file ) {
+    let dialog_config = {
+      detail: {
+        title: efmlJsVars.title_settings_import_file_missing,
+        texts: [
+          '<p>' + efmlJsVars.text_settings_import_file_missing + '</p>'
+        ],
+        buttons: [
+          {
+            'action': 'closeDialog();',
+            'variant': 'primary',
+            'text': efmlJsVars.lbl_ok
+          }
+        ]
+      }
+    }
+    efml_create_dialog( dialog_config );
+    return;
+  }
+
+  let request = new FormData();
+  request.append( 'file', file);
+  request.append( 'action', 'import_external_source_json' );
+  request.append( 'nonce', efmlJsVars.import_external_source_nonce );
+
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: "POST",
+    data: request,
+    contentType: false,
+    processData: false,
+    success: function( dialog_config ){
+      efml_create_dialog( dialog_config );
+    },
   });
 }

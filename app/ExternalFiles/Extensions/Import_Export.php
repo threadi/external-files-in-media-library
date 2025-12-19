@@ -293,18 +293,18 @@ class Import_Export extends Extension_Base {
 			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
 			'texts'   => array(
 				'<p>' . __( 'You will receive a JSON file that you can use to import this file into another media library.', 'external-files-in-media-library' ) . '</p>',
-				'<p>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
 			'buttons' => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',
-					'text'    => __( 'Yes', 'external-files-in-media-library' ),
+					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
 				),
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
-					'text'    => __( 'No', 'external-files-in-media-library' ),
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
 				),
 			),
 		);
@@ -331,7 +331,7 @@ class Import_Export extends Extension_Base {
 
 		// bail if ID is not given.
 		if( 0 === $post_id ) {
-			wp_referer_field( (string) wp_get_referer() );
+			wp_redirect( (string) wp_get_referer() );
 		}
 
 		// get the external file object of this file.
@@ -339,7 +339,7 @@ class Import_Export extends Extension_Base {
 
 		// bail if this is not an external file.
 		if( ! $external_file_obj->is_valid() ) {
-			wp_referer_field( (string) wp_get_referer() );
+			wp_redirect( (string) wp_get_referer() );
 		}
 
 		// collect the file data for the JSON-file.

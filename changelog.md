@@ -61,6 +61,7 @@
 - Added support for filenames in other writing systems (like Farsi)
 - Added option to hide the review begging
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
+- Added export and import of settings for external sources
 
 ### Changed
 

@@ -702,8 +702,13 @@ class Files {
 			if ( ! empty( $actions['download'] ) ) {
 				unset( $actions['download'] ); }
 
-			// add custom hint.
-			$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
+			// add custom hint depending on capabilities.
+			if( current_user_can( 'manage_options' ) ) {
+				$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
+			}
+			else {
+				$actions['eml-hint-mime'] = __( 'Mime-type is not allowed', 'external-files-in-media-library' );
+			}
 		}
 
 		// return resulting list of actions.
