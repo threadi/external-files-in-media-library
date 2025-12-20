@@ -99,6 +99,7 @@
 - Cleanup the return value for external files via get_attached_file()
 - File protocol uses now WP_Filesystem for each file interaction
 - Enabled search field for URLs in logs
+- Dropbox file URLs can now be imported without any API key if they are public available
 - External sources are now saved user-specific
   -> only administrators see all entries
   -> advanced option allows to show all entries for alle users

@@ -745,6 +745,11 @@ class Files {
 			$file    = str_replace( $uploads['basedir'] . '/', '', $file );
 		}
 
+		// if the basename of the file does not contain a ".", use the file title in backend.
+		if( is_admin() && ! strpos( basename( $file ), '.' ) ) {
+			$file = get_the_title( $post_id );
+		}
+
 		// return normal file-name.
 		return $file;
 	}

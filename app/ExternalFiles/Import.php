@@ -153,11 +153,19 @@ class Import extends Directory_Listing_Base {
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
 	public function add_url( string $url ): bool {
+		// get the fields
 		$fields = $this->get_fields();
 
-		// show deprecated warning for old hook name.
-		$false = apply_filters_deprecated( 'eml_prevent_import', array( false, $url, $fields ), '5.0.0', 'efml_prevent_import' );
+		/**
+		 * Filter the URL to import.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 * @param array $fields The fields.
+		 */
+		$url = apply_filters( 'efml_import_url', $url, $fields );
 
+		$false = false;
 		/**
 		 * Prevent import of this single URL.
 		 *
@@ -166,6 +174,8 @@ class Import extends Directory_Listing_Base {
 		 * @param bool $false Return true if normal import should not be started.
 		 * @param string $url The given URL.
 		 * @param array $fields List of fields necessary for the connection.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_prevent_import', $false, $url, $fields ) ) {
 			return false;
@@ -526,7 +536,7 @@ class Import extends Directory_Listing_Base {
 
 			// log that URL has been added as file in media library.
 			$log->create( __( 'URL successfully added in media library.', 'external-files-in-media-library' ), $file_url, 'success', 0, $this->get_identifier() );
-			$log->create( __( 'Using following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'info', 2, $this->get_identifier() );
+			$log->create( __( 'Used following settings to save this URL in media library:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $file_data ) . '</code>', $file_url, 'info', 2, $this->get_identifier() );
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_after_file_save', array( $external_file_obj, $file_data, $file_url ), '5.0.0', 'efml_after_file_save' );
