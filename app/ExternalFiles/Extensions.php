@@ -133,9 +133,6 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
 		);
 
-		// show deprecated warning for old hook name.
-		$list = apply_filters_deprecated( 'eml_extensions', array( $list ), '5.0.0', 'efml_extensions' );
-
 		/**
 		 * Filter the list of available file handling extensions.
 		 *
@@ -157,9 +154,6 @@ class Extensions {
 			'queue',
 			'real_import',
 		);
-
-		// show deprecated warning for old hook name.
-		$list = apply_filters_deprecated( 'eml_extensions_default', array( $list ), '5.0.0', 'efml_extensions_default' );
 
 		/**
 		 * Filter the list of default extensions.

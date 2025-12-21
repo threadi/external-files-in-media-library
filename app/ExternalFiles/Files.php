@@ -221,9 +221,6 @@ class Files {
 			'fields'         => 'ids',
 		);
 
-		// show deprecated warning for old hook name.
-		$query = apply_filters_deprecated( 'eml_files_query', array( $query ), '5.0.0', 'efml_files_query' );
-
 		/**
 		 * Filter the query to load all external files.
 		 *

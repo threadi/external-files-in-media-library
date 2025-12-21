@@ -462,9 +462,7 @@ class Import extends Directory_Listing_Base {
 			// get external file object to update its settings.
 			$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
-			// show deprecated hint for old hook.
-			$no_external_object = apply_filters_deprecated( 'eml_import_no_external_file', array( false, $url, $file_data, $external_file_obj ), '5.0.0', 'efml_import_no_external_file' );
-
+			$no_external_object = false;
 			/**
 			 * Filter whether we import no external files.
 			 *
@@ -476,6 +474,8 @@ class Import extends Directory_Listing_Base {
 			 * @param string $url The used URL.
 			 * @param array $file_data The file data.
 			 * @param File $external_file_obj The resulting external file (without any configuration yet).
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
 			 */
 			if ( apply_filters( 'efml_import_no_external_file', $no_external_object, $url, $file_data, $external_file_obj ) ) {
 				// show deprecated hint for old hook.

@@ -20,7 +20,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use Sabre\HTTP\ClientHttpException;
 use WP_Filesystem_Base;
 
 /**
@@ -58,14 +57,14 @@ class File extends Protocol_Base {
 	 * @return array<int|string,array<string,mixed>> List of file-infos.
 	 */
 	public function get_url_infos(): array {
+		// sanitize the local file path.
+		$url = $this->sanitize_local_path( $this->get_url() );
+
 		// initialize list of files.
 		$files = array();
 
 		// get actual object for hooks.
 		$instance = $this;
-
-		// show deprecated hint for old hook.
-		$files = apply_filters_deprecated( 'eml_filter_file_response', array( $files, $this->get_url(), $instance ), '5.0.0', 'efml_filter_file_response' );
 
 		/**
 		 * Filter the file with custom import methods.
@@ -75,7 +74,7 @@ class File extends Protocol_Base {
 		 * @param string $url The URL to import.
 		 * @param File $instance The actual protocol object.
 		 */
-		$results = apply_filters( 'efml_filter_file_response', array(), $this->get_url(), $instance );
+		$results = apply_filters( 'efml_filter_file_response', $files, $url, $instance );
 		if ( ! empty( $results ) ) {
 			// return the result as array for import this as single URL.
 			if ( isset( $results['title'] ) ) { // @phpstan-ignore isset.offset
@@ -90,9 +89,9 @@ class File extends Protocol_Base {
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// check if given URL is a directory.
-		if ( $wp_filesystem->is_dir( $this->get_url() ) ) {
+		if ( $wp_filesystem->is_dir( $url ) ) {
 			// show deprecated hint for old hook.
-			do_action_deprecated( 'eml_file_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_file_directory_import_start' );
+			do_action_deprecated( 'eml_file_directory_import_start', array( $url ), '5.0.0', 'efml_file_directory_import_start' );
 
 			/**
 			 * Run action on beginning of presumed directory import via file-protocol.
@@ -101,19 +100,19 @@ class File extends Protocol_Base {
 			 *
 			 * @param string $url   The URL to import.
 			 */
-			do_action( 'efml_file_directory_import_start', $this->get_url() );
+			do_action( 'efml_file_directory_import_start', $url );
 
 			// get the files.
-			$file_list = $wp_filesystem->dirlist( $this->get_url() );
+			$file_list = $wp_filesystem->dirlist( $url );
 
 			// bail if list could not be loaded.
 			if ( ! is_array( $file_list ) ) {
 				// log this event.
-				Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+				Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 				// add the result to the list.
 				$result = new Results\Url_Result();
-				$result->set_url( $this->get_url() );
+				$result->set_url( $url );
 				$result->set_result_text( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ) );
 				$result->set_error( true );
 				Results::get_instance()->add( $result );
@@ -121,9 +120,6 @@ class File extends Protocol_Base {
 				// do nothing more.
 				return array();
 			}
-
-			// show deprecated hint for old hook.
-			do_action_deprecated( 'eml_file_directory_import_files', array( $this->get_url(), $file_list ), '5.0.0', 'efml_file_directory_import_files' );
 
 			/**
 			 * Run action if we have files to check via FILE-protocol.
@@ -133,16 +129,16 @@ class File extends Protocol_Base {
 			 * @param string $url   The URL to import.
 			 * @param array<string,array<string,mixed>> $file_list List of files.
 			 */
-			do_action( 'efml_file_directory_import_files', $this->get_url(), $file_list );
+			do_action( 'efml_file_directory_import_files', $url, $file_list );
 
 			// show progress.
 			/* translators: %1$s is replaced by a URL. */
-			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $this->get_url() ), count( $file_list ) ) : '';
+			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory path %1$s', 'external-files-in-media-library' ), $url ), count( $file_list ) ) : '';
 
 			// loop through the directory.
 			foreach ( $file_list as $file => $settings ) {
 				// get file path.
-				$file_path = $this->get_url() . $file;
+				$file_path = $url . $file;
 
 				// bail if this is not a file.
 				if ( 'd' === $settings['type'] ) {
@@ -214,13 +210,13 @@ class File extends Protocol_Base {
 			$progress ? $progress->finish() : '';
 		} else {
 			// check for duplicate.
-			if ( $this->check_for_duplicate( $this->get_url() ) ) {
-				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			if ( $this->check_for_duplicate( $url ) ) {
+				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 				return array();
 			}
 
 			// gert file data.
-			$results = $this->get_url_info( $this->get_url() );
+			$results = $this->get_url_info( $url );
 
 			// bail if results are empty.
 			if ( empty( $results ) ) {
@@ -240,8 +236,9 @@ class File extends Protocol_Base {
 		 * @since 3.0.0 Available since 3.0.0
 		 * @param array<int,array<string,mixed>> $files List of files.
 		 * @param Protocol_Base $instance The import object.
+		 * @param string $url The used URL.
 		 */
-		return apply_filters( 'efml_external_files_infos', $files, $instance );
+		return apply_filters( 'efml_external_files_infos', $files, $instance, $url );
 	}
 
 	/**
@@ -253,7 +250,7 @@ class File extends Protocol_Base {
 	 */
 	public function get_url_info( string $url ): array {
 		// use file path as name for this in this protocol handler.
-		$file_path = $url;
+		$file_path = $this->sanitize_local_path( $url );
 
 		// initialize the file infos array.
 		$results = array(
@@ -277,7 +274,7 @@ class File extends Protocol_Base {
 		 * @param string $file_path The absolute file path.
 		 */
 		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
-			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->sanitize_local_path( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 			// return empty array as we can not get infos about a file which does not exist.
 			return array();
 		}
@@ -462,15 +459,15 @@ class File extends Protocol_Base {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */
-			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->get_url() ) ) );
-			$error_obj->set_url( $this->get_url() );
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $this->sanitize_local_path( $this->get_url() ) ) ) );
+			$error_obj->set_url( $this->sanitize_local_path( $this->get_url() ) );
 			$error_obj->set_error( true );
 
 			// add the error object to the list of errors.
 			Results::get_instance()->add( $error_obj );
 
 			// add log entry.
-			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
+			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->sanitize_local_path( $this->get_url() ), 'error' );
 
 			// do nothing more.
 			return false;
@@ -478,5 +475,16 @@ class File extends Protocol_Base {
 
 		// return the path to the tmp file.
 		return $tmp_file;
+	}
+
+	/**
+	 * Return the sanitized local path.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	private function sanitize_local_path( string $url ): string {
+		return 'file://' . realpath( str_replace( 'file://', '', $url ) );
 	}
 }

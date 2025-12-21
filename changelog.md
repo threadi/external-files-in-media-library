@@ -108,6 +108,7 @@
 - External sources can now get an individual name
 - ZIP files can not also be opened via any supported TCP protocol
 - Save used service on each external file
+- Local path will be sanitized
 - Optimized URL shortener
 
 ### Fixed

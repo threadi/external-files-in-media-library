@@ -675,9 +675,6 @@ class Forms {
 				),
 			);
 
-			// show deprecated warning for old hook name.
-			$dialog = apply_filters_deprecated( 'eml_dialog_after_adding', array( $dialog ), '5.0.0', 'efml_dialog_after_adding' );
-
 			/**
 			 * Filter the dialog after adding files.
 			 *
