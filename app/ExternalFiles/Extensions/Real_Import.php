@@ -473,16 +473,14 @@ class Real_Import extends Extension_Base {
 		// trigger hint depending on result.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( 'eml_real_import' );
-		if( $this->import_local( $external_file_obj ) ) {
+		if ( $this->import_local( $external_file_obj ) ) {
 			$transient_obj->set_message( '<strong>' . __( 'The file has been imported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is are now stored in the media library without any external connection.', 'external-files-in-media-library' ) );
 			$transient_obj->set_type( 'success' );
-		}
-		else {
-			if( current_user_can( 'manage_options' ) ) {
+		} else {
+			if ( current_user_can( 'manage_options' ) ) {
 				/* translators: %1$s will be replaced by a URL. */
 				$transient_obj->set_message( '<strong>' . __( 'The file could not be imported.', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Check <a href="%1$s">the log</a> to see what happened.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_logs' ) ) );
-			}
-			else {
+			} else {
 				$transient_obj->set_message( '<strong>' . __( 'The file could not be imported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'Talk to your project administration about this.', 'external-files-in-media-library' ) );
 			}
 			$transient_obj->set_type( 'error' );
@@ -729,7 +727,7 @@ class Real_Import extends Extension_Base {
 
 		// bail given file is not an external file.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
-		if( ! $external_file_obj->is_valid() ) {
+		if ( ! $external_file_obj->is_valid() ) {
 			return $actions;
 		}
 

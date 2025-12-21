@@ -703,10 +703,9 @@ class Files {
 				unset( $actions['download'] ); }
 
 			// add custom hint depending on capabilities.
-			if( current_user_can( 'manage_options' ) ) {
+			if ( current_user_can( 'manage_options' ) ) {
 				$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
-			}
-			else {
+			} else {
 				$actions['eml-hint-mime'] = __( 'Mime-type is not allowed', 'external-files-in-media-library' );
 			}
 		}
@@ -746,7 +745,7 @@ class Files {
 		}
 
 		// if the basename of the file does not contain a ".", use the file title in backend.
-		if( is_admin() && ! strpos( basename( $file ), '.' ) ) {
+		if ( is_admin() && ! strpos( basename( (string) $file ), '.' ) ) {
 			$file = get_the_title( $post_id );
 		}
 

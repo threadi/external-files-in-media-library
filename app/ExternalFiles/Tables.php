@@ -269,12 +269,12 @@ class Tables {
 		if ( 'external_files' === $column_name ) {
 			// show no-icon if it is not an external file.
 			if ( ! $external_file_obj->is_valid() ) {
-				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) .'"></span>';
+				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) . '"></span>';
 				return;
 			}
 
 			// show yes-icon as it is an external file.
-			echo '<span class="dashicons dashicons-yes" title="' . esc_html__( 'external file', 'external-files-in-media-library' ) .'"></span>';
+			echo '<span class="dashicons dashicons-yes" title="' . esc_html__( 'external file', 'external-files-in-media-library' ) . '"></span>';
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0' );
@@ -309,7 +309,7 @@ class Tables {
 			$service_name = $external_file_obj->get_service_name();
 
 			// get the service object.
-			$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+			$service_obj   = Services::get_instance()->get_service_by_name( $service_name );
 			$service_title = $protocol_handler->get_title();
 			if ( $service_obj instanceof Service_Base ) {
 				$service_title = $service_obj->get_label();
@@ -348,7 +348,7 @@ class Tables {
 			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file_obj );
 
 			// get the title.
-			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) .'"></span>';
+			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) . '"></span>';
 
 			/**
 			 * Filter the title for show in source column in media table for external files.
@@ -360,7 +360,7 @@ class Tables {
 			$title = apply_filters( 'efml_table_column_source_title', $title, $attachment_id );
 
 			// output.
-			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_html__( 'File info', 'external-files-in-media-library' ) .'"></a>' );
+			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_html__( 'File info', 'external-files-in-media-library' ) . '"></a>' );
 
 			// show deprecated hint for old hook.
 			do_action_deprecated( 'eml_table_column_source', array( $attachment_id ), '5.0.0', 'efml_table_column_source' );

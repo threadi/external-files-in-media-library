@@ -56,7 +56,8 @@
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 - Added support to import Google Drive files via WP CLI (without any timeouts)
 - Added option to unzip from external password protected ZIP-files
-- Added options to open and unzip zip-files which are already saved in media library
+- Added options to open and extract zip-files which are already saved in media library
+- Added support to open and extract multiple zip formats: .zip, .gz, .tar.gz
 - Added option to show what will be done in import dialog
 - Added support for filenames in other writing systems (like Farsi)
 - Added option to hide the review begging

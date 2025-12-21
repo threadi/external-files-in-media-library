@@ -257,7 +257,7 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function is_disabled(): bool {
-		// not disabled if mode is set to manually.
+		// not disabled if mode is set to "manually".
 		if ( $this->is_mode( 'manually' ) ) {
 			return false;
 		}
@@ -1233,7 +1233,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function convert_dropbox_urls( string $url ): string {
 		// bail if URL is not a Dropbox URL.
-		if( ! str_starts_with( $url, 'https://www.dropbox.com/' ) ) {
+		if ( ! str_starts_with( $url, 'https://www.dropbox.com/' ) ) {
 			return $url;
 		}
 
@@ -1241,8 +1241,9 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( __( 'Start check for converting the Dropbox URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
 
 		// create the direct download URL.
-		$dropbox_url = add_query_arg( array(
-				'raw' => 1
+		$dropbox_url = add_query_arg(
+			array(
+				'raw' => 1,
 			),
 			$url
 		);
@@ -1251,7 +1252,7 @@ class DropBox extends Service_Base implements Service {
 		$response = wp_get_http_headers( $dropbox_url );
 
 		// bail if result is false.
-		if( ! $response instanceof CaseInsensitiveDictionary ) {
+		if ( ! $response instanceof CaseInsensitiveDictionary ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Request to Dropbox URL results in error.', 'external-files-in-media-library' ), $url, 'error' );
 
@@ -1263,7 +1264,7 @@ class DropBox extends Service_Base implements Service {
 		$response_array = $response->getAll();
 
 		// bail if no location is set.
-		if( empty( $response_array['location'] ) ) {
+		if ( empty( $response_array['location'] ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'No forward URL returned from Dropbox.', 'external-files-in-media-library' ), $url, 'error' );
 

@@ -1114,9 +1114,14 @@ class File {
 		$service_name = get_post_meta( $this->get_id(), 'eml_service', true );
 
 		// if service name is empty, try to detect it via protocol handler.
-		if( empty( $service_name ) ) {
+		if ( empty( $service_name ) ) {
 			// get the protocol handler for this file.
-			$protocol_handler_obj  = $this->get_protocol_handler_obj();
+			$protocol_handler_obj = $this->get_protocol_handler_obj();
+
+			// bail if object could not be loaded.
+			if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
+				return '';
+			}
 
 			// get its name.
 			$service_name = $protocol_handler_obj->get_name();

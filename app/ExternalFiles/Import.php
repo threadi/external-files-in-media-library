@@ -153,7 +153,7 @@ class Import extends Directory_Listing_Base {
 	 * @return bool true if anything from the URL has been added successfully.
 	 */
 	public function add_url( string $url ): bool {
-		// get the fields
+		// get the fields.
 		$fields = $this->get_fields();
 
 		/**
@@ -436,7 +436,7 @@ class Import extends Directory_Listing_Base {
 			// bail on any error.
 			if ( is_wp_error( $attachment_id ) ) {
 				/* translators: %1$s will be replaced by a WP-error-message */
-				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>' ), $file_url, 'error', 0, $this->get_identifier() );
+				$log->create( sprintf( __( 'The URL could not be saved due to the following error: %1$s<br><br>Using following file data: %2$s', 'external-files-in-media-library' ), '<code>' . wp_json_encode( $attachment_id->errors['upload_error'][0] ) . '</code>', '<code>' . wp_json_encode( $file_data ) . '</code>' ), $file_url, 'error', 0, $this->get_identifier() );
 
 				// create the error entry.
 				$error_obj = new Url_Result();

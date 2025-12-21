@@ -76,7 +76,7 @@ class Import_Export extends Extension_Base {
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
 		// bail if this is not enabled.
-		if( 1 !== absint( get_option( 'eml_import_export' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_import_export' ) ) ) {
 			return;
 		}
 
@@ -160,7 +160,7 @@ class Import_Export extends Extension_Base {
 		}
 
 		// do not show if "no_textarea" is set to true.
-		if( ! empty( $settings['no_textarea'] ) ) {
+		if ( ! empty( $settings['no_textarea'] ) ) {
 			return $dialog;
 		}
 
@@ -174,8 +174,8 @@ class Import_Export extends Extension_Base {
 	/**
 	 * Set URLs from JSON for import.
 	 *
-	 * @param array  $url_array The URLs to import.
-	 * @param string $urls The original string from request.
+	 * @param array<int,string> $url_array The URLs to import.
+	 * @param string            $urls The original string from request.
 	 *
 	 * @return array<int,string>
 	 */
@@ -197,12 +197,12 @@ class Import_Export extends Extension_Base {
 		$file_data = json_decode( html_entity_decode( $urls ), true );
 
 		// bail if JSON could not be decoded.
-		if( empty( $file_data ) ) {
+		if ( empty( $file_data ) ) {
 			return $url_array;
 		}
 
 		// bail if URL is not given in JSON.
-		if( empty( $file_data['url'] ) ) {
+		if ( empty( $file_data['url'] ) ) {
 			return $url_array;
 		}
 
@@ -213,11 +213,11 @@ class Import_Export extends Extension_Base {
 	/**
 	 * Set URLs from JSON for import.
 	 *
-	 * @param array  $fields The fields for import.
-	 * @param array $url_array The original string from request.
-	 * @param string $urls The original string from request.
+	 * @param array<string,mixed> $fields The fields for import.
+	 * @param array<int,string>   $url_array The list of URLs to import.
+	 * @param string              $urls The original string from request.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function set_fields_for_import( array $fields, array $url_array, string $urls ): array {
@@ -238,17 +238,17 @@ class Import_Export extends Extension_Base {
 		$file_data = json_decode( html_entity_decode( $urls ), true );
 
 		// bail if JSON could not be decoded.
-		if( empty( $file_data ) ) {
+		if ( empty( $file_data ) ) {
 			return $fields;
 		}
 
 		// bail if URL is not given in JSON.
-		if( empty( $file_data['url'] ) ) {
+		if ( empty( $file_data['url'] ) ) {
 			return $fields;
 		}
 
 		// get the entry for the service from the JSON.
-		if( empty( $file_data['service'] ) ) {
+		if ( empty( $file_data['service'] ) ) {
 			return $fields;
 		}
 
@@ -256,12 +256,12 @@ class Import_Export extends Extension_Base {
 		$service_obj = Services::get_instance()->get_service_by_name( $file_data['service'] );
 
 		// bail if service could not be found.
-		if( ! $service_obj instanceof Service_Base ) {
+		if ( ! $service_obj instanceof Service_Base ) {
 			return $fields;
 		}
 
 		// bail if no fields are set in JSON.
-		if( empty( $file_data['fields'] ) ) {
+		if ( empty( $file_data['fields'] ) ) {
 			return $fields;
 		}
 
@@ -330,28 +330,28 @@ class Import_Export extends Extension_Base {
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if ID is not given.
-		if( 0 === $post_id ) {
-			wp_redirect( (string) wp_get_referer() );
+		if ( 0 === $post_id ) {
+			wp_safe_redirect( (string) wp_get_referer() );
 		}
 
 		// get the external file object of this file.
 		$external_file_obj = Files::get_instance()->get_file( $post_id );
 
 		// bail if this is not an external file.
-		if( ! $external_file_obj->is_valid() ) {
-			wp_redirect( (string) wp_get_referer() );
+		if ( ! $external_file_obj->is_valid() ) {
+			wp_safe_redirect( (string) wp_get_referer() );
 		}
 
 		// collect the file data for the JSON-file.
 		$file_data = array(
-			'url' => $external_file_obj->get_url( true ),
-			'type' => $external_file_obj->get_file_type_obj()->get_name(),
+			'url'     => $external_file_obj->get_url( true ),
+			'type'    => $external_file_obj->get_file_type_obj()->get_name(),
 			'service' => $external_file_obj->get_service_name(),
-			'fields' => $external_file_obj->get_fields(),
+			'fields'  => $external_file_obj->get_fields(),
 		);
 
 		// create filename for JSON-download-file.
-		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_external_file_' . basename( get_the_title( $post_id ) ) .  '.json';
+		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_external_file_' . basename( get_the_title( $post_id ) ) . '.json';
 		/**
 		 * File the filename for JSON-download of single file.
 		 *

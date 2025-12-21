@@ -31,6 +31,7 @@ class Zip extends File_Types_Base {
 	 */
 	protected array $mime_types = array(
 		'application/zip',
+		'application/x-gzip',
 	);
 
 	/**

@@ -68,6 +68,7 @@
         "ext-mysqli": "*",
         "ext-openssl": "*",
         "ext-curl": "*",
+        "ext-zlib": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "^4.0.4",
         "threadi/easy-settings-for-wordpress": "^1.17.0",
