@@ -8,12 +8,20 @@
 namespace ExternalFiles;
 
 use WP_REST_Request;
+use WP_REST_Server;
 use WP_UnitTestCase;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\ExternalFiles\Rest.
  */
 class Rest extends WP_UnitTestCase {
+
+	/**
+	 * The REST server object.
+	 *
+	 * @var ?WP_REST_Server
+	 */
+	private ?WP_REST_Server $server = null;
 
 	/**
 	 * The URL of the file to use for testings.
