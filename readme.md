@@ -100,3 +100,13 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 ## Check with plugin "Plugin Check"
 
 `wp plugin check --error-severity=7 --warning-severity=6 --include-low-severity-errors --categories=plugin_repo --format=json --slug=external-files-in-media-library .`
+
+## Unit tests
+
+### Initialize the test environment
+
+`composer test-install`
+
+### Run them
+
+`composer test`

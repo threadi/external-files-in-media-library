@@ -63,6 +63,7 @@
 - Added option to hide the review begging
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
 - Added export and import of settings for external sources
+- Added PHP unit tests for essential functions of this plugin
 
 ### Changed
 
@@ -125,6 +126,7 @@
 - Fixed potential error with attached files if they do not exist
 - Fixed missing visible progress-bar during synchronization
 - Fixed missing saving of actual availability of each file (all were available any time)
+- Fixed REST API endpoints to not using WP_Error for responses
 
 ### Removed
 

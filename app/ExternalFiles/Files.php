@@ -178,8 +178,6 @@ class Files {
 		 * @param bool $false True if URL should not be changed.
 		 * @param string $url The given URL.
 		 * @param ?int $attachment_id The ID of the attachment.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false !== apply_filters( 'efml_attachment_link', $false, $url, $attachment_id ) ) {
 			return $url;
@@ -257,11 +255,6 @@ class Files {
 
 			// add object to the list.
 			$results[] = $external_file_obj;
-		}
-
-		// bail if list is empty.
-		if ( empty( $results ) ) {
-			return array();
 		}
 
 		// return the resulting list.
@@ -712,7 +705,7 @@ class Files {
 	}
 
 	/**
-	 * Prevent output as file if availability is not given.
+	 * Prevent output as external file if availability is not given.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/get_attached_file/
 	 *

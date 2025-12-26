@@ -11,8 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
-use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;

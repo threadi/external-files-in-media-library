@@ -84,6 +84,11 @@ class Protocols {
 	 * @return Protocol_Base|false
 	 */
 	public function get_protocol_object_for_url( string $url ): Protocol_Base|false {
+		// bail if no URL is given.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
 		// define variable for result.
 		$result = false;
 
