@@ -94,6 +94,7 @@ class Export {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
 		add_action( 'efml_before_sync', array( $this, 'add_sync_filter' ), 10, 3 );
 		add_action( 'efml_before_deleting_synced_files', array( $this, 'add_sync_filter_during_deletion' ) );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_export_in_directory_listing' ), 10, 2 );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_listing_delete_action' ), 10, 2 );
 		add_action( 'efml_show_file_info', array( $this, 'add_info_about_export' ) );
 		add_action( 'efml_real_import_local', array( $this, 'delete_exported_file_during_import' ) );
@@ -245,7 +246,7 @@ class Export {
 	 */
 	public function add_columns( array $columns ): array {
 		// bail if user has not the capability.
-		if ( ! current_user_can( 'manage_options' ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
 			return $columns;
 		}
 
@@ -609,7 +610,7 @@ class Export {
 		$form = '<div><label for="enable">' . __( 'Enable:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="enable" id="enable" value="1"' . ( $enabled > 0 ? ' checked="checked"' : '' ) . '></div>';
 
 		// -> marker for main export source, if user has the capability for it.
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( current_user_can( 'efml_cap_tools_export' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
 			$description = sprintf( __( 'Manage this setting <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) );
 			$form       .= '<div><label for="main_export">' . __( 'Main export:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="main_export" id="main_export" value="1"' . ( absint( get_option( 'eml_export_main_source' ) ) === $term_id ? ' checked="checked"' : '' ) . '> ' . $description . '</div>';
@@ -1411,7 +1412,7 @@ class Export {
 	 */
 	public function export_description(): void {
 		/* translators: %1$s will be replaced by a URL. */
-		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use this options <a href="%1$s">here</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
 	}
 
 	/**
@@ -1748,6 +1749,11 @@ class Export {
 	 * @return array<string,string>
 	 */
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
+		// bail if cap is missing.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			return $actions;
+		}
+
 		// bail if export is disabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
 			return $actions;
@@ -1795,7 +1801,8 @@ class Export {
 			'texts'   => array(
 				'<p><strong>' . __( 'Do you really want to export this file?', 'external-files-in-media-library' ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
-				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s. It will handled as external file after this.', 'external-files-in-media-library' ), '<em>' . end( $external_sources ) . '</em>' ) . '</p>',
+				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.', 'external-files-in-media-library' ), '<em>' . end( $external_sources ) . '</em>' ) . '</p>',
+				'<p>' . __( 'It will be handled as external file after the export. It will not be saved in your local hosting.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons' => array(
 				array(
@@ -1828,7 +1835,13 @@ class Export {
 		check_admin_referer( 'efml-export-file', 'nonce' );
 
 		// get referer.
-		$referer = wp_get_referer();
+		$referer = (string) wp_get_referer();
+
+		// bail if cap is missing.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
 
 		// bail if export is disabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
@@ -2015,5 +2028,58 @@ class Export {
 	public function cleanup_exported_file( int $attachment_id ): void {
 		delete_post_meta( $attachment_id, 'eml_exported_file' );
 		delete_post_meta( $attachment_id, 'efml_export_sources' );
+	}
+
+	/**
+	 * Add option to export the settings for this specific external source.
+	 *
+	 * @param array<string,string> $actions List of action.
+	 * @param WP_Term              $term The requested WP_Term object.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_export_in_directory_listing( array $actions, WP_Term $term ): array {
+		// bail if user is not allowed to export this.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return $actions;
+		}
+
+		// create the import URL.
+		$url = add_query_arg(
+			array(
+				'action' => 'efml_export_external_source',
+				'nonce'  => wp_create_nonce( 'eml-export-external-source' ),
+				'term'   => $term->term_id,
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create dialog.
+		$dialog = array(
+			/* translators: %1$s will be replaced by the file name. */
+			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
+			'texts'   => array(
+				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project which is using the plugin "External Files in Media Library".', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add the action.
+		$actions['export'] = '<a href="' . esc_url( $url ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Export', 'external-files-in-media-library' ) . '</a>';
+
+		// return the list of actions.
+		return $actions;
 	}
 }

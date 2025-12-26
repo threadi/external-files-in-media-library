@@ -252,12 +252,12 @@ class Directory_Listing {
 		// get directory to connect to from request.
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 		if ( $term_id > 0 ) {
-			// get the user_id which saved this entry.
-			$user_id = absint( get_term_meta( $term_id, 'user_id', true ) );
+			// get the user_id's which saved this entry.
+			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id' ) );
 
 			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
-			if ( $user_id > 0 && get_current_user_id() !== $user_id && ! Helper::has_current_user_role( 'administrator' ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
-				$this->show_error( '<p>' . __( 'Access not allowed. This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
+			if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
+				$this->show_error( '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
 				return;
 			}
 

@@ -80,7 +80,6 @@ class Services {
 		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
-		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_export_in_directory_listing' ), 10, 2 );
 
 		// add actions.
 		add_action( 'admin_action_efml_export_external_source', array( $this, 'export_external_source' ), 10, 0 );
@@ -364,59 +363,6 @@ class Services {
 
 		// return the resulting dialog.
 		return $dialog;
-	}
-
-	/**
-	 * Add option to export the settings for this specific external source.
-	 *
-	 * @param array<string,string> $actions List of action.
-	 * @param WP_Term              $term The requested WP_Term object.
-	 *
-	 * @return array<string,string>
-	 */
-	public function add_export_in_directory_listing( array $actions, WP_Term $term ): array {
-		// bail if user is not allowed to export this.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return $actions;
-		}
-
-		// create the import URL.
-		$url = add_query_arg(
-			array(
-				'action' => 'efml_export_external_source',
-				'nonce'  => wp_create_nonce( 'eml-export-external-source' ),
-				'term'   => $term->term_id,
-			),
-			get_admin_url() . 'admin.php'
-		);
-
-		// create dialog.
-		$dialog = array(
-			/* translators: %1$s will be replaced by the file name. */
-			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
-			'texts'   => array(
-				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project which is using the plugin "External Files in Media Library".', 'external-files-in-media-library' ) . '</p>',
-				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
-			),
-			'buttons' => array(
-				array(
-					'action'  => 'location.href="' . $url . '";',
-					'variant' => 'primary',
-					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
-				),
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'primary',
-					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// add the action.
-		$actions['export'] = '<a href="' . esc_url( $url ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Export', 'external-files-in-media-library' ) . '</a>';
-
-		// return the list of actions.
-		return $actions;
 	}
 
 	/**

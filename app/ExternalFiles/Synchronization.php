@@ -271,6 +271,11 @@ class Synchronization {
 	 * @return array<string,string>
 	 */
 	public function add_column_for_hint( array $columns ): array {
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return $columns;
+		}
+
 		// bail if export is enabled.
 		if ( 1 === absint( get_option( 'eml_sync' ) ) ) {
 			return $columns;
@@ -292,7 +297,7 @@ class Synchronization {
 	 */
 	public function add_columns( array $columns ): array {
 		// bail if user has not the capability.
-		if ( ! current_user_can( 'efml_sync' ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
 			return $columns;
 		}
 
