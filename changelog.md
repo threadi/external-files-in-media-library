@@ -56,12 +56,14 @@
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
 - Added support to import Google Drive files via WP CLI (without any timeouts)
 - Added option to unzip from external password protected ZIP-files
-- Added options to open and unzip zip-files which are already saved in media library
+- Added options to open and extract zip-files which are already saved in media library
+- Added support to open and extract multiple zip formats: .zip, .gz, .tar.gz
 - Added option to show what will be done in import dialog
 - Added support for filenames in other writing systems (like Farsi)
 - Added option to hide the review begging
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
 - Added export and import of settings for external sources
+- Added PHP unit tests for essential functions of this plugin
 
 ### Changed
 
@@ -99,6 +101,7 @@
 - Cleanup the return value for external files via get_attached_file()
 - File protocol uses now WP_Filesystem for each file interaction
 - Enabled search field for URLs in logs
+- Dropbox file URLs can now be imported without any API key if they are public available
 - External sources are now saved user-specific
   -> only administrators see all entries
   -> advanced option allows to show all entries for alle users
@@ -106,6 +109,7 @@
 - External sources can now get an individual name
 - ZIP files can not also be opened via any supported TCP protocol
 - Save used service on each external file
+- Local path will be sanitized
 - Optimized URL shortener
 
 ### Fixed
@@ -122,6 +126,7 @@
 - Fixed potential error with attached files if they do not exist
 - Fixed missing visible progress-bar during synchronization
 - Fixed missing saving of actual availability of each file (all were available any time)
+- Fixed REST API endpoints to not using WP_Error for responses
 
 ### Removed
 

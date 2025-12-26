@@ -13,7 +13,9 @@
         "pre-autoload-dump": [
             "Google\\Task\\Composer::cleanup",
             "Aws\\Script\\Composer\\Composer::removeUnusedServices"
-        ]
+        ],
+        "test": "phpunit",
+        "test-install": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest"
     },
     "extra": {
         "google/apiclient-services": [
@@ -59,7 +61,9 @@
         "php-stubs/wp-cli-stubs": "^2.11",
         "coenjacobs/mozart": "^0.7.1",
         "phpcompatibility/phpcompatibility-wp": "^2.1",
-        "dealerdirect/phpcodesniffer-composer-installer": "^1.2"
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
+        "yoast/phpunit-polyfills": "^1.0",
+        "wp-phpunit/wp-phpunit": "^6.3"
     },
     "require": {
         "php": "^8.0",
@@ -68,6 +72,7 @@
         "ext-mysqli": "*",
         "ext-openssl": "*",
         "ext-curl": "*",
+        "ext-zlib": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "^4.0.4",
         "threadi/easy-settings-for-wordpress": "^1.17.0",

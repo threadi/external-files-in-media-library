@@ -72,9 +72,6 @@ class Cli {
 		// set the fields.
 		$import->set_fields( $fields );
 
-		// show deprecated warning for old hook name.
-		do_action_deprecated( 'eml_cli_arguments', array( $arguments ), '5.0.0', 'efml_cli_arguments' );
-
 		/**
 		 * Run additional tasks from extensions.
 		 *

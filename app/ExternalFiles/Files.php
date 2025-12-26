@@ -178,8 +178,6 @@ class Files {
 		 * @param bool $false True if URL should not be changed.
 		 * @param string $url The given URL.
 		 * @param ?int $attachment_id The ID of the attachment.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( false !== apply_filters( 'efml_attachment_link', $false, $url, $attachment_id ) ) {
 			return $url;
@@ -221,9 +219,6 @@ class Files {
 			'fields'         => 'ids',
 		);
 
-		// show deprecated warning for old hook name.
-		$query = apply_filters_deprecated( 'eml_files_query', array( $query ), '5.0.0', 'efml_files_query' );
-
 		/**
 		 * Filter the query to load all external files.
 		 *
@@ -260,11 +255,6 @@ class Files {
 
 			// add object to the list.
 			$results[] = $external_file_obj;
-		}
-
-		// bail if list is empty.
-		if ( empty( $results ) ) {
-			return array();
 		}
 
 		// return the resulting list.
@@ -703,10 +693,9 @@ class Files {
 				unset( $actions['download'] ); }
 
 			// add custom hint depending on capabilities.
-			if( current_user_can( 'manage_options' ) ) {
+			if ( current_user_can( 'manage_options' ) ) {
 				$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
-			}
-			else {
+			} else {
 				$actions['eml-hint-mime'] = __( 'Mime-type is not allowed', 'external-files-in-media-library' );
 			}
 		}
@@ -716,7 +705,7 @@ class Files {
 	}
 
 	/**
-	 * Prevent output as file if availability is not given.
+	 * Prevent output as external file if availability is not given.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/get_attached_file/
 	 *
@@ -743,6 +732,11 @@ class Files {
 		if ( is_string( $file ) && ! $external_file_obj->is_locally_saved() ) {
 			$uploads = wp_get_upload_dir();
 			$file    = str_replace( $uploads['basedir'] . '/', '', $file );
+		}
+
+		// if the basename of the file does not contain a ".", use the file title in backend.
+		if ( is_admin() && ! strpos( basename( (string) $file ), '.' ) ) {
+			$file = get_the_title( $post_id );
 		}
 
 		// return normal file-name.

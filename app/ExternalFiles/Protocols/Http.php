@@ -650,8 +650,6 @@ class Http extends Protocol_Base {
 		 *
 		 * @param bool $true Use false to disable this.
 		 * @param string $url The URL to check.
-		 *
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( is_ssl() && ! str_starts_with( $url, 'https://' ) && apply_filters( 'efml_http_ssl', $true, $url ) ) {
 			return true;

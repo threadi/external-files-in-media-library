@@ -33,6 +33,7 @@ use Spatie\Dropbox\Client;
 use WP_Error;
 use WP_Image_Editor;
 use WP_User;
+use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
 
 /**
  * Object to handle support for this platform.
@@ -58,13 +59,6 @@ class DropBox extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $settings_sub_tab = 'eml_dropbox';
-
-	/**
-	 * Marker for export files.
-	 *
-	 * @var bool
-	 */
-	protected bool $export_files = true;
 
 	/**
 	 * Instance of actual object.
@@ -139,6 +133,7 @@ class DropBox extends Service_Base implements Service {
 		add_filter( 'efml_files_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
 		add_filter( 'efml_http_header_response', array( $this, 'get_real_request_headers' ), 10, 3 );
 		add_filter( 'efml_directory_listing', array( $this, 'resort_for_subdirectories' ), 10, 3 );
+		add_filter( 'efml_import_url', array( $this, 'convert_dropbox_urls' ) );
 	}
 
 	/**
@@ -262,7 +257,7 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function is_disabled(): bool {
-		// not disabled if mode is set to manually.
+		// not disabled if mode is set to "manually".
 		if ( $this->is_mode( 'manually' ) ) {
 			return false;
 		}
@@ -1227,5 +1222,61 @@ class DropBox extends Service_Base implements Service {
 
 		// return only the subdirectory.
 		return array( $directory => $tree['DropBox/']['dirs'][ $directory ] );
+	}
+
+	/**
+	 * Convert a given Dropbox URL to its download URL.
+	 *
+	 * @param string $url The given URL.
+	 *
+	 * @return string
+	 */
+	public function convert_dropbox_urls( string $url ): string {
+		// bail if URL is not a Dropbox URL.
+		if ( ! str_starts_with( $url, 'https://www.dropbox.com/' ) ) {
+			return $url;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'Start check for converting the Dropbox URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+		// create the direct download URL.
+		$dropbox_url = add_query_arg(
+			array(
+				'raw' => 1,
+			),
+			$url
+		);
+
+		// send header request to get the forwarding URL for direct access.
+		$response = wp_get_http_headers( $dropbox_url );
+
+		// bail if result is false.
+		if ( ! $response instanceof CaseInsensitiveDictionary ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Request to Dropbox URL results in error.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// return the given URL.
+			return $url;
+		}
+
+		// get the response data.
+		$response_array = $response->getAll();
+
+		// bail if no location is set.
+		if ( empty( $response_array['location'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'No forward URL returned from Dropbox.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// return the given URL.
+			return $url;
+		}
+
+		// log this event.
+		/* translators: %1$s and %2$s will be replaced by URLs. */
+		Log::get_instance()->create( sprintf( __( 'Converting %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $url . '</em>', '<em>' . $response_array['location'] . '</em>' ), $response_array['location'], 'info', 2 );
+
+		// return the forwarding URL to use.
+		return $response_array['location'];
 	}
 }

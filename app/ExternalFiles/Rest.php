@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -108,15 +107,15 @@ class Rest {
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return WP_REST_Response
 	 */
-	public function add_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function add_file( WP_REST_Request $request ): WP_REST_Response {
 		// get the params from request.
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
-			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
+			return new WP_REST_Response( __( 'No file URL given!', 'external-files-in-media-library' ), 400 );
 		}
 
 		// get the import object.
@@ -135,43 +134,7 @@ class Rest {
 		}
 
 		// return error.
-		return new WP_Error( '400', __( 'External URL could not be saved!', 'external-files-in-media-library' ) );
-	}
-
-	/**
-	 * Delete an external file via REST API.
-	 *
-	 * Hint: "url" must be submitted as GET-param.
-	 *
-	 * @param WP_REST_Request $request The request object.
-	 *
-	 * @return WP_REST_Response|WP_Error
-	 */
-	public function delete_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
-		// get the params from request.
-		$params = $request->get_params();
-
-		// bail if params does not contain "url".
-		if ( empty( $params['url'] ) ) {
-			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
-		}
-
-		// get the external file object of the given URL.
-		$external_file_obj = Files::get_instance()->get_file_by_url( $params['url'] );
-
-		// bail if no external file could be found for the given URL.
-		if ( ! $external_file_obj instanceof File ) {
-			return new WP_Error( '400', __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ) );
-		}
-
-		// delete it.
-		$external_file_obj->delete();
-
-		// return success.
-		return new WP_REST_Response(
-			null,
-			200
-		);
+		return new WP_REST_Response( __( 'External URL could not be saved!', 'external-files-in-media-library' ), 400 );
 	}
 
 	/**
@@ -181,15 +144,15 @@ class Rest {
 	 *
 	 * @param WP_REST_Request $request The request object.
 	 *
-	 * @return WP_REST_Response|WP_Error
+	 * @return WP_REST_Response
 	 */
-	public function get_file( WP_REST_Request $request ): WP_REST_Response|WP_Error {
+	public function get_file( WP_REST_Request $request ): WP_REST_Response {
 		// get the params from request.
 		$params = $request->get_params();
 
 		// bail if params does not contain "url".
 		if ( empty( $params['url'] ) ) {
-			return new WP_Error( '400', __( 'No file URL given!', 'external-files-in-media-library' ) );
+			return new WP_REST_Response( __( 'No file URL given!', 'external-files-in-media-library' ), 400 );
 		}
 
 		// get the external file object of the given URL.
@@ -197,12 +160,48 @@ class Rest {
 
 		// bail if no external file could be found for the given URL.
 		if ( ! $external_file_obj instanceof File ) {
-			return new WP_Error( '400', __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ) );
+			return new WP_REST_Response( __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ), 404 );
 		}
 
 		// return success.
 		return new WP_REST_Response(
 			$external_file_obj->get_debug(),
+			200
+		);
+	}
+
+	/**
+	 * Delete an external file via REST API.
+	 *
+	 * Hint: "url" must be submitted as GET-param.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function delete_file( WP_REST_Request $request ): WP_REST_Response {
+		// get the params from request.
+		$params = $request->get_params();
+
+		// bail if params does not contain "url".
+		if ( empty( $params['url'] ) ) {
+			return new WP_REST_Response( __( 'No file URL given!', 'external-files-in-media-library' ), 400 );
+		}
+
+		// get the external file object of the given URL.
+		$external_file_obj = Files::get_instance()->get_file_by_url( $params['url'] );
+
+		// bail if no external file could be found for the given URL.
+		if ( ! $external_file_obj instanceof File ) {
+			return new WP_REST_Response( __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ), 404 );
+		}
+
+		// delete it.
+		$external_file_obj->delete();
+
+		// return success.
+		return new WP_REST_Response(
+			null,
 			200
 		);
 	}

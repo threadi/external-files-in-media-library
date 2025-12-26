@@ -665,9 +665,6 @@ class ImportDialog {
 		);
 		$settings = array();
 
-		// show deprecated warning for old hook name.
-		$settings = apply_filters_deprecated( 'eml_dialog_settings', array( $settings ), '5.0.0', 'efml_dialog_settings' );
-
 		/**
 		 * Filter the given settings for the import dialog.
 		 *

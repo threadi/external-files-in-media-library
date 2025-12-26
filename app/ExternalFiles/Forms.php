@@ -164,8 +164,8 @@ class Forms {
 		// create import dialog.
 		$import_dialog = array(
 			'detail' => array(
-				'title' => __( 'Add external source', 'external-files-in-media-library' ),
-				'texts' => array(
+				'title'   => __( 'Add external source', 'external-files-in-media-library' ),
+				'texts'   => array(
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'Add a new external source <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url() ) . '</p>',
 					'<p>' . __( 'Or select a JSON file with the configuration of an external source in the following field:', 'external-files-in-media-library' ) . '</p>',
@@ -173,17 +173,17 @@ class Forms {
 				),
 				'buttons' => array(
 					array(
-						'action' => 'import_external_source_json();',
+						'action'  => 'import_external_source_json();',
 						'variant' => 'primary',
-						'text' => __( 'Import this JSON', 'external-files-in-media-library' ),
+						'text'    => __( 'Import this JSON', 'external-files-in-media-library' ),
 					),
 					array(
-						'action' => 'closeDialog();',
+						'action'  => 'closeDialog();',
 						'variant' => 'primary',
-						'text' => __( 'Cancel', 'external-files-in-media-library' ),
-					)
-				)
-			)
+						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+					),
+				),
+			),
 		);
 
 		// add php-vars to our js-script.
@@ -191,46 +191,46 @@ class Forms {
 			'eml-admin',
 			'efmlJsVars',
 			array(
-				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
-				'urls_nonce'                    => wp_create_nonce( 'eml-urls-upload-nonce' ),
-				'dismiss_nonce'                 => wp_create_nonce( 'eml-dismiss-nonce' ),
-				'get_import_info_nonce'         => wp_create_nonce( 'eml-url-upload-info-nonce' ),
-				'switch_hosting_nonce'          => wp_create_nonce( 'eml-switch-hosting-nonce' ),
-				'reset_proxy_nonce'             => wp_create_nonce( 'eml-reset-proxy-nonce' ),
-				'add_archive_nonce'             => wp_create_nonce( 'eml-add-archive-nonce' ),
-				'delete_archive_nonce'          => wp_create_nonce( 'eml-delete-archive-nonce' ),
-				'import_dialog_nonce'           => wp_create_nonce( 'efml-import-dialog-nonce' ),
-				'change_term_name_nonce'        => wp_create_nonce( 'efml-change-term-name' ),
-				'import_external_source_nonce'  => wp_create_nonce( 'efml-import-external-source' ),
-				'review_url'                    => Helper::get_plugin_review_url(),
-				'directory_listing_url'         => Directory_Listing::get_instance()->get_view_directory_url( false ),
-				'title_add_file'                => __( 'Add external file', 'external-files-in-media-library' ),
-				'title_rate_us'                 => __( 'Add your review for this plugin', 'external-files-in-media-library' ),
-				'title_import_progress'         => __( 'Import of URLs running', 'external-files-in-media-library' ),
-				'title_import_ended'            => __( 'Import has been run', 'external-files-in-media-library' ),
-				'title_add_external_source'     => __( 'Add external source', 'external-files-in-media-library' ),
-				'add_external_source_dialog'    => $import_dialog,
-				'text_import_ended'             => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
-				'lbl_ok'                        => __( 'OK', 'external-files-in-media-library' ),
-				'lbl_cancel'                    => __( 'Cancel', 'external-files-in-media-library' ),
-				'lbl_close'                     => __( 'Close', 'external-files-in-media-library' ),
-				'text_urls_imported'            => __( 'The following URLs were successfully imported:', 'external-files-in-media-library' ),
-				'text_urls_errors'              => __( 'The following errors occurred:', 'external-files-in-media-library' ),
-				'title_no_urls'                 => __( 'No URLs given', 'external-files-in-media-library' ),
-				'text_no_urls'                  => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
-				'title_hosting_changed'         => __( 'Hosting changed', 'external-files-in-media-library' ),
-				'text_hosting_has_been_changed' => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
-				'txt_error'                     => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
-				'title_error'                   => __( 'An error occurred', 'external-files-in-media-library' ),
-				'info_timeout'                  => $info_timeout,
-				'title_hosting_change_wait'     => __( 'Please wait', 'external-files-in-media-library' ),
-				'text_hosting_change_wait'      => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
-				'title_loading'                 => __( 'Loading ..', 'external-files-in-media-library' ),
-				'text_loading'                  => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
+				'ajax_url'                           => admin_url( 'admin-ajax.php' ),
+				'urls_nonce'                         => wp_create_nonce( 'eml-urls-upload-nonce' ),
+				'dismiss_nonce'                      => wp_create_nonce( 'eml-dismiss-nonce' ),
+				'get_import_info_nonce'              => wp_create_nonce( 'eml-url-upload-info-nonce' ),
+				'switch_hosting_nonce'               => wp_create_nonce( 'eml-switch-hosting-nonce' ),
+				'reset_proxy_nonce'                  => wp_create_nonce( 'eml-reset-proxy-nonce' ),
+				'add_archive_nonce'                  => wp_create_nonce( 'eml-add-archive-nonce' ),
+				'delete_archive_nonce'               => wp_create_nonce( 'eml-delete-archive-nonce' ),
+				'import_dialog_nonce'                => wp_create_nonce( 'efml-import-dialog-nonce' ),
+				'change_term_name_nonce'             => wp_create_nonce( 'efml-change-term-name' ),
+				'import_external_source_nonce'       => wp_create_nonce( 'efml-import-external-source' ),
+				'review_url'                         => Helper::get_plugin_review_url(),
+				'directory_listing_url'              => Directory_Listing::get_instance()->get_view_directory_url( false ),
+				'title_add_file'                     => __( 'Add external file', 'external-files-in-media-library' ),
+				'title_rate_us'                      => __( 'Add your review for this plugin', 'external-files-in-media-library' ),
+				'title_import_progress'              => __( 'Import of URLs running', 'external-files-in-media-library' ),
+				'title_import_ended'                 => __( 'Import has been run', 'external-files-in-media-library' ),
+				'title_add_external_source'          => __( 'Add external source', 'external-files-in-media-library' ),
+				'add_external_source_dialog'         => $import_dialog,
+				'text_import_ended'                  => __( 'The specified URLs have been processed.', 'external-files-in-media-library' ),
+				'lbl_ok'                             => __( 'OK', 'external-files-in-media-library' ),
+				'lbl_cancel'                         => __( 'Cancel', 'external-files-in-media-library' ),
+				'lbl_close'                          => __( 'Close', 'external-files-in-media-library' ),
+				'text_urls_imported'                 => __( 'The following URLs were successfully imported:', 'external-files-in-media-library' ),
+				'text_urls_errors'                   => __( 'The following errors occurred:', 'external-files-in-media-library' ),
+				'title_no_urls'                      => __( 'No URLs given', 'external-files-in-media-library' ),
+				'text_no_urls'                       => __( 'Please enter one or more URLs to import in the field.', 'external-files-in-media-library' ),
+				'title_hosting_changed'              => __( 'Hosting changed', 'external-files-in-media-library' ),
+				'text_hosting_has_been_changed'      => __( 'The hosting of this file has been changed.', 'external-files-in-media-library' ),
+				'txt_error'                          => '<strong>' . __( 'The following error occurred:', 'external-files-in-media-library' ) . '</strong>',
+				'title_error'                        => __( 'An error occurred', 'external-files-in-media-library' ),
+				'info_timeout'                       => $info_timeout,
+				'title_hosting_change_wait'          => __( 'Please wait', 'external-files-in-media-library' ),
+				'text_hosting_change_wait'           => __( 'The hosting of the file will be changed.', 'external-files-in-media-library' ),
+				'title_loading'                      => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'                       => __( 'Please wait a moment ..', 'external-files-in-media-library' ),
 				/* source of file: https://pixabay.com */
-				'success_sound_file'            => Helper::get_plugin_url() . 'gfx/success.mp3',
+				'success_sound_file'                 => Helper::get_plugin_url() . 'gfx/success.mp3',
 				'title_settings_import_file_missing' => __( 'Error', 'external-files-in-media-library' ),
-				'text_settings_import_file_missing' => __( 'You have not selected a file to upload.', 'external-files-in-media-library' ),
+				'text_settings_import_file_missing'  => __( 'You have not selected a file to upload.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -517,7 +517,7 @@ class Forms {
 		$import_obj = Import::get_instance();
 
 		// add the fields.
-		$import_obj->set_fields( is_array( $fields ) ? $fields : array() );
+		$import_obj->set_fields( is_array( $fields ) ? $fields : array() ); // @phpstan-ignore function.alreadyNarrowedType
 
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
@@ -674,9 +674,6 @@ class Forms {
 					),
 				),
 			);
-
-			// show deprecated warning for old hook name.
-			$dialog = apply_filters_deprecated( 'eml_dialog_after_adding', array( $dialog ), '5.0.0', 'efml_dialog_after_adding' );
 
 			/**
 			 * Filter the dialog after adding files.

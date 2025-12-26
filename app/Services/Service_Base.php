@@ -144,9 +144,6 @@ class Service_Base extends Directory_Listing_Base {
 
 		$instance = $this;
 
-		// show deprecated warning for old hook name.
-		$modes = apply_filters_deprecated( 'eml_service_modes', array( $modes, $instance ), '5.0.0', 'efml_service_modes' );
-
 		/**
 		 * Filter the list of possible modes of this service.
 		 *
