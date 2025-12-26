@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -125,6 +126,7 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_directory_translations', array( $this, 'change_translations' ) );
+		add_action( 'efml_show_file_info', array( $this, 'add_option_to_show_zip' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
@@ -471,6 +473,11 @@ class Zip extends Service_Base implements Service {
 	 * @return array<string,string>
 	 */
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
+		// bail if cap is not set.
+		if ( ! current_user_can( 'efml_cap_tools_zip' ) ) {
+			return $actions;
+		}
+
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
@@ -534,6 +541,11 @@ class Zip extends Service_Base implements Service {
 	 * @return array<string,mixed>
 	 */
 	public function change_import_dialog( array $dialog, array $settings ): array {
+		// bail if cap is not set.
+		if ( ! current_user_can( 'efml_cap_tools_zip' ) ) {
+			return $dialog;
+		}
+
 		// bail if "unzip" is not set.
 		if ( ! isset( $settings['unzip'] ) ) {
 			return $dialog;
@@ -802,5 +814,62 @@ class Zip extends Service_Base implements Service {
 		 * @param array<int,string> $zip_objects List of object names.
 		 */
 		return apply_filters( 'efml_zip_objects', $zip_objects );
+	}
+
+	/**
+	 * Add option to show zip.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function add_option_to_show_zip( File $external_file_obj ): void {
+		// bail if capability is not set.
+		if ( ! current_user_can( 'efml_cap_tools_zip' ) ) {
+			return;
+		}
+
+		// bail if file is not a ZIP.
+		if ( 'ZIP' !== $external_file_obj->get_file_type_obj()->get_name() ) {
+			return;
+		}
+
+		// get the local path of this file.
+		$path = wp_get_attachment_url( $external_file_obj->get_id() );
+
+		// bail if path could not be loaded.
+		if ( ! is_string( $path ) ) {
+			return;
+		}
+
+		// define settings for the import dialog.
+		$settings = array(
+			'service' => $this->get_name(),
+			'urls'    => trailingslashit( $path ),
+			'unzip'   => true,
+		);
+
+		?>
+		<li>
+			<span id="eml_url_zip"><span class="dashicons dashicons-database-view"></span> <a href="#" class="efml-import-dialog" data-settings="<?php echo esc_attr( Helper::get_json( $settings ) ); ?>"><?php echo esc_html__( 'Extract file', 'external-files-in-media-library' ); ?></a></span>
+		</li>
+		<?php
+
+		// create link to open this file.
+		$url = add_query_arg(
+			array(
+				'page'   => 'efml_local_directories',
+				'method' => $this->get_name(),
+				'url'    => $path,
+				'nonce'  => wp_create_nonce( 'efml-open-zip-nonce' ),
+			),
+			get_admin_url() . 'upload.php'
+		);
+
+		?>
+		<li>
+			<span id="eml_url_zip"><span class="dashicons dashicons-database-view"></span> <a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html__( 'Open file', 'external-files-in-media-library' ); ?></a></span>
+		</li>
+		<?php
 	}
 }

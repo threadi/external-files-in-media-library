@@ -78,7 +78,7 @@ class Tables {
 	 * @return void
 	 */
 	public function add_media_filter(): void {
-		// bail if get_current_screen() is not available.
+		// bail if "get_current_screen()" is not available.
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return;
 		}
@@ -381,13 +381,18 @@ class Tables {
 	 * @return void
 	 */
 	public function use_user_mark( WP_Term_Query $query ): void {
-		// bail if this is not admin.
+		// bail if this is not the backend.
 		if ( ! is_admin() ) {
 			return;
 		}
 
 		// bail if this is not our taxonomy.
-		if ( 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
+		if ( is_array( $query->query_vars['taxonomy'] ) && ! in_array( 'edlfw_archive', $query->query_vars['taxonomy'], true ) ) {
+			return;
+		}
+
+		// bail if this is not our taxonomy.
+		if ( ! is_array( $query->query_vars['taxonomy'] ) && 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
 			return;
 		}
 

@@ -129,7 +129,7 @@ class Update {
 
 		// check for array.
 		if ( ! is_array( $roles ) ) {
-			$caps = array();
+			$roles = array();
 		}
 
 		// if list is empty, set the defaults.

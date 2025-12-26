@@ -138,9 +138,14 @@ class Roles {
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
+		// add the tools section.
+		$permissions_tab_tools = $permissions_tab->add_section( 'settings_section_tools', 20 );
+		$permissions_tab_tools->set_title( __( 'Permissions for tools', 'external-files-in-media-library' ) );
+		$permissions_tab_tools->set_setting( $settings_obj );
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_settings_allowed_roles' );
-		$setting->set_section( $permissions_tab_files );
+		$setting->set_section( $permissions_tab_tools );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
@@ -150,8 +155,60 @@ class Roles {
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_import_allowed_roles' );
+		$setting->set_section( $permissions_tab_tools );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator' ) );
+		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Import files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_export_allowed_roles' );
+		$setting->set_section( $permissions_tab_tools );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator' ) );
+		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Export files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles which should be allowed to configure and use export of files to external sources. This does not influence the automatic export of files to external sources through them.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_sync_allowed_roles' );
+		$setting->set_section( $permissions_tab_tools );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator' ) );
+		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Synchronisation of files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Choose the roles that should be allowed to configure the synchronize files from external sources. This does not influence the automatic synchronisation of files from external sources.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_zip_allowed_roles' );
+		$setting->set_section( $permissions_tab_tools );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator' ) );
+		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Unzip of files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Choose the roles that should be allowed to unzip files in your media library.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
 		// add the service section.
-		$permissions_tab_source = $permissions_tab->add_section( 'settings_section_use_services', 20 );
+		$permissions_tab_source = $permissions_tab->add_section( 'settings_section_use_services', 30 );
 		$permissions_tab_source->set_title( __( 'Permissions for external sources', 'external-files-in-media-library' ) );
 		$permissions_tab_source->set_callback( array( $this, 'show_service_permission_hint' ) );
 		$permissions_tab_source->set_setting( $settings_obj );
@@ -169,44 +226,6 @@ class Roles {
 			$field->set_options( $user_roles );
 			$setting->set_field( $field );
 		}
-
-		// get the sync tab.
-		$sync_settings_tab = $settings_page->get_tab( 'synchronization' );
-
-		// bail if tab could not be found.
-		if ( ! $sync_settings_tab instanceof Tab ) {
-			return;
-		}
-
-		// get the section.
-		$sync_settings_section = $sync_settings_tab->get_section( 'eml_synchronisation_settings' );
-
-		// bail if section could not be found.
-		if ( ! $sync_settings_section instanceof Section ) {
-			return;
-		}
-
-		// get sync settings object.
-		$sync_settings = $settings_obj->get_setting( 'eml_sync' );
-
-		// bail if section could not be found.
-		if ( ! $sync_settings instanceof Setting ) {
-			return;
-		}
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_sync_allow_roles' );
-		$setting->set_section( $sync_settings_section );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_sync' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Allow synchronisation', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Choose the roles that should be allowed to synchronize files from external sources.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$field->add_depend( $sync_settings, 1 );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 	}
 
 	/**
@@ -244,13 +263,28 @@ class Roles {
 				continue;
 			}
 
-			// remove the capability.
+			// remove the capabilities we set.
 			$role_obj->remove_cap( EFML_CAP_NAME );
+			$role_obj->remove_cap( 'efml_cap_tools_export' );
+			$role_obj->remove_cap( 'efml_cap_tools_import' );
+			$role_obj->remove_cap( 'efml_cap_tools_sync' );
+			$role_obj->remove_cap( 'efml_cap_tools_zip' );
+
+			// remove the caps for each service.
+			foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+				$role_obj->remove_cap( 'efml_cap_' . $service->get_name() );
+			}
+
+			// compatibility with < 5.0.0.
+			$role_obj->remove_cap( 'efml_sync' );
 		}
 	}
 
 	/**
-	 * Set the capabilities for the given roles.
+	 * Set a given capability for the given roles.
+	 *
+	 * First remove the capability from all roles.
+	 * Then set the capability on the list of given roles.
 	 *
 	 * @param array<string|int,mixed> $user_roles List of roles which will get our capability.
 	 * @param string                  $cap The capability to set.
@@ -272,7 +306,7 @@ class Roles {
 				continue;
 			}
 
-			// check if given role is in list of on-install supported roles.
+			// check if given role is in list of the roles were we want to add the capability.
 			if ( in_array( $slug, $user_roles, true ) ) {
 				// add capability.
 				$role_obj->add_cap( $cap );
@@ -313,6 +347,35 @@ class Roles {
 	}
 
 	/**
+	 * Set the capabilities for the given roles.
+	 *
+	 * @param array<int,string>|null $roles_to_set The roles to set.
+	 * @param array<int,string>      $old_value The old value.
+	 * @param string                 $option The used option.
+	 *
+	 * @return array<int,string>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function save_capabilities_for_tools( array|null $roles_to_set, array $old_value, string $option ): array {
+		// bail if null.
+		if ( is_null( $roles_to_set ) ) {
+			return array();
+		}
+
+		// get the tool name from option name.
+		$tool = str_replace( array( 'eml_tools_settings_', '_allowed_roles' ), '', $option );
+
+		// create the capability name.
+		$capability = 'efml_cap_' . $tool;
+
+		// set the capability to the roles.
+		$this->set( $roles_to_set, $capability );
+
+		// return the settings.
+		return $roles_to_set;
+	}
+
+	/**
 	 * Return list of users for settings.
 	 *
 	 * @param bool $ignore_actual_user True if the actual user should not be included in list.
@@ -341,26 +404,6 @@ class Roles {
 
 		// return list of users.
 		return $users;
-	}
-
-	/**
-	 * Save capabilities for synchronisation.
-	 *
-	 * @param array<int,string>|null $roles_to_set The roles which get the cap.
-	 *
-	 * @return array<int,string>
-	 */
-	public function save_capabilities_for_sync( array|null $roles_to_set ): array {
-		// bail if null.
-		if ( is_null( $roles_to_set ) ) {
-			return array();
-		}
-
-		// set the capability to the roles.
-		$this->set( $roles_to_set, 'efml_sync' );
-
-		// return the settings.
-		return $roles_to_set;
 	}
 
 	/**
