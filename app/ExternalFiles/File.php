@@ -661,7 +661,7 @@ class File {
 	}
 
 	/**
-	 * Switch hosting of this file to local.
+	 * Switch hosting of this file from extern to local.
 	 *
 	 * @return bool
 	 */
@@ -692,9 +692,7 @@ class File {
 		$file_data = $protocol_handler_obj->get_url_infos();
 
 		// remove prevent duplicate check for this file.
-		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ) );
 		remove_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ) );
-		remove_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ) );
 		remove_filter( 'efml_locale_file_check', array( $this, 'prevent_checks' ) );
 
 		// bail if no file data could be loaded.
@@ -754,9 +752,6 @@ class File {
 			$meta_data = array();
 		}
 
-		// copy the relevant settings of the new uploaded file to the original.
-		wp_update_attachment_metadata( $this->get_id(), $meta_data );
-
 		// get the new local url.
 		$local_url = wp_get_attachment_url( $attachment_id );
 
@@ -768,13 +763,19 @@ class File {
 		// remove base_url from local_url.
 		$upload_dir = wp_get_upload_dir();
 
+		// get the local URL.
+		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+
+		// set our local path as file.
+		$meta_data['file'] = $local_url;
+
+		// copy the relevant settings of the new uploaded file to the original.
+		wp_update_attachment_metadata( $this->get_id(), $meta_data );
+
 		// bail if baseurl is not a string.
 		if ( ! is_string( $upload_dir['baseurl'] ) ) {
 			return false;
 		}
-
-		// get the local URL.
-		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
 
 		// update attachment setting.
 		update_post_meta( $this->get_id(), '_wp_attached_file', $local_url );
@@ -868,7 +869,7 @@ class File {
 			return false;
 		}
 
-		// get the meta data.
+		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 
 		// bail if meta-data could not be loaded.

@@ -129,6 +129,7 @@ class Files {
 	 * @return string
 	 */
 	public function get_attachment_url( string $url, int $attachment_id ): string {
+		// get external file object by given attachment ID.
 		$external_file_obj = $this->get_file( $attachment_id );
 
 		// return the original URL if this URL-file is not valid or not available or is using a not allowed mime type.
@@ -136,17 +137,18 @@ class Files {
 			return $url;
 		}
 
-		// use local URL if URL-file is locally saved.
+		// use local URL if the URL has been locally saved.
 		if ( false !== $external_file_obj->is_locally_saved() ) {
+			// get upload directory settings.
 			$upload_dir = wp_get_upload_dir();
-
-			// bail if baseurl is not a string.
-			if ( ! is_string( $upload_dir['baseurl'] ) ) {
-				return $url;
-			}
 
 			// bail if any error occurred.
 			if ( false !== $upload_dir['error'] ) {
+				return $url;
+			}
+
+			// bail if baseurl is not a string.
+			if ( ! is_string( $upload_dir['baseurl'] ) ) {
 				return $url;
 			}
 
@@ -1015,6 +1017,11 @@ class Files {
 	 * @return array<string,string>
 	 */
 	public function get_attachment_metadata( array $data, int|string $attachment_id ): array {
+		// bail if attachment pages are not disabled.
+		if ( 0 === absint( get_option( 'eml_disable_attachment_pages', 0 ) ) ) {
+			return $data;
+		}
+
 		// get the external file object.
 		$external_file_obj = $this->get_file( absint( $attachment_id ) );
 
