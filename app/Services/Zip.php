@@ -14,6 +14,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
@@ -127,9 +128,12 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_directory_translations', array( $this, 'change_translations' ) );
 		add_action( 'efml_show_file_info', array( $this, 'add_option_to_show_zip' ) );
+		add_filter( 'efml_supported_mime_types', array( $this, 'add_supported_mime_types' ) );
+		add_filter( 'efml_get_mime_types', array( $this, 'change_enabled_mime_types' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'allow_tar_gz_uploads' ), 10, 4 );
 	}
 
 	/**
@@ -186,6 +190,18 @@ class Zip extends Service_Base implements Service {
 		$field = new Number();
 		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
+		$setting->set_field( $field );
+
+		// add setting to show also trashed files.
+		$setting = $settings_obj->add_setting( 'eml_zip_allow_gz' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Allow upload of .tar.gz', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled you will be able to import .tar.gz and .gz files as external files.', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
 		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
@@ -871,5 +887,86 @@ class Zip extends Service_Base implements Service {
 			<span id="eml_url_zip"><span class="dashicons dashicons-database-view"></span> <a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html__( 'Open file', 'external-files-in-media-library' ); ?></a></span>
 		</li>
 		<?php
+	}
+
+	/**
+	 * Allow the upload of .tar.gz and .gz files.
+	 *
+	 * @param array<string,mixed> $data The upload data.
+	 * @param string $file The file path.
+	 * @param string $filename The file name.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function allow_tar_gz_uploads( array $data, string $file, string $filename ): array {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+			return $data;
+		}
+
+		// get the path infos for this file.
+		$ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+		// allow the file if the extension is .gz or .tar.gz.
+		if ( $ext === 'gz' || str_ends_with( $filename, '.tar.gz' ) ) {
+			$data['ext']  = 'gz';
+			$data['type'] = 'application/gzip';
+			$data['proper_filename'] = $filename;
+		}
+
+		// return resulting data array.
+		return $data;
+	}
+
+	/**
+	 * Add .gz files to the list of possible mime types we support.
+	 *
+	 * @param array<string,array<string,string>> $mime_types List of mime types we support.
+	 *
+	 * @return array<string,array<string,string>>
+	 */
+	public function add_supported_mime_types( array $mime_types ): array {
+		// bail if setting is disabled.
+		if( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+			return $mime_types;
+		}
+
+		// add .gz files to the list.
+		$mime_types['application/x-gzip'] = array(
+			'label' => __( 'GZIP', 'external-files-in-media-library' ),
+			'ext'   => 'tar.gz',
+		);
+
+		// return the list of allowed mime types.
+		return $mime_types;
+	}
+
+	/**
+	 * Remove the .gz mime type from the list of allowed mime types if the setting is disabled.
+	 *
+	 * @param array<int,string> $mime_types List of mime types.
+	 *
+	 * @return array<int,string>
+	 */
+	public function change_enabled_mime_types( array $mime_types ): array {
+		// bail if setting is enabled.
+		if( 1 === absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+			return $mime_types;
+		}
+
+		// get the entry for "application/x-gzip".
+		$key = array_search( 'application/x-gzip', $mime_types, true );
+
+		// bail if no key could be found.
+		if( ! $key ) {
+			return $mime_types;
+		}
+
+		// remove .gz from this list.
+		unset( $mime_types[ $key ] );
+
+		// return the resulting list of enabled mimes.
+		return $mime_types;
 	}
 }

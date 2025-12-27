@@ -185,14 +185,6 @@ class Helper {
 				'label' => __( 'ZIP', 'external-files-in-media-library' ),
 				'ext'   => 'zip',
 			),
-			'application/gzip'   => array(
-				'label' => __( 'GZIP', 'external-files-in-media-library' ),
-				'ext'   => 'gz',
-			),
-			'application/x-gzip' => array(
-				'label' => __( 'GZIP', 'external-files-in-media-library' ),
-				'ext'   => 'gz',
-			),
 			'video/mp4'          => array(
 				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
 				'ext'   => 'mp4',
@@ -225,26 +217,26 @@ class Helper {
 	}
 
 	/**
-	 * Return allowed content types.
+	 * Return the allowed mime types.
 	 *
 	 * @return array<string>
 	 */
 	public static function get_allowed_mime_types(): array {
 		// get the list from settings.
-		$list = get_option( 'eml_allowed_mime_types', array() );
+		$mime_types = get_option( 'eml_allowed_mime_types', array() );
 
 		// bail if setting is not an array.
-		if ( ! is_array( $list ) ) {
+		if ( ! is_array( $mime_types ) ) {
 			return array();
 		}
 
 		// bail if list is empty.
-		if ( empty( $list ) ) {
+		if ( empty( $mime_types ) ) {
 			return array();
 		}
 
 		// show deprecated warning for old hook name.
-		$list = apply_filters_deprecated( 'eml_get_mime_types', array( $list ), '5.0.0', 'efml_get_mime_types' );
+		$mime_types = apply_filters_deprecated( 'eml_get_mime_types', array( $mime_types ), '5.0.0', 'efml_get_mime_types' );
 
 		/**
 		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks
@@ -253,16 +245,16 @@ class Helper {
 		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
 		 *  ```
-		 *  add_filter( 'efml_get_mime_types', function( $list ) {
-		 *   $list[] = 'your/mime';
+		 *  add_filter( 'efml_get_mime_types', function( $mime_types ) {
+		 *   $mime_types[] = 'your/mime';
 		 *  } );
 		 *  ```
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param array<string> $list List of mime types.
+		 * @param array<string> $mime_types List of mime types.
 		 */
-		return apply_filters( 'efml_get_mime_types', $list );
+		return apply_filters( 'efml_get_mime_types', $mime_types );
 	}
 
 	/**

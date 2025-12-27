@@ -852,6 +852,11 @@ class Http extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		// bail if URL is empty.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
 		// show deprecated hint for old hook.
 		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
 
