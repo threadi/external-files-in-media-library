@@ -157,6 +157,10 @@ class Helper {
 	 */
 	public static function get_possible_mime_types(): array {
 		$mime_types = array(
+			'image/avif'          => array(
+				'label' => __( 'AVIF', 'external-files-in-media-library' ),
+				'ext'   => 'avif',
+			),
 			'image/gif'          => array(
 				'label' => __( 'GIF', 'external-files-in-media-library' ),
 				'ext'   => 'gif',

@@ -236,11 +236,6 @@ class Roles {
 	public function install(): void {
 		// the global setting.
 		$this->set( get_option( 'eml_allowed_roles', array( 'administrator', 'editor' ) ), EFML_CAP_NAME );
-
-		// add settings for each service.
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
-			$this->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
-		}
 	}
 
 	/**

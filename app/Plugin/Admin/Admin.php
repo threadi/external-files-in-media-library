@@ -93,11 +93,14 @@ class Admin {
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
 		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_row_meta_links' ), 10, 2 );
 		add_filter( 'admin_footer_text', array( $this, 'show_plugin_hint_in_footer' ) );
+		add_action( 'efml_directory_listing_added', array( $this, 'mark_directory_listing_as_used' ) );
+		add_action( 'delete_' . Taxonomy::get_instance()->get_name(), array( $this, 'check_if_directory_listing_is_used' ) );
 
 		// register our own importer in backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );
@@ -176,21 +179,15 @@ class Admin {
 		// get transients object.
 		$transients_obj = Transients::get_instance();
 
-		// do not use the PHP 8.2 check before 2025-10-01.
-		if ( time() < 1759269600 ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
-			return;
-		}
-
 		// bail if PHP >= 8.2 is used.
 		if ( PHP_VERSION_ID > 80200 ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
+			$transients_obj->get_transient_by_name( 'eml_php_hint' )->delete();
 			return;
 		}
 
 		// bail if WordPress is in developer mode.
 		if ( Helper::is_development_mode() ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_php_hint' ) );
+			$transients_obj->get_transient_by_name( 'eml_php_hint' )->delete();
 			return;
 		}
 
@@ -324,19 +321,19 @@ class Admin {
 
 		// bail if setting to hide this hint is enabled.
 		if ( 1 === absint( get_option( 'eml_disable_gprd_warning' ) ) ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_gprd_hint' ) );
+			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
 			return;
 		}
 
 		// bail if language is not german.
 		if ( ! Languages::get_instance()->is_german_language() ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_gprd_hint' ) );
+			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
 			return;
 		}
 
 		// bail if WordPress is in developer mode.
 		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
-			$transients_obj->delete_transient( $transients_obj->get_transient_by_name( 'eml_gprd_hint' ) );
+			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
 			return;
 		}
 
@@ -346,7 +343,7 @@ class Admin {
 		$transient_obj->set_name( 'eml_gprd_hint' );
 		$transient_obj->set_dismissible_days( 180 );
 		/* translators: %1$s will be replaced by a URL. */
-		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files for Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
+		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
 		$transient_obj->save();
 	}
 
@@ -369,7 +366,7 @@ class Admin {
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_type( 'error' );
 			$transient_obj->set_name( 'eml_fs_method_faulty' );
-			$transient_obj->set_message( '<strong>' . __( 'Your website is using an incorrect file system setting!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set to <em>ftpext</em>. At the same time, the constant <em>FS_CHMOD_FILE</em> is missing. This means that you will not be able to save files to your media library with the plugin External Files for Media Library.<br><br>Correct this by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is using an incorrect file system setting!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set to <em>ftpext</em>. At the same time, the constant <em>FS_CHMOD_FILE</em> is missing. This means that you will not be able to save files to your media library with the plugin <i>External Files in Media Library</i>.<br><br>Correct this by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
 			return;
 		}
@@ -381,7 +378,7 @@ class Admin {
 			$transient_obj->set_dismissible_days( 30 );
 			$transient_obj->set_type( 'hint' );
 			$transient_obj->set_name( 'eml_fs_method_faulty' );
-			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin External Files for Media Library.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin <i>External Files in Media Library</i>.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
 			return;
 		}
@@ -458,8 +455,8 @@ class Admin {
 	public function configure_transients(): void {
 		$transients_obj = Transients::get_instance();
 		$transients_obj->set_slug( 'efml' );
-		$transients_obj->set_url( Helper::get_plugin_url() . '/app/Dependencies/easyTransientsForWordPress/' );
-		$transients_obj->set_path( Helper::get_plugin_path() . '/app/Dependencies/easyTransientsForWordPress/' );
+		$transients_obj->set_url( Helper::get_plugin_url() . 'app/Dependencies/easyTransientsForWordPress/' );
+		$transients_obj->set_path( Helper::get_plugin_path() . 'app/Dependencies/easyTransientsForWordPress/' );
 		$transients_obj->set_capability( 'manage_options' );
 		$transients_obj->set_template( 'grouped.php' );
 		$transients_obj->set_display_method( 'grouped' );
@@ -514,5 +511,63 @@ class Admin {
 
 		// return resulting list of classes.
 		return $classes;
+	}
+
+	/**
+	 * Mark directory listing as used.
+	 *
+	 * This is a small cache to prevent database requests for directory listing terms.
+	 *
+	 * @return void
+	 */
+	public function mark_directory_listing_as_used(): void {
+		update_option( 'efml_directory_listing_used', time() );
+	}
+
+	/**
+	 * Check if directory listing is used if a term has been deleted.
+	 *
+	 * @return void
+	 */
+	public function check_if_directory_listing_is_used(): void {
+		// get the terms.
+		$terms = get_terms(
+			array(
+				'taxonomy' => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
+
+		// bail if terms does exist.
+		if( ! empty( $terms ) ) {
+			return;
+		}
+
+		// reset the marker.
+		update_option( 'efml_directory_listing_used', 0 );
+	}
+
+	/**
+	 * Add CSS- and JS-files for plugin listing in backend.
+	 *
+	 * @param string $hook The used hook.
+	 *
+	 * @return void
+	 */
+	public function add_styles_and_js_admin( string $hook ): void {
+		global $pagenow;
+
+		// bail if we are not on "plugins.php".
+		if( 'plugins.php' !== $pagenow ) {
+			return;
+		}
+
+		// admin-specific styles.
+		wp_enqueue_style(
+			'eml-public-admin',
+			Helper::get_plugin_url() . 'admin/public.css',
+			array(),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.css' ),
+		);
 	}
 }

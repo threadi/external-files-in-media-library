@@ -149,6 +149,9 @@ class Install {
 			$transient_obj->set_prioritized( true );
 			$transient_obj->save();
 		}
+
+		// set caching options.
+		add_option( 'efml_directory_listing_used', 0, '', true );
 	}
 
 	/**

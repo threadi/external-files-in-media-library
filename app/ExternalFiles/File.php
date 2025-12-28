@@ -58,6 +58,13 @@ class File {
 	private int $filesize = 0;
 
 	/**
+	 * The mime type of the file.
+	 *
+	 * @var string
+	 */
+	private string $mime_type = '';
+
+	/**
 	 * Constructor for this object.
 	 *
 	 * @param int $attachment_id    The ID of the attachment.
@@ -199,6 +206,11 @@ class File {
 	 * @return string
 	 */
 	public function get_mime_type(): string {
+		// return value, if it is already known.
+		if( ! empty( $this->mime_type ) ) {
+			return $this->mime_type;
+		}
+
 		// get the mime type setting of this post.
 		$mime_type = get_post_mime_type( $this->get_id() );
 
@@ -206,6 +218,9 @@ class File {
 		if ( ! is_string( $mime_type ) ) {
 			return '';
 		}
+
+		// set the value.
+		$this->mime_type = $mime_type;
 
 		// return the mime type.
 		return $mime_type;
@@ -430,7 +445,7 @@ class File {
 	 *
 	 * @return void
 	 */
-	public function add_to_cache(): void {
+	public function add_to_proxy(): void {
 		// bail if finfo is not available.
 		if ( ! class_exists( 'finfo' ) ) {
 			return;
@@ -446,23 +461,18 @@ class File {
 			return;
 		}
 
+		// disable the check for unsafe URLs during the download of them for the proxy.
 		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
-		/**
-		 * Get the handler for this URL depending on its protocol.
-		 */
+		// get the handler for this URL depending on its protocol.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
-		/**
-		 * Do nothing if URL is using a not supported tcp protocol.
-		 */
-		if ( ! $protocol_handler_obj ) {
+		// bail if no protocol handler could be loaded.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
 			return;
 		}
 
-		/**
-		 * Get info about the external file.
-		 */
+		// get info about the file.
 		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
 
 		// do not proxy this file if no mime-type has been received.
@@ -903,7 +913,7 @@ class File {
 		$this->set_is_local_saved( false );
 
 		// add to cache.
-		$this->add_to_cache();
+		$this->add_to_proxy();
 
 		// return true if switch was successfully.
 		return true;
