@@ -321,19 +321,19 @@ class DropBox extends Service_Base implements Service {
 
 		// load these files if:
 		// - we are on a user profile and location is set to "user"
-		// - we are on plugin settings and location is set to "global"
+		// - we are on plugin settings and location is set to "global".
 		$use_it = false;
-		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$page   = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		$subtab = filter_input( INPUT_GET, 'subtab', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if( 'eml_settings' === $page && 'global' === $this->get_mode() && $this->get_settings_subtab_slug() === $subtab ) {
+		if ( 'eml_settings' === $page && 'global' === $this->get_mode() && $this->get_settings_subtab_slug() === $subtab ) {
 			$use_it = true;
 		}
-		if( 'profile.php' === $pagenow && 'user' === $this->get_mode() ) {
+		if ( 'profile.php' === $pagenow && 'user' === $this->get_mode() ) {
 			$use_it = true;
 		}
 
 		// bail if marker is not set.
-		if( ! $use_it ) {
+		if ( ! $use_it ) {
 			return;
 		}
 

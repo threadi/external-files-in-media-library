@@ -30,7 +30,11 @@ Below the input field for the URLs, you can enter access data if the URLs requir
 
 There is also support for individual services that require their own authentication:
 
+* AWS S3
+* Dropbox
 * Google Drive
+* Google Cloud Storage
+* WebDav
 
 And also for services without authorization:
 

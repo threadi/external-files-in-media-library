@@ -352,6 +352,8 @@ class Export extends Export_Base {
 	/**
 	 * Send request to Dropbox API using curl.
 	 *
+	 * Hint: The usage of curl is not compatible with WCS, but we need to handle chunks here, which is not possible with WP_Filesystem (at present).
+	 *
 	 * @param string           $url The Dropbox API URL to use.
 	 * @param array<int,mixed> $headers The headers to use.
 	 * @param string           $body The box to use.

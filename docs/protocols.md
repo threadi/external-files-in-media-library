@@ -11,5 +11,11 @@ The plugin currently supports the following protocols for integrating external f
 
 It is also possible to import files from external sources:
 
+* AWS S3
+* Dropbox
+* Google Drive
+* Google Cloud Storage
+* WebDav
 * [YouTube](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/youtube.md)
 * [WordPress REST API](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/rest.md)
+* ZIP

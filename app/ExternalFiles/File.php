@@ -207,7 +207,7 @@ class File {
 	 */
 	public function get_mime_type(): string {
 		// return value, if it is already known.
-		if( ! empty( $this->mime_type ) ) {
+		if ( ! empty( $this->mime_type ) ) {
 			return $this->mime_type;
 		}
 

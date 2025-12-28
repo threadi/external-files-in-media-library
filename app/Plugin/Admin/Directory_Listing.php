@@ -253,7 +253,7 @@ class Directory_Listing {
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 		if ( $term_id > 0 ) {
 			// get the user_id's which saved this entry.
-			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id' ) );
+			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
 
 			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
 			if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {

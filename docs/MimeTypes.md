@@ -12,14 +12,15 @@ Only released mime types in the plugin can be added to the Media Library as exte
 
 The following mime types are always available for selection:
 
+* AVIF
 * GIF
 * JPEG
+* MP4
+* PDF
 * PNG
 * SVG
 * WebP
-* PDF
 * ZIP
-* MP4
 
 # Add mime type
 

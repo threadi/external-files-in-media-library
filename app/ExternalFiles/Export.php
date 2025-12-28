@@ -1620,12 +1620,12 @@ class Export {
 	 */
 	private function get_external_sources_as_name_list(): array {
 		// bail if this is not in the backend.
-		if( ! is_admin() ) {
+		if ( ! is_admin() ) {
 			return array();
 		}
 
 		// bail if no terms are set.
-		if( 0 === absint( get_option( 'efml_directory_listing_used' ) ) ) {
+		if ( 0 === absint( get_option( 'efml_directory_listing_used' ) ) ) {
 			return array();
 		}
 
