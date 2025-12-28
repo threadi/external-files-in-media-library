@@ -58,6 +58,13 @@ class File {
 	private int $filesize = 0;
 
 	/**
+	 * The mime type of the file.
+	 *
+	 * @var string
+	 */
+	private string $mime_type = '';
+
+	/**
 	 * Constructor for this object.
 	 *
 	 * @param int $attachment_id    The ID of the attachment.
@@ -199,6 +206,11 @@ class File {
 	 * @return string
 	 */
 	public function get_mime_type(): string {
+		// return value, if it is already known.
+		if( ! empty( $this->mime_type ) ) {
+			return $this->mime_type;
+		}
+
 		// get the mime type setting of this post.
 		$mime_type = get_post_mime_type( $this->get_id() );
 
@@ -206,6 +218,9 @@ class File {
 		if ( ! is_string( $mime_type ) ) {
 			return '';
 		}
+
+		// set the value.
+		$this->mime_type = $mime_type;
 
 		// return the mime type.
 		return $mime_type;
@@ -430,7 +445,7 @@ class File {
 	 *
 	 * @return void
 	 */
-	public function add_to_cache(): void {
+	public function add_to_proxy(): void {
 		// bail if finfo is not available.
 		if ( ! class_exists( 'finfo' ) ) {
 			return;
@@ -446,23 +461,18 @@ class File {
 			return;
 		}
 
+		// disable the check for unsafe URLs during the download of them for the proxy.
 		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
-		/**
-		 * Get the handler for this URL depending on its protocol.
-		 */
+		// get the handler for this URL depending on its protocol.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
-		/**
-		 * Do nothing if URL is using a not supported tcp protocol.
-		 */
-		if ( ! $protocol_handler_obj ) {
+		// bail if no protocol handler could be loaded.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
 			return;
 		}
 
-		/**
-		 * Get info about the external file.
-		 */
+		// get info about the file.
 		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
 
 		// do not proxy this file if no mime-type has been received.
@@ -661,7 +671,7 @@ class File {
 	}
 
 	/**
-	 * Switch hosting of this file to local.
+	 * Switch hosting of this file from extern to local.
 	 *
 	 * @return bool
 	 */
@@ -692,9 +702,7 @@ class File {
 		$file_data = $protocol_handler_obj->get_url_infos();
 
 		// remove prevent duplicate check for this file.
-		remove_filter( 'eml_duplicate_check', array( $this, 'prevent_checks' ) );
 		remove_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ) );
-		remove_filter( 'eml_locale_file_check', array( $this, 'prevent_checks' ) );
 		remove_filter( 'efml_locale_file_check', array( $this, 'prevent_checks' ) );
 
 		// bail if no file data could be loaded.
@@ -754,9 +762,6 @@ class File {
 			$meta_data = array();
 		}
 
-		// copy the relevant settings of the new uploaded file to the original.
-		wp_update_attachment_metadata( $this->get_id(), $meta_data );
-
 		// get the new local url.
 		$local_url = wp_get_attachment_url( $attachment_id );
 
@@ -768,13 +773,19 @@ class File {
 		// remove base_url from local_url.
 		$upload_dir = wp_get_upload_dir();
 
+		// get the local URL.
+		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+
+		// set our local path as file.
+		$meta_data['file'] = $local_url;
+
+		// copy the relevant settings of the new uploaded file to the original.
+		wp_update_attachment_metadata( $this->get_id(), $meta_data );
+
 		// bail if baseurl is not a string.
 		if ( ! is_string( $upload_dir['baseurl'] ) ) {
 			return false;
 		}
-
-		// get the local URL.
-		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
 
 		// update attachment setting.
 		update_post_meta( $this->get_id(), '_wp_attached_file', $local_url );
@@ -868,7 +879,7 @@ class File {
 			return false;
 		}
 
-		// get the meta data.
+		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 
 		// bail if meta-data could not be loaded.
@@ -902,7 +913,7 @@ class File {
 		$this->set_is_local_saved( false );
 
 		// add to cache.
-		$this->add_to_cache();
+		$this->add_to_proxy();
 
 		// return true if switch was successfully.
 		return true;

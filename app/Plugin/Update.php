@@ -271,5 +271,8 @@ class Update {
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();
+
+		// set caching options.
+		add_option( 'efml_directory_listing_used', 0, '', true );
 	}
 }

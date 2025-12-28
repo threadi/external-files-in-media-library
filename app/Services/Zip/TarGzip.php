@@ -21,7 +21,7 @@ use PharData;
 use PharFileInfo;
 
 /**
- * Object to handle gzip files.
+ * Object to handle .tar.gz-files.
  */
 class TarGzip extends Zip_Base {
 	/**

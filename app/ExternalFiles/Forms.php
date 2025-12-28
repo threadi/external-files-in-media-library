@@ -106,30 +106,6 @@ class Forms {
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
 		if ( ! in_array( $hook, array( 'upload.php', 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php' ), true ) ) {
-			// backend-JS.
-			wp_enqueue_script(
-				'eml-admin',
-				Helper::get_plugin_url() . 'admin/public.js',
-				array( 'jquery' ),
-				Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.js' ),
-				true
-			);
-			// admin-specific styles.
-			wp_enqueue_style(
-				'eml-public-admin',
-				Helper::get_plugin_url() . 'admin/public.css',
-				array(),
-				Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.css' ),
-			);
-			// add php-vars to our js-script.
-			wp_localize_script(
-				'eml-admin',
-				'efmlJsVars',
-				array(
-					'ajax_url'      => admin_url( 'admin-ajax.php' ),
-					'dismiss_nonce' => wp_create_nonce( 'eml-dismiss-nonce' ),
-				)
-			);
 			return;
 		}
 

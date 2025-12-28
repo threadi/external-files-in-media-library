@@ -145,9 +145,9 @@ class Settings {
 		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
 		$settings_obj->set_slug( 'efml' );
 		$settings_obj->set_plugin_slug( EFML_PLUGIN );
-		$settings_obj->set_path( Helper::get_plugin_dir() . '/app/Dependencies/easySettingsForWordPress/' );
-		$settings_obj->set_url( Helper::get_plugin_url() . '/app/Dependencies/easySettingsForWordPress/' );
-		$settings_obj->set_menu_title( __( 'External files in Medias Library', 'external-files-in-media-library' ) );
+		$settings_obj->set_path( Helper::get_plugin_dir() . 'app/Dependencies/easySettingsForWordPress/' );
+		$settings_obj->set_url( Helper::get_plugin_url() . 'app/Dependencies/easySettingsForWordPress/' );
+		$settings_obj->set_menu_title( __( 'External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );

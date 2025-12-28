@@ -153,6 +153,23 @@ class Intro {
 	 * @return void
 	 */
 	public function add_js(): void {
+		// load these files only if:
+		// - we are in the settings of our own plugin.
+		// - or if welcome hint is not hidden.
+		$use_it = true;
+		if( Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
+			$use_it = false;
+		}
+		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_SPECIAL_CHARS );
+		if( 'eml_settings' === (string)$page ) {
+			$use_it = true;
+		}
+
+		// bail if flag is not set.
+		if( ! $use_it ) {
+			return;
+		}
+
 		// embed necessary scripts for dialog.
 		$path = Helper::get_plugin_path() . 'node_modules/intro.js/minified/';
 		$url  = Helper::get_plugin_url() . 'node_modules/intro.js/minified/';
@@ -229,7 +246,7 @@ class Intro {
 				'url_3'               => $url_3,
 				'delay'               => 50,
 				'step_1_title'        => __( 'Intro', 'external-files-in-media-library' ),
-				'step_1_intro'        => __( 'Thank you for installing External Files for Media Library. We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
+				'step_1_intro'        => __( 'Thank you for installing "External Files in Media Library". We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
 				'step_2_title'        => __( 'Start adding URLs', 'external-files-in-media-library' ),
 				'step_2_intro'        => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait a moment.', 'external-files-in-media-library' ),
 				'step_3_title'        => __( 'Open import dialog', 'external-files-in-media-library' ),

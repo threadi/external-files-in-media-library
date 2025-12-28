@@ -225,6 +225,11 @@ class Export {
 	 * @return array<string,string>
 	 */
 	public function add_column_for_hint( array $columns ): array {
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			return $columns;
+		}
+
 		// bail if export is enabled.
 		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
 			return $columns;
@@ -1126,7 +1131,7 @@ class Export {
 			$external_file_obj->set_date();
 
 			// add file to local cache, if necessary.
-			$external_file_obj->add_to_cache();
+			$external_file_obj->add_to_proxy();
 
 			// set the used service.
 			$external_file_obj->set_service_name( $listing_obj->get_name() );
@@ -1412,7 +1417,7 @@ class Export {
 	 */
 	public function export_description(): void {
 		/* translators: %1$s will be replaced by a URL. */
-		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use this options <a href="%1$s">here</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use these options <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
 	}
 
 	/**
@@ -1614,6 +1619,16 @@ class Export {
 	 * @return array<int,string>
 	 */
 	private function get_external_sources_as_name_list(): array {
+		// bail if this is not in the backend.
+		if( ! is_admin() ) {
+			return array();
+		}
+
+		// bail if no terms are set.
+		if( 0 === absint( get_option( 'efml_directory_listing_used' ) ) ) {
+			return array();
+		}
+
 		// get all terms.
 		$terms = get_terms(
 			array(

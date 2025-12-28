@@ -67,7 +67,7 @@ class WpExtraFileTypes extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Add file types enabled by this plugin to the list of allowed file types.
 	 *
-	 * @param array<string,array<string,string>> $possible_file_types List of possible file types in External Files for Media Library.
+	 * @param array<string,array<string,string>> $possible_file_types List of possible file types in "External Files in Media Library".
 	 *
 	 * @return array<string,array<string,string>>
 	 */

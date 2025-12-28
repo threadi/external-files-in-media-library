@@ -296,6 +296,9 @@ class File extends Protocol_Base {
 			// set the file as tmp-file for import.
 			$results['tmp-file'] = wp_tempnam();
 
+			// set the file as tmp-file for import with appropriate file extension.
+			$results['tmp-file'] = str_replace( '.tmp', '', $results['tmp-file'] . '.' . $mime_type['ext'] );
+
 			// and save the file there.
 			try {
 				$wp_filesystem->put_contents( $results['tmp-file'], $content );
@@ -438,7 +441,7 @@ class File extends Protocol_Base {
 		// get the tmp file name.
 		$tmp_file_name = wp_tempnam();
 
-		// set the file as tmp-file for import.
+		// set the file as tmp-file for import with appropriate file extension.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
 		// get content of the file.

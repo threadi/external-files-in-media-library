@@ -321,6 +321,9 @@ class Sftp extends Protocol_Base {
 		// set the file as tmp-file for import.
 		$results['tmp-file'] = wp_tempnam();
 
+		// set the file as tmp-file for import with appropriate file extension.
+		$results['tmp-file'] = str_replace( '.tmp', '', $results['tmp-file'] . '.' . $mime_type['ext'] );
+
 		// and save the file there.
 		try {
 			$wp_filesystem->put_contents( $results['tmp-file'], $file_content );

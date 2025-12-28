@@ -138,7 +138,7 @@ class Synchronization {
 		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync' );
 		$sync_settings_setting->set_section( $sync_settings_section );
 		$sync_settings_setting->set_type( 'integer' );
-		$sync_settings_setting->set_default( 1 );
+		$sync_settings_setting->set_default( 0 );
 		$sync_settings_setting->set_field(
 			array(
 				'title'       => __( 'Enable support for synchronization', 'external-files-in-media-library' ),
@@ -276,7 +276,7 @@ class Synchronization {
 			return $columns;
 		}
 
-		// bail if export is enabled.
+		// bail if sync is enabled.
 		if ( 1 === absint( get_option( 'eml_sync' ) ) ) {
 			return $columns;
 		}
@@ -1692,6 +1692,6 @@ class Synchronization {
 	 */
 	public function sync_description(): void {
 		/* translators: %1$s will be replaced by a URL. */
-		echo '<p><strong>' . esc_html__( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the source of these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the source of these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use these options <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
 	}
 }

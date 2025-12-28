@@ -169,7 +169,7 @@ class Proxy {
 			Log::get_instance()->create( __( 'The proxy creates a cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 
 			// add it to cache.
-			$external_file_obj->add_to_cache();
+			$external_file_obj->add_to_proxy();
 		}
 
 		// get cached file path.

@@ -336,7 +336,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_option_to_real_import_file( File $external_file_obj ): void {
 		// bail if capability is not set.
-		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_import' ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_import' ) ) {
 			return;
 		}
 
@@ -502,11 +502,6 @@ class Real_Import extends Extension_Base {
 	public function add_bulk_action( array $actions ): array {
 		// bail if capability is not set.
 		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_import' ) ) {
-			return $actions;
-		}
-
-		// bail if real import is disabled.
-		if ( 1 !== absint( get_option( 'eml_real_import' ) ) ) {
 			return $actions;
 		}
 
@@ -722,11 +717,6 @@ class Real_Import extends Extension_Base {
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
 		// bail if cap is missing.
 		if ( ! current_user_can( 'efml_cap_tools_import' ) ) {
-			return $actions;
-		}
-
-		// bail if real import is disabled.
-		if ( 1 !== absint( get_option( 'eml_real_import' ) ) ) {
 			return $actions;
 		}
 

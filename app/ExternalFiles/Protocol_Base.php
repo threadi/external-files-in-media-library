@@ -296,7 +296,7 @@ class Protocol_Base {
 	 * @return bool
 	 */
 	public function can_change_hosting(): bool {
-		return $this->has_fields_with_credentials();
+		return ! $this->has_fields_with_credentials();
 	}
 
 	/**

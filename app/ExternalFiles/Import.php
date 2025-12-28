@@ -526,7 +526,7 @@ class Import extends Directory_Listing_Base {
 			$external_file_obj->set_metadata();
 
 			// add file to local cache, if necessary.
-			$external_file_obj->add_to_cache();
+			$external_file_obj->add_to_proxy();
 
 			// set date of import (this is not the attachment datetime).
 			$external_file_obj->set_date();
