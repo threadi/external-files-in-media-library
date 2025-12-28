@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image;
+use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -1521,7 +1522,7 @@ class Files {
 	}
 
 	/**
-	 * Prevent usage of external images for non-image files.
+	 * Prevent usage of external images for non-image files (except PDFs).
 	 *
 	 * @param array<int,mixed>|false $image The given image to return for preview.
 	 * @param int                    $attachment_id The used attachment ID.
@@ -1547,8 +1548,8 @@ class Files {
 			return $image;
 		}
 
-		// bail if file is an image.
-		if ( $external_file_obj->get_file_type_obj() instanceof Image ) {
+		// bail if file is an image or pdf.
+		if ( $external_file_obj->get_file_type_obj() instanceof Image || $external_file_obj->get_file_type_obj() instanceof Pdf ) {
 			return $image;
 		}
 

@@ -279,12 +279,13 @@ class Export {
 
 		// show simple hint for users without capability to change settings.
 		$dialog = array(
-			'title'   => __( 'Export media files', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Export media files', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Export your media files to this external source.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
@@ -327,13 +328,14 @@ class Export {
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			// create dialog for sync now.
 			$dialog = array(
-				'title'   => __( 'Export is not supported', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Export for this external source is currently not supported.', 'external-files-in-media-library' ) . '</strong></p>',
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',
@@ -423,13 +425,14 @@ class Export {
 
 			// create dialog for delete link.
 			$dialog = array(
-				'title'   => __( 'Delete exported files?', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Delete exported files?', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Do you really want to delete this exported files?', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'The files will be deleted in your media library AND the external source.', 'external-files-in-media-library' ) . '</p>',
 					'<p>' . __( 'If the files are used on the website, they are no longer visible and usable on the website.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . $url_delete . '"',
 						'variant' => 'primary',
@@ -557,11 +560,12 @@ class Export {
 
 		// create dialog for failures.
 		$dialog = array(
-			'title'   => __( 'Configuration could not be loaded', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Configuration could not be loaded', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'The export configuration for this target could not be loaded.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
@@ -631,7 +635,7 @@ class Export {
 
 		// create dialog for sync config.
 		$dialog = array(
-			'className' => 'efml-export-config',
+			'className' => 'efml efml-export-config',
 			/* translators: %1$s will be replaced by a name. */
 			'title'     => sprintf( __( 'Export settings for %1$s', 'external-files-in-media-library' ), $term->name ),
 			'texts'     => array(
@@ -676,11 +680,12 @@ class Export {
 
 		// create dialog for any failures.
 		$dialog = array(
-			'title'   => __( 'Configuration could not be saved', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Configuration could not be saved', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'The export configuration for this target could not be saved.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
@@ -786,7 +791,7 @@ class Export {
 
 		// create dialog.
 		$dialog = array(
-			'className' => 'efml-export-config',
+			'className' => 'efml efml-export-config',
 			'title'     => __( 'Configuration saved', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'The configuration has been saved successfully.', 'external-files-in-media-library' ) . '</strong></p>',
@@ -982,7 +987,7 @@ class Export {
 		}
 
 		// get the file name.
-		$file = wp_get_original_image_path( $attachment_id, true );
+		$file = get_attached_file( $attachment_id, true );
 
 		// bail if file name could not be loaded.
 		if ( ! is_string( $file ) ) {
@@ -1130,7 +1135,7 @@ class Export {
 			// set date of import (this is not the attachment datetime).
 			$external_file_obj->set_date();
 
-			// add file to local cache, if necessary.
+			// add file to local proxy, if necessary.
 			$external_file_obj->add_to_proxy();
 
 			// set the used service.
@@ -1141,6 +1146,15 @@ class Export {
 
 			// mark as exported file.
 			update_post_meta( $external_file_obj->get_id(), 'eml_exported_file', time() );
+
+			// get the metadata.
+			$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
+			if ( ! is_array( $meta_data ) ) {
+				$meta_data = array();
+			}
+
+			// delete local files.
+			$this->update_attachment_metadata( $meta_data, $external_file_obj->get_id() );
 
 			// add this term to the list of export sources of this file.
 			$export_sources = get_post_meta( $external_file_obj->get_id(), 'efml_export_sources', true );
@@ -1181,7 +1195,7 @@ class Export {
 		}
 
 		// get the file name.
-		$file = wp_get_original_image_path( $attachment_id, true );
+		$file = get_attached_file( $attachment_id, true );
 
 		// bail if file name could not be loaded.
 		if ( ! is_string( $file ) ) {
@@ -1421,7 +1435,7 @@ class Export {
 	}
 
 	/**
-	 * Delete the local files of exported files.
+	 * Delete the local files of exported files for images.
 	 *
 	 * @param array<string,mixed> $data The meta-data.
 	 * @param int                 $attachment_id The attachment ID.
@@ -1464,7 +1478,7 @@ class Export {
 		}
 
 		// get attached file.
-		$file = wp_get_original_image_path( $attachment_id );
+		$file = get_attached_file( $attachment_id );
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
@@ -1812,14 +1826,15 @@ class Export {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Export media file', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Export media file', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Do you really want to export this file?', 'external-files-in-media-library' ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
 				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.', 'external-files-in-media-library' ), '<em>' . end( $external_sources ) . '</em>' ) . '</p>',
 				'<p>' . __( 'It will be handled as external file after the export. It will not be saved in your local hosting.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',
@@ -1889,7 +1904,7 @@ class Export {
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( 'eml_file_export' );
 		if ( $result ) {
-			$transient_obj->set_message( '<strong>' . __( 'The file has been export.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is now stored in the external source and used from there.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'The file has been exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is now stored in the external source and used from there.', 'external-files-in-media-library' ) );
 			$transient_obj->set_type( 'success' );
 		} else {
 			if ( current_user_can( 'manage_options' ) ) {
@@ -2015,12 +2030,6 @@ class Export {
 	 * @return void
 	 */
 	public function delete_exported_file_during_import( File $external_file_obj ): void {
-		// bail if file is not exported.
-		if ( 0 === absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) ) {
-			return;
-		}
-
-		// delete the exported file.
 		$this->delete_exported_file( $external_file_obj->get_id() );
 	}
 
@@ -2071,13 +2080,14 @@ class Export {
 
 		// create dialog.
 		$dialog = array(
+			'className' => 'efml',
 			/* translators: %1$s will be replaced by the file name. */
-			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
-			'texts'   => array(
+			'title'     => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
+			'texts'     => array(
 				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project which is using the plugin "External Files in Media Library".', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

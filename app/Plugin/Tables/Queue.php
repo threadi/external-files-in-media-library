@@ -129,14 +129,15 @@ class Queue extends WP_List_Table {
 
 			// create empty-dialog.
 			$process_dialog = array(
-				'title'   => __( 'Process the queue now', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Process the queue now', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to process the queue now?', 'external-files-in-media-library' ) . '</strong></p>',
 					/* translators: %1$s will be replaced by a number, %2$s by a URL. */
 					'<p>' . sprintf( __( 'Only max. %1$d entries will be processed according <a href="%2$s">to your setting</a>.', 'external-files-in-media-library' ), absint( get_option( 'eml_queue_limit' ) ), esc_url( Settings::get_instance()->get_url( 'eml_general' ) ) ) . '</p>',
 					'<p>' . __( 'This might take some time. You have to be patient.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . esc_url( $process_url ) . '";',
 						'variant' => 'primary',
@@ -171,12 +172,13 @@ class Queue extends WP_List_Table {
 
 			// create clear-dialog.
 			$clear_dialog = array(
-				'title'   => __( 'Clear the queue now', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Clear the queue now', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to clear the queue now?', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'Every entry in the queue will be deleted.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . esc_url( $clear_url ) . '";',
 						'variant' => 'primary',
@@ -214,12 +216,13 @@ class Queue extends WP_List_Table {
 
 			// create clear error dialog.
 			$clear_errors_dialog = array(
-				'title'   => __( 'Delete error entries in the queue now', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Delete error entries in the queue now', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to delete error entries in the queue now?', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'Every entry with state "error" in the queue will be deleted.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . esc_url( $clear_errors_url ) . '";',
 						'variant' => 'primary',
@@ -322,11 +325,12 @@ class Queue extends WP_List_Table {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Delete queue entry', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Delete queue entry', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',
@@ -361,11 +365,12 @@ class Queue extends WP_List_Table {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Process queue entry', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Process queue entry', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to process this queue entry now?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will be imported as external file. You may be want to import this URL through the automatic import of the queue.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

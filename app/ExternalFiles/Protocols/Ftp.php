@@ -323,7 +323,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * Get infos from single given URL.
+	 * Return infos about single given URL.
 	 *
 	 * @param string $url The FTP path.
 	 *
@@ -382,7 +382,7 @@ class Ftp extends Protocol_Base {
 		$results['last-modified'] = absint( $ftp_connection->mtime( $parse_url['path'] ) );
 
 		// get the temp file.
-		$results['tmp-file'] = $this->get_temp_file( $parse_url['path'], $ftp_connection );
+		$results['tmp-file'] = $this->get_temp_file( $file_path, $ftp_connection );
 
 		$response_headers = array();
 
@@ -441,13 +441,13 @@ class Ftp extends Protocol_Base {
 
 		// bail if validation is not resulting in an array.
 		if ( ! is_array( $parse_url ) ) {
-			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'FTP-path looks not like a URL.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 			return false;
 		}
 
 		// bail if scheme and host could not be loaded.
 		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
-			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'Could not get scheme and host from given URL.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 			return false;
 		}
 

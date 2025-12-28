@@ -1379,13 +1379,14 @@ class GoogleDrive extends Service_Base implements Service {
 		);
 
 		return array(
-			'title'   => __( 'Connect Google Drive', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Connect Google Drive', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p>' . __( 'You will be directed to a Google dialog. Follow this and confirm the approvals.', 'external-files-in-media-library' ) . '</p>',
 				'<p>' . __( 'You will also be directed to the website of the plugin developer. This is necessary to allow you to easily share your Google Drive account. No data about you will be stored in this context.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'Click on the button below to connect your Google Drive with your website.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '"',
 					'variant' => 'primary',
@@ -1417,12 +1418,13 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// create dialog.
 		return array(
-			'title'   => __( 'Disconnect Google Drive', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Disconnect Google Drive', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Click on the button below to disconnect your Google Drive from your website.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'Files you downloaded in the media library will still be there and usable.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '"',
 					'variant' => 'primary',

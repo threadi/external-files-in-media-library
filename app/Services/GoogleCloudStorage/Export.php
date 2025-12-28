@@ -94,7 +94,7 @@ class Export extends Export_Base {
 		}
 
 		// get the file path.
-		$file_path = wp_get_original_image_path( $attachment_id, true );
+		$file_path = get_attached_file( $attachment_id, true );
 
 		// bail if no file could be found.
 		if ( ! is_string( $file_path ) ) {

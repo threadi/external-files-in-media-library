@@ -11,12 +11,16 @@ namespace ExternalFilesInMediaLibrary\Services\S3;
 defined( 'ABSPATH' ) || exit;
 
 use Aws\S3\Exception\S3Exception;
+use Aws\S3\S3Client;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\S3;
+use WP_Filesystem_Base;
 
 /**
  * Object to handle different protocols.
@@ -45,12 +49,7 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_compatible(): bool {
 		// bail if this is not an AWS S3 URL.
-		if ( ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( '' ) ) && ! str_contains( $this->get_url(), 'amazonaws.com' ) ) {
-			return false;
-		}
-
-		// return true to use this protocol.
-		return true;
+		return ! ( ! str_contains( $this->get_url(), 'amazonaws.com' ) && ! str_starts_with( $this->get_url(), S3::get_instance()->get_url_mark( '' ) ) );
 	}
 
 	/**
@@ -71,6 +70,39 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
+	 * Return infos about single given URL.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_url_info( string $url ): array {
+		// get the HTTP protocol handler.
+		$http_protocol_handler = new Http( $url );
+		$http_protocol_handler->set_fields( $this->get_fields() );
+
+		// return the results from the HTTP handler.
+		return $http_protocol_handler->get_url_info( $url );
+	}
+
+	/**
+	 * Return temp file from given URL.
+	 *
+	 * @param string             $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url, \WP_Filesystem_Base $filesystem ): bool|string {
+		// get the HTTP protocol handler.
+		$http_protocol_handler = new Http( $url );
+		$http_protocol_handler->set_fields( $this->get_fields() );
+
+		// return the results from the HTTP handler.
+		return $http_protocol_handler->get_temp_file( $url, $filesystem );
+	}
+
+	/**
 	 * Return infos to each given URL.
 	 *
 	 * @return array<int|string,array<string,mixed>|bool> List of files with its infos.
@@ -79,7 +111,7 @@ class Protocol extends Protocol_Base {
 		// get fields.
 		$fields = $this->get_fields();
 
-		// remove our marker from the URL.
+		// remove the domain from URL to get the Key (aka path to the file in AWS S3).
 		$url = str_replace( S3::get_instance()->get_url_mark( $fields['bucket']['value'] ), '', $this->get_url() );
 
 		// get our own S3 object.
@@ -178,6 +210,15 @@ class Protocol extends Protocol_Base {
 							'SaveAs' => $tmp_file,
 						);
 
+						/**
+						 * Filter the query to save a file from AWS S3.
+						 *
+						 * @since 5.0.0 Available since 5.0.0.
+						 * @param array<string,mixed> $query The query.
+						 * @param S3Client $s3_client The AWS S3 Client.
+						 */
+						$query = apply_filters( 'efml_s3_file_import_query', $query, $s3_client );
+
 						// try to load the requested bucket to save the tmp file.
 						$s3_client->getObject( $query );
 
@@ -198,21 +239,33 @@ class Protocol extends Protocol_Base {
 				// generate tmp file path.
 				$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
-				// delete the tmp file.
+				// delete the tmp file as we create it new via S3Client->getObject().
 				$wp_filesystem->delete( $tmp_file_name );
+
+				// get the key from given URL.
+				$key = str_replace( sprintf( 'https://%s.s3.%s.amazonaws.com/', $fields['bucket']['value'], $fields['region']['value'] ), '', $this->get_url() );
 
 				// set query for the file and save it in tmp dir.
 				$query = array(
 					'Bucket' => $this->get_fields()['bucket']['value'],
-					'Key'    => $url,
+					'Key'    => $key,
 					'SaveAs' => $tmp_file,
 				);
+
+				/**
+				 * Filter the query to save a file from AWS S3.
+				 *
+				 * @since 5.0.0 Available since 5.0.0.
+				 * @param array<string,mixed> $query The query.
+				 * @param S3Client $s3_client The AWS S3 Client.
+				 */
+				$query = apply_filters( 'efml_s3_file_import_query', $query, $s3_client );
 
 				// try to load the requested bucket.
 				$result = $s3_client->getObject( $query );
 
 				// check the public permissions.
-				$public_access_allowed = $s3->is_file_public_available( $url, $s3_client );
+				$public_access_allowed = $s3->is_file_public_available( $key, $s3_client );
 				$url                   = $this->get_url();
 				if ( $public_access_allowed ) {
 					$url = $result->get( '@metadata' )['effectiveUri'];
@@ -234,7 +287,8 @@ class Protocol extends Protocol_Base {
 			}
 			return $results;
 		} catch ( S3Exception $e ) {
-			Log::get_instance()->create( __( 'Error during request of AWS S3 file. See the logs for details.', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			/* translators: %1$s will be replaced by a URL. */
+			Log::get_instance()->create( sprintf( __( 'Error during request of AWS S3 file. <a href="%1$s">Check the log</a> for details.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_logs' ) ) ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 			Log::get_instance()->create( __( 'Error during request of AWS S3 file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url(), 'error' );
 			return array();
 		}

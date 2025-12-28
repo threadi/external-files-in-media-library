@@ -133,7 +133,7 @@ class Zip extends Service_Base implements Service {
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
-		add_filter( 'wp_check_filetype_and_ext', array( $this, 'allow_tar_gz_uploads' ), 10, 4 );
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'allow_tar_gz_uploads' ), 10, 3 );
 	}
 
 	/**

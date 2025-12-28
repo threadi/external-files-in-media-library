@@ -289,13 +289,14 @@ class Import_Export extends Extension_Base {
 
 		// create dialog.
 		$dialog = array(
+			'className' => 'efml',
 			/* translators: %1$s will be replaced by the file name. */
-			'title'   => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
-			'texts'   => array(
+			'title'     => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
+			'texts'     => array(
 				'<p>' . __( 'You will receive a JSON file that you can use to import this file into another media library.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

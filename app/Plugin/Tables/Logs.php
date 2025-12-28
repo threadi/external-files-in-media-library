@@ -139,12 +139,13 @@ class Logs extends WP_List_Table {
 
 			// create empty-dialog.
 			$empty_dialog = array(
-				'title'   => __( 'Empty log entries', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Empty log entries', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to empty the log?', 'external-files-in-media-library' ) . '</strong></p>',
 					'<p>' . __( 'You will loose any log until now.', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . esc_url( $empty_url ) . '";',
 						'variant' => 'primary',
@@ -258,11 +259,12 @@ class Logs extends WP_List_Table {
 
 			// create dialog.
 			$dialog = array(
-				'title'   => __( 'Delete log entry', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Delete log entry', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to delete this log entry?', 'external-files-in-media-library' ) . '</strong></p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.href="' . $url . '";',
 						'variant' => 'primary',

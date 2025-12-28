@@ -374,11 +374,12 @@ class DropBox extends Service_Base implements Service {
 		if ( empty( $access_token ) ) {
 			// create dialog.
 			$dialog = array(
-				'title'   => __( 'Error', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Error', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p>' . __( 'Please enter an access token!', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',
@@ -397,11 +398,12 @@ class DropBox extends Service_Base implements Service {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'DropBox access token saved', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'DropBox access token saved', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p>' . __( 'You will now be able to use DropBox as your external source.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.reload();',
 					'variant' => 'primary',
@@ -532,11 +534,12 @@ class DropBox extends Service_Base implements Service {
 		if ( ! $this->delete_access_token() ) {
 			// create dialog.
 			$dialog = array(
-				'title'   => __( 'Error', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Error', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p>' . __( 'An error occurred during removing the access token!', 'external-files-in-media-library' ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'location.reload();',
 						'variant' => 'primary',
@@ -552,11 +555,12 @@ class DropBox extends Service_Base implements Service {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'DropBox access token removed', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'DropBox access token removed', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p>' . __( 'You will now not be able to use DropBox in your WordPress backend.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.reload();',
 					'variant' => 'primary',
@@ -577,7 +581,7 @@ class DropBox extends Service_Base implements Service {
 	private function get_help(): string {
 		$help = esc_html__( 'Follow these steps:', 'external-files-in-media-library' ) . '</p><ol>';
 		/* translators: %1$s will be replaced by a URL. */
-		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>. ', 'external-files-in-media-library' ), 'https://www.dropbox.com/developers/apps' ) . '</li>';
+		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>. ', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL:', 'external-files-in-media-library' ) . ' <code>' . get_option( 'home' ) . '</code></li>';
 		$help .= '<li>' . esc_html__( 'Copy the access token.', 'external-files-in-media-library' ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Click on the button "Connect" above here.', 'external-files-in-media-library' ) . '</li>';
@@ -989,12 +993,14 @@ class DropBox extends Service_Base implements Service {
 	 */
 	private function get_connect_dialog(): array {
 		return array(
-			'title'   => __( 'Connect DropBox', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml efml-dropbox-dialog',
+			'title'     => __( 'Connect DropBox', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
-				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value=""></div>',
+				/* translators: %1$s will be replaced by a URL. */
+				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value="" placeholder="' . __( 'Enter your access token', 'external-files-in-media-library' ) . '"> ' . sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</div>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_dropbox_connect();',
 					'variant' => 'primary',
@@ -1016,12 +1022,13 @@ class DropBox extends Service_Base implements Service {
 	 */
 	private function get_disconnect_dialog(): array {
 		return array(
-			'title'   => __( 'Disconnect DropBox', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Disconnect DropBox', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Click on the button below to disconnect your DropBox from your website.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'Files you downloaded in the media library will still be there and usable.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_dropbox_disconnect();',
 					'variant' => 'primary',
@@ -1124,7 +1131,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		/* translators: %1$s will be replaced by a URL. */
-		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/developers/apps' );
+		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() );
 	}
 
 	/**
@@ -1298,5 +1305,22 @@ class DropBox extends Service_Base implements Service {
 
 		// return the forwarding URL to use.
 		return $response_array['location'];
+	}
+
+	/**
+	 * Return the URL where user find their access token.
+	 *
+	 * @return string
+	 */
+	private function get_token_url(): string {
+		$url = 'https://www.dropbox.com/developers/apps';
+
+		/**
+		 * Filter the URL where Dropbox user will find their access token.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 */
+		return apply_filters( 'efml_dropbox_access_token_url', $url );
 	}
 }

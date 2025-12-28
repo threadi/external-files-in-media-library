@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
@@ -17,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term;
 use WP_Term_Query;
 
@@ -86,6 +88,8 @@ class Update {
 		if ( ! is_string( $db_plugin_version ) ) {
 			return;
 		}
+
+		$this->version500();
 
 		// compare version if we are not in development-mode.
 		if ( ! Helper::is_development_mode() && version_compare( $installed_plugin_version, $db_plugin_version, '>' ) ) {
@@ -260,11 +264,28 @@ class Update {
 			}
 		}
 
+		// init the main settings.
+		Settings::get_instance()->add_settings();
+
+		// initiate the services.
+		Services::get_instance()->init_services();
+
+		// initiate the settings for roles.
+		Roles::get_instance()->init_settings();
+
 		// add the file types settings.
 		File_Types::get_instance()->add_settings();
 
 		// run the same tasks for all settings as if we activate the plugin.
 		Settings::get_instance()->activation();
+
+		// trigger the capability settings.
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+			Roles::get_instance()->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
+		}
+		foreach ( array( 'import', 'export', 'zip', 'sync' ) as $tool ) {
+			Roles::get_instance()->set( array( 'administrator' ), 'efml_cap_tools_' . $tool );
+		}
 
 		// set configured capabilities.
 		Roles::get_instance()->install();

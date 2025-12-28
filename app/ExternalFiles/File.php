@@ -486,9 +486,7 @@ class File {
 			return;
 		}
 
-		/**
-		 * Get used WP Filesystem handler.
-		 */
+		// get used WP Filesystem handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get temp file.
@@ -673,6 +671,12 @@ class File {
 	/**
 	 * Switch hosting of this file from extern to local.
 	 *
+	 * The process:
+	 * 1. Get the external URL as temporary local file.
+	 * 2. Import the temporary file in media library.
+	 * 3. Copy the settings of the newly uploaded file in media library to the target file.
+	 * 4. Set attributes on target file to match as local saved external URL.
+	 *
 	 * @return bool
 	 */
 	public function switch_to_local(): bool {
@@ -684,6 +688,22 @@ class File {
 
 		// bail if no protocol handler could be loaded.
 		if ( ! $protocol_handler_obj ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Protocol handler for URL could not be found.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// get the upload directory settings.
+		$upload_dir = wp_get_upload_dir();
+
+		// bail if baseurl is not a string.
+		if ( ! is_string( $upload_dir['baseurl'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Upload directory could not be detected.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
@@ -707,11 +727,15 @@ class File {
 
 		// bail if no file data could be loaded.
 		if ( empty( $file_data ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'File info for URL could not be loaded.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
-		// import file via WP-own functions.
-		$array = array(
+		// prepare import of the temporary file via WP-own functions.
+		$file_array = array(
 			'name'     => $this->get_title(),
 			'type'     => $file_data[0]['mime-type'],
 			'tmp_name' => '',
@@ -720,89 +744,81 @@ class File {
 			'url'      => $this->get_url(),
 		);
 
-		// remove URL from attachment-setting.
-		delete_post_meta( $this->get_id(), '_wp_attached_file' );
-
-		/**
-		 * Get user the attachment would be assigned to.
-		 */
-		$user_id = Helper::get_current_user_id();
-
-		/**
-		 * Prepare attachment-post-settings.
-		 */
+		// prepare import of post data for the attachment.
 		$post_array = array(
-			'post_author' => $user_id,
+			'post_author' => Helper::get_current_user_id(),
 		);
 
-		// get temp file.
+		// get temp file for the external URL.
 		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
 		// bail if no temp file could be loaded.
 		if ( ! is_string( $tmp_file ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Temporary file could not be saved.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
-		// set temp file for side load.
-		$array['tmp_name'] = $tmp_file;
+		// remove URL from attachment-setting to prevent new file names by WP.
+		delete_post_meta( $this->get_id(), '_wp_attached_file' );
 
-		// upload the external file.
-		$attachment_id = media_handle_sideload( $array, 0, null, $post_array );
+		// set the temp file for side load to insert the file in media library.
+		$file_array['tmp_name'] = $tmp_file;
+
+		// save the temporary file in media library and get its attachment ID.
+		$temp_attachment_id = media_handle_sideload( $file_array, 0, null, $post_array );
 
 		// bail on error.
-		if ( is_wp_error( $attachment_id ) ) {
+		if ( is_wp_error( $temp_attachment_id ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Inserting temporary file resulted in error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $temp_attachment_id ) . '</code>', $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
-		// get meta-data from original.
-		$meta_data = wp_get_attachment_metadata( $attachment_id );
+		// get meta-data from uploaded temporary file.
+		$temp_meta_data = wp_get_attachment_metadata( $temp_attachment_id );
 
-		// create array for meta-data if it is not one.
-		if ( ! is_array( $meta_data ) ) {
-			$meta_data = array();
+		// create an array for meta-data of we got "false" from metadata request.
+		if ( ! is_array( $temp_meta_data ) ) {
+			$temp_meta_data = array();
 		}
 
-		// get the new local url.
-		$local_url = wp_get_attachment_url( $attachment_id );
+		// get the local URL of the temporary file.
+		$local_full_path = wp_get_attachment_url( $temp_attachment_id );
 
 		// bail if no URL returned.
-		if ( empty( $local_url ) ) {
+		if ( empty( $local_full_path ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Local URL could not be loaded.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// delete the temporary attachment.
+			wp_delete_attachment( $temp_attachment_id, true );
+
+			// do nothing more.
 			return false;
 		}
 
-		// remove base_url from local_url.
-		$upload_dir = wp_get_upload_dir();
+		// get the local path as relative path.
+		$local_path = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_full_path );
 
-		// get the local URL.
-		$local_url = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_url );
+		// set our local relative path on metadata.
+		$temp_meta_data['file'] = $local_path;
 
-		// set our local path as file.
-		$meta_data['file'] = $local_url;
+		// copy the relevant settings of the new uploaded file to the original file.
+		wp_update_attachment_metadata( $this->get_id(), $temp_meta_data );
 
-		// copy the relevant settings of the new uploaded file to the original.
-		wp_update_attachment_metadata( $this->get_id(), $meta_data );
-
-		// bail if baseurl is not a string.
-		if ( ! is_string( $upload_dir['baseurl'] ) ) {
-			return false;
-		}
-
-		// update attachment setting.
-		update_post_meta( $this->get_id(), '_wp_attached_file', $local_url );
+		// set the local relative path on the file.
+		update_post_meta( $this->get_id(), '_wp_attached_file', $local_path );
 
 		// set setting for this file to local.
 		$this->set_is_local_saved( true );
 
-		// get the file path of the original.
-		$file = wp_get_original_image_path( $this->get_id() );
-
-		// bail if file is not a string.
-		if ( ! is_string( $file ) ) {
-			return false;
-		}
-
-		// secure the attached thumbnail files of this file.
-		$files     = array( $file );
+		// secure the attached (and already updated) thumbnail files of this file.
+		$files     = array( trailingslashit( $upload_dir['basedir'] ) . $local_path );
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 		if ( ! empty( $meta_data['sizes'] ) ) {
 			foreach ( $meta_data['sizes'] as $meta_file ) {
@@ -817,23 +833,23 @@ class File {
 				}
 
 				// add the file to the list.
-				$files[] = trailingslashit( dirname( $file ) ) . $meta_file['file'];
+				$files[] = trailingslashit( $upload_dir['basedir'] ) . trailingslashit( dirname( $local_path ) ) . $meta_file['file'];
 			}
 		}
 
-		// secure the files of this attachment.
+		// secure the files of this attachment by copying them to the tmp directory.
 		foreach ( $files as $file ) {
 			$destination = trailingslashit( get_temp_dir() ) . basename( $file );
 			$wp_filesystem->copy( $file, $destination, true );
 		}
 
 		// delete the temporary uploaded file.
-		wp_delete_attachment( $attachment_id, true );
+		wp_delete_attachment( $temp_attachment_id, true );
 
-		// copy the secured files back.
+		// move the secured files back.
 		foreach ( $files as $file ) {
 			$source = trailingslashit( get_temp_dir() ) . basename( $file );
-			$wp_filesystem->copy( $source, $file, true );
+			$wp_filesystem->move( $source, $file, true );
 		}
 
 		// clear cache.
@@ -846,7 +862,7 @@ class File {
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param int $attachment_id The attachment ID.
 		 */
-		do_action( 'efml_switch_to_local_after', $attachment_id );
+		do_action( 'efml_switch_to_local_after', $this->get_id() );
 
 		// return true if switch was successfully.
 		return true;
@@ -896,7 +912,7 @@ class File {
 		}
 
 		// get attached file.
-		$file = wp_get_original_image_path( $this->get_id() );
+		$file = get_attached_file( $this->get_id() );
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
