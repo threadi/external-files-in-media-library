@@ -253,7 +253,7 @@ class Directory_Listing {
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 		if ( $term_id > 0 ) {
 			// get the user_id's which saved this entry.
-			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id' ) );
+			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
 
 			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
 			if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
@@ -515,9 +515,10 @@ class Directory_Listing {
 		$result_dialog = array(
 			'detail' =>
 				array(
-					'title'   => __( 'Error', 'external-files-in-media-library' ),
-					'texts'   => array(),
-					'buttons' => array(
+					'className' => 'efml',
+					'title'     => __( 'Error', 'external-files-in-media-library' ),
+					'texts'     => array(),
+					'buttons'   => array(
 						array(
 							'action'  => 'closeDialog();',
 							'variant' => 'primary',
@@ -614,9 +615,10 @@ class Directory_Listing {
 		$result_dialog = array(
 			'detail' =>
 				array(
-					'title'   => __( 'Error', 'external-files-in-media-library' ),
-					'texts'   => array(),
-					'buttons' => array(
+					'className' => 'efml',
+					'title'     => __( 'Error', 'external-files-in-media-library' ),
+					'texts'     => array(),
+					'buttons'   => array(
 						array(
 							'action'  => 'closeDialog();',
 							'variant' => 'primary',
@@ -701,12 +703,12 @@ class Directory_Listing {
 	 */
 	public function add_option_to_set_name( array $new_actions, WP_Term $term ): array {
 		// create the form.
-		$form  = '<div><label for="name">' . __( 'Name:', 'external-files-in-media-library' ) . '</label><input type="text" name="name" id="name" value="' . esc_attr( $term->name ) . '"></div>';
+		$form  = '<div><label for="name">' . __( 'Name:', 'external-files-in-media-library' ) . '</label><input type="text" name="name" id="name" value="' . esc_attr( $term->name ) . '" placeholder="' . __( 'Source for gallery images', 'external-files-in-media-library' ) . '"></div>';
 		$form .= '<input type="hidden" name="term_id" value="' . $term->term_id . '">';
 
 		// create dialog.
 		$dialog = array(
-			'className' => 'efml-term-change-name',
+			'className' => 'efml efml-term-change-name',
 			'title'     => __( 'Change name', 'external-files-in-media-library' ),
 			'texts'     => array(
 				$form,
@@ -743,11 +745,12 @@ class Directory_Listing {
 
 		// create dialog for response.
 		$dialog = array(
-			'title'   => __( 'Error', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Error', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'The new name could not be saved!', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',

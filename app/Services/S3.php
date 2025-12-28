@@ -659,7 +659,7 @@ class S3 extends Service_Base implements Service {
 	 */
 	private function get_regions(): array {
 		// get cached value.
-		$list = get_option( 'eml_aws_s3_regions' );
+		$list = get_transient( 'eml_aws_s3_regions' );
 
 		// use them if they are set.
 		if ( ! empty( $list ) && is_array( $list ) ) {
@@ -689,7 +689,7 @@ class S3 extends Service_Base implements Service {
 		$list = apply_filters( 'efml_service_s3_regions', $list );
 
 		// save the list in cache.
-		update_option( 'eml_aws_s3_regions', $list, WEEK_IN_SECONDS );
+		set_transient( 'eml_aws_s3_regions', $list, WEEK_IN_SECONDS );
 
 		// return the list.
 		return $list;

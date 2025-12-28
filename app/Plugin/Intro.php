@@ -157,16 +157,16 @@ class Intro {
 		// - we are in the settings of our own plugin.
 		// - or if welcome hint is not hidden.
 		$use_it = true;
-		if( Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
+		if ( Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
 			$use_it = false;
 		}
 		$page = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_SPECIAL_CHARS );
-		if( 'eml_settings' === (string)$page ) {
+		if ( 'eml_settings' === (string) $page ) {
 			$use_it = true;
 		}
 
 		// bail if flag is not set.
-		if( ! $use_it ) {
+		if ( ! $use_it ) {
 			return;
 		}
 

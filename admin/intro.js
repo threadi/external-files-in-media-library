@@ -143,7 +143,7 @@ jQuery(document).ready(function($) {
       window.setTimeout(function() {
         let intro = efml_intro_object( [
             {
-              element: document.querySelector( '.easy-dialog.eml' ),
+              element: document.querySelector( '.easy-dialog.efml' ),
               title: efmlIntroJsVars.step_6_title,
               intro: efmlIntroJsVars.step_6_intro,
             },

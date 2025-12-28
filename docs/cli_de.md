@@ -8,16 +8,23 @@ Das Plugin stellt eine Reihe von WP CLI Kommandos bereit.
 
 ## Import
 
-`wp eml import [URL] [--login=<login> --password=<password>]`
+`wp eml import [URL] [--login=<login> --password=<password>] [--queue] [--real_import] [--use_dates] [--use_specific_date=<value>]`
 
-* Du kannst eine URL, deren Protokoll vom Plugin unterstützt wird, hier angeben.
-* Die optionalen Zugangsdaten werden bei jeder dieser URLs verwendet.
+Parameter:
+
+* <URL> zum Importieren in die Mediathek.
+* [--login=<Wert>] - Legt das Login fest, die für alle hinzugefügten URLs verwendet werden soll.
+* [--password=<Wert>] - Legt das Passwort fest, das für alle hinzugefügten URLs verwendet werden soll.
+* [--queue] - Fügt die angegebenen URLs zur Warteschlange hinzu.
+* [--real_import] – Importiert Dateien von URLs als echte Dateien, die nicht mit einer externen URL verknüpft sind.
+* [--use_dates] – Verwendet die Daten der externen Quelle.
+* [--use_specific_date=<Wert>] – Verwendet ein bestimmtes Datum für jede Datei.
 
 ## Löschen
 
-`wp eml delete`
+`wp eml delete [<URLs>]`
 
-* Es gibt keine Parameter, um das Kommando zu beeinflussen.
+Löscht die angegebenen URLs aus der Mediathek.
 
 ## Log bereinigen
 
@@ -34,3 +41,5 @@ Das folgende Kommando führt zuerst die Kommandos beim Löschen des Plugins aus.
 Abhängig von deinen Einstellungen im Plugin werden dabei ggfs. vorhandene Dateien aus deiner Mediendatenbank entfernt.
 
 `wp eml reset_plugin`
+
+Diese Funktion kann auch im Backend unter Einstellungen > Externe Dateien in der Mediathek > Erweitert ausgeführt werden.

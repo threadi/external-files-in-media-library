@@ -140,14 +140,15 @@ class Forms {
 		// create import dialog.
 		$import_dialog = array(
 			'detail' => array(
-				'title'   => __( 'Add external source', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Add external source', 'external-files-in-media-library' ),
+				'texts'     => array(
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'Add a new external source <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url() ) . '</p>',
 					'<p>' . __( 'Or select a JSON file with the configuration of an external source in the following field:', 'external-files-in-media-library' ) . '</p>',
 					'<input type="file" accept="application/json" name="import_external_source_json" id="import_external_source_json">',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'import_external_source_json();',
 						'variant' => 'primary',
@@ -632,7 +633,7 @@ class Forms {
 			// create dialog.
 			$dialog = array(
 				'detail' => array(
-					'className' => 'eml',
+					'className' => 'efml',
 					'callback'  => 'document.dispatchEvent(new Event("efml-import-finished"));',
 					'title'     => __( 'Import has been executed', 'external-files-in-media-library' ),
 					'texts'     => array( $text ),

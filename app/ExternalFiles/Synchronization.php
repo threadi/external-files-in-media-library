@@ -353,13 +353,14 @@ class Synchronization {
 
 		// create dialog for delete link.
 		$dialog = array(
-			'title'   => __( 'Delete synchronized files?', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Delete synchronized files?', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Do you really want to delete this synchronized files?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'The files will be deleted in your media library. The original files on the source will stay untouched.', 'external-files-in-media-library' ) . '</p>',
 				'<p>' . __( 'If the files are used on the website, they are no longer visible and usable on the website.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url_delete . '"',
 					'variant' => 'primary',
@@ -393,12 +394,13 @@ class Synchronization {
 
 		// show simple hint for users without capability to change settings.
 		$dialog = array(
-			'title'   => __( 'Synchronize your media files', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Synchronize your media files', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
@@ -446,14 +448,15 @@ class Synchronization {
 		if ( method_exists( $listing_obj, 'is_sync_disabled' ) && $listing_obj->is_sync_disabled() ) {
 			// create dialog for sync now.
 			$dialog = array(
-				'title'   => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
+				'texts'     => array(
 					/* translators: %1$s will be replaced by a title. */
 					'<p>' . sprintf( __( 'Synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',
@@ -469,13 +472,14 @@ class Synchronization {
 
 		// create dialog for sync now.
 		$dialog_sync_now = array(
-			'title'   => __( 'Synchronize now?', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Synchronize now?', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to synchronize files from this external source with your media library?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'During synchronization, files are synchronized between the source and the media library.', 'external-files-in-media-library' ) . '<br>' . __( 'New files are imported, existing files are retained, files that no longer exist in the source are deleted from the media library.', 'external-files-in-media-library' ) . '<br>' . __( 'Files that do not belong to this source remain untouched.', 'external-files-in-media-library' ) . '</p>',
 				'<p>' . __( 'Synchronization may take some time.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_sync_from_directory("' . $listing_obj->get_name() . '", ' . $term_id . ');',
 					'variant' => 'primary',
@@ -530,7 +534,7 @@ class Synchronization {
 
 		// create dialog for sync config.
 		$dialog_sync_config = array(
-			'className' => 'eml-sync-config',
+			'className' => 'efml efml-sync-config',
 			/* translators: %1$s will be replaced by a name. */
 			'title'     => sprintf( __( 'Settings for this %1$s connection', 'external-files-in-media-library' ), $listing_obj->get_label() ),
 			'texts'     => array(
@@ -800,7 +804,7 @@ class Synchronization {
 		// create dialog.
 		$dialog = array(
 			'detail' => array(
-				'className' => 'eml',
+				'className' => 'efml',
 				'title'     => __( 'Synchronization has been executed', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<p><strong>' . __( 'The files in this external source are now synchronized in your media library.', 'external-files-in-media-library' ) . '</strong></p>',
@@ -1469,11 +1473,12 @@ class Synchronization {
 
 		// create dialog for failures.
 		$dialog = array(
-			'title'   => __( 'Configuration not saved', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Configuration not saved', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p>' . __( 'The configuration for this synchronization could not be saved.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'closeDialog();',
 					'variant' => 'primary',
@@ -1485,8 +1490,15 @@ class Synchronization {
 		// get the fields.
 		$fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fields'] ) ) : array();
 
-		// bail if term ID or interval is not given.
-		if ( empty( $fields['interval'] ) || 0 === absint( $fields['term_id'] ) ) {
+		// bail if interval is not given.
+		if ( empty( $fields['interval'] ) ) {
+			$dialog['texts'][] = '<p>' . __( 'Interval has not been selected.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( array( 'detail' => $dialog ) );
+		}
+
+		// bail if term ID is not given.
+		if ( 0 === absint( $fields['term_id'] ) ) {
+			$dialog['texts'][] = '<p>' . __( 'No external source chosen.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
@@ -1518,11 +1530,12 @@ class Synchronization {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Configuration saved', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Configuration saved', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p>' . __( 'The new configuration for this synchronization has been saved.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.reload();',
 					'variant' => 'primary',

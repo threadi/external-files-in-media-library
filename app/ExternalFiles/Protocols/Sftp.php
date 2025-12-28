@@ -254,7 +254,7 @@ class Sftp extends Protocol_Base {
 	}
 
 	/**
-	 * Get infos from single given URL.
+	 * Return infos about single given URL.
 	 *
 	 * @param string $url The SSH/SFTP path.
 	 *

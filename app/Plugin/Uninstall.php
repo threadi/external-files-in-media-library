@@ -166,11 +166,13 @@ class Uninstall {
 			'efmlVersion',
 			'eml_schedules',
 			'efml_admin_id',
-			'eml_aws_s3_regions'
 		);
 		foreach ( $options as $option ) {
 			delete_option( $option );
 		}
+
+		// remove custom transient.
+		delete_transient( 'eml_aws_s3_regions' );
 
 		// remove capability from roles.
 		Roles::get_instance()->uninstall();

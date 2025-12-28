@@ -42,7 +42,7 @@ class Cli {
 	 * : Import files from URLs as real files, not linked to external URL.
 	 *
 	 * [--use_dates]
-	 * : Use external files dates.
+	 * : Use the dates of the external files.
 	 *
 	 * [--use_specific_date=<value>]
 	 * : Use specific date for each file

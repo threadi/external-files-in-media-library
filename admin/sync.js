@@ -118,7 +118,7 @@ function efml_sync_get_info() {
  */
 function efml_sync_save_config() {
   // bail if any required field is not checked.
-  let required_fields = jQuery( '.eml-sync-config :input[required]:visible' );
+  let required_fields = jQuery( '.efml-sync-config :input[required]:visible' );
   if( required_fields.length > 0 && ! required_fields.is(":checked") ) {
     required_fields.parent().addClass( 'error' )
     return;
@@ -127,10 +127,10 @@ function efml_sync_save_config() {
 
   // get fields from the form.
   let fields = {};
-  jQuery('.eml-sync-config select, .eml-sync-config input[type="date"], .eml-sync-config input[type="email"]').each(function(){
+  jQuery('.efml-sync-config select, .efml-sync-config input[type="date"], .efml-sync-config input[type="email"]').each(function(){
     fields[jQuery(this).attr('id')] = jQuery(this).val();
   });
-  jQuery('.eml-sync-config input[type="checkbox"]').each(function(){
+  jQuery('.efml-sync-config input[type="checkbox"]').each(function(){
     if( jQuery(this).is(':checked') ) {
       if( jQuery( this ).attr( 'name' ).indexOf('[') >= 0 ) {
         if (!fields[jQuery( this ).attr( 'name' ).replace( '[', '' ).replace( ']', '' )]) {

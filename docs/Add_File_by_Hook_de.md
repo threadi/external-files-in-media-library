@@ -17,11 +17,10 @@ von External Files for Media Library für sich selbst nutzen möchten.
 * Typ: Filter
 * Name: efml_add_url
 * Parameter:
-  * ID der Medien-Datei
+  * ID der Medien-Datei (0 um neue Datei hinzuzufügen)
   * URL die hinzugefügt werden soll
   * Login um auf die URL zuzugreifen (optional).
   * Passwort um auf die URL zuzugreifen (optional).
-  * API-Key um auf die URL zuzugreifen (optional).
 * Rückgabe:
   * gleich "0" wenn die URL nicht hinzugefügt wurde und auch nicht in der Mediathek existiert.
   * größer "0" wenn die URL hinzugefügt wurde oder bereits in der Mediathek existiert

@@ -93,7 +93,7 @@ class Admin {
 		add_action( 'admin_action_eml_log_delete_entry', array( $this, 'delete_log_entry' ) );
 		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ), 10, 0 );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -533,13 +533,13 @@ class Admin {
 		// get the terms.
 		$terms = get_terms(
 			array(
-				'taxonomy' => Taxonomy::get_instance()->get_name(),
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
 				'hide_empty' => false,
 			)
 		);
 
 		// bail if terms does exist.
-		if( ! empty( $terms ) ) {
+		if ( ! empty( $terms ) ) {
 			return;
 		}
 
@@ -550,15 +550,13 @@ class Admin {
 	/**
 	 * Add CSS- and JS-files for plugin listing in backend.
 	 *
-	 * @param string $hook The used hook.
-	 *
 	 * @return void
 	 */
-	public function add_styles_and_js_admin( string $hook ): void {
+	public function add_styles_and_js_admin(): void {
 		global $pagenow;
 
 		// bail if we are not on "plugins.php".
-		if( 'plugins.php' !== $pagenow ) {
+		if ( 'plugins.php' !== $pagenow ) {
 			return;
 		}
 

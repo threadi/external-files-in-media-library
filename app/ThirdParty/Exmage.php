@@ -103,13 +103,14 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Migrate from Exmage to External Files in Media Library', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Migrate from Exmage to External Files in Media Library', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to migrate your files?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'After the migration you will not be able to use the Exmage functions on your files. But you could use the features of External Files in Media Library.', 'external-files-in-media-library' ) . '</p>',
 				'<p>' . __( 'Hint: create a backup before you run this migration.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

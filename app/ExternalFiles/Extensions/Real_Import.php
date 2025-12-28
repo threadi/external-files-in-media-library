@@ -352,16 +352,17 @@ class Real_Import extends Extension_Base {
 
 		// create dialog.
 		$dialog = array(
+			'className' => 'efml',
 			/* translators: %1$s will be replaced by the file name. */
-			'title'   => sprintf( __( 'Import %1$s as real file', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
-			'texts'   => array(
+			'title'     => sprintf( __( 'Import %1$s as real file', 'external-files-in-media-library' ), $external_file_obj->get_title() ),
+			'texts'     => array(
 				/* translators: %1$s will be replaced by the file name. */
 				'<p><strong>' . sprintf( __( 'Are you sure you want to import %1$s in your media library?', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_title() . '</code>' ) . '</strong></p>',
 				'<p>' . __( 'The file will be saved as real file in your media library without external connections.', 'external-files-in-media-library' ) . '</p>',
 				/* translators: %1$s will be replaced by the plugin name. */
 				'<p>' . sprintf( __( 'It will then no longer be managed by %1$s for you.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',
@@ -385,7 +386,7 @@ class Real_Import extends Extension_Base {
 	/**
 	 * Import single file as real local file.
 	 *
-	 * This is the main function to convert any external file to an local file in the media library.
+	 * This is the main function to convert any external file to a local file in the media library.
 	 *
 	 * @param File $external_file_obj The object of the external file which will be changed.
 	 *
@@ -738,12 +739,13 @@ class Real_Import extends Extension_Base {
 
 		// create dialog.
 		$dialog = array(
-			'title'   => __( 'Import external file', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Import external file', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Do you really want to import this external file as real file in media library?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'The file will then exist in the media library like any other local file. It will no longer have an external connection.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

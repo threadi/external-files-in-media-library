@@ -320,7 +320,7 @@ class Proxy {
 		// create answer dialog.
 		$dialog = array(
 			'detail' => array(
-				'className' => 'eml',
+				'className' => 'efml',
 				'title'     => __( 'Proxy has been reset', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<p>' . __( 'The proxy has been reset.', 'external-files-in-media-library' ) . '</p>',

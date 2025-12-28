@@ -137,11 +137,12 @@ class Statistics {
 
 		// create import dialog.
 		$dialog = array(
-			'title'   => __( 'Reset file statistics', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Reset file statistics', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Click on the button below to reset the file statistics for external files.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $url . '";',
 					'variant' => 'primary',

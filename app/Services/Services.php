@@ -427,11 +427,12 @@ class Services {
 		// create dialog for response.
 		$dialog = array(
 			'detail' => array(
-				'title'   => __( 'Error', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'Error', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'An error occurred during the import of the JSON file.', 'external-files-in-media-library' ) . '</strong></p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',

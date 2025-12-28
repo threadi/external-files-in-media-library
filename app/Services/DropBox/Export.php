@@ -83,7 +83,7 @@ class Export extends Export_Base {
 		$dropbox_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
 
 		// get the file path.
-		$file_path = wp_get_original_image_path( $attachment_id, true );
+		$file_path = get_attached_file( $attachment_id, true );
 
 		// bail if no file could be found.
 		if ( ! is_string( $file_path ) ) {
@@ -351,6 +351,8 @@ class Export extends Export_Base {
 
 	/**
 	 * Send request to Dropbox API using curl.
+	 *
+	 * Hint: The usage of curl is not compatible with WCS, but we need to handle chunks here, which is not possible with WP_Filesystem (at present).
 	 *
 	 * @param string           $url The Dropbox API URL to use.
 	 * @param array<int,mixed> $headers The headers to use.

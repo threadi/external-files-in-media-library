@@ -157,39 +157,39 @@ class Helper {
 	 */
 	public static function get_possible_mime_types(): array {
 		$mime_types = array(
-			'image/avif'          => array(
+			'image/avif'      => array(
 				'label' => __( 'AVIF', 'external-files-in-media-library' ),
 				'ext'   => 'avif',
 			),
-			'image/gif'          => array(
+			'image/gif'       => array(
 				'label' => __( 'GIF', 'external-files-in-media-library' ),
 				'ext'   => 'gif',
 			),
-			'image/jpeg'         => array(
+			'image/jpeg'      => array(
 				'label' => __( 'JPG/JPEG', 'external-files-in-media-library' ),
 				'ext'   => 'jpg',
 			),
-			'image/png'          => array(
+			'image/png'       => array(
 				'label' => __( 'PNG', 'external-files-in-media-library' ),
 				'ext'   => 'png',
 			),
-			'image/svg+xml'      => array(
+			'image/svg+xml'   => array(
 				'label' => __( 'SVG', 'external-files-in-media-library' ),
 				'ext'   => 'svg',
 			),
-			'image/webp'         => array(
+			'image/webp'      => array(
 				'label' => __( 'WEBP', 'external-files-in-media-library' ),
 				'ext'   => 'webp',
 			),
-			'application/pdf'    => array(
+			'application/pdf' => array(
 				'label' => __( 'PDF', 'external-files-in-media-library' ),
 				'ext'   => 'pdf',
 			),
-			'application/zip'    => array(
+			'application/zip' => array(
 				'label' => __( 'ZIP', 'external-files-in-media-library' ),
 				'ext'   => 'zip',
 			),
-			'video/mp4'          => array(
+			'video/mp4'       => array(
 				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
 				'ext'   => 'mp4',
 			),

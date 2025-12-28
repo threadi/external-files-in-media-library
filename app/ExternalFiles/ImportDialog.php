@@ -118,7 +118,7 @@ class ImportDialog {
 		// create dialog.
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
-			'className' => 'eml efml-import-dialog',
+			'className' => 'efml efml-import-dialog',
 			'callback'  => 'document.dispatchEvent(new Event("efml-import-dialog-loaded"));',
 			'title'     => _n( 'Add this external file by its URL', 'Add external files by their URLs', $url_count, 'external-files-in-media-library' ),
 			'texts'     => array(),
@@ -280,7 +280,7 @@ class ImportDialog {
 		// create minimal dialog which should trigger the automatic import process.
 		return array(
 			'id'        => 'efml-import-dialog',
-			'className' => 'eml efml-import-dialog efml-import-dialog-process-now',
+			'className' => 'efml efml-import-dialog efml-import-dialog-process-now',
 			'title'     => __( 'Please wait', 'external-files-in-media-library' ),
 			'texts'     => $texts,
 			'buttons'   => array(),

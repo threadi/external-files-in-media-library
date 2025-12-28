@@ -315,14 +315,15 @@ class Tables {
 
 			// create dialog.
 			$dialog = array(
-				'title'   => __( 'File info', 'external-files-in-media-library' ),
-				'texts'   => array(
+				'className' => 'efml',
+				'title'     => __( 'File info', 'external-files-in-media-library' ),
+				'texts'     => array(
 					'<p><strong>' . __( 'URL', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
 					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $service_title . '</p>',
 					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file_obj->get_date() . '</p>',
 					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file_obj->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
 				),
-				'buttons' => array(
+				'buttons'   => array(
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',

@@ -545,14 +545,15 @@ class Settings {
 
 		// create dialog.
 		$reset_dialog = array(
-			'title'   => __( 'Reset plugin', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Reset plugin', 'external-files-in-media-library' ),
+			'texts'     => array(
 				/* translators: %1$s will be replaced by the plugin name. */
 				'<p><strong>' . sprintf( __( 'Do you really want to reset any settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
 				'<p>' . __( 'This will reset all settings and all external files in your media library.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'We recommend creating a backup before resetting the plugin.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'location.href="' . $reset_url . '";',
 					'variant' => 'primary',
@@ -798,12 +799,13 @@ class Settings {
 	 */
 	public function get_proxy_reset_dialog(): string {
 		$dialog_config = array(
-			'title'   => __( 'Reset proxy cache', 'external-files-in-media-library' ),
-			'texts'   => array(
+			'className' => 'efml',
+			'title'     => __( 'Reset proxy cache', 'external-files-in-media-library' ),
+			'texts'     => array(
 				'<p><strong>' . __( 'Click on the following button to reset the proxy cache.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'This will remove all files in the cache, including all generated images.', 'external-files-in-media-library' ) . '</p>',
 			),
-			'buttons' => array(
+			'buttons'   => array(
 				array(
 					'action'  => 'efml_reset_proxy();',
 					'variant' => 'primary',

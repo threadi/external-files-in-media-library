@@ -133,7 +133,7 @@ class Zip extends Service_Base implements Service {
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
-		add_filter( 'wp_check_filetype_and_ext', array( $this, 'allow_tar_gz_uploads' ), 10, 4 );
+		add_filter( 'wp_check_filetype_and_ext', array( $this, 'allow_tar_gz_uploads' ), 10, 3 );
 	}
 
 	/**
@@ -893,25 +893,25 @@ class Zip extends Service_Base implements Service {
 	 * Allow the upload of .tar.gz and .gz files.
 	 *
 	 * @param array<string,mixed> $data The upload data.
-	 * @param string $file The file path.
-	 * @param string $filename The file name.
+	 * @param string              $file The file path.
+	 * @param string              $filename The file name.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function allow_tar_gz_uploads( array $data, string $file, string $filename ): array {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
 			return $data;
 		}
 
 		// get the path infos for this file.
-		$ext = pathinfo($filename, PATHINFO_EXTENSION);
+		$ext = pathinfo( $filename, PATHINFO_EXTENSION );
 
 		// allow the file if the extension is .gz or .tar.gz.
-		if ( $ext === 'gz' || str_ends_with( $filename, '.tar.gz' ) ) {
-			$data['ext']  = 'gz';
-			$data['type'] = 'application/gzip';
+		if ( 'gz' === $ext || str_ends_with( $filename, '.tar.gz' ) ) {
+			$data['ext']             = 'gz';
+			$data['type']            = 'application/gzip';
 			$data['proper_filename'] = $filename;
 		}
 
@@ -928,7 +928,7 @@ class Zip extends Service_Base implements Service {
 	 */
 	public function add_supported_mime_types( array $mime_types ): array {
 		// bail if setting is disabled.
-		if( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_zip_allow_gz' ) ) ) {
 			return $mime_types;
 		}
 
@@ -951,7 +951,7 @@ class Zip extends Service_Base implements Service {
 	 */
 	public function change_enabled_mime_types( array $mime_types ): array {
 		// bail if setting is enabled.
-		if( 1 === absint( get_option( 'eml_zip_allow_gz' ) ) ) {
+		if ( 1 === absint( get_option( 'eml_zip_allow_gz' ) ) ) {
 			return $mime_types;
 		}
 
@@ -959,7 +959,7 @@ class Zip extends Service_Base implements Service {
 		$key = array_search( 'application/x-gzip', $mime_types, true );
 
 		// bail if no key could be found.
-		if( ! $key ) {
+		if ( ! $key ) {
 			return $mime_types;
 		}
 
