@@ -89,8 +89,6 @@ class Update {
 			return;
 		}
 
-		$this->version500();
-
 		// compare version if we are not in development-mode.
 		if ( ! Helper::is_development_mode() && version_compare( $installed_plugin_version, $db_plugin_version, '>' ) ) {
 			if ( ! defined( 'EFML_UPDATE_RUNNING ' ) ) {
