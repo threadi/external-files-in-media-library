@@ -33,6 +33,13 @@ class Local extends Service_Base implements Service {
 	protected string $name = 'local';
 
 	/**
+	 * Slug of settings tab.
+	 *
+	 * @var string
+	 */
+	protected string $settings_sub_tab = 'eml_local';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Local

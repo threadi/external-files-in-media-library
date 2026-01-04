@@ -123,6 +123,15 @@ class Zip extends Zip_Base {
 			return false;
 		}
 
+		// bail if file could not be opened because it is not a valid ZIP.
+		if ( ZipArchive::ER_NOZIP === $opened ) {
+			// log event.
+			Log::get_instance()->create( __( 'Given file is not a valid ZIP.', 'external-files-in-media-library' ), $zip_file, 'error' );
+
+			// return empty array as we can not get infos about a file which does not exist.
+			return false;
+		}
+
 		// return the opened zip as object.
 		return $zip;
 	}
@@ -277,6 +286,11 @@ class Zip extends Zip_Base {
 		// get the path to the file in the ZIP (+4 for .zip and +1 for the starting "/") we want to extract.
 		$file_to_extract = substr( $file_to_extract, strpos( $file_to_extract, '.zip' ) + 5 );
 
+		// bail if file path was given false.
+		if ( empty( $file_to_extract ) ) {
+			return array();
+		}
+
 		// get the zip object for the given file.
 		$zip = $this->get_object( $this->get_zip_file() );
 
@@ -401,7 +415,7 @@ class Zip extends Zip_Base {
 	/**
 	 * Return list of files in zip to import in media library.
 	 *
-	 *  The file must be extracted in tmp directory to import them as usual URLs.
+	 * The file must be extracted in tmp directory to import them as usual URLs.
 	 *
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
@@ -415,7 +429,7 @@ class Zip extends Zip_Base {
 		}
 
 		// if given file is a single file in a ZIP, get its file infos.
-		if ( ! str_ends_with( $this->get_zip_file(), '.zip' ) && ! str_ends_with( $this->get_zip_file(), '.zip/' ) ) {
+		if ( ! str_ends_with( $this->get_zip_file(), '.zip/' ) ) {
 			return array( $this->get_file_info_from_zip( $this->get_zip_file() ) );
 		}
 

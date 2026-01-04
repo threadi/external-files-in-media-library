@@ -251,6 +251,7 @@ class Helper {
 		 *  ```
 		 *  add_filter( 'efml_get_mime_types', function( $mime_types ) {
 		 *   $mime_types[] = 'your/mime';
+		 *   return $mime_types;
 		 *  } );
 		 *  ```
 		 *

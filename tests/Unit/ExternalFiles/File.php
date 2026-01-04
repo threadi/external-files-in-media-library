@@ -5,24 +5,14 @@
  * @package external-files-in-media-library
  */
 
-namespace Unit\Plugin;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\ExternalFiles;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf;
-use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
-use WP_UnitTestCase;
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\ExternalFiles\File.
  */
-class File extends WP_UnitTestCase {
-
-	/**
-	 * The URL of the file to use for testings.
-	 *
-	 * @var string
-	 */
-	private string $url = 'https://plugins.svn.wordpress.org/external-files-in-media-library/assets/example_en.pdf';
-
+class File extends externalFilesTests {
 	/**
 	 * Prepare a file.
 	 *
@@ -30,7 +20,7 @@ class File extends WP_UnitTestCase {
 	 */
 	public function set_up(): void {
 		// add the test URL in the media library.
-		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( $this->url );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'pdf', 'http' ) );
 	}
 
 	/**
@@ -40,10 +30,11 @@ class File extends WP_UnitTestCase {
 	 */
 	private function get_file_object(): \ExternalFilesInMediaLibrary\ExternalFiles\File {
 		// get the file object.
-		$file_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( $this->url );
+		$file_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( self::get_test_file( 'pdf', 'http' ) );
 		$this->assertIsNotBool( $file_obj );
 		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, $file_obj );
 
+		// return the object.
 		return $file_obj;
 	}
 
@@ -59,12 +50,12 @@ class File extends WP_UnitTestCase {
 		// get its unproxied URL.
 		$url = $file_obj->get_url( true );
 		$this->assertIsString( $url );
-		$this->assertEquals( $this->url, $url );
+		$this->assertEquals( self::get_test_file( 'pdf', 'http' ), $url );
 
 		// get its proxied URL.
 		$url = $file_obj->get_url();
 		$this->assertIsString( $url );
-		$this->assertNotEquals( $this->url, $url );
+		$this->assertNotEquals( self::get_test_file( 'pdf', 'http' ), $url );
 	}
 
 	/**
@@ -122,7 +113,7 @@ class File extends WP_UnitTestCase {
 		// get the fields array.
 		$file_type = $file_obj->get_file_type_obj();
 		$this->assertIsObject( $file_type );
-		$this->assertInstanceOf( Pdf::class, $file_type );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf::class, $file_type );
 	}
 
 	/**
@@ -167,6 +158,6 @@ class File extends WP_UnitTestCase {
 		// get the protocol handler.
 		$protocol_handler = $file_obj->get_protocol_handler_obj();
 		$this->assertIsObject( $protocol_handler );
-		$this->assertInstanceOf( Http::class, $protocol_handler );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http::class, $protocol_handler );
 	}
 }

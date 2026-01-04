@@ -353,8 +353,8 @@ class TarGzip extends Zip_Base {
 			return array();
 		}
 
-		// if path does not end with .tar.gz and contains a "/" after it, it is a single file request.
-		if ( ! str_ends_with( $zip_file, '.tar.gz' ) && str_contains( $zip_file, '.tar.gz/' ) ) {
+		// if path does not end with ".tar.gz/", it is a single file request.
+		if ( ! str_ends_with( $zip_file, '.tar.gz/' ) ) {
 			return $this->get_file_info_from_zip( $zip_file );
 		}
 
