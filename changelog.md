@@ -64,6 +64,7 @@
 - Added option to hide the review begging
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
 - Added export and import of settings for external sources
+- A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
 - Added PHP unit tests for essential functions of this plugin
 
 ### Changed

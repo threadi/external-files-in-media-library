@@ -59,4 +59,13 @@ class Extension_Base {
 	public function get_title(): string {
 		return '';
 	}
+
+	/**
+	 * Hide this extension in settings.
+	 *
+	 * @return bool
+	 */
+	public function hide(): bool {
+		return false;
+	}
 }
