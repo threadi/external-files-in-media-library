@@ -443,6 +443,17 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_job_show_link' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 1 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Show job link on each imported file', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'When enabled, a link is displayed for each external file in the media library, which can be used to filter all files from the same import. This allows you to find them more quickly and delete them again if necessary.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_log_mode' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
@@ -515,6 +526,9 @@ class Settings {
 		// get the available extensions for import.
 		$extensions = array();
 		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+			if ( $extension_obj->hide() ) {
+				continue;
+			}
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 
