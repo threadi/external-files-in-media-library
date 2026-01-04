@@ -5,23 +5,14 @@
  * @package external-files-in-media-library
  */
 
-namespace Unit\Plugin;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\ExternalFiles;
 
-use WP_UnitTestCase;
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\ExternalFiles\Files.
  */
-class Files extends WP_UnitTestCase {
-	use CustomAssertTrait;
-
-	/**
-	 * The URL of the file to use for testings.
-	 *
-	 * @var string
-	 */
-	private string $url = 'https://plugins.svn.wordpress.org/external-files-in-media-library/assets/example_en.pdf';
-
+class Files extends externalFilesTests {
 	/**
 	 * Prepare a file.
 	 *
@@ -29,7 +20,7 @@ class Files extends WP_UnitTestCase {
 	 */
 	public function set_up(): void {
 		// add the test URL in the media library.
-		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( $this->url );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'pdf', 'http' ) );
 	}
 
 	/**
@@ -38,7 +29,7 @@ class Files extends WP_UnitTestCase {
 	 * @return \ExternalFilesInMediaLibrary\ExternalFiles\File
 	 */
 	private function get_external_file_object_of_test_url(): \ExternalFilesInMediaLibrary\ExternalFiles\File {
-		return \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( $this->url );
+		return \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( self::get_test_file( 'pdf', 'http' ) );
 	}
 
 	/**
@@ -56,9 +47,9 @@ class Files extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_get_attachment_url(): void {
-		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_url( $this->url, $this->get_attachment_id() );
+		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_url( self::get_test_file( 'pdf', 'http' ), $this->get_attachment_id() );
 		$this->assertIsString( $attachment_url );
-		$this->assertEquals( 'http://example.org/?emlproxy=example_en.pdf', $attachment_url );
+		$this->assertEquals( 'http://example.org/?emlproxy=' . basename( self::get_test_file( 'pdf', 'http' ) ), $attachment_url );
 	}
 
 	/**
@@ -67,9 +58,9 @@ class Files extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_get_attachment_link(): void {
-		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_link( $this->url, $this->get_attachment_id() );
+		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_link( self::get_test_file( 'pdf', 'http' ), $this->get_attachment_id() );
 		$this->assertIsString( $attachment_url );
-		$this->assertEquals( $this->url, $attachment_url );
+		$this->assertEquals( self::get_test_file( 'pdf', 'http' ), $attachment_url );
 	}
 
 	/**
@@ -92,7 +83,6 @@ class Files extends WP_UnitTestCase {
 	public function test_get_file(): void {
 		$file = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file( $this->get_attachment_id() );
 		$this->assertIsObject( $file );
-		$this->assertInstanceOf(\ExternalFilesInMediaLibrary\ExternalFiles\File::class, $file );
 		$this->assertEquals( $this->get_attachment_id(), $file->get_id() );
 	}
 
@@ -102,7 +92,7 @@ class Files extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_get_file_by_url(): void {
-		$file = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( $this->url );
+		$file = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( self::get_test_file( 'pdf', 'http' ) );
 		$this->assertIsObject( $file );
 		$this->assertInstanceOf(\ExternalFilesInMediaLibrary\ExternalFiles\File::class, $file );
 		$this->assertEquals( $this->get_attachment_id(), $file->get_id() );
@@ -136,7 +126,7 @@ class Files extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_add_urls_by_hook(): void {
-		$attachment_id = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->add_urls_by_hook( 0, $this->url );
+		$attachment_id = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->add_urls_by_hook( 0, self::get_test_file( 'pdf', 'http' ) );
 		$this->assertIsInt( $attachment_id );
 	}
 

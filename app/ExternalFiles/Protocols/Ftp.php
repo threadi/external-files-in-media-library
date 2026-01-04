@@ -116,7 +116,6 @@ class Ftp extends Protocol_Base {
 		 *
 		 * @param bool $return The result of this check.
 		 * @param string $url The requested external URL.
-		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		return apply_filters( 'efml_check_url', $return, $this->get_url() );
 	}

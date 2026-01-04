@@ -11,6 +11,7 @@ DB_PASS=$3
 DB_HOST=${4-localhost}
 WP_VERSION=${5-latest}
 SKIP_DB_CREATE=${6-false}
+DO_DB_RECREATE=${7-false}
 
 TMPDIR=${TMPDIR-/tmp}
 TMPDIR=$(echo $TMPDIR | sed -e "s/\/$//")
@@ -181,8 +182,10 @@ install_db() {
 	# create database
 	if [ $(mysql --user="$DB_USER" --password="$DB_PASS"$EXTRA --execute='show databases;' | grep ^$DB_NAME$) ]
 	then
-		echo "Reinstalling will delete the existing test database ($DB_NAME)"
-		read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
+	  if [ ${DO_DB_RECREATE} = "false" ]; then
+		  echo "Reinstalling will delete the existing test database ($DB_NAME)"
+		  read -p 'Are you sure you want to proceed? [y/N]: ' DELETE_EXISTING_DB
+		fi
 		recreate_db $DELETE_EXISTING_DB
 	else
 		create_db

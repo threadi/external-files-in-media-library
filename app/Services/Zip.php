@@ -123,8 +123,8 @@ class Zip extends Service_Base implements Service {
 		// use our own hooks.
 		add_filter( 'efml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
 		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
-		add_filter( 'efml_filter_url_response', array( $this, 'get_files_from_zip' ), 10, 2 );
-		add_filter( 'efml_filter_file_response', array( $this, 'get_files_from_zip' ), 10, 2 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_files_from_zip_via_filter' ), 10, 2 );
+		add_filter( 'efml_filter_file_response', array( $this, 'get_files_from_zip_via_filter' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
@@ -327,7 +327,7 @@ class Zip extends Service_Base implements Service {
 	 *
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
-	public function get_files_from_zip( array $results, string $file_path ): array {
+	public function get_files_from_zip_via_filter( array $results, string $file_path ): array {
 		// get service from request.
 		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -341,6 +341,18 @@ class Zip extends Service_Base implements Service {
 			return $results;
 		}
 
+		// return the list of files from this ZIP.
+		return $this->get_files_from_zip( $file_path );
+	}
+
+	/**
+	 * Return the list of files from a ZIP.
+	 *
+	 * @param string $file_path The path to the ZIP.
+	 *
+	 * @return array<int|string,array<string,mixed>|bool>
+	 */
+	public function get_files_from_zip( string $file_path ): array {
 		// get the zip object for this file.
 		$zip_obj = $this->get_zip_object_by_file( $file_path );
 
@@ -400,7 +412,7 @@ class Zip extends Service_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
-			// return false.
+			// return false as result.
 			return false;
 		}
 
@@ -546,7 +558,7 @@ class Zip extends Service_Base implements Service {
 			'service' => $this->get_name(),
 			'urls'    => trailingslashit( $path ),
 			'unzip'   => true,
-			'post' => $post->ID,
+			'post'    => $post->ID,
 		);
 
 		// add action to extract this file in media library.
@@ -1002,12 +1014,12 @@ class Zip extends Service_Base implements Service {
 	 */
 	public function add_warning_in_dialog( array $dialog, array $settings ): array {
 		// bail if it is not our service.
-		if( ! isset( $settings['service'] ) || $this->get_name() !== $settings['service'] ) {
+		if ( ! isset( $settings['service'] ) || $this->get_name() !== $settings['service'] ) {
 			return $dialog;
 		}
 
 		// bail if no ID is set.
-		if( ! isset( $settings['post'] ) ) {
+		if ( ! isset( $settings['post'] ) ) {
 			return $dialog;
 		}
 
@@ -1015,7 +1027,7 @@ class Zip extends Service_Base implements Service {
 		$zip_object = $this->get_zip_object_by_file( $settings['urls'] );
 
 		// bail if no zip object could be loaded.
-		if( ! $zip_object instanceof Zip_Base ) {
+		if ( ! $zip_object instanceof Zip_Base ) {
 			return $dialog;
 		}
 
@@ -1030,7 +1042,7 @@ class Zip extends Service_Base implements Service {
 		 * @param int $limit The limit in bytes.
 		 * @param array $settings The used settings.
 		 */
-		if( $external_file_obj->get_filesize() < apply_filters( 'efml_zip_max_size_limit', $limit, $settings ) ) {
+		if ( $external_file_obj->get_filesize() < apply_filters( 'efml_zip_max_size_limit', $limit, $settings ) ) {
 			return $dialog;
 		}
 

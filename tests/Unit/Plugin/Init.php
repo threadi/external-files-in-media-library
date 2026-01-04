@@ -5,14 +5,14 @@
  * @package external-files-in-media-library
  */
 
-namespace Unit\Plugin;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\Plugin;
 
-use WP_UnitTestCase;
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\Plugin\Init.
  */
-class Init extends WP_UnitTestCase {
+class Init extends externalFilesTests {
 
 	/**
 	 * Test if the returning variable is an array and contains "efml_15minutely".

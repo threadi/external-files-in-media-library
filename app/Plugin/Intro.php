@@ -165,7 +165,7 @@ class Intro {
 			$use_it = true;
 		}
 		$intro_running = filter_input( INPUT_GET, 'efml-intro', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if( ! is_null( $intro_running ) ) {
+		if ( ! is_null( $intro_running ) ) {
 			$use_it = true;
 		}
 

@@ -5,14 +5,14 @@
  * @package external-files-in-media-library
  */
 
-namespace Unit\Plugin;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\Plugin;
 
-use WP_UnitTestCase;
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\Plugin\Languages.
  */
-class Languages extends WP_UnitTestCase {
+class Languages extends externalFilesTests {
 
 	/**
 	 * Test if the returning variable is "true".

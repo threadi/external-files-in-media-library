@@ -5,16 +5,16 @@
  * @package external-files-in-media-library
  */
 
-namespace ExternalFiles;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\ExternalFiles;
 
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use WP_REST_Request;
 use WP_REST_Server;
-use WP_UnitTestCase;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\ExternalFiles\Rest.
  */
-class Rest extends WP_UnitTestCase {
+class Rest extends externalFilesTests {
 
 	/**
 	 * The REST server object.
@@ -24,19 +24,12 @@ class Rest extends WP_UnitTestCase {
 	private ?WP_REST_Server $server = null;
 
 	/**
-	 * The URL of the file to use for testings.
-	 *
-	 * @var string
-	 */
-	private string $url = 'https://plugins.svn.wordpress.org/external-files-in-media-library/assets/example_en.pdf';
-
-	/**
 	 * Set up the preparations for the tests.
 	 *
 	 * @return void
 	 */
-	public function setUp(): void {
-		parent::setUp();
+	public function set_up(): void {
+		parent::set_up();
 
 		// Initiating the REST API.
 		global $wp_rest_server;
@@ -62,7 +55,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/efml/v1/file' );
 		$request->set_body_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$response = $this->server->dispatch( $request );
@@ -97,7 +90,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/efml/v1/file' );
 		$request->set_body_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$response = $this->server->dispatch( $request );
@@ -150,7 +143,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/efml/v1/file' );
 		$request->set_body_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$this->server->dispatch( $request );
@@ -159,7 +152,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'GET', '/efml/v1/file' );
 		$request->set_query_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$response = $this->server->dispatch( $request );
@@ -180,7 +173,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/efml/v1/file' );
 		$request->set_body_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$this->server->dispatch( $request );
@@ -189,7 +182,7 @@ class Rest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'DELETE', '/efml/v1/file' );
 		$request->set_query_params(
 			array(
-				'url'   => $this->url,
+				'url'   => self::get_test_file( 'pdf', 'http' ),
 			)
 		);
 		$response = $this->server->dispatch( $request );

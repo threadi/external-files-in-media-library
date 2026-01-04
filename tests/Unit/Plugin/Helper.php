@@ -5,14 +5,14 @@
  * @package external-files-in-media-library
  */
 
-namespace Unit\Plugin;
+namespace ExternalFilesInMediaLibrary\Tests\Unit\Plugin;
 
-use WP_UnitTestCase;
+use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\Plugin\Helper.
  */
-class Helper extends WP_UnitTestCase {
+class Helper extends externalFilesTests {
 
 	/**
 	 * Test if the returning variable is an array and has the key "image/jpeg".
