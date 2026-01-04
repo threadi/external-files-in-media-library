@@ -24,6 +24,8 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results;
+use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Zip\Zip_Base;
@@ -130,6 +132,7 @@ class Zip extends Service_Base implements Service {
 		add_action( 'efml_show_file_info', array( $this, 'add_option_to_show_zip' ) );
 		add_filter( 'efml_supported_mime_types', array( $this, 'add_supported_mime_types' ) );
 		add_filter( 'efml_get_mime_types', array( $this, 'change_enabled_mime_types' ) );
+		add_filter( 'efml_add_dialog', array( $this, 'add_warning_in_dialog' ), 10, 2 );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
@@ -220,6 +223,16 @@ class Zip extends Service_Base implements Service {
 
 		// bail if no object could be loaded.
 		if ( ! $zip_obj instanceof Zip_Base ) {
+			// create the error entry.
+			$error_obj = new Url_Result();
+			$error_obj->set_result_text( __( 'Given URL is not compatible with any supported ZIP-format.', 'external-files-in-media-library' ) );
+			$error_obj->set_url( $directory );
+			$error_obj->set_error( true );
+
+			// add the error object to the list of errors.
+			Results::get_instance()->add( $error_obj );
+
+			// return an empty array.
 			return array();
 		}
 
@@ -380,6 +393,14 @@ class Zip extends Service_Base implements Service {
 
 		// bail if temp file could not be loaded.
 		if ( ! is_string( $zip_file ) ) {
+			// create error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_zip', __( 'No ZIP-file given!', 'external-files-in-media-library' ) );
+
+			// add it to the list.
+			$this->add_error( $error );
+
+			// return false.
 			return false;
 		}
 
@@ -525,6 +546,7 @@ class Zip extends Service_Base implements Service {
 			'service' => $this->get_name(),
 			'urls'    => trailingslashit( $path ),
 			'unzip'   => true,
+			'post' => $post->ID,
 		);
 
 		// add action to extract this file in media library.
@@ -968,5 +990,57 @@ class Zip extends Service_Base implements Service {
 
 		// return the resulting list of enabled mimes.
 		return $mime_types;
+	}
+
+	/**
+	 * Add warning in dialog if a ZIP bigger than 10 MB will be extracted.
+	 *
+	 * @param array<string,mixed> $dialog The dialog.
+	 * @param array<string,mixed> $settings The settings.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_warning_in_dialog( array $dialog, array $settings ): array {
+		// bail if it is not our service.
+		if( ! isset( $settings['service'] ) || $this->get_name() !== $settings['service'] ) {
+			return $dialog;
+		}
+
+		// bail if no ID is set.
+		if( ! isset( $settings['post'] ) ) {
+			return $dialog;
+		}
+
+		// get the zip object for the given URL.
+		$zip_object = $this->get_zip_object_by_file( $settings['urls'] );
+
+		// bail if no zip object could be loaded.
+		if( ! $zip_object instanceof Zip_Base ) {
+			return $dialog;
+		}
+
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $settings['post'] );
+
+		$limit = 10000000;
+		/**
+		 * Filter the maximum size for a single ZIP to extract.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param int $limit The limit in bytes.
+		 * @param array $settings The used settings.
+		 */
+		if( $external_file_obj->get_filesize() < apply_filters( 'efml_zip_max_size_limit', $limit, $settings ) ) {
+			return $dialog;
+		}
+
+		// collect the entry.
+		$text = '<label for="big_zip"><input type="checkbox" name="big_zip" id="big_zip" value="1" class="eml-use-for-import" required> <strong>' . __( 'You are trying to import a file bigger then 10 MB. Are your sure?', 'external-files-in-media-library' ) . '</strong></label>';
+
+		// add the entry to the dialog.
+		$dialog['texts'][] = $text;
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 }
