@@ -415,7 +415,7 @@ class Zip extends Zip_Base {
 		}
 
 		// if given file is a single file in a ZIP, get its file infos.
-		if ( ! str_ends_with( $this->get_zip_file(), '.zip' ) && ! str_ends_with( $this->get_zip_file(), '.zip/' ) ) {
+		if ( ! str_ends_with( $this->get_zip_file(), '.zip/' ) ) {
 			return array( $this->get_file_info_from_zip( $this->get_zip_file() ) );
 		}
 
