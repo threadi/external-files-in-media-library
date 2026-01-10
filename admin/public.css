@@ -1,3 +1,7 @@
 .efml-review, .efml-review:hover {
 	color: #d4af37;
 }
+
+body .etfw-transient h3 img {
+	width: 42px;
+}

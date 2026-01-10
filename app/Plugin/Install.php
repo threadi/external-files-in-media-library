@@ -101,7 +101,7 @@ class Install {
 		if ( ! $transients_obj->get_transient_by_name( 'eml_welcome' )->is_dismissed() ) {
 			// create the message.
 			/* translators: %1$s will be replaced by the URL where user can add media files. */
-			$message = sprintf( __( '<strong>Your have installed <i>External files for media library</i> - great and thank you!</strong> You can now immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
+			$message = sprintf( __( '<strong>You have installed <i>External files for media library</i> - great and thank you very much!</strong> Let us show you how it works or immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
 
 			// add button for intro, if not already closed.
 			if ( ! Intro::get_instance()->is_closed() ) {

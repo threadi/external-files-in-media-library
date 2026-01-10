@@ -68,7 +68,7 @@ class Dates extends Extension_Base {
 
 		// use our own hooks.
 		add_filter( 'efml_file_import_attachment', array( $this, 'add_file_date' ), 10, 3 );
-		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 40, 2 );
 		add_filter( 'efml_import_options', array( $this, 'add_import_option_to_list' ) );
 		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );

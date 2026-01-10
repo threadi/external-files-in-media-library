@@ -31,7 +31,7 @@ class Helper {
 	}
 
 	/**
-	 * Get plugin URL of this plugin with trailing slash.
+	 * Return plugin URL of this plugin with trailing slash.
 	 *
 	 * @return string
 	 */
@@ -790,4 +790,13 @@ class Helper {
 		 */
 		return apply_filters( 'efml_enqueued_file_version', $plugin_version, $filepath );
 	}
+
+	/**
+	 * Return the plugin logo in an img Element.
+	 *
+	 * @return string
+	 */
+    public static function get_logo_img(): string {
+		return '<img src="' . self::get_plugin_url() . 'gfx/logo.png" alt="">';
+    }
 }
