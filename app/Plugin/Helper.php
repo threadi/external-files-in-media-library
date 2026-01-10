@@ -796,7 +796,7 @@ class Helper {
 	 *
 	 * @return string
 	 */
-    public static function get_logo_img(): string {
+	public static function get_logo_img(): string {
 		return '<img src="' . self::get_plugin_url() . 'gfx/logo.png" alt="">';
-    }
+	}
 }

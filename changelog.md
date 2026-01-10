@@ -66,6 +66,7 @@
 - Added export and import of settings for external sources
 - A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
 - Added PHP unit tests for essential functions of this plugin
+- Added SBOM generation on GitHub for each release
 
 ### Changed
 
@@ -75,7 +76,7 @@
 - Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive
 - Small optimizations on multiple codes
-- Using fallback to default interval for each of our events if setting of not available
+- Using fallback to default interval for each our events if setting of not available
 - Show hide and rating on directory archive listing
 - Directory reload no shows the progress
 - Optimized ZIP service: no also allows to extract complete ZIP files in media library
