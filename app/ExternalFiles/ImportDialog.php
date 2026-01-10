@@ -61,7 +61,7 @@ class ImportDialog {
 		// use our own hooks to extend or change the dialog.
 		add_filter( 'efml_add_dialog', array( $this, 'add_textarea' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_urls' ), 10, 2 );
-		add_filter( 'efml_add_dialog', array( $this, 'add_credential_fields' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_credential_fields' ), 20, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_settings_link' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'prevent_dialog_usage' ), PHP_INT_MAX, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_term' ), 10, 2 );
@@ -323,7 +323,6 @@ class ImportDialog {
 		}
 
 		// add marker to use credentials.
-		// TODO nötig?
 		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1">';
 
 		// add the fields.

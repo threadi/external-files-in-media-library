@@ -460,6 +460,7 @@ class Admin {
 		$transients_obj->set_capability( 'manage_options' );
 		$transients_obj->set_template( 'grouped.php' );
 		$transients_obj->set_display_method( 'grouped' );
+		$transients_obj->set_vendor_path( Helper::get_plugin_path() . 'vendor/' );
 		$transients_obj->set_translations(
 			array(
 				/* translators: %1$d will be replaced by the days this message will be hidden. */
@@ -553,13 +554,6 @@ class Admin {
 	 * @return void
 	 */
 	public function add_styles_and_js_admin(): void {
-		global $pagenow;
-
-		// bail if we are not on "plugins.php".
-		if ( 'plugins.php' !== $pagenow ) {
-			return;
-		}
-
 		// admin-specific styles.
 		wp_enqueue_style(
 			'eml-public-admin',

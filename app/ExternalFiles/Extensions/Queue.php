@@ -87,7 +87,7 @@ class Queue extends Extension_Base {
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
 
 		// use our own hooks.
-		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 40, 2 );
 		add_filter( 'efml_dialog_after_adding', array( $this, 'change_dialog_after_adding' ) );
 		add_filter( 'efml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 3 );
 		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );

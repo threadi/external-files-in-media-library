@@ -78,7 +78,7 @@ class Services {
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 20 );
 		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
-		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 100, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 30, 2 );
 
 		// add actions.
 		add_action( 'admin_action_efml_export_external_source', array( $this, 'export_external_source' ), 10, 0 );

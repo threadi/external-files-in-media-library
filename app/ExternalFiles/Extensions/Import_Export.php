@@ -81,7 +81,7 @@ class Import_Export extends Extension_Base {
 		}
 
 		// use our hooks.
-		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 10, 2 );
+		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 40, 2 );
 		add_filter( 'efml_import_urls', array( $this, 'set_urls_for_import' ), 10, 2 );
 		add_filter( 'efml_import_fields', array( $this, 'set_fields_for_import' ), 10, 3 );
 		add_action( 'efml_show_file_info', array( $this, 'add_export' ) );
