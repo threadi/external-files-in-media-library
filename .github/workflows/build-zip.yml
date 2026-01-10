@@ -40,6 +40,8 @@ jobs:
           rm changelog.md
           rm readme.md
 
+      - uses: anchore/sbom-action@v0
+
       - name: Generate autoloader
         run: composer dump-autoload -oa --no-dev
 

@@ -9,11 +9,11 @@ License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: @@VersionNumber@@
 
-Add external files to your media library to use them in your website. They will be integrated as if they were locally available.
+Add external files to your media library to use them in your website. They are integrated as if they were available locally.
 
 == Description ==
 
-Add one or more files with their URLs under Media > "Add new media file". You can use this external files in all places where the media library is used.
+Add one or more files with their URLs under Media > "Add New Media File". You can use these external files anywhere the media library is used.
 
 == Feature ==
 
@@ -23,21 +23,21 @@ Automatically synchronize external directories containing files with your media 
 
 And even more:
 
-* Add the files with their external dates. This allows you to obtain the date, which is helpful for SEO, for example.
-* Import them as real files instead of just linking to them in your media library. This allows you to import any number of files into your project.
+* Add the files with their external dates. This allows you to get the date, helpful for SEO, for example.
+* Import them as real files instead of just linking to them in your media library. This allows you to import any amount files into your project.
 * Check their availability (only for HTTP connections) to ensure that the external files are actually available.
-* Configure which users in your project are allowed to use the external files options.
+* Configure, which users in your project are allowed to use the external files options.
 * Extract ZIP files into your media library.
 
 == Support for other plugins ==
 
-Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these, e.g. via FTP).
+Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these e.g., via AN FTP).
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
-Sort your external files in folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). You can import and synchronize them in these plugins.
+Sort your external files in a folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). You can import and synchronize them in these plugins.
 
-And also compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
+And compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
 
 The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
 
@@ -47,9 +47,9 @@ You can manage your external files with REST API requests as documented [here](h
 
 == Mass-Import ==
 
-You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import and the plugin will import any supported files from it or use the external source tools to navigate to the directory to import.
+You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import, and the plugin will import any supported files from it or use the external source tools to navigate to the directory to import.
 
-For very large directories there is also an automatically processed queue. You could also use the [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md) for large directories.
+For large directories, there is also an automatically processed queue. You could also use the [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md) for large directories.
 
 == TCP Protocols ==
 
@@ -87,9 +87,10 @@ The development repository is on [GitHub](https://github.com/threadi/external-fi
 
 Each release of this plugin will only be published if it fulfills the following conditions:
 
-* PHPStan check for possible bugs
-* Compliance with WordPress Coding Standards
-* No failures during PHP Compatibility check
+* PHPStan check for possible bugs.
+* Compliance with WordPress Coding Standards.
+* No failures during PHP Compatibility check.
+* No exceptions during PHP Unit Tests.
 
 ---
 
@@ -102,13 +103,13 @@ Each release of this plugin will only be published if it fulfills the following 
 
 = Can I prevent other WordPress-users from adding external files? =
 
-Yes, you can select under Settings > "External files in Media Library" > Permissions which roles gets the ability to add or delete external URLs in your media library.
+Yes, you can select under Settings > "External files in Media Library" > Permissions, which roles gets the ability to add or delete external URLs in your media library.
 
 = Can I also embed password-protected external files? =
 
 Yes, but these files are integrated locally and not from the external URL so that your visitors can access them without any problems.
 
-= Can I embed files from FTP? =
+= Can I embed files from an FTP? =
 
 Yes, you can [add them manually](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/ftp.md) or with the FTP-tool in Media > "Add external files".
 
@@ -133,7 +134,7 @@ external files by this plugin. This also allows you to use all protocols support
 
 = Is there a WP CLI command? =
 
-Yes, there are many options on WP CLI, see [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
+Yes, we provide many options on WP CLI, see [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
 
 = Google tells me that the app is not verified when I connect Google Drive - why? =
 
