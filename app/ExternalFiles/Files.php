@@ -823,8 +823,11 @@ class Files {
 		// the public filename.
 		$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// use the already existing thumb.
-		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && file_exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
+		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && $wp_filesystem->exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
 			// log the event.
 			/* translators: %1$s will be replaced by the image sizes. */
 			Log::get_instance()->create( sprintf( __( 'Loading the thumb from cache for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );

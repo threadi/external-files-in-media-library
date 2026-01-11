@@ -137,8 +137,11 @@ class Admin {
 		$path = trailingslashit( plugin_dir_path( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 		$url  = trailingslashit( plugin_dir_url( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if path does not exist.
-		if ( ! file_exists( $path ) ) {
+		if ( ! $wp_filesystem->exists( $path ) ) {
 			return;
 		}
 
@@ -146,7 +149,7 @@ class Admin {
 		$script_asset_path = $path . 'build/index.asset.php';
 
 		// bail if file does not exist.
-		if ( ! file_exists( $script_asset_path ) ) {
+		if ( ! $wp_filesystem->exists( $script_asset_path ) ) {
 			return;
 		}
 

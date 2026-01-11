@@ -791,13 +791,13 @@ class Settings {
 		// create the absolute path for old value.
 		$old_value_path = trailingslashit( WP_CONTENT_DIR ) . $old_value;
 
-		// bail if new path already exist.
-		if ( file_exists( $new_value_path ) ) {
-			return $old_value;
-		}
-
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// bail if new path already exist.
+		if ( $wp_filesystem->exists( $new_value_path ) ) {
+			return $old_value;
+		}
 
 		// move all files from old to new directory.
 		$wp_filesystem->move( $old_value_path, $new_value_path );

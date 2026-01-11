@@ -266,6 +266,9 @@ class File extends Protocol_Base {
 		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_file_check_existence', array( true, $file_path ), '5.0.0', 'efml_file_check_existence' );
 
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		/**
 		 * Filter the check if local file exist.
 		 *
@@ -273,14 +276,11 @@ class File extends Protocol_Base {
 		 * @param bool $true True if filter should be used.
 		 * @param string $file_path The absolute file path.
 		 */
-		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
+		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! $wp_filesystem->exists( $file_path ) ) {
 			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->sanitize_local_path( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
 			// return empty array as we cannot get infos about a file, which does not exist.
 			return array();
 		}
-
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );

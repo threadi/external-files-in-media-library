@@ -175,8 +175,11 @@ class Proxy {
 		// get cached file path.
 		$cached_file_path = $external_file_obj->get_cache_file( $dimensions );
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if file does not exist.
-		if ( ! file_exists( $cached_file_path ) ) {
+		if ( ! $wp_filesystem->exists( $cached_file_path ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );

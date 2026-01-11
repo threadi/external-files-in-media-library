@@ -362,13 +362,13 @@ class Protocol_Base {
 			return;
 		}
 
-		// bail if file does not exist.
-		if ( ! file_exists( $file ) ) {
-			return;
-		}
-
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// bail if file does not exist.
+		if ( ! $wp_filesystem->exists( $file ) ) {
+			return;
+		}
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );

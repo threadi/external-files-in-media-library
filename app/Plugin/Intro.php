@@ -178,8 +178,11 @@ class Intro {
 		$path = Helper::get_plugin_path() . 'node_modules/intro.js/minified/';
 		$url  = Helper::get_plugin_url() . 'node_modules/intro.js/minified/';
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if path does not exist.
-		if ( ! file_exists( $path ) ) {
+		if ( ! $wp_filesystem->exists( $path ) ) {
 			return;
 		}
 
