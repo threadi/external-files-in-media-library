@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Export Media Library".
+ * File to handle support for the plugin "Export Media Library".
  *
  * @source https://wordpress.org/plugins/export-media-library/
  *
@@ -78,7 +78,7 @@ class Massedge extends ThirdParty_Base implements ThirdParty {
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $params['attachment_id'] );
 
-		// check if the file is an external file, could be proxied and if it is really external hosted.
+		// check if the file is an external file, could be proxied and if it is external hosted.
 		if (
 			$external_file_obj->is_valid()
 			&& false === $external_file_obj->is_locally_saved()

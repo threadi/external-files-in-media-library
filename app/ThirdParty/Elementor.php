@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Elementor".
+ * File to handle support for the plugin "Elementor".
  *
  * @package external-files-in-media-library
  */
@@ -63,7 +63,7 @@ class Elementor extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Switch from local hostet video to YouTube video in output in frontend.
+	 * Switch from local hostet video to YouTube video in output in the frontend.
 	 *
 	 * @param Element_Base $element The basic Elementor widget object.
 	 *

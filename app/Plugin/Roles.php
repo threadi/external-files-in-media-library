@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the object which handles the capabilities for this plugin on the roles.
+ * This file contains the object, which handles the capabilities for this plugin on the roles.
  *
  * @package external-files-in-media-library
  */
@@ -14,14 +14,12 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use WP_Role;
 use WP_User;
 
 /**
- * Object which handles the capabilities for this plugin on the roles.
+ * Object, which handles the capabilities for this plugin on the roles.
  */
 class Roles {
 	/**
@@ -112,7 +110,7 @@ class Roles {
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to add external files.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles, which should be allowed to add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -128,7 +126,7 @@ class Roles {
 		if ( 0 === count( $users_for_setting ) ) {
 			$field = new TextInfo();
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'There are currently no users that could be configured here.', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'No users can be configured here at this moment.', 'external-files-in-media-library' ) );
 		} else {
 			$field = new MultiSelect();
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
@@ -150,7 +148,7 @@ class Roles {
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Use custom settings', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to use custom settings for the import of external URLs. Users with these role can edit their settings on their own profile page in WordPress backend.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles, which should be allowed to use custom settings for the import of external URLs. Users with these role can edit their settings on their own profile page in WordPress backend.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -163,7 +161,7 @@ class Roles {
 		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Import files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles, which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -176,7 +174,7 @@ class Roles {
 		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Export files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles which should be allowed to configure and use export of files to external sources. This does not influence the automatic export of files to external sources through them.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select roles, which should be allowed to configure and use export of files to external sources. This does not influence the automatic export of files to external sources through them.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -281,7 +279,7 @@ class Roles {
 	 * First remove the capability from all roles.
 	 * Then set the capability on the list of given roles.
 	 *
-	 * @param array<string|int,mixed> $user_roles List of roles which will get our capability.
+	 * @param array<string|int,mixed> $user_roles List of roles, which will get our capability.
 	 * @param string                  $cap The capability to set.
 	 *
 	 * @return void
@@ -382,7 +380,7 @@ class Roles {
 		$users = array();
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'eml_settings' === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
 			foreach ( get_users() as $user ) {
-				// bail if user is not a WP_User object.
+				// bail if user is not a "WP_User" object.
 				if ( ! $user instanceof WP_User ) {
 					continue;
 				}
@@ -415,7 +413,7 @@ class Roles {
 			return $allcaps;
 		}
 
-		// get user which should not have access to external files.
+		// get user, which should not have access to external files.
 		$forbidden_users = get_option( 'eml_user_forbidden' );
 		if ( ! is_array( $forbidden_users ) ) {
 			$forbidden_users = array();
@@ -460,6 +458,6 @@ class Roles {
 	 * @return void
 	 */
 	public function show_service_permission_hint(): void {
-		echo esc_html__( 'Select roles which should be allowed to use these services.', 'external-files-in-media-library' );
+		echo esc_html__( 'Select roles, which should be allowed to use these services.', 'external-files-in-media-library' );
 	}
 }

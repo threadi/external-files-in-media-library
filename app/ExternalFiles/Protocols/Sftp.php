@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the SSH/SFTP support.
+ * File, which handles the SSH/SFTP support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -106,7 +106,7 @@ class Sftp extends Protocol_Base {
 			return array();
 		}
 
-		// bail if path does not exist in array.
+		// bail if path does not exist in an array.
 		if ( ! isset( $parse_url['path'] ) ) {
 			return array();
 		}
@@ -124,7 +124,7 @@ class Sftp extends Protocol_Base {
 
 		// if SFTP-path is a directory, import all files from there.
 		if ( $ssh_connection->is_dir( $path ) ) {
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_sftp_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_sftp_directory_import_start' );
 
 			/**
@@ -144,7 +144,7 @@ class Sftp extends Protocol_Base {
 				return array();
 			}
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_sftp_directory_import_files', array( $this->get_url(), $file_list ), '5.0.0', 'efml_sftp_directory_import_files' );
 
 			/**
@@ -180,7 +180,7 @@ class Sftp extends Protocol_Base {
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_sftp_directory_import_file_check', array( $file_url ), '5.0.0', 'efml_sftp_directory_import_file_check' );
 
 				/**
@@ -206,7 +206,7 @@ class Sftp extends Protocol_Base {
 				// add the URL to the results.
 				$results['url'] = $file_url;
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_sftp_directory_import_file_before_to_list', array( $file_url, $file_list ), '5.0.0', 'efml_sftp_directory_import_file_before_to_list' );
 
 				/**
@@ -219,14 +219,14 @@ class Sftp extends Protocol_Base {
 				 */
 				do_action( 'efml_sftp_directory_import_file_before_to_list', $file_url, $file_list );
 
-				// add file to the list.
+				// add the file to the list.
 				$files[] = $results;
 			}
 
 			// finish progress.
 			$progress ? $progress->finish() : '';
 		} else {
-			// add file to the list.
+			// add the file to the list.
 			$results = $this->get_url_info( $path );
 
 			// bail if results are empty.
@@ -234,13 +234,13 @@ class Sftp extends Protocol_Base {
 				return array();
 			}
 
-			// add file to the list.
+			// add the file to the list.
 			$files[] = $results;
 		}
 
 		$instance = $this;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
 
 		/**
@@ -347,7 +347,7 @@ class Sftp extends Protocol_Base {
 
 		$response_headers = array();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
 
 		/**
@@ -412,7 +412,7 @@ class Sftp extends Protocol_Base {
 			return false;
 		}
 
-		// check if connection is already in cache.
+		// check if connection is already in the cache.
 		if ( ! empty( $this->ssh_connections[ md5( $connection_arguments_json ) ] ) ) {
 			return $this->ssh_connections[ md5( $connection_arguments_json ) ];
 		}
@@ -437,7 +437,7 @@ class Sftp extends Protocol_Base {
 	/**
 	 * Return whether the file using this protocol is available.
 	 *
-	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */

@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Media Library Organizer".
+ * File to handle support for the plugin "Media Library Organizer".
  *
  * @package external-files-in-media-library
  */
@@ -185,7 +185,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$categories = isset( $_POST['fields']['mlo_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['mlo_categories'] ) ) : array();
 
-		// if folderly_categories is empty, just remove the setting.
+		// if the category is empty, just remove the setting.
 		if ( empty( $categories ) ) {
 			delete_term_meta( $term_id, 'mlo_categories' );
 			return;
@@ -214,7 +214,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move the external file to a configured category after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -241,7 +241,7 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -263,14 +263,14 @@ class MediaLibraryOrganizer extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Add option to import in categories.
+	 * Add option to assign imported file in categories.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to these categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		return $dialog;
 	}
 }

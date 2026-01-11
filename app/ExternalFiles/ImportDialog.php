@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle the dialog which starts an import.
+ * File to handle the dialog, which starts an import.
  *
  * @package external-files-in-media-library
  */
@@ -14,7 +14,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_User;
 
 /**
- * Object to handle the dialog which starts an import.
+ * Object to handle the dialog, which starts an import.
  */
 class ImportDialog {
 	/**
@@ -55,7 +55,7 @@ class ImportDialog {
 	 * @return void
 	 */
 	public function init(): void {
-		// main handler for the dialog which is loaded via AJAX.
+		// the main handler for the dialog.
 		add_action( 'wp_ajax_efml_get_import_dialog', array( $this, 'get_import_dialog' ) );
 
 		// use our own hooks to extend or change the dialog.
@@ -95,7 +95,7 @@ class ImportDialog {
 			$settings = map_deep( wp_unslash( $_POST['settings'] ), 'wp_kses_post' );
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$settings = apply_filters_deprecated( 'eml_dialog_settings', array( $settings ), '5.0.0', 'efml_dialog_settings' );
 
 		/**
@@ -107,7 +107,7 @@ class ImportDialog {
 		 */
 		$settings = apply_filters( 'efml_dialog_settings', $settings );
 
-		// check number of files.
+		// check the amount files.
 		$url_count = 1;
 		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
@@ -115,7 +115,7 @@ class ImportDialog {
 			$url_count = 2;
 		}
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'efml efml-import-dialog',
@@ -142,7 +142,7 @@ class ImportDialog {
 			),
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$dialog = apply_filters_deprecated( 'eml_add_dialog', array( $dialog, $settings ), '5.0.0', 'efml_add_dialog' );
 
 		/**
@@ -159,7 +159,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add textarea field in dialog where user can enter multiple URLs.
+	 * Add textarea field in the dialog where user can enter multiple URLs.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -180,7 +180,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add hidden field to URLs from settings.
+	 * Add a hidden field to URLs from settings.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -201,7 +201,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add credentials field in dialog where user can enter credentials for the given URLs.
+	 * Add credentials field in the dialog where user can enter credentials for the given URLs.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -222,7 +222,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add settings link in dialog, if user has the capability for it.
+	 * Add settings link in the dialog, if user has the capability for it.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -252,7 +252,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Prevent usage of dialog. We send a minimal dialog which triggers the automatic import process.
+	 * Prevent usage of dialog. We send a minimal dialog, which triggers the automatic import process.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -277,7 +277,7 @@ class ImportDialog {
 			$texts[] = $text;
 		}
 
-		// create minimal dialog which should trigger the automatic import process.
+		// create the minimal dialog, which should trigger the automatic import process.
 		return array(
 			'id'        => 'efml-import-dialog',
 			'className' => 'efml efml-import-dialog efml-import-dialog-process-now',
@@ -288,7 +288,7 @@ class ImportDialog {
 	}
 
 	/**
-	 * Add hidden field in dialog for term.
+	 * Add hidden field in dialog for the term.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -322,7 +322,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
-		// add marker to use credentials.
+		// add the marker to use credentials.
 		$dialog['texts'][] = '<input type="hidden" name="use_credentials" value="1">';
 
 		// add the fields.
@@ -438,13 +438,13 @@ class ImportDialog {
 					$value = isset( $_POST[ $full_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $full_name ] ) ) : '';
 			}
 
-			// save it in DB.
+			// save it in the database.
 			update_user_meta( $user_id, 'efml_' . $name, $value );
 		}
 	}
 
 	/**
-	 * Add checkbox where user can set to hide this dialog for any further requests.
+	 * Add a checkbox where user can set to hide this dialog for any further requests.
 	 *
 	 * @param array<string,mixed> $dialog The dialog.
 	 * @param array<string,mixed> $settings The requested settings.
@@ -596,7 +596,7 @@ class ImportDialog {
 			return $dialog;
 		}
 
-		// add the log button on dialog.
+		// add the log button on the dialog.
 		$dialog['detail']['buttons'][] = array(
 			'action'  => 'location.href="' . Helper::get_log_url() . '";',
 			'variant' => 'secondary',
@@ -673,7 +673,7 @@ class ImportDialog {
 		 */
 		$settings = apply_filters( 'efml_dialog_settings', $settings );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$dialog = apply_filters_deprecated( 'eml_add_dialog', array( $dialog, $settings ), '5.0.0', 'efml_add_dialog' );
 
 		/**

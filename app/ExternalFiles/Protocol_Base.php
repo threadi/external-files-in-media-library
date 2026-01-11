@@ -1,6 +1,6 @@
 <?php
 /**
- * File which provide the base functions for each protocol we support.
+ * File, which provide the base functions for each protocol we support.
  *
  * @package external-files-in-media-library
  */
@@ -93,14 +93,14 @@ class Protocol_Base {
 
 		$instance = $this;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$tcp_protocols = apply_filters_deprecated( 'eml_tcp_protocols', array( $tcp_protocols, $instance ), '5.0.0', 'efml_tcp_protocols' );
 
 		/**
 		 * Filter the protocols.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array<string,int> $tcp_protocols List of protocols of this object (e.g. 'http' or 'ftp').
+		 * @param array<string,int> $tcp_protocols List of protocols of this object (e.g., 'http' or 'ftp').
 		 * @param Protocol_Base $instance The actual object.
 		 */
 		return apply_filters( 'efml_tcp_protocols', $tcp_protocols, $instance );
@@ -132,9 +132,9 @@ class Protocol_Base {
 	}
 
 	/**
-	 * Check if URL is compatible with the given protocol by compare the protocol handler
+	 * Check if URL is compatible with the given protocol by comparing the protocol handler
 	 * and the start of the given URL with the supported protocols of this protocol handler
-	 * (e.g. 'http' or 'ftp').
+	 * (e.g., 'http' or 'ftp').
 	 *
 	 * @return bool
 	 */
@@ -245,7 +245,7 @@ class Protocol_Base {
 	 * @return bool True if duplicate has been found.
 	 */
 	public function check_for_duplicate( string $url ): bool {
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$false = apply_filters_deprecated( 'eml_duplicate_check', array( false, $url ), '5.0.0', 'efml_duplicate_check' );
 
 		/**
@@ -259,7 +259,7 @@ class Protocol_Base {
 			return false;
 		}
 
-		// query for file with same URL.
+		// query for the file with same URL.
 		$query   = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
@@ -291,7 +291,7 @@ class Protocol_Base {
 	/**
 	 * Return whether this URL could change its hosting.
 	 *
-	 * It is not possible if the file has credentials set.
+	 * It is impossible if the file has credentials set.
 	 *
 	 * @return bool
 	 */
@@ -302,7 +302,7 @@ class Protocol_Base {
 	/**
 	 * Return whether the file using this protocol is available.
 	 *
-	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */
@@ -362,13 +362,13 @@ class Protocol_Base {
 			return;
 		}
 
-		// bail if file does not exist.
-		if ( ! file_exists( $file ) ) {
-			return;
-		}
-
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// bail if file does not exist.
+		if ( ! $wp_filesystem->exists( $file ) ) {
+			return;
+		}
 
 		// delete the temporary file.
 		$wp_filesystem->delete( $file );
@@ -414,7 +414,7 @@ class Protocol_Base {
 	protected function is_content_type_for_multiple_files( string $mime_type, string $url ): bool {
 		$false = 'text/html' === $mime_type;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$false = apply_filters_deprecated( 'eml_mime_type_for_multiple_files', array( $false, $mime_type, $url ), '5.0.0', 'efml_mime_type_for_multiple_files' );
 
 		/**

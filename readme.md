@@ -25,18 +25,18 @@ After checkout go through the following steps:
 
 ## Release
 
-### from local environment with ant
+### From local environment with ant
 
 1. increase the version number in _build/build.properties_.
 2. execute the following command in _build/_: `ant build`
-3. after that you will find a zip file in the release directory which could be used in WordPress to install it.
+3. after that you will find a zip file in the release directory, which could be used in WordPress to install it.
 
-### from local environment with Taskfile
+### From local environment with Taskfile
 
-1. execute the following command in main directory: `task release -- 5.0.0` - adjust the version number.
-2. after that you will find a zip file in the release directory which could be used in WordPress to install it.
+1. execute the following command in the main directory: `task release -- 5.0.0` - adjust the version number.
+2. after that you will find a zip file in the release directory, which could be used in WordPress to install it.
 
-### on GitHub
+### On GitHub
 
 1. Create a new tag with the new version number.
 2. The release zip will be created by GitHub action.
@@ -47,7 +47,7 @@ I recommend to use [PoEdit](https://poedit.net/) to translate texts for this plu
 
 ### generate pot-file
 
-Run in main directory:
+Run in the main directory:
 
 `wp i18n make-pot . languages/external-files-in-media-library.pot --exclude=svn/`
 
@@ -97,7 +97,7 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 
 `vendor/bin/phpstan analyse`
 
-## Check with plugin "Plugin Check"
+## Check with the plugin "Plugin Check"
 
 `wp plugin check --error-severity=7 --warning-severity=6 --include-low-severity-errors --categories=plugin_repo --format=json --slug=external-files-in-media-library .`
 

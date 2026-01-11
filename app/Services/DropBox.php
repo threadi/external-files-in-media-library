@@ -174,7 +174,7 @@ class DropBox extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_dropbox_main' );
 
 		// bail if tab does not exist.
@@ -190,7 +190,7 @@ class DropBox extends Service_Base implements Service {
 		$setting->prevent_export( true );
 		$setting->set_save_callback( array( $this, 'preserve_tokens_value' ) );
 
-		// add setting for button to connect.
+		// add setting for a button to connect.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_dropbox_connector' );
 			$setting->set_section( $section );
@@ -202,7 +202,7 @@ class DropBox extends Service_Base implements Service {
 
 			// show connect button if no token is set.
 			if ( empty( $access_token ) ) {
-				// create dialog.
+				// create the dialog.
 				$dialog = $this->get_connect_dialog();
 
 				$field = new Button();
@@ -210,7 +210,7 @@ class DropBox extends Service_Base implements Service {
 				$field->set_button_title( __( 'Connect now', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_help() );
 			} else {
-				// create dialog.
+				// create the dialog.
 				$dialog = $this->get_disconnect_dialog();
 
 				$field = new Button();
@@ -242,7 +242,7 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
-		// bail if directory is set on object.
+		// bail if directory is set on the object.
 		if ( ! empty( $this->directory ) ) {
 			return $this->directory;
 		}
@@ -372,7 +372,7 @@ class DropBox extends Service_Base implements Service {
 
 		// bail if token is empty.
 		if ( empty( $access_token ) ) {
-			// create dialog.
+			// create the dialog.
 			$dialog = array(
 				'className' => 'efml',
 				'title'     => __( 'Error', 'external-files-in-media-library' ),
@@ -396,7 +396,7 @@ class DropBox extends Service_Base implements Service {
 		// add the token.
 		$this->set_access_token( $access_token );
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'DropBox access token saved', 'external-files-in-media-library' ),
@@ -454,7 +454,7 @@ class DropBox extends Service_Base implements Service {
 	 * Set the access token depending on actual setting.
 	 *
 	 * @param string $access_token The access token.
-	 * @param int    $user_id The user id (optional).
+	 * @param int    $user_id The user ID (optional).
 	 *
 	 * @return void
 	 */
@@ -470,7 +470,7 @@ class DropBox extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( $this->is_mode( 'user' ) ) {
-			// get the user_id from session if it is not set.
+			// get the user_id from the session if it is not set.
 			if ( 0 === $user_id ) {
 				// get the user.
 				$user = $this->get_user();
@@ -532,7 +532,7 @@ class DropBox extends Service_Base implements Service {
 
 		// remove the token.
 		if ( ! $this->delete_access_token() ) {
-			// create dialog.
+			// create the dialog.
 			$dialog = array(
 				'className' => 'efml',
 				'title'     => __( 'Error', 'external-files-in-media-library' ),
@@ -553,7 +553,7 @@ class DropBox extends Service_Base implements Service {
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'DropBox access token removed', 'external-files-in-media-library' ),
@@ -574,7 +574,7 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
-	 * Create the help to create app and get access token.
+	 * Create the help to create an app and get access token.
 	 *
 	 * @return string
 	 */
@@ -700,7 +700,7 @@ class DropBox extends Service_Base implements Service {
 				// get parts of the path.
 				$parts = explode( '/', $dropbox_entry['path_lower'] );
 
-				// get content type of this file.
+				// get the content-type of this file.
 				$mime_type = wp_check_filetype( $dropbox_entry['path_lower'] );
 
 				// bail if file is not allowed.
@@ -708,7 +708,7 @@ class DropBox extends Service_Base implements Service {
 					continue;
 				}
 
-				// get binary stream of the file for preview.
+				// get the binary stream of the file for the preview.
 				$thumbnail = '';
 				if ( str_contains( $mime_type['type'], 'image/' ) && Init::get_instance()->is_preview_enabled() ) {
 					try {
@@ -730,7 +730,7 @@ class DropBox extends Service_Base implements Service {
 									// save the thumb.
 									$results = $editor->save( $upload_dir . '/' . basename( $dropbox_entry['path_lower'] ) );
 
-									// add thumb to output if it does not result in an error.
+									// add the thumb to output if it does not result in an error.
 									if ( ! is_wp_error( $results ) ) {
 										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 									}
@@ -998,7 +998,7 @@ class DropBox extends Service_Base implements Service {
 			'texts'     => array(
 				'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
-				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value="" placeholder="' . __( 'Enter your access token', 'external-files-in-media-library' ) . '"> ' . sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</div>',
+				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value="" placeholder="' . __( 'Enter your access token', 'external-files-in-media-library' ) . '"> ' . sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</div>',
 			),
 			'buttons'   => array(
 				array(
@@ -1131,7 +1131,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		/* translators: %1$s will be replaced by a URL. */
-		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() );
+		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() );
 	}
 
 	/**
@@ -1152,7 +1152,7 @@ class DropBox extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( $this->is_mode( 'user' ) ) {
-			// get the user set on object.
+			// get the user set on the object.
 			$user = $this->get_user();
 
 			// bail if user is not available.
@@ -1171,7 +1171,7 @@ class DropBox extends Service_Base implements Service {
 	/**
 	 * Do not check for content type if a Dropbox-URL is given.
 	 *
-	 * Reason: a bug in Dropbox API regarding header requests which results in "application/json" instead the correct
+	 * Reason: a bug in Dropbox API regarding header requests, which results in "application/json" instead the correct
 	 * content type.
 	 *
 	 * @param bool   $results The result.

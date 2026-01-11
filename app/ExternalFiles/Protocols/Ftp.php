@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the FTP-/FTPS-support.
+ * File, which handles the FTP-/FTPS-support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -57,7 +57,7 @@ class Ftp extends Protocol_Base {
 	 * @param string $url The URL to use.
 	 */
 	public function __construct( string $url ) {
-		// typically this is not defined, so we set it up just in case.
+		// typically this is not defined, so we set it up if.
 		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
 			define( 'FS_CONNECT_TIMEOUT', get_option( 'eml_timeout' ) );
 		}
@@ -90,7 +90,7 @@ class Ftp extends Protocol_Base {
 	 * Check the given URL regarding its string.
 	 *
 	 * Return true if URL is ok.
-	 * Return false if URL is not ok
+	 * Return false if URL is not ok.
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -181,7 +181,7 @@ class Ftp extends Protocol_Base {
 		if ( $ftp_connection->is_dir( $path ) ) {
 			$url = $this->get_url();
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_ftp_directory_import_start', array( $url ), '5.0.0', 'efml_ftp_directory_import_start' );
 
 			/**
@@ -203,7 +203,7 @@ class Ftp extends Protocol_Base {
 				return array();
 			}
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_ftp_directory_import_files', array( $url, $file_list ), '5.0.0', 'efml_ftp_directory_import_files' );
 
 			/**
@@ -222,7 +222,7 @@ class Ftp extends Protocol_Base {
 
 			// loop through the matches.
 			foreach ( $file_list as $filename => $settings ) {
-				// get the file path on FTP.
+				// get the file path on the FTP.
 				$file_path = $scheme . '://' . $host . trailingslashit( $path ) . $filename;
 
 				// get URL.
@@ -235,11 +235,11 @@ class Ftp extends Protocol_Base {
 					// show progress.
 					$progress ? $progress->tick() : '';
 
-					// bail on duplicate file.
+					// bail on a duplicate file.
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_ftp_directory_import_file_check', array( $file_url ), '5.0.0', 'efml_ftp_directory_import_file_check' );
 
 				/**
@@ -265,7 +265,7 @@ class Ftp extends Protocol_Base {
 				// add the URL to the results.
 				$results['url'] = $file_url;
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_ftp_directory_import_file_before_to_list', array( $file_url, $file_list ), '5.0.0', 'efml_ftp_directory_import_file_before_to_list' );
 
 				/**
@@ -278,7 +278,7 @@ class Ftp extends Protocol_Base {
 				 */
 				do_action( 'efml_ftp_directory_import_file_before_to_list', $file_url, $file_list );
 
-				// add file to the list.
+				// add the file to the list.
 				$files[] = $results;
 			}
 
@@ -291,7 +291,7 @@ class Ftp extends Protocol_Base {
 				return array();
 			}
 
-			// add file to the list.
+			// add the file to the list.
 			$results = $this->get_url_info( $this->get_url() );
 
 			// bail if results are empty.
@@ -302,13 +302,13 @@ class Ftp extends Protocol_Base {
 			// add the URL to the results.
 			$results['url'] = $this->get_url();
 
-			// add file to the list.
+			// add the file to the list.
 			$files[] = $results;
 		}
 
 		$instance = $this;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
 
 		/**
@@ -385,7 +385,7 @@ class Ftp extends Protocol_Base {
 
 		$response_headers = array();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $file_path, $response_headers ), '5.0.0', 'efml_external_file_infos' );
 
 		/**
@@ -401,7 +401,7 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
-	 * Files from FTP should be saved local every time.
+	 * Files from the FTP should be saved local every time.
 	 *
 	 * @return bool
 	 */
@@ -483,7 +483,7 @@ class Ftp extends Protocol_Base {
 			$connection_arguments_json = '';
 		}
 
-		// check if connection is already in cache.
+		// check if connection is already in the cache.
 		if ( ! empty( $this->ftp_connections[ md5( $connection_arguments_json ) ] ) ) {
 			return $this->ftp_connections[ md5( $connection_arguments_json ) ];
 		}
@@ -508,7 +508,7 @@ class Ftp extends Protocol_Base {
 	/**
 	 * Return whether the file using this protocol is available.
 	 *
-	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */
@@ -539,7 +539,7 @@ class Ftp extends Protocol_Base {
 			return false;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
 
 		/**

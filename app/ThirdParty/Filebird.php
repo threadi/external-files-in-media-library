@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Filebird Lite".
+ * File to handle support for the plugin "Filebird Lite".
  *
  * @package external-files-in-media-library
  */
@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use FileBird\Model\Folder;
@@ -193,7 +192,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured folder after sync.
+	 * Move the external file to a configured folder after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -223,7 +222,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured folder after import.
+	 * Save the external file to a configured folder after import.
 	 *
 	 * @param File $external_file_obj The used URL as external file object.
 	 *

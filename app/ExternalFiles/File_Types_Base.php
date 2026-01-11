@@ -1,6 +1,6 @@
 <?php
 /**
- * File which provide the base functions for each file type we support.
+ * File, which provide the base functions for each file type we support.
  *
  * @package external-files-in-media-library
  */
@@ -36,7 +36,7 @@ class File_Types_Base {
 	private array $size = array();
 
 	/**
-	 * The external file object which is handled here.
+	 * The external file object.
 	 *
 	 * @var File|false
 	 */
@@ -66,7 +66,7 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	public function is_file_compatible(): bool {
-		// bail if list of possible mime types in object is empty.
+		// bail if list of possible mime types in the object is empty.
 		if ( empty( $this->get_mime_types() ) ) {
 			return false;
 		}
@@ -86,7 +86,7 @@ class File_Types_Base {
 		// check the mime types.
 		$result = in_array( $mime_type, $this->get_mime_types(), true );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$result = apply_filters_deprecated( 'eml_file_type_compatibility_result', array( $result, $external_file_obj, $mime_type ), '5.0.0', 'efml_file_type_compatibility_result' );
 
 		/**
@@ -126,7 +126,7 @@ class File_Types_Base {
 		$mime_type         = $this->mime_types;
 		$external_file_obj = $this->get_file();
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$mime_type = apply_filters_deprecated( 'eml_file_type_supported_mime_types', array( $mime_type, $external_file_obj ), '5.0.0', 'efml_file_type_supported_mime_types' );
 
 		/**
@@ -248,7 +248,7 @@ class File_Types_Base {
 	}
 
 	/**
-	 * Set the mime type of the file.
+	 * Set the mime-type of the file.
 	 *
 	 * @param string $mime_type The given mime type.
 	 *

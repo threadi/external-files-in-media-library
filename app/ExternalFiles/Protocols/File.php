@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the file-protocol support.
+ * File, which handles the file-protocol support.
  *
  * Hint:
  * Files loaded with this protocol MUST be saved local to use them via http.
@@ -63,7 +63,7 @@ class File extends Protocol_Base {
 		// initialize list of files.
 		$files = array();
 
-		// get actual object for hooks.
+		// get the actual object for hooks.
 		$instance = $this;
 
 		/**
@@ -90,7 +90,7 @@ class File extends Protocol_Base {
 
 		// check if given URL is a directory.
 		if ( $wp_filesystem->is_dir( $url ) ) {
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_file_directory_import_start', array( $url ), '5.0.0', 'efml_file_directory_import_start' );
 
 			/**
@@ -165,7 +165,7 @@ class File extends Protocol_Base {
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_file_directory_import_file_check', array( $file_path ), '5.0.0', 'efml_file_directory_import_file_check' );
 
 				/**
@@ -189,7 +189,7 @@ class File extends Protocol_Base {
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_file_directory_import_file_before_to_list', array( $file_path, $file_list ), '5.0.0', 'efml_file_directory_import_file_before_to_list' );
 
 				/**
@@ -202,7 +202,7 @@ class File extends Protocol_Base {
 				 */
 				do_action( 'efml_file_directory_import_file_before_to_list', $file_path, $file_list );
 
-				// add file to the list.
+				// add the file to the list.
 				$files[] = $results;
 			}
 
@@ -223,11 +223,11 @@ class File extends Protocol_Base {
 				return array();
 			}
 
-			// add file to the list.
+			// add the file to the list.
 			$files[] = $results;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
 
 		/**
@@ -263,8 +263,11 @@ class File extends Protocol_Base {
 			'last-modified' => '',
 		);
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_file_check_existence', array( true, $file_path ), '5.0.0', 'efml_file_check_existence' );
+
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
 		/**
 		 * Filter the check if local file exist.
@@ -273,14 +276,11 @@ class File extends Protocol_Base {
 		 * @param bool $true True if filter should be used.
 		 * @param string $file_path The absolute file path.
 		 */
-		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! file_exists( $file_path ) ) {
+		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! $wp_filesystem->exists( $file_path ) ) {
 			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->sanitize_local_path( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
-			// return empty array as we can not get infos about a file which does not exist.
+			// return empty array as we cannot get infos about a file, which does not exist.
 			return array();
 		}
-
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// get the mime types.
 		$mime_type            = wp_check_filetype( $results['title'] );
@@ -326,7 +326,7 @@ class File extends Protocol_Base {
 
 		$response_headers = array();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $file_path, $response_headers ), '5.0.0', 'efml_external_file_infos' );
 
 		/**
@@ -344,7 +344,7 @@ class File extends Protocol_Base {
 	/**
 	 * Return whether the file using this protocol is available.
 	 *
-	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */
@@ -402,7 +402,7 @@ class File extends Protocol_Base {
 			return false;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
 
 		/**

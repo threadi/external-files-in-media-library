@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handle the support for different protocols (like HTTP, FTP ...).
+ * File, which handle the support for different protocols (like HTTP, FTP ...).
  *
  * @package external-files-in-media-library
  */
@@ -62,7 +62,7 @@ class Protocols {
 			'ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Sftp',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_protocols', array( $list ), '5.0.0', 'efml_protocols' );
 
 		/**
@@ -92,7 +92,7 @@ class Protocols {
 		// define variable for result.
 		$result = false;
 
-		// loop through the supported protocols and check which one is supporting the given URL.
+		// loop through the supported protocols and check, which one is supporting the given URL.
 		foreach ( $this->get_protocols() as $protocol_name ) {
 			// bail if result is already set.
 			if ( $result ) {
@@ -106,20 +106,20 @@ class Protocols {
 				continue;
 			}
 
-			// create object with given URL.
+			// create an object with given URL.
 			$obj = new $protocol_name( $url );
 
-			// bail if protocol is not a Protocol_Base object.
+			// bail if protocol is not a "Protocol_Base" object.
 			if ( ! $obj instanceof Protocol_Base ) {
 				/* translators: %1$s will be replaced by a name. */
-				Log::get_instance()->create( sprintf( __( 'Protocol %1$s is not a Protocol_Base object.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'error', 2 );
+				Log::get_instance()->create( sprintf( __( 'Protocol %1$s is not a "Protocol_Base" object.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'error', 2 );
 				continue;
 			}
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
 				/* translators: %1$s will be replaced by a protocol name (like SFTP). */
-				Log::get_instance()->create( sprintf( __( 'The protocol %1$s is not usable in this hosting.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
+				Log::get_instance()->create( sprintf( __( 'The protocol %1$s is unusable in this hosting.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'info', 2 );
 				continue;
 			}
 
@@ -165,10 +165,10 @@ class Protocols {
 				continue;
 			}
 
-			// create object.
+			// create the object.
 			$protocol_obj = new $protocol_name( $external_file->get_url( true ) );
 
-			// bail if object is not a Protocol_Base.
+			// bail if object is not a "Protocol_Base".
 			if ( ! $protocol_obj instanceof Protocol_Base ) {
 				continue;
 			}

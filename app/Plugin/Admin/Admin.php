@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains an object which handles the admin tasks of this plugin.
+ * This file contains an object, which handles the admin tasks of this plugin.
  *
  * @package external-files-in-media-library
  */
@@ -102,7 +102,7 @@ class Admin {
 		add_action( 'efml_directory_listing_added', array( $this, 'mark_directory_listing_as_used' ) );
 		add_action( 'delete_' . Taxonomy::get_instance()->get_name(), array( $this, 'check_if_directory_listing_is_used' ) );
 
-		// register our own importer in backend.
+		// register our own importer in the backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );
 		add_action( 'load-importer-efml-importer', array( $this, 'forward_importer_to_settings' ) );
 	}
@@ -137,8 +137,11 @@ class Admin {
 		$path = trailingslashit( plugin_dir_path( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 		$url  = trailingslashit( plugin_dir_url( EFML_PLUGIN ) ) . 'vendor/threadi/easy-dialog-for-wordpress/';
 
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if path does not exist.
-		if ( ! file_exists( $path ) ) {
+		if ( ! $wp_filesystem->exists( $path ) ) {
 			return;
 		}
 
@@ -146,7 +149,7 @@ class Admin {
 		$script_asset_path = $path . 'build/index.asset.php';
 
 		// bail if file does not exist.
-		if ( ! file_exists( $script_asset_path ) ) {
+		if ( ! $wp_filesystem->exists( $script_asset_path ) ) {
 			return;
 		}
 
@@ -196,22 +199,22 @@ class Admin {
 		$transient_obj->set_type( 'error' );
 		$transient_obj->set_name( 'eml_php_hint' );
 		$transient_obj->set_dismissible_days( 90 );
-		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">will be outdated</a> after December 2025. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
+		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">have been outdated</a> since December 2025. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
 		$transient_obj->save();
 	}
 
 	/**
-	 * Add link to settings and adding files in plugin list.
+	 * Add a link to settings and adding files in plugin list.
 	 *
 	 * @param array<string> $links List of links.
 	 *
 	 * @return array<string>
 	 */
 	public function add_setting_link( array $links ): array {
-		// add link to settings.
+		// add the link to settings.
 		$links[] = "<a href='" . esc_url( Helper::get_config_url() ) . "'>" . __( 'Settings', 'external-files-in-media-library' ) . '</a>';
 
-		// add link to add media.
+		// add the link to add media.
 		$links[] = "<a href='" . esc_url( Helper::get_add_media_url() ) . "' style='font-weight: bold'>" . __( 'Add external files', 'external-files-in-media-library' ) . '</a>';
 
 		// return resulting list of links.
@@ -238,7 +241,7 @@ class Admin {
 			'review'  => '<a href="' . esc_url( Helper::get_plugin_review_url() ) . '" target="_blank" title="' . esc_attr__( 'Add your review', 'external-files-in-media-library' ) . '" class="efml-review"><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span><span class="dashicons dashicons-star-filled"></span></a>',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$row_meta = apply_filters_deprecated( 'eml_plugin_row_meta', array( $row_meta ), '5.0.0', 'efml_plugin_row_meta' );
 
 		/**
@@ -309,7 +312,7 @@ class Admin {
 	}
 
 	/**
-	 * Check if website is using a language which _might_ be underlying the GPRD in germany.
+	 * Check if website is using a language, which _might_ be underlying the GPRD in germany.
 	 *
 	 * Show a warning hint if it is the case.
 	 *
@@ -343,19 +346,19 @@ class Admin {
 		$transient_obj->set_name( 'eml_gprd_hint' );
 		$transient_obj->set_dismissible_days( 180 );
 		/* translators: %1$s will be replaced by a URL. */
-		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'The above-mentioned detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
+		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens in a new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'This detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
 		$transient_obj->save();
 	}
 
 	/**
 	 * Check if constant "FS_METHOD" is set and if yes, it its configuration is complete.
 	 *
-	 * E.g. for the value ftpext we need also the constant "FS_CHMOD_FILE" to prevent errors.
+	 * E.g., for the value ftpext we need also the constant "FS_CHMOD_FILE" to prevent errors.
 	 *
 	 * @return void
 	 */
 	public function check_fs_method(): void {
-		// bail if FS_METHOD is not set.
+		// bail if "FS_METHOD" is not set.
 		if ( ! defined( 'FS_METHOD' ) ) {
 			return;
 		}
@@ -385,7 +388,7 @@ class Admin {
 	}
 
 	/**
-	 * Add custom importer for positions under Tools > Import.
+	 * Add a custom importer for files under Tools > Import.
 	 *
 	 * @return void
 	 */
@@ -549,7 +552,7 @@ class Admin {
 	}
 
 	/**
-	 * Add CSS- and JS-files for plugin listing in backend.
+	 * Add CSS- and JS-files for plugin listing in the backend.
 	 *
 	 * @return void
 	 */

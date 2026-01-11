@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "CatFolders".
+ * File to handle support for the plugin "CatFolders".
  *
  * @package external-files-in-media-library
  */
@@ -112,7 +112,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		$catfolder = absint( get_term_meta( $term_id, 'catfolder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="catfolders">' . __( 'Choose folder as target:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $catfolder ) . '</div>';
+		$form .= '<div><label for="catfolders">' . __( 'Choose a folder as target:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $catfolder ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -173,7 +173,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Add action to move files in folder before sync is running.
+	 * Add action to move files in a folder before sync is running.
 	 *
 	 * @param string               $url The used URL.
 	 * @param array<string,string> $term_data The term data.
@@ -191,7 +191,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured folder after sync.
+	 * Move the external file to a configured folder after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -221,7 +221,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured folder after import.
+	 * Save the external file to a configured folder after import.
 	 *
 	 * @param File $external_file_obj The external files object.
 	 *
@@ -260,7 +260,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose a folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
 	}
 }

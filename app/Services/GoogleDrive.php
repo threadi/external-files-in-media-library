@@ -62,6 +62,13 @@ class GoogleDrive extends Service_Base implements Service {
 	protected string $settings_sub_tab = 'eml_googledrive';
 
 	/**
+	 * The default directory.
+	 *
+	 * @var string
+	 */
+	private string $default_directory = 'Google Drive Directory Listing';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?GoogleDrive
@@ -168,7 +175,7 @@ class GoogleDrive extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -176,7 +183,7 @@ class GoogleDrive extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -184,7 +191,7 @@ class GoogleDrive extends Service_Base implements Service {
 			return;
 		}
 
-		// add setting for button to connect.
+		// add setting for a button to connect.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_google_drive_connector' );
 			$setting->set_section( $section );
@@ -196,14 +203,14 @@ class GoogleDrive extends Service_Base implements Service {
 
 			// show connect button if no token is set.
 			if ( empty( $access_token ) ) {
-				// create dialog.
+				// create the dialog.
 				$dialog = $this->get_connect_dialog();
 
 				$field = new Button();
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
 				$field->set_button_title( __( 'Connect now', 'external-files-in-media-library' ) );
 			} else {
-				// create dialog.
+				// create the dialog.
 				$dialog = $this->get_disconnect_dialog();
 
 				$field = new Button();
@@ -302,17 +309,17 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
-		// bail if directory is set on object.
+		// bail if directory is set on the object.
 		if ( ! empty( $this->directory ) ) {
 			return $this->directory;
 		}
 
 		// return the main directory name.
-		return 'Google Drive Directory Listing';
+		return $this->default_directory;
 	}
 
 	/**
-	 * Return access token depending on actual mode.
+	 * Return access token depending on the actual mode.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -324,7 +331,7 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( in_array( $this->get_mode(), array( 'user', 'manually' ), true ) ) {
-			// get the user set on object.
+			// get the user set on the object.
 			$user = $this->get_user();
 
 			// bail if user is not available.
@@ -360,7 +367,7 @@ class GoogleDrive extends Service_Base implements Service {
 	 * Set the access token for the actual WordPress user.
 	 *
 	 * @param array<string,string> $access_token The access token.
-	 * @param int                  $user_id The user id (optional).
+	 * @param int                  $user_id The user ID (optional).
 	 *
 	 * @return void
 	 */
@@ -376,7 +383,7 @@ class GoogleDrive extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( in_array( $this->get_mode(), array( 'user', 'manually' ), true ) ) {
-			// get the user_id from session if it is not set.
+			// get the user_id from the session if it is not set.
 			if ( 0 === $user_id ) {
 				// get the user.
 				$user = $this->get_user();
@@ -456,7 +463,7 @@ class GoogleDrive extends Service_Base implements Service {
 			return $results;
 		}
 
-		// list of Google Drive-URLs which cannot be used for <img>-elements.
+		// list of "Google Drive"-URLs, which cannot be used for <img>-elements.
 		$blacklist = array(
 			'https://drive.google.com/file/',
 		);
@@ -490,7 +497,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// set our client ID.
 		$client_id = EFML_GOOGLE_OAUTH_CLIENT_ID;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$client_id = apply_filters_deprecated( 'eml_google_drive_client_id', array( $client_id ), '5.0.0', 'efml_google_drive_client_id' );
 
 		/**
@@ -511,7 +518,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the token.
 		$real_redirect_uri = get_option( 'siteurl' ) . '/' . $this->get_oauth_slug() . '/';
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$real_redirect_uri = apply_filters_deprecated( 'eml_google_drive_real_redirect_uri', array( $real_redirect_uri ), '5.0.0', 'efml_google_drive_real_redirect_uri' );
 
 		/**
@@ -545,7 +552,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the state.
 		$state = Helper::get_plugin_slug() . ':' . base64_encode( $crypt_method->get_hash() ) . ':' . base64_encode( $this->get_real_redirect_uri() );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$state = apply_filters_deprecated( 'eml_google_drive_state', array( $state ), '5.0.0', 'efml_google_drive_state' );
 
 		/**
@@ -568,7 +575,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the redirect URI.
 		$redirect_uri = EFML_GOOGLE_OAUTH_SERVICE_URL;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$redirect_uri = apply_filters_deprecated( 'eml_google_drive_redirect_uri', array( $redirect_uri ), '5.0.0', 'efml_google_drive_redirect_uri' );
 
 		/**
@@ -602,7 +609,7 @@ class GoogleDrive extends Service_Base implements Service {
 			'prompt'                  => 'select_account consent', // forces consent dialog for each user.
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$params = apply_filters_deprecated( 'eml_google_drive_connector_params', array( $params ), '5.0.0', 'efml_google_drive_connector_params' );
 
 		/**
@@ -660,7 +667,7 @@ class GoogleDrive extends Service_Base implements Service {
 	 * @throws JsonException Could throw exception.
 	 */
 	public function check_for_oauth_return_url( string $template ): string {
-		// bail if slug is not used.
+		// bail if the slug is unused.
 		if ( empty( get_query_var( $this->get_oauth_slug() ) ) ) {
 			return $template;
 		}
@@ -739,7 +746,7 @@ class GoogleDrive extends Service_Base implements Service {
 			'orderBy'  => 'name_natural',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$query = apply_filters_deprecated( 'eml_google_drive_query_params', array( $query, $directory ), '5.0.0', 'efml_google_drive_query_params' );
 
 		/**
@@ -791,7 +798,7 @@ class GoogleDrive extends Service_Base implements Service {
 			'dirs'  => array(),
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$files = apply_filters_deprecated( 'eml_google_drive_files', array( $files ), '5.0.0', 'efml_google_drive_files' );
 
 		/**
@@ -829,7 +836,7 @@ class GoogleDrive extends Service_Base implements Service {
 				'title' => $file_obj->getName(),
 			);
 
-			// get content type of this file.
+			// get content-type of this file.
 			$mime_type = wp_check_filetype( $file_obj->getName() );
 
 			// bail if file type is not allowed.
@@ -851,11 +858,11 @@ class GoogleDrive extends Service_Base implements Service {
 			$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( strtotime( $file_obj->getCreatedTime() ) ) ) );
 			$entry['preview']       = $thumbnail;
 
-			// get directory-data for this file and add file in the given directories.
+			// get directory-data for this file and add the file in the given directories.
 			$parent_dirs = $file_obj->getParents();
 			if ( $parent_dirs ) {
 				// loop through all parent folders, add the directory if it does not exist in the list
-				// and add the file to each of them.
+				// and add the file to each.
 				foreach ( $parent_dirs as $parent_folder_id ) {
 					// add the directory if it does not exist atm in the list.
 					if ( ! isset( $folders[ trailingslashit( $parent_folder_id ) ] ) ) {
@@ -963,7 +970,7 @@ class GoogleDrive extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the URL mark which identifies Google Drive URLs within this plugin.
+	 * Return the URL mark, which identifies Google Drive URLs within this plugin.
 	 *
 	 * @return string
 	 */
@@ -1021,7 +1028,7 @@ class GoogleDrive extends Service_Base implements Service {
 		$q = array();
 
 		// if directory is set, use it.
-		if ( ! empty( $this->directory ) ) {
+		if ( ! empty( $this->directory ) && $this->default_directory !== $this->directory ) {
 			$q[]                                = "'" . str_replace( '/', '', $this->directory ) . "' in parents";
 			$query['includeItemsFromAllDrives'] = true;
 			$query['supportsAllDrives']         = true;
@@ -1095,7 +1102,7 @@ class GoogleDrive extends Service_Base implements Service {
 		// set the refresh URI.
 		$refresh_uri = EFML_GOOGLE_OAUTH_REFRESH_URL;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$refresh_uri = apply_filters_deprecated( 'eml_google_drive_refresh_uri', array( $refresh_uri ), '5.0.0', 'efml_google_drive_refresh_uri' );
 
 		/**
@@ -1320,7 +1327,7 @@ class GoogleDrive extends Service_Base implements Service {
 	/**
 	 * Show option to connect to Google Drive on the user profile.
 	 *
-	 * @param WP_User $user The WP_User object for the actual user.
+	 * @param WP_User $user The "WP_User" object for the actual user.
 	 *
 	 * @return void
 	 */
@@ -1351,7 +1358,7 @@ class GoogleDrive extends Service_Base implements Service {
 			?>
 			<a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="<?php echo esc_attr( Helper::get_json( $this->get_disconnect_dialog() ) ); ?>"><?php echo esc_html__( 'Disconnect', 'external-files-in-media-library' ); ?></a><br><br>
 			<?php
-			/* translators: %1$s will be replaced by a date. */
+			/* translators: %1$s will be replaced by a date and time. */
 			echo wp_kses_post( sprintf( __( 'Created at %1$s', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i', absint( $access_token['created'] ) ) ) ) . '<br><br><a href="' . Directory_Listing::get_instance()->get_view_directory_url( $this ) . '" class="button button-secondary">' . __( 'View and import files', 'external-files-in-media-library' ) . '</a>' );
 		}
 
@@ -1416,7 +1423,7 @@ class GoogleDrive extends Service_Base implements Service {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		return array(
 			'className' => 'efml',
 			'title'     => __( 'Disconnect Google Drive', 'external-files-in-media-library' ),
@@ -1538,9 +1545,9 @@ class GoogleDrive extends Service_Base implements Service {
 				'folder_id'    => array(
 					'name'         => 'folder_id',
 					'type'         => 'text',
-					'label'        => __( 'Folder Id', 'external-files-in-media-library' ),
-					'description'  => __( 'You can find the folder Id in the URL when you show it in your browser.', 'external-files-in-media-library' ),
-					'placeholder'  => __( 'Enter a folder Id', 'external-files-in-media-library' ),
+					'label'        => __( 'Folder ID', 'external-files-in-media-library' ),
+					'description'  => __( 'You can find the folder ID in the URL when you show it in your browser.', 'external-files-in-media-library' ),
+					'placeholder'  => __( 'Enter a folder ID', 'external-files-in-media-library' ),
 					'not_required' => true,
 				),
 			);

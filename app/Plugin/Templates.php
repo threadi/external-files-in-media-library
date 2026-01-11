@@ -61,16 +61,16 @@ class Templates {
 			return $template;
 		}
 
-		// check if requested template exist in theme.
+		// check if requested template exist in the theme.
 		$theme_template = locate_template( trailingslashit( basename( dirname( EFML_PLUGIN ) ) ) . $template );
 		if ( $theme_template ) {
 			return $theme_template;
 		}
 
-		// set the directory for template to use.
+		// set the directory for the template to use.
 		$directory = EFML_PLUGIN;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$directory = apply_filters_deprecated( 'eml_set_template_directory', array( $directory ), '5.0.0', 'efml_set_template_directory' );
 
 		/**

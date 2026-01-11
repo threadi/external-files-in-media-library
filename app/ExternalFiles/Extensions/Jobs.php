@@ -100,7 +100,7 @@ class Jobs extends Extension_Base {
 	}
 
 	/**
-	 * Create the job id for this single import.
+	 * Create the job ID for this single import.
 	 *
 	 * @return void
 	 */
@@ -120,7 +120,7 @@ class Jobs extends Extension_Base {
 	}
 
 	/**
-	 * Add filter for all files of this import job on media actions.
+	 * Add a filter for all files of this import job on media actions.
 	 *
 	 * @param array<string,string> $actions List of actions.
 	 * @param WP_Post              $post The post object of the attachment.
@@ -141,10 +141,10 @@ class Jobs extends Extension_Base {
 			return $actions;
 		}
 
-		// get the used job id.
+		// get the used job ID.
 		$job_id = get_post_meta( $external_file_obj->get_id(), 'eml_job_id', true );
 
-		// bail if no job id is set.
+		// bail if no job ID is set.
 		if ( empty( $job_id ) ) {
 			return $actions;
 		}
@@ -168,7 +168,7 @@ class Jobs extends Extension_Base {
 	/**
 	 * Use the filter options.
 	 *
-	 * @param WP_Query $query The WP_Query object.
+	 * @param WP_Query $query The "WP_Query" object.
 	 *
 	 * @return void
 	 */

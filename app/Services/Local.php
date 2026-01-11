@@ -130,11 +130,11 @@ class Local extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
 		$tab->set_title( __( 'Local', 'external-files-in-media-library' ) );
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->add_section( 'section_local_main', 10 );
 		$section->set_title( __( 'Settings for access to local hosting', 'external-files-in-media-library' ) );
 		$section->set_callback( array( $this, 'show_hint_for_permissions' ) );
@@ -240,7 +240,7 @@ class Local extends Service_Base implements Service {
 			return $result;
 		}
 
-		// get content type of this file.
+		// get content-type of this file.
 		$mime_type = wp_check_filetype( $path );
 
 		// return whether this file type is allowed (false) or not (true).

@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Yoast".
+ * File to handle support for the plugin "Yoast".
  *
  * @package external-files-in-media-library
  */

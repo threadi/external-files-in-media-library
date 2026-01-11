@@ -125,7 +125,7 @@ class Dates extends Extension_Base {
 	 *
 	 * @param array<string,mixed> $post_array The attachment settings.
 	 * @param string              $url        The requested external URL.
-	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
+	 * @param array<string,mixed> $file_data  List of file settings detected by the importer.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
@@ -224,7 +224,7 @@ class Dates extends Extension_Base {
 			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
-		// detect count of URLs depending on slash at the end of the given URL.
+		// detect count of URLs depending on a slash at the end of the given URL.
 		$url_count = 1;
 		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
@@ -316,7 +316,7 @@ class Dates extends Extension_Base {
 	}
 
 	/**
-	 * Add config on sync configuration form.
+	 * Add a config on sync configuration form.
 	 *
 	 * @param string $form The HTML-code of the form.
 	 * @param int    $term_id The term ID.
@@ -371,7 +371,7 @@ class Dates extends Extension_Base {
 			return;
 		}
 
-		// set use_dates to 1.
+		// set "use_dates" to 1.
 		$_POST['use_dates'] = 1;
 	}
 }

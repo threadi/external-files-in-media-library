@@ -73,7 +73,7 @@ class Schedules_Base {
 	public function get_interval(): string {
 		$instance = $this;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$interval = apply_filters_deprecated( 'eml_current_language', array( $this->interval, $instance ), '5.0.0', 'efml_schedule_interval' );
 
 		/**
@@ -189,7 +189,7 @@ class Schedules_Base {
 	public function is_enabled(): bool {
 		$instance = $this;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$false = apply_filters_deprecated( 'eml_schedule_enabling', array( false, $instance ), '5.0.0', 'efml_schedule_enabling' );
 
 		/**

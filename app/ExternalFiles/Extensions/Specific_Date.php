@@ -89,7 +89,7 @@ class Specific_Date extends Extension_Base {
 	 *
 	 * @param array<string,mixed> $post_array The attachment settings.
 	 * @param string              $url        The requested external URL.
-	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
+	 * @param array<string,mixed> $file_data  List of file settings detected by the importer.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
@@ -187,7 +187,7 @@ class Specific_Date extends Extension_Base {
 	}
 
 	/**
-	 * Add config on sync configuration form.
+	 * Add a config on sync configuration form.
 	 *
 	 * @param string $form The HTML-code of the form.
 	 * @param int    $term_id The term ID.
@@ -245,7 +245,7 @@ class Specific_Date extends Extension_Base {
 			return;
 		}
 
-		// set use_dates to the given date.
+		// set "use_specific_date" to the given date.
 		$_POST['use_specific_date'] = $value;
 	}
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the list of the queue of files which will be imported, using WP_List_Table.
+ * This file contains the list of the queue of files, which will be imported, using WP_List_Table.
  *
  * @package external-files-in-media-library
  */
@@ -19,7 +19,7 @@ use WP_List_Table;
  */
 class Queue extends WP_List_Table {
 	/**
-	 * Override the parent columns method. Defines the columns to use in your listing table
+	 * Override the parent columns method. Defines the columns to use in your listing table.
 	 *
 	 * @return array<string,string>
 	 */
@@ -75,7 +75,7 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
-	 * Define which columns are hidden
+	 * Define, which columns are hidden
 	 *
 	 * @return array<string,array<string,bool>>
 	 */
@@ -249,7 +249,7 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
-	 * Message to be displayed when there are no items.
+	 * Message to be displayed when no items are available.
 	 */
 	public function no_items(): void {
 		echo esc_html__( 'The queue for import external files in your media library is empty.', 'external-files-in-media-library' );
@@ -275,7 +275,7 @@ class Queue extends WP_List_Table {
 	 * @return array<string,string>
 	 */
 	protected function get_views(): array {
-		// get main URL without filter.
+		// get main URL without the filter.
 		$url = remove_query_arg( array( 'errors' ) );
 
 		// get called error-parameter.
@@ -286,11 +286,11 @@ class Queue extends WP_List_Table {
 			'all' => '<a href="' . esc_url( $url ) . '"' . ( 0 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'All', 'external-files-in-media-library' ) . '</a>',
 		);
 
-		// add filter for errors.
+		// add the filter for errors.
 		$url            = add_query_arg( array( 'errors' => 1 ) );
 		$list['errors'] = '<a href="' . esc_url( $url ) . '"' . ( 1 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'Errors', 'external-files-in-media-library' ) . '</a>';
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_queue_table_filter', array( $list ), '5.0.0', 'efml_queue_table_filter' );
 
 		/**
@@ -323,7 +323,7 @@ class Queue extends WP_List_Table {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Delete queue entry', 'external-files-in-media-library' ),
@@ -363,7 +363,7 @@ class Queue extends WP_List_Table {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Process queue entry', 'external-files-in-media-library' ),

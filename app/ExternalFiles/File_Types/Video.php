@@ -68,7 +68,7 @@ class Video extends File_Types_Base {
 		// set end byte to size - 1.
 		$end = $external_file_obj->get_filesize() - 1;
 
-		// set content type in header.
+		// set content type in the header.
 		header( 'Content-type: ' . $external_file_obj->get_mime_type() );
 
 		// set ranges.
@@ -150,7 +150,7 @@ class Video extends File_Types_Base {
 			return;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		do_action_deprecated( 'eml_video_meta_data', array( $external_file_obj ), '5.0.0', 'efml_video_meta_data' );
 
 		/**

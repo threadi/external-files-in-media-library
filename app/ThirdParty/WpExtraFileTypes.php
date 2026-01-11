@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "WP Extra File Types".
+ * File to handle support for the plugin "WP Extra File Types".
  *
  * @package external-files-in-media-library
  */

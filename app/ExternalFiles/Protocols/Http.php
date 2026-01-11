@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the HTTP support.
+ * File, which handles the HTTP support.
  *
  * @package external-files-in-media-library
  */
@@ -60,7 +60,7 @@ class Http extends Protocol_Base {
 	 * Check the given URL regarding its string.
 	 *
 	 * Return true if URL is ok.
-	 * Return false if URL is not ok
+	 * Return false if URL is not ok.
 	 *
 	 * @param string $url The URL to check.
 	 *
@@ -73,7 +73,7 @@ class Http extends Protocol_Base {
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
-			// return that given string is not a valid URL.
+			// return false as given string is not a valid URL.
 			return false;
 		}
 
@@ -102,7 +102,7 @@ class Http extends Protocol_Base {
 		// get the header-data of this url.
 		$response = $this->get_http_header( $url );
 
-		// bail if http_response is not set.
+		// bail if "http_response" is not set.
 		if ( empty( $response['http_response'] ) ) {
 			return false;
 		}
@@ -155,7 +155,7 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$return = apply_filters_deprecated( 'eml_check_url_availability', array( true, $url ), '5.0.0', 'efml_check_url_availability' );
 
 		/**
@@ -216,7 +216,7 @@ class Http extends Protocol_Base {
 			return array();
 		}
 
-		// save in cache.
+		// save in the cache.
 		$this->http_heads[ $url ] = $response;
 
 		// return results.
@@ -248,7 +248,7 @@ class Http extends Protocol_Base {
 		if ( ! empty( $response_headers['content-type'] ) && $this->is_content_type_for_multiple_files( Helper::get_content_type_from_string( $response_headers['content-type'] ), $this->get_url() ) ) {
 			$instance = $this;
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			$results = apply_filters_deprecated( 'eml_filter_url_response', array( array(), $this->get_url(), $instance ), '5.0.0', 'efml_filter_url_response' );
 
 			/**
@@ -278,7 +278,7 @@ class Http extends Protocol_Base {
 				return $results; // @phpstan-ignore return.type
 			}
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_http_directory_import_start', array( $this->get_url() ), '5.0.0', 'efml_http_directory_import_start' );
 
 			/**
@@ -316,7 +316,7 @@ class Http extends Protocol_Base {
 			// get the URL.
 			$url = $this->get_url();
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			$matches = apply_filters_deprecated( 'eml_http_directory_regex', array( array(), $content, $url ), '5.0.0', 'efml_http_directory_regex' );
 
 			/**
@@ -342,7 +342,7 @@ class Http extends Protocol_Base {
 			/* translators: %1$s is replaced by a URL. */
 			$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( __( 'Check files from presumed directory URL %1$s', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ), count( $matches[1] ) ) : '';
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_http_directory_import_files', array( $this->get_url(), $matches[1] ), '5.0.0', 'efml_http_directory_import_files' );
 
 			/**
@@ -375,7 +375,7 @@ class Http extends Protocol_Base {
 					}
 				}
 
-				// check if given file is a local file which exist in media library.
+				// check if given file is a local file, which exist in media library.
 				if ( $this->is_local_file( $file_url ) ) {
 					Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identifier() );
 
@@ -397,7 +397,7 @@ class Http extends Protocol_Base {
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_http_directory_import_file_check', array( $file_url ), '5.0.0', 'efml_http_directory_import_file_check' );
 
 				/**
@@ -420,7 +420,7 @@ class Http extends Protocol_Base {
 					continue;
 				}
 
-				// show deprecated hint for old hook.
+				// show deprecated hint for the old hook.
 				do_action_deprecated( 'eml_http_directory_import_file_before_to_list', array( $file_url, $matches[1] ), '5.0.0', 'efml_http_directory_import_file_before_to_list' );
 
 				/**
@@ -440,7 +440,7 @@ class Http extends Protocol_Base {
 			// finish progress.
 			$progress ? $progress->finish() : '';
 		} else {
-			// check if given file is a local file which exist in media library.
+			// check if given file is a local file, which exist in media library.
 			if ( $this->is_local_file( $this->get_url() ) ) {
 				Log::get_instance()->create( __( 'Specified URL already exist in your media library.', 'external-files-in-media-library' ), esc_url( $this->get_url() ), 'error', 2, Import::get_instance()->get_identifier() );
 				return array();
@@ -466,7 +466,7 @@ class Http extends Protocol_Base {
 
 		$instance = $this;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$files = apply_filters_deprecated( 'eml_external_files_infos', array( $files, $instance ), '5.0.0', 'efml_external_files_infos' );
 
 		/**
@@ -552,7 +552,7 @@ class Http extends Protocol_Base {
 			$results['tmp-file'] = $this->get_temp_file( $url, $wp_filesystem );
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$results = apply_filters_deprecated( 'eml_external_file_infos', array( $results, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
 
 		/**
@@ -610,7 +610,7 @@ class Http extends Protocol_Base {
 
 			$filename = trim( $attributes['filename'] );
 
-			// Unquote quoted filename, but after trimming.
+			// Unquote a quoted filename, but after trimming.
 			if ( str_starts_with( $filename, '"' ) && str_ends_with( $filename, '"' ) ) {
 				$filename = substr( $filename, 1, -1 );
 			}
@@ -639,7 +639,7 @@ class Http extends Protocol_Base {
 
 		$url = $this->get_url();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_http_ssl', array( true, $url ), '5.0.0', 'efml_http_ssl' );
 
 		/**
@@ -666,7 +666,7 @@ class Http extends Protocol_Base {
 		// if setting enables local, file should be saved local.
 		$result = ! $external_file_obj->is_locally_saved() && $external_file_obj->get_file_type_obj()->is_proxy_enabled();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$result = apply_filters_deprecated( 'eml_http_save_local', array( $result, $url ), '5.0.0', 'efml_http_save_local' );
 
 		/**
@@ -695,7 +695,7 @@ class Http extends Protocol_Base {
 			return true;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_http_ssl', array( true, $url ), '5.0.0', 'efml_http_ssl' );
 
 		/**
@@ -717,7 +717,7 @@ class Http extends Protocol_Base {
 		// if setting enables local saving, file should be saved local.
 		$result = $file_type_obj->is_local();
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$result = apply_filters_deprecated( 'eml_http_save_local', array( $result, $url ), '5.0.0', 'efml_http_save_local' );
 
 		/**
@@ -757,7 +757,7 @@ class Http extends Protocol_Base {
 
 		$instance = $this;
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$args = apply_filters_deprecated( 'eml_http_header_args', array( $args, $instance ), '5.0.0', 'efml_http_header_args' );
 
 		/**
@@ -793,7 +793,7 @@ class Http extends Protocol_Base {
 	private function get_allowed_http_states( string $url ): array {
 		$list = array( 200 );
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$list = apply_filters_deprecated( 'eml_http_states', array( $list, $url ), '5.0.0', 'efml_http_states' );
 
 		/**
@@ -809,7 +809,7 @@ class Http extends Protocol_Base {
 	/**
 	 * Return whether the file using this protocol is available.
 	 *
-	 * This depends on the hosting, e.g. if necessary libraries are available.
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */
@@ -825,7 +825,7 @@ class Http extends Protocol_Base {
 	 * @return bool
 	 */
 	private function is_local_file( string $url ): bool {
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$false = apply_filters_deprecated( 'eml_locale_file_check', array( false, $url ), '5.0.0', 'efml_locale_file_check' );
 
 		/**
@@ -857,7 +857,7 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$true = apply_filters_deprecated( 'eml_save_temp_file', array( true, $url ), '5.0.0', 'efml_save_temp_file' );
 
 		/**

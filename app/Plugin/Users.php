@@ -63,7 +63,7 @@ class Users {
 	 * @return int
 	 */
 	public function get_first_administrator_user(): int {
-		// get value from cache.
+		// get value from the cache.
 		$user_id = absint( get_option( 'efml_admin_id', 0 ) );
 
 		// return the ID from cache, if given.
@@ -99,7 +99,7 @@ class Users {
 		// get the ID.
 		$user_id = absint( $roles[0]->ID );
 
-		// save this ID in cache.
+		// save this ID in the cache.
 		update_option( 'efml_admin_id', $user_id );
 
 		// return it.

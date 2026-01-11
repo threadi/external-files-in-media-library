@@ -126,7 +126,7 @@ class Forms {
 			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/style.css' ),
 		);
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$info_timeout = apply_filters_deprecated( 'eml_import_info_timeout', array( 200 ), '5.0.0', 'efml_import_info_timeout' );
 
 		/**
@@ -260,7 +260,7 @@ class Forms {
 				<p>
 					<?php
 					/* translators: %1$s will be replaced with the URL for add new media */
-					echo wp_kses_post( sprintf( __( 'Add external files via their URL <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
+					echo wp_kses_post( sprintf( __( 'Add external files via their URL <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( $url ) ) );
 					?>
 				</p>
 			</div>
@@ -451,7 +451,7 @@ class Forms {
 		// collect errors.
 		$errors = array();
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		do_action_deprecated( 'eml_import_ajax_start', array( $url_array ), '5.0.0', 'efml_import_ajax_start' );
 
 		/**
@@ -465,7 +465,7 @@ class Forms {
 		// log this event.
 		$log->create( __( 'URLs has been transferred via AJAX and will now be checked and imported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$url_array = apply_filters_deprecated( 'eml_import_urls', array( $url_array ), '5.0.0', 'efml_import_urls' );
 
 		/**
@@ -513,7 +513,7 @@ class Forms {
 			/* translators: %1$s will be replaced by the URL which is imported. */
 			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Check URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
-			// show deprecated warning for old hook name.
+			// show deprecated warning for the old hook name.
 			$url = apply_filters_deprecated( 'eml_import_url', array( $url ), '5.0.0', 'efml_import_url' );
 
 			/**
@@ -541,7 +541,7 @@ class Forms {
 			wp_send_json( array( 'load_more' => 1 ) );
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );
 
 		/**
@@ -575,7 +575,7 @@ class Forms {
 			}
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		do_action_deprecated( 'eml_import_ajax_end', array( $url_array ), '5.0.0', 'efml_import_ajax_end' );
 
 		/**
@@ -630,7 +630,7 @@ class Forms {
 				$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following results:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
 			}
 
-			// create dialog.
+			// create the dialog.
 			$dialog = array(
 				'detail' => array(
 					'className' => 'efml',
@@ -801,7 +801,7 @@ class Forms {
 			// cleanup the JS-URL.
 			$url = str_replace( '&amp;', '&', $url );
 
-			// show deprecated warning for old hook name.
+			// show deprecated warning for the old hook name.
 			$url = apply_filters_deprecated( 'eml_import_url', array( $url ), '5.0.0', 'efml_import_url' );
 
 			/**
@@ -821,7 +821,7 @@ class Forms {
 			}
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );
 
 		/**

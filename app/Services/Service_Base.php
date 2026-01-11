@@ -104,11 +104,11 @@ class Service_Base extends Directory_Listing_Base {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->add_tab( $this->get_settings_subtab_slug(), 90 );
 		$tab->set_title( $this->get_label() );
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->add_section( 'section_' . $this->get_name() . '_main', 10 );
 		/* translators: %1$s will be replaced by the service title. */
 		$section->set_title( sprintf( __( 'Settings for %1$s', 'external-files-in-media-library' ), $this->get_label() ) );
@@ -124,7 +124,7 @@ class Service_Base extends Directory_Listing_Base {
 			$field = new Select();
 			$field->set_title( __( 'Location where credentials are stored', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
-			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made or it can be stored for each individual user or all users in this project. This only affects the import of files. The use of files in the media library is not affected.', 'external-files-in-media-library' ), $this->get_label() ) );
+			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. The use of files in the media library is not affected.', 'external-files-in-media-library' ), $this->get_label() ) );
 			$field->set_options( $this->get_modes() );
 			$setting->set_field( $field );
 		}
@@ -327,7 +327,7 @@ class Service_Base extends Directory_Listing_Base {
 					$value = isset( $_POST[ $full_name ] ) ? sanitize_text_field( wp_unslash( $_POST[ $full_name ] ) ) : '';
 			}
 
-			// save the value in DB.
+			// save the value in the database.
 			update_user_meta( $user_id, 'efml_' . $name, Crypt::get_instance()->encrypt( (string) $value ) );
 		}
 	}
@@ -338,12 +338,12 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return string
 	 */
 	protected function get_config_url(): string {
-		// use the directory URL in manual mode.
+		// use the directory URL in the manual mode.
 		if ( $this->is_mode( 'manually' ) ) {
 			return Directory_Listing::get_instance()->get_view_directory_url( $this );
 		}
 
-		// use the global settings in global mode.
+		// use the global settings in the global mode.
 		if ( $this->is_mode( 'global' ) ) {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return '';

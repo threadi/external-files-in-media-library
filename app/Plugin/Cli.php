@@ -45,9 +45,9 @@ class Cli {
 	 * : Use the dates of the external files.
 	 *
 	 * [--use_specific_date=<value>]
-	 * : Use specific date for each file
+	 * : Use specific date for each file.
 	 *
-	 * @param array<string,string> $urls Array with URL which might be given as parameter on CLI-command.
+	 * @param array<string,string> $urls Array with URL, which might be given as parameter on CLI-command.
 	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
 	 *
 	 * @return void
@@ -130,7 +130,7 @@ class Cli {
 	}
 
 	/**
-	 * Delete all URLs in media library which are imported by this plugin.
+	 * Delete all URLs in media library, which are imported by this plugin.
 	 *
 	 * [<URLs>]
 	 * : List of URLs to delete from in media library. If nothing is given all external files are deleted.
@@ -168,7 +168,7 @@ class Cli {
 		// bail if no files found.
 		if ( empty( $files_to_delete ) ) {
 			$logs->create( __( 'No files found to delete.', 'external-files-in-media-library' ), '', 'success', 2 );
-			\WP_CLI::error( __( 'There are no external URLs to delete.', 'external-files-in-media-library' ) );
+			\WP_CLI::error( __( 'No files found to delete.', 'external-files-in-media-library' ) );
 		}
 
 		// show progress.
@@ -293,7 +293,7 @@ class Cli {
 	 * If no URLs given all external files will be switched.
 	 *
 	 * [<URLs>]
-	 * : List of URLs for switch.
+	 * : List of URLs to switch.
 	 *
 	 * @param array<string> $urls List of URLs.
 	 *
@@ -342,7 +342,7 @@ class Cli {
 	 *  If no URLs given all external files will be switched.
 	 *
 	 * [<URLs>]
-	 * : List of URLs for switch.
+	 * : List of URLs to switch.
 	 *
 	 * @param array<string> $urls List of URLs.
 	 *

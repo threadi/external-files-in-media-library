@@ -65,7 +65,7 @@ class Languages {
 
 	/**
 	 * Return the current language in frontend and backend
-	 * depending on our own supported languages as 2-char-string (e.g. "en").
+	 * depending on our own supported languages as 2-char-string (e.g., "en").
 	 *
 	 * If detected language is not supported by our plugin, use the fallback language.
 	 *
@@ -74,7 +74,7 @@ class Languages {
 	public function get_current_lang(): string {
 		$wp_language = substr( get_bloginfo( 'language' ), 0, 2 );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$wp_language = apply_filters_deprecated( 'eml_current_language', array( $wp_language ), '5.0.0', 'efml_current_language' );
 
 		/**
@@ -82,7 +82,7 @@ class Languages {
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
-		 * @param string $wp_language The language-name (e.g. "en").
+		 * @param string $wp_language The language-name (e.g., "en").
 		 */
 		return apply_filters( 'efml_current_language', $wp_language );
 	}

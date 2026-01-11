@@ -1,6 +1,6 @@
 <?php
 /**
- * File which provide the base functions for each file extension.
+ * File, which provide the base functions for each file extension.
  *
  * @package external-files-in-media-library
  */

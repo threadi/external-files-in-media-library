@@ -83,7 +83,7 @@ class Directory_Listing {
 			return;
 		}
 
-		// add the page in backend.
+		// add the page in te backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
 		add_filter( 'hidden_columns', array( $this, 'hide_columns' ), 10, 3 );
@@ -252,7 +252,7 @@ class Directory_Listing {
 		// get directory to connect to from request.
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 		if ( $term_id > 0 ) {
-			// get the user_id's which saved this entry.
+			// get the user_ids which saved this entry.
 			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
 
 			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
@@ -261,7 +261,7 @@ class Directory_Listing {
 				return;
 			}
 
-			// set term in config.
+			// set term in the config.
 			$config['term'] = $term_id;
 
 			// get the URL to load.
@@ -410,9 +410,9 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Prevent edit of archive terms.
+	 * Prevent the edit of archive terms.
 	 *
-	 * @param string $location The generated URL for edit the term.
+	 * @param string $location The generated URL for editing the term.
 	 * @param int    $term_id The term ID.
 	 * @param string $taxonomy The used taxonomy.
 	 *
@@ -489,7 +489,7 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Return the URL to the directory listings in backend.
+	 * Return the URL to the directory listings in the backend.
 	 *
 	 * @return string
 	 */
@@ -706,7 +706,7 @@ class Directory_Listing {
 		$form  = '<div><label for="name">' . __( 'Name:', 'external-files-in-media-library' ) . '</label><input type="text" name="name" id="name" value="' . esc_attr( $term->name ) . '" placeholder="' . __( 'Source for gallery images', 'external-files-in-media-library' ) . '"></div>';
 		$form .= '<input type="hidden" name="term_id" value="' . $term->term_id . '">';
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml efml-term-change-name',
 			'title'     => __( 'Change name', 'external-files-in-media-library' ),
@@ -743,7 +743,7 @@ class Directory_Listing {
 		// check nonce.
 		check_ajax_referer( 'efml-change-term-name', 'nonce' );
 
-		// create dialog for response.
+		// create the dialog for response.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Error', 'external-files-in-media-library' ),

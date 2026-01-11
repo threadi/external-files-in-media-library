@@ -154,7 +154,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Zip',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_services_support', array( $list ), '5.0.0', 'efml_services_support' );
 
 		/**
@@ -423,7 +423,7 @@ class Services {
 		// check nonce.
 		check_ajax_referer( 'efml-import-external-source', 'nonce' );
 
-		// create dialog for response.
+		// create the dialog for response.
 		$dialog = array(
 			'detail' => array(
 				'className' => 'efml',

@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains the object which logs events.
+ * This file contains the object, which logs events.
  *
  * @package external-files-in-media-library
  */
@@ -71,7 +71,7 @@ class Log {
 	}
 
 	/**
-	 * Delete table on uninstallation.
+	 * Delete the table on uninstallation.
 	 *
 	 * @return void
 	 */

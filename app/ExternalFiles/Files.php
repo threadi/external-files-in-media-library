@@ -124,8 +124,8 @@ class Files {
 	/**
 	 * Return the URL of an external file.
 	 *
-	 * @param string $url               The URL which is requested.
-	 * @param int    $attachment_id     The attachment-ID which is requested.
+	 * @param string $url               The URL.
+	 * @param int    $attachment_id     The attachment-ID.
 	 *
 	 * @return string
 	 */
@@ -164,13 +164,13 @@ class Files {
 	/**
 	 * Disable attachment-page-links for external files, if this is enabled.
 	 *
-	 * @param string $url               The URL which is requested.
-	 * @param ?int   $attachment_id     The attachment-ID which is requested.
+	 * @param string $url               The URL.
+	 * @param ?int   $attachment_id     The attachment ID.
 	 *
 	 * @return string
 	 */
 	public function get_attachment_link( string $url, ?int $attachment_id ): string {
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$false = apply_filters_deprecated( 'eml_attachment_link', array( false, $url, $attachment_id ), '5.0.0', 'efml_attachment_link' );
 
 		/**
@@ -256,7 +256,7 @@ class Files {
 				continue;
 			}
 
-			// add object to the list.
+			// add the object to the list.
 			$results[] = $external_file_obj;
 		}
 
@@ -280,14 +280,14 @@ class Files {
 			return;
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		do_action_deprecated( 'eml_file_delete', array( $external_file_obj ), '5.0.0', 'efml_file_delete' );
 
 		/**
 		 * Run additional tasks for URL deletion.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param File $external_file_obj The object which has been deleted.
+		 * @param File $external_file_obj The object, which has been deleted.
 		 */
 		do_action( 'efml_file_delete', $external_file_obj );
 
@@ -383,7 +383,7 @@ class Files {
 		);
 		$result = new WP_Query( $query );
 
-		// bail if not a single result is in array.
+		// bail if not a single result is in the array.
 		if ( 1 !== $result->post_count ) {
 			return false;
 		}
@@ -503,7 +503,7 @@ class Files {
 		<li><span class="dashicons dashicons-yes-alt"></span>
 		<?php
 		if ( false !== $external_file_obj->is_locally_saved() ) {
-			echo '<span class="eml-hosting-state">' . esc_html__( 'File is local hosted.', 'external-files-in-media-library' ) . '</span>';
+			echo '<span class="eml-hosting-state">' . esc_html__( 'File is locally hosted.', 'external-files-in-media-library' ) . '</span>';
 			if ( current_user_can( EFML_CAP_NAME ) && $protocol_handler->can_change_hosting() && $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 				?>
 					<a href="#" class="button dashicons dashicons-controls-repeat eml-change-host" title="<?php echo esc_attr__( 'Switch to extern', 'external-files-in-media-library' ); ?>">&nbsp;</a>
@@ -543,7 +543,7 @@ class Files {
 		}
 		if ( $external_file_obj->has_credentials() ) {
 			?>
-			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'External file is protected with login and password.', 'external-files-in-media-library' ); ?></li>
+			<li><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'The external file is protected with login and password.', 'external-files-in-media-library' ); ?></li>
 			<?php
 		}
 		if ( current_user_can( 'manage_options' ) ) {
@@ -560,7 +560,7 @@ class Files {
 			<li><span class="dashicons dashicons-info"></span> <?php echo esc_html__( 'Mime type:', 'external-files-in-media-library' ); ?><br><code><?php echo esc_html( $external_file_obj->get_mime_type() ); ?></code></li>
 			<?php
 
-			// show deprecated warning for old hook name.
+			// show deprecated warning for the old hook name.
 			do_action_deprecated( 'eml_show_file_info', array( $external_file_obj ), '5.0.0', 'efml_show_file_info' );
 
 			/**
@@ -593,7 +593,7 @@ class Files {
 		// get ID.
 		$attachment_id = absint( filter_input( INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if id is not given.
+		// bail if ID is not given.
 		if ( 0 === $attachment_id ) {
 			wp_send_json( $result );
 		}
@@ -619,7 +619,7 @@ class Files {
 		if ( $external_file_obj->is_locally_saved() ) {
 			// switch to external and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_external() ) {
-				$result['message'] = __( 'Error during switch to external hosting.', 'external-files-in-media-library' );
+				$result['message'] = __( 'Error during the switch to external hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 
@@ -635,14 +635,14 @@ class Files {
 
 			// switch to local and show error if it runs in an error.
 			if ( ! $external_file_obj->switch_to_local() ) {
-				$result['message'] = __( 'Error during switch to local hosting.', 'external-files-in-media-library' );
+				$result['message'] = __( 'Error during the switch to local hosting.', 'external-files-in-media-library' );
 				wp_send_json( $result );
 			}
 
 			// create return message.
 			$result = array(
 				'state'   => 'success',
-				'message' => __( 'File is local hosted.', 'external-files-in-media-library' ),
+				'message' => __( 'File is locally hosted.', 'external-files-in-media-library' ),
 			);
 		}
 
@@ -681,8 +681,8 @@ class Files {
 			if ( ! empty( $actions['download'] ) ) {
 				unset( $actions['download'] ); }
 
-			// add custom hint.
-			$actions['eml-hint-availability'] = __( 'External file is NOT available', 'external-files-in-media-library' );
+			// add a custom hint.
+			$actions['eml-hint-availability'] = __( 'The external file is NOT available', 'external-files-in-media-library' );
 		}
 
 		// if file is using a not allowed mime type, remove action and show hint.
@@ -695,7 +695,7 @@ class Files {
 			if ( ! empty( $actions['download'] ) ) {
 				unset( $actions['download'] ); }
 
-			// add custom hint depending on capabilities.
+			// add a custom hint depending on capabilities.
 			if ( current_user_can( 'manage_options' ) ) {
 				$actions['eml-hint-mime'] = '<a href="' . esc_url( Helper::get_config_url() ) . '">' . __( 'Mime-type is not allowed', 'external-files-in-media-library' ) . '</a>';
 			} else {
@@ -737,7 +737,7 @@ class Files {
 			$file    = str_replace( $uploads['basedir'] . '/', '', $file );
 		}
 
-		// if the basename of the file does not contain a ".", use the file title in backend.
+		// if the basename of the file does not contain a ".", use the file title in the backend.
 		if ( is_admin() && ! strpos( basename( (string) $file ), '.' ) ) {
 			$file = get_the_title( $post_id );
 		}
@@ -820,14 +820,17 @@ class Files {
 		// generate the filename for the thumb.
 		$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
-		// public filename.
+		// the public filename.
 		$public_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_url() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
-		// use already existing thumb.
-		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && file_exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// use the already existing thumb.
+		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && $wp_filesystem->exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
 			// log the event.
 			/* translators: %1$s will be replaced by the image sizes. */
-			Log::get_instance()->create( sprintf( __( 'Loading thumb from cache for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'Loading the thumb from cache for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
 
 			// return the thumb.
 			return array(
@@ -998,7 +1001,7 @@ class Files {
 			false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->get_file_type_obj()->has_thumbs()
 		) {
-			// return empty array as we can not optimize external images.
+			// return empty array as we cannot optimize external images.
 			return array();
 		}
 
@@ -1008,7 +1011,7 @@ class Files {
 
 	/**
 	 * Force permalink-URL for file-attribute in meta-data for external URL-files
-	 * to change the link-target if attachment-pages are disabled via attachment_link-hook.
+	 * to change the link-target if attachment-pages are disabled via "attachment_link"-hook.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/wp_get_attachment_metadata/
 	 *
@@ -1074,10 +1077,10 @@ class Files {
 		// check referer.
 		check_admin_referer( 'eml-reset-thumbnails', 'nonce' );
 
-		// get the file id.
+		// get the file ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if post id is not given.
+		// bail if post ID is not given.
 		if ( 0 === $post_id ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
@@ -1127,7 +1130,7 @@ class Files {
 	 */
 	public function add_help( array $help_list ): array {
 		$content  = '<h1>' . __( 'Add external files', 'external-files-in-media-library' ) . '</h1>';
-		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in exactly the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
+		$content .= '<p>' . __( 'The plugin allows you to integrate external files into your media library. These are then handled in the same way as other files that you upload here. You can integrate them into your website as you are used to.', 'external-files-in-media-library' ) . '</p>';
 		$content .= '<h3>' . __( 'How to use', 'external-files-in-media-library' ) . '</h3>';
 		/* translators: %1$s will be replaced by a URL. */
 		$content .= '<ol><li>' . sprintf( __( 'Go to Media > <a href="%1$s">Add Media File</a>.', 'external-files-in-media-library' ), esc_url( add_query_arg( array(), get_admin_url() . 'media-new.php' ) ) ) . '</li>';
@@ -1157,7 +1160,7 @@ class Files {
 	 * @param array<string,mixed> $image_meta The meta data.
 	 * @param array<string,mixed> $size_array The size array.
 	 * @param string              $image_src The src.
-	 * @param int                 $attachment_id The attachment id.
+	 * @param int                 $attachment_id The attachment ID.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
@@ -1200,13 +1203,13 @@ class Files {
 		// bail if mime-type is set, but empty.
 		if ( empty( $results['mime-type'] ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'Mime-type of this file could not be detected. File will not be used for media library.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array to not import this file.
 			return array();
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$true = apply_filters_deprecated( 'eml_files_check_content_type', array( true, $url ), '5.0.0', 'efml_files_check_content_type' );
 
 		/**
@@ -1218,7 +1221,7 @@ class Files {
 		 */
 		if ( apply_filters( 'efml_files_check_content_type', $true, $url ) && ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'Mime-type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1229,10 +1232,10 @@ class Files {
 	}
 
 	/**
-	 * Extend info about external file in attachment modal.
+	 * Extend info about the external file in the attachment modal.
 	 *
 	 * @param string  $html The HTML to output.
-	 * @param WP_Post $post The WP_Post object of the requested attachment.
+	 * @param WP_Post $post The "WP_Post" object of the requested attachment.
 	 *
 	 * @return string
 	 */
@@ -1296,7 +1299,7 @@ class Files {
 	/**
 	 * Use the filter options.
 	 *
-	 * @param WP_Query $query The WP_Query object.
+	 * @param WP_Query $query The "WP_Query" object.
 	 *
 	 * @return void
 	 */
@@ -1355,7 +1358,7 @@ class Files {
 			return $dialog;
 		}
 
-		// add infos in dialog.
+		// add infos in the dialog.
 		$dialog['texts'][] = '<p><strong>' . esc_html__( 'External source:', 'external-files-in-media-library' ) . '</strong> ' . esc_html( $term->name ) . '</p>';
 
 		// return resulting dialog.
@@ -1436,7 +1439,7 @@ class Files {
 	}
 
 	/**
-	 * Show sync info (external source) for files which has been synced.
+	 * Show sync info (external source) for files, which has been synced.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -1524,7 +1527,7 @@ class Files {
 	/**
 	 * Prevent usage of external images for non-image files (except PDFs).
 	 *
-	 * @param array<int,mixed>|false $image The given image to return for preview.
+	 * @param array<int,mixed>|false $image The given image to return for the preview.
 	 * @param int                    $attachment_id The used attachment ID.
 	 *
 	 * @return array<int,mixed>|false
@@ -1548,7 +1551,7 @@ class Files {
 			return $image;
 		}
 
-		// bail if file is an image or pdf.
+		// bail if file is an image or PDF.
 		if ( $external_file_obj->get_file_type_obj() instanceof Image || $external_file_obj->get_file_type_obj() instanceof Pdf ) {
 			return $image;
 		}

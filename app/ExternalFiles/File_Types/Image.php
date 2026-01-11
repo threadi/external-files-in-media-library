@@ -113,7 +113,7 @@ class Image extends File_Types_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// get temporary file.
+		// get the temporary file.
 		$tmp_file = $protocol_handler->get_temp_file( $external_file_obj->get_url( true ), $wp_filesystem );
 
 		// bail if no tmp file returned.
@@ -146,7 +146,7 @@ class Image extends File_Types_Base {
 			wp_update_post( $query );
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		do_action_deprecated( 'eml_image_meta_data', array( $external_file_obj, $image_meta ), '5.0.0', 'efml_image_meta_data' );
 
 		/**

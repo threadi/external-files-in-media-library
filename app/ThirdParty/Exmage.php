@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Exmage".
+ * File to handle support for the plugin "Exmage".
  *
  * @source https://wordpress.org/plugins/exmage-wp-image-links/
  *
@@ -101,7 +101,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Migrate from Exmage to External Files in Media Library', 'external-files-in-media-library' ),

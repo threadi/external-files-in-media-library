@@ -54,7 +54,7 @@ class Cli {
 
 			// bail if user could not be found.
 			if ( ! $user instanceof WP_User ) {
-				/* translators: %1$s will be replaced by an ID. */
+				/* translators: %1$s will be replaced by the User ID. */
 				$check_results[] = sprintf( __( 'User with ID %1$d could not be found!', 'external-files-in-media-library' ), $user_id );
 				continue;
 			}

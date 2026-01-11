@@ -141,7 +141,7 @@ class Vimeo implements Service {
 			return $block_content;
 		}
 
-		// bail if id is not given.
+		// bail if ID is not given.
 		if ( empty( $block['attrs']['id'] ) ) {
 			return $block_content;
 		}

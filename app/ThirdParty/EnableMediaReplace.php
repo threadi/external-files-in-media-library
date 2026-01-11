@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Enable Media Replace".
+ * File to handle support for the plugin "Enable Media Replace".
  *
  * @package external-files-in-media-library
  */
@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Post;

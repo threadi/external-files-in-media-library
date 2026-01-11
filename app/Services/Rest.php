@@ -155,7 +155,7 @@ class Rest extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -163,7 +163,7 @@ class Rest extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -178,7 +178,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_default( 5 );
 		$field = new Number();
 		$field->set_title( __( 'Limit per request', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Defines the number of files requested per request. The higher the number, the higher the probability of timeouts during retrieval. The number is limited to a maximum of 100 by WordPress itself.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Defines the amount of files requested per request. The higher the number, the higher the probability of timeouts during retrieval. The number is limited to a maximum of 100 by WordPress itself.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 
 		// add setting.
@@ -188,7 +188,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_default( 100 );
 		$field = new Number();
 		$field->set_title( __( 'Max requests', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Sets the number of requests. The higher the number, the longer it will take to retrieve large media databases via REST API.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Sets the amount of requests. The higher the number, the longer it will take to retrieve large media databases via REST API.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 
 		// add setting.
@@ -251,7 +251,7 @@ class Rest extends Service_Base implements Service {
 			return array();
 		}
 
-		// prepend directory with https:// if that is not given.
+		// prepend the directory with https:// if that is not given.
 		if ( ! str_starts_with( $directory, 'http://' ) && ! str_starts_with( $directory, 'https://' ) ) {
 			$directory = 'https://' . $directory;
 		}
@@ -269,7 +269,7 @@ class Rest extends Service_Base implements Service {
 			$this->add_error( $error );
 
 			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a HTTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
+			Log::get_instance()->create( __( 'Given path is not an HTTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
 
 			// return empty array to not load anything more.
 			return array();
@@ -356,7 +356,7 @@ class Rest extends Service_Base implements Service {
 			// get the max pages from settings.
 			$max_pages = absint( get_option( 'eml_rest_max_requests' ) );
 
-			// get the max pages from header from response.
+			// get the max pages from the header from response.
 			$max_pages_external = absint( wp_remote_retrieve_header( $response, 'x-wp-totalpages' ) );
 
 			// use the lower value.
@@ -446,7 +446,7 @@ class Rest extends Service_Base implements Service {
 			return array();
 		}
 
-		// bail if response is 400 (means there are no more files => return the list).
+		// bail if response is 400 (means that no more files are there => return the list).
 		if ( 400 === $http_status ) {
 			return $listing;
 		}
@@ -489,7 +489,7 @@ class Rest extends Service_Base implements Service {
 
 			// add each file from response to the list of all files.
 			foreach ( $files as $file ) {
-				// bail if source_url is not set.
+				// bail if "source_url" is not set.
 				if ( ! isset( $file['source_url'] ) ) {
 					continue;
 				}
@@ -539,7 +539,7 @@ class Rest extends Service_Base implements Service {
 							// save the thumb.
 							$results = $editor->save( $upload_dir . '/' . basename( $file['source_url'] ) );
 
-							// add thumb to output if it does not result in an error.
+							// add the thumb to output if it does not result in an error.
 							if ( ! is_wp_error( $results ) ) {
 								$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="">';
 							}
@@ -846,13 +846,13 @@ class Rest extends Service_Base implements Service {
 
 				// add each file from response to the list of all files.
 				foreach ( $files as $file ) {
-					// bail if source_url is not set.
+					// bail if "source_url" is not set.
 					if ( ! isset( $file['source_url'] ) ) {
 						continue;
 					}
 
 					// update title for progress.
-					/* translators: %1$s will be replaced by the URL which is imported. */
+					/* translators: %1$s will be replaced by the URL. */
 					update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Get data for URL %1$s from REST API', 'external-files-in-media-library' ), '<em>' . esc_html( Helper::shorten_url( $file['source_url'] ) ) . '</em>' ) );
 
 					// update counter for URLs.
@@ -874,7 +874,7 @@ class Rest extends Service_Base implements Service {
 
 					$response_headers = array();
 
-					// show deprecated hint for old hook.
+					// show deprecated hint for the old hook.
 					$entry = apply_filters_deprecated( 'eml_external_file_infos', array( $entry, $url, $response_headers ), '5.0.0', 'efml_external_file_infos' );
 
 					/**
@@ -951,14 +951,14 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the URL to use as WordPress REST API URL with path.
+	 * Return the URL to use as WordPress REST API URL with the path.
 	 *
 	 * @param string $directory The given URL.
 	 *
 	 * @return string|bool
 	 */
 	private function get_url_to_use( string $directory ): string|bool {
-		// we check first which WordPress REST API URL is available.
+		// we check first, which WordPress REST API URL is available.
 		$url_to_use = false;
 		foreach ( $this->get_rest_api_paths() as $path ) {
 			// bail if url is already set.
@@ -1008,7 +1008,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the default REST API endpoint this service will be use.
+	 * Return the default REST API endpoint this service will be used.
 	 *
 	 * @return string
 	 */
@@ -1025,7 +1025,7 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return info about requested file from REST API.
+	 * Return info about the requested file from REST API.
 	 *
 	 * We need to request the external REST API for the file data.
 	 *
@@ -1124,7 +1124,7 @@ class Rest extends Service_Base implements Service {
 				 *
 				 * @param array<string,mixed> $post_array     The attachment settings.
 				 * @param string $file_url       The requested external URL.
-				 * @param array<string,mixed>  $file_data List of file settings detected by importer.
+				 * @param array<string,mixed>  $file_data List of file settings detected by the importer.
 				 */
 				$results = apply_filters( 'efml_service_rest_file_data', $results, $file_path, $file );
 			}
@@ -1132,7 +1132,7 @@ class Rest extends Service_Base implements Service {
 			// return the results.
 			return $results;
 		} catch ( JsonException $e ) {
-			// add log.
+			// add a log entry.
 			Log::get_instance()->create( __( 'JSON error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 
 			return array();

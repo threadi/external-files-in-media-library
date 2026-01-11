@@ -101,7 +101,7 @@ class Rest {
 	}
 
 	/**
-	 * Add external file via REST API request.
+	 * Add an external file via REST API request.
 	 *
 	 * Hint: "url" must be submitted as body parameter.
 	 *

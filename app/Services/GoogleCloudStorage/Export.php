@@ -99,7 +99,7 @@ class Export extends Export_Base {
 		// bail if no file could be found.
 		if ( ! is_string( $file_path ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Could not load file path for given attachment id.', 'external-files-in-media-library' ), $target, 'error' );
+			Log::get_instance()->create( __( 'Could not load file path for given attachment ID.', 'external-files-in-media-library' ), $target, 'error' );
 
 			// do nothing more.
 			return false;

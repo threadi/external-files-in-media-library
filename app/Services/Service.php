@@ -1,6 +1,6 @@
 <?php
 /**
- * File which holds the interface for each service.
+ * File, which holds the PHP-interface for each service.
  *
  * @package external-files-in-media-library
  */
