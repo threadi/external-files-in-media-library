@@ -69,19 +69,20 @@ body.settings_page_eml_settings .nav-tab-help:before {
 }
 
 body.settings_page_eml_settings, body.media_page_efml_local_directories, body.taxonomy-edlfw_archive {
-	h1.wp-heading-inline:before {
-		background-image: url(../gfx/logo.png);
-		background-repeat: no-repeat;
-		background-size: contain;
-		content: "";
-		display: inline-block;
-		height: 42px;
-		margin-right: .4em;
-		vertical-align: middle;
-		width: 42px;
-	}
 	.dashicons-no { color: red }
 	.dashicons-yes { color: green }
+}
+
+.efml h1.components-modal__header-heading:before {
+	background-image: url(../gfx/logo.png);
+	background-repeat: no-repeat;
+	background-size: contain;
+	content: "";
+	display: inline-block;
+	height: 42px;
+	margin-right: .4em;
+	vertical-align: middle;
+	width: 42px;
 }
 
 .efml .easy-dialog-for-wordpress-text label {

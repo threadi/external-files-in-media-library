@@ -1,6 +1,6 @@
 <?php
 /**
- * File which provide the base functions for each result object.
+ * File, which provide the base functions for each result object.
  *
  * @package external-files-in-media-library
  */

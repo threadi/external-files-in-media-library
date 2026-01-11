@@ -25,7 +25,7 @@ use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
 
 /**
- * Object which handles the settings of this plugin.
+ * Object, which handles the settings of this plugin.
  */
 class Settings {
 
@@ -88,7 +88,7 @@ class Settings {
 	}
 
 	/**
-	 * Return the php page the settings will be using.
+	 * Return the PHP page the settings will be using.
 	 *
 	 * @return string
 	 */
@@ -111,12 +111,12 @@ class Settings {
 			'page' => $this->get_menu_slug(),
 		);
 
-		// add tab, if set.
+		// add a tab, if set.
 		if ( ! empty( $tab ) ) {
 			$array['tab'] = $tab;
 		}
 
-		// add sbu-tab, if set.
+		// add a sub-tab, if set.
 		if ( ! empty( $sub_tab ) ) {
 			$array['subtab'] = $sub_tab;
 		}
@@ -153,13 +153,13 @@ class Settings {
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
 		$settings_obj->set_translations(
 			array(
-				'title_settings_import_file_missing' => __( 'Required file missing', 'external-files-in-media-library' ),
+				'title_settings_import_file_missing' => __( 'A required file is missing', 'external-files-in-media-library' ),
 				'text_settings_import_file_missing'  => __( 'Please choose a JSON-file with settings to import.', 'external-files-in-media-library' ),
 				'lbl_ok'                             => __( 'OK', 'external-files-in-media-library' ),
 				'lbl_cancel'                         => __( 'Cancel', 'external-files-in-media-library' ),
 				'import_title'                       => __( 'Import', 'external-files-in-media-library' ),
 				'dialog_import_title'                => __( 'Import plugin settings', 'external-files-in-media-library' ),
-				'dialog_import_text'                 => __( 'Click on the button below to chose your JSON-file with the settings.', 'external-files-in-media-library' ),
+				'dialog_import_text'                 => __( 'Click on the button below to choose your JSON-file with the settings.', 'external-files-in-media-library' ),
 				'dialog_import_button'               => __( 'Import now', 'external-files-in-media-library' ),
 				'dialog_import_error_title'          => __( 'Error during import', 'external-files-in-media-library' ),
 				'dialog_import_error_text'           => __( 'The file could not be imported!', 'external-files-in-media-library' ),
@@ -254,9 +254,9 @@ class Settings {
 		 * Add the settings to the settings object.
 		 */
 		// set description for disabling the attachment pages.
-		$description = __( 'Each file in media library has a attachment page which could be called in frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
+		$description = __( 'Each file in media library has an attachment page, which could be called in the frontend. With this option you can disable this attachment page for files with URLs.', 'external-files-in-media-library' );
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$description = apply_filters_deprecated( 'eml_setting_description_attachment_pages', array( $description ), '5.0.0', 'efml_setting_description_attachment_pages' );
 
 		/**
@@ -293,7 +293,7 @@ class Settings {
 		$field = new MultiSelect();
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
-		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
+		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
 		$field->set_options( $mime_types );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
 		$setting->set_field( $field );
@@ -401,7 +401,7 @@ class Settings {
 				'type'        => 'Checkbox',
 				'title'       => __( 'Hide begging for review', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
+				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens in a new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
 			)
 		);
 
@@ -412,7 +412,7 @@ class Settings {
 		$setting->set_default( Users::get_instance()->get_first_administrator_user() );
 		$field = new Select();
 		$field->set_title( __( 'Assign new files to this user', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g. via WP CLI import). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g., via WP CLI import). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
 		$field->set_options( Roles::get_instance()->get_user_for_settings() );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -517,7 +517,7 @@ class Settings {
 				'type'        => 'Checkbox',
 				'title'       => __( 'User-specific settings', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'If this option is enabled WordPress-user can choose their own settings for import of external URLs. Choose in <a href="%1$s">permissions</a> the roles which could use it.', 'external-files-in-media-library' ), esc_url( $this->get_url( 'eml_permissions' ) ) ),
+				'description' => sprintf( __( 'If this option is enabled WordPress-user can choose their own settings for import of external URLs. Choose in <a href="%1$s">permissions</a> the roles, which could use it.', 'external-files-in-media-library' ), esc_url( $this->get_url( 'eml_permissions' ) ) ),
 			)
 		);
 		$setting->set_type( 'integer' );
@@ -557,13 +557,13 @@ class Settings {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$reset_dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Reset plugin', 'external-files-in-media-library' ),
 			'texts'     => array(
 				/* translators: %1$s will be replaced by the plugin name. */
-				'<p><strong>' . sprintf( __( 'Do you really want to reset any settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
+				'<p><strong>' . sprintf( __( 'Are you sure you want to reset all settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
 				'<p>' . __( 'This will reset all settings and all external files in your media library.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'We recommend creating a backup before resetting the plugin.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
@@ -785,10 +785,10 @@ class Settings {
 			return $old_value;
 		}
 
-		// create absolute path for new value.
+		// create the absolute path for new value.
 		$new_value_path = trailingslashit( WP_CONTENT_DIR ) . $new_value;
 
-		// create absolute path for old value.
+		// create the absolute path for old value.
 		$old_value_path = trailingslashit( WP_CONTENT_DIR ) . $old_value;
 
 		// bail if new path already exist.

@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "WooCommerce".
+ * File to handle support for the plugin "WooCommerce".
  *
  * @package external-files-in-media-library
  */

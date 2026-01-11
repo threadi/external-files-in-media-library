@@ -110,7 +110,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			$fields = $settings['fields'];
 		}
 
-		// add filter to prevent the import.
+		// add a filter to prevent the import.
 		add_filter( 'efml_prevent_file_import', '__return_true' );
 		add_filter( 'efml_save_temp_file', '__return_false', PHP_INT_MAX );
 
@@ -142,7 +142,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 				continue;
 			}
 
-			// bail if index is >= 10 to minimize the list in dialog.
+			// bail if index is >= 10 to minimize the list in the dialog.
 			if ( $index >= 10 ) {
 				continue;
 			}
@@ -166,7 +166,7 @@ class Show_What_Will_Be_Done extends Extension_Base {
 					// get the file type object.
 					$file_type_obj = File_Types::get_instance()->get_type_object_by_mime_type( $file_data['mime-type'] );
 
-					// add proxy hint.
+					// add a proxy hint.
 					$proxy_info = __( 'and not use the proxy as its file type is not enabled for it', 'external-files-in-media-library' );
 					if ( $file_type_obj->is_proxy_enabled() ) {
 						$proxy_info = __( 'and use the proxy as its file type is enabled for it', 'external-files-in-media-library' );
@@ -181,9 +181,9 @@ class Show_What_Will_Be_Done extends Extension_Base {
 			}
 		}
 
-		// add hint about more files.
+		// add a hint about more files.
 		if ( count( $results ) >= 10 ) {
-			$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> ' . __( 'There are more files for which we do not provide any information about what exactly happens to them during import for performance reasons.', 'external-files-in-media-library' ) . '</label>';
+			$text .= '<label><span class="dashicons dashicons-admin-generic dashicons-info-outline"></span> ' . __( 'There are other files for which we do not provide information about what exactly happens to them during import for performance reasons.', 'external-files-in-media-library' ) . '</label>';
 		}
 
 		// cleanup results.

@@ -15,7 +15,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
- * Object which handles all proxy tasks.
+ * Object, which handles all proxy tasks.
  */
 class Proxy {
 	/**
@@ -148,7 +148,7 @@ class Proxy {
 		// get file object.
 		$external_file_obj = Files::get_instance()->get_file_by_title( $title );
 
-		// bail if no file object could be loaded or the loaded object is not valid.
+		// bail if no file object could be loaded, or the loaded object is not valid.
 		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
@@ -179,7 +179,7 @@ class Proxy {
 		if ( ! file_exists( $cached_file_path ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Requested file %1$s for proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
+			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
 			// return the template.
 			return $template;
@@ -233,7 +233,7 @@ class Proxy {
 	public function get_slug(): string {
 		$slug = $this->slug;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$slug = apply_filters_deprecated( 'eml_proxy_slug', array( $slug ), '5.0.0', 'efml_proxy_slug' );
 
 		/**
@@ -253,13 +253,13 @@ class Proxy {
 	 * @return string
 	 */
 	public function get_cache_directory(): string {
-		// get setting for proxy path.
+		// get setting for the proxy path.
 		$path_part = get_option( 'eml_proxy_path', 'cache/eml/' );
 
-		// create string with path for directory.
+		// create string with the path for the directory.
 		$path = trailingslashit( WP_CONTENT_DIR ) . $path_part;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$path = apply_filters_deprecated( 'eml_proxy_path', array( $path ), '5.0.0', 'efml_proxy_path' );
 
 		/**
@@ -289,7 +289,7 @@ class Proxy {
 			return;
 		}
 
-		// create directory and check response.
+		// create the directory and check response.
 		if ( false === wp_mkdir_p( $path ) ) {
 			/* translators: %1$s will be replaced by the path. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
@@ -336,9 +336,9 @@ class Proxy {
 		);
 
 		// log this event.
-		Log::get_instance()->create( __( 'Proxy cache has been reset via AJAX.', 'external-files-in-media-library' ), '', 'info', 2 );
+		Log::get_instance()->create( __( 'The proxy cache has been reset via AJAX.', 'external-files-in-media-library' ), '', 'info', 2 );
 
-		// response with dialog.
+		// response with the dialog.
 		wp_send_json( $dialog );
 	}
 
@@ -390,7 +390,7 @@ class Proxy {
 			return false;
 		}
 
-		// return the result of proxy setting on file type of this file.
+		// return the result of proxy setting on file-type of this file.
 		return $external_file_object->get_file_type_obj()->is_proxy_enabled();
 	}
 

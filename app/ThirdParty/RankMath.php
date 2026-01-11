@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Rank Math".
+ * File to handle support for the plugin "Rank Math".
  *
  * @package external-files-in-media-library
  */

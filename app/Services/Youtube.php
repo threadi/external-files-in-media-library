@@ -848,7 +848,7 @@ class Youtube extends Service_Base implements Service {
 	private function get_api_url(): string {
 		$api_url = $this->api_url;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$api_url = apply_filters_deprecated( 'eml_youtube_api_url', array( $api_url ), '5.0.0', 'efml_youtube_api_url' );
 
 		/**
@@ -868,7 +868,7 @@ class Youtube extends Service_Base implements Service {
 	private function get_channel_url(): string {
 		$channel_url = $this->channel_url;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$channel_url = apply_filters_deprecated( 'eml_youtube_channel_url', array( $channel_url ), '5.0.0', 'efml_youtube_channel_url' );
 
 		/**

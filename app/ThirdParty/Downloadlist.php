@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Download List with Icons".
+ * File to handle support for the plugin "Download List with Icons".
  *
  * @package external-files-in-media-library
  */
@@ -95,7 +95,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 			return $rel_attribute;
 		}
 
-		// bail if id is not given.
+		// bail if ID is not given.
 		if ( empty( $file['id'] ) ) {
 			return $rel_attribute;
 		}
@@ -190,7 +190,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured download list after import.
+	 * Save the external file to a configured download list after import.
 	 *
 	 * @param File $external_file_obj The used URL as external file object.
 	 *
@@ -269,7 +269,7 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured list after sync.
+	 * Move the external file to a configured list after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *

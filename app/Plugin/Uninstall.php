@@ -14,11 +14,9 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transient;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
-use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Services\Services;
-use ExternalFilesInMediaLibrary\ThirdParty\WooCommerce;
 use WP_User;
 
 /**
@@ -132,7 +130,7 @@ class Uninstall {
 		// remove user-specific settings.
 		$users = get_users();
 		foreach ( $users as $user ) {
-			// bail if user is not WP_User.
+			// bail if user is not a "WP_User" object.
 			if ( ! $user instanceof WP_User ) {
 				continue;
 			}

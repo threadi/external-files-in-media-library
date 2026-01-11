@@ -80,7 +80,7 @@ class Helper {
 	}
 
 	/**
-	 * Delete given directory recursively.
+	 * Delete the given directory recursively.
 	 *
 	 * @param string $dir The path to delete recursively.
 	 * @return void
@@ -136,7 +136,7 @@ class Helper {
 	/**
 	 * Checks whether a given plugin is active.
 	 *
-	 * Used because WP's own function is_plugin_active() is not accessible everywhere.
+	 * Used because WPs own function is_plugin_active() is not accessible everywhere.
 	 *
 	 * @param string $plugin Path to the plugin.
 	 * @return bool
@@ -195,11 +195,11 @@ class Helper {
 			),
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$mime_types = apply_filters_deprecated( 'eml_supported_mime_types', array( $mime_types ), '5.0.0', 'efml_supported_mime_types' );
 
 		/**
-		 * Filter the possible mime types this plugin could support. This is the list used for the setting in backend.
+		 * Filter the possible mime types this plugin could support. This is the list used for the setting in the backend.
 		 *
 		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
@@ -239,12 +239,12 @@ class Helper {
 			return array();
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$mime_types = apply_filters_deprecated( 'eml_get_mime_types', array( $mime_types ), '5.0.0', 'efml_get_mime_types' );
 
 		/**
 		 * Filter the list of possible mime types. This is the list used by the plugin during file-checks
-		 * and is not visible or editable in backend.
+		 * and is invisible or editable in the backend.
 		 *
 		 * To add files of type "your/mime" with file extension ".yourmime" use this example:
 		 *
@@ -421,7 +421,7 @@ class Helper {
 	}
 
 	/**
-	 * Return a shortened URL with domain and filename on base of given URL.
+	 * Return a shortened URL with the domain and filename on base of given URL.
 	 *
 	 * @param string $url The given URL.
 	 *
@@ -444,7 +444,7 @@ class Helper {
 			$shortened_url .= $parsed_url['scheme'] . '://';
 		}
 
-		// add host.
+		// add the host.
 		if ( ! empty( $parsed_url['host'] ) ) {
 			$shortened_url .= $parsed_url['host'];
 		}
@@ -497,11 +497,11 @@ class Helper {
 	}
 
 	/**
-	 * Add new entry with its key on specific position in array.
+	 * Add new entry with its key on specific position in an array.
 	 *
 	 * @param array<int,mixed>|null $fields The array we want to change.
 	 * @param int                   $position The position where the new array should be added.
-	 * @param array<int,mixed>      $array_to_add The new array which should be added.
+	 * @param array<int,mixed>      $array_to_add The new array, which should be added.
 	 *
 	 * @return array<int,mixed>
 	 */
@@ -513,7 +513,7 @@ class Helper {
 	}
 
 	/**
-	 * Return 404 site with template.
+	 * Return 404 site with a template.
 	 *
 	 * @return string
 	 */
@@ -555,7 +555,7 @@ class Helper {
 		\WP_Filesystem();
 		global $wp_filesystem;
 
-		// bail if wp_filesystem is not of "WP_Filesystem_Base".
+		// bail if "wp_filesystem" is not of "WP_Filesystem_Base".
 		if ( ! $wp_filesystem instanceof WP_Filesystem_Base ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php'; // @phpstan-ignore requireOnce.fileNotFound
 			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php'; // @phpstan-ignore requireOnce.fileNotFound
@@ -720,7 +720,7 @@ class Helper {
 	}
 
 	/**
-	 * Return whether this WordPress runs in development mode (which is available since WordPress 6.3).
+	 * Return whether this WordPress runs in development mode (available since WordPress 6.3).
 	 *
 	 * @return bool
 	 */
@@ -766,7 +766,7 @@ class Helper {
 	 * Return the version of the given file.
 	 *
 	 * With WP_DEBUG or plugin-debug enabled its @filemtime().
-	 * Without this it's the plugin-version.
+	 * Without this it is the plugin-version.
 	 *
 	 * @param string $filepath The absolute path to the requested file.
 	 *
@@ -781,7 +781,7 @@ class Helper {
 		$plugin_version = EFML_PLUGIN;
 
 		/**
-		 * Filter the used file version (for JS- and CSS-files which get enqueued).
+		 * Filter the used file version (for JS- and CSS-files, which get enqueued).
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 *

@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Real Media Library".
+ * File to handle support for the plugin "Real Media Library".
  *
  * @source https://docs.devowl.io/real-media-library/php/
  *
@@ -13,9 +13,7 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use WP_Post;
 
 /**
  * Object to handle support for this plugin.
@@ -107,7 +105,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		$assigned_category = absint( get_term_meta( $term_id, 'rml_folder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="rml_folder">' . __( 'Choose folder of plugin Real Media Library:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
+		$form .= '<div><label for="rml_folder">' . __( 'Choose a folder of plugin Real Media Library:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $assigned_category ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -157,7 +155,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$rml_folder = isset( $_POST['fields']['rml_folder'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['fields']['rml_folder'] ) ) : 0;
 
-		// if folderly_categories is empty, just remove the setting.
+		// if real media library folder is empty, just remove the setting.
 		if ( 0 === $rml_folder ) {
 			delete_term_meta( $term_id, 'rml_folder' );
 			return;
@@ -186,7 +184,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured folder after sync.
+	 * Move the external file to a configured folder after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -211,7 +209,7 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *

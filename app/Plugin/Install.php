@@ -16,7 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
- * Object which handles the installation of this plugin.
+ * Object, which handles the installation of this plugin.
  */
 class Install {
 
@@ -61,7 +61,7 @@ class Install {
 		// mark that activation is running.
 		define( 'EFML_ACTIVATION_RUNNING', 1 );
 
-		// add option for version of this plugin.
+		// add option for the version of this plugin.
 		add_option( 'efmlVersion', '', '', true );
 
 		// initialize database-table for logs.
@@ -103,12 +103,12 @@ class Install {
 			/* translators: %1$s will be replaced by the URL where user can add media files. */
 			$message = sprintf( __( '<strong>You have installed <i>External files for media library</i> - great and thank you very much!</strong> Let us show you how it works or immediately add external URLs to your media library <a href="%1$s">here</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_add_media_url() ) ) . '<br><br>';
 
-			// add button for intro, if not already closed.
+			// add a button for the intro, if not already closed.
 			if ( ! Intro::get_instance()->is_closed() ) {
 				$message .= '<a href="#" class="button button-primary efml-intro-start">' . __( 'Show me how it works', 'external-files-in-media-library' ) . '</a>';
 			}
 
-			// add button to go to "add new files".
+			// add a button to go to "add new files".
 			$url      = add_query_arg(
 				array(
 					'action'  => 'efml_hide_welcome',
@@ -118,7 +118,7 @@ class Install {
 			);
 			$message .= '<a href="' . esc_url( $url ) . '" class="button button-primary">' . __( 'Add your first external file', 'external-files-in-media-library' ) . '</a>';
 
-			// add button to just hide this message and forward to media library.
+			// add a button to just hide this message and forward to media library.
 			$url      = add_query_arg(
 				array(
 					'action'  => 'efml_hide_welcome',

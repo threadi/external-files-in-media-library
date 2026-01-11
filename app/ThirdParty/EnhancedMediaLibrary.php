@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Enhanced Media Library".
+ * File to handle support for the plugin "Enhanced Media Library".
  *
  * @package external-files-in-media-library
  */
@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -215,7 +214,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move the external file to a configured category after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -242,7 +241,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -271,7 +270,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to the categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		return $dialog;
 	}
 }

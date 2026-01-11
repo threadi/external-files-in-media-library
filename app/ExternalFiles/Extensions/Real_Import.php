@@ -350,7 +350,7 @@ class Real_Import extends Extension_Base {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			/* translators: %1$s will be replaced by the file name. */
@@ -421,7 +421,7 @@ class Real_Import extends Extension_Base {
 		// remove availability.
 		$external_file_obj->remove_availability();
 
-		// remove locally saved marker.
+		// remove the locally saved marker.
 		$external_file_obj->remove_local_saved();
 
 		// remove the credentials.
@@ -737,7 +737,7 @@ class Real_Import extends Extension_Base {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Import external file', 'external-files-in-media-library' ),

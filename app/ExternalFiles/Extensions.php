@@ -1,6 +1,6 @@
 <?php
 /**
- * This file an object to handle extension for file handlings.
+ * This file an object to handle extension for the file handlings.
  *
  * @package external-files-in-media-library
  */
@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle extension for file handlings.
+ * Object to handle extension for the file handlings.
  */
 class Extensions {
 	/**
@@ -80,7 +80,7 @@ class Extensions {
 			// get object.
 			$obj = $class_name();
 
-			// bail if object is not Extension_Base.
+			// bail if object is not "Extension_Base".
 			if ( ! $obj instanceof Extension_Base ) {
 				continue;
 			}

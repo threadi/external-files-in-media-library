@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Advanced Media Offloader".
+ * File to handle support for the plugin "Advanced Media Offloader".
  *
  * @package external-files-in-media-library
  */

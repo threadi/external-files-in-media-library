@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 
 /**
@@ -119,7 +120,7 @@ class Availability extends Extension_Base {
 	}
 
 	/**
-	 * Add CSS- and JS-files for backend.
+	 * Add CSS- and JS-files for the backend.
 	 *
 	 * @param string $hook The used hook.
 	 *
@@ -266,7 +267,7 @@ class Availability extends Extension_Base {
 	}
 
 	/**
-	 * Check all external files regarding their availability.
+	 * Check the availability of all external files.
 	 *
 	 * @return void
 	 */
@@ -289,8 +290,14 @@ class Availability extends Extension_Base {
 				continue;
 			}
 
-			// get and save its availability.
-			$external_file_obj->set_availability( $protocol_handler->check_availability( $external_file_obj->get_url() ) );
+			// get its availability.
+			$availability = $protocol_handler->check_availability( $external_file_obj->get_url( true ) );
+
+			// log the result.
+			Log::get_instance()->create( __( 'Result of availability check:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $availability ) . '</code>', $external_file_obj->get_url( true ), 'info', 2 );
+
+			// save it.
+			$external_file_obj->set_availability( $availability );
 		}
 	}
 
@@ -320,7 +327,7 @@ class Availability extends Extension_Base {
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $value ] ) ) {
 			/* translators: %1$s will be replaced by the name of the used interval */
-			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exists.', 'external-files-in-media-library' ), esc_html( $value ) ) );
+			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exist.', 'external-files-in-media-library' ), esc_html( $value ) ) );
 		}
 
 		// return the value.
@@ -345,8 +352,16 @@ class Availability extends Extension_Base {
 
 		// if new value is 'eml_disable_check' remove the schedule.
 		if ( 'eml_disable_check' === $value ) {
+			// log event.
+			Log::get_instance()->create( __( 'Availability check has been disabled.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+			// remove the schedule.
 			$check_files_schedule->delete();
-		} else {
+		} elseif( $value !== $check_files_schedule->get_interval() ) {
+			// log event.
+			/* translators: %1$s and %2$s will be replaced by intervall names. */
+			Log::get_instance()->create( sprintf( __( 'Availability check schedule interval has changed from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $check_files_schedule->get_interval() . '</em>', '<em>' . $value . '</em>' ), '', 'info', 2 );
+
 			// set the new interval.
 			$check_files_schedule->set_interval( $value );
 

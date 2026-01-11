@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains an object which handles the results of any import.
+ * This file contains an object, which handles the results of any import.
  *
  * @package external-files-in-media-library
  */
@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object which handles the results of any import.
+ * Object, which handles the results of any import.
  */
 class Results {
 
@@ -55,7 +55,7 @@ class Results {
 	 * @return void
 	 */
 	public function add( Result_Base $result_obj ): void {
-		// get the actual import results from DB.
+		// get the actual import results from the database.
 		$results = get_option( 'efml_import_results_' . $this->get_user_id(), array() );
 
 		// add this result to the list.
@@ -71,7 +71,7 @@ class Results {
 	 * @return array<int,Result_Base>
 	 */
 	public function get_results(): array {
-		// get the actual import results from DB.
+		// get the actual import results from the database.
 		$results = get_option( 'efml_import_results_' . $this->get_user_id(), array() );
 
 		// bail if results is not an array.

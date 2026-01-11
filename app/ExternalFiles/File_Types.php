@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handle the different file types.
+ * File, which handle the different file types.
  *
  * @package external-files-in-media-library
  */
@@ -108,7 +108,7 @@ class File_Types {
 
 			// add the settings section.
 			$section = $tab->add_section( 'settings_section_' . $name, 10 );
-			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$section->set_title( sprintf( __( '%1$s settings', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$section->set_callback( array( Settings::get_instance(), 'show_protocol_hint' ) );
 			$section->set_setting( $settings_obj );
@@ -119,9 +119,9 @@ class File_Types {
 			$setting->set_type( 'string' );
 			$setting->set_default( 'external' );
 			$field = new Select();
-			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Mode for %1$s handling', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
-			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_description( sprintf( __( 'Defines how external %1$s are handled.', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_options(
 				array(
@@ -138,7 +138,7 @@ class File_Types {
 			$setting->set_type( 'integer' );
 			$setting->set_default( $file_type_obj->is_proxy_default_enabled() ? 1 : 0 );
 			$field = new Checkbox();
-			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
 			$field->set_readonly( 'external' !== get_option( 'eml_' . $name . '_mode', '' ) );
@@ -151,7 +151,7 @@ class File_Types {
 			$setting->set_type( 'integer' );
 			$setting->set_default( $file_type_obj->get_default_proxy_max_age() );
 			$field = new Number();
-			/* translators: %1$s will be replaced by the file type title (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Max age for cached %1$s in proxy in hours', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'Defines how long these files, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
@@ -174,7 +174,7 @@ class File_Types {
 			'ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Zip',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_file_types', array( $list ), '5.0.0', 'efml_file_types' );
 
 		/**
@@ -255,7 +255,7 @@ class File_Types {
 			}
 
 			// log this event.
-			/* translators: %1$s will be replaced by the type name (e.g. "Images"). */
+			/* translators: %1$s will be replaced by the type name (e.g., "Images"). */
 			Log::get_instance()->create( sprintf( __( 'The file at this URL is of type %1$s.', 'external-files-in-media-library' ), '<i>' . $file_type_obj->get_name() . '</i>' ), $url, 'info', 2 );
 
 			// add to the list.

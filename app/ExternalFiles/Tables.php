@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains an object which extend the media tables in backend.
+ * This file contains an object, which extend the media tables in the backend.
  *
  * @package external-files-in-media-library
  */
@@ -19,7 +19,7 @@ use WP_Term_Query;
 use WP_User;
 
 /**
- * Object which extends the attachment tables in backend.
+ * Object, which extends the attachment tables in the backend.
  */
 class Tables {
 
@@ -73,7 +73,7 @@ class Tables {
 	}
 
 	/**
-	 * Add filter in media library for external files.
+	 * Add a filter in media library for external files.
 	 *
 	 * @return void
 	 */
@@ -125,7 +125,7 @@ class Tables {
 	}
 
 	/**
-	 * Change main query to filter external files in media library if requested.
+	 * Change a main query to filter external files in media library if requested.
 	 *
 	 * @param WP_Query $query The Query-object.
 	 * @return void
@@ -184,7 +184,7 @@ class Tables {
 		 * Filter the query.
 		 *
 		 * @since 4.0.0 Available since 4.0.0.
-		 * @param WP_Query $query The WP_Query object.
+		 * @param WP_Query $query The "WP_Query" object.
 		 */
 		do_action_ref_array( 'efml_filter_query', array( &$query ) );
 	}
@@ -240,9 +240,9 @@ class Tables {
 	}
 
 	/**
-	 * Add column to mark external files in media table.
+	 * Add a column to mark external files in the media table.
 	 *
-	 * @param array<string,string> $columns List of columns in media table.
+	 * @param array<string,string> $columns List of columns in the media table.
 	 *
 	 * @return array<string,string>
 	 */
@@ -252,10 +252,10 @@ class Tables {
 	}
 
 	/**
-	 * Add content for our custom column in media table.
+	 * Add content for our custom column in the media table.
 	 *
 	 * @param string $column_name The requested column.
-	 * @param int    $attachment_id The requested attachment id.
+	 * @param int    $attachment_id The requested attachment ID.
 	 *
 	 * @return void
 	 */
@@ -274,7 +274,7 @@ class Tables {
 			// show yes-icon as it is an external file.
 			echo '<span class="dashicons dashicons-yes" title="' . esc_html__( 'external file', 'external-files-in-media-library' ) . '"></span>';
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0' );
 
 			// get protocol handler.
@@ -313,7 +313,7 @@ class Tables {
 				$service_title = $service_obj->get_label();
 			}
 
-			// create dialog.
+			// create the dialog.
 			$dialog = array(
 				'className' => 'efml',
 				'title'     => __( 'File info', 'external-files-in-media-library' ),
@@ -321,7 +321,7 @@ class Tables {
 					'<p><strong>' . __( 'URL', 'external-files-in-media-library' ) . ':</strong> ' . $url_html . '</p>',
 					'<p><strong>' . __( 'Source', 'external-files-in-media-library' ) . ':</strong> ' . $service_title . '</p>',
 					'<p><strong>' . __( 'Imported at', 'external-files-in-media-library' ) . ':</strong> ' . $external_file_obj->get_date() . '</p>',
-					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file_obj->is_locally_saved() ? __( 'File is local hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
+					'<p><strong>' . __( 'Hosting', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file_obj->is_locally_saved() ? __( 'File is locally hosted.', 'external-files-in-media-library' ) : __( 'File is extern hosted.', 'external-files-in-media-library' ) ) . '</p>',
 				),
 				'buttons'   => array(
 					array(
@@ -350,7 +350,7 @@ class Tables {
 			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) . '"></span>';
 
 			/**
-			 * Filter the title for show in source column in media table for external files.
+			 * Filter the title for show in source column in the media table for external files.
 			 *
 			 * @since 5.0.0 Available since 5.0.0.
 			 * @param string $title The title to use.
@@ -361,7 +361,7 @@ class Tables {
 			// output.
 			echo wp_kses_post( $title . ' <a href="' . esc_url( $edit_url ) . '" class="dashicons dashicons-info-outline easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_html__( 'File info', 'external-files-in-media-library' ) . '"></a>' );
 
-			// show deprecated hint for old hook.
+			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_table_column_source', array( $attachment_id ), '5.0.0', 'efml_table_column_source' );
 
 			/**
@@ -412,8 +412,8 @@ class Tables {
 	}
 
 	/**
-	 * Add column for the date the entry has been saved.
-	 * Add column for the user, only visible for administrators.
+	 * Add a column for the date the entry has been saved.
+	 * Add a column for the user, only visible for administrators.
 	 *
 	 * @param array<string,string> $columns List of columns.
 	 *
@@ -428,7 +428,7 @@ class Tables {
 			return $columns;
 		}
 
-		// add the column to show the user which saved these entry.
+		// add the column to show the user, which saved these entry.
 		$columns['user'] = __( 'User', 'external-files-in-media-library' );
 
 		// return the resulting columns.
@@ -436,7 +436,7 @@ class Tables {
 	}
 
 	/**
-	 * Add info about the user which saved this entry.
+	 * Add info about the user, which saved this entry.
 	 *
 	 * @param string $content The column content.
 	 * @param string $column_name The column name.
@@ -476,7 +476,7 @@ class Tables {
 	}
 
 	/**
-	 * Add info about the user which saved this entry.
+	 * Add info about the user, which saved this entry.
 	 *
 	 * @param string $content The column content.
 	 * @param string $column_name The column name.

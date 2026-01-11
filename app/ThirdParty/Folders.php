@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Folders".
+ * File to handle support for the plugin "Folders".
  *
  * @package external-files-in-media-library
  */
@@ -102,7 +102,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	public function add_category_selection( string $form, int $term_id ): string {
-		// bail if WCP_Tree does not exist.
+		// bail if "WCP_Tree" does not exist.
 		if ( ! class_exists( 'WCP_Tree' ) ) {
 			return $form;
 		}
@@ -133,7 +133,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	 * @return string
 	 */
 	private function get_folder_selection( int $mark ): string {
-		// bail if WCP_Tree does not exist.
+		// bail if "WCP_Tree" does not exist.
 		if ( ! class_exists( 'WCP_Tree' ) ) {
 			return '';
 		}
@@ -182,7 +182,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$folders_categories = isset( $_POST['fields']['folders_folder'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folders_folder'] ) ) : array();
 
-		// if folderly_categories is empty, just remove the setting.
+		// if categories is empty, just remove the setting.
 		if ( empty( $folders_categories ) ) {
 			delete_term_meta( $term_id, 'folders_folder' );
 			return;
@@ -211,7 +211,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured folder after sync.
+	 * Move the external file to a configured folder after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -232,7 +232,7 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -299,7 +299,6 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get external file object for given object ID.
-		// get external file object by object ID.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if it is not an external file.

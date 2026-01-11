@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "iFolders".
+ * File to handle support for the plugin "iFolders".
  *
  * @package external-files-in-media-library
  */
@@ -194,7 +194,7 @@ class IFolders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move the external file to a configured category after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -221,7 +221,7 @@ class IFolders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *

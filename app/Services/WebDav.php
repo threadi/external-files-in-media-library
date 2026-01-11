@@ -157,7 +157,7 @@ class WebDav extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -165,7 +165,7 @@ class WebDav extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -274,7 +274,7 @@ class WebDav extends Service_Base implements Service {
 	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
-		// use subdirectory, if it is requested (has a longer path than the default one).
+		// use subdirectory, if this is requested (has a longer path than the default one).
 		if ( $directory !== $this->directory && strlen( $directory ) < strlen( $this->directory ) ) {
 			$directory = $this->directory;
 		}
@@ -291,7 +291,7 @@ class WebDav extends Service_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Http ) {
 			// create an error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_webdav', __( 'Given URL is not a HTTP-URL. The URL:', 'external-files-in-media-library' ) . ' ' . esc_html( $directory ) );
+			$error->add( 'efml_service_webdav', __( 'Given URL is not an HTTP-URL. The URL:', 'external-files-in-media-library' ) . ' ' . esc_html( $directory ) );
 			$this->add_error( $error );
 
 			// do nothing more.
@@ -384,7 +384,7 @@ class WebDav extends Service_Base implements Service {
 
 		// loop through the list, add each file to the list and loop through each subdirectory.
 		foreach ( $directory_list as $file_name => $settings ) {
-			// get directory-data for this file and add file in the given directories.
+			// get directory-data for this file and add the file in the given directories.
 			$parts = explode( '/', str_replace( $path, '', $file_name ) );
 
 			// collect the entry.
@@ -410,7 +410,7 @@ class WebDav extends Service_Base implements Service {
 					continue;
 				}
 
-				// get content type of this file.
+				// get content-type of this file.
 				$mime_type = wp_check_filetype( basename( $file_name ) );
 
 				// bail if file type is not allowed.
@@ -436,14 +436,14 @@ class WebDav extends Service_Base implements Service {
 				$dir_path = '';
 
 				// loop through all parent folders, add the directory if it does not exist in the list
-				// and add the file to each of them.
+				// and add the file to each.
 				foreach ( $parts as $key => $dir ) {
 					// bail if dir is empty.
 					if ( empty( $dir ) ) {
 						continue;
 					}
 
-					// bail for last entry (which is a file).
+					// bail for last entry (a file).
 					if ( $key === $last_key ) {
 						continue;
 					}
@@ -553,7 +553,7 @@ class WebDav extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function set_path( string $path, array $fields ): string {
-		// replace double slashes in path.
+		// replace double slashes in the path.
 		$path = str_replace( '//', '/', $path );
 
 		// if path is only "/" remove it.
@@ -620,7 +620,7 @@ class WebDav extends Service_Base implements Service {
 		/**
 		 * Filter the WebDAV client connection object.
 		 *
-		 * E.g. to add proxy or other additional settings to reach the WebDAV.
+		 * E.g., to add proxy or other additional settings to reach the WebDAV.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 *
@@ -647,7 +647,7 @@ class WebDav extends Service_Base implements Service {
 			return $result;
 		}
 
-		// get content type of this file.
+		// get content-type of this file.
 		$mime_type = wp_check_filetype( $file );
 
 		// return whether this file type is allowed (false) or not (true).
@@ -657,7 +657,7 @@ class WebDav extends Service_Base implements Service {
 	/**
 	 * Show option to connect to WebDav on the user profile.
 	 *
-	 * @param WP_User $user The WP_User object for the actual user.
+	 * @param WP_User $user The "WP_User" object for the actual user.
 	 *
 	 * @return void
 	 */
@@ -819,7 +819,7 @@ class WebDav extends Service_Base implements Service {
 		// if access token is set in plugin settings.
 		if ( $this->is_mode( 'global' ) ) {
 			if ( $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
-				return __( 'The credentials has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+				return __( 'The credentials have already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
 			}
 
 			if ( ! $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
@@ -850,7 +850,7 @@ class WebDav extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the values depending on actual mode.
+	 * Return the values depending on the actual mode.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -873,7 +873,7 @@ class WebDav extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( $this->is_mode( 'user' ) ) {
-			// get the user set on object.
+			// get the user set on the object.
 			$user = $this->get_user();
 
 			// bail if user is not available.
@@ -927,7 +927,7 @@ class WebDav extends Service_Base implements Service {
 			return;
 		}
 
-		// add filter.
+		// add a filter.
 		add_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 	}
 
@@ -944,7 +944,7 @@ class WebDav extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add filter to use unsafe URLs in proxy if WebDav-URLs are used.
+	 * Add a filter to use unsafe URLs in the proxy if WebDav-URLs are used.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *

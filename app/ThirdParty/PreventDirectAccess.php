@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Prevent Direct Access".
+ * File to handle support for the plugin "Prevent Direct Access".
  *
  * @package external-files-in-media-library
  */
@@ -65,7 +65,7 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Hide options of this plugin for external files in media table.
+	 * Hide options of this plugin for external files in the media table.
 	 *
 	 * @return void
 	 */
@@ -73,7 +73,7 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 		// get external files as list.
 		$external_files = Files::get_instance()->get_files();
 
-		// output the custom css.
+		// output the custom CSS.
 		echo '<style>';
 		foreach ( $external_files as $extern_file_obj ) {
 			// hide the column of this plugin in the table.

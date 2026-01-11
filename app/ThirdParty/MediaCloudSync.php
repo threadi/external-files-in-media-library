@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for the plugin Media Cloud Sync.
+ * File to handle support for the plugin "Media Cloud Sync".
  *
  * @package external-files-in-media-library
  */

@@ -21,7 +21,7 @@ use WP_List_Table;
  */
 class Logs extends WP_List_Table {
 	/**
-	 * Override the parent columns method. Defines the columns to use in your listing table
+	 * Override the parent columns method. Defines the columns to use in your listing table.
 	 *
 	 * @return array<string,string>
 	 */
@@ -84,7 +84,7 @@ class Logs extends WP_List_Table {
 	}
 
 	/**
-	 * Define which columns are hidden
+	 * Define, which columns are hidden
 	 *
 	 * @return array<string>
 	 */
@@ -143,7 +143,7 @@ class Logs extends WP_List_Table {
 				'title'     => __( 'Empty log entries', 'external-files-in-media-library' ),
 				'texts'     => array(
 					'<p><strong>' . __( 'Are you sure you want to empty the log?', 'external-files-in-media-library' ) . '</strong></p>',
-					'<p>' . __( 'You will loose any log until now.', 'external-files-in-media-library' ) . '</p>',
+					'<p>' . __( 'You will lose any log until now.', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
 					array(
@@ -172,7 +172,7 @@ class Logs extends WP_List_Table {
 	}
 
 	/**
-	 * Message to be displayed when there are no items.
+	 * Message to be displayed when no items are available.
 	 */
 	public function no_items(): void {
 		echo esc_html__( 'No log entries found.', 'external-files-in-media-library' );
@@ -199,7 +199,7 @@ class Logs extends WP_List_Table {
 	 * @return array<string,string>
 	 */
 	protected function get_views(): array {
-		// get main URL without filter.
+		// get main URL without the filter.
 		$url = remove_query_arg( array( 'errors', 'url' ) );
 
 		// get called error-parameter.
@@ -213,7 +213,7 @@ class Logs extends WP_List_Table {
 			'all' => '<a href="' . esc_url( $url ) . '"' . ( 0 === $errors && is_null( $requested_url ) ? ' class="current"' : '' ) . '>' . esc_html__( 'All', 'external-files-in-media-library' ) . '</a>',
 		);
 
-		// add filter for errors.
+		// add the filter for errors.
 		$url            = add_query_arg( array( 'errors' => 1 ) );
 		$list['errors'] = '<a href="' . esc_url( $url ) . '"' . ( 1 === $errors ? ' class="current"' : '' ) . '>' . esc_html__( 'Errors', 'external-files-in-media-library' ) . '</a>';
 
@@ -222,7 +222,7 @@ class Logs extends WP_List_Table {
 			$list['url'] = '<span class="current">' . esc_html( Helper::shorten_url( $requested_url ) ) . '</span>';
 		}
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_log_table_filter', array( $list ), '5.0.0', 'efml_log_table_filter' );
 
 		/**
@@ -257,7 +257,7 @@ class Logs extends WP_List_Table {
 				get_admin_url() . 'admin.php'
 			);
 
-			// create dialog.
+			// create the dialog.
 			$dialog = array(
 				'className' => 'efml',
 				'title'     => __( 'Delete log entry', 'external-files-in-media-library' ),
@@ -295,7 +295,7 @@ class Logs extends WP_List_Table {
 				// get the edit URL.
 				$edit_url = get_edit_post_link( $external_file_obj->get_id() );
 
-				// only add if edit_url is set.
+				// only add if "edit_url" is set.
 				if ( is_string( $edit_url ) ) {
 					// link to the attachment edit page.
 					$output .= '<a class="dashicons dashicons-edit" href="' . esc_url( $edit_url ) . '" title="' . esc_attr__( 'Edit this file', 'external-files-in-media-library' ) . '"></a>';
@@ -322,7 +322,7 @@ class Logs extends WP_List_Table {
 			return '<span title="' . esc_attr( $url ) . '">' . esc_html( url_shorten( $url, 50 ) ) . '</span>';
 		}
 
-		// if string starts with file:// show also only this path.
+		// if string starts with "file://" show also only this path.
 		if ( str_starts_with( $url, 'file://' ) ) {
 			return '<span title="' . esc_attr( $url ) . '">' . esc_html( url_shorten( $url, 50 ) ) . '</span>';
 		}

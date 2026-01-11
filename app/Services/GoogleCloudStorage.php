@@ -187,7 +187,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			$field = new Textarea();
 			$field->set_title( __( 'Authentication JSON', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ) );
+			$field->set_description( sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ) );
 			$field->set_sanitize_callback( array( $this, 'validate_json' ) );
 			$setting->set_field( $field );
 
@@ -741,7 +741,7 @@ class GoogleCloudStorage extends Service_Base implements Service {
 			'google_cloud_storage_json'   => array(
 				'label'       => __( 'Authentication JSON', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ),
+				'description' => sprintf( __( 'Get the authentication JSON by editing your service account <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_console_url() ),
 				'field'       => 'textarea',
 			),
 			'google_cloud_storage_bucket' => array(

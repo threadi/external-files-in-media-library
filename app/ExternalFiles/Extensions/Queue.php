@@ -145,17 +145,17 @@ class Queue extends Extension_Base {
 		$queue_interval_setting->set_save_callback( array( $this, 'update_interval_setting' ) );
 		$queue_interval_setting->set_field( $field );
 
-		// add setting for limit.
+		// add setting for the limit.
 		$setting = $settings_obj->add_setting( 'eml_queue_limit' );
 		$setting->set_section( $queue_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 10 );
 		$field = new Number();
 		$field->set_title( __( 'To process per queue cycle', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Set the limit of URLs which will be process per cycle.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Specify the amount of URLs to be processed per cycle.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 
-		// add tab for queue table.
+		// add a tab for queue table.
 		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 60 );
 		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
 		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
@@ -187,7 +187,7 @@ class Queue extends Extension_Base {
 		$intervals = wp_get_schedules();
 		if ( empty( $intervals[ $value ] ) ) {
 			/* translators: %1$s will be replaced by the name of the used interval */
-			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exists.', 'external-files-in-media-library' ), esc_html( $value ) ) );
+			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exist.', 'external-files-in-media-library' ), esc_html( $value ) ) );
 		}
 
 		// return the value.
@@ -215,9 +215,10 @@ class Queue extends Extension_Base {
 
 			// remove schedule.
 			$queue_schedule->delete();
-		} else {
+		} elseif( $value !== $queue_schedule->get_interval() ) {
 			// log event.
-			Log::get_instance()->create( __( 'Queue schedule interval has changed.', 'external-files-in-media-library' ), '', 'info', 2 );
+			/* translators: %1$s and %2$s will be replaced by intervall names. */
+			Log::get_instance()->create( sprintf( __( 'Queue schedule interval has changed from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $queue_schedule->get_interval() . '</em>', '<em>' . $value . '</em>' ), '', 'info', 2 );
 
 			// set the new interval.
 			$queue_schedule->set_interval( $value );
@@ -285,13 +286,13 @@ class Queue extends Extension_Base {
 			return false;
 		}
 
-		// bail if given URL is already in queue.
+		// bail if given URL is already in the queue.
 		if ( ! empty( $this->get_url( $url ) ) ) {
-			Log::get_instance()->create( __( 'URL is already in queue.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'URL is already in the queue.', 'external-files-in-media-library' ), $url, 'error', 0, Import::get_instance()->get_identifier() );
 			return true;
 		}
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$options = apply_filters_deprecated( 'eml_import_options', array( array(), $url ), '5.0.0', 'efml_import_options' );
 
 		/**
@@ -331,7 +332,7 @@ class Queue extends Extension_Base {
 	/**
 	 * Process the queue.
 	 *
-	 * Import all URLs from queue in media library which have the state "new".
+	 * Import all URLs from queue in media library, which have the state "new".
 	 *
 	 * @return void
 	 */
@@ -341,37 +342,37 @@ class Queue extends Extension_Base {
 
 		// show progress.
 		/* translators: %1$d will be replaced by a number. */
-		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( _n( 'Processing the import of %1$d URL from queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), count( $urls_to_import ) ) : '';
+		$progress = Helper::is_cli() ? \WP_CLI\Utils\make_progress_bar( sprintf( _n( 'Processing the import of %1$d URL from the queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), count( $urls_to_import ) ) : '';
 
 		// log event.
 		/* translators: %1$d will be replaced by a number. */
-		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from the queue.', 'Processing the import of %1$d URLs from queue.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		$urls_to_import = apply_filters_deprecated( 'eml_queue_urls', array( $urls_to_import ), '5.0.0', 'efml_queue_urls' );
 
 		/**
-		 * Filter the list of URLs from queue before they are processed.
+		 * Filter the list of URLs from the queue before they are processed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $urls_to_import List of URLs to import from queue.
+		 * @param array $urls_to_import List of URLs to import from the queue.
 		 */
 		$urls_to_import = apply_filters( 'efml_queue_urls', $urls_to_import );
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		do_action_deprecated( 'eml_queue_before_process', array( $urls_to_import ), '5.0.0', 'efml_queue_before_process' );
 
 		/**
-		 * Run action before queue is processed.
+		 * Run action before the queue is processed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $urls_to_import List of URLs to import from queue which will be processed.
+		 * @param array $urls_to_import List of URLs to import from the queue, which will be processed.
 		 */
 		do_action( 'efml_queue_before_process', $urls_to_import );
 
 		// loop through the queue.
 		foreach ( $urls_to_import as $url_data ) {
-			// bail if given url_data is not an array.
+			// bail if given "url_data" is not an array.
 			if ( ! is_array( $url_data ) ) {
 				continue;
 			}
@@ -385,20 +386,20 @@ class Queue extends Extension_Base {
 		// show end of process.
 		$progress ? $progress->finish() : '';
 
-		// show deprecated hint for old hook.
+		// show deprecated hint for the old hook.
 		do_action_deprecated( 'eml_queue_after_process', array( $urls_to_import ), '5.0.0', 'efml_queue_after_process' );
 
 		/**
-		 * Run action after queue is processed.
+		 * Run action after the queue is processed.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
-		 * @param array $urls_to_import List of URLs to import from queue which has been processed.
+		 * @param array $urls_to_import List of URLs to import from the queue, which has been processed.
 		 */
 		do_action( 'efml_queue_after_process', $urls_to_import );
 
 		// log event.
 		/* translators: %1$d will be replaced by a number. */
-		Log::get_instance()->create( sprintf( _n( 'Processing the import of %1$d URL from queue ended.', 'Processing the import of %1$d URLs from queue ended.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( _n( 'The processing of the import of %1$d URL from the queue is complete.', 'The processing of the import of %1$d URLs from the queue is complete.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
 	}
 
 	/**
@@ -489,7 +490,7 @@ class Queue extends Extension_Base {
 		// get the ID from request.
 		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// delete the entry if id is given.
+		// delete the entry if ID is given.
 		if ( $id > 0 ) {
 			// process it.
 			$this->process_entry( $id );
@@ -618,7 +619,7 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Return data of single URL in queue.
+	 * Return data of single URL in the queue.
 	 *
 	 * @param string $url The requested URL.
 	 *
@@ -637,7 +638,7 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Return data of single ID in queue.
+	 * Return data of single ID in the queue.
 	 *
 	 * @param int $id The ID.
 	 *
@@ -656,7 +657,7 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Set entry in queue to given state.
+	 * Set entry in the queue to given state.
 	 *
 	 * @param int    $id The ID to use.
 	 * @param string $state The state to set.
@@ -702,7 +703,7 @@ class Queue extends Extension_Base {
 	/**
 	 * Remove given URL from queue.
 	 *
-	 * @param int $id The id to use.
+	 * @param int $id The ID to use.
 	 *
 	 * @return void
 	 */
@@ -763,7 +764,7 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Show queue table in backend.
+	 * Show queue table in the backend.
 	 *
 	 * @return void
 	 */
@@ -856,7 +857,7 @@ class Queue extends Extension_Base {
 			return $dialog;
 		}
 
-		// we have no global setting to enable the queue in dialog.
+		// we have no global setting to enable the queue in the dialog.
 		$checked = false;
 
 		// if user has its own setting, use this.
@@ -864,7 +865,7 @@ class Queue extends Extension_Base {
 			$checked = true;
 		}
 
-		// detect count of URLs depending on slash at the end of the given URL.
+		// detect count of URLs depending on a slash at the end of the given URL.
 		$url_count = 1;
 		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;

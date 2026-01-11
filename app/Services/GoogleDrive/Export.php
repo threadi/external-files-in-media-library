@@ -84,7 +84,7 @@ class Export extends Export_Base {
 		// bail if file path could not be loaded.
 		if( ! is_string( $file_path ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Could not load file path for given attachment id.', 'external-files-in-media-library' ), $target, 'error' );
+			Log::get_instance()->create( __( 'Could not load file path for given attachment ID.', 'external-files-in-media-library' ), $target, 'error' );
 
 			// do nothing more.
 			return false;
@@ -171,7 +171,7 @@ class Export extends Export_Base {
 			// get the file ID.
 			$file_id = $result->id;
 
-			// save the used file id.
+			// save the used file ID.
 			update_post_meta( $attachment_id, 'efml_google_drive_file_id', $file_id );
 
 			// return the public URL for this file.

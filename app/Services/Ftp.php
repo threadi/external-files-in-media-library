@@ -151,7 +151,7 @@ class Ftp extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -159,7 +159,7 @@ class Ftp extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -167,7 +167,7 @@ class Ftp extends Service_Base implements Service {
 			return;
 		}
 
-		// add setting for button to connect.
+		// add setting for the button to connect.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
 			// add setting to show also shared files.
 			$setting = $settings_obj->add_setting( 'efml_ftp_server' );
@@ -231,7 +231,7 @@ class Ftp extends Service_Base implements Service {
 	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
-		// prepend directory with ftp:// if that is not given.
+		// prepend a directory with ftp:// if that is not given.
 		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
 			$directory = 'ftp://' . $directory;
 		}
@@ -243,11 +243,11 @@ class Ftp extends Service_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create an error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Given path is not an FTP-URL.', 'external-files-in-media-library' ) );
 			$this->add_error( $error );
 
 			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a FTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
+			Log::get_instance()->create( __( 'Given path is not an FTP-URL.', 'external-files-in-media-library' ), $directory, 'error' );
 
 			// do nothing more.
 			return array();
@@ -295,7 +295,7 @@ class Ftp extends Service_Base implements Service {
 
 		// bail if path could not be read.
 		if ( isset( $parse_url['path'] ) ) {
-			// get parent_dir path.
+			// get "parent_dir" path.
 			$parent_dir = trailingslashit( $parse_url['path'] );
 		}
 
@@ -355,7 +355,7 @@ class Ftp extends Service_Base implements Service {
 			if ( $is_dir ) {
 				$listing['dirs'][ trailingslashit( trailingslashit( $directory ) . $item_name ) ] = $entry;
 			} else {
-				// get content type of this file.
+				// get content-type of this file.
 				$mime_type = wp_check_filetype( $path );
 
 				// bail if file is not allowed.
@@ -392,7 +392,7 @@ class Ftp extends Service_Base implements Service {
 									// save the thumb.
 									$results = $editor->save( $upload_dir . '/' . basename( $item_name ) );
 
-									// add thumb to output if it does not result in an error.
+									// add the thumb to output if it does not result in an error.
 									if ( ! is_wp_error( $results ) ) {
 										$thumbnail = '<img src="' . esc_url( $upload_url . $results['file'] ) . '" alt="" class="filepreview">';
 									}
@@ -493,10 +493,10 @@ class Ftp extends Service_Base implements Service {
 			return false;
 		}
 
-		// set the directory.
+		// override the directory.
 		$directory = $this->fields['server']['value'];
 
-		// prepend directory with ftp:// if that is not given.
+		// prepend the directory with ftp:// if that is not given.
 		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
 			$directory = 'ftp://' . $directory;
 		}
@@ -508,7 +508,7 @@ class Ftp extends Service_Base implements Service {
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Specified URL is not a FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_ftp', __( 'Specified URL is not an FTP-path! Should be one of sftp:// or ftps://.', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -576,7 +576,7 @@ class Ftp extends Service_Base implements Service {
 			return $result;
 		}
 
-		// get content type of this file.
+		// get content-type of this file.
 		$mime_type = wp_check_filetype( $path );
 
 		// return whether this file type is allowed (false) or not (true).
@@ -643,7 +643,7 @@ class Ftp extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
-		// bail if directory is set on object.
+		// bail if directory is set on the object.
 		if ( ! empty( $this->directory ) ) {
 			return $this->directory;
 		}
@@ -660,7 +660,7 @@ class Ftp extends Service_Base implements Service {
 	/**
 	 * Show option to connect to FTP on the user profile.
 	 *
-	 * @param WP_User $user The WP_User object for the actual user.
+	 * @param WP_User $user The "WP_User" object for the actual user.
 	 *
 	 * @return void
 	 */
@@ -712,7 +712,7 @@ class Ftp extends Service_Base implements Service {
 		);
 
 		/**
-		 * Filter the list of possible user settings for FTP.
+		 * Filter the list of possible user settings for the FTP.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
@@ -721,7 +721,7 @@ class Ftp extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the values depending on actual mode.
+	 * Return the values depending on the actual mode.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -742,7 +742,7 @@ class Ftp extends Service_Base implements Service {
 
 		// save it user-specific, if this is enabled.
 		if ( $this->is_mode( 'user' ) ) {
-			// get the user set on object.
+			// get the user set on the object.
 			$user = $this->get_user();
 
 			// bail if user is not available.

@@ -58,7 +58,7 @@ class File {
 	private int $filesize = 0;
 
 	/**
-	 * The mime type of the file.
+	 * The mime-type of the file.
 	 *
 	 * @var string
 	 */
@@ -70,7 +70,7 @@ class File {
 	 * @param int $attachment_id    The ID of the attachment.
 	 */
 	public function __construct( int $attachment_id = 0 ) {
-		// set the ID in object.
+		// set the ID in the object.
 		$this->set_id( $attachment_id );
 	}
 
@@ -101,7 +101,7 @@ class File {
 	 * @return string
 	 */
 	public function get_url( bool $unproxied = false ): string {
-		// if external URL not known in object, get it now.
+		// if external URL not known in the object, get it now.
 		if ( empty( $this->url ) ) {
 			$url = get_post_meta( $this->get_id(), EFML_POST_META_URL, true );
 
@@ -121,7 +121,7 @@ class File {
 
 		$instance = $this;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$true = apply_filters_deprecated( 'eml_file_prevent_proxied_url', array( true, $instance ), '5.0.0', 'efml_file_prevent_proxied_url' );
 
 		/**
@@ -152,10 +152,10 @@ class File {
 	 * @return void
 	 */
 	public function set_url( string $url ): void {
-		// set in DB.
+		// set in the database.
 		update_post_meta( $this->get_id(), EFML_POST_META_URL, $url );
 
-		// set in object.
+		// set in the object.
 		$this->url = $url;
 	}
 
@@ -189,14 +189,14 @@ class File {
 	 * @return void
 	 */
 	public function set_title( string $title ): void {
-		// set in DB.
+		// set in the database.
 		$query = array(
 			'ID'         => $this->get_id(),
 			'post_title' => $title,
 		);
 		wp_update_post( $query );
 
-		// set in object.
+		// set in the object.
 		$this->title = $title;
 	}
 
@@ -233,7 +233,7 @@ class File {
 	 * @return void
 	 */
 	public function set_mime_type( string $mime_type ): void {
-		// set in DB.
+		// set in the database.
 		$query = array(
 			'ID'             => $this->get_id(),
 			'post_mime_type' => $mime_type,
@@ -256,14 +256,14 @@ class File {
 	 * @return bool
 	 */
 	public function is_available(): bool {
-		// get value from DB.
+		// get value from the database.
 		if ( empty( $this->availability ) ) {
 			$this->availability = 1 === absint( get_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, true ) );
 		}
 
 		$instance = $this;
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$this->availability = apply_filters_deprecated( 'eml_file_availability', array( $this->availability, $instance ), '5.0.0', 'efml_file_availability' );
 
 		/**
@@ -285,10 +285,10 @@ class File {
 	 * @return void
 	 */
 	public function set_availability( bool $availability ): void {
-		// set in DB.
+		// set in the database.
 		update_post_meta( $this->get_id(), EFML_POST_META_AVAILABILITY, $availability );
 
-		// set in object.
+		// set in the object.
 		$this->availability = $availability;
 	}
 
@@ -302,7 +302,7 @@ class File {
 	}
 
 	/**
-	 * Return whether the mime type of this file is allowed (true) or not (false).
+	 * Return whether the mime-type of this file is allowed (true) or not (false).
 	 *
 	 * @return bool
 	 */
@@ -331,7 +331,7 @@ class File {
 			return $this->filesize;
 		}
 
-		// get value from DB.
+		// get value from the database.
 		$meta = wp_get_attachment_metadata( $this->get_id(), true );
 
 		// bail if file size is not in meta.
@@ -363,7 +363,7 @@ class File {
 		// update the meta data.
 		wp_update_attachment_metadata( $this->get_id(), $meta );
 
-		// set the file size in object.
+		// set the file size in the object.
 		$this->filesize = $file_size;
 	}
 
@@ -402,12 +402,12 @@ class File {
 	 * @return void
 	 */
 	public function set_is_local_saved( bool $locally_saved ): void {
-		// set in DB.
+		// set in the database.
 		update_post_meta( $this->get_id(), 'eml_locally_saved', $locally_saved );
 	}
 
 	/**
-	 * Remove the marker for locally saved external file.
+	 * Remove the marker for a locally saved file.
 	 *
 	 * @return void
 	 */
@@ -423,7 +423,7 @@ class File {
 	 * @return bool
 	 */
 	public function is_cached(): bool {
-		// bail if file is not marked as cached in DB.
+		// bail if file is not marked as cached in the database.
 		if ( empty( get_post_meta( $this->get_id(), 'eml_proxied', true ) ) ) {
 			return false;
 		}
@@ -441,7 +441,7 @@ class File {
 	}
 
 	/**
-	 * Add file to cache for proxy.
+	 * Add the file to cache for proxy.
 	 *
 	 * @return void
 	 */
@@ -515,7 +515,7 @@ class File {
 		// delete the temporary file.
 		$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
-		// set path incl. md5-filename and extension.
+		// set path including md5-filename and extension.
 		$path = $this->get_cache_file();
 
 		// save the given content to the path.
@@ -603,7 +603,7 @@ class File {
 	}
 
 	/**
-	 * Save the fields on object.
+	 * Save the fields on the object.
 	 *
 	 * @param array<string,array<string,mixed>> $fields The fields.
 	 *
@@ -615,7 +615,7 @@ class File {
 			return;
 		}
 
-		// save as encrypted value in db.
+		// save as encrypted value in the database.
 		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
 	}
 
@@ -755,7 +755,7 @@ class File {
 		// bail if no temp file could be loaded.
 		if ( ! is_string( $tmp_file ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Temporary file could not be saved.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+			Log::get_instance()->create( __( 'The temporary file could not be saved.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
 			// do nothing more.
 			return false;
@@ -822,7 +822,7 @@ class File {
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 		if ( ! empty( $meta_data['sizes'] ) ) {
 			foreach ( $meta_data['sizes'] as $meta_file ) {
-				// bail if meta_file is not an array.
+				// bail if "meta_file" is not an array.
 				if ( ! is_array( $meta_file ) ) {
 					continue;
 				}
@@ -993,7 +993,7 @@ class File {
 
 		// loop through the sizes.
 		foreach ( $image_meta_data['sizes'] as $size_data ) {
-			// bail if size_data is not an array.
+			// bail if "size_data" is not an array.
 			if ( ! is_array( $size_data ) ) {
 				continue;
 			}
@@ -1041,7 +1041,7 @@ class File {
 	/**
 	 * Return the import datetime.
 	 *
-	 * Hint: this is not the WP_Post date.
+	 * Hint: this is not the "WP_Post" date.
 	 *
 	 * @return string
 	 */

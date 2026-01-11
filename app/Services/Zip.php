@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle the support of files from ZIP as directory listing.
+ * File to handle the support of files from a ZIP as directory listing.
  *
  * Handling of ZIPs per request:
  * - URL/path ending with "/" is a ZIP that should be extracted and its files should be imported in media library
@@ -33,7 +33,7 @@ use WP_Error;
 use WP_Post;
 
 /**
- * Object to handle support of files from ZIP as directory listing.
+ * Object to handle support of files from a ZIP as directory listing.
  */
 class Zip extends Service_Base implements Service {
 
@@ -169,7 +169,7 @@ class Zip extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -177,7 +177,7 @@ class Zip extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -203,7 +203,7 @@ class Zip extends Service_Base implements Service {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox();
-		$field->set_title( __( 'Allow upload of .tar.gz', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Allow the upload of .tar.gz', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled you will be able to import .tar.gz and .gz files as external files.', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
 		$field->set_readonly( $this->is_disabled() );
@@ -318,7 +318,7 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return list of files in zip to import in media library.
+	 * Return list of files in a ZIP to import in media library.
 	 *
 	 * The file must be extracted in tmp directory to import them as usual URLs.
 	 *
@@ -457,7 +457,7 @@ class Zip extends Service_Base implements Service {
 
 		// check each zip object.
 		foreach ( $this->get_zip_objects() as $zip_obj ) {
-			// bail if it is not usable.
+			// bail if it is unusable.
 			if ( ! $zip_obj->is_usable() ) {
 				continue;
 			}
@@ -564,7 +564,7 @@ class Zip extends Service_Base implements Service {
 		// add action to extract this file in media library.
 		$actions['eml-extract-zip'] = '<a href="#" class="efml-import-dialog" data-settings="' . esc_attr( Helper::get_json( $settings ) ) . '">' . __( 'Extract file', 'external-files-in-media-library' ) . '</a>';
 
-		// create link to open this file.
+		// create the link to open this file.
 		$url = add_query_arg(
 			array(
 				'page'   => 'efml_local_directories',
@@ -604,7 +604,7 @@ class Zip extends Service_Base implements Service {
 		// change the title.
 		$dialog['title'] = __( 'Unzip this file in your media library', 'external-files-in-media-library' );
 
-		// add marker for unzip task (this allows the magic).
+		// add a marker for the unzip task (this allows the magic).
 		$dialog['texts'][] = '<input type="hidden" name="unzip" value="1" />';
 
 		// return resulting dialog.
@@ -771,7 +771,7 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the zip object which can be used for this zip file.
+	 * Return the ZIP object, which can be used for this zip file.
 	 *
 	 * @param string $url The file URL.
 	 *
@@ -836,7 +836,7 @@ class Zip extends Service_Base implements Service {
 				continue;
 			}
 
-			// add object to the list.
+			// add the object to the list.
 			$zip_objects[] = $obj;
 		}
 
@@ -905,7 +905,7 @@ class Zip extends Service_Base implements Service {
 		</li>
 		<?php
 
-		// create link to open this file.
+		// create the link to open this file.
 		$url = add_query_arg(
 			array(
 				'page'   => 'efml_local_directories',

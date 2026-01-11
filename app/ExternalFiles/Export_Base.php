@@ -1,6 +1,6 @@
 <?php
 /**
- * File for object to handle base tasks for export.
+ * File for the object to handle base tasks for export.
  *
  * @package external-files-in-media-library
  */

@@ -12,11 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
-use ExternalFilesInMediaLibrary\Services\GoogleDrive;
-use ExternalFilesInMediaLibrary\Services\GoogleDrive\Protocol;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_User;
 
@@ -94,9 +91,9 @@ class Synchronization extends Schedules_Base {
 		// get the term data.
 		$term_data = Taxonomy::get_instance()->get_entry( $args['term_id'] );
 
-		// bail if term_data could not be loaded.
+		// bail if the "term_data" could not be loaded.
 		if ( empty( $term_data ) ) {
-			Log::get_instance()->create( __( 'To synchronize external directory does not have any configuration.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
+			Log::get_instance()->create( __( 'The external directory does not have any configuration for synchronization.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
 			return;
 		}
 

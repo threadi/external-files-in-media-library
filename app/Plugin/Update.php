@@ -81,7 +81,7 @@ class Update {
 		// get installed plugin-version (version of the actual files in this plugin).
 		$installed_plugin_version = EFML_PLUGIN_VERSION;
 
-		// get db-version (version which was last installed).
+		// get db-version (version, which was last installed).
 		$db_plugin_version = get_option( 'efmlVersion', '1.0.0' );
 
 		// bail if version is not a string.
@@ -100,19 +100,19 @@ class Update {
 			$this->version400();
 			$this->version500();
 
-			// save new plugin-version in DB.
+			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
 		}
 	}
 
 	/**
-	 * To run on update to version 2.0.0 or newer.
+	 * To run on the update to version 2.0.0 or newer.
 	 *
 	 * @return void
 	 */
 	private function version200(): void {
 		if ( ! get_option( 'efmlVersion', false ) ) {
-			// add option for version of this plugin.
+			// add option for the version of this plugin.
 			add_option( 'efmlVersion', '', '', true );
 		}
 
@@ -121,7 +121,7 @@ class Update {
 	}
 
 	/**
-	 * To run on update to version 2.0.1 or newer.
+	 * To run on the update to version 2.0.1 or newer.
 	 *
 	 * @return void
 	 */
@@ -129,7 +129,7 @@ class Update {
 		// get the configured roles.
 		$roles = get_option( 'eml_allowed_roles' );
 
-		// check for array.
+		// check for an array.
 		if ( ! is_array( $roles ) ) {
 			$roles = array();
 		}
@@ -145,7 +145,7 @@ class Update {
 	}
 
 	/**
-	 * To run on update to version 3.0.0 or newer.
+	 * To run on the update to version 3.0.0 or newer.
 	 *
 	 * @return void
 	 */
@@ -156,7 +156,7 @@ class Update {
 		// update database-table for queues.
 		Queue::get_instance()->install();
 
-		// set proxy marker for all files where proxy is enabled.
+		// set the proxy marker for all files where proxy is enabled.
 		foreach ( Files::get_instance()->get_files() as $external_file_obj ) {
 			// bail if proxy is not enabled for this file.
 			if ( ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
@@ -172,7 +172,7 @@ class Update {
 	}
 
 	/**
-	 * To run on update to version 4.0.0 or newer.
+	 * To run on the update to version 4.0.0 or newer.
 	 *
 	 * @return void
 	 */
@@ -196,7 +196,7 @@ class Update {
 		$file_check_event_obj->reset();
 
 		/**
-		 * Update the interval name for queue.
+		 * Update the interval name for the queue.
 		 */
 		// get the queue schedule object.
 		$queue_event_obj = new Schedules\Queue();
@@ -215,7 +215,7 @@ class Update {
 	}
 
 	/**
-	 * To run on update to version 5.0.0 or newer.
+	 * To run on the update to version 5.0.0 or newer.
 	 *
 	 * @return void
 	 */
@@ -254,7 +254,7 @@ class Update {
 		$terms = new WP_Term_Query( $query );
 		if ( is_array( $terms->terms ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			foreach ( $terms->terms as $term ) {
-				// bail if this is not a WP_Term.
+				// bail if this is not a "WP_Term" object.
 				if ( ! $term instanceof WP_Term ) {
 					continue;
 				}

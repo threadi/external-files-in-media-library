@@ -65,8 +65,10 @@ class Statistics {
 		// use our own hooks.
 		add_action( 'efml_after_file_save', array( $this, 'add_file_count' ), 10, 0 );
 		add_action( 'efml_after_file_save', array( $this, 'add_file_sizes' ) );
-		add_action( 'efml_file_delete', array( $this, 'sub_file_count' ) );
+		add_action( 'efml_file_delete', array( $this, 'sub_file_count' ), 10, 0 );
 		add_action( 'efml_file_delete', array( $this, 'sub_file_sizes' ) );
+		add_action( 'efml_real_import_local', array( $this, 'sub_file_count' ), 10, 0 );
+		add_action( 'efml_real_import_local', array( $this, 'sub_file_sizes' ) );
 
 		// add actions.
 		add_action( 'admin_action_eml_recalc_files', array( $this, 'recalc_files_by_request' ) );
@@ -89,12 +91,12 @@ class Statistics {
 			return;
 		}
 
-		// add tab.
+		// add a tab.
 		$tab = $settings_page->add_tab( 'eml_statistics', 110 );
 		$tab->set_title( __( 'Statistics', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section_files = $tab->add_section( 'section_file_statistics', 10 );
 		$section_files->set_title( __( 'Files', 'external-files-in-media-library' ) );
 

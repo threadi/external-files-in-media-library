@@ -589,7 +589,7 @@ class S3 extends Service_Base implements Service {
 			$field = new Text();
 			$field->set_title( __( 'Access key', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ) );
+			$field->set_description( sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ) );
 			$field->set_placeholder( __( 'The access key', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
 
@@ -777,7 +777,7 @@ class S3 extends Service_Base implements Service {
 			's3_access_key' => array(
 				'label'       => __( 'Access key', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ),
+				'description' => sprintf( __( 'Get your access key as described <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://docs.aws.amazon.com/solutions/latest/data-transfer-hub/set-up-credentials-for-amazon-s3.html' ),
 				'field'       => 'text',
 				'placeholder' => __( 'The access key', 'external-files-in-media-library' ),
 			),

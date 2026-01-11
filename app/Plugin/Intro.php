@@ -5,7 +5,7 @@
  * After fresh installation of this plugin it starts via button click:
  * 1. Redirect to media-new.php
  * 2. Click on "External files" there.
- * 3. Add URL for example file in field.
+ * 3. Add URL for example file in the field.
  * 4. Click on "Add URLs"
  * 5. Show hint for different sources for files.
  *
@@ -153,7 +153,7 @@ class Intro {
 	 * @return void
 	 */
 	public function add_js(): void {
-		// load these files only if:
+		// Load these files only if:
 		// - we are in the settings of our own plugin.
 		// - or if welcome hint is not hidden.
 		$use_it = true;
@@ -174,7 +174,7 @@ class Intro {
 			return;
 		}
 
-		// embed necessary scripts for dialog.
+		// embed necessary scripts for the dialog.
 		$path = Helper::get_plugin_path() . 'node_modules/intro.js/minified/';
 		$url  = Helper::get_plugin_url() . 'node_modules/intro.js/minified/';
 
@@ -231,7 +231,7 @@ class Intro {
 			$url_2 = $this->get_example_pdf_url() . 'example_de.pdf';
 		}
 
-		// create the forward URL after end of intro.
+		// create the forward URL after the end of the intro.
 		$url_3 = get_admin_url() . 'media-new.php';
 
 		// add php-vars to our js-script.
@@ -252,7 +252,7 @@ class Intro {
 				'step_1_title'        => __( 'Intro', 'external-files-in-media-library' ),
 				'step_1_intro'        => __( 'Thank you for installing "External Files in Media Library". We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
 				'step_2_title'        => __( 'Start adding URLs', 'external-files-in-media-library' ),
-				'step_2_intro'        => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait a moment.', 'external-files-in-media-library' ),
+				'step_2_intro'        => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait for a moment.', 'external-files-in-media-library' ),
 				'step_3_title'        => __( 'Open import dialog', 'external-files-in-media-library' ),
 				'step_3_intro'        => __( 'Click here to get the import dialog for external files. We will do this for you now.', 'external-files-in-media-library' ),
 				'step_4_title'        => __( 'Add your URL', 'external-files-in-media-library' ),

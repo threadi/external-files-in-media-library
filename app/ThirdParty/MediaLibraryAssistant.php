@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle support for plugin "Media Library Assistant".
+ * File to handle support for the plugin "Media Library Assistant".
  *
  * @package external-files-in-media-library
  */
@@ -263,7 +263,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$categories = isset( $_POST['fields']['mla_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['mla_categories'] ) ) : array();
 
-		// if folderly_categories is empty, just remove the setting.
+		// if categories are empty, just remove the setting.
 		if ( empty( $categories ) ) {
 			delete_term_meta( $term_id, 'mla_categories' );
 		} else {
@@ -274,7 +274,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$tags = isset( $_POST['fields']['mla_tags'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['mla_tags'] ) ) : array();
 
-		// if folderly_categories is empty, just remove the setting.
+		// if tags are empty, just remove the setting.
 		if ( empty( $tags ) ) {
 			delete_term_meta( $term_id, 'mla_tags' );
 		} else {
@@ -303,7 +303,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move the external file to a configured category after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -330,7 +330,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Move external file to a configured category after sync.
+	 * Move the external file to a configured category after sync.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -357,7 +357,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *
@@ -379,7 +379,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
-	 * Save external file to a configured categories after import.
+	 * Save the external file to a configured categories after import.
 	 *
 	 * @param File $external_file_obj The external file object.
 	 *

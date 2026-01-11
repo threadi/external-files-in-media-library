@@ -287,7 +287,7 @@ class Import_Export extends Extension_Base {
 			get_admin_url() . 'admin.php'
 		);
 
-		// create dialog.
+		// create the dialog.
 		$dialog = array(
 			'className' => 'efml',
 			/* translators: %1$s will be replaced by the file name. */
@@ -351,7 +351,7 @@ class Import_Export extends Extension_Base {
 			'fields'  => $external_file_obj->get_fields(),
 		);
 
-		// create filename for JSON-download-file.
+		// create the filename for the JSON-download-file.
 		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_external_file_' . basename( get_the_title( $post_id ) ) . '.json';
 		/**
 		 * File the filename for JSON-download of single file.

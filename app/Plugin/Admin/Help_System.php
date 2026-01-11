@@ -95,7 +95,7 @@ class Help_System {
 	 * @return void
 	 */
 	private function add_sidebar( WP_Screen $screen ): void {
-		// get content for sidebar.
+		// get content for the sidebar.
 		$sidebar_content = '<p><strong>' . __( 'Question not answered?', 'external-files-in-media-library' ) . '</strong></p><p><a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank">' . esc_html__( 'Ask in our forum', 'external-files-in-media-library' ) . '</a></p>';
 
 		// add help sidebar with the given content.
@@ -110,7 +110,7 @@ class Help_System {
 	private function get_help_tabs(): array {
 		$list = array();
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list = apply_filters_deprecated( 'eml_help_tabs', array( $list ), '5.0.0', 'efml_help_tabs' );
 
 		/**

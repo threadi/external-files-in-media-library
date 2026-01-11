@@ -11,7 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * The object which handles schedules.
+ * The object, which handles schedules.
  */
 class Schedules {
 	/**
@@ -75,7 +75,7 @@ class Schedules {
 				continue;
 			}
 
-			// set attributes in object, if available.
+			// set attributes in an object, if available.
 			if ( ! empty( $event['settings'][ array_key_first( $event['settings'] ) ]['args'] ) ) {
 				$schedule_obj->set_args( $event['settings'][ array_key_first( $event['settings'] ) ]['args'] );
 			}
@@ -94,12 +94,12 @@ class Schedules {
 		// get our own events from events list in WordPress.
 		$our_events = $this->get_wp_events();
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$our_events = apply_filters_deprecated( 'eml_schedule_our_events', array( $our_events ), '5.0.0', 'efml_schedule_our_events' );
 
 		/**
 		 * Filter the list of our own events,
-		 * e.g. to check if all which are enabled in setting are active.
+		 * e.g., to check if all, which are enabled in setting are active.
 		 *
 		 * @since 2.0.0 Available since 2.0.0.
 		 *
@@ -109,7 +109,7 @@ class Schedules {
 	}
 
 	/**
-	 * Check the available events with the ones which should be active.
+	 * Check the available events with the ones, which should be active.
 	 *
 	 * Re-installs missing events. Log this event.
 	 *
@@ -120,7 +120,7 @@ class Schedules {
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function check_events( array $our_events ): array {
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$false = apply_filters_deprecated( 'eml_disable_cron_check', array( false ), '5.0.0', 'efml_disable_cron_check' );
 
 		/**
@@ -158,7 +158,7 @@ class Schedules {
 			// get the object.
 			$obj = new $object_name();
 
-			// bail if object is not Schedules_Base.
+			// bail if object is not "Schedules_Base".
 			if ( ! $obj instanceof Schedules_Base ) {
 				continue;
 			}
@@ -207,7 +207,7 @@ class Schedules {
 		foreach ( $this->get_schedule_object_names() as $obj_name ) {
 			$schedule_obj = new $obj_name();
 
-			// bail if this is not a Schedules_Base object.
+			// bail if this is not a "Schedules_Base" object.
 			if ( ! $schedule_obj instanceof Schedules_Base ) {
 				continue;
 			}
@@ -227,7 +227,7 @@ class Schedules {
 		foreach ( $this->get_schedule_object_names() as $obj_name ) {
 			$schedule_obj = new $obj_name();
 
-			// bail if this is not a Schedules_Base object.
+			// bail if this is not a "Schedules_Base" object.
 			if ( ! $schedule_obj instanceof Schedules_Base ) {
 				continue;
 			}
@@ -249,7 +249,7 @@ class Schedules {
 			'\ExternalFilesInMediaLibrary\Plugin\Schedules\Queue',
 		);
 
-		// show deprecated warning for old hook name.
+		// show deprecated warning for the old hook name.
 		$list_of_schedules = apply_filters_deprecated( 'eml_schedules', array( $list_of_schedules ), '5.0.0', 'efml_schedules' );
 
 		/**
@@ -309,7 +309,7 @@ class Schedules {
 	}
 
 	/**
-	 * Run check for cronjobs in frontend, if enabled.
+	 * Run check for cronjobs in the frontend, if enabled.
 	 *
 	 * @return void
 	 */
