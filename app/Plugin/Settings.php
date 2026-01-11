@@ -218,6 +218,13 @@ class Settings {
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 
+		// the copyright tab.
+		$copyright_tab = $settings_page->add_tab( 'copyright', 900 );
+		$copyright_tab->set_title( '&nbsp;' );
+		$copyright_tab->set_tab_class( 'copyright' );
+		$copyright_tab->set_hide_save( true );
+		$copyright_tab->set_callback( array( $this, 'show_copyright' ) );
+
 		// the helper tab.
 		$helper_tab = $settings_page->add_tab( 'eml_helper', 1000 );
 		$helper_tab->set_url( Helper::get_plugin_support_url() );
@@ -856,5 +863,55 @@ class Settings {
 
 		// forward user to dashboard.
 		wp_safe_redirect( get_admin_url() );
+	}
+
+	/**
+	 * Show copyright hints.
+	 *
+	 * @return void
+	 */
+	public function show_copyright(): void {
+		?>
+		<div class="wrap">
+			<table class="form-table" role="presentation">
+				<tr>
+					<th><img src="<?php echo esc_url( Helper::get_plugin_url() . 'gfx/dropbox_icon.svg' ); ?>" alt=""></th>
+					<td>
+						<?php
+							/* translators: %1$s will be replaced by a URL. */
+							echo wp_kses_post( sprintf( __( 'The Dropbox logo is a trademark of <a href="%1$s" target="_blank">Dropbox International Unlimited Company (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/official-teams-page' ) );
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th><span class="dashicons dashicons-google"></span></th>
+					<td>
+						<?php
+						/* translators: %1$s will be replaced by a URL. */
+						echo wp_kses_post( sprintf( __( 'The Google logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc. (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://abc.xyz' ) );
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th><span class="dashicons dashicons-amazon"></span></th>
+					<td>
+						<?php
+						/* translators: %1$s will be replaced by a URL. */
+						echo wp_kses_post( sprintf( __( 'The Amazon logo is a trademark of <a href="%1$s" target="_blank">Amazon.com, Inc.  (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.amazon.com' ) );
+						?>
+					</td>
+				</tr>
+				<tr>
+					<th><span class="dashicons dashicons-youtube"></span></th>
+					<td>
+						<?php
+						/* translators: %1$s will be replaced by a URL. */
+						echo wp_kses_post( sprintf( __( 'The YouTube logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc.  (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://abc.xyz' ) );
+						?>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<?php
 	}
 }

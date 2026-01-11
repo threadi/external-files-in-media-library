@@ -357,7 +357,7 @@ class Availability extends Extension_Base {
 
 			// remove the schedule.
 			$check_files_schedule->delete();
-		} elseif( $value !== $check_files_schedule->get_interval() ) {
+		} elseif ( $value !== $check_files_schedule->get_interval() ) {
 			// log event.
 			/* translators: %1$s and %2$s will be replaced by intervall names. */
 			Log::get_instance()->create( sprintf( __( 'Availability check schedule interval has changed from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $check_files_schedule->get_interval() . '</em>', '<em>' . $value . '</em>' ), '', 'info', 2 );

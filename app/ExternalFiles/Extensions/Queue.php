@@ -215,7 +215,7 @@ class Queue extends Extension_Base {
 
 			// remove schedule.
 			$queue_schedule->delete();
-		} elseif( $value !== $queue_schedule->get_interval() ) {
+		} elseif ( $value !== $queue_schedule->get_interval() ) {
 			// log event.
 			/* translators: %1$s and %2$s will be replaced by intervall names. */
 			Log::get_instance()->create( sprintf( __( 'Queue schedule interval has changed from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $queue_schedule->get_interval() . '</em>', '<em>' . $value . '</em>' ), '', 'info', 2 );

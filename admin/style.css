@@ -521,3 +521,31 @@ body.settings_page_eml_settings .ui-sortable-handle:before {
 body .etfw-transient h3 img {
 	width: 42px;
 }
+
+body.settings_page_eml_settings .nav-tab.copyright { position: relative;z-index: 1 }
+
+body.settings_page_eml_settings .nav-tab.copyright:after {
+	content: '®';
+	font-size: 22px;
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	bottom: 0;
+	z-index: 1;
+	text-align: center;
+}
+
+body.settings_page_eml_settings {
+	.tab-content img {
+		width: 42px;
+	}
+	td {
+		vertical-align: top;
+	}
+	th {
+		.dashicons {
+			font-size: 42px;
+		}
+	}
+}
