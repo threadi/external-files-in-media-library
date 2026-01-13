@@ -152,14 +152,25 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
+- Added intro for first time users of this plugin
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
-- Added DropBox support for import of external files into your media library
+- Added support for AWS S3 as external source of files
+- Added support for DropBox as external source of files
+- Added support for Google Cloud Storage as external source of files
+- Added support for WebDav as external source of files, e.g. usable with your Nextcloud
+- Added hook to import external URLs through third party plugins (for custom development)
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
+- Added option to export each newly uploaded file in media library to external sources which are reachable via web
+-> supported for Dropbox, FTP, Google Drive, Google Cloud Storage, local, AWS S3 and WebDav
+-> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
+- Added option to export each file in media library to external source as described above
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
-- Added these 2 new options also as parameter on WP CLI command to import URLs
+- Added option to choose a specific date for each file to import
+- Added paginated AJAX-import to prevent timeouts, supported for AWS S3 and Google Drive
+- Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added option to choose which of these extensions should be available for file handlings
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
@@ -168,14 +179,52 @@ WordPress website.
 - Added new table column in media library which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
-- Added support for custom Download Lists of the plugin "Download Lists with icons" incl. sync of them
+- Added check for compatibility with WordPress Plugin Checker on every release
+- Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
+- Added support for plugin "Folders" to import external files in its folders incl. sync of them
+- Added support for plugin "Media Library Organizer" to import external files in its categories incl. sync of them
+- Added support for plugin "iFolders" to import external files in its folders incl. sync of them
+- Added support for plugin "Real Media Library Lite" to import external files in its folders incl. sync of them
+- Added support for plugin "Advanced Media Offloader" to prevent the offloading of already external files
+- Added support for plugin "Media Library Assistant" to import external files in its folders incl. sync of them
+- Added compatibility with plugin "Media Cloud Sync"
+-> do not sync external files with external clouds
+-> do sync real imported external files
+- Added new file types "PDF" and "ZIP" for better supporting the handling of these files
+- Added info about external files in attachment modal
+- Added option to use the files dates during synchronization
+- Added option to import real files during synchronization (they are just imported if they are no duplicate)
+- Added privacy hint as checkbox in every import dialog, configurable in user settings
+- Added WordPress Importer entry
+- Added info in admin footer for pages provided by the plugin or for which it makes extensions on the called pages
+- Added support for plugin "WP Extra File Types" to enabled additional possible file types to use as external files
+- Added option to load upload directory via local service
+- Added option to use our plugin name in each HTTP-header User Agent (default enabled)
+- Added success sound after import has been run (can be disabled)
+- Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
+- Added support to import Google Drive files via WP CLI (without any timeouts)
+- Added option to unzip from external password protected ZIP-files
+- Added options to open and extract zip-files which are already saved in media library
+- Added support to open and extract multiple zip formats: .zip, .gz, .tar.gz
+- Added support for .avif files
+- Added option to show what will be done in import dialog
+- Added support for filenames in other writing systems (like Farsi)
+- Added option to hide the review begging
+- Added new extension to allow import and export of external files in JSON-format (default disabled)
+- Added export and import of settings for external sources
+- A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
+- Added PHP unit tests for essential functions of this plugin
+- Added SBOM generation on GitHub for each release
+- Changed ALL hooks to prefix with 4 characters to match WordPress Coding Standards
+- Compatibility with WordPress 6.9
+- Renamed "Directory Archive" to "Your external sources"
 - Show processed file URLs during manual started synchronization
 - Hide import button for unsupported files in directory archive
 - Small optimizations on multiple codes
-- Using fallback to default interval for each of our events if setting of not available
+- Using fallback to default interval for each our events if setting of not available
 - Show hide and rating on directory archive listing
 - Directory reload no shows the progress
-- Optimized ZIP service
+- Optimized ZIP service: no also allows to extract complete ZIP files in media library
 - Updated some unfavorable text descriptions
 - Updated dependencies
 - Active folder in directory listing is now marked
@@ -193,6 +242,23 @@ WordPress website.
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 - Hosting of files can now only be changed by users with the capability to upload external files
+- Synced files will be linked with its linked source in media library
+- Prevent deletion of sources which has active synced or exported files
+- Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
+- Using new transient object in backend for hints and errors
+- Cleanup the return value for external files via get_attached_file()
+- File protocol uses now WP_Filesystem for each file interaction
+- Enabled search field for URLs in logs
+- Dropbox file URLs can now be imported without any API key if they are public available
+- External sources are now saved user-specific
+  -> only administrators see all entries
+  -> advanced option allows to show all entries for alle users
+- Settings for most services are now saved on user and not global, but can be set to global
+- External sources can now get an individual name
+- ZIP files can not also be opened via any supported TCP protocol
+- Save used service on each external file
+- Local path will be sanitized
+- Optimized URL shortener
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
 - Fixed wrong link to queue list in settings and in dialog
 - Fixed missing file on FTP listing if for previous file not thumbnail could be created
@@ -200,6 +266,12 @@ WordPress website.
 - Fixed disabling of thumbnails on GoogleDrive view
 - Fixed usage of ZIP service on single uploaded file
 - Fixed wrong capability to access the directory archive for non-administrator users
+- Fixed disabling of check files event
+- Fixed detection of correct file type during import process
+- Fixed potential error with attached files if they do not exist
+- Fixed missing visible progress-bar during synchronization
+- Fixed missing saving of actual availability of each file (all were available any time)
+- Fixed REST API endpoints to not using WP_Error for responses
 - Removed hook "eml_import_fields" as we do not use fields in this form anymore
 - Removed hook "eml_import_url_after" as it could be better used via the hook "eml_after_file_save"
 
