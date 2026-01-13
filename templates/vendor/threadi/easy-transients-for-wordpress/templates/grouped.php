@@ -8,6 +8,9 @@
  * @package easy-transients-for-wordpress
  */
 
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
 use easyTransientsForWordPress\Transient;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 

@@ -14,10 +14,8 @@
  * @package external-files-in-media-library
  */
 
-// Exit if accessed directly.
-if ( ! defined( 'ABSPATH' ) ) {
-	exit;
-}
+// prevent direct access.
+defined( 'ABSPATH' ) || exit;
 
 // do nothing if PHP-version is not 8.1 or newer.
 if ( PHP_VERSION_ID < 80100 ) { // @phpstan-ignore if.alwaysFalse,smaller.alwaysFalse
