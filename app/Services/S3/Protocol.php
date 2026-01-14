@@ -164,12 +164,12 @@ class Protocol extends Protocol_Base {
 						continue;
 					}
 
-					// set counter for files which has been loaded from Google Drive.
+					// set counter for files, which has been loaded from AWS S3.
 					$loaded_files = 0;
 
 					// add each file to the list.
 					foreach ( $dir_data['files'] as $file ) {
-						// bail if this an AJAX-request and the file already exist in media library.
+						// bail if this an AJAX-request, and the file already exist in media library.
 						if ( wp_doing_ajax() && Files::get_instance()->get_file_by_title( $file['title'] ) ) {
 							continue;
 						}

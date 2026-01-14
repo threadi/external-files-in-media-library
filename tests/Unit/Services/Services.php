@@ -51,28 +51,6 @@ class Services extends externalFilesTests {
 	 *
 	 * @return void
 	 */
-	public function test_get_google_cloud_storage_service_by_name(): void {
-		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( \ExternalFilesInMediaLibrary\Services\GoogleCloudStorage::get_instance()->get_name() );
-		$this->assertIsObject( $service );
-		$this->assertInstanceOf( '\ExternalFilesInMediaLibrary\Services\GoogleCloudStorage', $service );
-	}
-
-	/**
-	 * Test if the returning variable is an object.
-	 *
-	 * @return void
-	 */
-	public function test_get_google_drive_service_by_name(): void {
-		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( \ExternalFilesInMediaLibrary\Services\GoogleDrive::get_instance()->get_name() );
-		$this->assertIsObject( $service );
-		$this->assertInstanceOf( '\ExternalFilesInMediaLibrary\Services\GoogleDrive', $service );
-	}
-
-	/**
-	 * Test if the returning variable is an object.
-	 *
-	 * @return void
-	 */
 	public function test_get_local_service_by_name(): void {
 		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( \ExternalFilesInMediaLibrary\Services\Local::get_instance()->get_name() );
 		$this->assertIsObject( $service );

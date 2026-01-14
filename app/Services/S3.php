@@ -800,7 +800,7 @@ class S3 extends Service_Base implements Service {
 		);
 
 		/**
-		 * Filter the list of possible user settings for Google Drive.
+		 * Filter the list of possible user settings for AWS S3.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param array<string,mixed> $list The list of settings.
@@ -809,7 +809,7 @@ class S3 extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return the URL mark which identifies Google Cloud Storage URLs within this plugin.
+	 * Return the URL mark, which identifies AWS S3 URLs within this plugin.
 	 *
 	 * @param string $bucket_name The bucket name.
 	 *
@@ -939,8 +939,8 @@ class S3 extends Service_Base implements Service {
 	}
 
 	/**
-	 * Remove the authorization header for requests on public Google Drive files as theire usage
-	 * would result in HTTP status 400 from Google Drive.
+	 * Remove the authorization header for requests on public AWS S3 files as their usage
+	 * would result in HTTP status 400 from AWS S3.
 	 *
 	 * @param array<string,mixed> $args The arguments.
 	 * @param Protocol_Base       $http The used protocol.
@@ -1041,7 +1041,7 @@ class S3 extends Service_Base implements Service {
 	public function get_form_title(): string {
 		// bail if credentials are set.
 		if ( $this->has_credentials_set() ) {
-			return __( 'Connect to your Google Cloud Storage', 'external-files-in-media-library' );
+			return __( 'Connect to your AWS S3', 'external-files-in-media-library' );
 		}
 
 		// return default title.

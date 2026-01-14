@@ -122,7 +122,7 @@ class Ftp extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add settings for Google Drive support.
+	 * Add settings for FTP support.
 	 *
 	 * @return void
 	 */
