@@ -136,15 +136,13 @@ class Services {
 	/**
 	 * Return list of services support we implement.
 	 *
-	 * @return array<string>
+	 * @return array<int,string>
 	 */
 	private function get_services(): array {
 		$list = array(
 			'ExternalFilesInMediaLibrary\Services\DropBox',
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
-			'ExternalFilesInMediaLibrary\Services\GoogleDrive',
-			'ExternalFilesInMediaLibrary\Services\GoogleCloudStorage',
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\S3',
@@ -161,7 +159,7 @@ class Services {
 		 * Filter the list of third party support.
 		 *
 		 * @since 3.0.0 Available since 3.0.0.
-		 * @param array<string> $list List of third party support.
+		 * @param array<int,string> $list List of third party support.
 		 */
 		return apply_filters( 'efml_services_support', $list );
 	}
