@@ -82,6 +82,9 @@ class Admin {
 		// initialize the intro.
 		Intro::get_instance()->init();
 
+		// initialize the additional plugins support.
+		Plugins::get_instance()->init();
+
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );

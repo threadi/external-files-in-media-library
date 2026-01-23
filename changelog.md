@@ -8,27 +8,27 @@
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added support for AWS S3 as external source of files
 - Added support for DropBox as external source of files
-- Added support for Google Cloud Storage as external source of files
-- Added support for WebDav as external source of files, e.g. usable with your Nextcloud
-- Added hook to import external URLs through third party plugins (for custom development)
+- Added support for a service plugin to use Google Cloud Storage as external source of files
+- Added support for a service plugin to use Google Drive as external source of files
+- Added support for WebDav as external source of files, e.g., usable with your Nextcloud
+- Added a hook to import external URLs through third party plugins (for custom development)
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
-- Added option to export each newly uploaded file in media library to external sources which are reachable via web
--> supported for Dropbox, FTP, Google Drive, Google Cloud Storage, local, AWS S3 and WebDav
+- Added option to export each newly uploaded file in media library to external sources, which are reachable via web
 -> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
 - Added option to export each file in media library to external source as described above
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to really import files in media library (this disables all external files functions for these files)
 - Added option to choose a specific date for each file to import
-- Added paginated AJAX-import to prevent timeouts, supported for AWS S3 and Google Drive
+- Added paginated AJAX-import to prevent timeouts for some supported external sources
 - Added these 3 new options also as parameter on WP CLI command to import URLs
-- Added option to choose which of these extensions should be available for file handlings
+- Added option to choose, which of these extensions should be available for the handling of files
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
   are occurring simultaneously
 - Added import date for each external URL
-- Added new table column in media library which shows basic URL information
+- Added new table column in media library, which shows basic URL information
 - Added Taskfile as third way to build plugin release
 - Added check for PHP strict usage on every release with PHPStan
 - Added check for compatibility with WordPress Plugin Checker on every release
@@ -54,9 +54,8 @@
 - Added option to use our plugin name in each HTTP-header User Agent (default enabled)
 - Added success sound after import has been run (can be disabled)
 - Added option to reset the plugin in backend settings (in preparation for Cyber Resilience Act)
-- Added support to import Google Drive files via WP CLI (without any timeouts)
-- Added option to unzip from external password protected ZIP-files
-- Added options to open and extract zip-files which are already saved in media library
+- Added option to unzip from an external password protected ZIP-files
+- Added options to open and extract zip-files, which are already saved in media library
 - Added support to open and extract multiple zip formats: .zip, .gz, .tar.gz
 - Added support for .avif files
 - Added option to show what will be done in import dialog
@@ -67,6 +66,7 @@
 - A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
 - Added PHP unit tests for essential functions of this plugin
 - Added SBOM generation on GitHub for each release
+- Added support to import service plugins, which provide support for more platforms not bundled in the main plugin
 
 ### Changed
 
@@ -91,18 +91,18 @@
 - Re-arranged the settings for a better overview
 - Multiple new hooks and updated hook documentation
 - Updated settings object for better performance and more possibilities
-- Extended documentation in GitHub for all services we provide
+- Extended the documentation in GitHub for all services we provide
 - Extended logging is automatically enabled if WordPress is running in development mode
 - Moved availability check in extension
 - Renamed filter "eml_import_url_before" to "eml_import_url"
 - Renamed filter "eml_blacklist" to "eml_prevent_import"
 - Hosting of files can now only be changed by users with the capability to upload external files
 - Synced files will be linked with its linked source in media library
-- Prevent deletion of sources which has active synced or exported files
+- Prevent deletion of sources, which has active synced or exported files
 - Import of files during WooCommerce CSV supports now also usage of credentials (you could import files e.g. from FTP)
 - Using new transient object in backend for hints and errors
 - Cleanup the return value for external files via get_attached_file()
-- File protocol uses now WP_Filesystem for each file interaction
+- File protocol uses now "WP_Filesystem" for each file interaction
 - Enabled search field for URLs in logs
 - Dropbox file URLs can now be imported without any API key if they are public available
 - External sources are now saved user-specific
@@ -121,7 +121,6 @@
 - Fixed wrong link to queue list in settings and in dialog
 - Fixed missing file on FTP listing if for previous file not thumbnail could be created
 - Fixed missing file preview if PHP-imagick-library is not used
-- Fixed disabling of thumbnails on GoogleDrive view
 - Fixed usage of ZIP service on single uploaded file
 - Fixed wrong capability to access the directory archive for non-administrator users
 - Fixed disabling of check files event
@@ -133,8 +132,9 @@
 
 ### Removed
 
-- Removed hook "eml_import_fields" as we do not use fields in this form anymore
-- Removed hook "eml_import_url_after" as it could be better used via the hook "eml_after_file_save"
+- Removed the hook "eml_import_fields" as we do not use fields in this form anymore
+- Removed the hook "eml_import_url_after" as it could be better used via the hook "eml_after_file_save"
+- Removed support for Google Drive in the main plugin, a second service plugin is now necessary to use it
 
 ## [4.0.0] - 2025-05-14
 

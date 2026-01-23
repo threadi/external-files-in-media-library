@@ -278,12 +278,7 @@ class Update {
 		Settings::get_instance()->activation();
 
 		// trigger the capability settings.
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
-			Roles::get_instance()->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
-		}
-		foreach ( array( 'import', 'export', 'zip', 'sync' ) as $tool ) {
-			Roles::get_instance()->set( array( 'administrator' ), 'efml_cap_tools_' . $tool );
-		}
+		Roles::get_instance()->trigger_update();
 
 		// set configured capabilities.
 		Roles::get_instance()->install();

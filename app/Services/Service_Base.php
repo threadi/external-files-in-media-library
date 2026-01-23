@@ -54,6 +54,18 @@ class Service_Base extends Directory_Listing_Base {
 	private WP_User|false $user = false;
 
 	/**
+	 * Set the configuration for the external source of this service plugin.
+	 *
+	 * @var array<string,string>
+	 */
+	protected array $source_config = array(
+		'type'        => '',
+		'github_user' => '',
+		'github_slug' => '',
+		'plugin_slug' => '',
+	);
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void
@@ -483,5 +495,59 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_export_object(): Export_Base|bool {
 		return false;
+	}
+
+	/**
+	 * Return the plugin slug for this service.
+	 *
+	 * @return string
+	 */
+	public function get_plugin_slug(): string {
+		return $this->source_config['plugin_slug'];
+	}
+
+	/**
+	 * Return whether this service is based on a plugin.
+	 *
+	 * @return bool
+	 */
+	public function is_plugin(): bool {
+		return ! empty( $this->get_plugin_slug() );
+	}
+
+	/**
+	 * Return the source configuration if this service is based on an external plugin.
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_source_config(): array {
+		return $this->source_config;
+	}
+
+	/**
+	 * Return the plugins main file.
+	 *
+	 * @return string
+	 */
+	public function get_plugin_main_file(): string {
+		return $this->source_config['plugin_main_file'];
+	}
+
+	/**
+	 * Return false to mark these service provides editable permissions.
+	 *
+	 * @return bool
+	 */
+	public function has_no_editable_permissions(): bool {
+		return false;
+	}
+
+	/**
+	 * Return the permission name to use this listing.
+	 *
+	 * @return string
+	 */
+	public function get_permission_name(): string {
+		return 'efml_cap_' . $this->get_name();
 	}
 }

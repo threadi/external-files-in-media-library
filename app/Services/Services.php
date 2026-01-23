@@ -145,7 +145,6 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\Local',
 			'ExternalFilesInMediaLibrary\Services\Rest',
-			'ExternalFilesInMediaLibrary\Services\S3',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\WebDav',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
@@ -447,13 +446,13 @@ class Services {
 
 		// bail if file has no size.
 		if ( isset( $_FILES['file']['size'] ) && 0 === $_FILES['file']['size'] ) {
-			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file does not have a size.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file does not have a size.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
 
 		// bail if file type is not JSON.
 		if ( isset( $_FILES['file']['type'] ) && 'application/json' !== $_FILES['file']['type'] ) {
-			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
 
@@ -464,20 +463,20 @@ class Services {
 		if ( isset( $_FILES['file']['name'] ) ) {
 			$filetype = wp_check_filetype( sanitize_file_name( wp_unslash( $_FILES['file']['name'] ) ) );
 			if ( 'json' !== $filetype['ext'] ) {
-				$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
+				$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not a JSON.', 'external-files-in-media-library' ) . '</p>';
 				wp_send_json( $dialog );
 			}
 		}
 
 		// bail if no tmp_name is available.
 		if ( ! isset( $_FILES['file']['tmp_name'] ) ) {
-			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file could not be saved.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file could not be saved.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
 
 		// bail if uploaded file is not readable.
 		if ( isset( $_FILES['file']['tmp_name'] ) && ! file_exists( sanitize_text_field( $_FILES['file']['tmp_name'] ) ) ) {
-			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not readable.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not readable.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
 
@@ -492,15 +491,15 @@ class Services {
 
 		// bail if necessary entries are missing.
 		if ( empty( $settings_array['type'] ) || empty( $settings_array['title'] ) || empty( $settings_array['directory'] ) || empty( $settings_array['fields'] ) ) {
-			$dialog['detail']['texts'][1] = '<p>' . __( 'Uploaded file is not compatible with external sources.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not compatible with external sources.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
 
 		// add the external source.
 		Taxonomy::get_instance()->add( $settings_array['type'], $settings_array['directory'], $settings_array['fields'] );
 
-		// return that import was successfully.
-		$dialog['detail']['title']                = __( 'External source has been added', 'external-files-in-media-library' );
+		// return the info about successfully import.
+		$dialog['detail']['title']                = __( 'The external source has been added', 'external-files-in-media-library' );
 		$dialog['detail']['texts'][0]             = '<p><strong>' . __( 'You will find the external source in the list.', 'external-files-in-media-library' ) . '</strong></p>';
 		$dialog['detail']['buttons'][0]['action'] = 'location.reload();';
 		wp_send_json( $dialog );

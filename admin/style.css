@@ -247,16 +247,22 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services {
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li {
 	border: 4px dashed #c3c4c7;
+	display: flex;
+	flex-direction: column;
+	align-content: center;
+	align-items: center;
+	justify-content: space-between;
 	flex: 1 1 0;
 	font-size: 24px;
 	line-height: 1;
-	padding: 2em 1em;
+	gap: 1em;
+	padding: 1.2em 1em;
 	text-align: center;
 	min-width: 200px;
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li:hover {
-	background-color: rgba(255,255,255,.6);
+	background-color: rgba(255,255,255,.9);
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a:not(.connect) {
@@ -267,8 +273,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a:n
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li span:nth-of-type(2) {
 	display: inline-block;
-	font-size: 16px;
-	margin-top: 24px;
+	font-size: 13px;
 }
 
 body.post-type-attachment .external_files span {
@@ -312,12 +317,16 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f498";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive span:before, body.post-type-attachment .external_files .efml-google-drive:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive span:not(.button):before, body.post-type-attachment .external_files .efml-google-drive:before {
 	content: "\f18b";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:before, body.post-type-attachment .external_files .efml-google-cloud-storage:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:not(.button):before, body.post-type-attachment .external_files .efml-google-cloud-storage:before {
 	content: "\f18b";
+}
+
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hello-dolly a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hello-dolly span:not(.button):before {
+	content: "\f118";
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before, body.post-type-attachment .external_files .efml-rest:before {
@@ -337,7 +346,7 @@ body.post-type-attachment .external_files .efml-dropbox:before {
 	height: 16px;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-s3 a:before, body.post-type-attachment .external_files .efml-s3:before {
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-aws-s3 span:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-aws-s3 a:before {
 	content: "\f162";
 }
 
@@ -361,10 +370,6 @@ body.post-type-attachment .external_files .efml-webdav:before {
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {
 	display: none;
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a.connect, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a.connect {
-	margin-top: 24px;
 }
 
 .easy-dialog.efml button.settings {
@@ -489,11 +494,12 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hint {
 	flex-basis: 100%;
-	font-size: 1.2em;
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hint span:before {
-	font-size: 1em;
+	p {
+		font-size: 16px;
+	}
+	span:before {
+		font-size: 1.2em;
+	}
 }
 
 #attachment_external_file a:not(.nav-tab-help)[target="_blank"]:after, body.settings_page_eml_settings a:not(.review-hint-button):not(.nav-tab-help)[target="_blank"]:after, .efml-user-settings a:not(.nav-tab-help)[target="_blank"]:after {

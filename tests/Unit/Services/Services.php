@@ -62,17 +62,6 @@ class Services extends externalFilesTests {
 	 *
 	 * @return void
 	 */
-	public function test_get_s3_service_by_name(): void {
-		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( \ExternalFilesInMediaLibrary\Services\S3::get_instance()->get_name() );
-		$this->assertIsObject( $service );
-		$this->assertInstanceOf( '\ExternalFilesInMediaLibrary\Services\S3', $service );
-	}
-
-	/**
-	 * Test if the returning variable is an object.
-	 *
-	 * @return void
-	 */
 	public function test_get_webdav_service_by_name(): void {
 		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( \ExternalFilesInMediaLibrary\Services\WebDav::get_instance()->get_name() );
 		$this->assertIsObject( $service );

@@ -28,7 +28,7 @@
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
         </replace>
 
-        <delete file="${build.dir}/readme-release.php"/>
+        <delete file="${build.dir}/readme-release.txt"/>
         <copy file="${src.dir}/readme.txt" tofile="${src.dir}/readme-release.txt"/>
         <replace file="${src.dir}/readme-release.txt">
             <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
@@ -152,13 +152,10 @@
             <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/build/" />
             <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" />
-            <zipfileset dir="${src.dir}/vendor/aws" prefix="${plugin.slug}/vendor/aws" />
-            <zipfileset dir="${src.dir}/vendor/mtdowling" prefix="${plugin.slug}/vendor/mtdowling" />
             <zipfileset dir="${src.dir}/vendor/ralouphie" prefix="${plugin.slug}/vendor/ralouphie" />
             <zipfileset dir="${src.dir}/vendor/symfony" prefix="${plugin.slug}/vendor/symfony" />
             <zipfileset dir="${src.dir}/vendor/guzzlehttp" prefix="${plugin.slug}/vendor/guzzlehttp" />
             <zipfileset dir="${src.dir}/vendor/spatie" prefix="${plugin.slug}/vendor/spatie" />
-            <zipfileset dir="${src.dir}/vendor/sabre" prefix="${plugin.slug}/vendor/sabre" />
             <zipfileset dir="${src.dir}/vendor/graham-campbell" prefix="${plugin.slug}/vendor/graham-campbell" />
             <zipfileset dir="${src.dir}/node_modules/intro.js/minified/" prefix="${plugin.slug}/node_modules/intro.js/minified/" />
             <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />

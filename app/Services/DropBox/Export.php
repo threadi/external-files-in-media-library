@@ -90,7 +90,7 @@ class Export extends Export_Base {
 			return false;
 		}
 
-		// get the local WP_Filesystem.
+		// get the local "WP_Filesystem".
 		$wp_filesystem_local = Helper::get_wp_filesystem();
 
 		// bail if source file does not exist.
@@ -115,7 +115,7 @@ class Export extends Export_Base {
 		/**
 		 * Transfer the file per chunk.
 		 *
-		 * Hint: This is not compatible with WCS, but we need to read chunks here, which is not possible with WP_Filesystem (at present).
+		 * Hint: This is not compatible with WCS, but we need to read chunks here, that is impossible with "WP_Filesystem".
 		 */
 
 		/**
@@ -277,7 +277,7 @@ class Export extends Export_Base {
 
 		// search for the one we uploaded.
 		foreach ( $shared_files as $shared_file ) {
-			// bail if file id does not match.
+			// bail if file ID does not match.
 			if ( $shared_file['id'] !== $result['id'] ) {
 				continue;
 			}
@@ -352,7 +352,7 @@ class Export extends Export_Base {
 	/**
 	 * Send request to Dropbox API using curl.
 	 *
-	 * Hint: The usage of curl is not compatible with WCS, but we need to handle chunks here, which is not possible with WP_Filesystem (at present).
+	 * Hint: The usage of curl is not compatible with WCS, but we need to handle chunks here, that is impossible with "WP_Filesystem".
 	 *
 	 * @param string           $url The Dropbox API URL to use.
 	 * @param array<int,mixed> $headers The headers to use.

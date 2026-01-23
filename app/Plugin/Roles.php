@@ -213,6 +213,11 @@ class Roles {
 
 		// add settings for each service.
 		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+			// bail if this plugin does not require any permissions.
+			if ( method_exists( $service, 'has_no_editable_permissions' ) && $service->has_no_editable_permissions() ) {
+				continue;
+			}
+
 			// add setting.
 			$setting = $settings_obj->add_setting( 'eml_service_' . $service->get_name() . '_allowed_roles' );
 			$setting->set_section( $permissions_tab_source );
@@ -280,7 +285,7 @@ class Roles {
 	 * Then set the capability on the list of given roles.
 	 *
 	 * @param array<string|int,mixed> $user_roles List of roles, which will get our capability.
-	 * @param string                  $cap The capability to set.
+	 * @param string                  $cap        The capability to set.
 	 *
 	 * @return void
 	 */
@@ -459,5 +464,19 @@ class Roles {
 	 */
 	public function show_service_permission_hint(): void {
 		echo esc_html__( 'Select roles, which should be allowed to use these services.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Trigger update of the used capabilities.
+	 *
+	 * @return void
+	 */
+	public function trigger_update(): void {
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+			$this->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
+		}
+		foreach ( array( 'import', 'export', 'zip', 'sync' ) as $tool ) {
+			$this->set( array( 'administrator' ), 'efml_cap_tools_' . $tool );
+		}
 	}
 }

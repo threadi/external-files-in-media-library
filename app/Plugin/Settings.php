@@ -17,6 +17,9 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Mul
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
@@ -600,6 +603,16 @@ class Settings {
 		$field->add_class( 'easy-dialog-for-wordpress' );
 		$setting->set_field( $field );
 
+		// create a hidden page for hidden settings.
+		$hidden_page = $settings_obj->add_page( 'hidden_page' );
+
+		// create a hidden tab on this page.
+		$hidden_tab = $hidden_page->add_tab( 'hidden_tab', 10 );
+
+		// the hidden section for any not visible settings.
+		$hidden = $hidden_tab->add_section( 'hidden_section', 20 );
+		$hidden->set_setting( $settings_obj );
+
 		// initialize this settings object.
 		$settings_obj->init();
 	}
@@ -913,5 +926,42 @@ class Settings {
 			</table>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Return the hidden section of the settings object.
+	 *
+	 * @return false|Section
+	 */
+	public function get_hidden_section(): Section|false {
+		// get settings object.
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+
+		// create a hidden page for hidden settings.
+		$hidden_page = $settings_obj->get_page( 'hidden_page' );
+
+		// bail if page could not be found.
+		if ( ! $hidden_page instanceof Page ) {
+			return false;
+		}
+
+		// create a hidden tab on this page.
+		$hidden_tab = $hidden_page->get_tab( 'hidden_tab' );
+
+		// bail if tab could not be found.
+		if ( ! $hidden_tab instanceof Tab ) {
+			return false;
+		}
+
+		// the hidden section for any not visible settings.
+		$hidden_section = $hidden_tab->get_section( 'hidden_section' );
+
+		// bail if section could not be found.
+		if ( ! $hidden_section instanceof Section ) {
+			return false;
+		}
+
+		// return the hidden section object.
+		return $hidden_section;
 	}
 }

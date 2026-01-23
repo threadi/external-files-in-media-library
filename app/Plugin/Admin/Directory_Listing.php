@@ -17,7 +17,13 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Services\AwsS3;
+use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
+use ExternalFilesInMediaLibrary\Services\GoogleDrive;
+use ExternalFilesInMediaLibrary\Services\HelloDolly;
+use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
+use ExternalFilesInMediaLibrary\Services\WebDav;
 use WP_Screen;
 use WP_Term;
 
@@ -94,6 +100,8 @@ class Directory_Listing {
 		add_action( 'efml_directory_listing_added', array( $this, 'add_user_mark' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'add_date' ) );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
+		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing_plugins' ) );
+		add_filter( 'efml_directory_listing_objects', array( $this, 'sort_list' ), 100 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 30 );
 
@@ -186,7 +194,7 @@ class Directory_Listing {
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 						// hide listing object if user has no capability for it.
-						if ( ! current_user_can( 'efml_cap_' . $obj->get_name() ) ) {
+						if ( ! current_user_can( $obj->get_permission_name() ) ) {
 							continue;
 						}
 
@@ -194,7 +202,7 @@ class Directory_Listing {
 						if ( $obj->is_disabled() ) {
 							// show enabled listing object.
 							?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><br><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?></li>
 							<?php
 							continue;
 						}
@@ -216,10 +224,10 @@ class Directory_Listing {
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo ... ? Ask in our <a href="%1$s" target="_blank">supportforum</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) );
+							echo '<p>' . wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) ) . '</p>';
 						if ( current_user_can( 'manage_options' ) ) {
 							?>
-									<br><br><a href="<?php echo esc_url( Settings::get_instance()->get_url() ); ?>" title="<?php echo esc_attr__( 'Go to settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+							<p><a href="<?php echo esc_url( Settings::get_instance()->get_url() ); ?>" title="<?php echo esc_attr__( 'Go to settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a></p>
 								<?php
 						}
 						?>
@@ -234,8 +242,14 @@ class Directory_Listing {
 		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
 
 		// bail if no object could be loaded.
-		if ( ! $directory_listing_obj ) {
+		if ( ! $directory_listing_obj instanceof Directory_Listing_Base ) {
 			$this->show_error( '<p>' . __( 'Requested service for external files could not be found!', 'external-files-in-media-library' ) . '</p>' );
+			return;
+		}
+
+		// get the service object for this listing and bail if it is a plugin.
+		if ( method_exists( $directory_listing_obj, 'is_plugin' ) && $directory_listing_obj->is_plugin() ) {
+			$this->show_error( '<p>' . __( 'Requested service is a plugin, that is not installed and activate!', 'external-files-in-media-library' ) . '</p>' );
 			return;
 		}
 
@@ -288,7 +302,7 @@ class Directory_Listing {
 			// load nothing if directory is not set on loading a concrete listing.
 			if ( empty( $config['directory'] ) && isset( $config['term'] ) ) {
 				?>
-					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'External source could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
+					<div class="eml_add_external_files_wrapper"><p><strong><?php echo esc_html__( 'The external source could not be loaded.', 'external-files-in-media-library' ); ?></strong></p></div>
 					<?php
 			} else {
 				?>
@@ -340,7 +354,7 @@ class Directory_Listing {
 			'date'                          => __( 'Date', 'external-files-in-media-library' ),
 			'config_missing'                => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
 			'nonce_missing'                 => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
-			'empty_directory'               => __( 'Loaded an empty directory. This could also mean that the files in the directory cannot be imported into WordPress, e.g. because they have a non-approved file type.', 'external-files-in-media-library' ),
+			'empty_directory'               => __( 'Loaded an empty directory. This could also mean the files in the directory cannot be imported into WordPress, e.g., because they have a non-approved file type.', 'external-files-in-media-library' ),
 			'error_title'                   => __( 'The following error occurred:', 'external-files-in-media-library' ),
 			'errors_title'                  => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 			'serverside_error'              => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
@@ -359,8 +373,8 @@ class Directory_Listing {
 					'not_found'     => sprintf( __( 'No external sources found. Add them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $this->get_view_directory_url( false ) ),
 				),
 				'messages'        => array(
-					'updated' => __( 'External source updated.', 'external-files-in-media-library' ),
-					'deleted' => __( 'External source deleted.', 'external-files-in-media-library' ),
+					'updated' => __( 'An external source has been updated.', 'external-files-in-media-library' ),
+					'deleted' => __( 'An external source has been deleted.', 'external-files-in-media-library' ),
 				),
 				'type'            => __( 'Type', 'external-files-in-media-library' ),
 				'connect'         => __( 'Connect', 'external-files-in-media-library' ),
@@ -381,7 +395,7 @@ class Directory_Listing {
 					'label' => __( 'Password', 'external-files-in-media-library' ),
 				),
 				'save_credentials' => array(
-					'label' => __( 'Save this credentials as external source', 'external-files-in-media-library' ),
+					'label' => __( 'Save these credentials as external source', 'external-files-in-media-library' ),
 				),
 				'button'           => array(
 					'label' => __( 'Show directory', 'external-files-in-media-library' ),
@@ -458,7 +472,7 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Show taxonomy for archives in media menu.
+	 * Show taxonomy for archives in the media menu.
 	 *
 	 * @return void
 	 */
@@ -475,7 +489,7 @@ class Directory_Listing {
 	 */
 	public function add_help( array $help_list ): array {
 		$content  = '<h1>' . __( 'External sources', 'external-files-in-media-library' ) . '</h1>';
-		$content .= '<p>' . __( 'With your external sources, you can easily save your frequently used connections to external directories and reuse them at any time. Whats more, you can also use them to automatically synchronize the files with your media library.', 'external-files-in-media-library' ) . '</p>';
+		$content .= '<p>' . __( 'With your external sources, you can easily save your frequently used connections to external directories and reuse them at any time. You can also use them to automatically synchronize the files with your media library.', 'external-files-in-media-library' ) . '</p>';
 
 		// add help for the settings of this plugin.
 		$help_list[] = array(
@@ -565,7 +579,7 @@ class Directory_Listing {
 
 		// bail if type is unknown.
 		if ( ! $service_obj instanceof Directory_Listing_Base ) {
-			$result_dialog['detail']['texts'][] = '<p>' . __( 'The type of source for this directory is unknown.', 'external-files-in-media-library' ) . '</p>';
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'The external source is unknown.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $result_dialog );
 		}
 
@@ -588,7 +602,7 @@ class Directory_Listing {
 		}
 
 		// return OK.
-		$result_dialog['detail']['title']     = __( 'External source saved', 'external-files-in-media-library' );
+		$result_dialog['detail']['title']     = __( 'The external source has been saved', 'external-files-in-media-library' );
 		$result_dialog['detail']['texts']     = array(
 			'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
 			/* translators: %1$s will be replaced by a URL, %2$s by a title. */
@@ -647,7 +661,7 @@ class Directory_Listing {
 		}
 
 		// return OK.
-		$result_dialog['detail']['title'] = __( 'External source deleted', 'external-files-in-media-library' );
+		$result_dialog['detail']['title'] = __( 'The external source has been deleted', 'external-files-in-media-library' );
 		$result_dialog['detail']['texts'] = array(
 			'<p><strong>' . __( 'The directory has been deleted from your external source.', 'external-files-in-media-library' ) . '</strong></p>',
 		);
@@ -774,7 +788,7 @@ class Directory_Listing {
 
 		// bail if no name is given.
 		if ( empty( $name ) ) {
-			$dialog['texts'][] = __( 'New name is missing!', 'external-files-in-media-library' );
+			$dialog['texts'][] = __( 'A new name is missing!', 'external-files-in-media-library' );
 			wp_send_json( array( 'detail' => $dialog ) );
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
@@ -836,5 +850,92 @@ class Directory_Listing {
 			),
 			get_admin_url() . 'edit-tags.php'
 		);
+	}
+
+	/**
+	 * Add plugins, which add support for directory listings with other platforms as simple objects.
+	 *
+	 * @param array<int,Directory_Listing_Base> $directory_listings The list of directory listing object.
+	 *
+	 * @return array<int,Directory_Listing_Base>
+	 */
+	public function add_directory_listing_plugins( array $directory_listings ): array {
+		// loop through the list and add them, if their plugins are not active.
+		foreach ( $this->get_list_of_service_plugins() as $service_obj ) {
+			// bail if plugin is active.
+			if ( Helper::is_plugin_active( $service_obj->get_plugin_main_file() ) ) {
+				continue;
+			}
+
+			// add this object to the list.
+			$directory_listings[] = $service_obj;
+		}
+
+		// return the resulting list.
+		return $directory_listings;
+	}
+
+	/**
+	 * Return the list of service plugins.
+	 *
+	 * @return array<int,Service_Plugin_Base>
+	 */
+	private function get_list_of_service_plugins(): array {
+		// create the list.
+		$list = array(
+			AwsS3::get_instance(),
+			GoogleCloudStorage::get_instance(),
+			GoogleDrive::get_instance(),
+			WebDav::get_instance()
+		);
+
+		// add "Hello Dolly" as example (although it is not a service plugin) only if dev mode is enabled.
+		if ( Helper::is_development_mode() ) {
+			$list[] = HelloDolly::get_instance();
+		}
+
+		/**
+		 * Filter the list of available service plugins.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<int,Service_Plugin_Base> $list The list.
+		 */
+		return apply_filters( 'efml_service_plugins', $list );
+	}
+
+	/**
+	 * Sort the list of directory listings by its name, but "URL" at first place.
+	 *
+	 * @param array<int,Directory_Listing_Base> $directory_listings List of directory listings.
+	 *
+	 * @return array<int,Directory_Listing_Base>
+	 */
+	public function sort_list( array $directory_listings ): array {
+		// get the first two entries (the "import" and "local" objects).
+		$import_obj = $directory_listings[0];
+		$local_obj  = $directory_listings[1];
+		unset( $directory_listings[0], $directory_listings[1] );
+
+		// sort the list.
+		usort( $directory_listings, array( $this, 'sort' ) );
+
+		// move the both objects at the beginning.
+		array_unshift( $directory_listings, $local_obj );
+		array_unshift( $directory_listings, $import_obj );
+
+		// return the resulting list of directory listing objects.
+		return $directory_listings;
+	}
+
+	/**
+	 * Compare to objects from the list and sort them.
+	 *
+	 * @param Directory_Listing_Base $a First object to compare.
+	 * @param Directory_Listing_Base $b Second object to compare.
+	 *
+	 * @return int
+	 */
+	public function sort( Directory_Listing_Base $a, Directory_Listing_Base $b ): int {
+		return strcmp( $a->get_name(), $b->get_name() );
 	}
 }
