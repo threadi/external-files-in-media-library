@@ -22,7 +22,7 @@ use WP_User;
 class Helper {
 
 	/**
-	 * Get plugin dir of this plugin with trailing slash.
+	 * Return plugin dir of this plugin with trailing slash.
 	 *
 	 * @return string
 	 */
@@ -131,6 +131,19 @@ class Helper {
 
 		// return it.
 		return $content_type;
+	}
+
+	/**
+	 * Return whether a given plugin is installed.
+	 *
+	 * This will not check if it is active.
+	 *
+	 * @param string $plugin_main_file The main plugin file to check for.
+	 *
+	 * @return bool
+	 */
+	public static function is_plugin_installed( string $plugin_main_file ): bool {
+		return self::get_wp_filesystem()->exists( trailingslashit( WP_PLUGIN_DIR ) . $plugin_main_file );
 	}
 
 	/**

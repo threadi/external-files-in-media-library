@@ -1,6 +1,6 @@
 <?php
 /**
- * File to add a hint for support of the WebDav platform.
+ * File to add a hint for support of the AWS S3 platform.
  *
  * @package external-files-in-media-library
  */
@@ -13,20 +13,20 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Object to handle support for this platform.
  */
-class WebDav extends Service_Plugin_Base implements Service {
+class AwsS3 extends Service_Plugin_Base implements Service {
 	/**
 	 * The object name.
 	 *
 	 * @var string
 	 */
-	protected string $name = 'webdav';
+	protected string $name = 'aws-s3';
 
 	/**
 	 * The public label.
 	 *
 	 * @var string
 	 */
-	protected string $label = 'WebDav';
+	protected string $label = 'AWS S3';
 
 	/**
 	 * Set the configuration for the external source of this service plugin.
@@ -36,17 +36,17 @@ class WebDav extends Service_Plugin_Base implements Service {
 	protected array $source_config = array(
 		'type'             => 'github',
 		'github_user'      => 'threadi',
-		'github_slug'      => 'external-files-from-webdav',
-		'plugin_slug'      => 'external-files-from-webdav',
-		'plugin_main_file' => 'external-files-from-webdav/external-files-from-webdav.php',
+		'github_slug'      => 'external-files-from-aws-s3',
+		'plugin_slug'      => 'external-files-from-aws-s3',
+		'plugin_main_file' => 'external-files-from-aws-s3/external-files-from-aws-s3.php',
 	);
 
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?WebDav
+	 * @var ?AwsS3
 	 */
-	private static ?WebDav $instance = null;
+	private static ?AwsS3 $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -63,9 +63,9 @@ class WebDav extends Service_Plugin_Base implements Service {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return WebDav
+	 * @return AwsS3
 	 */
-	public static function get_instance(): WebDav {
+	public static function get_instance(): AwsS3 {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -86,7 +86,7 @@ class WebDav extends Service_Plugin_Base implements Service {
 	 * @return string
 	 */
 	public function get_plugin_label(): string {
-		return __( 'External Files from WebDav', 'external-files-in-media-library' );
+		return __( 'External Files from AWS S3', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -96,7 +96,7 @@ class WebDav extends Service_Plugin_Base implements Service {
 	 */
 	protected function get_install_dialog_description(): array {
 		return array(
-			'<p>' . __( 'It will enable you to use files from WebDav in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
+			'<p>' . __( 'It will enable you to use files from AWS S3 in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}

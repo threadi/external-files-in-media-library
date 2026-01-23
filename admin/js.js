@@ -436,7 +436,7 @@ function efml_get_import_dialog( settings ) {
 }
 
 /**
- * Start the process of a URL import from dialog.
+ * Start the process of a URL import from a dialog.
  *
  * Send the complete form from the dialog via AJAX to process it.
  */
@@ -567,4 +567,85 @@ function import_external_source_json() {
       efml_create_dialog( dialog_config );
     },
   });
+}
+
+/**
+ * Start AJAX process to install and activate a service plugin.
+ */
+function efml_process_install_and_activate_service_plugin( plugin_name ) {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsVars.ajax_url,
+    type: 'POST',
+    data: {
+      'action': 'efml_install_and_activate_plugin',
+      'name': plugin_name,
+      'nonce': efmlJsVars.install_and_activate_service_plugin
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsVars.title_service_plugin_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      efml_progress_timeout = setTimeout(function() { efml_get_info_about_install_state( plugin_name ) }, efmlJsVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Get and show info about running installation and activation of a service plugin.
+ */
+function efml_get_info_about_install_state( plugin_name ) {
+  jQuery.ajax( {
+    type: "POST",
+    url: efmlJsVars.ajax_url,
+    data: {
+      'action': 'efml_get_info_about_install_and_activate_service_plugin',
+      'name': plugin_name,
+      'nonce': efmlJsVars.get_install_and_activate_service_plugin_info_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (data) {
+      let count = parseInt( data[0] );
+      let max = parseInt( data[1] );
+      let running = parseInt( data[2] );
+      let status = data[3];
+      let dialog_config = data[4];
+
+      // show progress.
+      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
+      jQuery( '#progress_status' ).html( status );
+
+      /**
+       * If import is still running, get next info in xy ms.
+       * If import is not running and error occurred, show the error.
+       * If import is not running and no error occurred, show ok-message.
+       */
+      if ( running >= 1 ) {
+        efml_progress_timeout = setTimeout( function () {
+          efml_get_info_about_install_state( plugin_name )
+        }, efmlJsVars.info_timeout );
+      }
+      else {
+        efml_create_dialog( dialog_config );
+      }
+    }
+  } )
 }

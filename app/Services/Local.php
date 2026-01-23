@@ -90,7 +90,7 @@ class Local extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_local' ), 20 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_local' ) ) {
+		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
 

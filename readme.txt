@@ -27,7 +27,7 @@ And even more:
 * Import them as real files instead of just linking to them in your media library. This allows you to import any amount files into your project.
 * Check their availability (only for HTTP connections) to ensure that the external files are actually available.
 * Configure, which users in your project are allowed to use the external files options.
-* Extract ZIP files into your media library.
+* Extract ZIP files from any external source into your media library.
 
 == Support for other plugins ==
 
@@ -64,6 +64,15 @@ You can use the following TCP-protocols to import external files in your media l
 * `file://`
 
 Some of them require credentials, for http(s) it is optional.
+
+== Service plugins ==
+
+Support for additional platforms as external sources is enabled by additional service plugins. These are now:
+
+* [External files from Google Cloud Storage in Media Library](https://github.com/threadi/external-files-from-google-cloud-storage)
+* [External files from Google Drive in Media Library](https://github.com/threadi/external-files-from-google-drive)
+
+They can be installed manually or in the backend of your WordPress unter Media Library > External Sources.
 
 == Use cases ==
 

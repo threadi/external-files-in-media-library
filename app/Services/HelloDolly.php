@@ -1,6 +1,6 @@
 <?php
 /**
- * File to add a hint for support of the WebDav platform.
+ * File to add a hint for support of Hello Dolly placebo platform.
  *
  * @package external-files-in-media-library
  */
@@ -13,20 +13,20 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Object to handle support for this platform.
  */
-class WebDav extends Service_Plugin_Base implements Service {
+class HelloDolly extends Service_Plugin_Base implements Service {
 	/**
 	 * The object name.
 	 *
 	 * @var string
 	 */
-	protected string $name = 'webdav';
+	protected string $name = 'hello-dolly';
 
 	/**
 	 * The public label.
 	 *
 	 * @var string
 	 */
-	protected string $label = 'WebDav';
+	protected string $label = 'Hello Dolly';
 
 	/**
 	 * Set the configuration for the external source of this service plugin.
@@ -34,19 +34,17 @@ class WebDav extends Service_Plugin_Base implements Service {
 	 * @var array<string,string>
 	 */
 	protected array $source_config = array(
-		'type'             => 'github',
-		'github_user'      => 'threadi',
-		'github_slug'      => 'external-files-from-webdav',
-		'plugin_slug'      => 'external-files-from-webdav',
-		'plugin_main_file' => 'external-files-from-webdav/external-files-from-webdav.php',
+		'type'             => 'wordpress-repository',
+		'plugin_slug'      => 'hello-dolly',
+		'plugin_main_file' => 'hello-dolly/hello.php',
 	);
 
 	/**
 	 * Instance of actual object.
 	 *
-	 * @var ?WebDav
+	 * @var ?HelloDolly
 	 */
-	private static ?WebDav $instance = null;
+	private static ?HelloDolly $instance = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -63,9 +61,9 @@ class WebDav extends Service_Plugin_Base implements Service {
 	/**
 	 * Return instance of this object as singleton.
 	 *
-	 * @return WebDav
+	 * @return HelloDolly
 	 */
-	public static function get_instance(): WebDav {
+	public static function get_instance(): HelloDolly {
 		if ( is_null( self::$instance ) ) {
 			self::$instance = new self();
 		}
@@ -86,7 +84,7 @@ class WebDav extends Service_Plugin_Base implements Service {
 	 * @return string
 	 */
 	public function get_plugin_label(): string {
-		return __( 'External Files from WebDav', 'external-files-in-media-library' );
+		return __( 'Hello Dolly Service Plugin Demo', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -96,8 +94,7 @@ class WebDav extends Service_Plugin_Base implements Service {
 	 */
 	protected function get_install_dialog_description(): array {
 		return array(
-			'<p>' . __( 'It will enable you to use files from WebDav in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
-			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
+			'<p>' . __( 'This is only a demo for developers how a service plugin could be installed. You will not be able to use is as service.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}
 }

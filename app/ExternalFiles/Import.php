@@ -805,4 +805,13 @@ class Import extends Directory_Listing_Base {
 	public function set_url_decoded( string $url ): string {
 		return urldecode( $url );
 	}
+
+	/**
+	 * Return the permission name to use this listing.
+	 *
+	 * @return string
+	 */
+	public function get_permission_name(): string {
+		return 'efml_cap_' . $this->get_name();
+	}
 }

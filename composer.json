@@ -10,17 +10,11 @@
             "\"vendor/bin/mozart\" compose",
             "composer dump-autoload"
         ],
-        "pre-autoload-dump": [
-            "Aws\\Script\\Composer\\Composer::removeUnusedServices"
-        ],
         "test": "phpunit",
         "test-install": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest",
         "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true"
     },
     "extra": {
-        "aws/aws-sdk-php": [
-            "S3"
-        ],
         "mozart": {
             "dep_namespace": "ExternalFilesInMediaLibrary\\Dependencies\\",
             "dep_directory": "/app/Dependencies/",
@@ -79,8 +73,6 @@
         "threadi/easy-directory-listing-for-wordpress": "^4.0.4",
         "threadi/easy-settings-for-wordpress": "^1.17.0",
         "threadi/easy-transients-for-wordpress": "^1.4.3",
-        "spatie/dropbox-api": "^1.23",
-        "aws/aws-sdk-php": "^3.352",
-        "sabre/dav": "^4.7"
+        "spatie/dropbox-api": "^1.23"
     }
 }
