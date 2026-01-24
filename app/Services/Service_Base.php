@@ -97,6 +97,11 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return void
 	 */
 	public function add_base_settings(): void {
+		// bail if not subtab slug is given.
+		if( empty($this->get_settings_subtab_slug() ) ) {
+			return;
+		}
+
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
