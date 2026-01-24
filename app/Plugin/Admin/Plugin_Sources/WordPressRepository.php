@@ -61,4 +61,15 @@ class WordPressRepository extends Plugin_Sources_Base {
 		// return the download URL.
 		return $api->download_link; // @phpstan-ignore property.notFound
 	}
+
+	/**
+	 * Return the description for the given source.
+	 *
+	 * @param array<string,mixed> $config The configuration of a service.
+	 *
+	 * @return string
+	 */
+	public function get_description( array $config ): string {
+		return '<p>' . sprintf( __( 'The newest release from <a href="%1$s" target="_blank">this WordPress plugin (opens new windows)</a> will be loaded.', 'external-files-in-media-library' ), 'https://wordpress.org/plugins/' . $config['plugin_slug'] . '/' ) . '</p>';
+	}
 }

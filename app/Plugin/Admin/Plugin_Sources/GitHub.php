@@ -115,4 +115,15 @@ class GitHub extends Plugin_Sources_Base {
 		// return the resulting absolute local path to the file to install.
 		return $release_zip_path;
 	}
+
+	/**
+	 * Return the description for the given source.
+	 *
+	 * @param array<string,mixed> $config The configuration of a service.
+	 *
+	 * @return string
+	 */
+	public function get_description( array $config ): string {
+		return '<p>' . sprintf( __( 'The newest release from <a href="%1$s" target="_blank">this GitHub repository (opens new windows)</a> will be loaded.', 'external-files-in-media-library' ), 'https://github.com/' . $config['github_user'] . '/' . $config['github_slug'] ) . '</p>';
+	}
 }
