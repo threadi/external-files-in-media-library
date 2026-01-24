@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Plugins;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Upgrader_Skin;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -181,7 +182,7 @@ class Plugin_Installation extends Extension_Base {
 			'title'     => __( 'Install WordPress plugin', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to install this ZIP as WordPress plugin?', 'external-files-in-media-library' ) . '</strong></p>',
-				'<p>' . __( 'It will only be installed. You can activate it after the installation yourself.', 'external-files-in-media-library' ) . '</p>'
+				'<p>' . __( 'It will only be installed. You can activate it after the installation yourself.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
 				array(
@@ -222,7 +223,7 @@ class Plugin_Installation extends Extension_Base {
 		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if no attachment ID is given.
-		if( 0 === $attachment_id ) {
+		if ( 0 === $attachment_id ) {
 			wp_safe_redirect( wp_get_referer() );
 		}
 
@@ -243,9 +244,9 @@ class Plugin_Installation extends Extension_Base {
 		$slug = '';
 
 		// check the files.
-		foreach( $files as $file ) {
+		foreach ( $files as $file ) {
 			// bail if this is not the readme.txt.
-			if( 'readme.txt' !== $file['title'] ) {
+			if ( 'readme.txt' !== $file['title'] ) { // @phpstan-ignore offsetAccess.nonOffsetAccessible
 				continue;
 			}
 
@@ -254,25 +255,40 @@ class Plugin_Installation extends Extension_Base {
 		}
 
 		// bail if slug could not be loaded.
-		if( empty( $slug ) ) {
+		if ( empty( $slug ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		}
 
 		// bail if this plugin is already installed.
-		if( Helper::is_plugin_installed( $slug ) ) {
+		if ( Helper::is_plugin_installed( $slug ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		}
 
+		// get the protocol handler of this file.
+		$protocol_handler_obj = $external_file_obj->get_protocol_handler_obj();
+
+		// bail if protocol handler could not be loaded.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
+			wp_safe_redirect( wp_get_referer() );
+			return;
+		}
+
 		// get the file for local installation.
-		$file = $external_file_obj->get_protocol_handler_obj()->get_temp_file( $external_file_obj->get_url( true ), Helper::get_wp_filesystem() );
+		$file = $protocol_handler_obj->get_temp_file( $external_file_obj->get_url( true ), Helper::get_wp_filesystem() );
+
+		// bail if file could not be loaded.
+		if ( ! is_string( $file ) ) {
+			wp_safe_redirect( wp_get_referer() );
+			return;
+		}
 
 		// unpack this package in the plugin directory.
 		include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 		$upgrader       = new WP_Upgrader( new Upgrader_Skin() );
 		$install_result = $upgrader->run(
 			array(
-				'package'     => $file,
-				'destination' => WP_PLUGIN_DIR . '/' . $slug,
+				'package'           => $file,
+				'destination'       => WP_PLUGIN_DIR . '/' . $slug,
 				'clear_destination' => true,
 			)
 		);
@@ -285,8 +301,8 @@ class Plugin_Installation extends Extension_Base {
 		// forward user to the plugin list and filter for the slug.
 		$url = add_query_arg(
 			array(
-				's' => $slug,
-				'plugin_status' => 'all'
+				's'             => $slug,
+				'plugin_status' => 'all',
 			),
 			get_admin_url() . 'plugins.php'
 		);

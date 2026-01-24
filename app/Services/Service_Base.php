@@ -98,7 +98,7 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function add_base_settings(): void {
 		// bail if not subtab slug is given.
-		if( empty($this->get_settings_subtab_slug() ) ) {
+		if ( empty( $this->get_settings_subtab_slug() ) ) {
 			return;
 		}
 

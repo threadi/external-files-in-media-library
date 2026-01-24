@@ -886,7 +886,7 @@ class Directory_Listing {
 			AwsS3::get_instance(),
 			GoogleCloudStorage::get_instance(),
 			GoogleDrive::get_instance(),
-			WebDav::get_instance()
+			WebDav::get_instance(),
 		);
 
 		// add "Hello Dolly" as example (although it is not a service plugin) only if dev mode is enabled.

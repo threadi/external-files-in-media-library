@@ -53,13 +53,13 @@ class Plugin_Sources_Base {
 	 *
 	 * @return string
 	 */
-    public function get_description( array $config ): string {
+	public function get_description( array $config ): string {
 		// bail if empty.
-		if( empty( $config ) ) {
+		if ( empty( $config ) ) {
 			return '';
 		}
 
 		// return nothing as base entry.
 		return '';
-    }
+	}
 }

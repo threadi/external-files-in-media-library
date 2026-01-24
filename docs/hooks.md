@@ -34,7 +34,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 690](ExternalFiles/File.php#L690-L695)
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 710](ExternalFiles/File.php#L710-L715)
 
 ### `efml_switch_to_local_after`
 
@@ -44,7 +44,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 690](Externa
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$attachment_id` | `int` | The attachment ID.
+`$this->get_id()` |  | 
 
 **Changelog**
 
@@ -52,7 +52,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 843](ExternalFiles/File.php#L843-L849)
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 859](ExternalFiles/File.php#L859-L865)
 
 ### `efml_file_delete`
 
@@ -62,7 +62,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 843](Externa
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The object which has been deleted.
+`$external_file_obj` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The object, which has been deleted.
 
 **Changelog**
 
@@ -70,7 +70,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 285](ExternalFiles/Files.php#L285-L291)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 286](ExternalFiles/Files.php#L286-L292)
 
 ### `efml_show_file_info`
 
@@ -88,17 +88,17 @@ Version | Description
 ------- | -----------
 `4.0.0` | Available since 4.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 565](ExternalFiles/Files.php#L565-L571)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 566](ExternalFiles/Files.php#L566-L572)
 
 ### `efml_queue_before_process`
 
-*Run action before queue is processed.*
+*Run action before the queue is processed.*
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$urls_to_import` | `array` | List of URLs to import from queue which will be processed.
+`$urls_to_import` | `array` | List of URLs to import from the queue, which will be processed.
 
 **Changelog**
 
@@ -106,17 +106,17 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 364](ExternalFiles/Extensions/Queue.php#L364-L370)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 365](ExternalFiles/Extensions/Queue.php#L365-L371)
 
 ### `efml_queue_after_process`
 
-*Run action after queue is processed.*
+*Run action after the queue is processed.*
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$urls_to_import` | `array` | List of URLs to import from queue which has been processed.
+`$urls_to_import` | `array` | List of URLs to import from the queue, which has been processed.
 
 **Changelog**
 
@@ -124,7 +124,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 391](ExternalFiles/Extensions/Queue.php#L391-L397)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 392](ExternalFiles/Extensions/Queue.php#L392-L398)
 
 ### `efml_sftp_directory_import_start`
 
@@ -364,7 +364,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 188](ExternalFiles/Protocols/Ftp.php#L188-L195)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 187](ExternalFiles/Protocols/Ftp.php#L187-L194)
 
 ### `efml_ftp_directory_import_files`
 
@@ -383,7 +383,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 210](ExternalFiles/Protocols/Ftp.php#L210-L218)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 209](ExternalFiles/Protocols/Ftp.php#L209-L217)
 
 ### `efml_ftp_directory_import_file_check`
 
@@ -401,7 +401,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 246](ExternalFiles/Protocols/Ftp.php#L246-L253)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 245](ExternalFiles/Protocols/Ftp.php#L245-L252)
 
 ### `efml_ftp_directory_import_file_before_to_list`
 
@@ -420,7 +420,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 272](ExternalFiles/Protocols/Ftp.php#L272-L280)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 271](ExternalFiles/Protocols/Ftp.php#L271-L279)
 
 ### `efml_filter_query`
 
@@ -456,7 +456,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 366](ExternalFiles/Tables.php#L366-L372)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 367](ExternalFiles/Tables.php#L367-L373)
 
 ### `efml_before_sync`
 
@@ -476,7 +476,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 611](ExternalFiles/Synchronization.php#L611-L619)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 615](ExternalFiles/Synchronization.php#L615-L623)
 
 ### `efml_before_deleting_synced_files`
 
@@ -494,7 +494,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1133](ExternalFiles/Synchronization.php#L1133-L1139)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1137](ExternalFiles/Synchronization.php#L1137-L1143)
 
 ### `efml_sync_save_config`
 
@@ -512,7 +512,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1511](ExternalFiles/Synchronization.php#L1511-L1517)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1523](ExternalFiles/Synchronization.php#L1523-L1529)
 
 ### `efml_image_meta_data`
 
@@ -585,7 +585,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 456](ExternalFiles/Forms.php#L456-L462)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 460](ExternalFiles/Forms.php#L460-L466)
 
 ### `efml_import_ajax_end`
 
@@ -603,7 +603,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 580](ExternalFiles/Forms.php#L580-L586)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 584](ExternalFiles/Forms.php#L584-L590)
 
 ### `efml_proxy_before`
 
@@ -616,43 +616,6 @@ Argument | Type | Description
 `$external_file_obj` |  | 
 
 Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 161](ExternalFiles/Proxy.php#L161-L164)
-
-### `efml_webdav_directory_import_files`
-
-*Run action if we have files to check via WebDav-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL to import.
-`$directory_list` | `string[]` | List of matches (the URLs).
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav/Protocol.php](Services/WebDav/Protocol.php), [line 186](Services/WebDav/Protocol.php#L186-L194)
-
-### `efml_webdav_directory_import_file_check`
-
-*Run action just before the file check via WebDAV-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$domain . $file_name` |  | 
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav/Protocol.php](Services/WebDav/Protocol.php), [line 198](Services/WebDav/Protocol.php#L198-L205)
 
 ### `efml_dropbox_directory_import_files`
 
@@ -691,80 +654,6 @@ Version | Description
 
 Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 150](Services/DropBox/Protocol.php#L150-L157)
 
-### `efml_s3_directory_import_files`
-
-*Run action if we have files to check via AWS S3-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL to import.
-`$files` | `array<int\|string,mixed>` | List of matches (the URLs).
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3/Protocol.php](Services/S3/Protocol.php), [line 108](Services/S3/Protocol.php#L108-L116)
-
-### `efml_s3_directory_import_file_check`
-
-*Run action just before the file check via AWS S3-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$dir` |  | 
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3/Protocol.php](Services/S3/Protocol.php), [line 121](Services/S3/Protocol.php#L121-L128)
-
-### `efml_google_drive_directory_import_files`
-
-*Run action if we have files to check via Google Drive-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL to import.
-`$directories` |  | 
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleDrive/Protocol.php](Services/GoogleDrive/Protocol.php), [line 158](Services/GoogleDrive/Protocol.php#L158-L166)
-
-### `efml_google_drive_directory_import_file_check`
-
-*Run action just before the file check via Google Drive-protocol.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$directory` | `int\|string` | The URL to import.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleDrive/Protocol.php](Services/GoogleDrive/Protocol.php), [line 175](Services/GoogleDrive/Protocol.php#L175-L182)
-
 ## Filters
 
 ### `efml_current_language`
@@ -775,7 +664,7 @@ Source: [app/Services/GoogleDrive/Protocol.php](Services/GoogleDrive/Protocol.ph
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$wp_language` | `string` | The language-name (e.g. "en").
+`$wp_language` | `string` | The language-name (e.g., "en").
 
 **Changelog**
 
@@ -849,7 +738,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 227](Plugin/Tables/Logs.php#L227-L233)
+Source: [app/Plugin/Tables/Logs.php](Plugin/Tables/Logs.php), [line 228](Plugin/Tables/Logs.php#L228-L234)
 
 ### `efml_queue_table_filter`
 
@@ -867,7 +756,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Tables/Queue.php](Plugin/Tables/Queue.php), [line 293](Plugin/Tables/Queue.php#L293-L299)
+Source: [app/Plugin/Tables/Queue.php](Plugin/Tables/Queue.php), [line 296](Plugin/Tables/Queue.php#L296-L302)
 
 ### `efml_hide_intro`
 
@@ -903,11 +792,11 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Intro.php](Plugin/Intro.php), [line 362](Plugin/Intro.php#L362-L368)
+Source: [app/Plugin/Intro.php](Plugin/Intro.php), [line 369](Plugin/Intro.php#L369-L375)
 
 ### `efml_supported_mime_types`
 
-*Filter the possible mime types this plugin could support. This is the list used for the setting in backend.*
+*Filter the possible mime types this plugin could support. This is the list used for the setting in the backend.*
 
 To add files of type "your/mime" with file extension ".yourmime" use this example:
 
@@ -933,18 +822,19 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 201](Plugin/Helper.php#L201-L220)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 214](Plugin/Helper.php#L214-L233)
 
 ### `efml_get_mime_types`
 
 *Filter the list of possible mime types. This is the list used by the plugin during file-checks
-and is not visible or editable in backend.*
+and is invisible or editable in the backend.*
 
 To add files of type "your/mime" with file extension ".yourmime" use this example:
 
 ```
 add_filter( 'efml_get_mime_types', function( $mime_types ) {
  $mime_types[] = 'your/mime';
+ return $mime_types;
 } );
 ```
 
@@ -960,7 +850,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 245](Plugin/Helper.php#L245-L261)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 258](Plugin/Helper.php#L258-L275)
 
 ### `efml_own_cron_schedules`
 
@@ -972,11 +862,11 @@ Argument | Type | Description
 `(string) $name` |  | 
 `$interval` |  | 
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 398](Plugin/Helper.php#L398-L398)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 412](Plugin/Helper.php#L412-L412)
 
 ### `efml_enqueued_file_version`
 
-*Filter the used file version (for JS- and CSS-files which get enqueued).*
+*Filter the used file version (for JS- and CSS-files, which get enqueued).*
 
 **Arguments**
 
@@ -991,7 +881,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 782](Plugin/Helper.php#L782-L790)
+Source: [app/Plugin/Helper.php](Plugin/Helper.php), [line 796](Plugin/Helper.php#L796-L804)
 
 ### `efml_help_tabs`
 
@@ -1011,6 +901,24 @@ Version | Description
 
 Source: [app/Plugin/Admin/Help_System.php](Plugin/Admin/Help_System.php), [line 116](Plugin/Admin/Help_System.php#L116-L122)
 
+### `efml_plugin_sources`
+
+*Filter the list of possible plugin sources for services of this plugin.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of plugin sources.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Plugin/Admin/Plugins.php](Plugin/Admin/Plugins.php), [line 340](Plugin/Admin/Plugins.php#L340-L346)
+
 ### `efml_directory_translations`
 
 *Filter the translations to use for directory listings.*
@@ -1027,7 +935,25 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 403](Plugin/Admin/Directory_Listing.php#L403-L409)
+Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 417](Plugin/Admin/Directory_Listing.php#L417-L423)
+
+### `efml_service_plugins`
+
+*Filter the list of available service plugins.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,\ExternalFilesInMediaLibrary\Services\Service_Plugin_Base>` | The list.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 897](Plugin/Admin/Directory_Listing.php#L897-L903)
 
 ### `efml_plugin_row_meta`
 
@@ -1045,12 +971,12 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 244](Plugin/Admin/Admin.php#L244-L250)
+Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 250](Plugin/Admin/Admin.php#L250-L256)
 
 ### `efml_schedule_our_events`
 
 *Filter the list of our own events,
-e.g. to check if all which are enabled in setting are active.*
+e.g., to check if all, which are enabled in setting are active.*
 
 **Arguments**
 
@@ -1175,7 +1101,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 351](ExternalFiles/ImportDialog.php#L351-L357)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 350](ExternalFiles/ImportDialog.php#L350-L356)
 
 ### `efml_user_settings`
 
@@ -1193,7 +1119,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 420](ExternalFiles/ImportDialog.php#L420-L426)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 419](ExternalFiles/ImportDialog.php#L419-L425)
 
 ### `efml_dialog_settings`
 
@@ -1211,7 +1137,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 668](ExternalFiles/ImportDialog.php#L668-L675)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 667](ExternalFiles/ImportDialog.php#L667-L674)
 
 ### `efml_add_dialog`
 
@@ -1230,7 +1156,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 680](ExternalFiles/ImportDialog.php#L680-L687)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 679](ExternalFiles/ImportDialog.php#L679-L686)
 
 ### `efml_file_prevent_proxied_url`
 
@@ -1272,7 +1198,7 @@ Argument | Type | Description
 `$url` |  | 
 `$attachment_id` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 184](ExternalFiles/Files.php#L184-L184)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 185](ExternalFiles/Files.php#L185-L185)
 
 ### `efml_files_query`
 
@@ -1290,7 +1216,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 224](ExternalFiles/Files.php#L224-L230)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 225](ExternalFiles/Files.php#L225-L231)
 
 ### `efml_files_check_content_type`
 
@@ -1301,7 +1227,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1218](ExternalFiles/Files.php#L1218-L1218)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1222](ExternalFiles/Files.php#L1222-L1222)
 
 ### `efml_import_options`
 
@@ -1320,17 +1246,17 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 297](ExternalFiles/Extensions/Queue.php#L297-L304)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 298](ExternalFiles/Extensions/Queue.php#L298-L305)
 
 ### `efml_queue_urls`
 
-*Filter the list of URLs from queue before they are processed.*
+*Filter the list of URLs from the queue before they are processed.*
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$urls_to_import` | `array` | List of URLs to import from queue.
+`$urls_to_import` | `array` | List of URLs to import from the queue.
 
 **Changelog**
 
@@ -1338,7 +1264,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 353](ExternalFiles/Extensions/Queue.php#L353-L359)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 354](ExternalFiles/Extensions/Queue.php#L354-L360)
 
 ### `efml_tcp_protocols`
 
@@ -1348,7 +1274,7 @@ Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$tcp_protocols` | `array<string,int>` | List of protocols of this object (e.g. 'http' or 'ftp').
+`$tcp_protocols` | `array<string,int>` | List of protocols of this object (e.g., 'http' or 'ftp').
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base` | The actual object.
 
 **Changelog**
@@ -1486,7 +1412,7 @@ Argument | Type | Description
 `$true` |  | 
 `$file_path` |  | 
 
-Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 276](ExternalFiles/Protocols/File.php#L276-L276)
+Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 279](ExternalFiles/Protocols/File.php#L279-L279)
 
 ### `efml_external_file_infos`
 
@@ -1823,7 +1749,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 112](ExternalFiles/Protocols/Ftp.php#L112-L121)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 112](ExternalFiles/Protocols/Ftp.php#L112-L120)
 
 ### `efml_external_files_infos`
 
@@ -1842,7 +1768,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 315](ExternalFiles/Protocols/Ftp.php#L315-L322)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 314](ExternalFiles/Protocols/Ftp.php#L314-L321)
 
 ### `efml_external_file_infos`
 
@@ -1862,7 +1788,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 392](ExternalFiles/Protocols/Ftp.php#L392-L401)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 391](ExternalFiles/Protocols/Ftp.php#L391-L400)
 
 ### `efml_save_temp_file`
 
@@ -1873,7 +1799,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 553](ExternalFiles/Protocols/Ftp.php#L553-L553)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 552](ExternalFiles/Protocols/Ftp.php#L552-L552)
 
 ### `efml_filter_options`
 
@@ -1910,11 +1836,11 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 339](ExternalFiles/Tables.php#L339-L346)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 340](ExternalFiles/Tables.php#L340-L347)
 
 ### `efml_table_column_source_title`
 
-*Filter the title for show in source column in media table for external files.*
+*Filter the title for show in source column in the media table for external files.*
 
 **Arguments**
 
@@ -1929,7 +1855,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 351](ExternalFiles/Tables.php#L351-L358)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 352](ExternalFiles/Tables.php#L352-L359)
 
 ### `efml_import_info_timeout`
 
@@ -1966,7 +1892,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 511](ExternalFiles/Synchronization.php#L511-L518)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 515](ExternalFiles/Synchronization.php#L515-L522)
 
 ### `efml_protocols`
 
@@ -2002,7 +1928,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 136](ExternalFiles/Extensions.php#L136-L142)
+Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 138](ExternalFiles/Extensions.php#L138-L144)
 
 ### `efml_extensions_default`
 
@@ -2020,7 +1946,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 158](ExternalFiles/Extensions.php#L158-L164)
+Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 160](ExternalFiles/Extensions.php#L160-L166)
 
 ### `efml_import_info_timeout`
 
@@ -2057,7 +1983,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 470](ExternalFiles/Forms.php#L470-L477)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 474](ExternalFiles/Forms.php#L474-L481)
 
 ### `efml_import_fields`
 
@@ -2077,7 +2003,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 479](ExternalFiles/Forms.php#L479-L487)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 483](ExternalFiles/Forms.php#L483-L491)
 
 ### `efml_import_url`
 
@@ -2095,7 +2021,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 518](ExternalFiles/Forms.php#L518-L524)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 522](ExternalFiles/Forms.php#L522-L528)
 
 ### `efml_import_urls_errors`
 
@@ -2113,7 +2039,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 546](ExternalFiles/Forms.php#L546-L552)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 550](ExternalFiles/Forms.php#L550-L556)
 
 ### `efml_dialog_after_adding`
 
@@ -2131,7 +2057,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 654](ExternalFiles/Forms.php#L654-L660)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 658](ExternalFiles/Forms.php#L658-L664)
 
 ### `efml_import_url`
 
@@ -2149,7 +2075,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 806](ExternalFiles/Forms.php#L806-L812)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 810](ExternalFiles/Forms.php#L810-L816)
 
 ### `efml_import_urls_errors`
 
@@ -2167,7 +2093,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 826](ExternalFiles/Forms.php#L826-L832)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 830](ExternalFiles/Forms.php#L830-L836)
 
 ### `efml_file_type_compatibility_result`
 
@@ -2224,7 +2150,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 239](ExternalFiles/Proxy.php#L239-L246)
+Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 242](ExternalFiles/Proxy.php#L242-L249)
 
 ### `efml_proxy_path`
 
@@ -2242,7 +2168,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 265](ExternalFiles/Proxy.php#L265-L271)
+Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 268](ExternalFiles/Proxy.php#L268-L274)
 
 ### `efml_service_modes`
 
@@ -2261,7 +2187,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Service_Base.php](Services/Service_Base.php), [line 147](Services/Service_Base.php#L147-L154)
+Source: [app/Services/Service_Base.php](Services/Service_Base.php), [line 164](Services/Service_Base.php#L164-L171)
 
 ### `efml_zip_objects`
 
@@ -2279,7 +2205,36 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Zip.php](Services/Zip.php), [line 826](Services/Zip.php#L826-L832)
+Source: [app/Services/Zip.php](Services/Zip.php), [line 860](Services/Zip.php#L860-L866)
+
+### `efml_zip_max_size_limit`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$limit` |  | 
+`$settings` |  | 
+
+Source: [app/Services/Zip.php](Services/Zip.php), [line 1045](Services/Zip.php#L1045-L1045)
+
+### `efml_dropbox_access_token_url`
+
+*Filter the URL where Dropbox user will find their access token.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$url` | `string` | The URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1318](Services/DropBox.php#L1318-L1324)
 
 ### `efml_services_support`
 
@@ -2289,7 +2244,7 @@ Source: [app/Services/Zip.php](Services/Zip.php), [line 826](Services/Zip.php#L8
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `string[]` | List of third party support.
+`$list` | `array<int,string>` | List of third party support.
 
 **Changelog**
 
@@ -2297,7 +2252,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/Services.php](Services/Services.php), [line 161](Services/Services.php#L161-L167)
+Source: [app/Services/Services.php](Services/Services.php), [line 157](Services/Services.php#L157-L163)
 
 ### `efml_export_service_filename`
 
@@ -2315,447 +2270,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Services.php](Services/Services.php), [line 402](Services/Services.php#L402-L409)
-
-### `efml_service_webdav_path`
-
-*Filter the WebDAV path.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$path` | `string` | The path to use after the given domain.
-`$fields` | `array` | The login to use.
-`$domain` | `string` | The domain to use.
-`$directory` | `string` | The requested URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav/Protocol.php](Services/WebDav/Protocol.php), [line 127](Services/WebDav/Protocol.php#L127-L137)
-
-### `efml_service_webdav_settings`
-
-*Filter the WebDAV settings.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$settings` | `array<string,string>` | The settings to use.
-`$domain` | `string` | The domain to use.
-`$directory` | `string` | The requested URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav/Protocol.php](Services/WebDav/Protocol.php), [line 146](Services/WebDav/Protocol.php#L146-L155)
-
-### `efml_google_drive_client_id`
-
-*Filter the Google OAuth Client ID for the app used to connect Google Drive.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$client_id` | `string` | The client ID.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 496](Services/GoogleDrive.php#L496-L502)
-
-### `efml_google_drive_real_redirect_uri`
-
-*Filter the real redirect URI to connect the Google OAuth Client.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$real_redirect_uri` | `string` | The real redirect URI.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 517](Services/GoogleDrive.php#L517-L523)
-
-### `efml_google_drive_state`
-
-*Filter the token to connect the Google OAuth Client.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$state` | `string` | The token.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 551](Services/GoogleDrive.php#L551-L557)
-
-### `efml_google_drive_redirect_uri`
-
-*Filter the redirect URI to connect the Google OAuth Client.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$redirect_uri` | `string` | The redirect URI.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 574](Services/GoogleDrive.php#L574-L580)
-
-### `efml_google_drive_connector_params`
-
-*Filter the params for Google OAuth request.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$params` | `array` | The list of params.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 608](Services/GoogleDrive.php#L608-L614)
-
-### `efml_google_drive_query_params`
-
-*Filter the query to get files from Google Drive.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$query` | `array` | The list of params.
-`$directory` | `string` | The requested directory.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 745](Services/GoogleDrive.php#L745-L752)
-
-### `efml_google_drive_files`
-
-*Filter the list of files we got from Google Drive.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$files` | `\Google\Service\Drive\DriveFile[]` | List of files.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 797](Services/GoogleDrive.php#L797-L803)
-
-### `efml_google_drive_hide_file`
-
-*Filter whether given GoogleDrive file should be hidden.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | True if it should be hidden.
-`$file_obj` | `\Google\Service\Drive\DriveFile` | The object with the file data.
-`$directory` | `string` | The requested directory.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 812](Services/GoogleDrive.php#L812-L823)
-
-### `efml_google_drive_refresh_uri`
-
-*Filter the redirect URI to connect the Google OAuth Client.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$refresh_uri` | `string` | The redirect URI.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`3.0.0` | Available since 3.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 1101](Services/GoogleDrive.php#L1101-L1107)
-
-### `efml_service_google_drive_user_settings`
-
-*Filter the list of possible user settings for Google Drive.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<string,mixed>` | The list of settings.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 1459](Services/GoogleDrive.php#L1459-L1465)
-
-### `efml_service_google_drive_public_url`
-
-*Filter the public URL for a given file ID.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL.
-`$file_id` | `string` | The file ID.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleDrive.php](Services/GoogleDrive.php), [line 1505](Services/GoogleDrive.php#L1505-L1512)
-
-### `efml_service_googlecloudstorage_hide_file`
-
-*Filter whether given Google Cloud Storage file should be hidden.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | True if it should be hidden.
-`$file_data` | `array<string,mixed>` | The object with the file data.
-`$directory` | `string` | The requested directory.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleCloudStorage.php](Services/GoogleCloudStorage.php), [line 447](Services/GoogleCloudStorage.php#L447-L458)
-
-### `efml_service_google_cloud_user_settings`
-
-*Filter the list of possible user settings for Google Cloud Storage.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<string,mixed>` | The list of settings.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleCloudStorage.php](Services/GoogleCloudStorage.php), [line 754](Services/GoogleCloudStorage.php#L754-L760)
-
-### `efml_service_google_cloud_storage_public_url`
-
-*Filter the public URL for a given bucket and file name.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL.
-`$bucket_name` | `string` | The bucket name.
-`$file_name` | `string` | The file name.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleCloudStorage.php](Services/GoogleCloudStorage.php), [line 880](Services/GoogleCloudStorage.php#L880-L888)
-
-### `efml_service_google_cloud_storage_console_url`
-
-*Filter the URL for the Google Cloud Console where credentials can be managed.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$url` | `string` | The URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleCloudStorage.php](Services/GoogleCloudStorage.php), [line 999](Services/GoogleCloudStorage.php#L999-L1005)
-
-### `efml_service_googlecloudstorage_hide_file`
-
-*Filter whether given Google Cloud Storage file should be hidden.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | True if it should be hidden.
-`$file_data` | `array<string,mixed>` | The object with the file data.
-`$directory` | `string` | The requested directory.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/GoogleCloudStorage/Protocol.php](Services/GoogleCloudStorage/Protocol.php), [line 287](Services/GoogleCloudStorage/Protocol.php#L287-L298)
-
-### `efml_service_webdav_path`
-
-*Filter the WebDAV path.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$path` | `string` | The path to use after the given domain.
-`$fields` | `array` | The fields to use.
-`$domain` | `string` | The domain to use.
-`$directory` | `string` | The requested URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav.php](Services/WebDav.php), [line 336](Services/WebDav.php#L336-L346)
-
-### `efml_service_webdav_settings`
-
-*Filter the WebDAV settings.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$settings` | `array<string,string>` | The settings to use.
-`$domain` | `string` | The domain to use.
-`$directory` | `string` | The requested URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav.php](Services/WebDav.php), [line 348](Services/WebDav.php#L348-L357)
-
-### `efml_service_webdav_hide_file`
-
-*Filter whether given WebDAV file should be hidden.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | True if it should be hidden.
-`$settings` |  | 
-`$file_name` | `string` | The requested file.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav.php](Services/WebDav.php), [line 398](Services/WebDav.php#L398-L409)
-
-### `efml_service_webdav_client`
-
-*Filter the WebDAV client connection object.*
-
-E.g. to add proxy or other additional settings to reach the WebDAV.
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$client` | `\Sabre\DAV\Client` | The WebDAV client object.
-`$domain` | `string` | The domain to use.
-`$directory` | `string` | The requested URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav.php](Services/WebDav.php), [line 620](Services/WebDav.php#L620-L631)
-
-### `efml_service_webdav_user_settings`
-
-*Filter the list of possible user settings for WebDAV.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<string,mixed>` | The list of settings.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/WebDav.php](Services/WebDav.php), [line 717](Services/WebDav.php#L717-L723)
+Source: [app/Services/Services.php](Services/Services.php), [line 398](Services/Services.php#L398-L405)
 
 ### `efml_service_ftp_hide_file`
 
@@ -2780,7 +2295,7 @@ Source: [app/Services/Ftp.php](Services/Ftp.php), [line 333](Services/Ftp.php#L3
 
 ### `efml_service_ftp_user_settings`
 
-*Filter the list of possible user settings for FTP.*
+*Filter the list of possible user settings for the FTP.*
 
 **Arguments**
 
@@ -2795,100 +2310,6 @@ Version | Description
 `5.0.0` | Available since 5.0.0.
 
 Source: [app/Services/Ftp.php](Services/Ftp.php), [line 714](Services/Ftp.php#L714-L720)
-
-### `efml_aws_s3_query_params`
-
-*Filter the query for files in AWS S3.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$query` | `array` | The query.
-`$directory` | `string` | The URL.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3.php](Services/S3.php), [line 157](Services/S3.php#L157-L164)
-
-### `efml_service_s3_hide_file`
-
-*Filter whether given AWS S3 file should be hidden.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$false` | `bool` | True if it should be hidden.
-`$file` | `array<string,mixed>` | The array with the file data.
-`$directory` | `string` | The requested directory.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3.php](Services/S3.php), [line 202](Services/S3.php#L202-L213)
-
-### `efml_service_s3_regions`
-
-*Filter the resulting list of AWS S3 regions.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<string,string>` | List of regions.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3.php](Services/S3.php), [line 683](Services/S3.php#L683-L689)
-
-### `efml_service_s3_default_region`
-
-*Filter the default AWS S3 region.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$default_region` | `string` | The default region.
-`$language` | `string` | The actual language.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3.php](Services/S3.php), [line 730](Services/S3.php#L730-L737)
-
-### `efml_service_s3_user_settings`
-
-*Filter the list of possible user settings for Google Drive.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<string,mixed>` | The list of settings.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/Services/S3.php](Services/S3.php), [line 802](Services/S3.php#L802-L808)
 
 ### `efml_youtube_api_url`
 

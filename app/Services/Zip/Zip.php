@@ -413,7 +413,7 @@ class Zip extends Zip_Base {
 	}
 
 	/**
-	 * Return list of files in zip to import in media library.
+	 * Return list of files in the ZIP to import in media library.
 	 *
 	 * The file must be extracted in tmp directory to import them as usual URLs.
 	 *

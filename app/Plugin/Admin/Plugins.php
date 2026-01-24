@@ -228,7 +228,7 @@ class Plugins {
 	 */
 	private function install_and_activate_plugin( string $path, string $plugin_slug, string $plugin_main_file ): void {
 		// bail if any of these values are empty.
-		if( empty( $path ) || empty( $plugin_slug ) || empty( $plugin_main_file ) ) {
+		if ( empty( $path ) || empty( $plugin_slug ) || empty( $plugin_main_file ) ) {
 			return;
 		}
 
@@ -671,9 +671,9 @@ class Plugins {
 	}
 
 	/**
+	 * Return a plugin source by given name.
 	 *
-	 *
-	 * @param string $name
+	 * @param string $name The given name.
 	 *
 	 * @return false|Plugin_Sources_Base
 	 */

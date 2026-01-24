@@ -1799,7 +1799,7 @@ class Export {
 		}
 
 		// bail if mime type is not allowed.
-		if( ! in_array( get_post_mime_type( $post->ID ), Helper::get_allowed_mime_types(), true ) ) {
+		if ( ! in_array( get_post_mime_type( $post->ID ), Helper::get_allowed_mime_types(), true ) ) {
 			return $actions;
 		}
 
@@ -1823,7 +1823,10 @@ class Export {
 		$external_source_for_export = end( $external_sources );
 
 		// get the URL of the external source.
-		$term_id = array_search( $external_source_for_export, $external_sources, true );
+		$term_id = absint( array_search( $external_source_for_export, $external_sources, true ) );
+		if ( 0 === $term_id ) {
+			return $actions;
+		}
 		$external_url = get_term_meta( $term_id, 'efml_export_url', true );
 
 		// create URL to export this file.

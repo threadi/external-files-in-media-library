@@ -95,7 +95,7 @@ class Service_Plugin_Base extends Service_Base {
 			'texts'     => array_merge(
 				array(
 					'<p><strong>' . __( 'Are you sure you want to install and activate this WordPress plugin?', 'external-files-in-media-library' ) . '</strong></p>',
-					$this->get_source_info()
+					$this->get_source_info(),
 				),
 				$this->get_install_dialog_description()
 			),
@@ -172,7 +172,7 @@ class Service_Plugin_Base extends Service_Base {
 		$source_config = $this->get_source_config();
 
 		// bail if no source type is given in the config.
-		if( empty( $source_config['type'] ) ) {
+		if ( empty( $source_config['type'] ) ) {
 			return '';
 		}
 
@@ -180,7 +180,7 @@ class Service_Plugin_Base extends Service_Base {
 		$source_obj = Plugins::get_instance()->get_source_by_name( $source_config['type'] );
 
 		// bail if source could not be loaded.
-		if( ! $source_obj instanceof Plugin_Sources_Base ) {
+		if ( ! $source_obj instanceof Plugin_Sources_Base ) {
 			return '';
 		}
 
