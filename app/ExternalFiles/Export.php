@@ -2101,7 +2101,7 @@ class Export {
 			),
 			'buttons'   => array(
 				array(
-					'action'  => 'location.href="' . $url . '";',
+					'action'  => 'location.href="' . $url . '";closeDialog();',
 					'variant' => 'primary',
 					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
 				),
