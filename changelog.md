@@ -4,7 +4,7 @@
 
 ### Added
 
-- Added intro for first time users of this plugin
+- Added an intro for first time users of this plugin
 - Added REST API support for handling of external URLs from other WordPress-projects in your media library
 - Added support for AWS S3 as external source of files
 - Added support for DropBox as external source of files
@@ -19,7 +19,7 @@
 - Added option to export each file in media library to external source as described above
 - Introduced file handling extensions and added 3 of them (date, queue, real_import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
-- Added option to really import files in media library (this disables all external files functions for these files)
+- Added option to actually import files in media library (this disables all external files functions for these files)
 - Added option to choose a specific date for each file to import
 - Added paginated AJAX-import to prevent timeouts for some supported external sources
 - Added these 3 new options also as parameter on WP CLI command to import URLs
@@ -33,13 +33,13 @@
 - Added check for PHP strict usage on every release with PHPStan
 - Added check for compatibility with WordPress Plugin Checker on every release
 - Added support for download lists of the plugin "Download Lists with icons" incl. sync of them
-- Added support for plugin "Folders" to import external files in its folders incl. sync of them
-- Added support for plugin "Media Library Organizer" to import external files in its categories incl. sync of them
-- Added support for plugin "iFolders" to import external files in its folders incl. sync of them
-- Added support for plugin "Real Media Library Lite" to import external files in its folders incl. sync of them
-- Added support for plugin "Advanced Media Offloader" to prevent the offloading of already external files
-- Added support for plugin "Media Library Assistant" to import external files in its folders incl. sync of them
-- Added compatibility with plugin "Media Cloud Sync"
+- Added support for the plugin "Folders" to import external files in its folders incl. sync of them
+- Added support for the plugin "Media Library Organizer" to import external files in its categories incl. sync of them
+- Added support for the plugin "iFolders" to import external files in its folders incl. sync of them
+- Added support for the plugin "Real Media Library Lite" to import external files in its folders incl. sync of them
+- Added support for the plugin "Advanced Media Offloader" to prevent the offloading of already external files
+- Added support for the plugin "Media Library Assistant" to import external files in its folders incl. sync of them
+- Added compatibility with the plugin "Media Cloud Sync"
 -> do not sync external files with external clouds
 -> do sync real imported external files
 - Added new file types "PDF" and "ZIP" for better supporting the handling of these files
@@ -67,6 +67,7 @@
 - Added PHP unit tests for essential functions of this plugin
 - Added SBOM generation on GitHub for each release
 - Added support to import service plugins, which provide support for more platforms not bundled in the main plugin
+- Added support to install WordPress plugins from external sources
 
 ### Changed
 
@@ -110,16 +111,16 @@
   -> advanced option allows to show all entries for alle users
 - Settings for most services are now saved on user and not global, but can be set to global
 - External sources can now get an individual name
-- ZIP files can not also be opened via any supported TCP protocol
+- ZIP files cannot also be opened via any supported TCP protocol
 - Save used service on each external file
-- Local path will be sanitized
+- Any local path will be sanitized
 - Optimized URL shortener
 
 ### Fixed
 
 - Wrong usage of import URLs from directory archives if they are using a path after the domain
 - Fixed wrong link to queue list in settings and in dialog
-- Fixed missing file on FTP listing if for previous file not thumbnail could be created
+- Fixed missing file on FTP listing if the previous files thumbnail could not be created
 - Fixed missing file preview if PHP-imagick-library is not used
 - Fixed usage of ZIP service on single uploaded file
 - Fixed wrong capability to access the directory archive for non-administrator users
@@ -143,9 +144,9 @@
 - Added option to synchronize directories with files on every supported protocol
 - Added support for the plugins CatFolders, Filebird and Folderly to import files in specific folders of this plugins
 - Added support for the plugin Enhanced Media Library to add imported files to their categories
-- Added wrapper for all settings of this plugin for easier management in the future
+- Added a wrapper for all settings of this plugin for easier management in the future
 - Added custom intervals for any cron event this plugin delivers
-- Added option for import local files from chosen directory via queue (for very large directories)
+- Added option for import local files from the chosen directory via the queue (for very large directories)
 - Added support to add external SVG files
 
 ### Changed
@@ -153,7 +154,7 @@
 - PHP 8.1 is now minimum requirement
 - Optimized styling of list of directory services
 - Optimized handling of import through directory services
-- Moved import tasks from general Files in own object Import which is now also a directory listing object
+- Moved import tasks from general Files in own object Import, which is now also a directory listing object
 - Multiple code optimizations
 - Extended support for YouTube channel imports
 - Extended help for using Imgur images
@@ -165,11 +166,11 @@
 
 - Fixed error on import on any files from local hosting
 - Fixed to early loading of translations
-- Fixed error on GoogleDrive import which would break if a duplicate is detected
+- Fixed error on GoogleDrive import, which would break if a duplicate is detected
 - Fixed potential error of sodium encryption is used and failed
 - Fixed faulty check for existing schedules
 - Fixed missing check for duplicate YouTube videos during import of them
-- Fixed preview of files in FTP service (which also prevents the usage of FTP-files as service)
+- Fixed the preview of files in FTP service (which also prevents the usage of FTP-files as service)
 - Fixed wrong "Go to logs" URL if import failed
 - Fixed typos
 

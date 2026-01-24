@@ -436,7 +436,7 @@ class Zip extends Zip_Base {
 		// get count of files.
 		$file_count = $zip->count();
 
-		// set counter for files which has been loaded from ZIP.
+		// set counter for files, which has been loaded from ZIP.
 		$loaded_files = 0;
 
 		// create the result array.

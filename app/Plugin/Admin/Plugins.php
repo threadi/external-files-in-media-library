@@ -227,6 +227,11 @@ class Plugins {
 	 * @return void
 	 */
 	private function install_and_activate_plugin( string $path, string $plugin_slug, string $plugin_main_file ): void {
+		// bail if any of these values are empty.
+		if( empty( $path ) || empty( $plugin_slug ) || empty( $plugin_main_file ) ) {
+			return;
+		}
+
 		// set the plugin directory for this plugin.
 		$plugin_dir = WP_PLUGIN_DIR . '/' . $plugin_slug;
 
