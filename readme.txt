@@ -110,6 +110,14 @@ Each release of this plugin will only be published if it fulfills the following 
 
 == Frequently Asked Questions ==
 
+= Why do you need to install additional plugins for some sources? =
+
+Two reasons for this:
+
+a) Some of the external sources use libraries whose licenses are not permitted in the WordPress repository. For example, the aws/aws-sdk-php library for AWS uses the Apache License. This is not compatible with GPL.
+
+b) With all these libraries, the plugin would be too large to publish in the WordPress repository.
+
 = Can I prevent other WordPress-users from adding external files? =
 
 Yes, you can select under Settings > "External files in Media Library" > Permissions, which roles gets the ability to add or delete external URLs in your media library.

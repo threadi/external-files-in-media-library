@@ -129,6 +129,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Import_Export',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Jobs',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Plugin_Installation',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',

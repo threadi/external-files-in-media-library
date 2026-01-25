@@ -45,4 +45,21 @@ class Plugin_Sources_Base {
 		}
 		return '';
 	}
+
+	/**
+	 * Return the description for the given source.
+	 *
+	 * @param array<string,mixed> $config The configuration of a service.
+	 *
+	 * @return string
+	 */
+	public function get_description( array $config ): string {
+		// bail if empty.
+		if ( empty( $config ) ) {
+			return '';
+		}
+
+		// return nothing as base entry.
+		return '';
+	}
 }

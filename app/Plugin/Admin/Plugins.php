@@ -27,7 +27,7 @@ use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Upgrader;
 
 /**
- * Object to handle services plugin.
+ * Object to handle service plugins.
  */
 class Plugins {
 	/**
@@ -227,6 +227,11 @@ class Plugins {
 	 * @return void
 	 */
 	private function install_and_activate_plugin( string $path, string $plugin_slug, string $plugin_main_file ): void {
+		// bail if any of these values are empty.
+		if ( empty( $path ) || empty( $plugin_slug ) || empty( $plugin_main_file ) ) {
+			return;
+		}
+
 		// set the plugin directory for this plugin.
 		$plugin_dir = WP_PLUGIN_DIR . '/' . $plugin_slug;
 
@@ -504,16 +509,7 @@ class Plugins {
 		update_option( 'eml_service_plugins_ia_name', $plugin_mail_file );
 
 		// select the handler for the given source.
-		$source = false;
-		foreach ( $this->get_source_types_as_object() as $plugin_source_type ) {
-			// bail if it does not match.
-			if ( $plugin_source_type->get_name() !== $source_config['type'] ) {
-				continue;
-			}
-
-			// set this source type.
-			$source = $plugin_source_type;
-		}
+		$source = $this->get_source_by_name( $source_config['type'] );
 
 		// bail if no source type could be found.
 		if ( ! $source instanceof Plugin_Sources_Base ) {
@@ -672,5 +668,31 @@ class Plugins {
 				$dialog,
 			)
 		);
+	}
+
+	/**
+	 * Return a plugin source by given name.
+	 *
+	 * @param string $name The given name.
+	 *
+	 * @return false|Plugin_Sources_Base
+	 */
+	public function get_source_by_name( string $name ): false|Plugin_Sources_Base {
+		// prepare the resulting variable.
+		$source = false;
+
+		// get the source by its name.
+		foreach ( $this->get_source_types_as_object() as $plugin_source_type ) {
+			// bail if it does not match.
+			if ( $plugin_source_type->get_name() !== $name ) {
+				continue;
+			}
+
+			// set this source type.
+			$source = $plugin_source_type;
+		}
+
+		// return the resulting source.
+		return $source;
 	}
 }

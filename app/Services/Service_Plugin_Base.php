@@ -10,6 +10,8 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Admin\Plugin_Sources_Base;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Plugins;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -93,6 +95,7 @@ class Service_Plugin_Base extends Service_Base {
 			'texts'     => array_merge(
 				array(
 					'<p><strong>' . __( 'Are you sure you want to install and activate this WordPress plugin?', 'external-files-in-media-library' ) . '</strong></p>',
+					$this->get_source_info(),
 				),
 				$this->get_install_dialog_description()
 			),
@@ -157,5 +160,31 @@ class Service_Plugin_Base extends Service_Base {
 	 */
 	public function get_permission_name(): string {
 		return 'edit_posts';
+	}
+
+	/**
+	 * Return info about the used plugin source.
+	 *
+	 * @return string
+	 */
+	private function get_source_info(): string {
+		// get the source config.
+		$source_config = $this->get_source_config();
+
+		// bail if no source type is given in the config.
+		if ( empty( $source_config['type'] ) ) {
+			return '';
+		}
+
+		// get the source object by the given type name.
+		$source_obj = Plugins::get_instance()->get_source_by_name( $source_config['type'] );
+
+		// bail if source could not be loaded.
+		if ( ! $source_obj instanceof Plugin_Sources_Base ) {
+			return '';
+		}
+
+		// return the description for the given source.
+		return $source_obj->get_description( $source_config );
 	}
 }

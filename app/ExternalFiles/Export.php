@@ -296,7 +296,7 @@ class Export {
 		// extend the hint for all others.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
-			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
 
 			// show extended hint for all others.
 			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
@@ -1798,6 +1798,11 @@ class Export {
 			return $actions;
 		}
 
+		// bail if mime type is not allowed.
+		if ( ! in_array( get_post_mime_type( $post->ID ), Helper::get_allowed_mime_types(), true ) ) {
+			return $actions;
+		}
+
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
@@ -1813,6 +1818,16 @@ class Export {
 		if ( empty( $external_sources ) ) {
 			return $actions;
 		}
+
+		// get the last one from list, that is the main external source for exports.
+		$external_source_for_export = end( $external_sources );
+
+		// get the URL of the external source.
+		$term_id = absint( array_search( $external_source_for_export, $external_sources, true ) );
+		if ( 0 === $term_id ) {
+			return $actions;
+		}
+		$external_url = get_term_meta( $term_id, 'efml_export_url', true );
 
 		// create URL to export this file.
 		$url = add_query_arg(
@@ -1830,8 +1845,8 @@ class Export {
 			'title'     => __( 'Export media file', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to export this file?', 'external-files-in-media-library' ) . '</strong></p>',
-				/* translators: %1$s will be replaced by a URL. */
-				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.', 'external-files-in-media-library' ), '<em>' . end( $external_sources ) . '</em>' ) . '</p>',
+				/* translators: %1$s will be replaced by a title, %2$s by a URL. */
+				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.<br>After the export it will be available under <a href="%2$s">%2$s</a>.', 'external-files-in-media-library' ), '<em>' . $external_source_for_export . '</em>', $external_url ) . '</p>',
 				'<p>' . __( 'It will be handled as external file after the export. It will not be saved in your local hosting.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
@@ -2089,7 +2104,7 @@ class Export {
 			),
 			'buttons'   => array(
 				array(
-					'action'  => 'location.href="' . $url . '";',
+					'action'  => 'location.href="' . $url . '";closeDialog();',
 					'variant' => 'primary',
 					'text'    => __( 'Yes, export the file', 'external-files-in-media-library' ),
 				),
