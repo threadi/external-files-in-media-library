@@ -605,8 +605,8 @@ class Synchronization {
 		add_action( 'efmlgd_google_drive_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'efmlawss3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
 		add_action( 'efmlawss3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efml_webdav_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_webdav_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
+		add_action( 'efmlwd_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
+		add_action( 'efmlwd_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
 		add_action( 'efml_before_file_list', array( $this, 'change_process_title' ) );
 
 		// update the sync title on each file.

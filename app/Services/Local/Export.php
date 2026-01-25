@@ -59,7 +59,7 @@ class Export extends Export_Base {
 	 * @return string|bool
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
-		// remove protocol from target.
+		// remove protocol from the target.
 		$local_target = str_replace( 'file://', '', $target );
 
 		// get the WP filesystem object.
@@ -88,7 +88,7 @@ class Export extends Export_Base {
 		// bail if source file does not exist.
 		if ( ! $wp_filesystem->exists( $file_path ) ) {
 			/* translators: %1$s will be replaced by the service title. */
-			Log::get_instance()->create( sprintf( __( 'Local path %1$s does not exist.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>' ), $target, 'error' );
+			Log::get_instance()->create( sprintf( __( 'The local path %1$s does not exist.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>' ), $target, 'error' );
 
 			// do nothing more.
 			return false;
@@ -113,7 +113,7 @@ class Export extends Export_Base {
 		}
 
 		/* translators: %1$s and %2$s will be replaced by filenames. */
-		Log::get_instance()->create( sprintf( __( 'Successfully copied file from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>', '<em>' . $local_target . '</em>' ), $target, 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'Successful copied file from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>', '<em>' . $local_target . '</em>' ), $target, 'info', 2 );
 
 		// return the file URL.
 		return $target;
