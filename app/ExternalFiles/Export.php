@@ -948,7 +948,7 @@ class Export {
 	 * @return void
 	 */
 	public function export_file_by_upload( int $attachment_id ): void {
-		// bail if sync is running.
+		// bail if sync or import is running.
 		if ( defined( 'EFML_URL_IMPORT_RUNNING' ) || $this->is_sync_running() ) {
 			return;
 		}

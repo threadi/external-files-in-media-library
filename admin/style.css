@@ -333,6 +333,10 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li.efm
 	content: "\f120";
 }
 
+body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-multisite a:before, body.post-type-attachment .external_files .efml-multisite:before {
+	content: "\f541";
+}
+
 body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox span:before {
 	content: url(../gfx/dropbox_icon.svg);
 }

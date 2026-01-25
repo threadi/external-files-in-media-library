@@ -17,7 +17,7 @@ Add one or more files with their URLs under Media > "Add New Media File". You ca
 
 == Feature ==
 
-Embed your files from AWS S3, DropBox, Google Drive, Google Cloud Storage, FTP, your local hosting, other WordPress REST APIs, YouTube or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
+Embed your files from AWS S3, DropBox, Google Drive, Google Cloud Storage, FTP, your local hosting, another website in your multisite, other WordPress REST APIs, YouTube or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
 
 Automatically synchronize external directories containing files with your media library at intervals you specify.
 

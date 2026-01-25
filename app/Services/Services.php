@@ -144,6 +144,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
 			'ExternalFilesInMediaLibrary\Services\Local',
+			'ExternalFilesInMediaLibrary\Services\Multisite',
 			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\WebDav',
