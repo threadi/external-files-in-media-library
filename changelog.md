@@ -26,7 +26,7 @@
 - Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added option to choose, which of these extensions should be available for the handling of files
 - Added file type specific icons in directory listings
-- Added unique identifier for each import to prevent To avoid confusion when multiple users and imports
+- Added unique identifier for each import to prevent to avoid confusion when multiple users and imports
   are occurring simultaneously
 - Added import date for each external URL
 - Added new table column in media library, which shows basic URL information
@@ -69,6 +69,7 @@
 - Added SBOM generation on GitHub for each release
 - Added support to import service plugins, which provide support for more platforms not bundled in the main plugin
 - Added support to install WordPress plugins from external sources
+- Added support for multisite-installations: manage service plugins in your network
 
 ### Changed
 

@@ -31,9 +31,50 @@ class Service_Plugin_Base extends Service_Base {
 	 * @return string
 	 */
 	public function get_description(): string {
-		// bail if user has no permission to install plugins.
-		if ( ! current_user_can( 'install_plugins' ) ) {
-			return '<span class="connect button button-secondary">' . __( 'Available as plugin', 'external-files-in-media-library' ) . '</span>';
+		// bail if user has no permission to install plugins, or the project is a WP-multisite.
+		if ( ! current_user_can( 'install_plugins' ) || ( is_multisite() && ! is_network_admin() ) ) {
+			// create the dialog with the hint to activate this plugin.
+			$dialog = array(
+				'className' => 'efml',
+				'title'     => __( 'Available as plugin', 'external-files-in-media-library' ),
+				'texts'     => array_merge(
+					array(
+						/* translators: %1$s will be replaced by a plugin title. */
+						'<p>' . sprintf( __( 'This option is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . $this->get_plugin_label() . '</em>' ) . '</p>',
+						'<p><strong>' . __( 'You are not allowed to install plugins. Please contact your administrator.', 'external-files-in-media-library' ) . '</strong></p>',
+					),
+				),
+				'buttons'   => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			);
+			return '<span class="connect button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Available as plugin', 'external-files-in-media-library' ) . '</span>';
+		}
+
+		// show hint in multisite if plugin is installed.
+		if ( is_multisite() && is_network_admin() && Helper::is_plugin_installed( $this->get_plugin_main_file() ) ) {
+			// create the dialog with the hint to activate this plugin.
+			$dialog = array(
+				'className' => 'efml',
+				'title'     => __( 'Installed in network', 'external-files-in-media-library' ),
+				'texts'     => array_merge(
+					array(
+						'<p>' . __( 'The plugin is already installed in your multisite. Manage its activation in your network.', 'external-files-in-media-library' ) . '</p>',
+					),
+				),
+				'buttons'   => array(
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+				),
+			);
+			return '<span class="connect button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Installed in network', 'external-files-in-media-library' ) . '</span>';
 		}
 
 		// show other options if plugin is installed.
@@ -112,6 +153,14 @@ class Service_Plugin_Base extends Service_Base {
 				),
 			),
 		);
+
+		// show other text if we are in multisite.
+		if ( is_multisite() ) {
+			/* translators: %1$s will be replaced by a plugin title. */
+			$dialog['title']              = sprintf( __( 'Install %1$s', 'external-files-in-media-library' ), $this->get_plugin_label() );
+			$dialog['texts'][0]           = '<p><strong>' . __( 'Are you sure you want to install this WordPress plugin?', 'external-files-in-media-library' ) . '</strong> ' . __( 'You will be able to activate it on each website in your network.', 'external-files-in-media-library' ) . '</p>';
+			$dialog['buttons'][0]['text'] = __( 'Yes, install it', 'external-files-in-media-library' );
+		}
 
 		// return the resulting description.
 		return '<a href="' . esc_url( $install_url ) . '" class="connect button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Install plugin', 'external-files-in-media-library' ) . '</a>';

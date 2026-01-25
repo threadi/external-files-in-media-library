@@ -83,7 +83,7 @@ class Multisite extends Service_Base implements Service {
 	 */
 	public function init(): void {
 		// bail if this is not a multisite.
-		if( ! is_multisite() ) {
+		if ( ! is_multisite() ) {
 			return;
 		}
 
@@ -115,7 +115,7 @@ class Multisite extends Service_Base implements Service {
 		$fields = $this->get_fields();
 
 		// bail if no "website" has been chosen.
-		if( empty( $fields['website']['value'] ) ) {
+		if ( empty( $fields['website']['value'] ) ) {
 			return array();
 		}
 
@@ -123,12 +123,9 @@ class Multisite extends Service_Base implements Service {
 		$blog_id = absint( $fields['website']['value'] );
 
 		// bail if ID is unusable.
-		if( 0 === $blog_id ) {
+		if ( 0 === $blog_id ) {
 			return array();
 		}
-
-		// get our own blog ID.
-		$original_blog_id = get_current_blog_id();
 
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
@@ -137,7 +134,7 @@ class Multisite extends Service_Base implements Service {
 		$results = $this->get_all_attachments();
 
 		// bail on no results.
-		if( 0 === $results->found_posts ) {
+		if ( 0 === $results->found_posts ) {
 			return array();
 		}
 
@@ -149,9 +146,9 @@ class Multisite extends Service_Base implements Service {
 		);
 
 		// add each attachment to the list.
-		foreach( $results->posts as $post ) {
+		foreach ( $results->posts as $post ) {
 			// bail if result is not "WP_Post".
-			if( ! $post instanceof WP_Post ) {
+			if ( ! $post instanceof WP_Post ) {
 				continue;
 			}
 
@@ -159,17 +156,17 @@ class Multisite extends Service_Base implements Service {
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
 			// get its URL.
-			$url = wp_get_attachment_url( $post->ID );
+			$url = (string) wp_get_attachment_url( $post->ID );
 
 			// collect the data for this file.
 			$entry = array(
-				'title' => basename( $url ),
-				'file' => $url,
-				'filesize' => $meta_data['filesize'],
-				'mime-type' => $post->post_mime_type,
-				'icon' => '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $post->post_mime_type ) . '"></span>',
+				'title'         => basename( $url ),
+				'file'          => $url,
+				'filesize'      => absint( $meta_data['filesize'] ), // @phpstan-ignore offsetAccess.nonOffsetAccessible
+				'mime-type'     => $post->post_mime_type,
+				'icon'          => '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $post->post_mime_type ) . '"></span>',
 				'last-modified' => $post->post_modified,
-				'thumbnail' => $meta_data['thumbnail'],
+				'thumbnail'     => '', // TODO to be completed.
 			);
 
 			// add it to the list.
@@ -177,7 +174,7 @@ class Multisite extends Service_Base implements Service {
 		}
 
 		// switch back to our own blog.
-		switch_to_blog( $original_blog_id );
+		restore_current_blog();
 
 		// return the resulting list.
 		return $listing;
@@ -251,12 +248,12 @@ class Multisite extends Service_Base implements Service {
 		if ( empty( $this->fields ) ) {
 			// set the fields.
 			$this->fields = array( // @phpstan-ignore property.notFound
-				'website'     => array(
-					'name'        => 'website',
-					'type'        => 'select',
-					'label'       => __( 'Website', 'external-files-from-aws-s3' ),
-					'options'     => $this->get_websites(),
-					'value'       => ''
+				'website' => array(
+					'name'    => 'website',
+					'type'    => 'select',
+					'label'   => __( 'Website', 'external-files-from-aws-s3' ),
+					'options' => $this->get_websites(),
+					'value'   => '',
 				),
 			);
 		}
@@ -275,15 +272,17 @@ class Multisite extends Service_Base implements Service {
 
 		// get the websites.
 		$websites = $wpdb->get_results(
-			"
-            SELECT blog_id
-            FROM " . $wpdb->blogs . "
-            WHERE site_id = '" . $wpdb->siteid . "'
-            AND spam = '0'
-            AND deleted = '0'
-            AND archived = '0'
-            AND blog_id != " . get_current_blog_id() . "
-        	"
+			$wpdb->prepare(
+				"
+	            SELECT blog_id
+	            FROM ' . $wpdb->blogs . '
+	            WHERE site_id = ' . $wpdb->siteid . '
+	            AND spam = '0'
+	            AND deleted = '0'
+	            AND archived = '0'
+	            AND blog_id != %d",
+				get_current_blog_id()
+			)
 		);
 
 		// prepare the list.
@@ -291,7 +290,7 @@ class Multisite extends Service_Base implements Service {
 			array(
 				'label' => __( 'Choose the website', 'external-files-in-media-library' ),
 				'value' => '',
-			)
+			),
 		);
 
 		// add the sites to the list.
@@ -302,7 +301,7 @@ class Multisite extends Service_Base implements Service {
 			// add it to the list.
 			$list[] = array(
 				'label' => $url,
-				'value' => $website->blog_id
+				'value' => $website->blog_id,
 			);
 		}
 
@@ -338,11 +337,11 @@ class Multisite extends Service_Base implements Service {
 		$fields = $this->get_fields();
 
 		// if website is selected, use their URL.
-		if( ! empty( $fields['website']['value'] ) ) {
+		if ( ! empty( $fields['website']['value'] ) ) {
 			$blog_id = absint( $fields['website']['value'] );
 
 			// bail if ID is not valid.
-			if( 0 === $blog_id ) {
+			if ( 0 === $blog_id ) {
 				return $this->directory;
 			}
 
@@ -379,7 +378,7 @@ class Multisite extends Service_Base implements Service {
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if term ID is not given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			return $results;
 		}
 
@@ -387,7 +386,7 @@ class Multisite extends Service_Base implements Service {
 		$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
 		// bail if not term data could be loaded.
-		if( empty( $term_data ) ) {
+		if ( empty( $term_data ) ) {
 			return $results;
 		}
 
@@ -395,7 +394,7 @@ class Multisite extends Service_Base implements Service {
 		$fields = $term_data['fields'];
 
 		// bail if fields are empty.
-		if( empty( $fields ) ) {
+		if ( empty( $fields ) ) {
 			return $results;
 		}
 
@@ -405,9 +404,6 @@ class Multisite extends Service_Base implements Service {
 		// get the blog ID from the configuration.
 		$blog_id = absint( $fields['website']['value'] );
 
-		// get our own blog ID.
-		$original_blog_id = get_current_blog_id();
-
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
 
@@ -415,7 +411,7 @@ class Multisite extends Service_Base implements Service {
 		$attachments = $this->get_all_attachments();
 
 		// bail on no results.
-		if( 0 === $attachments->found_posts ) {
+		if ( 0 === $attachments->found_posts ) {
 			return array();
 		}
 
@@ -423,9 +419,9 @@ class Multisite extends Service_Base implements Service {
 		$listing = array();
 
 		// check each attachment.
-		foreach( $attachments->posts as $post ) {
+		foreach ( $attachments->posts as $post ) {
 			// bail if post is not "WP_Post".
-			if( ! $post instanceof WP_Post ) {
+			if ( ! $post instanceof WP_Post ) {
 				continue;
 			}
 
@@ -433,13 +429,13 @@ class Multisite extends Service_Base implements Service {
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
 			// get the URL.
-			$url = wp_get_attachment_url( $post->ID );
+			$url = (string) wp_get_attachment_url( $post->ID );
 
 			// download the URL as tmp file.
 			$tmp_file = download_url( $url );
 
 			// bail if download was not successfully.
-			if( ! is_string( $tmp_file ) ) {
+			if ( ! is_string( $tmp_file ) ) {
 				// log this event.
 				Log::get_instance()->create( __( 'Could not download file for import. Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $tmp_file ) . '</code>', $url, 'error' );
 
@@ -453,17 +449,17 @@ class Multisite extends Service_Base implements Service {
 				'local'         => false,
 				'url'           => $url,
 				'last-modified' => $post->post_modified,
-				'filesize' => $meta_data['filesize'],
-				'mime-type' => $post->post_mime_type,
-				'tmp-file' => $tmp_file
+				'filesize'      => absint( $meta_data['filesize'] ), // @phpstan-ignore offsetAccess.nonOffsetAccessible
+				'mime-type'     => $post->post_mime_type,
+				'tmp-file'      => $tmp_file,
 			);
 
 			// add it to the list.
 			$listing[] = $entry;
 		}
 
-		// switch back to our own blog.
-		switch_to_blog( $original_blog_id );
+		// switch back to our blog.
+		restore_current_blog();
 
 		// return the resulting list.
 		return $listing;
@@ -476,8 +472,8 @@ class Multisite extends Service_Base implements Service {
 	 */
 	private function get_all_attachments(): WP_Query {
 		$query = array(
-			'post_type' => 'attachment',
-			'post_status' => 'any',
+			'post_type'      => 'attachment',
+			'post_status'    => 'any',
 			'posts_per_page' => -1,
 		);
 		return new WP_Query( $query );
