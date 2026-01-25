@@ -11,9 +11,11 @@ namespace ExternalFilesInMediaLibrary\Services\Multisite;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Post;
 
 /**
  * Object for export files to local hosting.
@@ -76,7 +78,7 @@ class Export extends Export_Base {
 		$fields = $credentials['fields'];
 
 		// bail if fields are empty.
-		if( empty( $fields ) ) {
+		if ( empty( $fields ) ) {
 			return false;
 		}
 
@@ -86,29 +88,36 @@ class Export extends Export_Base {
 		// get the attachment post object.
 		$attachment_post_obj = get_post( $attachment_id );
 
+		// bail if post could not be loaded.
+		if ( ! $attachment_post_obj instanceof WP_Post ) {
+			return false;
+		}
+
 		// get the file size.
-		$file_path = get_attached_file( $attachment_id );
-		$filesize = $wp_filesystem->size( $file_path );
+		$file_path = (string) get_attached_file( $attachment_id );
+		$filesize  = absint( $wp_filesystem->size( $file_path ) );
 
 		// get its URL.
-		$url = wp_get_attachment_url( $attachment_id );
+		$url = (string) wp_get_attachment_url( $attachment_id );
 
 		// get the protocol handler for this URL.
 		$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+		// bail if protocol handler could not be loaded.
+		if ( ! $protocol_handler instanceof Protocol_Base ) {
+			return false;
+		}
 
 		// get the tmp file.
 		$tmp_file = $protocol_handler->get_temp_file( $url, $wp_filesystem );
 
 		// bail if tmp file could not be saved.
-		if( ! is_string( $tmp_file ) ) {
+		if ( ! is_string( $tmp_file ) ) {
 			return false;
 		}
 
 		// get the blog ID from the configuration.
 		$blog_id = absint( $fields['website']['value'] );
-
-		// get our own blog ID.
-		$original_blog_id = get_current_blog_id();
 
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
@@ -118,8 +127,7 @@ class Export extends Export_Base {
 
 		// bail if baseurl is not a string.
 		if ( ! is_string( $upload_dir['baseurl'] ) ) {
-			// switch back to our own blog.
-			switch_to_blog( $original_blog_id );
+			restore_current_blog();
 
 			// do nothing more.
 			return false;
@@ -131,7 +139,7 @@ class Export extends Export_Base {
 			'type'     => $attachment_post_obj->post_mime_type,
 			'tmp_name' => $tmp_file,
 			'error'    => '0',
-			'size'     => $filesize,
+			'size'     => (string) $filesize,
 			'url'      => $url,
 		);
 
@@ -145,16 +153,16 @@ class Export extends Export_Base {
 
 		// get the file URL if no error occurred.
 		if ( is_int( $new_attachment_id ) ) {
-			$target = wp_get_attachment_url( $new_attachment_id );
+			$target = (string) wp_get_attachment_url( $new_attachment_id );
 
 			// get meta-data from uploaded file.
 			$meta_data = wp_get_attachment_metadata( $new_attachment_id );
-
-			// get the local URL of the file.
-			$local_full_path = wp_get_attachment_url( $new_attachment_id );
+			if ( ! is_array( $meta_data ) ) {
+				$meta_data = array();
+			}
 
 			// get the local path as relative path.
-			$local_path = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $local_full_path );
+			$local_path = str_replace( trailingslashit( $upload_dir['baseurl'] ), '', $target );
 
 			// set our local relative path on metadata.
 			$meta_data['file'] = $local_path;
@@ -164,7 +172,7 @@ class Export extends Export_Base {
 		}
 
 		// switch back to our own blog.
-		switch_to_blog( $original_blog_id );
+		restore_current_blog();
 
 		// bail on error.
 		if ( is_wp_error( $new_attachment_id ) ) {
@@ -192,9 +200,7 @@ class Export extends Export_Base {
 	 * @return bool
 	 */
 	public function delete_exported_file( string $url, array $credentials, int $attachment_id ): bool {
-		// TODO !!!
-
-		// return true as file has been deleted.
+		// TODO has to be completed.
 		return true;
 	}
 

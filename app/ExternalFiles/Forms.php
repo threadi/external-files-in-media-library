@@ -97,7 +97,7 @@ class Forms {
 	}
 
 	/**
-	 * Add CSS- and JS-files for backend.
+	 * Add CSS- and JS-files for the backend.
 	 *
 	 * @param string $hook The used hook.
 	 *
@@ -105,7 +105,8 @@ class Forms {
 	 */
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
-		if ( ! in_array( $hook, array( 'upload.php', 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php' ), true ) ) {
+		// TODO find better way.
+		if ( ! in_array( $hook, array( 'plugins_page_efml_service_plugins', 'upload.php', 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php' ), true ) ) {
 			return;
 		}
 

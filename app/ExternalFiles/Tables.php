@@ -347,7 +347,7 @@ class Tables {
 			$dialog = apply_filters( 'efml_table_column_file_source_dialog', $dialog, $external_file_obj );
 
 			// get the title.
-			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) . '"></span>';
+			$title = '<span class="efml-icon efml-' . esc_attr( $service_name ) . '" title="' . esc_attr( $service_title ) . '"><span></span></span>';
 
 			/**
 			 * Filter the title for show in source column in the media table for external files.

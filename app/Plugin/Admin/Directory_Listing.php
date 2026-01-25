@@ -876,29 +876,31 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Return the list of service plugins.
+	 * Return the list of possible service plugins.
 	 *
-	 * @return array<int,Service_Plugin_Base>
+	 * Array index should be the slug of the real plugin.
+	 *
+	 * @return array<string,Service_Plugin_Base>
 	 */
 	private function get_list_of_service_plugins(): array {
 		// create the list.
 		$list = array(
-			AwsS3::get_instance(),
-			GoogleCloudStorage::get_instance(),
-			GoogleDrive::get_instance(),
-			WebDav::get_instance(),
+			'external-files-from-aws-s3'               => AwsS3::get_instance(),
+			'external-files-from-google-cloud-storage' => GoogleCloudStorage::get_instance(),
+			'external-files-from-google-drive'         => GoogleDrive::get_instance(),
+			'external-files-from-webdav'               => WebDav::get_instance(),
 		);
 
 		// add "Hello Dolly" as example (although it is not a service plugin) only if dev mode is enabled.
 		if ( Helper::is_development_mode() ) {
-			$list[] = HelloDolly::get_instance();
+			$list['hello-dolly'] = HelloDolly::get_instance();
 		}
 
 		/**
 		 * Filter the list of available service plugins.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array<int,Service_Plugin_Base> $list The list.
+		 * @param array<string,Service_Plugin_Base> $list The list.
 		 */
 		return apply_filters( 'efml_service_plugins', $list );
 	}

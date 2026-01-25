@@ -440,6 +440,12 @@ class Admin {
 			return $content . ' ' . sprintf( __( 'This page has been expanded by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
 		}
 
+		// show hint in multisite on our service plugin page.
+		if ( 'efml_service_plugins' === $page && is_multisite() ) {
+			/* translators: %1$s will be replaced by the plugin name. */
+			return $content . ' ' . sprintf( __( 'This page is provided by the plugin %1$s.', 'external-files-in-media-library' ), '<em>' . Helper::get_plugin_name() . '</em>' );
+		}
+
 		// get requested taxonomy.
 		$post_type = filter_input( INPUT_GET, 'taxonomy', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 

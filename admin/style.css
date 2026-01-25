@@ -237,111 +237,107 @@ body.settings_page_eml_settings .copied:after {
 
 .form-table .settings_page_eml_settings th { padding: 8px 10px }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services {
-	display: flex;
-	gap: 1em;
-	flex-flow: row wrap;
-	align-content: space-between;
-	justify-content: space-between;
+body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
+	ul#efml-directory-listing-services {
+		display: flex;
+		gap: 1em;
+		flex-flow: row wrap;
+		align-content: space-between;
+		justify-content: space-between;
+		li {
+			border: 4px dashed #c3c4c7;
+			display: flex;
+			flex-direction: column;
+			align-content: center;
+			align-items: center;
+			justify-content: space-between;
+			flex: 1 1 0;
+			font-size: 24px;
+			line-height: 1;
+			gap: 1em;
+			padding: 1.2em 1em;
+			text-align: center;
+			min-width: 200px;
+			&:hover {
+				background-color: rgba(255,255,255,.9);
+			}
+			a:not(.button):before, span:not(.button):before {
+				display: block;
+				font-family: dashicons, sans-serif;
+				font-size: 52px;
+				margin: 0 auto 10px;
+			}
+			a:not(.connect) {
+				box-shadow: none;
+				line-height: 1.4;
+				text-decoration: none;
+			}
+			span:nth-of-type(2) {
+				display: inline-block;
+				font-size: 13px;
+			}
+		}
+	}
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li {
-	border: 4px dashed #c3c4c7;
-	display: flex;
-	flex-direction: column;
-	align-content: center;
-	align-items: center;
-	justify-content: space-between;
-	flex: 1 1 0;
-	font-size: 24px;
-	line-height: 1;
-	gap: 1em;
-	padding: 1.2em 1em;
-	text-align: center;
-	min-width: 200px;
+body.post-type-attachment .external_files {
+	span {
+		margin-right: .2em;
+	}
+	.efml-icon > *:before {
+		font-family: dashicons, sans-serif;
+		margin: 0 auto 10px;
+		display: inline-block;
+		font-size: 16px;
+		vertical-align: middle;
+	}
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li:hover {
-	background-color: rgba(255,255,255,.9);
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li a:not(.connect) {
-	box-shadow: none;
-	line-height: 1.4;
-	text-decoration: none;
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li span:nth-of-type(2) {
-	display: inline-block;
-	font-size: 13px;
-}
-
-body.post-type-attachment .external_files span {
-	margin-right: .2em;
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li span:before, body.post-type-attachment .external_files .efml-icon:before {
-	display: block;
-	font-family: dashicons, sans-serif;
-	font-size: 52px;
-	margin: 0 auto 10px;
-}
-
-body.post-type-attachment .external_files .efml-icon:before {
-	display: inline-block;
-	font-size: 16px;
-	vertical-align: middle;
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-local a:before, body.post-type-attachment .external_files .efml-file:before, body.post-type-attachment .external_files .efml-local:before {
+.efml-local > *:before, .efml-file > *:before {
 	content: "\f163";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-import a:before, body.post-type-attachment .external_files .efml-http:before {
-	content: "\f317";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-ftp a:before, body.post-type-attachment .external_files .efml-ftp:before {
-	content: "\f504";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-youtube a:before, body.post-type-attachment .external_files .efml-youtube:before {
-	content: "\f19b";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-directory a:before {
-	content: "\f501";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-zip span:first-child:before, body.post-type-attachment .external_files .efml-zip:before {
-	content: "\f498";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-drive span:not(.button):before, body.post-type-attachment .external_files .efml-google-drive:before {
-	content: "\f18b";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-google-cloud-storage span:not(.button):before, body.post-type-attachment .external_files .efml-google-cloud-storage:before {
-	content: "\f18b";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hello-dolly a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-hello-dolly span:not(.button):before {
-	content: "\f118";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-rest a:before, body.post-type-attachment .external_files .efml-rest:before {
-	content: "\f120";
-}
-
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-multisite a:before, body.post-type-attachment .external_files .efml-multisite:before {
+.efml-multisite > *:before {
 	content: "\f541";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-dropbox span:before {
-	content: url(../gfx/dropbox_icon.svg);
+.efml-import > *:before, .efml-http > *:before {
+	content: "\f317";
 }
 
-body.post-type-attachment .external_files .efml-dropbox:before {
+.efml-ftp > *:before {
+	content: "\f504";
+}
+
+.efml-youtube > *:before {
+	content: "\f19b";
+}
+
+.efml-directory > *:before {
+	content: "\f501";
+}
+
+.efml-zip > *:before {
+	content: "\f498";
+}
+
+.efml-google-drive > *:not(.button):before {
+	content: "\f18b";
+}
+
+.efml-google-cloud-storage > *:not(.button):before {
+	content: "\f18b";
+}
+
+.efml-hello-dolly > *:before {
+	content: "\f118";
+}
+
+.efml-rest > *:before {
+	content: "\f120";
+}
+
+.efml-dropbox > *:before {
 	background-image: url(../gfx/dropbox_icon.svg);
 	background-size: contain;
 	background-repeat: no-repeat;
@@ -350,19 +346,11 @@ body.post-type-attachment .external_files .efml-dropbox:before {
 	height: 16px;
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-aws-s3 span:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-aws-s3 a:before {
+.efml-aws-s3 > *:not(.button):before {
 	content: "\f162";
 }
 
-body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-webdav a:before, body.media_page_efml_local_directories ul#efml-directory-listing-services li.efml-webdav span:before {
-	background-image: url(../gfx/webdav.svg);
-	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
-	content: '';
-	height: 50px;
-	width: 50px;
-}
-
-body.post-type-attachment .external_files .efml-webdav:before {
+.efml-webdav > *:before {
 	background-image: url(../gfx/webdav.svg);
 	background-repeat: no-repeat;
 	background-size: contain;
@@ -370,6 +358,15 @@ body.post-type-attachment .external_files .efml-webdav:before {
 	content: '';
 	height: 16px;
 	width: 16px;
+}
+
+body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
+	.efml-dropbox, .efml-webdav {
+		&>*:before {
+			width: 50px;
+			height: 50px;
+		}
+	}
 }
 
 body.media_page_efml_local_directories ul#efml-directory-listing-services li a.connect:before {

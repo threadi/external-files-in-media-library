@@ -411,7 +411,7 @@ class Synchronization {
 		// extend the hint for all others.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
-			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '</p>';
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your options</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'synchronization' ) ) . '</p>';
 		}
 
 		// show extended hint for all others.

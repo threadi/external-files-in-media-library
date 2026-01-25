@@ -18,11 +18,13 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Upgrader;
 
@@ -76,6 +78,9 @@ class Plugins {
 		// add AJAX hooks.
 		add_action( 'wp_ajax_efml_install_and_activate_plugin', array( $this, 'install_and_activate_plugin_by_ajax' ) );
 		add_action( 'wp_ajax_efml_get_info_about_install_and_activate_service_plugin', array( $this, 'get_info_about_install_and_activate_service_plugin_via_ajax' ) );
+
+		// add multisite support.
+		add_action( 'network_admin_menu', array( $this, 'admin_multisite_menu' ) );
 	}
 
 	/**
@@ -149,7 +154,7 @@ class Plugins {
 		check_admin_referer( 'efml-install-plugin', 'nonce' );
 
 		// bail if user has not the required permissions.
-		if ( ! current_user_can( 'install_plugins' ) ) {
+		if ( ! current_user_can( 'install_plugins' ) || is_multisite() ) {
 			wp_safe_redirect( wp_get_referer() );
 			return;
 		}
@@ -218,7 +223,7 @@ class Plugins {
 	}
 
 	/**
-	 * Install and activate the given plugin by its absolute path and slug.
+	 * Install and activate the given plugin by its absolute local path and slug.
 	 *
 	 * @param string $path        The absolute path to the plugin to install.
 	 * @param string $plugin_slug The plugin slug.
@@ -288,6 +293,11 @@ class Plugins {
 		// set the actual step.
 		update_option( 'eml_service_plugins_ia_count', 4 );
 
+		// if we are in a multisite, do not enable it.
+		if ( is_multisite() ) {
+			return;
+		}
+
 		// activate the plugin.
 		require_once ABSPATH . 'wp-admin/includes/admin.php';
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -356,7 +366,7 @@ class Plugins {
 		check_admin_referer( 'efml-activate-plugin', 'nonce' );
 
 		// bail if user has not the required permissions.
-		if ( ! current_user_can( 'install_plugins' ) ) {
+		if ( ! current_user_can( 'install_plugins' ) || is_multisite() ) {
 			wp_safe_redirect( wp_get_referer() );
 			return;
 		}
@@ -561,11 +571,11 @@ class Plugins {
 			$plugin_zip = WP_PLUGIN_DIR . '/' . $source_config['plugin_main_file'];
 		}
 
-		// install it.
+		// install and activate it.
 		$this->install_and_activate_plugin( $plugin_zip, $service_obj->get_plugin_slug(), $plugin_mail_file );
 
 		// trigger hint, if the installation was not successfully.
-		if ( ! Helper::is_plugin_active( $plugin_mail_file ) ) {
+		if ( ! is_multisite() && ! Helper::is_plugin_active( $plugin_mail_file ) ) {
 			// set the result.
 			update_option(
 				'eml_service_plugins_ia_result',
@@ -614,6 +624,9 @@ class Plugins {
 				$plugin_name = $plugin_data['Name'];
 			}
 
+			// prepare the title.
+			$title = __( 'Installation and activation has been executed', 'external-files-in-media-library' );
+
 			// set default text.
 			$texts = array(
 				/* translators: %1$s will be replaced by the plugin name. */
@@ -647,11 +660,26 @@ class Plugins {
 				$buttons[0]['action'] = 'location.href="' . Directory_Listing::get_instance()->get_view_directory_url( $service_obj ) . '"';
 			}
 
+			// show other text in multisite.
+			if ( is_multisite() ) {
+				$url   = add_query_arg(
+					array(
+						'service'       => 'External files',
+						'plugin_status' => 'all',
+					),
+					get_admin_url() . 'network/plugins.php'
+				);
+				$title = __( 'Installation has been executed', 'external-files-in-media-library' );
+				/* translators: %1$s will be replaced by the plugin name. */
+				$texts[0]             = '<p>' . sprintf( __( 'The plugin %1$s has been installed. You can now activate it on the websites in your network.', 'external-files-in-media-library' ), '<em>' . $plugin_name . '</em>' ) . '</p>';
+				$buttons[0]['action'] = 'location.href="' . $url . '";';
+			}
+
 			// create the dialog.
 			$dialog = array(
 				'detail' => array(
 					'className' => 'efml',
-					'title'     => __( 'Installation and activation has been executed', 'external-files-in-media-library' ),
+					'title'     => $title,
 					'texts'     => $texts,
 					'buttons'   => $buttons,
 				),
@@ -694,5 +722,51 @@ class Plugins {
 
 		// return the resulting source.
 		return $source;
+	}
+
+	/**
+	 * Add menu in multisite to show possible service plugins there.
+	 *
+	 * @return void
+	 */
+	public function admin_multisite_menu(): void {
+		add_submenu_page(
+			'plugins.php',
+			__( 'External files sources', 'external-files-in-media-library' ),
+			__( 'External files sources', 'external-files-in-media-library' ),
+			'install_plugins',
+			'efml_service_plugins',
+			array( $this, 'admin_multisite_service_plugins' ),
+			6
+		);
+	}
+
+	/**
+	 * Show list of service plugins in multisite.
+	 *
+	 * @return void
+	 */
+	public function admin_multisite_service_plugins(): void {
+		// output.
+		?>
+		<div class="wrap">
+			<h1 class="wp-heading-inline"><?php echo esc_html__( 'Service plugins for External files in media library', 'external-files-in-media-library' ); ?></h1>
+			<ul id="efml-directory-listing-services">
+			<?php
+			foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
+				// bail if this is not a service plugin.
+				if ( ! $obj instanceof Service_Plugin_Base ) {
+					continue;
+				}
+
+				// show it.
+				?>
+					<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+					<?php
+			}
+			?>
+			</ul>
+		</div>
+		<?php
 	}
 }

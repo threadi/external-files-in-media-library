@@ -491,7 +491,7 @@ class Services {
 		$settings_array = json_decode( $file_content, true );
 
 		// bail if necessary entries are missing.
-		if ( empty( $settings_array['type'] ) || empty( $settings_array['title'] ) || empty( $settings_array['directory'] ) ) {
+		if ( empty( $settings_array['type'] ) || empty( $settings_array['title'] ) || empty( $settings_array['directory'] ) || empty( $settings_array['fields'] ) ) {
 			$dialog['detail']['texts'][1] = '<p>' . __( 'The uploaded file is not compatible with external sources.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}
