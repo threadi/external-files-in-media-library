@@ -12,10 +12,19 @@ As user of the plugin you find documentation for protocols and handling in the [
 
 After checkout go through the following steps:
 
+### By hand
+
+Run the following commands in this order:
+
+1. `composer install`
+2. `npm i`
+3. `npm run build`
+4. after that the plugin can be activated in WordPress.
+
 ### Using ant
 
 1. copy _build/build.properties.dist_ to _build/build.properties_.
-2. modify the build/build.properties file - note the comments in the file.
+2. modify the _build/build.properties_ file - note the comments in the file.
 3. after that the plugin can be activated in WordPress.
 
 ### Using Taskfile
@@ -24,6 +33,19 @@ After checkout go through the following steps:
 2. after that the plugin can be activated in WordPress.
 
 ## Release
+
+### From local environment by hand
+
+1. `composer install`
+2. `npm i`
+3. `npm run build`
+4. `composer test-install`
+5. `composer test`
+6. `vendor/bin/phpstan analyse`
+7. `vendor/bin/phpcbf --standard=ruleset.xml .`
+8. `vendor/bin/phpcs --standard=ruleset.xml .`
+9. Set version nummer in _readme.txt_ and _external-files-in-media-library.php_
+10. Create the release ZIP with all necessary folders and files.
 
 ### From local environment with ant
 
@@ -39,25 +61,27 @@ After checkout go through the following steps:
 ### On GitHub
 
 1. Create a new tag with the new version number.
-2. The release zip will be created by GitHub action.
+2. The release zip will be created by a GitHub action.
 
 ## Translations
 
-I recommend to use [PoEdit](https://poedit.net/) to translate texts for this plugin.
+I recommend translating this plugin in the [WordPress Translating tool](https://translate.wordpress.org/projects/wp-plugins/external-files-in-media-library/).
 
-### generate pot-file
+For manual translation I recommend to use [PoEdit](https://poedit.net/) to translate texts for this plugin.
+
+### Generate pot-file
 
 Run in the main directory:
 
 `wp i18n make-pot . languages/external-files-in-media-library.pot --exclude=svn/`
 
-### update translation-file
+### Update translation-file
 
 1. Open .po-file of the language in PoEdit.
 2. Go to "Translate" > "Update from POT-file".
 3. After this the new entries are added to the language-file.
 
-### export translation-file
+### Export translation-file
 
 1. Open .po-file of the language in PoEdit.
 2. Go to "File" > "Save".
@@ -101,7 +125,7 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 
 `wp plugin check --error-severity=7 --warning-severity=6 --include-low-severity-errors --categories=plugin_repo --format=json --slug=external-files-in-media-library .`
 
-## Unit tests
+## PHP Unit tests
 
 ### Initialize the test environment
 
