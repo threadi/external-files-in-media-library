@@ -1,6 +1,6 @@
 <?php
 /**
- * File which handles the DropBox support as own protocol.
+ * File, which handles the DropBox support as own protocol.
  *
  * @package external-files-in-media-library
  */
@@ -121,7 +121,7 @@ class Protocol extends Protocol_Base {
 			}
 		}
 
-		// bail if file_data is empty (e.g. if error occurred).
+		// bail if "file_data" is empty (e.g., if error occurred).
 		if ( empty( $entries ) ) {
 			return array();
 		}

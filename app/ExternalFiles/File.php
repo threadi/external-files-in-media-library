@@ -453,11 +453,19 @@ class File {
 
 		// bail if file type should not be cached in proxy.
 		if ( ! $this->get_file_type_obj()->is_proxy_enabled() ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Proxy is disabled for the used file type.', 'external-files-in-media-library' ), $this->get_url( true ), 'info', 2 );
+
+			// do nothing more.
 			return;
 		}
 
 		// bail if file is locally saved.
 		if ( $this->is_locally_saved() ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'File has been locally saved and must not be cached for proxy.', 'external-files-in-media-library' ), $this->get_url( true ), 'info', 2 );
+
+			// do nothing more.
 			return;
 		}
 
@@ -469,6 +477,10 @@ class File {
 
 		// bail if no protocol handler could be loaded.
 		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Protocol handler for the given URL could not be found!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return;
 		}
 
@@ -477,11 +489,18 @@ class File {
 
 		// do not proxy this file if no mime-type has been received.
 		if ( empty( $file_data['mime-type'] ) ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Mime type for the file could not be detected!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return;
 		}
 
 		// compare the retrieved mime-type with the saved mime-type.
 		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
 			// other mime-type received => do not proxy this file.
 			return;
 		}
@@ -494,6 +513,10 @@ class File {
 
 		// bail if temp file could not be loaded.
 		if ( ! is_string( $tmp_file ) ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return;
 		}
 
@@ -502,6 +525,10 @@ class File {
 
 		// bail if no contents returned.
 		if ( ! $body ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'File is empty! Found during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return;
 		}
 
@@ -509,6 +536,10 @@ class File {
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
 		$binary_mime_type = $binary_data_info->buffer( $body );
 		if ( $binary_mime_type !== $file_data['mime-type'] ) {
+			// add log entry.
+			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return;
 		}
 
@@ -537,6 +568,9 @@ class File {
 			// do nothing more.
 			return;
 		}
+
+		// add log entry.
+		Log::get_instance()->create( __( 'File has been added to proxy cache.', 'external-files-in-media-library' ), $this->get_url( true ), 'info', 2 );
 
 		// save that file has been cached.
 		update_post_meta( $this->get_id(), 'eml_proxied', time() );

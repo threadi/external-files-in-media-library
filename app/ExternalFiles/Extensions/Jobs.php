@@ -128,6 +128,11 @@ class Jobs extends Extension_Base {
 	 * @return array<string,string>
 	 */
 	public function add_media_action( array $actions, WP_Post $post ): array {
+		// bail if user has not the capability for this.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return $actions;
+		}
+
 		// bail if setting is disabled.
 		if ( 1 !== absint( get_option( 'eml_job_show_link' ) ) ) {
 			return $actions;
@@ -173,6 +178,11 @@ class Jobs extends Extension_Base {
 	 * @return void
 	 */
 	public function use_filter_options( WP_Query $query ): void {
+		// bail if user has not the capability for this.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// get filter value.
 		$filter = filter_input( INPUT_GET, 'filter_job_id', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 

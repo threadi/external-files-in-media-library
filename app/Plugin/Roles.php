@@ -110,7 +110,7 @@ class Roles {
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles, which should be allowed to add external files.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the roles that should be allowed to add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -294,7 +294,7 @@ class Roles {
 			return;
 		}
 
-		// set the capability 'eml_manage_files' for the given roles.
+		// set the given capability for the given roles.
 		foreach ( wp_roles()->roles as $slug => $role ) {
 			// get the role-object.
 			$role_obj = get_role( $slug );

@@ -84,7 +84,7 @@ class Export {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
 
 		// bail if not enabled.
-		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+		if ( ! $this->is_enabled() ) {
 			return;
 		}
 
@@ -107,7 +107,7 @@ class Export {
 
 		// use AJAX.
 		add_action( 'wp_ajax_efml_get_export_config_dialog', array( $this, 'get_export_config_dialog' ) );
-		add_action( 'wp_ajax_efml_save_export_config', array( $this, 'save_export_config' ) );
+		add_action( 'wp_ajax_efml_save_export_config', array( $this, 'save_export_config_via_ajax' ) );
 		add_action( 'wp_ajax_efml_change_export_state', array( $this, 'export_state_change_via_ajax' ) );
 
 		// use hooks.
@@ -674,7 +674,7 @@ class Export {
 	 *
 	 * @return void
 	 */
-	public function save_export_config(): void {
+	public function save_export_config_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
 
@@ -858,7 +858,7 @@ class Export {
 	 *
 	 * @return void
 	 */
-	private function set_state_for_term( int $term_id, int $enabled ): void {
+	public function set_state_for_term( int $term_id, int $enabled ): void {
 		// get the term.
 		$term = get_term( $term_id, Taxonomy::get_instance()->get_name() );
 
@@ -902,7 +902,7 @@ class Export {
 	 *
 	 * @return array<int,int>
 	 */
-	private function get_export_terms(): array {
+	public function get_export_terms(): array {
 		// get the export terms.
 		$query = array(
 			'taxonomy'     => Taxonomy::get_instance()->get_name(),
@@ -1587,8 +1587,14 @@ class Export {
 	 * @return void
 	 */
 	public function show_export_hint_on_file_add_page(): void {
+		// bail if he also does not have the capability for external files.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// show simple messages if user has not the capability for settings.
 		if ( ! current_user_can( 'manage_options' ) ) {
+			// show info if export is enabled.
 			if ( 1 === absint( get_option( 'eml_export' ) ) ) {
 				// get the external sources with enabled export option.
 				$external_sources = $this->get_external_sources_as_name_list();
@@ -1605,7 +1611,7 @@ class Export {
 		}
 
 		// if export is already enabled, show where the files will be exported.
-		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+		if ( $this->is_enabled() ) {
 			// get the external sources with enabled export option.
 			$external_sources = $this->get_external_sources_as_name_list();
 
@@ -2121,5 +2127,39 @@ class Export {
 
 		// return the list of actions.
 		return $actions;
+	}
+
+	/**
+	 * Return whether export is enabled:
+	 * - either we are in a multisite, and the actual site is NOT the main media library site
+	 * - or we are NOT in a multisite and export is enabled in it.
+	 *
+	 * @return bool
+	 */
+	private function is_enabled(): bool {
+		// bail if this is not a multisite.
+		if( ! is_multisite() ) {
+			return $this->is_enabled_on_single_site();
+		}
+
+		// get the configured site ID for the main media library.
+		$efml_media_library_site_id = \ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->get_main_media_library_site_id();
+
+		// use single site setting, if not main media library is set.
+		if( 0 === $efml_media_library_site_id ) {
+			return $this->is_enabled_on_single_site();
+		}
+
+		// return true if this is NOT the main media library site to enable the export.
+		return $efml_media_library_site_id !== get_current_blog_id();
+	}
+
+	/**
+	 * Return whether export is enabled on the actual single site.
+	 *
+	 * @return bool
+	 */
+	private function is_enabled_on_single_site(): bool {
+		return 1 === absint( get_option( 'eml_export' ) );
 	}
 }

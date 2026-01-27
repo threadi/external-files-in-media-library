@@ -182,7 +182,7 @@ class Proxy {
 		if ( ! $wp_filesystem->exists( $cached_file_path ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
+			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for the proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
 			// return the template.
 			return $template;

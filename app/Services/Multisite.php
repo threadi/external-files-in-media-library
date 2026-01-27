@@ -98,9 +98,25 @@ class Multisite extends Service_Base implements Service {
 		// set title.
 		$this->title = __( 'Choose file(s) from another website in your multisite', 'external-files-in-media-library' );
 
-		// misc.
+		// use our own hooks.
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_multisite_files' ) );
 		add_action( 'efml_after_file_save', array( $this, 'change_service_name' ) );
+	}
+
+	/**
+	 * Add our own protocol.
+	 *
+	 * @param array<string> $protocols List of protocols.
+	 *
+	 * @return array<string>
+	 */
+	public function add_protocol( array $protocols ): array {
+		// add the DropBox protocol before the HTTPS-protocol and return resulting list of protocols.
+		array_unshift( $protocols, 'ExternalFilesInMediaLibrary\Services\Multisite\Protocol' );
+
+		// return the resulting list.
+		return $protocols;
 	}
 
 	/**
@@ -155,8 +171,17 @@ class Multisite extends Service_Base implements Service {
 			// get the metadata of this file.
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
-			// get its URL.
-			$url = (string) wp_get_attachment_url( $post->ID );
+			/**
+			 * Get the file URL.
+			 *
+			 * We have an active Core bug here: https://core.trac.wordpress.org/ticket/25650,
+			 * so we cant use wp_get_attachment_url() atm.
+			 *
+			 * Our solution:
+			 * 1. get_attached_file() gives the absolute path for the file.
+			 * 2. We strip the ABSPATH and add the domain before it.
+			 */
+			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), get_attached_file( $post->ID ) );
 
 			// collect the data for this file.
 			$entry = array(
@@ -268,22 +293,8 @@ class Multisite extends Service_Base implements Service {
 	 * @return array<int,array<string,string>>
 	 */
 	private function get_websites(): array {
-		global $wpdb;
-
 		// get the websites.
-		$websites = $wpdb->get_results(
-			$wpdb->prepare(
-				"
-	            SELECT blog_id
-	            FROM ' . $wpdb->blogs . '
-	            WHERE site_id = ' . $wpdb->siteid . '
-	            AND spam = '0'
-	            AND deleted = '0'
-	            AND archived = '0'
-	            AND blog_id != %d",
-				get_current_blog_id()
-			)
-		);
+		$websites = Helper::get_blogs( get_current_blog_id() );
 
 		// prepare the list.
 		$list = array(
@@ -412,6 +423,10 @@ class Multisite extends Service_Base implements Service {
 
 		// bail on no results.
 		if ( 0 === $attachments->found_posts ) {
+			// restore the current blog.
+			restore_current_blog();
+
+			// return empty array.
 			return array();
 		}
 
@@ -428,8 +443,17 @@ class Multisite extends Service_Base implements Service {
 			// get the metadata of this file.
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
-			// get the URL.
-			$url = (string) wp_get_attachment_url( $post->ID );
+			/**
+			 * Get the file URL.
+			 *
+			 * We have an active Core bug here: https://core.trac.wordpress.org/ticket/25650,
+			 * so we cant use wp_get_attachment_url() atm.
+			 *
+			 * Our solution:
+			 * 1. get_attached_file() gives the absolute path for the file.
+			 * 2. We strip the ABSPATH and add the domain before it.
+			 */
+			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), get_attached_file( $post->ID ) );
 
 			// download the URL as tmp file.
 			$tmp_file = download_url( $url );

@@ -88,6 +88,9 @@ class Init {
 		// initialize the user management.
 		Users::get_instance()->init();
 
+		// initialize the network settings.
+		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();
+
 		// plugin-actions.
 		register_activation_hook( EFML_PLUGIN, array( Install::get_instance(), 'activation' ) );
 		register_deactivation_hook( EFML_PLUGIN, array( Install::get_instance(), 'deactivation' ) );

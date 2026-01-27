@@ -1448,15 +1448,7 @@ class Synchronization {
 		}
 
 		// set new state.
-		if ( 1 === absint( $state ) ) {
-			$this->add_schedule( $term_id );
-		} else {
-			// get the schedule object.
-			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
-			if ( $schedule_obj instanceof Schedules_Base ) {
-				$schedule_obj->delete();
-			}
-		}
+		$this->set_state( $term_id, $state );
 
 		// send ok.
 		wp_send_json_success();
@@ -1706,5 +1698,25 @@ class Synchronization {
 	public function sync_description(): void {
 		/* translators: %1$s will be replaced by a URL. */
 		echo '<p><strong>' . esc_html__( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Synchronization detects new files in the external sources at the configured interval and imports them as external files according to the settings.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the source of these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use these options <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
+	}
+
+	/**
+	 * Set the sync state for a given term and configure the schedule accordingly.
+	 *
+	 * @param int $term_id The term ID.
+	 * @param int $state The state.
+	 *
+	 * @return void
+	 */
+	public function set_state( int $term_id, int $state ): void {
+		if ( 1 === $state ) {
+			$this->add_schedule( $term_id );
+		} else {
+			// get the schedule object.
+			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
+			if ( $schedule_obj instanceof Schedules_Base ) {
+				$schedule_obj->delete();
+			}
+		}
 	}
 }

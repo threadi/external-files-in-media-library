@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
     /**
      * Add rating hint.
      */
-    $('body.settings_page_eml_settings:not(.efml-hide-review-hint) h1.wp-heading-inline, body.taxonomy-edlfw_archive:not(.efml-hide-review-hint) h1.wp-heading-inline, body.media_page_efml_local_directories:not(.efml-hide-review-hint) h1.wp-heading-inline').each(function() {
+    $('body:not(.multisite).settings_page_eml_settings:not(.efml-hide-review-hint) h1.wp-heading-inline, body:not(.multisite).taxonomy-edlfw_archive:not(.efml-hide-review-hint) h1.wp-heading-inline, body:not(.multisite).media_page_efml_local_directories:not(.efml-hide-review-hint) h1.wp-heading-inline').each(function() {
       let review_button = document.createElement( 'a' );
       review_button.className = 'review-hint-button page-title-action';
       review_button.href = efmlJsVars.review_url;

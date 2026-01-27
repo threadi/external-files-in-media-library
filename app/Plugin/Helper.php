@@ -812,4 +812,29 @@ class Helper {
 	public static function get_logo_img(): string {
 		return '<img src="' . self::get_plugin_url() . 'gfx/logo.png" alt="">';
 	}
+
+	/**
+	 * Return the list of all sites in the multisite.
+	 *
+	 * @param int $exclude_blog_id A blog ID to exclude.
+	 *
+	 * @return array<int,object>
+	 */
+    public static function get_blogs( int $exclude_blog_id = 0 ): array {
+		// query for the list of blogs.
+		global $wpdb;
+	    return $wpdb->get_results(
+		    $wpdb->prepare(
+			    "
+	            SELECT blog_id
+	            FROM " . $wpdb->blogs . "
+	            WHERE site_id = " . $wpdb->siteid . "
+	            AND spam = '0'
+	            AND deleted = '0'
+	            AND archived = '0'
+	            AND blog_id != %d",
+			    $exclude_blog_id
+		    )
+	    );
+    }
 }

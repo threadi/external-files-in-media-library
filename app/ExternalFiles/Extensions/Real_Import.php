@@ -336,7 +336,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_option_to_real_import_file( File $external_file_obj ): void {
 		// bail if capability is not set.
-		if ( ! current_user_can( 'efml_cap_tools_import' ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -457,6 +457,12 @@ class Real_Import extends Extension_Base {
 		// if referer is false, set empty string.
 		if ( ! $referer ) {
 			$referer = '';
+		}
+
+		// bail if user has not the capability for this.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			wp_safe_redirect( $referer );
+			exit;
 		}
 
 		// get attachment ID.
@@ -684,7 +690,7 @@ class Real_Import extends Extension_Base {
 			return array();
 		}
 
-		// query for file with same filename.
+		// query for the file with same filename.
 		$query         = array(
 			'post_type'      => 'attachment',
 			'title'          => basename( $results['url'] ),
@@ -717,7 +723,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
 		// bail if cap is missing.
-		if ( ! current_user_can( 'efml_cap_tools_import' ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
 			return $actions;
 		}
 

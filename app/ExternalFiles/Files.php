@@ -431,6 +431,11 @@ class Files {
 	 * @return void
 	 */
 	public function add_media_box( WP_Post $post ): void {
+		// bail if user has not the capability.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// get file by its ID.
 		$external_file_obj = $this->get_file( $post->ID );
 
@@ -1435,7 +1440,7 @@ class Files {
 		}
 
 		// return the listing object label.
-		return $listing_obj->get_label();
+		return '<span class="efml-icon efml-' . esc_attr( $listing_obj->get_name() ) . '" title="' . esc_attr( $listing_obj->get_title() ) . '"><span></span></span>';
 	}
 
 	/**
