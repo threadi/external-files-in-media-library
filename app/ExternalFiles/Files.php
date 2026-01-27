@@ -885,6 +885,11 @@ class Files {
 			);
 		}
 
+		// add the file entry, if it is missing.
+		if( ! isset( $image_data['file'] ) ) {
+			$image_data['file'] = get_attached_file( $attachment_id );
+		}
+
 		// remove the path from the resized image data.
 		unset( $new_image_data['path'] );
 
@@ -897,7 +902,7 @@ class Files {
 
 		// log the event.
 		/* translators: %1$s will be replaced by the image sizes. */
-		Log::get_instance()->create( sprintf( __( 'New thumb for %1$s generated.', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'New thumb for size %1$s generated.', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
 
 		// return the thumb.
 		return array(

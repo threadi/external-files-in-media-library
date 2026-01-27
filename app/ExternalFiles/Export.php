@@ -1166,7 +1166,7 @@ class Export {
 
 			// log this event.
 			/* translators: %1$s will be replaced by the external source title. */
-			Log::get_instance()->create( sprintf( __( 'File exported to external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
+			Log::get_instance()->create( sprintf( __( 'File has been exported to the external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
 		}
 
 		// return the result.
@@ -1485,8 +1485,13 @@ class Export {
 			return $data;
 		}
 
+		// add the path to the metadata, if not set.
+		if( ! isset( $meta_data['file'] ) ) {
+			$meta_data['file'] = $file;
+		}
+
 		// log this event.
-		Log::get_instance()->create( __( 'Cleanup the attachment files.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
+		Log::get_instance()->create( __( 'Cleanup the attachment files starting.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
 
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
@@ -1507,6 +1512,9 @@ class Export {
 
 		// delete the original.
 		$wp_filesystem->delete( $path );
+
+		// log this event.
+		Log::get_instance()->create( __( 'Cleanup the attachment files completed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
 
 		// return the metadata.
 		return $data;
