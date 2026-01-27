@@ -73,7 +73,6 @@ class Settings {
 		// get the actual settings.
 		$efml_media_library = $this->get_main_media_library_site_id();
 		$efml_hide_options = $this->get_hide_options();
-		var_dump($efml_hide_options);
 
 		// show selection.
 		?>
