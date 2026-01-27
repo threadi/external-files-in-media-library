@@ -247,7 +247,15 @@ class Tables {
 	 * @return array<string,string>
 	 */
 	public function add_media_columns( array $columns ): array {
+		// bail if user has not the capability.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return $columns;
+		}
+
+		// add the column.
 		$columns['external_files'] = __( 'External file', 'external-files-in-media-library' );
+
+		// return the resulting list of columns.
 		return $columns;
 	}
 

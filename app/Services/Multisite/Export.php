@@ -119,6 +119,11 @@ class Export extends Export_Base {
 		// get the blog ID from the configuration.
 		$blog_id = absint( $fields['website']['value'] );
 
+		// bail if blog ID is not set.
+		if( 0 === $blog_id ) {
+			return false;
+		}
+
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
 
@@ -183,6 +188,9 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// save the external attachment ID on our local entry.
+		update_post_meta( $attachment_id, 'efml_multisite_attachment_id', $new_attachment_id );
+
 		/* translators: %1$s will be replaced by a website title. */
 		Log::get_instance()->create( sprintf( __( 'Successful exported file to %1$s.', 'external-files-in-media-library' ), '<em>' . get_blogaddress_by_id( $blog_id ) . '</em>' ), $target, 'info', 2 );
 
@@ -200,7 +208,51 @@ class Export extends Export_Base {
 	 * @return bool
 	 */
 	public function delete_exported_file( string $url, array $credentials, int $attachment_id ): bool {
-		// TODO has to be completed.
+		// get the fields.
+		$fields = $credentials['fields'];
+
+		// bail if fields are empty.
+		if ( empty( $fields ) ) {
+			return false;
+		}
+
+		// get the blog ID from the configuration.
+		$blog_id = absint( $fields['website']['value'] );
+
+		// bail if blog ID is not set.
+		if( 0 === $blog_id ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Blog ID for a file to delete in multisite could not be loaded.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// get the external attachment ID.
+		$external_attachment_id = absint( get_post_meta( $attachment_id, 'efml_multisite_attachment_id', true ) );
+
+		// bail if external attachment ID could not be loaded.
+		if( 0 === $external_attachment_id ) {
+			// log this event.
+			Log::get_instance()->create( __( 'External attachment ID for a file to delete in multisite could not be loaded.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// switch to this blog.
+		switch_to_blog( $blog_id );
+
+		// delete the entry.
+		wp_delete_attachment( $external_attachment_id, true );
+
+		// switch back to our own blog.
+		restore_current_blog();
+
+		// log this event.
+		Log::get_instance()->create( __( 'File has been deleted from other website in multisite.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+		// return true as file could be deleted in export target.
 		return true;
 	}
 

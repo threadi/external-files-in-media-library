@@ -268,22 +268,8 @@ class Multisite extends Service_Base implements Service {
 	 * @return array<int,array<string,string>>
 	 */
 	private function get_websites(): array {
-		global $wpdb;
-
 		// get the websites.
-		$websites = $wpdb->get_results(
-			$wpdb->prepare(
-				"
-	            SELECT blog_id
-	            FROM ' . $wpdb->blogs . '
-	            WHERE site_id = ' . $wpdb->siteid . '
-	            AND spam = '0'
-	            AND deleted = '0'
-	            AND archived = '0'
-	            AND blog_id != %d",
-				get_current_blog_id()
-			)
-		);
+		$websites = Helper::get_blogs( get_current_blog_id() );
 
 		// prepare the list.
 		$list = array(

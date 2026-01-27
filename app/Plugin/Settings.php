@@ -1,6 +1,6 @@
 <?php
 /**
- * This file defines the settings for this plugin.
+ * This file defines the settings of this plugin.
  *
  * @package external-files-in-media-library
  */
@@ -154,6 +154,7 @@ class Settings {
 		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
 		$settings_obj->set_menu_slug( $this->get_menu_slug() );
 		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
+		$settings_obj->set_capability( $this->is_disabled() ? 'god' : 'manage_options' );
 		$settings_obj->set_translations(
 			array(
 				'title_settings_import_file_missing' => __( 'A required file is missing', 'external-files-in-media-library' ),
@@ -963,5 +964,30 @@ class Settings {
 
 		// return the hidden section object.
 		return $hidden_section;
+	}
+
+	/**
+	 * Return "true" if this is a site in a network and this is not the site for the main media library.
+	 *
+	 * Otherwise, return "false".
+	 *
+	 * @return bool
+	 */
+	private function is_disabled(): bool {
+		// bail if this is not a multisite.
+		if( ! is_multisite() ) {
+			return false;
+		}
+
+		// get the configured site ID for the main media library.
+		$efml_media_library_site_id = \ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->get_main_media_library_site_id();
+
+		// bail if no main site is set for media library.
+		if( 0 === $efml_media_library_site_id ) {
+			return false;
+		}
+
+		// return true if this is NOT the main media library site to enable the export.
+		return $efml_media_library_site_id !== get_current_blog_id();
 	}
 }
