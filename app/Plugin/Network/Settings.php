@@ -94,7 +94,7 @@ class Settings {
 								}
 							?>
 						</select>
-						<p><?php echo wp_kses_post( __( 'All files from all websites are stored in the media library of the website selected here. The other websites store a reference to these. Depending on the file type, the URLs using a proxy or are delivered directly. <strong>Only activate this function when setting up a new multisite! Create a backup of everything beforehand.</strong>', 'external-files-in-media-library' ) ); ?></p>
+						<p><?php echo wp_kses_post( __( 'All files from all websites are stored in the media library of the website selected here. The other websites store a reference to these. Depending on the file type, the URLs using a proxy or are delivered directly. <strong>Create a backup of everything beforehand.</strong>', 'external-files-in-media-library' ) ); ?></p>
 					</td>
 				</tr>
 				<tr>

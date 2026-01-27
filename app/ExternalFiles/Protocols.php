@@ -173,13 +173,13 @@ class Protocols {
 				continue;
 			}
 
+			// configure its fields, even it nothing are set.
+			$protocol_obj->set_fields( $external_file->get_fields() );
+
 			// bail if URL is compatible.
 			if ( ! $protocol_obj->is_url_compatible() ) {
 				continue;
 			}
-
-			// configure its fields, even it nothing are set.
-			$protocol_obj->set_fields( $external_file->get_fields() );
 
 			// return resulting object.
 			return $protocol_obj;
