@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transien
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tables;
+use ExternalFilesInMediaLibrary\Plugin\CapabilitySets;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Intro;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
@@ -84,6 +85,9 @@ class Admin {
 
 		// initialize the additional plugins support.
 		Plugins::get_instance()->init();
+
+		// initialize the capability sets.
+		CapabilitySets::get_instance()->init();
 
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );

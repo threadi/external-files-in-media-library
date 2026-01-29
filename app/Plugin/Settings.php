@@ -975,7 +975,7 @@ class Settings {
 	 */
 	private function is_disabled(): bool {
 		// bail if this is not a multisite.
-		if( ! is_multisite() ) {
+		if ( ! is_multisite() ) {
 			return false;
 		}
 
@@ -983,11 +983,11 @@ class Settings {
 		$efml_media_library_site_id = \ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->get_main_media_library_site_id();
 
 		// bail if no main site is set for media library.
-		if( 0 === $efml_media_library_site_id ) {
+		if ( 0 === $efml_media_library_site_id ) {
 			return false;
 		}
 
 		// return true if this is NOT the main media library site to enable the export.
-		return $efml_media_library_site_id !== get_current_blog_id();
+		return get_current_blog_id() !== $efml_media_library_site_id;
 	}
 }

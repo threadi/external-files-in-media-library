@@ -181,7 +181,7 @@ class Multisite extends Service_Base implements Service {
 			 * 1. get_attached_file() gives the absolute path for the file.
 			 * 2. We strip the ABSPATH and add the domain before it.
 			 */
-			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), get_attached_file( $post->ID ) );
+			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), (string) get_attached_file( $post->ID ) );
 
 			// collect the data for this file.
 			$entry = array(
@@ -307,12 +307,12 @@ class Multisite extends Service_Base implements Service {
 		// add the sites to the list.
 		foreach ( $websites as $website ) {
 			// get the URL of this website.
-			$url = get_blogaddress_by_id( $website->blog_id );
+			$url = get_blogaddress_by_id( $website->blog_id ); // @phpstan-ignore property.notFound
 
 			// add it to the list.
 			$list[] = array(
 				'label' => $url,
-				'value' => $website->blog_id,
+				'value' => $website->blog_id, // @phpstan-ignore property.notFound
 			);
 		}
 
@@ -453,7 +453,7 @@ class Multisite extends Service_Base implements Service {
 			 * 1. get_attached_file() gives the absolute path for the file.
 			 * 2. We strip the ABSPATH and add the domain before it.
 			 */
-			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), get_attached_file( $post->ID ) );
+			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), (string) get_attached_file( $post->ID ) );
 
 			// download the URL as tmp file.
 			$tmp_file = download_url( $url );

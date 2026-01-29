@@ -432,7 +432,7 @@ class Files {
 	 */
 	public function add_media_box( WP_Post $post ): void {
 		// bail if user has not the capability.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -886,8 +886,8 @@ class Files {
 		}
 
 		// add the file entry, if it is missing.
-		if( ! isset( $image_data['file'] ) ) {
-			$image_data['file'] = get_attached_file( $attachment_id );
+		if ( ! isset( $image_data['file'] ) ) {
+			$image_data['file'] = get_attached_file( absint( $attachment_id ) );
 		}
 
 		// remove the path from the resized image data.

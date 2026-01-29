@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Services\Multisite;
 use WP_Filesystem_Base;
+use WP_Post;
 use WP_Query;
 
 /**
@@ -46,7 +47,7 @@ class Protocol extends Protocol_Base {
 		$fields = $this->get_fields();
 
 		// bail if fields does not contain a website-entry for multisite-setting.
-		if( ! isset( $fields['website'] ) ) {
+		if ( ! isset( $fields['website'] ) ) {
 			return false;
 		}
 
@@ -96,7 +97,7 @@ class Protocol extends Protocol_Base {
 		$blog_id = absint( $fields['website']['value'] );
 
 		// bail if blog ID is not given.
-		if( 0 === $blog_id ) {
+		if ( 0 === $blog_id ) {
 			return array();
 		}
 
@@ -114,22 +115,34 @@ class Protocol extends Protocol_Base {
 		 * 1. Get the file path without the domain.
 		 * 2. Query for it in "_wp_attached_file" in the postmeta table.
 		 */
-		$path = str_replace( trailingslashit( get_blogaddress_by_id( $blog_id ) ) . 'wp-content/uploads/', '', $url );
-		$query = array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'any',
-			'meta_query'     => array(
+		$path   = str_replace( trailingslashit( get_blogaddress_by_id( $blog_id ) ) . 'wp-content/uploads/', '', $url );
+		$query  = array(
+			'post_type'   => 'attachment',
+			'post_status' => 'any',
+			'meta_query'  => array(
 				array(
 					'key'     => '_wp_attached_file',
 					'value'   => $path,
-					'compare' => '='
-				)
+					'compare' => '=',
+				),
 			),
 		);
 		$result = new WP_Query( $query );
 
 		// bail on no result.
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
+			// return to our blog.
+			restore_current_blog();
+
+			// return the collected URL info without optimized data.
+			return $url_info;
+		}
+
+		// get the post object.
+		$post_obj = $result->posts[0];
+
+		// bail if post object could not be loaded.
+		if ( ! $post_obj instanceof WP_Post ) {
 			// return to our blog.
 			restore_current_blog();
 
@@ -138,7 +151,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// use its title in URL infos.
-		$url_info['title'] = $result->posts[0]->post_title;
+		$url_info['title'] = $post_obj->post_title;
 
 		// return to our blog.
 		restore_current_blog();

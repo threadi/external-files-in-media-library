@@ -129,7 +129,7 @@ class Jobs extends Extension_Base {
 	 */
 	public function add_media_action( array $actions, WP_Post $post ): array {
 		// bail if user has not the capability for this.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return $actions;
 		}
 
@@ -179,7 +179,7 @@ class Jobs extends Extension_Base {
 	 */
 	public function use_filter_options( WP_Query $query ): void {
 		// bail if user has not the capability for this.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 

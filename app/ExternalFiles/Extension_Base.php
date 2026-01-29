@@ -13,14 +13,7 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Object to handle different file extensions.
  */
-class Extension_Base {
-	/**
-	 * The internal extension name.
-	 *
-	 * @var string
-	 */
-	protected string $name = '';
-
+class Extension_Base extends Tools_Base {
 	/**
 	 * Initialize this object.
 	 *
@@ -41,24 +34,6 @@ class Extension_Base {
 	 * @return void
 	 */
 	public function uninstall(): void {}
-
-	/**
-	 * Return the object name.
-	 *
-	 * @return string
-	 */
-	public function get_name(): string {
-		return $this->name;
-	}
-
-	/**
-	 * Return the object title.
-	 *
-	 * @return string
-	 */
-	public function get_title(): string {
-		return '';
-	}
 
 	/**
 	 * Hide this extension in settings.

@@ -70,6 +70,7 @@
 - Added support to import service plugins, which provide support for more platforms not bundled in the main plugin
 - Added support to install WordPress plugins from external sources
 - Added support for multisite-installations: manage service plugins in your network
+- Added capability sets to fast configuration of capabilities for each tool and service
 
 ### Changed
 

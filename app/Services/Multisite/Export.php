@@ -120,7 +120,7 @@ class Export extends Export_Base {
 		$blog_id = absint( $fields['website']['value'] );
 
 		// bail if blog ID is not set.
-		if( 0 === $blog_id ) {
+		if ( 0 === $blog_id ) {
 			return false;
 		}
 
@@ -220,7 +220,7 @@ class Export extends Export_Base {
 		$blog_id = absint( $fields['website']['value'] );
 
 		// bail if blog ID is not set.
-		if( 0 === $blog_id ) {
+		if ( 0 === $blog_id ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Blog ID for a file to delete in multisite could not be loaded.', 'external-files-in-media-library' ), $url, 'error' );
 
@@ -232,7 +232,7 @@ class Export extends Export_Base {
 		$external_attachment_id = absint( get_post_meta( $attachment_id, 'efml_multisite_attachment_id', true ) );
 
 		// bail if external attachment ID could not be loaded.
-		if( 0 === $external_attachment_id ) {
+		if ( 0 === $external_attachment_id ) {
 			// log this event.
 			Log::get_instance()->create( __( 'External attachment ID for a file to delete in multisite could not be loaded.', 'external-files-in-media-library' ), $url, 'error' );
 
