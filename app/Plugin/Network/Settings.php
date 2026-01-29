@@ -8,14 +8,14 @@
 namespace ExternalFilesInMediaLibrary\Plugin\Network;
 
 // prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
 use WP_Role;
-
-defined( 'ABSPATH' ) || exit;
 
 /**
  * Object, which handles the settings for the multisite network of this plugin.
@@ -72,38 +72,46 @@ class Settings {
 	public function add_settings(): void {
 		// get the actual settings.
 		$efml_media_library = $this->get_main_media_library_site_id();
-		$efml_hide_options = $this->get_hide_options();
+		$efml_hide_options  = $this->get_hide_options();
 
 		// show selection.
 		?>
 			<h2><?php echo esc_html__( 'External files in Media Library', 'external-files-in-media-library' ); ?></h2>
 			<table class="form-table" role="presentation">
 				<tr>
-					<th scope="row"><label for="efml_media_library_site_id"><?php _e( 'One media library for all sites' ); ?></label></th>
+					<th scope="row"><label for="efml_media_library_site_id"><?php echo esc_html__( 'One media library for all sites', 'external-files-in-media-library' ); ?></label></th>
 					<td>
 						<select name="efml_media_library_site_id" id="efml_media_library_site_id">
-							<option value="0"><?php echo __( 'Not used', 'external-files-in-media-library' ); ?></option>
+							<option value="0"><?php echo esc_html__( 'Not used', 'external-files-in-media-library' ); ?></option>
 							<?php
-								foreach( Helper::get_blogs() as $website ) {
-									// get the URL of this website.
-									$url = get_blogaddress_by_id( $website->blog_id );
+							foreach ( Helper::get_blogs() as $website ) {
+								// get the blog ID.
+								$blog_id = $website->blog_id; // @phpstan-ignore property.notFound
 
-									// show it.
-									?><option value="<?php echo absint( $website->blog_id ); ?>"<?php echo ( $efml_media_library === absint( $website->blog_id ) ? ' selected' : '' ); ?>><?php echo esc_html( $url ); ?></option><?php
-								}
+								// get the URL of this website.
+								$url = get_blogaddress_by_id( $blog_id ); // @phpstan-ignore property.notFound
+
+								// show it.
+								?>
+									<option value="<?php echo absint( $blog_id ); ?>"<?php echo ( absint( $blog_id ) === $efml_media_library ? ' selected' : '' ); ?>>
+										<?php echo esc_html( $url ); ?>
+									</option>
+								<?php
+							}
 							?>
 						</select>
 						<p><?php echo wp_kses_post( __( 'All files from all websites are stored in the media library of the website selected here. The other websites store a reference to these. Depending on the file type, the URLs using a proxy or are delivered directly. <strong>Create a backup of everything beforehand.</strong>', 'external-files-in-media-library' ) ); ?></p>
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="efml_hide_options"><?php _e( 'Hide options' ); ?></label></th>
+					<th scope="row"><label for="efml_hide_options"><?php esc_html__( 'Hide options', 'external-files-in-media-library' ); ?></label></th>
 					<td>
 						<input type="checkbox" name="efml_hide_options" id="efml_hide_options" value="1"<?php echo ( $efml_hide_options ? ' checked="checked"' : '' ); ?>>
-						<p><?php echo esc_html__( 'If enabled no user will be able to use external files options in any multisite except the one configured above.', 'external-files-in-media-library' ) ?></p>
+						<p><?php echo esc_html__( 'If enabled no user will be able to use external files options in any multisite except the one configured above.', 'external-files-in-media-library' ); ?></p>
 					</td>
 				</tr>
-			</table><?php
+			</table>
+			<?php
 	}
 
 	/**
@@ -118,20 +126,20 @@ class Settings {
 	public function update_settings(): void {
 		// get our setting from request.
 		$efml_media_library_site_id = absint( filter_input( INPUT_POST, 'efml_media_library_site_id', FILTER_SANITIZE_NUMBER_INT ) );
-		$efml_hide_options = absint( filter_input( INPUT_POST, 'efml_hide_options', FILTER_SANITIZE_NUMBER_INT ) );
+		$efml_hide_options          = absint( filter_input( INPUT_POST, 'efml_hide_options', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// if setting is 0, disable it and remove all export settings from each site.
-		if( 0 === $efml_media_library_site_id ) {
+		if ( 0 === $efml_media_library_site_id ) {
 			// loop through each site and add the main library as external source for export.
-			foreach( Helper::get_blogs() as $website ) {
+			foreach ( Helper::get_blogs() as $website ) {
 				// switch to the site.
-				switch_to_blog( $website->blog_id );
+				switch_to_blog( $website->blog_id ); // @phpstan-ignore property.notFound
 
 				// get the export terms.
 				$terms = Export::get_instance()->get_export_terms();
 
 				// remove them.
-				foreach( $terms as $term_id ) {
+				foreach ( $terms as $term_id ) {
 					Taxonomy::get_instance()->delete( $term_id );
 				}
 
@@ -147,8 +155,7 @@ class Settings {
 
 			// remove the setting.
 			delete_site_option( 'efml_media_library_site_id' );
-		}
-		else {
+		} else {
 			// get the URL of the chosen site.
 			$url = get_blogaddress_by_id( $efml_media_library_site_id );
 
@@ -156,15 +163,15 @@ class Settings {
 			$fields = array(
 				'website' => array(
 					'value' => $efml_media_library_site_id,
-				)
+				),
 			);
 
 			// Loop through each site and:
 			// - add the main library as external target for export and source for sync.
 			// - change the capabilities to hide any external files features.
-			foreach( Helper::get_blogs( $efml_media_library_site_id ) as $website ) {
+			foreach ( Helper::get_blogs( $efml_media_library_site_id ) as $website ) {
 				// get the blog ID.
-				$blog_id = absint( $website->blog_id );
+				$blog_id = absint( $website->blog_id ); // @phpstan-ignore property.notFound
 
 				// switch to the site.
 				switch_to_blog( $blog_id );
@@ -176,7 +183,7 @@ class Settings {
 				$term_id = Taxonomy::get_instance()->add( 'multisite', $url, $fields );
 
 				// bail if term_id could not be loaded.
-				if( 0 === $term_id ) {
+				if ( 0 === $term_id ) {
 					continue;
 				}
 
@@ -193,7 +200,7 @@ class Settings {
 				Synchronization::get_instance()->set_state( $term_id, 1 );
 
 				// remove the capability 'eml_manage_files' from each role if this is requested.
-				if( 1 === $efml_hide_options ) {
+				if ( 1 === $efml_hide_options ) {
 					foreach ( wp_roles()->roles as $slug => $role ) {
 						// get the role-object.
 						$role_obj = get_role( $slug );
@@ -206,8 +213,7 @@ class Settings {
 						// remove capability.
 						$role_obj->remove_cap( EFML_CAP_NAME );
 					}
-				}
-				else {
+				} else {
 					// reset the capability for 'eml_manage_files' in this blog.
 					Roles::get_instance()->set_capabilities( get_option( 'eml_allowed_roles' ) );
 				}

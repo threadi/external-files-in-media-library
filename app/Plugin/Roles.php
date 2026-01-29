@@ -15,6 +15,8 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Mul
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
+use ExternalFilesInMediaLibrary\Plugin\CapabilitySets\Standard;
 use WP_Role;
 use WP_User;
 
@@ -101,6 +103,7 @@ class Roles {
 		$permissions_tab_files = $permissions_tab->add_section( 'settings_section_add_files', 10 );
 		$permissions_tab_files->set_title( __( 'Permissions for external files', 'external-files-in-media-library' ) );
 		$permissions_tab_files->set_setting( $settings_obj );
+		$permissions_tab_files->set_callback( array( $this, 'head_of_permission_section' ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_allowed_roles' );
@@ -153,57 +156,26 @@ class Roles {
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_import_allowed_roles' );
-		$setting->set_section( $permissions_tab_tools );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Import files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles, which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+		// add capability settings for main tools.
+		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
+			// bail if this extension does not require capabilities.
+			if ( ! $tools_obj->has_capability() ) {
+				continue;
+			}
 
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_export_allowed_roles' );
-		$setting->set_section( $permissions_tab_tools );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Export files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Select roles, which should be allowed to configure and use export of files to external sources. This does not influence the automatic export of files to external sources through them.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_sync_allowed_roles' );
-		$setting->set_section( $permissions_tab_tools );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Synchronisation of files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Choose the roles that should be allowed to configure the synchronize files from external sources. This does not influence the automatic synchronisation of files from external sources.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-
-		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_zip_allowed_roles' );
-		$setting->set_section( $permissions_tab_tools );
-		$setting->set_type( 'array' );
-		$setting->set_default( array( 'administrator' ) );
-		$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
-		$field = new MultiSelect();
-		$field->set_title( __( 'Unzip of files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Choose the roles that should be allowed to unzip files in your media library.', 'external-files-in-media-library' ) );
-		$field->set_options( $user_roles );
-		$setting->set_field( $field );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+			// add setting.
+			$setting = $settings_obj->add_setting( 'eml_tools_settings_tools_' . $tools_obj->get_name() . '_allowed_roles' );
+			$setting->set_section( $permissions_tab_tools );
+			$setting->set_type( 'array' );
+			$setting->set_default( $tools_obj->get_capability_default() );
+			$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+			$field = new MultiSelect();
+			$field->set_title( $tools_obj->get_title() );
+			$field->set_description( $tools_obj->get_capability_description() );
+			$field->set_options( $user_roles );
+			$setting->set_field( $field );
+			$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+		}
 
 		// add the service section.
 		$permissions_tab_source = $permissions_tab->add_section( 'settings_section_use_services', 30 );
@@ -263,14 +235,15 @@ class Roles {
 
 			// remove the capabilities we set.
 			$role_obj->remove_cap( EFML_CAP_NAME );
-			$role_obj->remove_cap( 'efml_cap_tools_export' );
-			$role_obj->remove_cap( 'efml_cap_tools_import' );
-			$role_obj->remove_cap( 'efml_cap_tools_sync' );
-			$role_obj->remove_cap( 'efml_cap_tools_zip' );
 
 			// remove the caps for each service.
 			foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
 				$role_obj->remove_cap( 'efml_cap_' . $service->get_name() );
+			}
+
+			// remove the caps for each tool.
+			foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
+				$role_obj->remove_cap( 'efml_cap_' . $tools_obj->get_name() );
 			}
 
 			// compatibility with < 5.0.0.
@@ -467,16 +440,25 @@ class Roles {
 	}
 
 	/**
-	 * Trigger update of the used capabilities.
+	 * Trigger update of the used capabilities through running the Standard capability set.
 	 *
 	 * @return void
 	 */
 	public function trigger_update(): void {
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
-			$this->set( array( 'administrator', 'editor' ), 'efml_cap_' . $service->get_name() );
-		}
-		foreach ( array( 'import', 'export', 'zip', 'sync' ) as $tool ) {
-			$this->set( array( 'administrator' ), 'efml_cap_tools_' . $tool );
-		}
+		$standard_capability_set = new Standard();
+		$standard_capability_set->run();
+	}
+
+	/**
+	 * Show a hint, and the list of capability-sets we use.
+	 *
+	 * @return void
+	 */
+	public function head_of_permission_section(): void {
+		// show simple text hint.
+		echo '<p><strong>' . esc_html__( 'Control, which WordPress users and roles have access to which features of the plugin.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following set for faster configuration:', 'external-files-in-media-library' ) . '</p>';
+
+		// show the list of capability sets.
+		CapabilitySets::get_instance()->show_list();
 	}
 }

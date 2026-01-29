@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle the export of uploaded files to supporting external services.
+ * File to handle the export of in the media library uploaded files to supporting external services.
  *
  * @package external-files-in-media-library
  */
@@ -28,9 +28,16 @@ use WP_Term;
 use WP_Term_Query;
 
 /**
- * Object to handle the export of uploaded files.
+ * Object to handle the export of in the media library uploaded files to supporting external services.
  */
-class Export {
+class Export extends Tools_Base {
+	/**
+	 * Name of this object.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'export';
+
 	/**
 	 * Marker for running sync.
 	 *
@@ -215,6 +222,15 @@ class Export {
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
+	}
+
+	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Export of files', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -1166,7 +1182,7 @@ class Export {
 
 			// log this event.
 			/* translators: %1$s will be replaced by the external source title. */
-			Log::get_instance()->create( sprintf( __( 'File exported to external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
+			Log::get_instance()->create( sprintf( __( 'File has been exported to the external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
 		}
 
 		// return the result.
@@ -1485,8 +1501,13 @@ class Export {
 			return $data;
 		}
 
+		// add the path to the metadata, if not set.
+		if ( ! isset( $meta_data['file'] ) ) {
+			$meta_data['file'] = $file;
+		}
+
 		// log this event.
-		Log::get_instance()->create( __( 'Cleanup the attachment files.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
+		Log::get_instance()->create( __( 'Cleanup the attachment files starting.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
 
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
@@ -1507,6 +1528,9 @@ class Export {
 
 		// delete the original.
 		$wp_filesystem->delete( $path );
+
+		// log this event.
+		Log::get_instance()->create( __( 'Cleanup the attachment files completed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
 
 		// return the metadata.
 		return $data;
@@ -1588,7 +1612,7 @@ class Export {
 	 */
 	public function show_export_hint_on_file_add_page(): void {
 		// bail if he also does not have the capability for external files.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -2138,7 +2162,7 @@ class Export {
 	 */
 	private function is_enabled(): bool {
 		// bail if this is not a multisite.
-		if( ! is_multisite() ) {
+		if ( ! is_multisite() ) {
 			return $this->is_enabled_on_single_site();
 		}
 
@@ -2146,12 +2170,12 @@ class Export {
 		$efml_media_library_site_id = \ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->get_main_media_library_site_id();
 
 		// use single site setting, if not main media library is set.
-		if( 0 === $efml_media_library_site_id ) {
+		if ( 0 === $efml_media_library_site_id ) {
 			return $this->is_enabled_on_single_site();
 		}
 
 		// return true if this is NOT the main media library site to enable the export.
-		return $efml_media_library_site_id !== get_current_blog_id();
+		return get_current_blog_id() !== $efml_media_library_site_id;
 	}
 
 	/**
@@ -2161,5 +2185,32 @@ class Export {
 	 */
 	private function is_enabled_on_single_site(): bool {
 		return 1 === absint( get_option( 'eml_export' ) );
+	}
+
+	/**
+	 * Return whether is extension require a capability to use it.
+	 *
+	 * @return bool
+	 */
+	public function has_capability(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the default roles with capability for this object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_capability_default(): array {
+		return array( 'administrator', 'editor' );
+	}
+
+	/**
+	 * Return the description for the capability settings.
+	 *
+	 * @return string
+	 */
+	public function get_capability_description(): string {
+		return __( 'Select roles, which should be allowed to export files in the media library to external sources.', 'external-files-in-media-library' );
 	}
 }

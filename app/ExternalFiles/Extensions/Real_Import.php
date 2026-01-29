@@ -107,7 +107,7 @@ class Real_Import extends Extension_Base {
 	 * @return string
 	 */
 	public function get_title(): string {
-		return __( 'Really import each file', 'external-files-in-media-library' );
+		return __( 'Real import of each file', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -336,7 +336,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_option_to_real_import_file( File $external_file_obj ): void {
 		// bail if capability is not set.
-		if ( ! current_user_can( 'efml_cap_tools_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_real_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -460,7 +460,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if user has not the capability for this.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -508,7 +508,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_bulk_action( array $actions ): array {
 		// bail if capability is not set.
-		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_import' ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_real_import' ) ) {
 			return $actions;
 		}
 
@@ -723,7 +723,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
 		// bail if cap is missing.
-		if ( ! current_user_can( 'efml_cap_tools_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( 'efml_cap_tools_real_import' ) || ! current_user_can( EFML_CAP_NAME ) ) {
 			return $actions;
 		}
 
@@ -770,5 +770,32 @@ class Real_Import extends Extension_Base {
 
 		// return resulting list of actions.
 		return $actions;
+	}
+
+	/**
+	 * Return whether is extension require a capability to use it.
+	 *
+	 * @return bool
+	 */
+	public function has_capability(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the default roles with capability for this object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_capability_default(): array {
+		return array( 'administrator' );
+	}
+
+	/**
+	 * Return the description for the capability settings.
+	 *
+	 * @return string
+	 */
+	public function get_capability_description(): string {
+		return __( 'Select roles, which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' );
 	}
 }

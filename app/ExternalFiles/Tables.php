@@ -248,7 +248,7 @@ class Tables {
 	 */
 	public function add_media_columns( array $columns ): array {
 		// bail if user has not the capability.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return $columns;
 		}
 

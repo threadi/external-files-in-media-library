@@ -29,7 +29,7 @@ use WP_Term;
 /**
  * Controller for synchronization of files.
  */
-class Synchronization {
+class Synchronization extends Tools_Base {
 	/**
 	 * Instance of actual object.
 	 *
@@ -1440,15 +1440,15 @@ class Synchronization {
 		}
 
 		// get the new state.
-		$state = filter_input( INPUT_POST, 'state', FILTER_SANITIZE_NUMBER_INT );
+		$state = absint( filter_input( INPUT_POST, 'state', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// bail if state is not given.
-		if ( is_null( $state ) ) {
+		if ( 0 === $state ) {
 			wp_send_json_error();
 		}
 
 		// set new state.
-		$this->set_state( $term_id, $state );
+		$this->set_state( absint( $term_id ), absint( $state ) );
 
 		// send ok.
 		wp_send_json_success();
@@ -1718,5 +1718,41 @@ class Synchronization {
 				$schedule_obj->delete();
 			}
 		}
+	}
+
+	/**
+	 * Return the object title.
+	 *
+	 * @return string
+	 */
+	public function get_title(): string {
+		return __( 'Synchronisation of files', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return whether is extension require a capability to use it.
+	 *
+	 * @return bool
+	 */
+	public function has_capability(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the default roles with capability for this object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_capability_default(): array {
+		return array( 'administrator' );
+	}
+
+	/**
+	 * Return the description for the capability settings.
+	 *
+	 * @return string
+	 */
+	public function get_capability_description(): string {
+		return __( 'Choose the roles that should be allowed to configure the synchronize files from external sources. This does not influence the automatic synchronisation of files from external sources.', 'external-files-in-media-library' );
 	}
 }

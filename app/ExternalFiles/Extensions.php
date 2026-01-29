@@ -1,6 +1,9 @@
 <?php
 /**
- * This file an object to handle extension for the file handlings.
+ * File for an object to handle extension for the file handlings.
+ *
+ * Definition:
+ * Extension are a sub-set of tools, which allows to manage external files in different ways.
  *
  * @package external-files-in-media-library
  */
@@ -56,6 +59,9 @@ class Extensions {
 		foreach ( $this->get_extensions_as_objects() as $obj ) {
 			$obj->init();
 		}
+
+		// use our own hooks.
+		add_filter( 'efml_tools', array( $this, 'add_extensions_as_tools' ) );
 	}
 
 	/**
@@ -133,6 +139,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Zip',
 		);
 
 		/**
@@ -164,5 +171,16 @@ class Extensions {
 		 * @param array<int,string> $list List of names of the default extensions.
 		 */
 		return apply_filters( 'efml_extensions_default', $list );
+	}
+
+	/**
+	 * Add the extension to the list of tools.
+	 *
+	 * @param array<int,string> $tools List of tools.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_extensions_as_tools( array $tools ): array {
+		return array_merge( $tools, $this->get_extensions() );
 	}
 }
