@@ -461,11 +461,13 @@ class ImportDialog {
 		$text = '<label for="hide_dialog"><input type="checkbox" name="hide_dialog" id="hide_dialog" value="1" class="eml-use-for-import"> ' . esc_html__( 'Do not display this dialog for future imports. You can disable this setting in your user profile at any time.', 'external-files-in-media-library' );
 
 		// add link to user settings.
-		$url   = add_query_arg(
-			array(),
-			get_admin_url() . 'profile.php'
-		);
-		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		if ( self::get_instance()->is_customization_allowed() ) {
+			$url   = add_query_arg(
+				array(),
+				get_admin_url() . 'profile.php'
+			);
+			$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		}
 
 		// end the text.
 		$text .= '</label>';
@@ -627,11 +629,13 @@ class ImportDialog {
 		$text = '<label for="privacy_hint"><input type="checkbox" name="privacy_hint" id="privacy_hint" value="1" class="eml-use-for-import" required> <strong>' . esc_html__( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong>';
 
 		// add link to user settings.
-		$url   = add_query_arg(
-			array(),
-			get_admin_url() . 'profile.php'
-		);
-		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		if ( self::get_instance()->is_customization_allowed() ) {
+			$url   = add_query_arg(
+				array(),
+				get_admin_url() . 'profile.php'
+			);
+			$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		}
 		$text .= '</label>';
 
 		// add the text.

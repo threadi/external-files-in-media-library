@@ -159,6 +159,18 @@ class Protocols {
 	 * @return Protocol_Base|false
 	 */
 	public function get_protocol_object_for_external_file( File $external_file ): Protocol_Base|false {
+		// get the service name direct from the database.
+		$service_name = get_post_meta( $external_file->get_id(), 'eml_service', true );
+
+		// get the service for this name, if given.
+		if ( ! empty( $service_name ) ) {
+			$protocol_obj = $this->get_protocol_by_name( $service_name, $external_file );
+			if ( $protocol_obj instanceof Protocol_Base ) {
+				return $protocol_obj;
+			}
+		}
+
+		// check each protocol for compatibility with this file by its URL.
 		foreach ( $this->get_protocols() as $protocol_name ) {
 			// bail if class does not exist.
 			if ( ! class_exists( $protocol_name ) ) {
@@ -186,6 +198,43 @@ class Protocols {
 		}
 
 		// return false if no protocol could be found.
+		return false;
+	}
+
+	/**
+	 * Return the protocol for a file by a given name.
+	 *
+	 * @param string $name The name.
+	 * @param File   $external_file The file.
+	 *
+	 * @return false|Protocol_Base
+	 */
+	private function get_protocol_by_name( string $name, File $external_file ): false|Protocol_Base {
+		// check each protocol for compatibility with this file by its URL.
+		foreach ( $this->get_protocols() as $protocol_name ) {
+			// bail if class does not exist.
+			if ( ! class_exists( $protocol_name ) ) {
+				continue;
+			}
+
+			// create the object.
+			$protocol_obj = new $protocol_name( $external_file->get_url( true ) );
+
+			// bail if object is not a "Protocol_Base".
+			if ( ! $protocol_obj instanceof Protocol_Base ) {
+				continue;
+			}
+
+			// bail if name does not match.
+			if ( $protocol_obj->get_name() !== $name ) {
+				continue;
+			}
+
+			// return the protocol object.
+			return $protocol_obj;
+		}
+
+		// return false if not protocol could be found.
 		return false;
 	}
 }

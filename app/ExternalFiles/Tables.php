@@ -268,11 +268,11 @@ class Tables {
 	 * @return void
 	 */
 	public function add_media_column_content( string $column_name, int $attachment_id ): void {
-		// get the external object for this file.
-		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
-
 		// show marker if this is an external file.
 		if ( 'external_files' === $column_name ) {
+			// get the external object for this file.
+			$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+
 			// show no-icon if it is not an external file.
 			if ( ! $external_file_obj->is_valid() ) {
 				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) . '"></span>';
