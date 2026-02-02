@@ -139,14 +139,9 @@ class Roles {
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
-		// add the tools section.
-		$permissions_tab_tools = $permissions_tab->add_section( 'settings_section_tools', 20 );
-		$permissions_tab_tools->set_title( __( 'Permissions for tools', 'external-files-in-media-library' ) );
-		$permissions_tab_tools->set_setting( $settings_obj );
-
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_settings_allowed_roles' );
-		$setting->set_section( $permissions_tab_tools );
+		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$field = new MultiSelect();
@@ -155,6 +150,11 @@ class Roles {
 		$field->set_options( $user_roles );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add the tools section.
+		$permissions_tab_tools = $permissions_tab->add_section( 'settings_section_tools', 20 );
+		$permissions_tab_tools->set_title( __( 'Permissions for tools', 'external-files-in-media-library' ) );
+		$permissions_tab_tools->set_setting( $settings_obj );
 
 		// add capability settings for main tools.
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
@@ -286,6 +286,10 @@ class Roles {
 				$role_obj->remove_cap( $cap );
 			}
 		}
+
+		// log this event.
+		/* translators: %1$s will be replaced by a string. */
+		Log::get_instance()->create( sprintf( __( 'Set capability %1$s for the following roles:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $user_roles ) . '</code>', '<em>' . $cap . '</em>' ), '', 'info', 2 );
 	}
 
 	/**
@@ -456,7 +460,7 @@ class Roles {
 	 */
 	public function head_of_permission_section(): void {
 		// show simple text hint.
-		echo '<p><strong>' . esc_html__( 'Control, which WordPress users and roles have access to which features of the plugin.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following set for faster configuration:', 'external-files-in-media-library' ) . '</p>';
+		echo '<p><strong>' . esc_html__( 'Control, which WordPress users and roles have access to which features of the plugin.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following buttons for faster configuration:', 'external-files-in-media-library' ) . '</p>';
 
 		// show the list of capability sets.
 		CapabilitySets::get_instance()->show_list();

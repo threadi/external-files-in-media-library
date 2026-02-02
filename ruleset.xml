@@ -52,6 +52,7 @@
                 <element value="efml_cap_tools_sync"/>
                 <element value="efml_cap_tools_zip"/>
                 <element value="efml_sync"/>
+                <element value="efml_cap_tools_real_import"/>
             </property>
         </properties>
     </rule>

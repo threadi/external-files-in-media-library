@@ -347,7 +347,7 @@ class Export extends Tools_Base {
 				'className' => 'efml',
 				'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<p><strong>' . __( 'Export for this external source is now not supported.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
 					/* translators: %1$s will be replaced by a URL. */
 					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
 				),
@@ -363,7 +363,7 @@ class Export extends Tools_Base {
 			// show a specific hint.
 			if ( $listing_obj instanceof Service_Base ) {
 				/* translators: %1$s will be replaced by a title. */
-				$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is now not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
+				$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
 			}
 
 			// return the resulting link.
@@ -613,14 +613,14 @@ class Export extends Tools_Base {
 
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base ) {
-			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is now not supported.', 'external-files-in-media-library' ) . '</strong></p>';
+			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// bail if no object could be found.
 		if ( ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			/* translators: %1$s will be replaced by a title. */
-			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is now not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
+			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
@@ -724,14 +724,14 @@ class Export extends Tools_Base {
 
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base ) {
-			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is now not supported.', 'external-files-in-media-library' ) . '</strong></p>';
+			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
 		// bail if no object could be found.
 		if ( ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			/* translators: %1$s will be replaced by a title. */
-			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is now not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
+			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
@@ -1859,6 +1859,9 @@ class Export extends Tools_Base {
 		}
 		$external_url = get_term_meta( $term_id, 'efml_export_url', true );
 
+		// assume the export URL.
+		$external_url_of_file = $external_url . basename( $external_file_obj->get_attachment_url() );
+
 		// create URL to export this file.
 		$url = add_query_arg(
 			array(
@@ -1875,8 +1878,8 @@ class Export extends Tools_Base {
 			'title'     => __( 'Export media file', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to export this file?', 'external-files-in-media-library' ) . '</strong></p>',
-				/* translators: %1$s will be replaced by a title, %2$s by a URL. */
-				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.<br>After the export it will be available under <a href="%2$s">%2$s</a>.', 'external-files-in-media-library' ), '<em>' . $external_source_for_export . '</em>', $external_url ) . '</p>',
+				/* translators: %1$s will be replaced by a title. */
+				'<p>' . sprintf( __( 'The file will be exported to the external source %1$s.<br>After the export the file will be available under this URL:', 'external-files-in-media-library' ) . ' <a href="' . $external_url_of_file . '">' . $external_url_of_file . '</a>', '<em>' . $external_source_for_export . '</em>' ) . '</p>',
 				'<p>' . __( 'It will be handled as external file after the export. It will not be saved in your local hosting.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
@@ -2202,7 +2205,7 @@ class Export extends Tools_Base {
 	 * @return array<int,string>
 	 */
 	public function get_capability_default(): array {
-		return array( 'administrator', 'editor' );
+		return array( 'administrator' );
 	}
 
 	/**

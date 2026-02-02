@@ -116,6 +116,7 @@ class Files {
 		add_filter( 'efml_table_column_source_title', array( $this, 'get_external_source_title' ), 10, 2 );
 		add_action( 'efml_show_file_info', array( $this, 'show_external_source_info' ) );
 		add_filter( 'efml_add_url', array( $this, 'add_urls_by_hook' ), 10, 3 );
+		add_action( 'efml_show_file_info', array( $this, 'show_debug_info' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
@@ -468,7 +469,7 @@ class Files {
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if no protocol handler could be loaded.
-		if ( ! $protocol_handler ) {
+		if ( ! $protocol_handler instanceof Protocol_Base ) {
 			return;
 		}
 
@@ -1473,6 +1474,25 @@ class Files {
 		// show info about sync time.
 		?>
 		<li><span class="dashicons dashicons-clock"></span> <?php echo esc_html__( 'Synchronized from:', 'external-files-in-media-library' ); ?><br><a href="<?php echo esc_url( Directory_Listing::get_instance()->get_url() ); ?>"><?php echo esc_html( $title ); ?></a></li>
+		<?php
+	}
+
+	/**
+	 * Show debug information if the project is running in debug mode.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function show_debug_info( File $external_file_obj ): void {
+		// bail if debug mode is disabled.
+		if ( ! defined( 'WP_DEBUG' ) || ! WP_DEBUG ) {
+			return;
+		}
+
+		// show the used service.
+		?>
+		<li><span class="dashicons dashicons-admin-tools"></span> <?php echo esc_html__( 'Used service:', 'external-files-in-media-library' ); ?> <em><?php echo esc_html( $external_file_obj->get_service_name() ); ?></em></li>
 		<?php
 	}
 

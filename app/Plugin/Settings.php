@@ -457,7 +457,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_job_show_link' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
-		$setting->set_default( 1 );
+		$setting->set_default( 0 );
 		$field = new Checkbox();
 		$field->set_title( __( 'Show job link on each imported file', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When enabled, a link is displayed for each external file in the media library, which can be used to filter all files from the same import. This allows you to find them more quickly and delete them again if necessary.', 'external-files-in-media-library' ) );
@@ -494,6 +494,17 @@ class Settings {
 		$field = new Checkbox();
 		$field->set_title( __( 'Disable GPRD-hint', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If disabled we will not warn you about the GPRD regulations regarding external files in websites.', 'external-files-in-media-library' ) );
+		$gprd_hint_setting->set_field( $field );
+
+		// add setting.
+		$gprd_hint_setting = $settings_obj->add_setting( 'eml_disable_plugin_hints' );
+		$gprd_hint_setting->set_section( $advanced_tab_advanced );
+		$gprd_hint_setting->set_show_in_rest( false );
+		$gprd_hint_setting->set_type( 'integer' );
+		$gprd_hint_setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Disable hints for plugins', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If disabled we will not show you any hint for additional service plugins.', 'external-files-in-media-library' ) );
 		$gprd_hint_setting->set_field( $field );
 
 		// add setting to change the proxy path.

@@ -247,11 +247,13 @@ class Real_Import extends Extension_Base {
 		$text = '<label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Import the external file as a real file. The file will then no longer be treated as an external file.', 'Import the external files as real files. They will not be treated as external files afterwards.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
-		$url   = add_query_arg(
-			array(),
-			get_admin_url() . 'profile.php'
-		);
-		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
+			$url   = add_query_arg(
+				array(),
+				get_admin_url() . 'profile.php'
+			);
+			$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		}
 
 		// add link to global settings.
 		if ( current_user_can( 'manage_options' ) ) {

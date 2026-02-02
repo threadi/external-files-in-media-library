@@ -14,8 +14,12 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Roles;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\AwsS3;
 use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
@@ -92,6 +96,7 @@ class Directory_Listing {
 		// add the page in te backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
+		add_action( 'init', array( $this, 'init_settings' ), 30 );
 		add_filter( 'hidden_columns', array( $this, 'hide_columns' ), 10, 3 );
 
 		// misc.
@@ -119,8 +124,93 @@ class Directory_Listing {
 		$directory_listing_obj->set_preview_state( 1 !== absint( get_option( 'eml_directory_listing_hide_preview', 0 ) ) );
 		$directory_listing_obj->set_page_hook( 'media_page_' . $this->get_menu_slug() );
 		$directory_listing_obj->set_menu_slug( $this->get_menu_slug() );
-		$directory_listing_obj->set_capability( EFML_CAP_NAME );
+		$directory_listing_obj->set_capabilities(
+			array(
+				'manage_terms' => EFML_CAP_NAME,
+				'edit_terms'   => EFML_CAP_NAME . '_edit',
+				'delete_terms' => EFML_CAP_NAME . '_delete',
+			)
+		);
 		$directory_listing_obj->init();
+	}
+
+	/**
+	 * Add the role settings.
+	 *
+	 * @return void
+	 */
+	public function init_settings(): void {
+		// get the settings object.
+		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( 'eml_settings' );
+
+		// bail if page could not be found.
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
+
+		// get the permission tab.
+		$permissions_tab = $settings_page->get_tab( 'eml_permissions' );
+
+		// bail if tab could not be found.
+		if ( ! $permissions_tab instanceof Tab ) {
+			return;
+		}
+
+		// get user roles.
+		$user_roles = array();
+		if ( function_exists( 'wp_roles' ) && ! empty( wp_roles()->roles ) ) {
+			foreach ( wp_roles()->roles as $slug => $role ) {
+				$user_roles[ $slug ] = $role['name'];
+			}
+		}
+
+		// add the files section.
+		$permissions_tab_sources = $permissions_tab->add_section( 'settings_section_efml_sources_permissions', 15 );
+		$permissions_tab_sources->set_title( __( 'Permissions for external sources', 'external-files-in-media-library' ) );
+		$permissions_tab_sources->set_setting( $settings_obj );
+		$permissions_tab_sources->set_callback( array( $this, 'head_of_permission_section' ) );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_sources_manage' );
+		$setting->set_section( $permissions_tab_sources );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator', 'editor' ) );
+		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Manage external sources', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the roles that should be allowed to manage external sources.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_sources_read' );
+		$setting->set_section( $permissions_tab_sources );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator', 'editor' ) );
+		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Read external sources', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the roles that should be allowed to read external sources.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_sources_delete' );
+		$setting->set_section( $permissions_tab_sources );
+		$setting->set_type( 'array' );
+		$setting->set_default( array( 'administrator', 'editor' ) );
+		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Delete external sources', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the roles that should be allowed to delete external sources.', 'external-files-in-media-library' ) );
+		$field->set_options( $user_roles );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 	}
 
 	/**
@@ -883,6 +973,11 @@ class Directory_Listing {
 	 * @return array<string,Service_Plugin_Base>
 	 */
 	private function get_list_of_service_plugins(): array {
+		// bail if user do not want to show plugin hints.
+		if ( 1 === absint( get_option( 'eml_disable_plugin_hints' ) ) ) {
+			return array();
+		}
+
 		// create the list.
 		$list = array(
 			'external-files-from-aws-s3'               => AwsS3::get_instance(),
@@ -939,5 +1034,49 @@ class Directory_Listing {
 	 */
 	public function sort( Directory_Listing_Base $a, Directory_Listing_Base $b ): int {
 		return strcmp( $a->get_name(), $b->get_name() );
+	}
+
+	/**
+	 * Set the capabilities for external sources for the given roles.
+	 *
+	 * @param array<int,string>|null $roles_to_set The roles to set.
+	 * @param array<int,string>      $old_value The old value.
+	 * @param string                 $option The used option.
+	 *
+	 * @return array<int,string>
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function set_capabilities( array|null $roles_to_set, array $old_value, string $option ): array {
+		// bail if null.
+		if ( is_null( $roles_to_set ) ) {
+			return array();
+		}
+
+		// get the service name from option name.
+		$service = str_replace( 'eml_sources_', '', $option );
+
+		// check the service.
+		if ( 'manage' === $service ) {
+			$service = '';
+		}
+
+		// create the capability name.
+		$capability = EFML_CAP_NAME . '_' . $service;
+
+		// set the capability to the roles.
+		Roles::get_instance()->set( $roles_to_set, $capability );
+
+		// return the settings.
+		return $roles_to_set;
+	}
+
+	/**
+	 * Show a hint, and the list of capability-sets we use.
+	 *
+	 * @return void
+	 */
+	public function head_of_permission_section(): void {
+		// show simple text hint.
+		echo '<p><strong>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following buttons for faster configuration:', 'external-files-in-media-library' ) . '</p>';
 	}
 }

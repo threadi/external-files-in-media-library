@@ -121,6 +121,7 @@ class Zip extends Service_Base implements Service {
 		$this->title = __( 'Extract file(s) from a ZIP-File', 'external-files-in-media-library' );
 
 		// use our own hooks.
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_file_check_existence', array( $this, 'is_file_in_zip_file' ), 10, 2 );
 		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_files_from_zip_via_filter' ), 10, 2 );
@@ -133,6 +134,7 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_supported_mime_types', array( $this, 'add_supported_mime_types' ) );
 		add_filter( 'efml_get_mime_types', array( $this, 'change_enabled_mime_types' ) );
 		add_filter( 'efml_add_dialog', array( $this, 'add_warning_in_dialog' ), 10, 2 );
+		add_action( 'efml_after_file_save', array( $this, 'change_service_name' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
@@ -208,6 +210,21 @@ class Zip extends Service_Base implements Service {
 		$field->set_setting( $setting );
 		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
+	}
+
+	/**
+	 * Add our own protocol.
+	 *
+	 * @param array<string> $protocols List of protocols.
+	 *
+	 * @return array<string>
+	 */
+	public function add_protocol( array $protocols ): array {
+		// add the DropBox protocol before the HTTPS-protocol and return resulting list of protocols.
+		array_unshift( $protocols, 'ExternalFilesInMediaLibrary\Services\Zip\Protocol' );
+
+		// return the resulting list.
+		return $protocols;
 	}
 
 	/**
@@ -1054,5 +1071,30 @@ class Zip extends Service_Base implements Service {
 
 		// return the resulting dialog.
 		return $dialog;
+	}
+
+	/**
+	 * Change the used service name if zip import has been used.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function change_service_name( File $external_file_obj ): void {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return;
+		}
+
+		// set the service name.
+		$external_file_obj->set_service_name( $service );
 	}
 }

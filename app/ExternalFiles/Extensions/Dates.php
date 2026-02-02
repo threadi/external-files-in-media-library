@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 
 /**
@@ -234,11 +235,13 @@ class Dates extends Extension_Base {
 		$text = '<label for="use_dates"><input type="checkbox" name="use_dates" id="use_dates" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Use the file date from the external file.', 'Use the file date of the external files.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
-		$url   = add_query_arg(
-			array(),
-			get_admin_url() . 'profile.php'
-		);
-		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
+			$url   = add_query_arg(
+				array(),
+				get_admin_url() . 'profile.php'
+			);
+			$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		}
 
 		// add link to global settings.
 		if ( current_user_can( 'manage_options' ) ) {

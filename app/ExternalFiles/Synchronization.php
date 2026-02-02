@@ -31,6 +31,13 @@ use WP_Term;
  */
 class Synchronization extends Tools_Base {
 	/**
+	 * Name of this object.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'sync';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Synchronization|null

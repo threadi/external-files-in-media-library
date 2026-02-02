@@ -875,11 +875,13 @@ class Queue extends Extension_Base {
 		$text = '<label for="add_to_queue"><input type="checkbox" name="add_to_queue" id="add_to_queue" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Add this URL to the queue, which will be processed in the background.', 'Add these URLs to the queue, which will be processed in the background.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
-		$url   = add_query_arg(
-			array(),
-			get_admin_url() . 'profile.php'
-		);
-		$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
+			$url   = add_query_arg(
+				array(),
+				get_admin_url() . 'profile.php'
+			);
+			$text .= '<a href="' . esc_url( $url ) . '#efml-settings" target="_blank" title="' . esc_attr__( 'Go to user settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-users"></span></a>';
+		}
 
 		// add link to global settings.
 		if ( current_user_can( 'manage_options' ) ) {
