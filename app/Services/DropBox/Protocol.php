@@ -34,7 +34,9 @@ class Protocol extends Protocol_Base {
 	protected string $name = 'dropbox';
 
 	/**
-	 * Return whether the file using this protocol is available.
+	 * Return whether this protocol is available in this hosting.
+	 *
+	 * This depends on the hosting, e.g., if necessary libraries are available.
 	 *
 	 * @return bool
 	 */
