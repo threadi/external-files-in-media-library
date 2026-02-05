@@ -111,7 +111,7 @@ class Http extends Protocol_Base {
 		if ( ! in_array( $response['http_response']->get_status(), $this->get_allowed_http_states( $url ), true ) ) {
 			// log this event.
 			/* translators: %1$d will be replaced by the HTTP-Status. */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$d.', 'external-files-in-media-library' ), '<em>' . $response['http_response']->get_status() . '</em>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( sprintf( __( 'Specified URL response with HTTP-status %1$s.', 'external-files-in-media-library' ), '<em>' . $response['http_response']->get_status() . '</em>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file is not available.
 			return false;

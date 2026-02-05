@@ -386,7 +386,7 @@ class Synchronization extends Tools_Base {
 	}
 
 	/**
-	 * Show hint to enabled sync.
+	 * Show hint to enable sync.
 	 *
 	 * @param string $content The column content.
 	 * @param string $column_name The column name.
@@ -1205,7 +1205,7 @@ class Synchronization extends Tools_Base {
 	 *
 	 * @return Schedules\Synchronization|false
 	 */
-	private function get_schedule_by_term_id( int $term_id ): Schedules\Synchronization|false {
+	public function get_schedule_by_term_id( int $term_id ): Schedules\Synchronization|false {
 		// get all schedules.
 		foreach ( _get_cron_array() as $event ) {
 			// get first entry key.
@@ -1449,13 +1449,8 @@ class Synchronization extends Tools_Base {
 		// get the new state.
 		$state = absint( filter_input( INPUT_POST, 'state', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if state is not given.
-		if ( 0 === $state ) {
-			wp_send_json_error();
-		}
-
 		// set new state.
-		$this->set_state( absint( $term_id ), absint( $state ) );
+		$this->set_state( absint( $term_id ), $state );
 
 		// send ok.
 		wp_send_json_success();

@@ -27,6 +27,17 @@ class Protocol extends Protocol_Base {
 	protected string $name = 'zip';
 
 	/**
+	 * Return whether this protocol is available in this hosting.
+	 *
+	 * This depends on the hosting, e.g., if necessary libraries are available.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		return true;
+	}
+
+	/**
 	 * Check if URL is compatible with the given protocol.
 	 *
 	 * @return bool

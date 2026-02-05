@@ -137,6 +137,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Plugin_Installation',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Real_Import',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Revert',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Zip',

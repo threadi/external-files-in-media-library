@@ -141,7 +141,7 @@ class Import extends Directory_Listing_Base {
 	/**
 	 * Add a URL in media library.
 	 *
-	 * This is the main function for any integration of external URLs.
+	 * This is the main function for any integration of external URLs in the media library.
 	 *
 	 * If URL is a directory we try to import all files from this directory.
 	 * If URL is a single file, this single file will be imported.
@@ -562,6 +562,16 @@ class Import extends Directory_Listing_Base {
 		if ( $load_more ) {
 			update_option( 'eml_import_url_loading_more_' . $user_id, 1 );
 		}
+
+		/**
+		 * Run tasks after the import.
+		 *
+		 * @since        5.0.0 Available since 5.0.0.
+		 *
+		 * @param string $url      The given URL.
+		 * @param array $fields List of fields.
+		 */
+		do_action( 'efml_after_import', $url, $fields );
 
 		// return ok.
 		return true;

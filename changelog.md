@@ -24,6 +24,7 @@
 - Added option to choose a specific date for each file to import
 - Added paginated AJAX-import to prevent timeouts for some supported external sources
 - Added these 3 new options also as parameter on WP CLI command to import URLs
+- Added new options for WP CLI to manage external sources
 - Added option to choose, which of these extensions should be available for the handling of files
 - Added file type specific icons in directory listings
 - Added unique identifier for each import to prevent to avoid confusion when multiple users and imports
@@ -47,6 +48,7 @@
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
 - Added option to import real files during synchronization (they are just imported if they are no duplicate)
+- Added option to run synchronisation for selected external sources via WP CLI
 - Added privacy hint as checkbox in every import dialog, configurable in user settings
 - Added WordPress Importer entry
 - Added info in admin footer for pages provided by the plugin or for which it makes extensions on the called pages
@@ -64,6 +66,7 @@
 - Added option to hide the review begging
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
 - Added export and import of settings for external sources
+- Added options for manage export settings via WP CLI
 - A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
 - Added PHP unit tests for essential functions of this plugin
 - Added SBOM generation on GitHub for each release
@@ -71,6 +74,7 @@
 - Added support to install WordPress plugins from external sources
 - Added support for multisite-installations: manage service plugins in your network
 - Added capability sets to fast configuration of capabilities for each tool and service
+- Added option to revert the last import
 
 ### Changed
 
@@ -118,6 +122,7 @@
 - Save used service on each external file
 - Any local path will be sanitized
 - Optimized URL shortener
+- Now also usable as "must use"-plugin (requires a additional file to enable it)
 
 ### Fixed
 
@@ -133,6 +138,7 @@
 - Fixed missing visible progress-bar during synchronization
 - Fixed missing saving of actual availability of each file (all were available any time)
 - Fixed REST API endpoints to not using WP_Error for responses
+- Fixed WP CLI command to delete error entries from queue
 
 ### Removed
 

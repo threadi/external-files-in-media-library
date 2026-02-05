@@ -481,13 +481,13 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * Return the sanitized local path.
+	 * Return the sanitized local path with "file" protocol as prefix.
 	 *
 	 * @param string $url The given URL.
 	 *
 	 * @return string
 	 */
 	private function sanitize_local_path( string $url ): string {
-		return 'file://' . realpath( str_replace( 'file://', '', $url ) );
+		return 'file://' . realpath( str_replace( 'file://', '', $url ) ) . ( str_ends_with( $url, '/' ) ? '/' : '' );
 	}
 }

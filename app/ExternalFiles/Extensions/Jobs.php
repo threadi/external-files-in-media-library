@@ -75,6 +75,7 @@ class Jobs extends Extension_Base {
 		// use our own hooks.
 		add_action( 'efml_before_file_list', array( $this, 'create' ) );
 		add_action( 'efml_after_file_save', array( $this, 'add_file' ) );
+		add_action( 'efml_after_import', array( $this, 'assign_job_to_user' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'add_media_action' ), 20, 2 );
@@ -211,5 +212,29 @@ class Jobs extends Extension_Base {
 				)
 			)
 		);
+	}
+
+	/**
+	 * Assign this job to the actual user.
+	 *
+	 * @return void
+	 */
+	public function assign_job_to_user(): void {
+		// bail if we are not logged in.
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+
+		// set the marker for the last job on the user.
+		update_user_meta( get_current_user_id(), 'efml_last_job_id', $this->job_id );
+	}
+
+	/**
+	 * Return the last job ID for the actual user.
+	 *
+	 * @return string
+	 */
+	public function get_last_job_id(): string {
+		return (string) get_user_meta( get_current_user_id(), 'efml_last_job_id', true );
 	}
 }

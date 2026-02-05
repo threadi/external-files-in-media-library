@@ -562,11 +562,8 @@ class Queue extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-queue-clear-errors', 'nonce' );
 
-		// get the error entries.
-		foreach ( $this->get_urls( 'error' ) as $url_data ) {
-			// delete them.
-			$this->remove_url( absint( $url_data['id'] ) );
-		}
+		// delete the error entries.
+		$this->clear_error_entries();
 
 		// show ok message.
 		$transients_obj = Transients::get_instance();
@@ -1010,5 +1007,18 @@ class Queue extends Extension_Base {
 
 		// return the settings.
 		return $settings;
+	}
+
+	/**
+	 * Remove error entries from queue.
+	 *
+	 * @return void
+	 */
+	public function clear_error_entries(): void {
+		// get the error entries.
+		foreach ( $this->get_urls( 'error' ) as $url_data ) {
+			// delete them.
+			$this->remove_url( absint( $url_data['id'] ) );
+		}
 	}
 }
