@@ -148,9 +148,10 @@ class Uninstall {
 				}
 			}
 
-			// and also the "hide_dialog" and the copyright setting.
+			// and also the "hide_dialog", the copyright setting, and the last job ID.
 			delete_user_meta( $user->ID, 'efml_hide_dialog' );
 			delete_user_meta( $user->ID, 'efml_no_privacy_hint' );
+			delete_user_meta( $user->ID, 'efml_last_job_id' );
 		}
 
 		// delete options this plugin has used.

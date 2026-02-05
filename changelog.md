@@ -74,6 +74,7 @@
 - Added support to install WordPress plugins from external sources
 - Added support for multisite-installations: manage service plugins in your network
 - Added capability sets to fast configuration of capabilities for each tool and service
+- Added option to revert the last import
 
 ### Changed
 

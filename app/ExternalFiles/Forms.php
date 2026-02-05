@@ -629,7 +629,7 @@ class Forms {
 				$text .= '<li class="' . ( $result->is_error() ? 'error' : 'success' ) . '">' . $result->get_text() . '</li>';
 			}
 
-			// surround with hint and list, if not empty.
+			// surround with a hint and list, if not empty.
 			if ( ! empty( $text ) ) {
 				$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following results:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
 			}
@@ -963,7 +963,7 @@ class Forms {
 	public function filter_urls( array $urls ): array {
 		$url_array = array();
 
-		// loop through them to check if they are additionally separated by comma.
+		// loop through them to check if they are additionally separated by a comma.
 		foreach ( $urls as $url ) {
 			$url_array = array_merge( $url_array, explode( ',', $url ) );
 		}
@@ -973,7 +973,7 @@ class Forms {
 	}
 
 	/**
-	 * Add successfully imported URL to the list of successfully imported URLs.
+	 * Add a successfully imported URL to the list of successfully imported URLs.
 	 *
 	 * @param File                $external_file_obj The file object.
 	 * @param array<string,mixed> $file_data The file data.

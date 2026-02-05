@@ -1,6 +1,6 @@
 <?php
 /**
- * This file controls the option to install a plugin from an external source.
+ * This file controls the option to install a plugin from an external source via media library.
  *
  * @package external-files-in-media-library
  */
@@ -16,19 +16,16 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
-use ExternalFilesInMediaLibrary\Plugin\Admin\Plugins;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Upgrader_Skin;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Services\Zip\Zip;
 use WP_Post;
 use WP_Upgrader;
-use ZipArchive;
 
 /**
- * Handler controls how to check the availability of external files.
+ * Object to install a plugin from an external source via media library.
  */
 class Plugin_Installation extends Extension_Base {
 	/**
