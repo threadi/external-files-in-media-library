@@ -122,6 +122,7 @@
 - Save used service on each external file
 - Any local path will be sanitized
 - Optimized URL shortener
+- Now also usable as "must use"-plugin (requires a additional file to enable it)
 
 ### Fixed
 

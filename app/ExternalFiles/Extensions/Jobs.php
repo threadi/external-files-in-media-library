@@ -221,7 +221,7 @@ class Jobs extends Extension_Base {
 	 */
 	public function assign_job_to_user(): void {
 		// bail if we are not logged in.
-		if( ! is_user_logged_in() ) {
+		if ( ! is_user_logged_in() ) {
 			return;
 		}
 

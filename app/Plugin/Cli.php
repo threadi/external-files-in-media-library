@@ -51,7 +51,7 @@ class Cli {
 	 * [--use_specific_date=<value>]
 	 * : Use specific date for each file.
 	 *
-	 * @param array<string,string> $urls Array with URL, which might be given as parameter on CLI-command.
+	 * @param array<int,string>    $urls Array with URL, which might be given as parameter on CLI-command.
 	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
 	 *
 	 * @return void
@@ -139,7 +139,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to delete from in media library. If nothing is given all external files are deleted.
 	 *
-	 * @param array<string> $urls List of URLs.
+	 * @param array<int,string> $urls List of URLs.
 	 *
 	 * @return void
 	 */
@@ -223,7 +223,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to check. They must exist in media library.
 	 *
-	 * @param array<string> $urls List of URLs.
+	 * @param array<int,string> $urls List of URLs.
 	 *
 	 * @return void
 	 */
@@ -302,7 +302,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to switch.
 	 *
-	 * @param array<string> $urls List of URLs.
+	 * @param array<int,string> $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
@@ -351,7 +351,7 @@ class Cli {
 	 * [<URLs>]
 	 * : List of URLs to switch.
 	 *
-	 * @param array<string> $urls List of URLs.
+	 * @param array<int,string> $urls List of URLs.
 	 *
 	 * @return void
 	 * @noinspection PhpUnused
@@ -442,7 +442,7 @@ class Cli {
 	 * --fields=<value>
 	 * : Fields to configure this source as JSON.
 	 *
-	 * @param array<string,string> $names Array with names, which might be given as parameter on CLI-command.
+	 * @param array<int,string>    $names Array with names, which might be given as parameter on CLI-command.
 	 * @param array<string,string> $arguments List of parameter to use for the given URLs.
 	 *
 	 * @return void
@@ -452,7 +452,7 @@ class Cli {
 		$fields = json_decode( $arguments['fields'], true );
 
 		// bail if fields is not an array.
-		if( ! is_array( $fields ) ) {
+		if ( ! is_array( $fields ) ) {
 			\WP_CLI::error( __( 'Wrong fields value given!', 'external-files-in-media-library' ) );
 		}
 
@@ -474,7 +474,7 @@ class Cli {
 	 * <Names>
 	 * : List of names of external sources to delete.
 	 *
-	 * @param array<string,string> $names List of names.
+	 * @param array<int,string> $names List of names.
 	 *
 	 * @return void
 	 */
@@ -483,23 +483,23 @@ class Cli {
 		$taxonomy_obj = Taxonomy::get_instance();
 
 		// check each given name.
-		foreach( $names as $name ) {
+		foreach ( $names as $name ) {
 			// get the term by the given name.
-			$query = array(
-				'taxonomy' => $taxonomy_obj->get_name(),
+			$query  = array(
+				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
 				'meta_query' => array(
 					array(
-						'key' => 'path',
-						'value' => $name,
-						'compare' => '='
-					)
-				)
+						'key'     => 'path',
+						'value'   => $name,
+						'compare' => '=',
+					),
+				),
 			);
 			$result = new WP_Term_Query( $query );
 
 			// bail on no results.
-			if( empty( $result->terms ) ) {
+			if ( empty( $result->terms ) ) {
 				continue;
 			}
 
@@ -517,7 +517,7 @@ class Cli {
 	 * <Names>
 	 * : Names of external sources to sync.
 	 *
-	 * @param array<string,string> $names List of names.
+	 * @param array<int,string> $names List of names.
 	 *
 	 * @return void
 	 */
@@ -532,7 +532,7 @@ class Cli {
 		}
 
 		// bail if no names are given.
-		if( empty( $names ) ) {
+		if ( empty( $names ) ) {
 			// show hint.
 			\WP_CLI::error( __( 'No external sources given!', 'external-files-in-media-library' ) );
 
@@ -547,23 +547,23 @@ class Cli {
 		$sync_obj = Synchronization::get_instance();
 
 		// sync each given name.
-		foreach( $names as $name ) {
+		foreach ( $names as $name ) {
 			// get the term by the given name.
-			$query = array(
-				'taxonomy' => $taxonomy_obj->get_name(),
+			$query  = array(
+				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
 				'meta_query' => array(
 					array(
-						'key' => 'path',
-						'value' => $name,
-						'compare' => '='
-					)
-				)
+						'key'     => 'path',
+						'value'   => $name,
+						'compare' => '=',
+					),
+				),
 			);
 			$result = new WP_Term_Query( $query );
 
 			// bail on no results.
-			if( empty( $result->terms ) ) {
+			if ( empty( $result->terms ) ) {
 				continue;
 			}
 
@@ -587,7 +587,7 @@ class Cli {
 	 * <Names>
 	 * : Names of external sources to sync.
 	 *
-	 * @param array<string,string> $names List of names.
+	 * @param array<int,string> $names List of names.
 	 *
 	 * @return void
 	 */
@@ -602,7 +602,7 @@ class Cli {
 		}
 
 		// bail if no names are given.
-		if( empty( $names ) ) {
+		if ( empty( $names ) ) {
 			// show hint.
 			\WP_CLI::error( __( 'No external sources given!', 'external-files-in-media-library' ) );
 
@@ -617,23 +617,23 @@ class Cli {
 		$sync_obj = Synchronization::get_instance();
 
 		// delete files for each given name.
-		foreach( $names as $name ) {
+		foreach ( $names as $name ) {
 			// get the term by the given name.
-			$query = array(
-				'taxonomy' => $taxonomy_obj->get_name(),
+			$query  = array(
+				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
 				'meta_query' => array(
 					array(
-						'key' => 'path',
-						'value' => $name,
-						'compare' => '='
-					)
-				)
+						'key'     => 'path',
+						'value'   => $name,
+						'compare' => '=',
+					),
+				),
 			);
 			$result = new WP_Term_Query( $query );
 
 			// bail on no results.
-			if( empty( $result->terms ) ) {
+			if ( empty( $result->terms ) ) {
 				continue;
 			}
 
@@ -663,8 +663,8 @@ class Cli {
 	 * Hint: enabling the export to an external source can only be successful
 	 * if it has already been configured for export.
 	 *
-	 * @param array<string,string> $names List of names.
-	 * @param array                $arguments The arguments.
+	 * @param array<int,string>    $names List of names.
+	 * @param array<string,string> $arguments The arguments.
 	 *
 	 * @return void
 	 */
@@ -679,7 +679,7 @@ class Cli {
 		}
 
 		// bail if no names are given.
-		if( empty( $names ) ) {
+		if ( empty( $names ) ) {
 			// show hint.
 			\WP_CLI::error( __( 'No external sources given!', 'external-files-in-media-library' ) );
 
@@ -688,7 +688,7 @@ class Cli {
 		}
 
 		// bail if no arguments are set.
-		if( empty( $arguments ) ) {
+		if ( empty( $arguments ) ) {
 			// show hint.
 			\WP_CLI::error( __( 'No setting is given given!', 'external-files-in-media-library' ) );
 
@@ -703,23 +703,23 @@ class Cli {
 		$export_obj = Export::get_instance();
 
 		// enable export for each given name.
-		foreach( $names as $name ) {
+		foreach ( $names as $name ) {
 			// get the term by the given name.
-			$query = array(
-				'taxonomy' => $taxonomy_obj->get_name(),
+			$query  = array(
+				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
 				'meta_query' => array(
 					array(
-						'key' => 'path',
-						'value' => $name,
-						'compare' => '='
-					)
-				)
+						'key'     => 'path',
+						'value'   => $name,
+						'compare' => '=',
+					),
+				),
 			);
 			$result = new WP_Term_Query( $query );
 
 			// bail on no results.
-			if( empty( $result->terms ) ) {
+			if ( empty( $result->terms ) ) {
 				continue;
 			}
 

@@ -149,7 +149,7 @@ class Revert extends Extension_Base {
 	 */
 	public function change_dialog( array $dialog ): array {
 		// bail if option is not enabled.
-		if( 0 === absint( get_option( 'eml_revert' ) ) ) {
+		if ( 0 === absint( get_option( 'eml_revert' ) ) ) {
 			return $dialog;
 		}
 
@@ -157,7 +157,7 @@ class Revert extends Extension_Base {
 		$url = add_query_arg(
 			array(
 				'action' => 'efml_revert',
-				'nonce' => wp_create_nonce( 'efml-revert' ),
+				'nonce'  => wp_create_nonce( 'efml-revert' ),
 			),
 			get_admin_url() . 'admin.php'
 		);
@@ -186,33 +186,33 @@ class Revert extends Extension_Base {
 		$job_id = Jobs::get_instance()->get_last_job_id();
 
 		// bail if no job ID is given.
-		if( empty( $job_id ) ) {
+		if ( empty( $job_id ) ) {
 			wp_safe_redirect( (string) wp_get_referer() );
 		}
 
 		// get all files with this job ID.
-		$query = array(
-			'post_type'   => 'attachment',
-			'post_status' => 'any',
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'any',
 			'posts_per_page' => -1,
-			'meta_query'  => array(
+			'meta_query'     => array(
 				array(
 					'key'     => 'eml_job_id',
 					'value'   => $job_id,
 					'compare' => '=',
-				)
+				),
 			),
-			'fields'      => 'ids',
+			'fields'         => 'ids',
 		);
 		$result = new WP_Query( $query );
 
 		// bail if no results could be found.
-		if( 0 === $result->found_posts ) {
+		if ( 0 === $result->found_posts ) {
 			wp_safe_redirect( (string) wp_get_referer() );
 		}
 
 		// delete all those files.
-		foreach( $result->posts as $post_id ) {
+		foreach ( $result->posts as $post_id ) {
 			wp_delete_post( absint( $post_id ), true );
 		}
 
