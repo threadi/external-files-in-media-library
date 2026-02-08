@@ -759,7 +759,7 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Show error.
+	 * Show an error.
 	 *
 	 * @param string $error The error text.
 	 *
@@ -770,7 +770,9 @@ class Directory_Listing {
 		?>
 			<div class="wrap">
 				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Error loading external source', 'external-files-in-media-library' ); ?></h1>
-				<?php echo wp_kses_post( $error ); ?>
+				<div class="notice error">
+					<?php echo wp_kses_post( $error ); ?>
+				</div>
 			</div>
 		<?php
 	}
