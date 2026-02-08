@@ -10,7 +10,11 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_REST_Server;
 
@@ -54,6 +58,14 @@ class Site_Health {
 	 * @return void
 	 */
 	public function init(): void {
+		// use hooks.
+		add_action( 'init', array( $this, 'add_settings' ), 20 );
+
+		// bail if setting is disabled.
+		if( 1 === absint( get_option( 'eml_disable_site_health' ) ) ) {
+			return;
+		}
+
 		// register REST API.
 		add_action( 'rest_api_init', array( $this, 'add_rest_api' ) );
 
@@ -162,5 +174,49 @@ class Site_Health {
 
 		// return the resulting list of debug information.
 		return $debug_information;
+	}
+
+	/**
+	 * Add our custom settings for this plugin.
+	 *
+	 * @return void
+	 */
+	public function add_settings(): void {
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// get the main settings page.
+		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
+
+		// bail if page could not be loaded.
+		if ( ! $main_settings_page instanceof Page ) {
+			return;
+		}
+
+		// get the advanced tab.
+		$advanced_tab = $main_settings_page->get_tab( 'eml_advanced' );
+
+		// bail if page could not be loaded.
+		if ( ! $advanced_tab instanceof Tab ) {
+			return;
+		}
+
+		// get the advanced section.
+		$advanced_section = $advanced_tab->get_section( 'settings_section_advanced' );
+
+		// bail if section could not be loaded.
+		if ( ! $advanced_section instanceof Section ) {
+			return;
+		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_disable_site_health' );
+		$setting->set_section( $advanced_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox();
+		$field->set_title( __( 'Disable site health checks', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled we will not check for missing cronjobs or failed external sources.', 'external-files-in-media-library' ) );
+		$setting->set_field( $field );
 	}
 }

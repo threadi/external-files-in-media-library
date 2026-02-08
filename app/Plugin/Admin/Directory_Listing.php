@@ -1096,7 +1096,7 @@ class Directory_Listing {
 		foreach( $this->get_external_sources() as $term ) {
 			// add the endpoint.
 			$endpoints[] = array(
-				'label'     => Helper::get_plugin_name() . ' - ' . __( 'External source', 'external-files-in-media-library' ) . ': ' . $term->name,
+				'label'     => __( 'External source', 'external-files-in-media-library' ) . ': ' . $term->name,
 				'namespace' => 'efml/v1',
 				'route'     => '/external_source/' . $term->term_id,
 				'callback'  => array( $this, 'check_cron' ),
@@ -1138,7 +1138,7 @@ class Directory_Listing {
 
 		// define default results.
 		$result = array(
-			'label'       => __( 'External Files in Media Library - External source:', 'external-files-in-media-library' ) . ' ' . $term_data['title'],
+			'label'       => __( 'External source:', 'external-files-in-media-library' ) . ' ' . $term_data['title'],
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),

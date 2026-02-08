@@ -1834,7 +1834,7 @@ class Synchronization extends Tools_Base {
 	public function add_site_health_endpoint( array $endpoints ): array {
 		// add the endpoint.
 		$endpoints[] = array(
-			'label' => Helper::get_plugin_name() . ' ' . __( 'Synchronisation', 'external-files-in-media-library' ),
+			'label' => __( 'Synchronisation', 'external-files-in-media-library' ),
 			'namespace' => 'efml/v1',
 			'route'     => '/sync/',
 			'callback'  => array( $this, 'check_cron' ),
@@ -1854,7 +1854,7 @@ class Synchronization extends Tools_Base {
 	public function check_cron(): array {
 		// define default results.
 		$result = array(
-			'label'       => __( 'External Files in Media Library: Synchronisation Cron Check', 'external-files-in-media-library' ),
+			'label'       => __( 'Synchronisation Cron Check', 'external-files-in-media-library' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),

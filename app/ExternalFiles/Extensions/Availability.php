@@ -421,7 +421,7 @@ class Availability extends Extension_Base {
 	public function check_cron(): array {
 		// define default results.
 		$result = array(
-			'label'       => __( 'External Files in Media Library: Availability Cron Check', 'external-files-in-media-library' ),
+			'label'       => __( 'Availability Cron Check', 'external-files-in-media-library' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
