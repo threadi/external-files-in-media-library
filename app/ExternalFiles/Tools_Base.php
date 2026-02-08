@@ -65,4 +65,24 @@ class Tools_Base {
 	public function get_capability_description(): string {
 		return '';
 	}
+
+	/**
+	 * Return whether this tool is in use.
+	 *
+	 * @return bool
+	 */
+	public function is_in_use(): bool {
+		return true;
+	}
+
+	/**
+	 * Run tasks to disable this tool.
+	 *
+	 * We disable it by removing the capability.
+	 *
+	 * @return void
+	 */
+	public function disable(): void {
+		update_option( 'eml_tools_settings_tools_' . $this->get_name() . '_allowed_roles', array() );
+	}
 }

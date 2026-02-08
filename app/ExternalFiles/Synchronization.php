@@ -25,6 +25,7 @@ use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
 use WP_Term;
+use WP_Term_Query;
 
 /**
  * Controller for synchronization of files.
@@ -726,7 +727,7 @@ class Synchronization extends Tools_Base {
 	}
 
 	/**
-	 * Call sync via AJAX request.
+	 * Call sync for specific external source via AJAX request.
 	 *
 	 * @return void
 	 */
@@ -1360,9 +1361,10 @@ class Synchronization extends Tools_Base {
 	 */
 	private function add_schedule( int $term_id ): void {
 		// get the interval to set.
-		$interval = get_term_meta( $term_id, 'interval', true );
+		$interval = (string) get_term_meta( $term_id, 'interval', true );
 		if ( empty( $interval ) ) {
-			$interval = 'efml_hourly';
+			update_term_meta( $term_id, 'interval', 'efml_hourly' );
+			$interval = (string) get_term_meta( $term_id, 'interval', true );
 		}
 
 		// get the schedule object.
@@ -1756,5 +1758,67 @@ class Synchronization extends Tools_Base {
 	 */
 	public function get_capability_description(): string {
 		return __( 'Choose the roles that should be allowed to configure the synchronize files from external sources. This does not influence the automatic synchronisation of files from external sources.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return whether this tool is in use.
+	 *
+	 * @return bool
+	 */
+	public function is_in_use(): bool {
+		// bail with false if synchronisation is disabled.
+		if( 1 !== absint( get_option( 'eml_sync' ) ) ) {
+			return false;
+		}
+
+		// get list of external sources.
+		$external_sources = $this->get_sync_terms();
+
+		// return result depending on terms for sync.
+		return ! empty( $external_sources );
+	}
+
+	/**
+	 * Return list of terms, which are enabled for sync.
+	 *
+	 * @return array<int,int>
+	 */
+	public function get_sync_terms(): array {
+		// get the terms with enable sync.
+		$query = array(
+			'taxonomy'     => Taxonomy::get_instance()->get_name(),
+			'hide_empty'   => false,
+			'count'        => false,
+			'meta_key'     => 'interval',
+			'meta_compare' => 'EXISTS',
+			'fields'       => 'ids',
+		);
+		$terms = new WP_Term_Query( $query );
+
+		// bail on no results.
+		if ( empty( $terms->terms ) ) {
+			return array();
+		}
+
+		// create the list.
+		$list = array();
+
+		// add each "WP_Term" to the list.
+		foreach ( $terms->terms as $term_id ) {
+			$list[] = absint( $term_id );
+		}
+
+		// return resulting list.
+		return $list;
+	}
+
+	/**
+	 * Run tasks to disable this tool.
+	 *
+	 * @return void
+	 */
+	public function disable(): void {
+		update_option( 'eml_sync', 0 );
+		parent::disable();
 	}
 }

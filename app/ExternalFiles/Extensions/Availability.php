@@ -11,7 +11,9 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
@@ -96,17 +98,29 @@ class Availability extends Extension_Base {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
-		// get the advanced section.
-		$general_tab_main = $settings_obj->get_section( 'settings_section_main' );
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( 'eml_settings' );
 
-		// bail if section could not be loaded.
-		if ( ! $general_tab_main ) {
+		// bail if page could not be loaded.
+		if( ! $settings_page instanceof Page ) {
 			return;
 		}
 
+		// get the general tab.
+		$general_tab_main = $settings_page->get_tab( 'eml_general' );
+
+		// bail if tab could not be loaded.
+		if( ! $general_tab_main instanceof Tab ) {
+			return;
+		}
+
+		// add the availability section.
+		$availability_section = $general_tab_main->add_section( 'settings_section_availability', 50 );
+		$availability_section->set_title( __( 'Availability', 'external-files-in-media-library' ) );
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_check_interval' );
-		$setting->set_section( $general_tab_main );
+		$setting->set_section( $availability_section );
 		$setting->set_type( 'string' );
 		$setting->set_default( 'efml_24hourly' );
 		$setting->set_help( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );

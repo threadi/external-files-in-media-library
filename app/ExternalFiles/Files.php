@@ -1557,16 +1557,23 @@ class Files {
 	/**
 	 * Prevent usage of external images for non-image files (except PDFs).
 	 *
+	 * Hint:
+	 * The hook "wp_get_attachment_image_src" requires the parameter #2 ($attachment_id) to be an int.
+	 * But plugins like WooCommerce gives here strings. So we use "mixed" and check the value further.
+	 *
 	 * @param array<int,mixed>|false $image The given image to return for the preview.
-	 * @param int                    $attachment_id The used attachment ID.
+	 * @param mixed                  $attachment_id The used attachment ID.
 	 *
 	 * @return array<int,mixed>|false
 	 */
-	public function prevent_images( array|false $image, int $attachment_id ): array|false {
+	public function prevent_images( array|false $image, mixed $attachment_id ): array|false {
 		// bail if image is not an array.
 		if ( ! is_array( $image ) ) {
 			return $image;
 		}
+
+		// convert attachment to an int.
+		$attachment_id = absint( $attachment_id );
 
 		// get external file object.
 		$external_file_obj = $this->get_file( $attachment_id );

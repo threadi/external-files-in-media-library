@@ -75,6 +75,7 @@
 - Added support for multisite-installations: manage service plugins in your network
 - Added capability sets to fast configuration of capabilities for each tool and service
 - Added option to revert the last import
+- Added configurations to quickly configure the plugin for a specific task
 
 ### Changed
 

@@ -2216,4 +2216,32 @@ class Export extends Tools_Base {
 	public function get_capability_description(): string {
 		return __( 'Select roles, which should be allowed to export files in the media library to external sources.', 'external-files-in-media-library' );
 	}
+
+	/**
+	 * Return whether this tool is in use.
+	 *
+	 * @return bool
+	 */
+	public function is_in_use(): bool {
+		// bail with false if export is disabled.
+		if( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return false;
+		}
+
+		// get list of external sources.
+		$external_sources = $this->get_export_terms();
+
+		// return result depending on terms for export.
+		return ! empty( $external_sources );
+	}
+
+	/**
+	 * Run tasks to disable this tool.
+	 *
+	 * @return void
+	 */
+	public function disable(): void {
+		update_option( 'eml_export', 0 );
+		parent::disable();
+	}
 }

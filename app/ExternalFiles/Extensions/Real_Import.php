@@ -611,10 +611,10 @@ class Real_Import extends Extension_Base {
 			return;
 		}
 
-		// set use_dates to 1.
+		// set "use_dates" to 1.
 		$_POST['real_import'] = 1;
 
-		// add filter.
+		// add the filter.
 		add_filter( 'efml_external_file_infos', array( $this, 'check_for_duplicate_during_sync' ) );
 	}
 

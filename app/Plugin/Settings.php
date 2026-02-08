@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -290,6 +291,15 @@ class Settings {
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_modes' );
+		$setting->set_section( $general_tab_main );
+		$setting->prevent_export( true );
+		$field = new TextInfo();
+		$field->set_title( __( 'Set configuration', 'external-files-in-media-library' ) );
+		$field->set_description( $this->show_modes() );
+		$setting->set_field( $field );
+
 		// get possible mime types.
 		$mime_types = array();
 		foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
@@ -418,12 +428,12 @@ class Settings {
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_user_assign' );
-		$setting->set_section( $general_tab_main );
+		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( Users::get_instance()->get_first_administrator_user() );
 		$field = new Select();
 		$field->set_title( __( 'Assign new files to this user', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g., via WP CLI import). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g., via WP CLI import or synchronisation). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
 		$field->set_options( Roles::get_instance()->get_user_for_settings() );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -1000,5 +1010,20 @@ class Settings {
 
 		// return true if this is NOT the main media library site to enable the export.
 		return get_current_blog_id() !== $efml_media_library_site_id;
+	}
+
+	/**
+	 * Return list of available plugins modes.
+	 *
+	 * @return string
+	 */
+	public function show_modes(): string {
+		ob_start();
+		Configurations::get_instance()->show_list();
+		$content = ob_get_clean();
+		if( ! $content ) {
+			return '';
+		}
+		return $content;
 	}
 }
