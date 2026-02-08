@@ -77,6 +77,7 @@
 - Added capability sets to fast configuration of capabilities for each tool and service
 - Added option to revert the last import
 - Added configurations to quickly configure the plugin for a specific task
+- Added output of all (not private) settings in site health report
 
 ### Changed
 
