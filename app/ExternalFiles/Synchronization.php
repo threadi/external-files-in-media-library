@@ -96,6 +96,7 @@ class Synchronization extends Tools_Base {
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_sync_info_in_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_listing_delete_action' ), 10, 2 );
 		add_filter( 'efml_schedules', array( $this, 'add_schedule_obj' ) );
+		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
 
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
@@ -105,6 +106,7 @@ class Synchronization extends Tools_Base {
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
+		add_action( 'admin_action_efml_create_sync_cron', array( $this, 'add_cron_by_request' ) );
 
 		// misc.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
@@ -990,7 +992,7 @@ class Synchronization extends Tools_Base {
 		// create URL.
 		$url = add_query_arg(
 			array(
-				'taxonomy'  => 'edlfw_archive',
+				'taxonomy'  => Taxonomy::get_instance()->get_name(),
 				'post_type' => 'attachment',
 				's'         => $term->name,
 			),
@@ -1820,5 +1822,133 @@ class Synchronization extends Tools_Base {
 	public function disable(): void {
 		update_option( 'eml_sync', 0 );
 		parent::disable();
+	}
+
+	/**
+	 * Add a custom endpoint for site health.
+	 *
+	 * @param array<int,array<string,mixed>> $endpoints
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_site_health_endpoint( array $endpoints ): array {
+		// add the endpoint.
+		$endpoints[] = array(
+			'label' => Helper::get_plugin_name() . ' ' . __( 'Synchronisation', 'external-files-in-media-library' ),
+			'namespace' => 'efml/v1',
+			'route'     => '/sync/',
+			'callback'  => array( $this, 'check_cron' ),
+			'args'      => array(),
+		);
+
+		// return the resulting list of endpoints.
+		return $endpoints;
+	}
+
+	/**
+	 * Return result after checking cronjob-states.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnused
+	 */
+	public function check_cron(): array {
+		// define default results.
+		$result = array(
+			'label'       => __( 'External Files in Media Library: Synchronisation Cron Check', 'external-files-in-media-library' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
+				'color' => 'gray',
+			),
+			'description' => __( 'We use a cronjob to synchronisation the external files with your media library.<br><strong>All ok with the cronjob!</strong>', 'external-files-in-media-library' ),
+			'actions'     => '',
+			'test'        => 'efml_test_sync_cron',
+		);
+
+		// collect the missing cronjobs.
+		$missing_cronjobs = array();
+
+		// collect missing runs of cronjobs.
+		$no_run_cronjobs = array();
+
+		// get all external sources with enabled sync and check their cronjobs.
+		foreach( $this->get_sync_terms() as $term_id ) {
+			// get the schedule object for this term.
+			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
+
+			// bail if object could not be loaded.
+			if( ! $schedule_obj instanceof Schedules_Base ) {
+				// add this cronjob to the list of missing cronjobs.
+				$missing_cronjobs[] = $term_id;
+
+				// do nothing more.
+				continue;
+			}
+
+			// get its event.
+			$event = $schedule_obj->get_event();
+
+			// bail if event could be loaded.
+			if( is_object( $event ) ) {
+				// check its time.
+				if ( $event->timestamp < time() ) { // @phpstan-ignore property.notFound
+					$no_run_cronjobs[] = $term_id;
+				}
+
+				// do nothing more.
+				continue;
+			}
+
+			// add this cronjob to the list of missing cronjobs.
+			$missing_cronjobs[] = $term_id;
+		}
+
+		// if any event does not exist => show error.
+		if ( ! empty( $missing_cronjobs ) ) {
+			$url                   = add_query_arg(
+				array(
+					'action' => 'efml_create_sync_cron',
+					'nonce'  => wp_create_nonce( 'efml-create-sync-schedule' ),
+				),
+				get_admin_url() . 'admin.php'
+			);
+			$result['status']      = 'recommended';
+			$result['description'] = __( 'Cronjob to synchronise your external files with the media library does not exist!', 'external-files-in-media-library' );
+			$result['actions'] = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+
+			// return this result.
+			return $result;
+		}
+
+		// if any scheduled event was not run, show hint.
+		if ( ! empty( $no_run_cronjobs ) ) { // @phpstan-ignore property.notFound
+			$result['status'] = 'recommended';
+			/* translators: %1$s will be replaced by the date of the planned next schedule run. */
+			$result['description'] = sprintf( __( 'Cronjob to synchronise your external files with the media library should have been run at %1$s, but was not executed!<br><strong>Please check the cron-system of your WordPress-installation.</strong>', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $scheduled_event->timestamp ) ) );
+
+			// return this result.
+			return $result;
+		}
+
+		// return result.
+		return $result;
+	}
+
+	/**
+	 * Add the availability cron by request.
+	 *
+	 * @return void
+	 */
+	public function add_cron_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-create-sync-schedule', 'nonce' );
+
+		// get all external sources with enabled sync and check their cronjobs.
+		foreach( $this->get_sync_terms() as $term_id ) {
+			$this->add_schedule( $term_id );
+		}
+
+		// forward user.
+		wp_safe_redirect( (string) wp_get_referer() );
 	}
 }

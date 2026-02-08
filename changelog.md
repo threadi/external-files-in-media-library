@@ -78,6 +78,7 @@
 - Added option to revert the last import
 - Added configurations to quickly configure the plugin for a specific task
 - Added output of all (not private) settings in site health report
+- Added site health checks for cronjobs, and the availability of external sources
 
 ### Changed
 

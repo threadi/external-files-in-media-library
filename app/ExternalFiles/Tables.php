@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -203,7 +204,7 @@ class Tables {
 		}
 
 		// bail if this is not our taxonomy.
-		if ( 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
+		if ( Taxonomy::get_instance()->get_name() !== $query->query_vars['taxonomy'] ) {
 			return;
 		}
 
@@ -396,12 +397,12 @@ class Tables {
 		}
 
 		// bail if this is not our taxonomy.
-		if ( is_array( $query->query_vars['taxonomy'] ) && ! in_array( 'edlfw_archive', $query->query_vars['taxonomy'], true ) ) {
+		if ( is_array( $query->query_vars['taxonomy'] ) && ! in_array( Taxonomy::get_instance()->get_name(), $query->query_vars['taxonomy'], true ) ) {
 			return;
 		}
 
 		// bail if this is not our taxonomy.
-		if ( ! is_array( $query->query_vars['taxonomy'] ) && 'edlfw_archive' !== $query->query_vars['taxonomy'] ) {
+		if ( ! is_array( $query->query_vars['taxonomy'] ) && Taxonomy::get_instance()->get_name() !== $query->query_vars['taxonomy'] ) {
 			return;
 		}
 

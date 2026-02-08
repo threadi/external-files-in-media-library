@@ -93,6 +93,9 @@ class Admin {
 		// initialize the modes.
 		Configurations::get_instance()->init();
 
+		// initialize the site health object.
+		Site_Health::get_instance()->init();
+
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
@@ -105,7 +108,6 @@ class Admin {
 		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ), 10, 0 );
-		add_filter( 'debug_information', array( $this, 'add_debug_info' ) );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -552,12 +554,7 @@ class Admin {
 	 */
 	public function check_if_directory_listing_is_used(): void {
 		// get the terms.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
+		$terms = Directory_Listing::get_instance()->get_external_sources();
 
 		// bail if terms does exist.
 		if ( ! empty( $terms ) ) {
@@ -581,35 +578,5 @@ class Admin {
 			array(),
 			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.css' ),
 		);
-	}
-
-	/**
-	 * Add our own debug information to site health.
-	 *
-	 * @param array<string,mixed> $debug_information List of debug information for the actual project.
-	 *
-	 * @return array<string,mixed>
-	 */
-	public function add_debug_info( array $debug_information ): array {
-		$debug_information['external-files-in-media-library'] = array(
-			'label' => Helper::get_plugin_name(),
-			'fields' => array()
-		);
-
-		// loop through all settings and add them as fields if their export is allowed.
-		foreach( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_settings() as $setting ) {
-			// create the entry.
-			$entry = array(
-				'label' => $setting->get_name(),
-				'value' => $setting->get_value(),
-				'private' => $setting->is_export_prevented()
-			);
-
-			// add it to the list.
-			$debug_information['external-files-in-media-library']['fields'][$setting->get_name()] = $entry;
-		}
-
-		// return the resulting list of debug information.
-		return $debug_information;
 	}
 }

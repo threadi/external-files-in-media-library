@@ -1290,12 +1290,7 @@ class Files {
 	 */
 	public function add_filter_options( array $options ): array {
 		// get all external sources.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
+		$terms = Directory_Listing::get_instance()->get_external_sources();
 
 		// add them to the options list.
 		if ( is_array( $terms ) ) {

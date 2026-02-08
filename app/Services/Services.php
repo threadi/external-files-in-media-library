@@ -394,7 +394,7 @@ class Services {
 			wp_safe_redirect( (string) wp_get_referer() );
 		}
 
-		// create filename for JSON-download-file.
+		// create the filename for the JSON-download-file.
 		$filename = gmdate( 'YmdHi' ) . '_' . get_option( 'blogname' ) . '_external_source_' . basename( $name ) . '.json'; // @phpstan-ignore argument.type
 		/**
 		 * File the filename for JSON-download of a service file.

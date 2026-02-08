@@ -78,6 +78,10 @@ class Availability extends Extension_Base {
 
 		// use our own hooks.
 		add_action( 'efml_show_file_info', array( $this, 'show_availability' ) );
+		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
+
+		// use actions.
+		add_action( 'admin_action_efml_create_availability_cron', array( $this, 'add_cron_by_request' ) );
 	}
 
 	/**
@@ -385,5 +389,98 @@ class Availability extends Extension_Base {
 
 		// return the new value to save it via WP.
 		return $value;
+	}
+
+	/**
+	 * Add a custom endpoint for site health.
+	 *
+	 * @param array<int,array<string,mixed>> $endpoints
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_site_health_endpoint( array $endpoints ): array {
+		// add the endpoint.
+		$endpoints[] = array(
+			'label' => Helper::get_plugin_name() . ' ' . __( 'Availability', 'external-files-in-media-library' ),
+			'namespace' => 'efml/v1',
+			'route'     => '/availability/',
+			'callback'  => array( $this, 'check_cron' ),
+			'args'      => array(),
+		);
+
+		// return the resulting list of endpoints.
+		return $endpoints;
+	}
+
+	/**
+	 * Return result after checking cronjob-states.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnused
+	 */
+	public function check_cron(): array {
+		// define default results.
+		$result = array(
+			'label'       => __( 'External Files in Media Library: Availability Cron Check', 'external-files-in-media-library' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
+				'color' => 'gray',
+			),
+			'description' => __( 'We check the availability of your external files with a cronjob.<br><strong>All ok with the cronjob!</strong>', 'external-files-in-media-library' ),
+			'actions'     => '',
+			'test'        => 'efml_test_availability_cron',
+		);
+
+		// get scheduled event.
+		$schedule_obj    = new Check_Files();
+		$scheduled_event = $schedule_obj->get_event();
+
+		// event does not exist => show error.
+		if ( false === $scheduled_event ) {
+			$url                   = add_query_arg(
+				array(
+					'action' => 'efml_create_availability_cron',
+					'nonce'  => wp_create_nonce( 'efml-create-availability-schedule' ),
+				),
+				get_admin_url() . 'admin.php'
+			);
+			$result['status']      = 'recommended';
+			$result['description'] = __( 'Cronjob to check the availability of your external files does not exist!', 'external-files-in-media-library' );
+			$result['actions'] = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+
+			// return this result.
+			return $result;
+		}
+
+		// if scheduled event exist, check if next run is in the past.
+		if ( $scheduled_event->timestamp < time() ) { // @phpstan-ignore property.notFound
+			$result['status'] = 'recommended';
+			/* translators: %1$s will be replaced by the date of the planned next schedule run. */
+			$result['description'] = sprintf( __( 'Cronjob to check the availability of your external files should have been run at %1$s, but was not executed!<br><strong>Please check the cron-system of your WordPress-installation.</strong>', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $scheduled_event->timestamp ) ) );
+
+			// return this result.
+			return $result;
+		}
+
+		// return result.
+		return $result;
+	}
+
+	/**
+	 * Add the availability cron by request.
+	 *
+	 * @return void
+	 */
+	public function add_cron_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-create-availability-schedule', 'nonce' );
+
+		// recreate the schedule.
+		$schedule_obj    = new Check_Files();
+		$schedule_obj->reset();
+
+		// forward user.
+		wp_safe_redirect( (string) wp_get_referer() );
 	}
 }

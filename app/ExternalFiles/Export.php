@@ -185,7 +185,7 @@ class Export extends Tools_Base {
 		// create URL.
 		$url = add_query_arg(
 			array(
-				'taxonomy'  => 'edlfw_archive',
+				'taxonomy'  => Taxonomy::get_instance()->get_name(),
 				'post_type' => 'attachment',
 			),
 			get_admin_url() . 'edit-tags.php'
