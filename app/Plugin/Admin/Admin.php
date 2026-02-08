@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Intro;
 use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Configurations;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
@@ -88,6 +89,9 @@ class Admin {
 
 		// initialize the capability sets.
 		CapabilitySets::get_instance()->init();
+
+		// initialize the modes.
+		Configurations::get_instance()->init();
 
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );

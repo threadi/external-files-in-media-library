@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
@@ -288,6 +289,15 @@ class Settings {
 		$field->set_title( __( 'Disable the attachment page for URL-files', 'external-files-in-media-library' ) );
 		$field->set_description( $description );
 		$field->set_setting( $setting );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_modes' );
+		$setting->set_section( $general_tab_main );
+		$setting->prevent_export( true );
+		$field = new TextInfo();
+		$field->set_title( __( 'Set configuration', 'external-files-in-media-library' ) );
+		$field->set_description( $this->show_modes() );
 		$setting->set_field( $field );
 
 		// get possible mime types.
@@ -1000,5 +1010,20 @@ class Settings {
 
 		// return true if this is NOT the main media library site to enable the export.
 		return get_current_blog_id() !== $efml_media_library_site_id;
+	}
+
+	/**
+	 * Return list of available plugins modes.
+	 *
+	 * @return string
+	 */
+	public function show_modes(): string {
+		ob_start();
+		Configurations::get_instance()->show_list();
+		$content = ob_get_clean();
+		if( ! $content ) {
+			return '';
+		}
+		return $content;
 	}
 }

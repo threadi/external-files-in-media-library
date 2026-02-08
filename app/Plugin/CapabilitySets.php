@@ -178,7 +178,7 @@ class CapabilitySets {
 					array(
 						'action'  => 'closeDialog();',
 						'variant' => 'primary',
-						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+						'text'    => __( 'No', 'external-files-in-media-library' ),
 					),
 				),
 			);

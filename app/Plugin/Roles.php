@@ -184,20 +184,20 @@ class Roles {
 		$permissions_tab_source->set_setting( $settings_obj );
 
 		// add settings for each service.
-		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service_obj ) {
 			// bail if this plugin does not require any permissions.
-			if ( method_exists( $service, 'has_no_editable_permissions' ) && $service->has_no_editable_permissions() ) {
+			if ( method_exists( $service_obj, 'has_no_editable_permissions' ) && $service_obj->has_no_editable_permissions() ) {
 				continue;
 			}
 
 			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_service_' . $service->get_name() . '_allowed_roles' );
+			$setting = $settings_obj->add_setting( 'eml_service_' . $service_obj->get_name() . '_allowed_roles' );
 			$setting->set_section( $permissions_tab_source );
 			$setting->set_type( 'array' );
 			$setting->set_default( array( 'administrator', 'editor' ) );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_service' ) );
 			$field = new MultiSelect();
-			$field->set_title( $service->get_label() );
+			$field->set_title( $service_obj->get_label() );
 			$field->set_options( $user_roles );
 			$setting->set_field( $field );
 		}
