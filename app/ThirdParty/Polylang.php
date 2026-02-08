@@ -14,7 +14,6 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use WP_Query;
 
 /**
  * Object to handle support for this plugin.
@@ -60,7 +59,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function init(): void {
 		// bail if Polylang is not active.
-		if ( ! Helper::is_plugin_active( 'polylang/polylang.php' ) ) {
+		if ( ! defined( 'POLYLANG_BASENAME' ) ) {
 			return;
 		}
 
