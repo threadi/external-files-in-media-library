@@ -39,6 +39,8 @@ Sort your external files in a folder of [CatFolders](https://wordpress.org/plugi
 
 And compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
 
+And it is also compatible with multilingual plugins like Polylang to translate the media files.
+
 The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
 
 == REST API ==
@@ -83,6 +85,8 @@ Here are a few examples of how this plugin can help you:
 * Automatically synchronize photos from your vacation for display on your website.
 * Import regularly newly generated PDF files from a shared directory for output on your website.
 * Get images for your products from a central directory.
+
+Find more (here)[https://plugins.thomaszwirner.de/en/external-files-in-the-media-library/].
 
 == ClassicPress ==
 
