@@ -374,12 +374,17 @@ class Sftp extends Protocol_Base {
 		$parse_url = wp_parse_url( $url );
 
 		// bail if scheme or host could not be read.
-		if ( ! isset( $parse_url['scheme'] ) || ! isset( $parse_url['host'] ) ) {
+		if ( ! isset( $parse_url['scheme'], $parse_url['host'] ) ) {
 			return false;
 		}
 
 		// get the fields.
 		$fields = $this->get_fields();
+
+		// bail if fields are missing.
+		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
+			return false;
+		}
 
 		// define ssh/sftp connection parameter.
 		$connection_arguments = array(
@@ -391,16 +396,6 @@ class Sftp extends Protocol_Base {
 
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {
-			return false;
-		}
-
-		// bail if login is not set.
-		if ( empty( $connection_arguments['username'] ) ) {
-			return false;
-		}
-
-		// bail if password is not set.
-		if ( empty( $connection_arguments['password'] ) ) {
 			return false;
 		}
 

@@ -62,7 +62,7 @@ class Site_Health {
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
 		// bail if setting is disabled.
-		if( 1 === absint( get_option( 'eml_disable_site_health' ) ) ) {
+		if ( 1 === absint( get_option( 'eml_disable_site_health' ) ) ) {
 			return;
 		}
 
@@ -155,21 +155,21 @@ class Site_Health {
 	 */
 	public function add_debug_info( array $debug_information ): array {
 		$debug_information[ Helper::get_plugin_slug() ] = array(
-			'label' => Helper::get_plugin_name(),
-			'fields' => array()
+			'label'  => Helper::get_plugin_name(),
+			'fields' => array(),
 		);
 
 		// loop through all settings and add them as fields if their export is allowed.
-		foreach( Settings::get_instance()->get_settings() as $setting ) {
+		foreach ( Settings::get_instance()->get_settings() as $setting ) {
 			// create the entry.
 			$entry = array(
-				'label' => $setting->get_name(),
-				'value' => $setting->get_value(),
-				'private' => $setting->is_export_prevented()
+				'label'   => $setting->get_name(),
+				'value'   => $setting->get_value(),
+				'private' => $setting->is_export_prevented(),
 			);
 
 			// add it to the list.
-			$debug_information[ Helper::get_plugin_slug() ]['fields'][$setting->get_name()] = $entry;
+			$debug_information[ Helper::get_plugin_slug() ]['fields'][ $setting->get_name() ] = $entry;
 		}
 
 		// return the resulting list of debug information.

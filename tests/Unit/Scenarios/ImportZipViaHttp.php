@@ -26,7 +26,7 @@ class ImportZipViaHttp extends externalFilesTests {
 	}
 
 	/**
-	 * Allow zip to import.
+	 * Allow .zip to import.
 	 *
 	 * @param array $mime_types
 	 *
@@ -52,6 +52,7 @@ class ImportZipViaHttp extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_import_zip_via_http(): void {
+		// import the file.
 		$result = \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'zip', 'http' ) );
 		$this->assertIsBool( $result );
 		$this->assertTrue( $result );

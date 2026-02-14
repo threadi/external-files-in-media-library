@@ -22,6 +22,7 @@ parameters:
     - "#wp_rml#"
     - "#StorageObject#"
     - "#IN_SECONDS#"
+    - "#pll_#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

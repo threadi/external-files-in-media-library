@@ -1087,13 +1087,13 @@ class Directory_Listing {
 	/**
 	 * Add a custom endpoint for site health for each external source term.
 	 *
-	 * @param array<int,array<string,mixed>> $endpoints
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function add_site_health_endpoints( array $endpoints ): array {
 		// loop through each term.
-		foreach( $this->get_external_sources() as $term ) {
+		foreach ( $this->get_external_sources() as $term ) {
 			// add the endpoint.
 			$endpoints[] = array(
 				'label'     => __( 'External source', 'external-files-in-media-library' ) . ': ' . $term->name,
@@ -1113,6 +1113,8 @@ class Directory_Listing {
 	 *
 	 * We do not check if files are available as it could be empty.
 	 *
+	 * @param WP_REST_Request $data The REST request object.
+	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnused
 	 */
@@ -1121,7 +1123,7 @@ class Directory_Listing {
 		$term_id = absint( str_replace( '/efml/v1/external_source/', '', $data->get_route() ) );
 
 		// bail if no term ID is given.
-		if( 0 === $term_id ) {
+		if ( 0 === $term_id ) {
 			return array();
 		}
 
@@ -1129,7 +1131,7 @@ class Directory_Listing {
 		$term = get_term( $term_id, Taxonomy::get_instance()->get_name() );
 
 		// bail if term data could not be loaded.
-		if( ! $term instanceof WP_Term ) {
+		if ( ! $term instanceof WP_Term ) {
 			return array();
 		}
 
@@ -1166,7 +1168,7 @@ class Directory_Listing {
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
 		// bail if no listing object could be found.
-		if( ! $listing_obj instanceof Directory_Listing_Base ) {
+		if ( ! $listing_obj instanceof Directory_Listing_Base ) {
 			$result['status'] = 'recommended';
 			/* translators: %1$s will be replaced by a URL. */
 			$result['description'] = sprintf( __( '<strong>Could not load external source!</strong><br>Please check the configuration <a href="$1%s">for this external source</a>.', 'external-files-in-media-library' ), $url );
@@ -1179,10 +1181,10 @@ class Directory_Listing {
 		$listing_obj->set_fields( $term_data['fields'] );
 
 		// test the login.
-		$login_test = $listing_obj->do_login( $term_data['directory']);
+		$login_test = $listing_obj->do_login( $term_data['directory'] );
 
 		// return warning of login failed.
-		if( ! $login_test ) {
+		if ( ! $login_test ) {
 			$result['status'] = 'recommended';
 			/* translators: %1$s will be replaced by a URL. */
 			$result['description'] = sprintf( __( '<strong>Login failed!</strong><br>Please check the credentials <a href="%1$s">for this external source</a>.', 'external-files-in-media-library' ), $url );
@@ -1210,7 +1212,7 @@ class Directory_Listing {
 		);
 
 		// bail if result is not an array.
-		if( ! is_array( $terms ) ) {
+		if ( ! is_array( $terms ) ) {
 			return array();
 		}
 

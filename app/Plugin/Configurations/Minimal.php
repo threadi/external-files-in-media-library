@@ -51,7 +51,7 @@ class Minimal extends Configuration_Base {
 	 */
 	public function get_dialog_hints(): array {
 		return array(
-			'<p>' . __( 'This will disable all services you actually do not use.', 'external-files-in-media-library' ) . '<br />' . __( 'This will also disable any tools the plugin provides, and the user specific settings for imports.', 'external-files-in-media-library' ) . '</p>'
+			'<p>' . __( 'This will disable all services you actually do not use.', 'external-files-in-media-library' ) . '<br />' . __( 'This will also disable any tools the plugin provides, and the user specific settings for imports.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}
 
@@ -79,7 +79,7 @@ class Minimal extends Configuration_Base {
 			$service_name = $file->get_service_name();
 
 			// bail if service name is empty.
-			if( empty( $service_name ) ) {
+			if ( empty( $service_name ) ) {
 				continue;
 			}
 
@@ -93,7 +93,7 @@ class Minimal extends Configuration_Base {
 			$service_name = get_term_meta( $term->term_id, 'type', true );
 
 			// bail if service name is empty.
-			if( empty( $service_name ) ) {
+			if ( empty( $service_name ) ) {
 				continue;
 			}
 
@@ -102,14 +102,14 @@ class Minimal extends Configuration_Base {
 		}
 
 		// 4. Get all services and disable the ones, which are not in our list.
-		foreach( Services::get_instance()->get_services_as_objects() as $service_obj ) {
+		foreach ( Services::get_instance()->get_services_as_objects() as $service_obj ) {
 			// bail if method for the name does not exist.
-			if( ! method_exists( $service_obj, 'get_name' ) ) {
+			if ( ! method_exists( $service_obj, 'get_name' ) ) {
 				continue;
 			}
 
 			// bail if this service is in the list.
-			if( isset( $used_services[ $service_obj->get_name() ] ) ) {
+			if ( isset( $used_services[ $service_obj->get_name() ] ) ) {
 				continue;
 			}
 
@@ -139,7 +139,7 @@ class Minimal extends Configuration_Base {
 		 */
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
 			// bail if tool is being not used.
-			if( $tools_obj->is_in_use() ) {
+			if ( $tools_obj->is_in_use() ) {
 				continue;
 			}
 

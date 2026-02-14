@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Configurations;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Configuration_Base;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
@@ -47,7 +48,7 @@ class Standard extends Configuration_Base {
 	 */
 	public function get_dialog_hints(): array {
 		return array(
-			'<p>' . __( 'This will set the services as if the plugin was freshly installed.', 'external-files-in-media-library' ) . '<br>' . __( 'We do not change any other settings or tools.', 'external-files-in-media-library' ) . '<br>' . __( 'Additional plugins for services will not be installed.', 'external-files-in-media-library' ) . '</p>'
+			'<p>' . __( 'This will set the services as if the plugin was freshly installed.', 'external-files-in-media-library' ) . '<br>' . __( 'We do not change any other settings or tools.', 'external-files-in-media-library' ) . '<br>' . __( 'Additional plugins for services will not be installed.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}
 
@@ -60,6 +61,9 @@ class Standard extends Configuration_Base {
 		Roles::get_instance()->install();
 		Roles::get_instance()->trigger_update();
 
+		// get the setting.
+		$setting_obj = Settings::get_instance()->get_setting( 'eml_import_extensions' );
+
 		/**
 		 * Configuration:
 		 * Change settings to hide options.
@@ -68,7 +72,9 @@ class Standard extends Configuration_Base {
 		update_option( 'eml_disable_plugin_hints', 0 );
 
 		// enable all options.
-		update_option( 'eml_import_extensions', Settings::get_instance()->get_setting( 'eml_import_extensions' )->get_default() );
+		if ( $setting_obj instanceof Setting ) {
+			update_option( 'eml_import_extensions', $setting_obj->get_default() );
+		}
 
 		// enable user specific settings.
 		update_option( 'eml_user_settings', 1 );

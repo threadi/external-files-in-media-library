@@ -1028,14 +1028,14 @@ class Queue extends Extension_Base {
 	/**
 	 * Add a custom endpoint for site health.
 	 *
-	 * @param array<int,array<string,mixed>> $endpoints
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function add_site_health_endpoint( array $endpoints ): array {
 		// add the endpoint.
 		$endpoints[] = array(
-			'label' => Helper::get_plugin_name() . ' ' . __( 'Queue', 'external-files-in-media-library' ),
+			'label'     => Helper::get_plugin_name() . ' ' . __( 'Queue', 'external-files-in-media-library' ),
 			'namespace' => 'efml/v1',
 			'route'     => '/queue/',
 			'callback'  => array( $this, 'check_cron' ),
@@ -1081,7 +1081,7 @@ class Queue extends Extension_Base {
 			);
 			$result['status']      = 'recommended';
 			$result['description'] = __( 'Cronjob to process the queue to import external files does not exist!', 'external-files-in-media-library' );
-			$result['actions'] = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+			$result['actions']     = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
 
 			// return this result.
 			return $result;
@@ -1111,7 +1111,7 @@ class Queue extends Extension_Base {
 		check_admin_referer( 'efml-create-queue-schedule', 'nonce' );
 
 		// recreate the schedule.
-		$schedule_obj    = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();
+		$schedule_obj = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();
 		$schedule_obj->reset();
 
 		// forward user.

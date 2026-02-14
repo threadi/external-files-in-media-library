@@ -296,7 +296,7 @@ class Settings {
 		$setting->set_section( $general_tab_main );
 		$setting->prevent_export( true );
 		$field = new TextInfo();
-		$field->set_title( __( 'Set configuration', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Choose configuration', 'external-files-in-media-library' ) );
 		$field->set_description( $this->show_modes() );
 		$setting->set_field( $field );
 
@@ -1021,7 +1021,7 @@ class Settings {
 		ob_start();
 		Configurations::get_instance()->show_list();
 		$content = ob_get_clean();
-		if( ! $content ) {
+		if ( ! $content ) {
 			return '';
 		}
 		return $content;

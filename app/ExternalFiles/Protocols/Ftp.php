@@ -453,6 +453,11 @@ class Ftp extends Protocol_Base {
 		// get the fields.
 		$fields = $this->get_fields();
 
+		// bail if fields are missing.
+		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
+			return false;
+		}
+
 		// define ftp connection parameter.
 		$connection_arguments = array(
 			'port'            => $this->get_port_by_protocol( $parse_url['scheme'] ),
@@ -464,16 +469,6 @@ class Ftp extends Protocol_Base {
 
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {
-			return false;
-		}
-
-		// bail if login is not set.
-		if ( empty( $connection_arguments['username'] ) ) {
-			return false;
-		}
-
-		// bail if password is not set.
-		if ( empty( $connection_arguments['password'] ) ) {
 			return false;
 		}
 

@@ -63,7 +63,10 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 
 		// prepare to load just one time.
 		if ( ! did_action('efml_test_preparation_loaded') ) {
+			// enable error reporting.
+			error_reporting( E_ALL );
 
+			// enable the extended log mode.
 			update_option( 'eml_log_mode', 2 );
 
 			// initialize the plugin.
@@ -71,6 +74,7 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 
 			// run initialization.
 			do_action( 'init' );
+			do_action( 'rest_api_init' );
 
 			// prevent external requests from Personio APIs.
 			add_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ), 10, 3 );
@@ -137,7 +141,7 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		}
 
 		// create a local response for the GET request.
-		if( 'GET' === $parsed_args['method'] && $url === self::get_test_file( $file_info['extension'], 'http' ) ) {
+		if( 'GET' === $parsed_args['method'] && ! empty( $file_info['extension'] ) && $url === self::get_test_file( $file_info['extension'], 'http' ) ) {
 			// get the local test file.
 			$content = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem()->get_contents( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . self::get_test_file( $file_info['extension'], 'http' ) );
 
@@ -152,8 +156,8 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			);
 		}
 
-		// return the given value.
-		return $false;
+		// show error as we do not want any external URL connection during PHP Unit Tests.
+		self::fail( __( 'Trying an external URL connection, which should not happen during PHP Unit Tests. Used URL:', 'external-files-in-media-library' ) . ' ' . $url );
 	}
 
 	/**
@@ -171,15 +175,15 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	/**
 	 * Return the requested test file.
 	 *
-	 * @param string $type
-	 * @param string $protocol
+	 * @param string $type     The type to test for.
+	 * @param string $protocol The used protocol.
 	 *
 	 * @return string
 	 */
 	protected static function get_test_file( string $type, string $protocol ): string {
 		$file = self::$test_files[ $type ][ $protocol ];
 
-		// add path before the file if protocol 'file' is requested.
+		// add the path before the file if protocol 'file' is requested.
 		if( 'file' === $protocol ) {
 			$file = 'file://' . \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . $file;
 		}
@@ -191,8 +195,8 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	/**
 	 * Return the requested faulty test file.
 	 *
-	 * @param string $type
-	 * @param string $protocol
+	 * @param string $type The type to test for.
+	 * @param string $protocol The used protocol.
 	 *
 	 * @return string
 	 */
@@ -203,13 +207,13 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	/**
 	 * Check for an array of specific object types.
 	 *
-	 * @param $type
-	 * @param $array
-	 * @param $message
+	 * @param string $type The used type.
+	 * @param array $array The array to check.
+	 * @param string $message The message to check for.
 	 *
 	 * @return void
 	 */
-	public function assertArrayHasObjectOfType( $type, $array, $message = '' ): void {
+	public function assertArrayHasObjectOfType( string $type, array $array, string $message = '' ): void {
 		$found = false;
 		foreach( $array as $obj ) {
 			if( get_class( $obj ) === $type ) {
@@ -233,5 +237,31 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			'fields'         => 'ids',
 		);
 		return ( new WP_Query( $query ) )->found_posts;
+	}
+
+	/**
+	 * Login in this session as admin.
+	 *
+	 * @return void
+	 */
+	protected function do_login(): void {
+		// login as admin.
+		$user_id = 1;
+		$user_login = 'admin';
+		wp_set_current_user( $user_id, $user_login );
+		wp_set_auth_cookie( $user_id );
+		do_action('wp_login', $user_login );
+	}
+
+	/**
+	 * Logout from this session.
+	 *
+	 * @return void
+	 */
+	protected function do_logout(): void {
+		// logout.
+		wp_set_current_user( 0 );
+		wp_set_auth_cookie( 0 );
+		do_action('wp_login' );
 	}
 }

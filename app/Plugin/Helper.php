@@ -821,6 +821,11 @@ class Helper {
 	 * @return array<int,object>
 	 */
 	public static function get_blogs( int $exclude_blog_id = 0 ): array {
+		// bail if this is not a multisite.
+		if ( ! is_multisite() ) {
+			return array();
+		}
+
 		// query for the list of blogs.
 		global $wpdb;
 		return $wpdb->get_results(

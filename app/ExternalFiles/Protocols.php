@@ -54,7 +54,7 @@ class Protocols {
 	 *
 	 * @return array<string>
 	 */
-	private function get_protocols(): array {
+	public function get_protocols(): array {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ExternalFiles\Protocols\File',
 			'ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp',

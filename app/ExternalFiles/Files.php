@@ -1293,10 +1293,8 @@ class Files {
 		$terms = Directory_Listing::get_instance()->get_external_sources();
 
 		// add them to the options list.
-		if ( is_array( $terms ) ) {
-			foreach ( $terms as $term ) {
-				$options[ (string) $term->term_id ] = $term->name;
-			}
+		foreach ( $terms as $term ) {
+			$options[ (string) $term->term_id ] = $term->name;
 		}
 
 		return $options;

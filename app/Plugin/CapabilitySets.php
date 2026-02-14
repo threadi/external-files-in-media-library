@@ -84,7 +84,7 @@ class CapabilitySets {
 	 *
 	 * @return false|CapabilitySet_Base
 	 */
-	private function get_capability_set_by_name( string $set_name ): false|CapabilitySet_Base {
+	public function get_capability_set_by_name( string $set_name ): false|CapabilitySet_Base {
 		// prepare the return value.
 		$result = false;
 

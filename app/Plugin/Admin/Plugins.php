@@ -232,6 +232,11 @@ class Plugins {
 	 * @return void
 	 */
 	private function install_and_activate_plugin( string $path, string $plugin_slug, string $plugin_main_file ): void {
+		// bail if capability is not given.
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return;
+		}
+
 		// bail if any of these values are empty.
 		if ( empty( $path ) || empty( $plugin_slug ) || empty( $plugin_main_file ) ) {
 			return;
@@ -365,7 +370,7 @@ class Plugins {
 		// check nonce.
 		check_admin_referer( 'efml-activate-plugin', 'nonce' );
 
-		// bail if user has not the required permissions.
+		// bail if user has not the required permissions, or if we are in a multisite network.
 		if ( ! current_user_can( 'install_plugins' ) || is_multisite() ) {
 			wp_safe_redirect( wp_get_referer() );
 			return;

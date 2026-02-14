@@ -3,7 +3,7 @@
  * File to handle the support of files from a ZIP as directory listing.
  *
  * Handling of ZIPs per request:
- * - URL/path ending with "/" is a ZIP that should be extracted and its files should be imported in media library
+ * - URL/path ending with allowed ending and a "/" at the end, is a ZIP that should be extracted and its files should be imported in media library
  * - URL/path ending with allowed ending is a file that should bei imported
  *
  * @package external-files-in-media-library

@@ -1769,7 +1769,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function is_in_use(): bool {
 		// bail with false if synchronisation is disabled.
-		if( 1 !== absint( get_option( 'eml_sync' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return false;
 		}
 
@@ -1827,14 +1827,14 @@ class Synchronization extends Tools_Base {
 	/**
 	 * Add a custom endpoint for site health.
 	 *
-	 * @param array<int,array<string,mixed>> $endpoints
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function add_site_health_endpoint( array $endpoints ): array {
 		// add the endpoint.
 		$endpoints[] = array(
-			'label' => __( 'Synchronisation', 'external-files-in-media-library' ),
+			'label'     => __( 'Synchronisation', 'external-files-in-media-library' ),
 			'namespace' => 'efml/v1',
 			'route'     => '/sync/',
 			'callback'  => array( $this, 'check_cron' ),
@@ -1872,12 +1872,12 @@ class Synchronization extends Tools_Base {
 		$no_run_cronjobs = array();
 
 		// get all external sources with enabled sync and check their cronjobs.
-		foreach( $this->get_sync_terms() as $term_id ) {
+		foreach ( $this->get_sync_terms() as $term_id ) {
 			// get the schedule object for this term.
 			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
 			// bail if object could not be loaded.
-			if( ! $schedule_obj instanceof Schedules_Base ) {
+			if ( ! $schedule_obj instanceof Schedules_Base ) {
 				// add this cronjob to the list of missing cronjobs.
 				$missing_cronjobs[] = $term_id;
 
@@ -1889,7 +1889,7 @@ class Synchronization extends Tools_Base {
 			$event = $schedule_obj->get_event();
 
 			// bail if event could be loaded.
-			if( is_object( $event ) ) {
+			if ( is_object( $event ) ) {
 				// check its time.
 				if ( $event->timestamp < time() ) { // @phpstan-ignore property.notFound
 					$no_run_cronjobs[] = $term_id;
@@ -1914,7 +1914,7 @@ class Synchronization extends Tools_Base {
 			);
 			$result['status']      = 'recommended';
 			$result['description'] = __( 'Cronjob to synchronise your external files with the media library does not exist!', 'external-files-in-media-library' );
-			$result['actions'] = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+			$result['actions']     = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
 
 			// return this result.
 			return $result;
@@ -1922,9 +1922,8 @@ class Synchronization extends Tools_Base {
 
 		// if any scheduled event was not run, show hint.
 		if ( ! empty( $no_run_cronjobs ) ) { // @phpstan-ignore property.notFound
-			$result['status'] = 'recommended';
-			/* translators: %1$s will be replaced by the date of the planned next schedule run. */
-			$result['description'] = sprintf( __( 'Cronjob to synchronise your external files with the media library should have been run at %1$s, but was not executed!<br><strong>Please check the cron-system of your WordPress-installation.</strong>', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $scheduled_event->timestamp ) ) );
+			$result['status']      = 'recommended';
+			$result['description'] = __( 'Cronjob to synchronise your external files with the media library should have been run, but was not executed!<br><strong>Please check the cron-system of your WordPress-installation.</strong>', 'external-files-in-media-library' );
 
 			// return this result.
 			return $result;
@@ -1944,7 +1943,7 @@ class Synchronization extends Tools_Base {
 		check_admin_referer( 'efml-create-sync-schedule', 'nonce' );
 
 		// get all external sources with enabled sync and check their cronjobs.
-		foreach( $this->get_sync_terms() as $term_id ) {
+		foreach ( $this->get_sync_terms() as $term_id ) {
 			$this->add_schedule( $term_id );
 		}
 

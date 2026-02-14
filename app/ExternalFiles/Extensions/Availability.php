@@ -106,7 +106,7 @@ class Availability extends Extension_Base {
 		$settings_page = $settings_obj->get_page( 'eml_settings' );
 
 		// bail if page could not be loaded.
-		if( ! $settings_page instanceof Page ) {
+		if ( ! $settings_page instanceof Page ) {
 			return;
 		}
 
@@ -114,7 +114,7 @@ class Availability extends Extension_Base {
 		$general_tab_main = $settings_page->get_tab( 'eml_general' );
 
 		// bail if tab could not be loaded.
-		if( ! $general_tab_main instanceof Tab ) {
+		if ( ! $general_tab_main instanceof Tab ) {
 			return;
 		}
 
@@ -394,14 +394,14 @@ class Availability extends Extension_Base {
 	/**
 	 * Add a custom endpoint for site health.
 	 *
-	 * @param array<int,array<string,mixed>> $endpoints
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
 	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function add_site_health_endpoint( array $endpoints ): array {
 		// add the endpoint.
 		$endpoints[] = array(
-			'label' => Helper::get_plugin_name() . ' ' . __( 'Availability', 'external-files-in-media-library' ),
+			'label'     => Helper::get_plugin_name() . ' ' . __( 'Availability', 'external-files-in-media-library' ),
 			'namespace' => 'efml/v1',
 			'route'     => '/availability/',
 			'callback'  => array( $this, 'check_cron' ),
@@ -447,7 +447,7 @@ class Availability extends Extension_Base {
 			);
 			$result['status']      = 'recommended';
 			$result['description'] = __( 'Cronjob to check the availability of your external files does not exist!', 'external-files-in-media-library' );
-			$result['actions'] = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+			$result['actions']     = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
 
 			// return this result.
 			return $result;
@@ -477,7 +477,7 @@ class Availability extends Extension_Base {
 		check_admin_referer( 'efml-create-availability-schedule', 'nonce' );
 
 		// recreate the schedule.
-		$schedule_obj    = new Check_Files();
+		$schedule_obj = new Check_Files();
 		$schedule_obj->reset();
 
 		// forward user.

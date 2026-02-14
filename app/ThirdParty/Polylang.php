@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle support for this plugin.
@@ -118,7 +117,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 	 */
 	public function efml_save_file_in_every_language( File $external_file_obj ): void {
 		// bail if Polylang support is not enabled.
-		if( 1 !== absint( get_option( 'eml_polylang' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_polylang' ) ) ) {
 			return;
 		}
 
@@ -126,9 +125,9 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 		$primary_obj_language = pll_get_post_language( $external_file_obj->get_id() );
 
 		// loop through the languages set in Polylang and duplicate the file for each language, if it does not already exist.
-		foreach( pll_languages_list() as $language ) {
+		foreach ( pll_languages_list() as $language ) {
 			// bail if this is the primary language.
-			if( $primary_obj_language === $language ) {
+			if ( $primary_obj_language === $language ) {
 				continue;
 			}
 
@@ -136,7 +135,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 			$translations = pll_get_post_translations( $external_file_obj->get_id() );
 
 			// bail if a translation for this file in this language is already set.
-			if( isset( $translations[ $language ] ) ) {
+			if ( isset( $translations[ $language ] ) ) {
 				continue;
 			}
 
@@ -150,7 +149,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 			$post_id = pll_insert_post( $post_array, $language );
 
 			// bail on error.
-			if( is_wp_error( $post_id ) ) {
+			if ( is_wp_error( $post_id ) ) {
 				continue;
 			}
 
@@ -164,9 +163,17 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 
 			// copy post taxonomies.
 			$taxonomies = get_post_taxonomies( $external_file_obj->get_id() );
-			foreach ( $taxonomies as $taxonomy ) {
-				$term_ids = wp_get_object_terms( $post_id, $taxonomy, array( 'fields' => 'ids' ) );
-				wp_set_object_terms( $post_id, $term_ids, $taxonomy );
+			foreach ( $taxonomies as $taxonomy_name ) {
+				// get the terms from the original object.
+				$term_ids = wp_get_object_terms( $external_file_obj->get_id(), $taxonomy_name, array( 'fields' => 'ids' ) );
+
+				// bail if terms could not be loaded.
+				if ( ! is_array( $term_ids ) ) {
+					continue;
+				}
+
+				// add them to the new object.
+				wp_set_object_terms( $post_id, $term_ids, $taxonomy_name );
 			}
 
 			// create the translations if not set.
