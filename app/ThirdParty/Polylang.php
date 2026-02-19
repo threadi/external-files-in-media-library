@@ -143,7 +143,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 			$post_array = get_post( $external_file_obj->get_id(), ARRAY_A );
 
 			// bail if array could not be loaded.
-			if( ! is_array( $post_array ) ) {
+			if ( ! is_array( $post_array ) ) {
 				continue;
 			}
 
