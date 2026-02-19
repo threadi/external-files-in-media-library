@@ -740,7 +740,7 @@ class Real_Import extends Extension_Base {
 		$protocol_handler_obj = $external_file_obj->get_protocol_handler_obj();
 
 		// bail if protocol could not be loaded.
-		if( ! $protocol_handler_obj instanceof Protocol_Base ) {
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
 			return $actions;
 		}
 
