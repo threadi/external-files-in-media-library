@@ -156,6 +156,8 @@ class Configurations {
 			return;
 		}
 
+		echo '<p>' . esc_html__( 'Use predefined configurations to quickly limit the plugin settings to what you want to use. You can then make changes to everything at any time.', 'external-files-in-media-library' ) . '</p>';
+
 		echo '<p>';
 
 		// show the possible sets.
@@ -163,9 +165,9 @@ class Configurations {
 			// create the URL.
 			$url = add_query_arg(
 				array(
-					'action'   => 'efml_set_configuration',
+					'action'             => 'efml_set_configuration',
 					'configuration_name' => $configuration_obj->get_name(),
-					'nonce'    => wp_create_nonce( 'efml-set-configuration' ),
+					'nonce'              => wp_create_nonce( 'efml-set-configuration' ),
 				),
 				get_admin_url() . 'admin.php'
 			);

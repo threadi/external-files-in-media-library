@@ -23,6 +23,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use JsonException;
 use mysqli_result;
 use wpdb;
@@ -85,6 +86,7 @@ class Queue extends Extension_Base {
 		add_action( 'admin_action_eml_queue_clear_errors', array( $this, 'delete_errors_by_request' ) );
 		add_action( 'admin_action_eml_queue_delete_entry', array( $this, 'delete_entry_by_request' ) );
 		add_action( 'admin_action_eml_queue_process_entry', array( $this, 'process_queue_entry_by_request' ) );
+		add_action( 'admin_action_efml_create_queue_cron', array( $this, 'add_cron_by_request' ) );
 
 		// use our own hooks.
 		add_filter( 'efml_add_dialog', array( $this, 'add_option_in_form' ), 40, 2 );
@@ -92,6 +94,7 @@ class Queue extends Extension_Base {
 		add_filter( 'efml_prevent_import', array( $this, 'add_urls_to_queue' ), 100, 3 );
 		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
+		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
 	}
 
 	/**
@@ -1020,5 +1023,98 @@ class Queue extends Extension_Base {
 			// delete them.
 			$this->remove_url( absint( $url_data['id'] ) );
 		}
+	}
+
+	/**
+	 * Add a custom endpoint for site health.
+	 *
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_site_health_endpoint( array $endpoints ): array {
+		// add the endpoint.
+		$endpoints[] = array(
+			'label'     => Helper::get_plugin_name() . ' ' . __( 'Queue', 'external-files-in-media-library' ),
+			'namespace' => 'efml/v1',
+			'route'     => '/queue/',
+			'callback'  => array( $this, 'check_cron' ),
+			'args'      => array(),
+		);
+
+		// return the resulting list of endpoints.
+		return $endpoints;
+	}
+
+	/**
+	 * Return result after checking cronjob-states.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnused
+	 */
+	public function check_cron(): array {
+		// define default results.
+		$result = array(
+			'label'       => __( 'Queue Cron Check', 'external-files-in-media-library' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
+				'color' => 'gray',
+			),
+			'description' => __( 'To process the queue to import external files, we need a cronjob.<br><strong>All ok with the cronjob!</strong>', 'external-files-in-media-library' ),
+			'actions'     => '',
+			'test'        => 'efml_test_queue_cron',
+		);
+
+		// get scheduled event.
+		$schedule_obj    = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();
+		$scheduled_event = $schedule_obj->get_event();
+
+		// event does not exist => show error.
+		if ( false === $scheduled_event ) {
+			$url                   = add_query_arg(
+				array(
+					'action' => 'efml_create_queue_cron',
+					'nonce'  => wp_create_nonce( 'efml-create-queue-schedule' ),
+				),
+				get_admin_url() . 'admin.php'
+			);
+			$result['status']      = 'recommended';
+			$result['description'] = __( 'Cronjob to process the queue to import external files does not exist!', 'external-files-in-media-library' );
+			$result['actions']     = '<p><a href="' . $url . '" class="button button-primary">' . __( 'Recreate the cronjob', 'external-files-in-media-library' ) . '</a></p>';
+
+			// return this result.
+			return $result;
+		}
+
+		// if scheduled event exist, check if next run is in the past.
+		if ( $scheduled_event->timestamp < time() ) { // @phpstan-ignore property.notFound
+			$result['status'] = 'recommended';
+			/* translators: %1$s will be replaced by the date of the planned next schedule run. */
+			$result['description'] = sprintf( __( 'Cronjob to process the queue to import external files should have been run at %1$s, but was not executed!<br><strong>Please check the cron-system of your WordPress-installation.</strong>', 'external-files-in-media-library' ), Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $scheduled_event->timestamp ) ) );
+
+			// return this result.
+			return $result;
+		}
+
+		// return result.
+		return $result;
+	}
+
+	/**
+	 * Add the queue cron by request.
+	 *
+	 * @return void
+	 */
+	public function add_cron_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-create-queue-schedule', 'nonce' );
+
+		// recreate the schedule.
+		$schedule_obj = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();
+		$schedule_obj->reset();
+
+		// forward user.
+		wp_safe_redirect( (string) wp_get_referer() );
 	}
 }

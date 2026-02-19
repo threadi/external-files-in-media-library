@@ -113,7 +113,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$woocommerce_settings_tab = $settings_page->add_tab( 'woocommerce', 120 );
 		$woocommerce_settings_tab->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 
-		// add section for WooCommerce settings.
+		// add a section for WooCommerce settings.
 		$woocommerce_settings_section = $woocommerce_settings_tab->add_section( 'eml_woocommerce_settings', 10 );
 		$woocommerce_settings_section->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 

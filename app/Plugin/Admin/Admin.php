@@ -93,6 +93,9 @@ class Admin {
 		// initialize the modes.
 		Configurations::get_instance()->init();
 
+		// initialize the site health object.
+		Site_Health::get_instance()->init();
+
 		// add admin hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_dialog_scripts' ) );
 		add_action( 'admin_init', array( $this, 'trigger_mime_warning' ) );
@@ -210,7 +213,7 @@ class Admin {
 		$transient_obj->set_type( 'error' );
 		$transient_obj->set_name( 'eml_php_hint' );
 		$transient_obj->set_dismissible_days( 90 );
-		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">have been outdated</a> since December 2025. To continue using the plugins new features, please update your PHP version.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
+		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">have been outdated</a> since December 2025. To continue using the new features of the plugins, update your PHP version please.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
 		$transient_obj->save();
 	}
 
@@ -357,7 +360,7 @@ class Admin {
 		$transient_obj->set_name( 'eml_gprd_hint' );
 		$transient_obj->set_dismissible_days( 180 );
 		/* translators: %1$s will be replaced by a URL. */
-		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens in a new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the use of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'This detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by click on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
+		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens in a new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the usage of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'This detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by clicking on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
 		$transient_obj->save();
 	}
 
@@ -380,7 +383,7 @@ class Admin {
 			$transient_obj = Transients::get_instance()->add();
 			$transient_obj->set_type( 'error' );
 			$transient_obj->set_name( 'eml_fs_method_faulty' );
-			$transient_obj->set_message( '<strong>' . __( 'Your website is using an incorrect file system setting!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set to <em>ftpext</em>. At the same time, the constant <em>FS_CHMOD_FILE</em> is missing. This means that you will not be able to save files to your media library with the plugin <i>External Files in Media Library</i>.<br><br>Correct this by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is using an incorrect file system setting!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set to <em>ftpext</em>. At the same time, the constant <em>FS_CHMOD_FILE</em> is missing. This means that you will not be able to save files to your media library with the plugin <i>External Files in Media Library</i>.<br><br>Correct this by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator, or your hosts support team.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
 			return;
 		}
@@ -392,9 +395,8 @@ class Admin {
 			$transient_obj->set_dismissible_days( 30 );
 			$transient_obj->set_type( 'hint' );
 			$transient_obj->set_name( 'eml_fs_method_faulty' );
-			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin <i>External Files in Media Library</i>.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin <i>External Files in Media Library</i>.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator, or your hosts support team.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
-			return;
 		}
 	}
 
@@ -552,12 +554,7 @@ class Admin {
 	 */
 	public function check_if_directory_listing_is_used(): void {
 		// get the terms.
-		$terms = get_terms(
-			array(
-				'taxonomy'   => Taxonomy::get_instance()->get_name(),
-				'hide_empty' => false,
-			)
-		);
+		$terms = Directory_Listing::get_instance()->get_external_sources();
 
 		// bail if terms does exist.
 		if ( ! empty( $terms ) ) {

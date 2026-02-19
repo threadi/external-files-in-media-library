@@ -23,4 +23,16 @@ class Dropbox extends externalFilesTests {
 		$this->assertIsString( $name );
 		$this->assertNotEmpty( $name );
 	}
+
+	/**
+	 * Test if the returning variable is a string.
+	 *
+	 * @return void
+	 */
+	public function test_get_directory(): void {
+		$directory = \ExternalFilesInMediaLibrary\Services\Dropbox::get_instance()->get_directory();
+		$this->assertIsString( $directory );
+		$this->assertNotEmpty( $directory );
+		$this->assertEquals( 'DropBox', $directory );
+	}
 }

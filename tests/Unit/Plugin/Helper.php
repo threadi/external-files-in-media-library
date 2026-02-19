@@ -115,9 +115,9 @@ class Helper extends externalFilesTests {
 		// test 2: logged in.
 		$user_id = 1;
 		$user_login = 'admin';
-		wp_set_current_user($user_id, $user_login);
-		wp_set_auth_cookie($user_id);
-		do_action('wp_login', $user_login);
+		wp_set_current_user( $user_id, $user_login );
+		wp_set_auth_cookie( $user_id );
+		do_action('wp_login', $user_login );
 		$logged_in = \ExternalFilesInMediaLibrary\Plugin\Helper::has_current_user_role( 'administrator' );
 		$this->assertIsBool( $logged_in );
 		$this->assertTrue( $logged_in );

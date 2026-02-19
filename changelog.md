@@ -67,6 +67,7 @@
 - Added new extension to allow import and export of external files in JSON-format (default disabled)
 - Added export and import of settings for external sources
 - Added options for manage export settings via WP CLI
+- Added support to generate attachment entries for each external file with Polylang
 - A unique job ID has been added to each imported file to enable filtering of imported external files in a single task
 - Added PHP unit tests for essential functions of this plugin
 - Added SBOM generation on GitHub for each release
@@ -76,6 +77,8 @@
 - Added capability sets to fast configuration of capabilities for each tool and service
 - Added option to revert the last import
 - Added configurations to quickly configure the plugin for a specific task
+- Added output of all (not private) settings in site health report
+- Added site health checks for cronjobs, and the availability of external sources
 
 ### Changed
 

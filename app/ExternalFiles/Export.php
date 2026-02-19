@@ -185,7 +185,7 @@ class Export extends Tools_Base {
 		// create URL.
 		$url = add_query_arg(
 			array(
-				'taxonomy'  => 'edlfw_archive',
+				'taxonomy'  => Taxonomy::get_instance()->get_name(),
 				'post_type' => 'attachment',
 			),
 			get_admin_url() . 'edit-tags.php'
@@ -2224,7 +2224,7 @@ class Export extends Tools_Base {
 	 */
 	public function is_in_use(): bool {
 		// bail with false if export is disabled.
-		if( 1 !== absint( get_option( 'eml_export' ) ) ) {
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
 			return false;
 		}
 

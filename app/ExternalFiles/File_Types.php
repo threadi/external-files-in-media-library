@@ -194,7 +194,7 @@ class File_Types {
 	 *
 	 * @return array<int,File_Types_Base>
 	 */
-	private function get_file_types_as_objects( false|File|string $external_file_obj = false ): array {
+	public function get_file_types_as_objects( false|File|string $external_file_obj = false ): array {
 		// create the list.
 		$list = array();
 

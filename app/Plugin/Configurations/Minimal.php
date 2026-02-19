@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Configuration_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term_Query;
@@ -50,7 +51,7 @@ class Minimal extends Configuration_Base {
 	 */
 	public function get_dialog_hints(): array {
 		return array(
-			'<p>' . __( 'This will disable all services you actually do not use.', 'external-files-in-media-library' ) . '<br />' . __( 'This will also disable any tools the plugin provides, and the user specific settings for imports.', 'external-files-in-media-library' ) . '</p>'
+			'<p>' . __( 'This will disable all services you actually do not use.', 'external-files-in-media-library' ) . '<br />' . __( 'This will also disable any tools the plugin provides, and the user specific settings for imports.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}
 
@@ -78,7 +79,7 @@ class Minimal extends Configuration_Base {
 			$service_name = $file->get_service_name();
 
 			// bail if service name is empty.
-			if( empty( $service_name ) ) {
+			if ( empty( $service_name ) ) {
 				continue;
 			}
 
@@ -87,36 +88,28 @@ class Minimal extends Configuration_Base {
 		}
 
 		// 3. Check the external sources.
-		$query = array(
-			'taxonomy'   => Taxonomy::get_instance()->get_name(),
-			'hide_empty' => false,
-			'count'      => false,
-		);
-		$terms = new WP_Term_Query( $query );
-		if ( is_array( $terms->terms ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			foreach ( $terms->terms as $term ) {
-				// get the used service name.
-				$service_name = get_term_meta( $term->term_id, 'type', true );
+		foreach ( Directory_Listing::get_instance()->get_external_sources() as $term ) {
+			// get the used service name.
+			$service_name = get_term_meta( $term->term_id, 'type', true );
 
-				// bail if service name is empty.
-				if( empty( $service_name ) ) {
-					continue;
-				}
-
-				// add the name to the list.
-				$used_services[ $service_name ] = $service_name;
+			// bail if service name is empty.
+			if ( empty( $service_name ) ) {
+				continue;
 			}
+
+			// add the name to the list.
+			$used_services[ $service_name ] = $service_name;
 		}
 
 		// 4. Get all services and disable the ones, which are not in our list.
-		foreach( Services::get_instance()->get_services_as_objects() as $service_obj ) {
+		foreach ( Services::get_instance()->get_services_as_objects() as $service_obj ) {
 			// bail if method for the name does not exist.
-			if( ! method_exists( $service_obj, 'get_name' ) ) {
+			if ( ! method_exists( $service_obj, 'get_name' ) ) {
 				continue;
 			}
 
 			// bail if this service is in the list.
-			if( isset( $used_services[ $service_obj->get_name() ] ) ) {
+			if ( isset( $used_services[ $service_obj->get_name() ] ) ) {
 				continue;
 			}
 
@@ -146,7 +139,7 @@ class Minimal extends Configuration_Base {
 		 */
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
 			// bail if tool is being not used.
-			if( $tools_obj->is_in_use() ) {
+			if ( $tools_obj->is_in_use() ) {
 				continue;
 			}
 

@@ -68,7 +68,7 @@ class Zip extends Zip_Base {
 	}
 
 	/**
-	 * Return the object of this file.
+	 * Return the ZipArchive object of this file.
 	 *
 	 * @param string $file The file to check.
 	 *
@@ -106,7 +106,7 @@ class Zip extends Zip_Base {
 			// log event.
 			Log::get_instance()->create( __( 'ZIP-file to use for extracting a file does not exist.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
-			// return empty array as we can not get infos about a file which does not exist.
+			// return empty array as we cannot get infos about a file, which does not exist.
 			return false;
 		}
 
@@ -119,7 +119,7 @@ class Zip extends Zip_Base {
 			// log event.
 			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
-			// return empty array as we can not get infos about a file which does not exist.
+			// return empty array as we cannot get infos about a file, which does not exist.
 			return false;
 		}
 
@@ -128,7 +128,7 @@ class Zip extends Zip_Base {
 			// log event.
 			Log::get_instance()->create( __( 'Given file is not a valid ZIP.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
-			// return empty array as we can not get infos about a file which does not exist.
+			// return empty array as we cannot get infos about a file, which does not exist.
 			return false;
 		}
 
@@ -276,7 +276,7 @@ class Zip extends Zip_Base {
 	}
 
 	/**
-	 * Return info about single file in zip.
+	 * Return info about a single file in the .zip.
 	 *
 	 * @param string $file_to_extract The file.
 	 *

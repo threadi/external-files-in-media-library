@@ -160,7 +160,7 @@ class Local extends Service_Base implements Service {
 	 */
 	public function add_directory_listing( array $directory_listing_objects ): array {
 		// bail if this has already been run.
-		if ( defined( 'EML_LOCAL_UPDATED' ) ) {
+		if ( defined( 'EFML_LOCAL_UPDATED' ) ) {
 			return $directory_listing_objects;
 		}
 
@@ -175,7 +175,7 @@ class Local extends Service_Base implements Service {
 		}
 
 		// mark as updated.
-		define( 'EML_LOCAL_UPDATED', time() );
+		define( 'EFML_LOCAL_UPDATED', time() );
 
 		// return resulting list of objects.
 		return $directory_listing_objects;

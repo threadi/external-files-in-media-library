@@ -759,7 +759,7 @@ class Forms {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
-			// if term_data could be loaded, use them.
+			// if "term_data" could be loaded, use them.
 			if ( ! empty( $term_data ) ) {
 				// get the domain part of the directory.
 				$term_directory_url = wp_parse_url( $term_data['directory'] );

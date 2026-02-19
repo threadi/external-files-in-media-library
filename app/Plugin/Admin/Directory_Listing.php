@@ -28,6 +28,7 @@ use ExternalFilesInMediaLibrary\Services\HelloDolly;
 use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\Services\WebDav;
+use WP_REST_Request;
 use WP_Screen;
 use WP_Term;
 
@@ -109,6 +110,7 @@ class Directory_Listing {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'sort_list' ), 100 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 30 );
+		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoints' ) );
 
 		// use AJAX hooks.
 		add_action( 'wp_ajax_efml_add_archive', array( $this, 'add_archive_via_ajax' ) );
@@ -759,7 +761,7 @@ class Directory_Listing {
 	}
 
 	/**
-	 * Show error.
+	 * Show an error.
 	 *
 	 * @param string $error The error text.
 	 *
@@ -770,7 +772,9 @@ class Directory_Listing {
 		?>
 			<div class="wrap">
 				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Error loading external source', 'external-files-in-media-library' ); ?></h1>
-				<?php echo wp_kses_post( $error ); ?>
+				<div class="notice error">
+					<?php echo wp_kses_post( $error ); ?>
+				</div>
 			</div>
 		<?php
 	}
@@ -935,7 +939,7 @@ class Directory_Listing {
 	public function get_listing_url(): string {
 		return add_query_arg(
 			array(
-				'taxonomy'  => 'edlfw_archive',
+				'taxonomy'  => Taxonomy::get_instance()->get_name(),
 				'post_type' => 'attachment',
 			),
 			get_admin_url() . 'edit-tags.php'
@@ -1078,5 +1082,141 @@ class Directory_Listing {
 	public function head_of_permission_section(): void {
 		// show simple text hint.
 		echo '<p><strong>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following buttons for faster configuration:', 'external-files-in-media-library' ) . '</p>';
+	}
+
+	/**
+	 * Add a custom endpoint for site health for each external source term.
+	 *
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_site_health_endpoints( array $endpoints ): array {
+		// loop through each term.
+		foreach ( $this->get_external_sources() as $term ) {
+			// add the endpoint.
+			$endpoints[] = array(
+				'label'     => __( 'External source', 'external-files-in-media-library' ) . ': ' . $term->name,
+				'namespace' => 'efml/v1',
+				'route'     => '/external_source/' . $term->term_id,
+				'callback'  => array( $this, 'check_cron' ),
+				'args'      => array(),
+			);
+		}
+
+		// return the resulting list of endpoints.
+		return $endpoints;
+	}
+
+	/**
+	 * Check a single external source if login is possible.
+	 *
+	 * We do not check if files are available as it could be empty.
+	 *
+	 * @param WP_REST_Request $data The REST request object.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnused
+	 */
+	public function check_cron( WP_REST_Request $data ): array {
+		// get term ID from request.
+		$term_id = absint( str_replace( '/efml/v1/external_source/', '', $data->get_route() ) );
+
+		// bail if no term ID is given.
+		if ( 0 === $term_id ) {
+			return array();
+		}
+
+		// get the term data.
+		$term = get_term( $term_id, Taxonomy::get_instance()->get_name() );
+
+		// bail if term data could not be loaded.
+		if ( ! $term instanceof WP_Term ) {
+			return array();
+		}
+
+		// get the term configuration.
+		$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+		// define default results.
+		$result = array(
+			'label'       => __( 'External source:', 'external-files-in-media-library' ) . ' ' . $term_data['title'],
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
+				'color' => 'gray',
+			),
+			'description' => __( 'Your external sources should be reachable to be used.<br><strong>This external source is reachable - all ok!</strong>', 'external-files-in-media-library' ),
+			'actions'     => '',
+			'test'        => 'efml_test_term_' . $term_id . '_cron',
+		);
+
+		// create URL to show the external source in list.
+		$url = add_query_arg(
+			array(
+				'taxonomy'  => Taxonomy::get_instance()->get_name(),
+				'post_type' => 'attachment',
+				's'         => $term->name,
+			),
+			get_admin_url() . 'edit-tags.php'
+		);
+
+		// get the type name.
+		$type = get_term_meta( $term_id, 'type', true );
+
+		// get the listing object by this name.
+		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// bail if no listing object could be found.
+		if ( ! $listing_obj instanceof Directory_Listing_Base ) {
+			$result['status'] = 'recommended';
+			/* translators: %1$s will be replaced by a URL. */
+			$result['description'] = sprintf( __( '<strong>Could not load external source!</strong><br>Please check the configuration <a href="$1%s">for this external source</a>.', 'external-files-in-media-library' ), $url );
+
+			// return this result.
+			return $result;
+		}
+
+		// set the configuration.
+		$listing_obj->set_fields( $term_data['fields'] );
+
+		// test the login.
+		$login_test = $listing_obj->do_login( $term_data['directory'] );
+
+		// return warning of login failed.
+		if ( ! $login_test ) {
+			$result['status'] = 'recommended';
+			/* translators: %1$s will be replaced by a URL. */
+			$result['description'] = sprintf( __( '<strong>Login failed!</strong><br>Please check the credentials <a href="%1$s">for this external source</a>.', 'external-files-in-media-library' ), $url );
+
+			// return this result.
+			return $result;
+		}
+
+		// return result.
+		return $result;
+	}
+
+	/**
+	 * Return list of external sources.
+	 *
+	 * @return array<int,WP_Term>
+	 */
+	public function get_external_sources(): array {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+				'count'      => false,
+			)
+		);
+
+		// bail if result is not an array.
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+
+		// return the list of terms.
+		return $terms;
 	}
 }

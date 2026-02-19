@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term;
@@ -246,20 +247,8 @@ class Update {
 		update_option( 'eml_images_proxy_max_age', get_option( 'eml_proxy_max_age' ) );
 
 		// loop through all saved external sources and add their path meta.
-		$query = array(
-			'taxonomy'   => Taxonomy::get_instance()->get_name(),
-			'hide_empty' => false,
-			'count'      => false,
-		);
-		$terms = new WP_Term_Query( $query );
-		if ( is_array( $terms->terms ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			foreach ( $terms->terms as $term ) {
-				// bail if this is not a "WP_Term" object.
-				if ( ! $term instanceof WP_Term ) {
-					continue;
-				}
-				update_term_meta( $term->term_id, 'path', $term->name );
-			}
+		foreach ( Directory_Listing::get_instance()->get_external_sources() as $term ) {
+			update_term_meta( $term->term_id, 'path', $term->name );
 		}
 
 		// init the main settings.

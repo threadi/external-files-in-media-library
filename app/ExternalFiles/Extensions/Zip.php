@@ -13,18 +13,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\ExternalFiles\Import;
-use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
-use ExternalFilesInMediaLibrary\Plugin\Log;
-use WP_Post;
-use WP_Query;
 
 /**
  * Handler controls how to unzip files in media library.
