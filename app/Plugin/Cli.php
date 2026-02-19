@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
+use WP_Query;
 use WP_Term_Query;
 
 /**
@@ -690,7 +691,7 @@ class Cli {
 		// bail if no arguments are set.
 		if ( empty( $arguments ) ) {
 			// show hint.
-			\WP_CLI::error( __( 'No setting is given given!', 'external-files-in-media-library' ) );
+			\WP_CLI::error( __( 'No setting is given!', 'external-files-in-media-library' ) );
 
 			// do nothing more.
 			return;
@@ -732,5 +733,68 @@ class Cli {
 
 		// show ok message.
 		\WP_CLI::success( __( 'Settings for export to external sources has been changed.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Export files from media library to an external source.
+	 *
+	 * @return void
+	 */
+	public function export(): void {
+		// bail if export is not enabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			// show hint.
+			\WP_CLI::error( __( 'Export is not enabled!', 'external-files-in-media-library' ) );
+
+			// do nothing more.
+			return;
+		}
+
+		// bail if option is disabled.
+		if ( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			// show hint.
+			\WP_CLI::error( __( 'Export for local files is not enabled!', 'external-files-in-media-library' ) );
+
+			// do nothing more.
+			return;
+		}
+
+		// get all not external files in media library.
+		$query = array(
+			'post_type'      => 'attachment',
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'meta_query'     => array(
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'NOT EXISTS',
+				),
+			),
+		);
+		$files = new WP_Query( $query );
+
+		// bail if no files could be found.
+		if ( 0 === $files->found_posts ) {
+			// show hint.
+			\WP_CLI::error( __( 'No files to export could be found!', 'external-files-in-media-library' ) );
+
+			// do nothing more.
+			return;
+		}
+
+		// collect the results.
+		$result_counter = 0;
+
+		// export each file.
+		foreach ( $files->posts as $attachment_id ) {
+			if ( Export::get_instance()->export_file( absint( $attachment_id ) ) ) {
+				++$result_counter;
+			}
+		}
+
+		// show ok message.
+		/* translators: %1$s will be replaced by a number. */
+		\WP_CLI::success( sprintf( _n( '%1$d file have been exported.', '%1$d files have been exported.', $result_counter, 'external-files-in-media-library' ), $result_counter ) );
 	}
 }

@@ -312,7 +312,7 @@ class Export extends Tools_Base {
 		// extend the hint for all others.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
-			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
 
 			// show extended hint for all others.
 			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
@@ -989,7 +989,7 @@ class Export extends Tools_Base {
 	 *
 	 * @return bool Return true if the file export was successfully, false it not.
 	 */
-	private function export_file( int $attachment_id ): bool {
+	public function export_file( int $attachment_id ): bool {
 		// get external file object for the given attachment ID.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -1087,35 +1087,35 @@ class Export extends Tools_Base {
 				continue;
 			}
 
-			// get the configured URL, if enabled on export object.
+			// check the configured URL, if required for the export object.
 			if ( $export_obj->is_url_required() ) {
 				$base_url = get_term_meta( $term_id, 'efml_export_url', true );
 
-				// bail if no base URL is given.
+				// bail if no URL is given.
 				if ( empty( $base_url ) ) {
 					continue;
 				}
 			}
 
-			// get the base URL.
+			// get the base URL for each file on this external source.
 			$term_url = get_term_meta( $term_id, 'path', true );
 
-			// create the import path of this file.
-			$import_path = trailingslashit( $term_url ) . basename( $file );
+			// create the export path of this file.
+			$export_path = trailingslashit( $term_url ) . basename( $file );
 
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
 
 			// log this event.
 			/* translators: %1$s will be replaced by the service title. */
-			Log::get_instance()->create( sprintf( __( 'Exporting file to external source %1$s.', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $external_file_obj->get_url( true ), 'info', 2 );
+			Log::get_instance()->create( sprintf( __( 'Exporting file to external source %1$s.', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $export_path, 'info', 2 );
 
-			// export the file via this listing object and get its external public URL.
-			$url = $export_obj->export_file( $attachment_id, $import_path, $credentials );
+			// export the file via the given export object and get its external public URL if it was successfully.
+			$url = $export_obj->export_file( $attachment_id, $export_path, $credentials );
 			if ( ! is_string( $url ) ) {
 				// log this event.
 				/* translators: %1$s will be replaced by the service title. */
-				Log::get_instance()->create( sprintf( __( 'File could not be exported to external source %1$s.', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $external_file_obj->get_url( true ), 'error' );
+				Log::get_instance()->create( sprintf( __( 'File could not be exported to external source %1$s.', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $export_path, 'error' );
 
 				// do nothing more.
 				continue;
@@ -1136,6 +1136,9 @@ class Export extends Tools_Base {
 			// mark this attachment as one of our own plugin through setting the URL.
 			$external_file_obj->set_url( $url );
 
+			// set the used service.
+			$external_file_obj->set_service_name( $listing_obj->get_name() );
+
 			// set the title.
 			$external_file_obj->set_title( basename( $file ) );
 
@@ -1150,12 +1153,6 @@ class Export extends Tools_Base {
 
 			// set date of import (this is not the attachment datetime).
 			$external_file_obj->set_date();
-
-			// add the file to local proxy, if necessary.
-			$external_file_obj->add_to_proxy();
-
-			// set the used service.
-			$external_file_obj->set_service_name( $listing_obj->get_name() );
 
 			// assign the file to this term.
 			wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
@@ -1246,7 +1243,7 @@ class Export extends Tools_Base {
 			// delete the exported file.
 			if ( ! $export_obj->delete_exported_file( $url, $credentials, $attachment_id ) ) {
 				// log this event.
-				Log::get_instance()->create( __( 'The exported file could not be deleted.', 'external-files-in-media-library' ), $url, 'error' );
+				Log::get_instance()->create( __( 'The exported file could not be deleted (maybe it does not exist).', 'external-files-in-media-library' ), $url, 'error' );
 
 				// mark as not successfully.
 				$successfully_deleted = false;

@@ -97,19 +97,19 @@ class Protocol extends Protocol_Base {
 		// remove our marker from the URL.
 		$url = str_replace( $dropbox_obj->get_name(), '', strtolower( $this->get_url() ) );
 
-		// if the URL is only "/", get all files from dropbox.
+		// if the URL is only "/", get all files from DropBox.
 		if ( '/' === $url ) {
 			$files_from_dropbox = $client->listFolder( '/', true );
 			if ( ! empty( $files_from_dropbox['entries'] ) ) {
 				$entries = $files_from_dropbox['entries'];
 			}
 		} else {
-			// get the file data.
+			// get the data for a single file.
 			try {
 				$entries[] = $client->getMetadata( $url );
 			} catch ( ClientException | \Spatie\Dropbox\Exceptions\BadRequest $e ) {
 				// log this event.
-				Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e ) . '</code>', '', 'error' );
+				Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e ) . '</code>', $url, 'error' );
 
 				// create the error entry.
 				$error_obj = new Url_Result();
@@ -158,7 +158,7 @@ class Protocol extends Protocol_Base {
 			 */
 			do_action( 'efml_dropbox_directory_import_file_check', $file_url );
 
-			// bail if this an AJAX-request and the file already exist in media library.
+			// bail if this an AJAX-request, and the file already exist in media library.
 			if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file_url ) ) {
 				Log::get_instance()->create( __( 'The specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 

@@ -196,7 +196,7 @@ class Services {
 				continue;
 			}
 
-			// add object to the list.
+			// add the object to the list.
 			$services[] = $obj;
 		}
 

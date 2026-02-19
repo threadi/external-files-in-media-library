@@ -127,7 +127,7 @@ class Revert extends Extension_Base {
 		$setting->set_default( 0 );
 		$field = new Checkbox();
 		$field->set_title( __( 'Allow to revert the last import', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'If enabled an option will be visible after each import, to revert the last import. This will remove the imported file from media library.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled an option will be visible after each import, to revert the last import. This will remove the last imported files from media library.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 	}
 
