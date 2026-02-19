@@ -433,7 +433,7 @@ class Settings {
 		$setting->set_default( Users::get_instance()->get_first_administrator_user() );
 		$field = new Select();
 		$field->set_title( __( 'Assign new files to this user', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'This is only a workaround if the actual user is not available (e.g., via WP CLI import or synchronisation). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g., via WP CLI import or synchronisation). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
 		$field->set_options( Roles::get_instance()->get_user_for_settings() );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );

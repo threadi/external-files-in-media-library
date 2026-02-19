@@ -312,7 +312,7 @@ class Export extends Tools_Base {
 		// extend the hint for all others.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
-			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
+			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
 
 			// show extended hint for all others.
 			return '<a class="dashicons dashicons-editor-help easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '"></a>';
@@ -1246,7 +1246,7 @@ class Export extends Tools_Base {
 			// delete the exported file.
 			if ( ! $export_obj->delete_exported_file( $url, $credentials, $attachment_id ) ) {
 				// log this event.
-				Log::get_instance()->create( __( 'The exported file could not be deleted.', 'external-files-in-media-library' ), $url, 'error' );
+				Log::get_instance()->create( __( 'The exported file could not be deleted (maybe it does not exist).', 'external-files-in-media-library' ), $url, 'error' );
 
 				// mark as not successfully.
 				$successfully_deleted = false;
