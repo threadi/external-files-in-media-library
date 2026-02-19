@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Post;
@@ -171,7 +172,7 @@ class Real_Import extends Extension_Base {
 	 *
 	 * @param array<string,mixed> $post_array The attachment settings.
 	 * @param string              $url        The requested external URL.
-	 * @param array<string,mixed> $file_data  List of file settings detected by importer.
+	 * @param array<string,mixed> $file_data  List of file settings detected by the importer.
 	 *
 	 * @return array<string,mixed>
 	 * @noinspection PhpUnusedParameterInspection
@@ -237,14 +238,14 @@ class Real_Import extends Extension_Base {
 			$checked = 1 === absint( get_user_meta( get_current_user_id(), 'efml_' . $this->get_name(), true ) );
 		}
 
-		// detect count of URLs depending on slash at the end of the given URL.
+		// detect count of URLs depending on a slash at the end of the given URL.
 		$url_count = 1;
 		if ( ! empty( $settings['urls'] ) && str_ends_with( $settings['urls'], '/' ) ) {
 			$url_count = 2;
 		}
 
 		// collect the entry.
-		$text = '<label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Import the external file as a real file. The file will then no longer be treated as an external file.', 'Import the external files as real files. They will not be treated as external files afterwards.', $url_count, 'external-files-in-media-library' );
+		$text = '<label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1" class="eml-use-for-import"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . _n( 'Import the external file as a real file. The file will then no longer be treated as an external file.', 'Import the external files as real files. They will not be treated as external files afterward.', $url_count, 'external-files-in-media-library' );
 
 		// add link to user settings.
 		if ( ImportDialog::get_instance()->is_customization_allowed() ) {
@@ -320,7 +321,7 @@ class Real_Import extends Extension_Base {
 
 		// add our setting.
 		$settings[ $this->get_name() ] = array(
-			'label'       => __( 'Really import each file', 'external-files-in-media-library' ),
+			'label'       => __( 'Real import each file', 'external-files-in-media-library' ),
 			'description' => __( 'Files are not imported as external files.', 'external-files-in-media-library' ),
 			'field'       => 'checkbox',
 		);
@@ -390,7 +391,7 @@ class Real_Import extends Extension_Base {
 	 *
 	 * This is the main function to convert any external file to a local file in the media library.
 	 *
-	 * @param File $external_file_obj The object of the external file which will be changed.
+	 * @param File $external_file_obj The object of the external file, which will be changed.
 	 *
 	 * @return bool Return true if the file import was successfully, false it not.
 	 */
@@ -527,7 +528,7 @@ class Real_Import extends Extension_Base {
 	 *
 	 * @param string         $sendback The return value.
 	 * @param string         $doaction The action used.
-	 * @param array<int,int> $items The items to take action.
+	 * @param array<int,int> $items The items to act.
 	 *
 	 * @return string
 	 */
@@ -556,7 +557,7 @@ class Real_Import extends Extension_Base {
 	}
 
 	/**
-	 * Add config on sync configuration form.
+	 * Add a config on sync configuration form.
 	 *
 	 * @param string $form The HTML-code of the form.
 	 * @param int    $term_id The term ID.
@@ -568,7 +569,7 @@ class Real_Import extends Extension_Base {
 		$checked = 1 === absint( get_term_meta( $term_id, 'real_import', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Really import each file. Files are not synchronized, just saved if they do not exist.', 'external-files-in-media-library' ) . '</label></div>';
+		$form .= '<div><label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Real import each file. Files are not synchronized, just saved if they do not exist.', 'external-files-in-media-library' ) . '</label></div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -735,6 +736,19 @@ class Real_Import extends Extension_Base {
 			return $actions;
 		}
 
+		// get the protocol handler.
+		$protocol_handler_obj = $external_file_obj->get_protocol_handler_obj();
+
+		// bail if protocol could not be loaded.
+		if( ! $protocol_handler_obj instanceof Protocol_Base ) {
+			return $actions;
+		}
+
+		// bail if the used protocol does not support hosting changes.
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			return $actions;
+		}
+
 		// create URL to export this file.
 		$url = add_query_arg(
 			array(
@@ -750,7 +764,7 @@ class Real_Import extends Extension_Base {
 			'className' => 'efml',
 			'title'     => __( 'Import external file', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Do you really want to import this external file as real file in media library?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p><strong>' . __( 'Do you real want to import this external file as real file in media library?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'The file will then exist in the media library like any other local file. It will no longer have an external connection.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(

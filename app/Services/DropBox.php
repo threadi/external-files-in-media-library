@@ -112,7 +112,7 @@ class DropBox extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_drop_box' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
 

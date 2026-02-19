@@ -484,6 +484,9 @@ class File {
 			return;
 		}
 
+		// set the fields.
+		$protocol_handler_obj->set_fields( $this->get_fields() );
+
 		// get info about the file.
 		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
 
@@ -508,16 +511,20 @@ class File {
 		// get used WP Filesystem handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// get temp file.
-		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
+		// get temp file, if no already set.
+		if ( empty( $file_data['tmp-file'] ) ) {
+			$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
 
-		// bail if temp file could not be loaded.
-		if ( ! is_string( $tmp_file ) ) {
-			// add log entry.
-			Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
+			// bail if temp file could not be loaded.
+			if ( ! is_string( $tmp_file ) ) {
+				// add log entry.
+				Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
 
-			// do nothing more.
-			return;
+				// do nothing more.
+				return;
+			}
+		} else {
+			$tmp_file = $file_data['tmp-file'];
 		}
 
 		// get the content of this file.
