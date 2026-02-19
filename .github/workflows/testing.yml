@@ -22,7 +22,7 @@ jobs:
           - 3306:3306
     steps:
       - name: Check out source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Run package installs and builds
         run: |
