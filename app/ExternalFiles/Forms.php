@@ -1,6 +1,6 @@
 <?php
 /**
- * This file contains an object which handles the forms to add external files.
+ * This file contains an object, which handles the forms to add external files.
  *
  * @package external-files-in-media-library
  */
@@ -71,7 +71,7 @@ class Forms {
 		add_action( 'post-plupload-upload-ui', array( $this, 'add_multi_form' ), 10, 0 );
 		add_action( 'post-html-upload-ui', array( $this, 'add_single_form' ), 10, 0 );
 
-		// add AJAX endpoints which processes the import from @ImportDialog.
+		// add AJAX endpoints, which processes the import from @ImportDialog.
 		add_action( 'wp_ajax_eml_add_external_urls', array( $this, 'add_urls_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_eml_get_external_urls_import_info', array( $this, 'get_external_urls_import_info' ), 10, 0 );
 
@@ -251,7 +251,7 @@ class Forms {
 							<a href="#" class="button button-secondary efml-import-dialog"><?php echo esc_html__( 'Add external files', 'external-files-in-media-library' ); ?></a>
 						<?php
 				} else {
-					// show simple form without dialog.
+					// show simple form without the dialog.
 					ImportDialog::get_instance()->get_form();
 				}
 				?>
@@ -423,7 +423,7 @@ class Forms {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
-			// if term_data could be loaded, use them.
+			// if "term_data" could be loaded, use them.
 			if ( ! empty( $term_data ) ) {
 				// get the domain part of the directory.
 				$term_directory_url = wp_parse_url( $term_data['directory'] );
@@ -514,7 +514,7 @@ class Forms {
 			$log->create( __( 'Try to import the URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
 
 			// update title for progress.
-			/* translators: %1$s will be replaced by the URL which is imported. */
+			/* translators: %1$s will be replaced by the URL, which has been imported. */
 			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Check URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 
 			// show deprecated warning for the old hook name.
@@ -540,7 +540,7 @@ class Forms {
 			}
 		}
 
-		// is marker to load more is set, return this info via AJAX.
+		// if marker to load more is set, return this info via AJAX.
 		if ( 1 === absint( get_option( 'eml_import_url_loading_more_' . $user_id ) ) ) {
 			wp_send_json( array( 'load_more' => 1 ) );
 		}
@@ -556,7 +556,7 @@ class Forms {
 		 */
 		$errors = apply_filters( 'efml_import_urls_errors', $errors );
 
-		// loop through the errors and add them as URL_Error-objects to the list.
+		// loop through the errors and add them as "URL_Result"-objects to the list.
 		foreach ( $errors as $url ) {
 			// get log entries for this URL.
 			$log_entries = $log->get_logs( $url, 'error', Import::get_instance()->get_identifier() );
@@ -836,7 +836,7 @@ class Forms {
 		 */
 		$errors = apply_filters( 'efml_import_urls_errors', $errors );
 
-		// loop through the errors and add them as URL_Error-objects to the list.
+		// loop through the errors and add them as "URL_Error"-objects to the list.
 		foreach ( $errors as $url ) {
 			// get log entries for this URL.
 			$log_entries = Log::get_instance()->get_logs( $url, 'error', Import::get_instance()->get_identifier() );
@@ -876,7 +876,7 @@ class Forms {
 			$text .= '<li class="' . ( $result->is_error() ? 'error' : 'success' ) . '">' . $result->get_text() . '</li>';
 		}
 
-		// surround with hint and list, if not empty.
+		// surround with a hint and list, if not empty.
 		if ( ! empty( $text ) ) {
 			$text = '<p><strong>' . _n( 'The import returned the following result:', 'The import returned the following results:', count( $results ), 'external-files-in-media-library' ) . '</strong></p><ul class="efml-import-result-list">' . $text . '</ul>';
 		}
