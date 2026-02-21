@@ -712,17 +712,17 @@ class File {
 		// check for credential fields.
 		foreach ( $this->get_fields() as $field ) {
 			// bail if this field has no credential marker set.
-			if( ! isset( $field['credential'] ) ) {
+			if ( ! isset( $field['credential'] ) ) {
 				continue;
 			}
 
 			// bail if credential marker is false.
-			if( ! $field['credential'] ) {
+			if ( ! $field['credential'] ) {
 				continue;
 			}
 
 			// bail if no value is set.
-			if( empty( $field['value'] ) ) {
+			if ( empty( $field['value'] ) ) {
 				continue;
 			}
 

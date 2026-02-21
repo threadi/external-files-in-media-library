@@ -429,7 +429,7 @@ class Zip extends Service_Base implements Service {
 			// add it to the list.
 			$this->add_error( $error );
 
-			// return false as result.
+			// return with false as result.
 			return false;
 		}
 

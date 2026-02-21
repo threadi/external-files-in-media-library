@@ -111,7 +111,7 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 
 ### Run
 
-`vendor/bin/phpcs --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/* --standard=WordPress-VIP-Go .`
+`vendor/bin/phpcs --extensions=php --ignore=*/attributes/*,*/blocks/*,*/example/*,*/css/*,*/vendor/*,*/node_modules/*,*/svn/*,*/tests/* --standard=WordPress-VIP-Go .`
 
 ## Check PHP compatibility
 

@@ -14,6 +14,8 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Plugin\CapabilitySets\Standard;
@@ -449,8 +451,50 @@ class Roles {
 	 * @return void
 	 */
 	public function trigger_update(): void {
+		// set the standard settings for capabilities.
 		$standard_capability_set = new Standard();
 		$standard_capability_set->run();
+
+		// get the settings object.
+		$settings_obj = Settings::get_instance();
+
+		// set capabilities for each tool.
+		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
+			// bail if this extension does not require capabilities.
+			if ( ! $tools_obj->has_capability() ) {
+				continue;
+			}
+
+			// get the settings object.
+			$setting_obj = $settings_obj->get_setting( 'eml_tools_settings_tools_' . $tools_obj->get_name() . '_allowed_roles' );
+
+			// bail if setting object could not be loaded.
+			if ( ! $setting_obj instanceof Setting ) {
+				continue;
+			}
+
+			// set the default option.
+			$this->save_capabilities_for_tools( $setting_obj->get_default(), array(), 'eml_tools_settings_tools_' . $tools_obj->get_name() . '_allowed_roles' );
+		}
+
+		// set capabilities for each service.
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
+			// bail if this plugin does not require any permissions.
+			if ( method_exists( $service, 'has_no_editable_permissions' ) && $service->has_no_editable_permissions() ) {
+				continue;
+			}
+
+			// get the settings object.
+			$setting_obj = $settings_obj->get_setting( 'eml_service_' . $service->get_name() . '_allowed_roles' );
+
+			// bail if setting object could not be loaded.
+			if ( ! $setting_obj instanceof Setting ) {
+				continue;
+			}
+
+			// set the default option.
+			$this->save_capabilities_for_service( $setting_obj->get_default(), array(), 'eml_service_' . $service->get_name() . '_allowed_roles' );
+		}
 	}
 
 	/**

@@ -1495,19 +1495,18 @@ class Files {
 		$service_obj = Services::get_instance()->get_service_by_name( $service_name );
 
 		// bail if service could not be found.
-		if( ! $service_obj instanceof Service_Base ) {
+		if ( ! $service_obj instanceof Service_Base ) {
 			// try to load it as protocol.
 			$protocol_obj = $external_file_obj->get_protocol_handler_obj();
 
 			// bail if protocol handler could not be loaded.
-			if( ! $protocol_obj instanceof Protocol_Base ) {
+			if ( ! $protocol_obj instanceof Protocol_Base ) {
 				return;
 			}
 
 			// get the title.
 			$title = $protocol_obj->get_title();
-		}
-		else {
+		} else {
 			// get the title.
 			$title = $service_obj->get_label();
 		}
