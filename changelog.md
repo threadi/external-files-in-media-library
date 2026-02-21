@@ -90,6 +90,7 @@
 - Small optimizations on multiple codes
 - Using fallback to default interval for each our events if setting of not available
 - Show hide and rating on directory archive listing
+- Show hint of user has configured Google Drive in a version before 5.0.0 to install the new separate plugin
 - Directory reload no shows the progress
 - Optimized ZIP service: no also allows to extract complete ZIP files in media library
 - Updated some unfavorable text descriptions

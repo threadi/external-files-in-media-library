@@ -361,6 +361,11 @@ class Admin {
 		$transient_obj->set_dismissible_days( 180 );
 		/* translators: %1$s will be replaced by a URL. */
 		$transient_obj->set_message( '<strong>' . sprintf( __( 'Your website seems to be subject to the European Union rules of the <a href="%1$s" target="_blank">GPRD (opens in a new window)</a>!', 'external-files-in-media-library' ), esc_url( Helper::get_gprd_url() ) ) . '</strong><br><br>' . __( 'Please note that according to these rules, the usage of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>' . sprintf( __( 'This detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by clicking on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) ) );
+		$transient_obj->set_hide_on(
+			array(
+				get_admin_url() . 'update.php',
+			)
+		);
 		$transient_obj->save();
 	}
 

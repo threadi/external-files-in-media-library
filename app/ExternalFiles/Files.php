@@ -18,6 +18,8 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
 use WP_Term;
@@ -1024,6 +1026,9 @@ class Files {
 	 * Force permalink-URL for file-attribute in meta-data for external URL-files
 	 * to change the link-target if attachment-pages are disabled via "attachment_link"-hook.
 	 *
+	 * Hint:
+	 * The second parameter should be int, but some plugins use string here. We check the format later.
+	 *
 	 * @source https://developer.wordpress.org/reference/hooks/wp_get_attachment_metadata/
 	 *
 	 * @param array<string,string> $data The image-data.
@@ -1483,9 +1488,32 @@ class Files {
 			return;
 		}
 
+		// get the service name.
+		$service_name = $external_file_obj->get_service_name();
+
+		// get the service object for this name.
+		$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+
+		// bail if service could not be found.
+		if ( ! $service_obj instanceof Service_Base ) {
+			// try to load it as protocol.
+			$protocol_obj = $external_file_obj->get_protocol_handler_obj();
+
+			// bail if protocol handler could not be loaded.
+			if ( ! $protocol_obj instanceof Protocol_Base ) {
+				return;
+			}
+
+			// get the title.
+			$title = $protocol_obj->get_title();
+		} else {
+			// get the title.
+			$title = $service_obj->get_label();
+		}
+
 		// show the used service.
 		?>
-		<li><span class="dashicons dashicons-admin-tools"></span> <?php echo esc_html__( 'Used service:', 'external-files-in-media-library' ); ?> <em><?php echo esc_html( $external_file_obj->get_service_name() ); ?></em></li>
+		<li><span class="dashicons dashicons-admin-tools"></span> <?php echo esc_html__( 'Used service:', 'external-files-in-media-library' ); ?> <em><?php echo esc_html( $title ); ?></em></li>
 		<?php
 	}
 

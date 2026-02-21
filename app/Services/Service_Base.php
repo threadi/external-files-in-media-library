@@ -486,6 +486,7 @@ class Service_Base extends Directory_Listing_Base {
 				continue;
 			}
 
+			// mark that this service is using credentials.
 			$has_credentials = true;
 		}
 

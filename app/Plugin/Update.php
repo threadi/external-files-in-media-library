@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Directory_Listings;
-use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
@@ -20,8 +18,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Services\Services;
-use WP_Term;
-use WP_Term_Query;
 
 /**
  * Helper-function for updates of this plugin.
@@ -260,11 +256,11 @@ class Update {
 		// initiate the settings for roles.
 		Roles::get_instance()->init_settings();
 
+		// initiate the directory listing settings.
+		Directory_Listing::get_instance()->init_settings();
+
 		// add the file types settings.
 		File_Types::get_instance()->add_settings();
-
-		// run the same tasks for all settings as if we activate the plugin.
-		Settings::get_instance()->activation();
 
 		// trigger the capability settings.
 		Roles::get_instance()->trigger_update();
@@ -274,6 +270,9 @@ class Update {
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();
+
+		// run the same tasks for all settings as if we activate the plugin.
+		Settings::get_instance()->activation();
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );

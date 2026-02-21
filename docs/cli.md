@@ -1,6 +1,6 @@
 # WP CLI commands
 
-The plugin provides a number of WP CLI commands.
+The plugin provides several WP CLI commands.
 
 ## Call up list
 
@@ -43,3 +43,46 @@ Depending on your settings in the plugin, existing files may be removed from you
 `wp eml reset_plugin`
 
 This function can also be performed in the backend under Settings > External files in the media library > Advanced.
+
+## Add external source
+
+`wp eml add_external_source <Name> --type=<value> --fields=<value>`
+
+Parameter:
+* <Name> - The name to use.
+* [--type=<value>] - Set the type, e.g. "ftp".
+* [--fields=<value>] - Set the configuration as JSON-string in one line. Format is depending on the used type.
+
+## Delete external source
+
+`wp eml delete_external_source <Names>`
+
+Parameter
+* <Names> - The names of the external sources to delete.
+
+## Change export state
+
+`wp eml change_export_state <Names> [--enable] [--disable]`
+
+Parameter:
+* <Names> - List of names of external sources to change.
+* [--enable] - Marker to enable the given names for export.
+* [--disable] - Marker to disable the given names for export.
+
+## Cleanup queue
+
+This will remove error URLs from the queue.
+
+`wp eml cleanup_queue`
+
+## Clear queue
+
+This will delete every entry in the queue.
+
+`wp eml clear_queue`
+
+## Export media files
+
+This will export all not external files in media library to the for export enabled external sources.
+
+`wp eml export`
