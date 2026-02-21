@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -123,6 +124,7 @@ class Rest extends Service_Base implements Service {
 		add_filter( 'efml_service_rest_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 		add_filter( 'efml_directory_listing_before_tree_building', array( $this, 'prepare_tree_building' ), 10, 3 );
+		add_action( 'efml_after_file_save', array( $this, 'change_service_name' ) );
 	}
 
 	/**
@@ -1291,5 +1293,30 @@ class Rest extends Service_Base implements Service {
 	 */
 	public function get_form_description(): string {
 		return __( 'Enter the address of the WordPress website whose REST API data on media files you want to display in the URL field.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Change the used service name if multisite import has been used.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function change_service_name( File $external_file_obj ): void {
+		// get service from request.
+		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if it is not set.
+		if ( is_null( $service ) ) {
+			return;
+		}
+
+		// bail if service is not ours.
+		if ( $this->get_name() !== $service ) {
+			return;
+		}
+
+		// set the service name.
+		$external_file_obj->set_service_name( $service );
 	}
 }

@@ -706,7 +706,32 @@ class File {
 	 * @return bool
 	 */
 	public function has_credentials(): bool {
-		return ! empty( $this->get_fields() );
+		// prepare the return value.
+		$has_credentials = false;
+
+		// check for credential fields.
+		foreach ( $this->get_fields() as $field ) {
+			// bail if this field has no credential marker set.
+			if( ! isset( $field['credential'] ) ) {
+				continue;
+			}
+
+			// bail if credential marker is false.
+			if( ! $field['credential'] ) {
+				continue;
+			}
+
+			// bail if no value is set.
+			if( empty( $field['value'] ) ) {
+				continue;
+			}
+
+			// mark that this file is using credentials.
+			$has_credentials = true;
+		}
+
+		// return the resulting value.
+		return $has_credentials;
 	}
 
 	/**

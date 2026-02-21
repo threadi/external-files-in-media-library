@@ -18,6 +18,8 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
 use WP_Term;
@@ -1483,9 +1485,20 @@ class Files {
 			return;
 		}
 
+		// get the service name.
+		$service_name = $external_file_obj->get_service_name();
+
+		// get the service object for this name.
+		$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+
+		// bail if service could not be found.
+		if( ! $service_obj instanceof Service_Base ) {
+			return;
+		}
+
 		// show the used service.
 		?>
-		<li><span class="dashicons dashicons-admin-tools"></span> <?php echo esc_html__( 'Used service:', 'external-files-in-media-library' ); ?> <em><?php echo esc_html( $external_file_obj->get_service_name() ); ?></em></li>
+		<li><span class="dashicons dashicons-admin-tools"></span> <?php echo esc_html__( 'Used service:', 'external-files-in-media-library' ); ?> <em><?php echo esc_html( $service_obj->get_label() ); ?></em></li>
 		<?php
 	}
 
