@@ -15,6 +15,13 @@ defined( 'ABSPATH' ) || exit;
  */
 class Extension_Base extends Tools_Base {
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = '';
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void
@@ -36,11 +43,11 @@ class Extension_Base extends Tools_Base {
 	public function uninstall(): void {}
 
 	/**
-	 * Hide this extension in settings.
+	 * Return the type from this extension.
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	public function hide(): bool {
-		return false;
+	public function get_type(): string {
+		return $this->extension_type;
 	}
 }

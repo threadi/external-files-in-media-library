@@ -31,6 +31,13 @@ class Revert extends Extension_Base {
 	protected string $name = 'revert';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Revert|null
@@ -129,15 +136,6 @@ class Revert extends Extension_Base {
 		$field->set_title( __( 'Allow to revert the last import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled an option will be visible after each import, to revert the last import. This will remove the last imported files from media library.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
-	}
-
-	/**
-	 * Hide this extension in settings.
-	 *
-	 * @return bool
-	 */
-	public function hide(): bool {
-		return true;
 	}
 
 	/**

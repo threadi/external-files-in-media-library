@@ -155,28 +155,6 @@ class Extensions {
 	}
 
 	/**
-	 * Return list of names of the default extensions.
-	 *
-	 * @return array<int,string>
-	 */
-	public function get_default_extensions(): array {
-		$list = array(
-			'availability',
-			'dates',
-			'queue',
-			'real_import',
-		);
-
-		/**
-		 * Filter the list of default extensions.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array<int,string> $list List of names of the default extensions.
-		 */
-		return apply_filters( 'efml_extensions_default', $list );
-	}
-
-	/**
 	 * Add the extension to the list of tools.
 	 *
 	 * @param array<int,string> $tools List of tools.

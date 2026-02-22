@@ -11,7 +11,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -28,6 +31,13 @@ class Export_By_File_Type extends Extension_Base {
 	 * @var string
 	 */
 	protected string $name = 'export_by_file_type';
+
+	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'export_dialog';
 
 	/**
 	 * Instance of actual object.
@@ -98,33 +108,33 @@ class Export_By_File_Type extends Extension_Base {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
-		// get the advanced section.
-		$export_tab_export = $settings_obj->get_section( 'settings_section_export' );
-
-		// bail if section could not be loaded.
-		if ( ! $export_tab_export ) {
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+		if( ! $settings_page instanceof Page ) {
 			return;
 		}
 
+		// get the export tab.
+		$export_tab = $settings_page->get_tab( 'eml_export' );
+		if ( ! $export_tab instanceof Tab ) {
+			return;
+		}
+
+		// add a section.
+		$section = $export_tab->add_section( 'export_by_file_type', 20 );
+		$section->set_title( __( 'Export by file types', 'external-files-in-media-library' ) );
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_file_types' );
-		$setting->set_section( $export_tab_export );
+		$setting->set_section( $section );
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
 		$field = new MultiSelect();
 		$field->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Chose the file types that should be exported to external sources. If none are selected, all file types are allowed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_possible_mime_types_for_settings() );
+		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_export_extensions' ), true ) );
 		$setting->set_field( $field );
-	}
-
-	/**
-	 * Hide this extension from list of extensions.
-	 *
-	 * @return bool
-	 */
-	public function hide(): bool {
-		return true;
 	}
 
 	/**
@@ -136,6 +146,11 @@ class Export_By_File_Type extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export( bool $result, File $external_file_obj ): bool {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $result;
+		}
+
 		// get the global setting.
 		$allowed_file_types = get_option( 'eml_export_file_types' );
 
@@ -164,6 +179,11 @@ class Export_By_File_Type extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export_by_service( bool $result, File $external_file_obj, int $term_id ): bool {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $result;
+		}
+
 		// get the global setting.
 		$allowed_file_types = get_term_meta( $term_id, 'eml_export_file_types', true );
 
@@ -196,6 +216,11 @@ class Export_By_File_Type extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function extend_export_config_dialog( array $dialog, int $term_id ): array {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $dialog;
+		}
+
 		// get the actual setting for this term.
 		$allowed_file_types = get_term_meta( $term_id, 'eml_export_file_types', true );
 
@@ -231,6 +256,11 @@ class Export_By_File_Type extends Extension_Base {
 			return;
 		}
 
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the list of allowed file types from request.
 		$allowed_file_types = isset( $_POST['allowed_file_types'] ) ? array_map( 'wp_kses_post', wp_unslash( $_POST['allowed_file_types'] ) ) : array();
 
@@ -249,6 +279,11 @@ class Export_By_File_Type extends Extension_Base {
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
 		// bail if export option is not set.
 		if ( ! isset( $actions['eml-export-file'] ) ) {
+			return $actions;
+		}
+
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $actions;
 		}
 

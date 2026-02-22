@@ -371,7 +371,7 @@ class File extends Protocol_Base {
 	}
 
 	/**
-	 * Local files could not change its hosting.
+	 * Local files cannot change their hosting.
 	 *
 	 * @return bool
 	 */

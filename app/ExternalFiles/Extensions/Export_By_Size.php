@@ -11,7 +11,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
@@ -29,6 +32,13 @@ class Export_By_Size extends Extension_Base {
 	 * @var string
 	 */
 	protected string $name = 'export_by_size';
+
+	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'export_dialog';
 
 	/**
 	 * Instance of actual object.
@@ -99,44 +109,45 @@ class Export_By_Size extends Extension_Base {
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
 
-		// get the advanced section.
-		$export_tab_export = $settings_obj->get_section( 'settings_section_export' );
-
-		// bail if section could not be loaded.
-		if ( ! $export_tab_export ) {
+		// get the settings page.
+		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+		if( ! $settings_page instanceof Page ) {
 			return;
 		}
 
+		// get the export tab.
+		$export_tab = $settings_page->get_tab( 'eml_export' );
+		if ( ! $export_tab instanceof Tab ) {
+			return;
+		}
+
+		// add a section.
+		$section = $export_tab->add_section( 'export_by_file_size', 20 );
+		$section->set_title( __( 'Export by file size', 'external-files-in-media-library' ) );
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_min_size' );
-		$setting->set_section( $export_tab_export );
+		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Number();
 		$field->set_title( __( 'Minimum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );
+		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_export_extensions' ), true ) );
 		$setting->set_field( $field );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_max_size' );
-		$setting->set_section( $export_tab_export );
+		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Number();
 		$field->set_title( __( 'Maximum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );
+		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_export_extensions' ), true ) );
 		$setting->set_field( $field );
-	}
-
-	/**
-	 * Hide this extension from list of extensions.
-	 *
-	 * @return bool
-	 */
-	public function hide(): bool {
-		return true;
 	}
 
 	/**
@@ -148,6 +159,11 @@ class Export_By_Size extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export( bool $result, File $external_file_obj ): bool {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $result;
+		}
+
 		// get the global setting.
 		$min_size = absint( get_option( 'eml_export_min_size' ) );
 		$max_size = absint( get_option( 'eml_export_max_size' ) );
@@ -198,6 +214,11 @@ class Export_By_Size extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export_by_service( bool $result, File $external_file_obj, int $term_id ): bool {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $result;
+		}
+
 		// get the setting for this term.
 		$min_size = absint( get_term_meta( $term_id, 'eml_export_min_size', true ) );
 		$max_size = absint( get_term_meta( $term_id, 'eml_export_max_size', true ) );
@@ -247,6 +268,11 @@ class Export_By_Size extends Extension_Base {
 	 * @return array<string,mixed>
 	 */
 	public function extend_export_config_dialog( array $dialog, int $term_id ): array {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $dialog;
+		}
+
 		// get the actual setting for this term.
 		$min_size = absint( get_term_meta( $term_id, 'eml_export_min_size', true ) );
 		$max_size = absint( get_term_meta( $term_id, 'eml_export_max_size', true ) );
@@ -267,6 +293,11 @@ class Export_By_Size extends Extension_Base {
 	 * @return void
 	 */
 	public function save_export_config( int $term_id ): void {
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the values.
 		$min_size = absint( filter_input( INPUT_POST, 'min_size', FILTER_SANITIZE_NUMBER_INT ) );
 		$max_size = absint( filter_input( INPUT_POST, 'max_size', FILTER_SANITIZE_NUMBER_INT ) );
@@ -287,6 +318,11 @@ class Export_By_Size extends Extension_Base {
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
 		// bail if export option is not set.
 		if ( ! isset( $actions['eml-export-file'] ) ) {
+			return $actions;
+		}
+
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $actions;
 		}
 

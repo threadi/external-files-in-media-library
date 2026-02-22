@@ -30,6 +30,13 @@ class Show_What_Will_Be_Done extends Extension_Base {
 	protected string $name = 'show_what_will_be_done';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import_dialog';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Show_What_Will_Be_Done|null

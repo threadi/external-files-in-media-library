@@ -36,6 +36,13 @@ class Real_Import extends Extension_Base {
 	protected string $name = 'real_import';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import_dialog';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Real_Import|null
@@ -99,7 +106,7 @@ class Real_Import extends Extension_Base {
 		add_filter( 'handle_bulk_actions-upload', array( $this, 'run_bulk_action' ), 10, 3 );
 
 		// actions.
-		add_action( 'admin_action_eml_real_import_external_file', array( $this, 'import_local_per_request' ) );
+		add_action( 'admin_action_eml_real_import_external_file', array( $this, 'import_per_request' ) );
 	}
 
 	/**
@@ -343,6 +350,11 @@ class Real_Import extends Extension_Base {
 			return;
 		}
 
+		// bail if file could not be imported as real file.
+		if( ! $this->can_be_imported( $external_file_obj ) ) {
+			return;
+		}
+
 		// create the import URL.
 		$url = add_query_arg(
 			array(
@@ -396,8 +408,8 @@ class Real_Import extends Extension_Base {
 	 * @return bool Return true if the file import was successfully, false it not.
 	 */
 	private function import_local( File $external_file_obj ): bool {
-		// bail if this file is not valid.
-		if ( ! $external_file_obj->is_valid() ) {
+		// bail if this file cannot be imported.
+		if( ! $this->can_be_imported( $external_file_obj ) ) {
 			return false;
 		}
 
@@ -450,7 +462,7 @@ class Real_Import extends Extension_Base {
 	 * @return void
 	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
-	public function import_local_per_request(): void {
+	public function import_per_request(): void {
 		// check referer.
 		check_admin_referer( 'eml-real-import-external-file', 'nonce' );
 
@@ -732,20 +744,9 @@ class Real_Import extends Extension_Base {
 
 		// bail given file is not an external file.
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
-		if ( ! $external_file_obj->is_valid() ) {
-			return $actions;
-		}
 
-		// get the protocol handler.
-		$protocol_handler_obj = $external_file_obj->get_protocol_handler_obj();
-
-		// bail if protocol could not be loaded.
-		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
-			return $actions;
-		}
-
-		// bail if the used protocol does not support hosting changes.
-		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+		// bail if file cannot be imported.
+		if( ! $this->can_be_imported( $external_file_obj ) ) {
 			return $actions;
 		}
 
@@ -813,5 +814,40 @@ class Real_Import extends Extension_Base {
 	 */
 	public function get_capability_description(): string {
 		return __( 'Select roles, which should be allowed to import already existing external files in the media library.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return whether the given file can be imported.
+	 *
+	 * @param File $external_file_obj The external file to check.
+	 *
+	 * @return bool
+	 */
+	private function can_be_imported( File $external_file_obj ): bool {
+		// bail if user has not the capability for it.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return false;
+		}
+
+		// bail given file is not an external file.
+		if ( ! $external_file_obj->is_valid() ) {
+			return false;
+		}
+
+		// get the protocol handler.
+		$protocol_handler_obj = $external_file_obj->get_protocol_handler_obj();
+
+		// bail if protocol could not be loaded.
+		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
+			return false;
+		}
+
+		// bail if the used protocol does not support hosting changes.
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			return false;
+		}
+
+		// return true if file can be imported.
+		return true;
 	}
 }

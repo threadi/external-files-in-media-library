@@ -23,7 +23,6 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
-use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use JsonException;
 use mysqli_result;
 use wpdb;
@@ -38,6 +37,13 @@ class Queue extends Extension_Base {
 	 * @var string
 	 */
 	protected string $name = 'queue';
+
+	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import_dialog';
 
 	/**
 	 * Instance of actual object.
@@ -816,7 +822,7 @@ class Queue extends Extension_Base {
 		// get the ID from request.
 		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// delete the entry if id is given.
+		// delete the entry if ID is given.
 		if ( $id > 0 ) {
 			$this->remove_url( $id );
 

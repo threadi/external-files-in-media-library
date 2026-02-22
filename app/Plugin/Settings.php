@@ -23,6 +23,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -552,7 +553,7 @@ class Settings {
 		// get the available extensions for import.
 		$extensions = array();
 		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			if ( $extension_obj->hide() ) {
+			if ( 'import_dialog' !== $extension_obj->get_type() ) {
 				continue;
 			}
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
@@ -562,7 +563,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_import_extensions' );
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_type( 'array' );
-		$setting->set_default( Extensions::get_instance()->get_default_extensions() );
+		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );

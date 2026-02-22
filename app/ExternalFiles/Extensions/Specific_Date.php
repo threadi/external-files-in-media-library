@@ -25,6 +25,13 @@ class Specific_Date extends Extension_Base {
 	protected string $name = 'specific_date';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import_dialog';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Specific_Date|null

@@ -19,6 +19,13 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
  */
 class Dates extends Extension_Base {
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import_dialog';
+
+	/**
 	 * The internal extension name.
 	 *
 	 * @var string

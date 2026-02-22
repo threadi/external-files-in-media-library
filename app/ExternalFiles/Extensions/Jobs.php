@@ -28,6 +28,13 @@ class Jobs extends Extension_Base {
 	protected string $name = 'jobs';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'import';
+
+	/**
 	 * The job ID.
 	 *
 	 * @var string
@@ -89,15 +96,6 @@ class Jobs extends Extension_Base {
 	 */
 	public function get_title(): string {
 		return __( 'Jobs', 'external-files-in-media-library' );
-	}
-
-	/**
-	 * Hide this extension in settings.
-	 *
-	 * @return bool
-	 */
-	public function hide(): bool {
-		return true;
 	}
 
 	/**

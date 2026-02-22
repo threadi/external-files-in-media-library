@@ -750,4 +750,26 @@ class ImportDialog {
 		<div><input type="submit" class="button button-primary" name="add_external_files_button" value="<?php echo esc_attr__( 'Add these URLs', 'external-files-in-media-library' ); ?>" /></div>
 		<?php
 	}
+
+	/**
+	 * Return list of names of the default extensions for the import dialog.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_default_extensions(): array {
+		$list = array(
+			'availability',
+			'dates',
+			'queue',
+			'real_import',
+		);
+
+		/**
+		 * Filter the list of default extensions.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param array<int,string> $list List of names of the default extensions.
+		 */
+		return apply_filters( 'efml_import_dialog_extensions_default', $list );
+	}
 }

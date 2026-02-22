@@ -36,6 +36,13 @@ class Plugin_Installation extends Extension_Base {
 	protected string $name = 'plugin_installation';
 
 	/**
+	 * The extension type.
+	 *
+	 * @var string
+	 */
+	protected string $extension_type = 'advanced';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Plugin_Installation|null
