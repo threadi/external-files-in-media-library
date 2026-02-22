@@ -88,7 +88,7 @@ class Export extends Tools_Base {
 		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
-		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 
 		// bail if not enabled.
 		if ( ! $this->is_enabled() ) {
@@ -217,8 +217,8 @@ class Export extends Tools_Base {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox();
-		$field->set_title( __( 'Show option to export local files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'When enabled, you will be able to export local saved files to an external service.', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
@@ -282,15 +282,24 @@ class Export extends Tools_Base {
 	/**
 	 * Show hint to enabled export.
 	 *
-	 * @param string $content The column content.
+	 * @param string $content     The column content.
 	 * @param string $column_name The column name.
+	 * @param int    $term_id     The term ID.
 	 *
 	 * @return string
 	 */
-	public function add_column_hint_content( string $content, string $column_name ): string {
+	public function add_column_hint_content( string $content, string $column_name, int $term_id ): string {
 		// bail if column is not 'efml_export_hint'.
 		if ( 'efml_export_hint' !== $column_name ) {
 			return $content;
+		}
+
+		// get the listings object.
+		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if no object could be found.
+		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+			return $this->get_not_supported_hint( $listing_obj );
 		}
 
 		// show a simple hint for users without capability to change settings.
@@ -309,7 +318,8 @@ class Export extends Tools_Base {
 				),
 			),
 		);
-		// extend the hint for all others.
+
+		// change the hint for users with necessary capability.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
 			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
@@ -342,32 +352,7 @@ class Export extends Tools_Base {
 
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
-			// create the dialog for sync now.
-			$dialog = array(
-				'className' => 'efml',
-				'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
-				'texts'     => array(
-					'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
-					/* translators: %1$s will be replaced by a URL. */
-					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
-				),
-				'buttons'   => array(
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'primary',
-						'text'    => __( 'OK', 'external-files-in-media-library' ),
-					),
-				),
-			);
-
-			// show a specific hint.
-			if ( $listing_obj instanceof Service_Base ) {
-				/* translators: %1$s will be replaced by a title. */
-				$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
-			}
-
-			// return the resulting link.
-			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
+			return $this->get_not_supported_hint( $listing_obj );
 		}
 
 		// get the export object.
@@ -2240,5 +2225,41 @@ class Export extends Tools_Base {
 	public function disable(): void {
 		update_option( 'eml_export', 0 );
 		parent::disable();
+	}
+
+	/**
+	 * Return the "not supported" hint for table-view.
+	 *
+	 * @param Service_Base|false $listing_obj The used service object.
+	 *
+	 * @return string
+	 */
+	private function get_not_supported_hint( Service_Base|false $listing_obj ): string {
+		// create the dialog for sync now.
+		$dialog = array(
+			'className' => 'efml',
+			'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
+				/* translators: %1$s will be replaced by a URL. */
+				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// show a specific hint.
+		if ( $listing_obj instanceof Service_Base ) {
+			/* translators: %1$s will be replaced by a title. */
+			$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
+		}
+
+		// return the resulting link.
+		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
 	}
 }

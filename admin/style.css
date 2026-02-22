@@ -194,6 +194,8 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 
 .wp-list-table.media #external_files { width: 120px }
 
+.wp-list-table span.easy-dialog-for-wordpress { cursor: pointer }
+
 .efml .easy-dialog-for-wordpress-text:last-of-type {
 	margin-bottom: 1em;
 }
