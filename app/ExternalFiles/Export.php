@@ -661,7 +661,7 @@ class Export extends Tools_Base {
 		 * Filter the dialog to configure an export.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array $dialog The dialog.
+		 * @param array<string,mixed> $dialog The dialog.
 		 * @param int $term_id The term ID.
 		 */
 		$dialog = apply_filters( 'efml_export_config_dialog', $dialog, $term_id );
@@ -789,6 +789,14 @@ class Export extends Tools_Base {
 		if ( 1 === $enabled && 1 === $main_export ) {
 			update_option( 'eml_export_main_source', $term_id );
 		}
+
+		/**
+		 * Run additional tasks after saving an export dialog.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param int $term_id The used term ID.
+		 */
+		do_action( 'efml_export_save_config', $term_id );
 
 		// create the dialog.
 		$dialog = array(
@@ -987,6 +995,22 @@ class Export extends Tools_Base {
 			return false;
 		}
 
+		$false = false;
+		/**
+		 * Filter whether the given file should be exported.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $false True for prevent the export.
+		 * @param File $external_file_obj The external file object to use.
+		 */
+		if ( apply_filters( 'efml_prevent_export', $false, $external_file_obj ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Export of file has been prevented.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+			// do nothing more.
+			return false;
+		}
+
 		// get the file name.
 		$file = get_attached_file( $attachment_id, true );
 
@@ -1050,6 +1074,24 @@ class Export extends Tools_Base {
 
 			// bail if no object could be found.
 			if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+				continue;
+			}
+
+			$false = false;
+			/**
+			 * Filter whether the given file should be exported.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param bool $false True for prevent the export.
+			 * @param File $external_file_obj The external file object to use.
+			 * @param int $term_id The ID of the external source.
+			 */
+			if ( apply_filters( 'efml_prevent_export_on_service', $false, $external_file_obj, $term_id ) ) {
+				// log this event.
+				/* translators: %1$s will be replaced by a title. */
+				Log::get_instance()->create( sprintf( __( 'Export of file via %1$s has been prevented.', 'external-files-in-media-library' ), $term_name ), $external_file_obj->get_url( true ), 'info', 2 );
+
+				// do nothing more.
 				continue;
 			}
 
@@ -2230,11 +2272,11 @@ class Export extends Tools_Base {
 	/**
 	 * Return the "not supported" hint for table-view.
 	 *
-	 * @param Service_Base|false $listing_obj The used service object.
+	 * @param object|false $listing_obj The used service object.
 	 *
 	 * @return string
 	 */
-	private function get_not_supported_hint( Service_Base|false $listing_obj ): string {
+	private function get_not_supported_hint( object|false $listing_obj ): string {
 		// create the dialog for sync now.
 		$dialog = array(
 			'className' => 'efml',

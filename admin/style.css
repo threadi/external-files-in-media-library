@@ -96,7 +96,7 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 	font-weight: 600;
 }
 
-.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
+.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text select, .easy-dialog-for-wordpress-text #youtube_channel_id {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;

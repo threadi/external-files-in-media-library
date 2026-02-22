@@ -300,12 +300,6 @@ class Settings {
 		$field->set_description( $this->show_modes() );
 		$setting->set_field( $field );
 
-		// get possible mime types.
-		$mime_types = array();
-		foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
-			$mime_types[ $mime_type ] = $settings['label'];
-		}
-
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_allowed_mime_types' );
 		$setting->set_section( $general_tab_main );
@@ -315,7 +309,7 @@ class Settings {
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
 		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
-		$field->set_options( $mime_types );
+		$field->set_options( Helper::get_possible_mime_types_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );

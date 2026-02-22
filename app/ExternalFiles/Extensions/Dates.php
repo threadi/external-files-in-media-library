@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
-use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 
 /**

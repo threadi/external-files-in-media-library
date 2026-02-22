@@ -18,6 +18,7 @@
 - Added option to export each newly uploaded file in media library to external sources, which are reachable via web
 -> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
 - Added option to export each file in media library to external source as described above
+- Added option to export only files with specific file types or sizes, configurable as global setting for per external source
 - Introduced file handling extensions and added 3 of them (date, queue, real import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to actually import files in media library (this disables all external files functions for these files)
