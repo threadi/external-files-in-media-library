@@ -23,6 +23,7 @@ parameters:
     - "#StorageObject#"
     - "#IN_SECONDS#"
     - "#pll_#"
+    - "#EDLFW_HASH#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
   paths:

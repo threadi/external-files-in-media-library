@@ -10,14 +10,12 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
@@ -32,11 +30,11 @@ class Sync_By_Size extends Extension_Base {
 	protected string $name = 'sync_by_size';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'sync_dialog';
+	protected array $extension_types = array( 'sync_dialog' );
 
 	/**
 	 * The synchronized term ID.
@@ -125,6 +123,7 @@ class Sync_By_Size extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'sync_by_file_size', 20 );
 		$section->set_title( __( 'Synchronization by file size', 'external-files-in-media-library' ) );
+		$section->set_callback( array( $this, 'show_info' ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_min_size' );
@@ -155,7 +154,7 @@ class Sync_By_Size extends Extension_Base {
 	 * Extend the config dialog for each external source with settings for max. and min. file sizes.
 	 *
 	 * @param string $form The HTML code for the form.
-	 * @param int                 $term_id The used term ID.
+	 * @param int    $term_id The used term ID.
 	 *
 	 * @return string
 	 */
@@ -180,7 +179,7 @@ class Sync_By_Size extends Extension_Base {
 	 * Save our custom configuration for allowed file types on a term.
 	 *
 	 * @param array<string,mixed> $fields List of fields from request.
-	 * @param int   $term_id The used term ID.
+	 * @param int                 $term_id The used term ID.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
@@ -226,14 +225,14 @@ class Sync_By_Size extends Extension_Base {
 	/**
 	 * Prevent the sync of single files by their file size.
 	 *
-	 * @param bool  $result The return value, should be true to prevent the import.
-	 * @param array $file_data The file data we got from the external source.
+	 * @param bool                $result The return value, should be true to prevent the import.
+	 * @param array<string,mixed> $file_data The file data we got from the external source.
 	 *
 	 * @return bool
 	 */
 	public function prevent_sync( bool $result, array $file_data ): bool {
 		// bail if term ID is missing.
-		if( 0 === $this->synced_term_id ) {
+		if ( 0 === $this->synced_term_id ) {
 			return $result;
 		}
 
@@ -286,5 +285,20 @@ class Sync_By_Size extends Extension_Base {
 
 		// return the initial value.
 		return $result;
+	}
+
+	/**
+	 * Show info about disabled settings.
+	 *
+	 * @return void
+	 */
+	public function show_info(): void {
+		// bail if extension is enabled.
+		if ( in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
+		// show hint to enable the extension.
+		echo esc_html__( 'Enable the extension in the settings above to use these options.', 'external-files-in-media-library' );
 	}
 }

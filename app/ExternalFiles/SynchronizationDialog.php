@@ -149,7 +149,7 @@ class SynchronizationDialog {
 		}
 
 		// bail if the listing object does not support synchronizations.
-		if ( ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) {
+		if ( ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) { // @phpstan-ignore function.alreadyNarrowedType
 			/* translators: %1$s will be replaced by a title. */
 			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Synchronization to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
 			wp_send_json( array( 'detail' => $dialog ) );
@@ -186,13 +186,7 @@ class SynchronizationDialog {
 		 */
 		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
 
-		// get actual email.
-		$email = get_term_meta( $term_id, 'email', true );
-
-		// add option to send email after the end of each sync.
-		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
-
-		// add privacy hint, if it is not disabled.
+		// add privacy hint at the end of the form, if it is not disabled.
 		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
 			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong></label></div>';
 		}
@@ -273,6 +267,19 @@ class SynchronizationDialog {
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
+		$false = false;
+		/**
+		 * Run additional tasks to validate given values during saving a new sync configuration.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $false True to prevent saving.
+		 * @param array $fields List of fields.
+		 * @param array $dialog The response dialog.
+		 */
+		if ( apply_filters( 'efml_sync_validate_config', $false, $fields, $dialog ) ) {
+			return;
+		}
+
 		// get the term ID.
 		$term_id = absint( $fields['term_id'] );
 
@@ -287,9 +294,6 @@ class SynchronizationDialog {
 
 		// save this interval on the term as setting.
 		update_term_meta( $term_id, 'interval', $interval );
-
-		// save the given email.
-		update_term_meta( $term_id, 'email', $fields['email'] );
 
 		/**
 		 * Run additional tasks during saving a new sync configuration.
@@ -306,7 +310,7 @@ class SynchronizationDialog {
 			'title'     => __( 'Configuration saved', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'The new configuration for this synchronization has been saved.', 'external-files-in-media-library' ) . '</strong></p>',
-				'<p>' . __( 'The configurations you have made will now be taken into effect.', 'external-files-in-media-library' ) . '</p>'
+				'<p>' . __( 'The configurations you have made will now be taken into effect.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

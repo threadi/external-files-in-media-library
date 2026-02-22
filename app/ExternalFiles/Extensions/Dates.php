@@ -13,17 +13,18 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 
 /**
  * Handler controls how to import external files with their original dates.
  */
 class Dates extends Extension_Base {
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import_dialog';
+	protected array $extension_types = array( 'import_dialog', 'sync_dialog' );
 
 	/**
 	 * The internal extension name.
@@ -333,6 +334,11 @@ class Dates extends Extension_Base {
 	 * @return string
 	 */
 	public function add_option_on_sync_config( string $form, int $term_id ): string {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $form;
+		}
+
 		// get the actual setting.
 		$checked = 1 === absint( get_term_meta( $term_id, 'use_dates', true ) );
 
@@ -351,6 +357,11 @@ class Dates extends Extension_Base {
 	 * @return void
 	 */
 	public function save_sync_settings( array $fields ): void {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the term ID.
 		$term_id = absint( $fields['term_id'] );
 

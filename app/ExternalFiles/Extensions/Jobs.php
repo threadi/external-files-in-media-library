@@ -28,11 +28,11 @@ class Jobs extends Extension_Base {
 	protected string $name = 'jobs';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import';
+	protected array $extension_types = array( 'import' );
 
 	/**
 	 * The job ID.

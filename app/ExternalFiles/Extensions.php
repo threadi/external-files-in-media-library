@@ -128,10 +128,11 @@ class Extensions {
 	 *
 	 * @return array<int,string>
 	 */
-	private function get_extensions(): array {
+	public function get_extensions(): array {
 		$list = array(
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Email',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_File_Type',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_Size',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Import_Export',

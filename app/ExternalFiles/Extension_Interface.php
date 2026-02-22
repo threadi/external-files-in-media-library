@@ -1,6 +1,6 @@
 <?php
 /**
- * File, which provide the base functions for each file extension.
+ * File, which provides the PHP-interface for each file extension object.
  *
  * @package external-files-in-media-library
  */
@@ -11,43 +11,34 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Object to handle different file extensions.
+ * Object for the PHP-interface for each file extension object.
  */
-class Extension_Base extends Tools_Base implements Extension_Interface {
-	/**
-	 * The extension type.
-	 *
-	 * @var array<int,string>
-	 */
-	protected array $extension_types = array();
-
+interface Extension_Interface {
 	/**
 	 * Initialize this object.
 	 *
 	 * @return void
 	 */
-	public function init(): void {}
+	public function init(): void;
 
 	/**
 	 * Run additional tasks during plugin installation.
 	 *
 	 * @return void
 	 */
-	public function install(): void {}
+	public function install(): void;
 
 	/**
 	 * Run additional tasks during plugin uninstallation.
 	 *
 	 * @return void
 	 */
-	public function uninstall(): void {}
+	public function uninstall(): void;
 
 	/**
 	 * Return the types from this extension.
 	 *
 	 * @return array<int,string>
 	 */
-	public function get_types(): array {
-		return $this->extension_types;
-	}
+	public function get_types(): array;
 }

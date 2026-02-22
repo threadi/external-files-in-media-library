@@ -31,11 +31,11 @@ class Sync_By_File_Type extends Extension_Base {
 	protected string $name = 'sync_by_file_type';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'sync_dialog';
+	protected array $extension_types = array( 'sync_dialog' );
 
 	/**
 	 * The synchronized term ID.
@@ -124,6 +124,7 @@ class Sync_By_File_Type extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'sync_by_file_type', 20 );
 		$section->set_title( __( 'Synchronization by file types', 'external-files-in-media-library' ) );
+		$section->set_callback( array( $this, 'show_info' ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_file_types' );
@@ -142,7 +143,7 @@ class Sync_By_File_Type extends Extension_Base {
 	 * Extend the config dialog for each external source with the selection of allowed file types.
 	 *
 	 * @param string $form The HTML code for the form.
-	 * @param int                 $term_id The used term ID.
+	 * @param int    $term_id The used term ID.
 	 *
 	 * @return string
 	 */
@@ -178,7 +179,7 @@ class Sync_By_File_Type extends Extension_Base {
 	 * Save our custom configuration for allowed file types on a term.
 	 *
 	 * @param array<string,mixed> $fields List of fields from request.
-	 * @param int   $term_id The used term ID.
+	 * @param int                 $term_id The used term ID.
 	 *
 	 * @return void
 	 * @noinspection PhpUnusedParameterInspection
@@ -219,7 +220,7 @@ class Sync_By_File_Type extends Extension_Base {
 		$allow_file_types_term = (array) get_term_meta( $term_id, 'eml_sync_file_types', true );
 
 		// bail if both are empty.
-		if( empty( $allow_file_types_global ) && empty( $allow_file_types_term ) ) {
+		if ( empty( $allow_file_types_global ) && empty( $allow_file_types_term ) ) {
 			return;
 		}
 
@@ -233,27 +234,27 @@ class Sync_By_File_Type extends Extension_Base {
 	/**
 	 * Prevent the sync of single files by their file type.
 	 *
-	 * @param bool  $return The return value, should be true to prevent the import.
-	 * @param array $file_data The file data we got from the external source.
+	 * @param bool                $result The return value, should be true to prevent the import.
+	 * @param array<string,mixed> $file_data The file data we got from the external source.
 	 *
 	 * @return bool
 	 */
-	public function prevent_sync( bool $return, array $file_data ): bool {
+	public function prevent_sync( bool $result, array $file_data ): bool {
 		// bail if term ID is missing.
-		if( 0 === $this->synced_term_id ) {
-			return $return;
+		if ( 0 === $this->synced_term_id ) {
+			return $result;
 		}
 
 		// get global setting.
 		$allow_file_types_global = get_option( 'eml_sync_file_types' );
 
 		// get it as an array.
-		if( ! is_array( $allow_file_types_global ) ) {
+		if ( ! is_array( $allow_file_types_global ) ) {
 			$allow_file_types_global = array();
 		}
 
 		// prevent import, if mime type is not in the global list.
-		if( ! empty( $allow_file_types_global ) && ! in_array( $file_data['mime-type'], $allow_file_types_global, true ) ) {
+		if ( ! empty( $allow_file_types_global ) && ! in_array( $file_data['mime-type'], $allow_file_types_global, true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization of file has been prevented as it has a not allowed file type.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 
@@ -265,12 +266,12 @@ class Sync_By_File_Type extends Extension_Base {
 		$allow_file_types_term = get_term_meta( $this->synced_term_id, 'eml_sync_file_types', true );
 
 		// get it as an array.
-		if( ! is_array( $allow_file_types_term ) ) {
+		if ( ! is_array( $allow_file_types_term ) ) {
 			$allow_file_types_term = array();
 		}
 
 		// prevent import, if mime type is not in the specific list.
-		if( ! empty( $allow_file_types_term ) && ! in_array( $file_data['mime-type'], $allow_file_types_term, true ) ) {
+		if ( ! empty( $allow_file_types_term ) && ! in_array( $file_data['mime-type'], $allow_file_types_term, true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization of file has been prevented as it has a not allowed file type.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 
@@ -279,6 +280,21 @@ class Sync_By_File_Type extends Extension_Base {
 		}
 
 		// return the initial value.
-		return $return;
+		return $result;
+	}
+
+	/**
+	 * Show info about disabled settings.
+	 *
+	 * @return void
+	 */
+	public function show_info(): void {
+		// bail if extension is enabled.
+		if ( in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
+		// show hint to enable the extension.
+		echo esc_html__( 'Enable the extension in the settings above to use these options.', 'external-files-in-media-library' );
 	}
 }

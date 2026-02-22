@@ -160,10 +160,7 @@ class Synchronization extends Tools_Base {
 
 		// get the available extensions for import.
 		$extensions = array();
-		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			if ( 'sync_dialog' !== $extension_obj->get_type() ) {
-				continue;
-			}
+		foreach ( Extension_Types::get_instance()->get_extensions_for_type( 'sync_dialog' ) as $extension_obj ) {
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 
@@ -225,18 +222,6 @@ class Synchronization extends Tools_Base {
 		$field->set_description( __( 'Delete files in media library belonging to an external source when the connection to the external source is deleted.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
-
-		// add setting to send emails after sync.
-		$setting = $settings_obj->add_setting( 'eml_sync_email' );
-		$setting->set_section( $sync_settings_section );
-		$setting->set_type( 'integer' );
-		$setting->set_default( 1 );
-		$field = new Checkbox();
-		$field->set_title( __( 'Send email after sync', 'external-files-in-media-library' ) );
-		/* translators: %1$s will be replaced by an email address. */
-		$field->set_description( sprintf( __( 'When activated, you will receive an email to the admin email address %1$s or to the email address stored in the synchronization for the external source as soon as a synchronization has been successfully completed.', 'external-files-in-media-library' ), '<code>' . get_option( 'admin_email' ) . '</code>' ) );
-		$field->add_depend( $sync_settings_setting, 1 );
-		$setting->set_field( $field );
 	}
 
 	/**
@@ -278,14 +263,14 @@ class Synchronization extends Tools_Base {
 			array(
 				'ajax_url'               => admin_url( 'admin-ajax.php' ),
 				'sync_nonce'             => wp_create_nonce( 'efml-sync-nonce' ),
-				'sync_config_nonce'    => wp_create_nonce( 'efml-sync-config-nonce' ),
+				'sync_config_nonce'      => wp_create_nonce( 'efml-sync-config-nonce' ),
 				'get_info_sync_nonce'    => wp_create_nonce( 'efml-sync-info-nonce' ),
 				'sync_state_nonce'       => wp_create_nonce( 'efml-sync-state-nonce' ),
 				'sync_save_config_nonce' => wp_create_nonce( 'efml-sync-save-config-nonce' ),
 				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'info_timeout'           => $info_timeout,
-				'title_loading'                       => __( 'Loading ..', 'external-files-in-media-library' ),
-				'text_loading'                        => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
+				'title_loading'          => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'           => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -433,7 +418,7 @@ class Synchronization extends Tools_Base {
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( (string) get_term_meta( $term_id, 'type', true ) );
 
 		// bail if no object could be found.
-		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) {
+		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) { // @phpstan-ignore function.alreadyNarrowedType
 			return $this->get_not_supported_hint( $listing_obj );
 		}
 
@@ -485,7 +470,7 @@ class Synchronization extends Tools_Base {
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
 		// bail if object does not allow sync.
-		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) {
+		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) { // @phpstan-ignore function.alreadyNarrowedType
 			return $this->get_not_supported_hint( $listing_obj );
 		}
 
@@ -513,7 +498,7 @@ class Synchronization extends Tools_Base {
 		);
 
 		// get the sync schedule object for this term_id.
-		$sync_schedule_obj = Synchronization::get_instance()->get_schedule_by_term_id( $term_id );
+		$sync_schedule_obj = self::get_instance()->get_schedule_by_term_id( $term_id );
 
 		// define actions.
 		$actions = array(
@@ -665,33 +650,15 @@ class Synchronization extends Tools_Base {
 			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 		}
 
-		// send email if enabled.
-		if ( 1 === absint( get_option( 'eml_sync_email' ) ) ) {
-			// get the to-email from settings.
-			$to = get_term_meta( $term_id, 'email', true );
-			if ( empty( $to ) ) {
-				$to = get_option( 'admin_email' );
-			}
-
-			// get the term.
-			$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
-
-			// bail if term could not be loaded.
-			if ( ! $term instanceof WP_Term ) {
-				return;
-			}
-
-			// define mail.
-			$subject = '[' . get_option( 'blogname' ) . '] ' . __( 'Synchronisation completed', 'external-files-in-media-library' );
-			/* translators: %1$s will be replaced by a title. */
-			$body    = sprintf( __( 'The synchronization of %1$s has been successfully completed.', 'external-files-in-media-library' ), esc_html( $term->name ) ) . '<br><br>' . __( 'This email was generated by the WordPress plugin <em>External files for Media Library</em> based on the settings in your project.', 'external-files-in-media-library' );
-			$headers = array(
-				'Content-Type: text/html; charset=UTF-8',
-			);
-
-			// send mail.
-			wp_mail( $to, $subject, $body, $headers );
-		}
+		/**
+		 * Allow to add additional tasks after sync has been running.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The used URL.
+		 * @param array<string,string> $term_data The term data.
+		 * @param int $term_id The used term ID.
+		 */
+		do_action( 'efml_after_sync', $url, $term_data, $term_id );
 	}
 
 	/**
@@ -1825,6 +1792,11 @@ class Synchronization extends Tools_Base {
 	 * @return string
 	 */
 	private function get_not_supported_hint( object|false $listing_obj ): string {
+		// bail if object is not a "Extension_Base".
+		if ( ! $listing_obj instanceof Service_Base ) {
+			return '';
+		}
+
 		// create the dialog for sync now.
 		$dialog = array(
 			'className' => 'efml',

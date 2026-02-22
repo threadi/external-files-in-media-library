@@ -31,11 +31,11 @@ class Revert extends Extension_Base {
 	protected string $name = 'revert';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import';
+	protected array $extension_types = array( 'import' );
 
 	/**
 	 * Instance of actual object.

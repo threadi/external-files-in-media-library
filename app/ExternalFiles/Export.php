@@ -168,10 +168,7 @@ class Export extends Tools_Base {
 
 		// get the available extensions for import.
 		$extensions = array();
-		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			if ( 'export_dialog' !== $extension_obj->get_type() ) {
-				continue;
-			}
+		foreach ( Extension_Types::get_instance()->get_extensions_for_type( 'export_dialog' ) as $extension_obj ) {
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 
@@ -564,8 +561,8 @@ class Export extends Tools_Base {
 				'export_config_nonce'      => wp_create_nonce( 'efml-export-config-nonce' ),
 				'save_export_config_nonce' => wp_create_nonce( 'efml-export-save-config-nonce' ),
 				'export_state_nonce'       => wp_create_nonce( 'efml-export-state-nonce' ),
-				'title_loading'                       => __( 'Loading ..', 'external-files-in-media-library' ),
-				'text_loading'                        => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
+				'title_loading'            => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'             => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -1944,7 +1941,7 @@ class Export extends Tools_Base {
 	}
 
 	/**
-	 * Return whether export is enabled on the actual single site.
+	 * Return whether export is enabled on the actual single website.
 	 *
 	 * @return bool
 	 */

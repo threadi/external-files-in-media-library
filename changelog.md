@@ -23,6 +23,7 @@
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to actually import files in media library (this disables all external files functions for these files)
 - Added option to choose a specific date for each file to import
+- Added options to choose extensions for export, import and synchronization and there global or custom settings
 - Added paginated AJAX-import to prevent timeouts for some supported external sources
 - Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added new options for WP CLI to manage external sources

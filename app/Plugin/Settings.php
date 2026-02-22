@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
@@ -552,10 +553,7 @@ class Settings {
 
 		// get the available extensions for import.
 		$extensions = array();
-		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			if ( 'import_dialog' !== $extension_obj->get_type() ) {
-				continue;
-			}
+		foreach ( Extension_Types::get_instance()->get_extensions_for_type( 'import_dialog' ) as $extension_obj ) {
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 

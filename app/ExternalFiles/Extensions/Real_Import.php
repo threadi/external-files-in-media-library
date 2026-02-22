@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Post;
@@ -36,11 +37,11 @@ class Real_Import extends Extension_Base {
 	protected string $name = 'real_import';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import_dialog';
+	protected array $extension_types = array( 'import_dialog', 'sync_dialog' );
 
 	/**
 	 * Instance of actual object.
@@ -577,11 +578,16 @@ class Real_Import extends Extension_Base {
 	 * @return string
 	 */
 	public function add_option_on_sync_config( string $form, int $term_id ): string {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $form;
+		}
+
 		// get the actual setting.
 		$checked = 1 === absint( get_term_meta( $term_id, 'real_import', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Real import each file. Files are not synchronized, just saved if they do not exist.', 'external-files-in-media-library' ) . '</label></div>';
+		$form .= '<div><label for="real_import"><input type="checkbox" name="real_import" id="real_import" value="1"' . ( $checked ? ' checked="checked"' : '' ) . '> ' . esc_html__( 'Real import each file. Files are not synchronized, just saved in media library if they do not exist there.', 'external-files-in-media-library' ) . '</label></div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -595,6 +601,11 @@ class Real_Import extends Extension_Base {
 	 * @return void
 	 */
 	public function save_sync_settings( array $fields ): void {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the term ID.
 		$term_id = absint( $fields['term_id'] );
 

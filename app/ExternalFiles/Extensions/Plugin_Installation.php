@@ -36,11 +36,11 @@ class Plugin_Installation extends Extension_Base {
 	protected string $name = 'plugin_installation';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'advanced';
+	protected array $extension_types = array( 'advanced' );
 
 	/**
 	 * Instance of actual object.

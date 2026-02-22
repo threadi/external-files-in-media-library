@@ -33,11 +33,11 @@ class Export_By_File_Type extends Extension_Base {
 	protected string $name = 'export_by_file_type';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'export_dialog';
+	protected array $extension_types = array( 'export_dialog' );
 
 	/**
 	 * Instance of actual object.
@@ -123,6 +123,7 @@ class Export_By_File_Type extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'export_by_file_type', 20 );
 		$section->set_title( __( 'Export by file types', 'external-files-in-media-library' ) );
+		$section->set_callback( array( $this, 'show_info' ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_file_types' );
@@ -305,5 +306,20 @@ class Export_By_File_Type extends Extension_Base {
 
 		// return the resulting list of actions.
 		return $actions;
+	}
+
+	/**
+	 * Show info about disabled settings.
+	 *
+	 * @return void
+	 */
+	public function show_info(): void {
+		// bail if extension is enabled.
+		if ( in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
+		// show hint to enable the extension.
+		echo esc_html__( 'Enable the extension in the settings above to use these options.', 'external-files-in-media-library' );
 	}
 }

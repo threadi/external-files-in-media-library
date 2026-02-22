@@ -470,6 +470,8 @@ body.eml-file-synced #delete-action { display: none }
 	display: block;
 	font-weight: normal;
 	margin: 0 0 0.4em;
+	text-indent: -32px;
+	padding-left: 32px;
 }
 
 body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box { display: none }

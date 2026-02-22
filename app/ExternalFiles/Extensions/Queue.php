@@ -39,11 +39,11 @@ class Queue extends Extension_Base {
 	protected string $name = 'queue';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import_dialog';
+	protected array $extension_types = array( 'import_dialog' );
 
 	/**
 	 * Instance of actual object.

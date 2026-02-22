@@ -27,11 +27,11 @@ use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
  */
 class Availability extends Extension_Base {
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'import';
+	protected array $extension_types = array( 'import' );
 
 	/**
 	 * The internal extension name.

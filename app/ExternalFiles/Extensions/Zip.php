@@ -27,11 +27,11 @@ class Zip extends Extension_Base {
 	protected string $name = 'zip';
 
 	/**
-	 * The extension type.
+	 * The extension types.
 	 *
-	 * @var string
+	 * @var array<int,string>
 	 */
-	protected string $extension_type = 'advanced';
+	protected array $extension_types = array( 'advanced' );
 
 	/**
 	 * Instance of actual object.
