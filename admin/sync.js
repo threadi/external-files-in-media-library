@@ -1,5 +1,42 @@
 jQuery(document).ready(function($) {
   /**
+   * Add AJAX-functionality to show config settings for sync.
+   */
+  $( "span.efml-sync" ).on( 'click', function (e) {
+    e.preventDefault();
+
+    // send request
+    $.ajax({
+      url: efmlJsSyncVars.ajax_url,
+      type: 'post',
+      data: {
+        term_id: $(this).data('term-id'),
+        action: 'efml_get_sync_config_dialog',
+        nonce: efmlJsSyncVars.sync_config_nonce
+      },
+      beforeSend: function() {
+        // show loading dialog.
+        let dialog_config = {
+          detail: {
+            className: 'is-loading',
+            title: efmlJsSyncVars.title_loading,
+            texts: [
+              '<p>' + efmlJsSyncVars.text_loading + '</p>'
+            ],
+          }
+        }
+        efml_create_dialog( dialog_config );
+      },
+      error: function( jqXHR, textStatus, errorThrown ) {
+        efml_ajax_error_dialog( errorThrown )
+      },
+      success: function (response) {
+        efml_create_dialog( response );
+      }
+    });
+  });
+
+  /**
    * Save sync changes via toggle.
    */
   $('.synchronization .eml-switch-toggle input:not([readonly])').on("change", function() {

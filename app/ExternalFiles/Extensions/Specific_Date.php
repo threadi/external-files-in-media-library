@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 
 /**
  * Handler controls how to import external files with a specific date.
@@ -23,6 +24,13 @@ class Specific_Date extends Extension_Base {
 	 * @var string
 	 */
 	protected string $name = 'specific_date';
+
+	/**
+	 * The extension types.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $extension_types = array( 'import_dialog', 'sync_dialog' );
 
 	/**
 	 * Instance of actual object.
@@ -195,6 +203,11 @@ class Specific_Date extends Extension_Base {
 	 * @return string
 	 */
 	public function add_option_on_sync_config( string $form, int $term_id ): string {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $form;
+		}
+
 		// get the actual setting.
 		$value = (string) get_term_meta( $term_id, 'use_specific_date', true );
 
@@ -213,6 +226,11 @@ class Specific_Date extends Extension_Base {
 	 * @return void
 	 */
 	public function save_sync_settings( array $fields ): void {
+		// bail if extension is disabled.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the term ID.
 		$term_id = absint( $fields['term_id'] );
 

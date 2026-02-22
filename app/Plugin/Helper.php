@@ -842,4 +842,20 @@ class Helper {
 			)
 		);
 	}
+
+	/**
+	 * Return list of possible mime types for settings.
+	 *
+	 * @return array<string,string>
+	 */
+	public static function get_possible_mime_types_for_settings(): array {
+		// get possible mime types.
+		$mime_types = array();
+		foreach ( self::get_possible_mime_types() as $mime_type => $settings ) {
+			$mime_types[ $mime_type ] = $settings['label'];
+		}
+
+		// return the resulting list of possible mime types for the settings.
+		return $mime_types;
+	}
 }

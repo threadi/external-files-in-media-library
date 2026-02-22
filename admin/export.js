@@ -14,6 +14,19 @@ jQuery(document).ready(function($) {
         action: 'efml_get_export_config_dialog',
         nonce: efmlJsExportVars.export_config_nonce
       },
+      beforeSend: function() {
+        // show loading dialog.
+        let dialog_config = {
+          detail: {
+            className: 'is-loading',
+            title: efmlJsExportVars.title_loading,
+            texts: [
+              '<p>' + efmlJsExportVars.text_loading + '</p>'
+            ],
+          }
+        }
+        efml_create_dialog( dialog_config );
+      },
       error: function( jqXHR, textStatus, errorThrown ) {
         efml_ajax_error_dialog( errorThrown )
       },
@@ -49,7 +62,7 @@ jQuery(document).ready(function($) {
  */
 function efml_export_save_config() {
   // get all form data.
-  let formData = jQuery('.efml-export-config :input').serializeArray();
+  let formData = jQuery( '.efml-export-config :input, .efml-export-config select' ).serializeArray();
 
   // add data to process this request.
   formData.push({ 'name': 'action', 'value': 'efml_save_export_config'});
@@ -60,6 +73,7 @@ function efml_export_save_config() {
     url: efmlJsVars.ajax_url,
     type: 'POST',
     data: formData,
+    dataType: 'json',
     error: function( jqXHR, textStatus, errorThrown ) {
       efml_ajax_error_dialog( errorThrown )
     },

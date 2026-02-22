@@ -18,10 +18,12 @@
 - Added option to export each newly uploaded file in media library to external sources, which are reachable via web
 -> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
 - Added option to export each file in media library to external source as described above
+- Added option to export only files with specific file types or sizes, configurable as global setting for per external source
 - Introduced file handling extensions and added 3 of them (date, queue, real import)
 - Added option to use the date of external files in add-dialog (2nd file handling extension)
 - Added option to actually import files in media library (this disables all external files functions for these files)
 - Added option to choose a specific date for each file to import
+- Added options to choose extensions for export, import and synchronization and there global or custom settings
 - Added paginated AJAX-import to prevent timeouts for some supported external sources
 - Added these 3 new options also as parameter on WP CLI command to import URLs
 - Added new options for WP CLI to manage external sources
@@ -79,6 +81,7 @@
 - Added configurations to quickly configure the plugin for a specific task
 - Added output of all (not private) settings in site health report
 - Added site health checks for cronjobs, and the availability of external sources
+- Added option to export the installation hash key, which is used for any encryption
 
 ### Changed
 

@@ -115,6 +115,7 @@ class Admin {
 		add_filter( 'admin_footer_text', array( $this, 'show_plugin_hint_in_footer' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'mark_directory_listing_as_used' ) );
 		add_action( 'delete_' . Taxonomy::get_instance()->get_name(), array( $this, 'check_if_directory_listing_is_used' ) );
+		add_action( 'admin_action_efml_download_key', array( $this, 'export_installation_key' ) );
 
 		// register our own importer in the backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );
@@ -583,5 +584,27 @@ class Admin {
 			array(),
 			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/public.css' ),
 		);
+	}
+
+	/**
+	 * Return the installation key to download as a JSON file.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function export_installation_key(): void {
+		// check nonce.
+		check_admin_referer( 'efml-download-key', 'nonce' );
+
+		// create the array with the hash key.
+		$content = array(
+			get_option( EDLFW_HASH ),
+		);
+
+		// return the JSON file for the download.
+		header( 'Content-disposition: attachment; filename=' . gmdate( 'YmdHi' ) . '_efml_installation_key.json' );
+		header( 'Content-type: application/json' );
+		echo wp_json_encode( $content );
+		exit;
 	}
 }

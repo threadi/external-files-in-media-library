@@ -22,7 +22,9 @@ use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -300,12 +302,6 @@ class Settings {
 		$field->set_description( $this->show_modes() );
 		$setting->set_field( $field );
 
-		// get possible mime types.
-		$mime_types = array();
-		foreach ( Helper::get_possible_mime_types() as $mime_type => $settings ) {
-			$mime_types[ $mime_type ] = $settings['label'];
-		}
-
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_allowed_mime_types' );
 		$setting->set_section( $general_tab_main );
@@ -315,7 +311,7 @@ class Settings {
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
 		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
-		$field->set_options( $mime_types );
+		$field->set_options( Helper::get_possible_mime_types_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
@@ -557,10 +553,7 @@ class Settings {
 
 		// get the available extensions for import.
 		$extensions = array();
-		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
-			if ( $extension_obj->hide() ) {
-				continue;
-			}
+		foreach ( Extension_Types::get_instance()->get_extensions_for_type( 'import_dialog' ) as $extension_obj ) {
 			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
 		}
 
@@ -568,7 +561,7 @@ class Settings {
 		$setting = $settings_obj->add_setting( 'eml_import_extensions' );
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_type( 'array' );
-		$setting->set_default( Extensions::get_instance()->get_default_extensions() );
+		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
 		$field = new MultiSelect();
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );
@@ -622,6 +615,49 @@ class Settings {
 		$field->set_button_title( __( 'Reset plugin', 'external-files-in-media-library' ) );
 		$field->set_button_url( $reset_url );
 		$field->add_data( 'dialog', Helper::get_json( $reset_dialog ) );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$setting->set_field( $field );
+
+		// create reset URL.
+		$download_url = add_query_arg(
+			array(
+				'action' => 'efml_download_key',
+				'nonce'  => wp_create_nonce( 'efml-download-key' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create the dialog.
+		$download_dialog = array(
+			'title'   => __( 'Download installation key', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Do you real want to download the installation key?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'The installation key is used to encrypt the plugins data. Without it, you would no longer be able to access this encrypted content.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Keep this file in a safe place.', 'personio-integration' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $download_url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, download it', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'efmlDownloadKey' );
+		$setting->set_section( $advanced_plugin );
+		$setting->prevent_export( true );
+		$field = new Button();
+		$field->set_title( __( 'Download installation key', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Download key', 'external-files-in-media-library' ) );
+		$field->set_button_url( $download_url );
+		$field->add_data( 'dialog', Helper::get_json( $download_dialog ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
 		$setting->set_field( $field );
 

@@ -96,11 +96,14 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 	font-weight: 600;
 }
 
-.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .easy-dialog-for-wordpress-text #youtube_channel_id {
+.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text select, .easy-dialog-for-wordpress-text #youtube_channel_id,
+.efml-sync-config .easy-dialog-for-wordpress-text input[type="email"], .efml-sync-config select {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
+
+.efml-sync-config .easy-dialog-for-wordpress-text input[type="email"], .efml-sync-config select { width: 400px }
 
 .efml .easy-dialog-for-wordpress-text textarea {
 	display: block;
@@ -193,6 +196,8 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 .misc-pub-external-file > li .dashicons { text-indent: 0 }
 
 .wp-list-table.media #external_files { width: 120px }
+
+.wp-list-table span.easy-dialog-for-wordpress { cursor: pointer }
 
 .efml .easy-dialog-for-wordpress-text:last-of-type {
 	margin-bottom: 1em;
@@ -465,6 +470,8 @@ body.eml-file-synced #delete-action { display: none }
 	display: block;
 	font-weight: normal;
 	margin: 0 0 0.4em;
+	text-indent: -32px;
+	padding-left: 32px;
 }
 
 body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box { display: none }

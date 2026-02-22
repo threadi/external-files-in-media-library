@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
@@ -88,7 +89,7 @@ class Export extends Tools_Base {
 		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
-		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 
 		// bail if not enabled.
 		if ( ! $this->is_enabled() ) {
@@ -113,8 +114,6 @@ class Export extends Tools_Base {
 		add_action( 'admin_action_efml_export_file', array( $this, 'export_file_via_request' ) );
 
 		// use AJAX.
-		add_action( 'wp_ajax_efml_get_export_config_dialog', array( $this, 'get_export_config_dialog' ) );
-		add_action( 'wp_ajax_efml_save_export_config', array( $this, 'save_export_config_via_ajax' ) );
 		add_action( 'wp_ajax_efml_change_export_state', array( $this, 'export_state_change_via_ajax' ) );
 
 		// use hooks.
@@ -167,6 +166,25 @@ class Export extends Tools_Base {
 		$field->set_setting( $setting_export );
 		$setting_export->set_field( $field );
 
+		// get the available extensions for import.
+		$extensions = array();
+		foreach ( Extension_Types::get_instance()->get_extensions_for_type( 'export_dialog' ) as $extension_obj ) {
+			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
+		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_export_extensions' );
+		$setting->set_section( $section );
+		$setting->set_type( 'array' );
+		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Options for export', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the options you want to have available in your export dialog. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
+		$field->set_options( $extensions );
+		$field->add_depend( $setting_export, 1 );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_do_not_delete_local_files' );
 		$setting->set_section( $section );
@@ -217,8 +235,8 @@ class Export extends Tools_Base {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox();
-		$field->set_title( __( 'Show option to export local files', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'When enabled, you will be able to export local saved files to an external service.', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
@@ -282,15 +300,24 @@ class Export extends Tools_Base {
 	/**
 	 * Show hint to enabled export.
 	 *
-	 * @param string $content The column content.
+	 * @param string $content     The column content.
 	 * @param string $column_name The column name.
+	 * @param int    $term_id     The term ID.
 	 *
 	 * @return string
 	 */
-	public function add_column_hint_content( string $content, string $column_name ): string {
+	public function add_column_hint_content( string $content, string $column_name, int $term_id ): string {
 		// bail if column is not 'efml_export_hint'.
 		if ( 'efml_export_hint' !== $column_name ) {
 			return $content;
+		}
+
+		// get the listings object.
+		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if no object could be found.
+		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+			return $this->get_not_supported_hint( $listing_obj );
 		}
 
 		// show a simple hint for users without capability to change settings.
@@ -309,7 +336,8 @@ class Export extends Tools_Base {
 				),
 			),
 		);
-		// extend the hint for all others.
+
+		// change the hint for users with necessary capability.
 		if ( current_user_can( 'manage_options' ) ) {
 			/* translators: %1$s will be replaced by a URL. */
 			$dialog['texts'][1] = '<p>' . sprintf( __( 'Enable this option <a href="%1$s">in your settings</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) ) . '</p>';
@@ -342,32 +370,7 @@ class Export extends Tools_Base {
 
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
-			// create the dialog for sync now.
-			$dialog = array(
-				'className' => 'efml',
-				'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
-				'texts'     => array(
-					'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
-					/* translators: %1$s will be replaced by a URL. */
-					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
-				),
-				'buttons'   => array(
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'primary',
-						'text'    => __( 'OK', 'external-files-in-media-library' ),
-					),
-				),
-			);
-
-			// show a specific hint.
-			if ( $listing_obj instanceof Service_Base ) {
-				/* translators: %1$s will be replaced by a title. */
-				$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
-			}
-
-			// return the resulting link.
-			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
+			return $this->get_not_supported_hint( $listing_obj );
 		}
 
 		// get the export object.
@@ -427,44 +430,41 @@ class Export extends Tools_Base {
 		// collect the actions.
 		$actions = array( '<a href="' . esc_url( $url ) . '">' . absint( count( $files ) ) . '</a>' );
 
-		// only add the delete link on the main term.
-		if ( absint( get_option( 'eml_export_main_source' ) ) === $term_id ) {
-			// create URL to delete them.
-			$url_delete = add_query_arg(
+		// create URL to delete them.
+		$url_delete = add_query_arg(
+			array(
+				'action' => 'efml_delete_exported_files',
+				'nonce'  => wp_create_nonce( 'efml-exported-synced-files' ),
+				'term'   => $term_id,
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create the dialog for delete the link.
+		$dialog = array(
+			'className' => 'efml',
+			'title'     => __( 'Delete exported files?', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<p><strong>' . __( 'Are you sure you want to delete these exported files?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'The files will be deleted in your media library AND the external source.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'When the files are used on the website, they are no longer visible or usable on your website.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons'   => array(
 				array(
-					'action' => 'efml_delete_exported_files',
-					'nonce'  => wp_create_nonce( 'efml-exported-synced-files' ),
-					'term'   => $term_id,
+					'action'  => 'location.href="' . $url_delete . '"',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, delete them', 'external-files-in-media-library' ),
 				),
-				get_admin_url() . 'admin.php'
-			);
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
 
-			// create the dialog for delete the link.
-			$dialog = array(
-				'className' => 'efml',
-				'title'     => __( 'Delete exported files?', 'external-files-in-media-library' ),
-				'texts'     => array(
-					'<p><strong>' . __( 'Are you sure you want to delete these exported files?', 'external-files-in-media-library' ) . '</strong></p>',
-					'<p>' . __( 'The files will be deleted in your media library AND the external source.', 'external-files-in-media-library' ) . '</p>',
-					'<p>' . __( 'If the files are used on the website, they are no longer visible and usable on the website.', 'external-files-in-media-library' ) . '</p>',
-				),
-				'buttons'   => array(
-					array(
-						'action'  => 'location.href="' . $url_delete . '"',
-						'variant' => 'primary',
-						'text'    => __( 'Yes, delete them', 'external-files-in-media-library' ),
-					),
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'secondary',
-						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-					),
-				),
-			);
-
-			// add to the actions.
-			$actions[] = '<a href="' . esc_url( $url_delete ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Delete', 'external-files-in-media-library' ) . '</a>';
-		}
+		// add to the actions.
+		$actions[] = '<a href="' . esc_url( $url_delete ) . '" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . esc_html__( 'Delete', 'external-files-in-media-library' ) . '</a>';
 
 		/**
 		 * Filter the actions for export handlings on the external source terms.
@@ -561,282 +561,10 @@ class Export extends Tools_Base {
 				'export_config_nonce'      => wp_create_nonce( 'efml-export-config-nonce' ),
 				'save_export_config_nonce' => wp_create_nonce( 'efml-export-save-config-nonce' ),
 				'export_state_nonce'       => wp_create_nonce( 'efml-export-state-nonce' ),
+				'title_loading'            => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'             => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
-	}
-
-	/**
-	 * Return the export configuration dialog for a given source term.
-	 *
-	 * @return void
-	 */
-	public function get_export_config_dialog(): void {
-		// check nonce.
-		check_ajax_referer( 'efml-export-config-nonce', 'nonce' );
-
-		// create the dialog for failures.
-		$dialog = array(
-			'className' => 'efml',
-			'title'     => __( 'Configuration could not be loaded', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p><strong>' . __( 'The export configuration for this target could not be loaded.', 'external-files-in-media-library' ) . '</strong></p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// get term ID from request.
-		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// bail if no term ID is given.
-		if ( 0 === $term_id ) {
-			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get the term.
-		$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
-
-		// bail if no term could be found.
-		if ( ! $term instanceof WP_Term ) {
-			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get the listings object.
-		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
-
-		// bail if no object could be found.
-		if ( ! $listing_obj instanceof Service_Base ) {
-			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// bail if no object could be found.
-		if ( ! $listing_obj->get_export_object() instanceof Export_Base ) {
-			/* translators: %1$s will be replaced by a title. */
-			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get actual state.
-		$enabled = absint( get_term_meta( $term_id, 'efml_export', true ) );
-
-		// get URL.
-		$url = get_term_meta( $term_id, 'efml_export_url', true );
-
-		// Create the form:
-		// -> first the state.
-		$form = '<div><label for="enable">' . __( 'Enable:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="enable" id="enable" value="1"' . ( $enabled > 0 ? ' checked="checked"' : '' ) . '></div>';
-
-		// -> marker for main export source, if user has the capability for it.
-		if ( current_user_can( 'efml_cap_tools_export' ) ) {
-			/* translators: %1$s will be replaced by a URL. */
-			$description = sprintf( __( 'Manage this setting <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_export' ) );
-			$form       .= '<div><label for="main_export">' . __( 'Main export:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="main_export" id="main_export" value="1"' . ( absint( get_option( 'eml_export_main_source' ) ) === $term_id ? ' checked="checked"' : '' ) . '> ' . $description . '</div>';
-		}
-
-		// -> then the URL, if required.
-		if ( $listing_obj->get_export_object()->is_url_required() ) {
-			$form .= '<div><label for="url">' . __( 'URL:', 'external-files-in-media-library' ) . '</label><input type="url" placeholder="https://example.com" name="url" id="url" value="' . esc_url( $url ) . '">' . __( 'This must be the URL where files uploaded to this external source are available.', 'external-files-in-media-library' ) . '</div>';
-		}
-
-		// -> the term ID.
-		$form .= '<input type="hidden" name="term_id" value="' . $term_id . '">';
-
-		// create the dialog for sync config.
-		$dialog = array(
-			'className' => 'efml efml-export-config',
-			/* translators: %1$s will be replaced by a name. */
-			'title'     => sprintf( __( 'Export settings for %1$s', 'external-files-in-media-library' ), $term->name ),
-			'texts'     => array(
-				'<p><strong>' . __( 'Configure this external source as the destination for files newly added to the media library.', 'external-files-in-media-library' ) . '</strong> ' . __( 'This allows you to use this external directory to store all your files.', 'external-files-in-media-library' ) . '</p>',
-				$form,
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'efml_export_save_config(' . $term_id . ');',
-					'variant' => 'primary',
-					'text'    => __( 'Save', 'external-files-in-media-library' ),
-				),
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'secondary',
-					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		/**
-		 * Filter the dialog to configure an export.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array $dialog The dialog.
-		 * @param int $term_id The term ID.
-		 */
-		$dialog = apply_filters( 'efml_export_config_dialog', $dialog, $term_id );
-
-		// send the dialog.
-		wp_send_json( array( 'detail' => $dialog ) );
-	}
-
-	/**
-	 * Save the export settings.
-	 *
-	 * @return void
-	 */
-	public function save_export_config_via_ajax(): void {
-		// check nonce.
-		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
-
-		// create the dialog for any failures.
-		$dialog = array(
-			'className' => 'efml',
-			'title'     => __( 'Configuration could not be saved', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p><strong>' . __( 'The export configuration for this target could not be saved.', 'external-files-in-media-library' ) . '</strong></p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// get term ID from request.
-		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// bail if no term ID is given.
-		if ( 0 === $term_id ) {
-			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get the listings object.
-		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
-
-		// bail if no object could be found.
-		if ( ! $listing_obj instanceof Service_Base ) {
-			$dialog['texts'][] = '<p><strong>' . __( 'Export to this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// bail if no object could be found.
-		if ( ! $listing_obj->get_export_object() instanceof Export_Base ) {
-			/* translators: %1$s will be replaced by a title. */
-			$dialog['texts'][] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get the URL, if required.
-		if ( $listing_obj->get_export_object()->is_url_required() ) {
-			$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_URL );
-
-			// bail if URL is not given.
-			if ( empty( $url ) ) {
-				$dialog['texts'][] = '<p>' . __( 'No URL specified.', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// bail if given URL is not valid.
-			if ( ! wp_http_validate_url( $url ) ) {
-				$dialog['texts'][] = '<p>' . __( 'Given URL cannot be used.', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// send a test request to this URL.
-			$response = wp_safe_remote_head( $url );
-
-			// bail on any error.
-			if ( is_wp_error( $response ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'Given URL could not be reached! Error:', 'external-files-in-media-library' ) . '<em>' . wp_json_encode( $response ) . '</em>', $url, 'error' );
-
-				// configure the dialog and return it.
-				$dialog['texts'][] = '<p>' . __( 'Given URL could not be reached!', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// get the HTTP status for this URL.
-			$response_code = wp_remote_retrieve_response_code( $response );
-
-			// check the HTTP status, should be 200, 403 or 404.
-			$result = in_array( $response_code, array( 200, 403, 404 ), true );
-
-			/**
-			 * Filter the possible HTTP states for export URLs during export configuration.
-			 *
-			 * @since 5.0.0 Available since 5.0.0.
-			 *
-			 * @param bool   $result The check result.
-			 * @param string $url    The given URL.
-			 */
-			if ( ! apply_filters( 'efml_export_configuration_url_state', $result, $url ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'Given URL is returning a not allowed HTTP state:', 'external-files-in-media-library' ) . ' <code>' . $response_code . '</code>', $url, 'info' );
-
-				// configure the dialog and return it.
-				$dialog['texts'][] = '<p>' . __( 'Given URL is returning a not allowed HTTP state!', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// save URL.
-			update_term_meta( $term_id, 'efml_export_url', $url );
-		}
-
-		// get the state.
-		$enabled = absint( filter_input( INPUT_POST, 'enable', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// enable the export state for this term.
-		$this->set_state_for_term( $term_id, $enabled );
-
-		// get the "main_export" marker.
-		$main_export = absint( filter_input( INPUT_POST, 'main_export', FILTER_SANITIZE_NUMBER_INT ) );
-
-		// if this export is enabled, and the main export is set, set this export as main export.
-		if ( 1 === $enabled && 1 === $main_export ) {
-			update_option( 'eml_export_main_source', $term_id );
-		}
-
-		// create the dialog.
-		$dialog = array(
-			'className' => 'efml efml-export-config',
-			'title'     => __( 'Configuration saved', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p><strong>' . __( 'The configuration has been saved successfully.', 'external-files-in-media-library' ) . '</strong></p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'location.reload();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// show hint if enabled.
-		if ( $enabled ) {
-			$dialog['texts'][] = '<p>' . __( 'As soon as you upload new files to your media library, they will be stored in this external storage.', 'external-files-in-media-library' ) . '</p>';
-		}
-
-		/**
-		 * Filter the dialog after saving an updated export configuration.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array $dialog The dialog.
-		 * @param int $term_id The term ID.
-		 */
-		$dialog = apply_filters( 'efml_export_save_config_dialog', $dialog, $term_id );
-
-		// send the dialog.
-		wp_send_json( array( 'detail' => $dialog ) );
 	}
 
 	/**
@@ -1002,6 +730,22 @@ class Export extends Tools_Base {
 			return false;
 		}
 
+		$false = false;
+		/**
+		 * Filter whether the given file should be exported.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $false True for prevent the export.
+		 * @param File $external_file_obj The external file object to use.
+		 */
+		if ( apply_filters( 'efml_prevent_export', $false, $external_file_obj ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Export of file has been prevented.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+			// do nothing more.
+			return false;
+		}
+
 		// get the file name.
 		$file = get_attached_file( $attachment_id, true );
 
@@ -1065,6 +809,24 @@ class Export extends Tools_Base {
 
 			// bail if no object could be found.
 			if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+				continue;
+			}
+
+			$false = false;
+			/**
+			 * Filter whether the given file should be exported.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param bool $false True for prevent the export.
+			 * @param File $external_file_obj The external file object to use.
+			 * @param int $term_id The ID of the external source.
+			 */
+			if ( apply_filters( 'efml_prevent_export_on_service', $false, $external_file_obj, $term_id ) ) {
+				// log this event.
+				/* translators: %1$s will be replaced by a title. */
+				Log::get_instance()->create( sprintf( __( 'Export of file via %1$s has been prevented.', 'external-files-in-media-library' ), $term_name ), $external_file_obj->get_url( true ), 'info', 2 );
+
+				// do nothing more.
 				continue;
 			}
 
@@ -1424,7 +1186,7 @@ class Export extends Tools_Base {
 	 *
 	 * @return object|false
 	 */
-	private function get_service_object_by_type( string $type ): object|false {
+	public function get_service_object_by_type( string $type ): object|false {
 		// get the listing object by this name.
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
@@ -2129,7 +1891,7 @@ class Export extends Tools_Base {
 			/* translators: %1$s will be replaced by the file name. */
 			'title'     => sprintf( __( 'Export %1$s as JSON', 'external-files-in-media-library' ), $term->name ),
 			'texts'     => array(
-				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project, which is using the plugin "External Files in Media Library".', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'You will receive a JSON file that you can use to import this external source into another project that uses the “External Files in Media Library” plugin.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'The file may also contain access data. Keep it safe.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
 			'buttons'   => array(
@@ -2179,7 +1941,7 @@ class Export extends Tools_Base {
 	}
 
 	/**
-	 * Return whether export is enabled on the actual single site.
+	 * Return whether export is enabled on the actual single website.
 	 *
 	 * @return bool
 	 */
@@ -2240,5 +2002,41 @@ class Export extends Tools_Base {
 	public function disable(): void {
 		update_option( 'eml_export', 0 );
 		parent::disable();
+	}
+
+	/**
+	 * Return the "not supported" hint for table-view.
+	 *
+	 * @param object|false $listing_obj The used service object.
+	 *
+	 * @return string
+	 */
+	private function get_not_supported_hint( object|false $listing_obj ): string {
+		// create the dialog for sync now.
+		$dialog = array(
+			'className' => 'efml',
+			'title'     => __( 'Export is not supported', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
+				/* translators: %1$s will be replaced by a URL. */
+				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// show a specific hint.
+		if ( $listing_obj instanceof Service_Base ) {
+			/* translators: %1$s will be replaced by a title. */
+			$dialog['texts'][0] = '<p><strong>' . sprintf( __( 'Export to %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</strong></p>';
+		}
+
+		// return the resulting link.
+		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
 	}
 }

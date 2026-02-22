@@ -128,10 +128,13 @@ class Extensions {
 	 *
 	 * @return array<int,string>
 	 */
-	private function get_extensions(): array {
+	public function get_extensions(): array {
 		$list = array(
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Availability',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Dates',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Email',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_File_Type',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_Size',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Import_Export',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Jobs',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',
@@ -140,6 +143,8 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Revert',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_File_Type',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_Size',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Zip',
 		);
 
@@ -150,28 +155,6 @@ class Extensions {
 		 * @param array<int,string> $list List of extensions.
 		 */
 		return apply_filters( 'efml_extensions', $list );
-	}
-
-	/**
-	 * Return list of names of the default extensions.
-	 *
-	 * @return array<int,string>
-	 */
-	public function get_default_extensions(): array {
-		$list = array(
-			'availability',
-			'dates',
-			'queue',
-			'real_import',
-		);
-
-		/**
-		 * Filter the list of default extensions.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array<int,string> $list List of names of the default extensions.
-		 */
-		return apply_filters( 'efml_extensions_default', $list );
 	}
 
 	/**

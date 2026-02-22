@@ -10,10 +10,12 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
@@ -236,7 +238,8 @@ class Update {
 
 		// set new options.
 		update_option( 'eml_user_settings', 1 );
-		update_option( 'eml_import_extensions', Extensions::get_instance()->get_default_extensions() );
+		update_option( 'eml_import_extensions', ImportDialog::get_instance()->get_default_extensions() );
+		update_option( 'eml_export_extensions', ExportDialog::get_instance()->get_default_extensions() );
 
 		// migrate the image proxy setting.
 		update_option( 'eml_images_proxy', get_option( 'eml_proxy' ) );

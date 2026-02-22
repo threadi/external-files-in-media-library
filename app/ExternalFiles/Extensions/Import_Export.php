@@ -24,7 +24,7 @@ use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
- * Handler controls how to import external files with their original dates.
+ * Handler controls the option to import/export the settings of external files.
  */
 class Import_Export extends Extension_Base {
 	/**
@@ -33,6 +33,13 @@ class Import_Export extends Extension_Base {
 	 * @var string
 	 */
 	protected string $name = 'import_export';
+
+	/**
+	 * The extension types.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $extension_types = array( 'import_dialog' );
 
 	/**
 	 * Instance of actual object.

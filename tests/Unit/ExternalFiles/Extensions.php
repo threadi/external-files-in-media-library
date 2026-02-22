@@ -26,17 +26,6 @@ class Extensions extends externalFilesTests {
 	}
 
 	/**
-	 * Test if value is an array and is not empty.
-	 *
-	 * @return void
-	 */
-	public function test_get_default_extensions(): void {
-		$default_extensions = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions::get_instance()->get_default_extensions();
-		$this->assertIsArray( $default_extensions );
-		$this->assertNotEmpty( $default_extensions );
-	}
-
-	/**
 	 * Return the list of extensions as list of objects.
 	 *
 	 * @return iterable
@@ -60,8 +49,9 @@ class Extensions extends externalFilesTests {
 		$this->assertInstanceOf( '\ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base', $obj );
 		$this->assertIsString( $obj->get_name() );
 		$this->assertIsString( $obj->get_title() );
-		$this->assertIsBool( $obj->hide() );
 		$this->assertIsArray( $obj->get_capability_default() );
 		$this->assertIsString( $obj->get_capability_description() );
+		$this->assertIsArray( $obj->get_types() );
+		$this->assertNotEmpty( $obj->get_types() );
 	}
 }
