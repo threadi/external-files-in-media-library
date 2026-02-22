@@ -142,6 +142,8 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Revert',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Show_What_Will_Be_Done',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_File_Type',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_Size',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Zip',
 		);
 

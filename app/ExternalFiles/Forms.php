@@ -66,6 +66,7 @@ class Forms {
 		// initialize the dialogs.
 		ImportDialog::get_instance()->init();
 		ExportDialog::get_instance()->init();
+		SynchronizationDialog::get_instance()->init();
 
 		// add forms.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );

@@ -1,6 +1,6 @@
 <?php
 /**
- * File to handle the dialog, which configures an export for a single external source.
+ * File to handle the dialog, which configures the export for a single external source.
  *
  * @package external-files-in-media-library
  */
@@ -8,16 +8,16 @@
 namespace ExternalFilesInMediaLibrary\ExternalFiles;
 
 // prevent direct access.
+defined( 'ABSPATH' ) || exit;
+
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use WP_Term;
 
-defined( 'ABSPATH' ) || exit;
-
 /**
- * Object to handle the dialog, which configures an export for a single external source
+ * Object to handle the dialog, which configures the export for a single external source
  */
 class ExportDialog {
 	/**
@@ -58,8 +58,8 @@ class ExportDialog {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'wp_ajax_efml_get_export_config_dialog', array( $this, 'get_export_config_dialog' ) );
-		add_action( 'wp_ajax_efml_save_export_config', array( $this, 'save_export_config_via_ajax' ) );
+		add_action( 'wp_ajax_efml_get_export_config_dialog', array( $this, 'get_dialog' ) );
+		add_action( 'wp_ajax_efml_save_export_config', array( $this, 'save_via_ajax' ) );
 	}
 
 	/**
@@ -86,10 +86,7 @@ class ExportDialog {
 	 * @return array<int,string>
 	 */
 	public function get_default_extensions(): array {
-		$list = array(
-			'export_by_file_type',
-			'export_by_size',
-		);
+		$list = array();
 
 		/**
 		 * Filter the list of default extensions.
@@ -105,7 +102,7 @@ class ExportDialog {
 	 *
 	 * @return void
 	 */
-	public function get_export_config_dialog(): void {
+	public function get_dialog(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-export-config-nonce', 'nonce' );
 
@@ -225,7 +222,7 @@ class ExportDialog {
 	 *
 	 * @return void
 	 */
-	public function save_export_config_via_ajax(): void {
+	public function save_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
 

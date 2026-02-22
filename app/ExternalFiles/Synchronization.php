@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
+use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
@@ -21,6 +22,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
@@ -79,7 +81,7 @@ class Synchronization extends Tools_Base {
 		// add setting.
 		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
-		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 2 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 
 		// bail if synchronization support is not enabled or user is not allowed to use it.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
@@ -102,7 +104,6 @@ class Synchronization extends Tools_Base {
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_get_sync_info', array( $this, 'sync_info' ), 10, 0 );
 		add_action( 'wp_ajax_efml_change_sync_state', array( $this, 'sync_state_change_via_ajax' ) );
-		add_action( 'wp_ajax_efml_sync_save_config', array( $this, 'save_config_via_ajax' ) );
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_synced_files', array( $this, 'delete_synced_file_via_request' ) );
@@ -156,6 +157,28 @@ class Synchronization extends Tools_Base {
 				'type'        => 'Checkbox',
 			)
 		);
+
+		// get the available extensions for import.
+		$extensions = array();
+		foreach ( Extensions::get_instance()->get_extensions_as_objects() as $extension_obj ) {
+			if ( 'sync_dialog' !== $extension_obj->get_type() ) {
+				continue;
+			}
+			$extensions[ $extension_obj->get_name() ] = $extension_obj->get_title();
+		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_sync_extensions' );
+		$setting->set_section( $sync_settings_section );
+		$setting->set_type( 'array' );
+		$setting->set_default( SynchronizationDialog::get_instance()->get_default_extensions() );
+		$field = new MultiSelect();
+		$field->set_title( __( 'Options for synchronization', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Select the options you want to have available in your configuration dialog for each synchronization. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
+		$field->set_options( $extensions );
+		$field->add_depend( $sync_settings_setting, 1 );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting to enable automatic sync for every new external directory.
 		$setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
@@ -254,12 +277,15 @@ class Synchronization extends Tools_Base {
 			'efmlJsSyncVars',
 			array(
 				'ajax_url'               => admin_url( 'admin-ajax.php' ),
-				'sync_nonce'             => wp_create_nonce( 'eml-sync-nonce' ),
-				'get_info_sync_nonce'    => wp_create_nonce( 'eml-sync-info_nonce' ),
-				'sync_state_nonce'       => wp_create_nonce( 'eml-sync-state-nonce' ),
-				'sync_save_config_nonce' => wp_create_nonce( 'eml-sync-save-config-nonce' ),
+				'sync_nonce'             => wp_create_nonce( 'efml-sync-nonce' ),
+				'sync_config_nonce'    => wp_create_nonce( 'efml-sync-config-nonce' ),
+				'get_info_sync_nonce'    => wp_create_nonce( 'efml-sync-info-nonce' ),
+				'sync_state_nonce'       => wp_create_nonce( 'efml-sync-state-nonce' ),
+				'sync_save_config_nonce' => wp_create_nonce( 'efml-sync-save-config-nonce' ),
 				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
 				'info_timeout'           => $info_timeout,
+				'title_loading'                       => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'                        => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -391,15 +417,24 @@ class Synchronization extends Tools_Base {
 	/**
 	 * Show hint to enable sync.
 	 *
-	 * @param string $content The column content.
+	 * @param string $content     The column content.
 	 * @param string $column_name The column name.
+	 * @param int    $term_id The term ID.
 	 *
 	 * @return string
 	 */
-	public function add_column_hint_content( string $content, string $column_name ): string {
+	public function add_column_hint_content( string $content, string $column_name, int $term_id ): string {
 		// bail if column is not 'efml_sync_hint'.
 		if ( 'efml_sync_hint' !== $column_name ) {
 			return $content;
+		}
+
+		// get the listings object.
+		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if no object could be found.
+		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) {
+			return $this->get_not_supported_hint( $listing_obj );
 		}
 
 		// show a simple hint for users without capability to change settings.
@@ -449,36 +484,10 @@ class Synchronization extends Tools_Base {
 		// get the listing object by this name.
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
-		// bail if no object could be found.
-		if ( ! $listing_obj ) {
-			return $content;
-		}
-
 		// bail if object does not allow sync.
-		if ( method_exists( $listing_obj, 'is_sync_disabled' ) && $listing_obj->is_sync_disabled() ) {
-			// create the dialog for sync now.
-			$dialog = array(
-				'className' => 'efml',
-				'title'     => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
-				'texts'     => array(
-					/* translators: %1$s will be replaced by a title. */
-					'<p>' . sprintf( __( 'Synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
-					/* translators: %1$s will be replaced by a URL. */
-					'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
-				),
-				'buttons'   => array(
-					array(
-						'action'  => 'closeDialog();',
-						'variant' => 'primary',
-						'text'    => __( 'OK', 'external-files-in-media-library' ),
-					),
-				),
-			);
-			return '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></a>';
+		if ( ! $listing_obj instanceof Service_Base || ! method_exists( $listing_obj, 'is_sync_disabled' ) || $listing_obj->is_sync_disabled() ) {
+			return $this->get_not_supported_hint( $listing_obj );
 		}
-
-		// get the sync schedule object for this term_id.
-		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
 
 		// create the dialog for sync now.
 		$dialog_sync_now = array(
@@ -503,73 +512,14 @@ class Synchronization extends Tools_Base {
 			),
 		);
 
-		// get actual interval.
-		$term_interval = $sync_schedule_obj ? $sync_schedule_obj->get_interval() : get_term_meta( $term_id, 'interval', true );
-		if ( empty( $term_interval ) ) {
-			$term_interval = get_option( 'eml_sync_interval' );
-		}
-
-		// create the interval field.
-		$form = '<div><label for="interval">' . __( 'Choose an interval:', 'external-files-in-media-library' ) . '</label><select id="interval">';
-		foreach ( Helper::get_intervals() as $name => $label ) {
-			// bail if this is the disabled entry.
-			if ( 'eml_disable_check' === $name ) {
-				continue;
-			}
-
-			// add the entry.
-			$form .= '<option value="' . $name . '"' . ( $term_interval === $name ? ' selected' : '' ) . '>' . $label . '</option>';
-		}
-		$form .= '</select><input type="hidden" id="term_id" value="' . absint( $term_id ) . '"></div>';
-
-		/**
-		 * Filter the form to configure this external directory.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param string $form The form HTML-code.
-		 * @param int $term_id The term ID.
-		 */
-		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
-
-		// get actual email.
-		$email = get_term_meta( $term_id, 'email', true );
-
-		// add option to send email after the end of each sync.
-		$form .= '<div><label for="email">' . __( 'Send email after sync to:', 'external-files-in-media-library' ) . '</label><input type="email" id="email" name="email" value="' . esc_attr( $email ) . '" placeholder="info@example.com"></div>';
-
-		// add privacy hint, if it is not disabled.
-		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
-			$form .= '<div><label for="privacy"><input type="checkbox" id="privacy" name="privacy" value="1" required> <strong>' . __( 'I confirm that I will respect the copyrights of these external files.', 'external-files-in-media-library' ) . '</strong></label></div>';
-		}
-
-		// create the dialog for sync config.
-		$dialog_sync_config = array(
-			'className' => 'efml efml-sync-config',
-			/* translators: %1$s will be replaced by a name. */
-			'title'     => sprintf( __( 'Settings for this %1$s connection', 'external-files-in-media-library' ), $listing_obj->get_label() ),
-			'texts'     => array(
-				'<p><strong>' . __( 'Configure an interval, which will be used to automatically synchronize this external source with your media library.', 'external-files-in-media-library' ) . '</strong></p>',
-				$form,
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'efml_sync_save_config("' . $listing_obj->get_name() . '", ' . $term_id . ');',
-					'variant' => 'primary',
-					'text'    => __( 'Save', 'external-files-in-media-library' ),
-				),
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'secondary',
-					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
-				),
-			),
-		);
+		// get the sync schedule object for this term_id.
+		$sync_schedule_obj = Synchronization::get_instance()->get_schedule_by_term_id( $term_id );
 
 		// define actions.
 		$actions = array(
 			'<div class="eml-switch-toggle"><input id="state-on-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id ) . '" value="1" type="radio"' . ( $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-on-' . absint( $term_id ) . '" class="green">' . __( 'On', 'external-files-in-media-library' ) . '</label><input id="state-off-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id ) . '" value="0"' . ( ! $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-off-' . absint( $term_id ) . '" class="red">' . __( 'Off', 'external-files-in-media-library' ) . '</label></div>',
 			'<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog_sync_now ) ) . '">' . __( 'Now', 'external-files-in-media-library' ) . '</a>',
-			'<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog_sync_config ) ) . '">' . __( 'Configure', 'external-files-in-media-library' ) . '</a>',
+			'<span class="button button-secondary efml-sync" data-term-id="' . absint( $term_id ) . '">' . __( 'Configure', 'external-files-in-media-library' ) . '</a>',
 		);
 
 		// return the actions.
@@ -586,6 +536,22 @@ class Synchronization extends Tools_Base {
 	 * @return void
 	 */
 	public function sync( string $url, array $term_data, int $term_id ): void {
+		$false = false;
+		/**
+		 * Filter whether the given URL should be synchronized.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param bool $false True for prevent the synchronization.
+		 * @param string $url The URL to synchronize.
+		 */
+		if ( apply_filters( 'efml_prevent_sync', $false, $url ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Synchronization of file has been prevented.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+			// do nothing more.
+			return;
+		}
+
 		// remove the update marker on all existing synced files for this URL.
 		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
 			delete_post_meta( $post_id, 'eml_synced' );
@@ -735,7 +701,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function sync_via_ajax(): void {
 		// check nonce.
-		check_ajax_referer( 'eml-sync-nonce', 'nonce' );
+		check_ajax_referer( 'efml-sync-nonce', 'nonce' );
 
 		// get log object.
 		$log = Log::get_instance();
@@ -806,7 +772,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function sync_info(): void {
 		// check nonce.
-		check_ajax_referer( 'eml-sync-info_nonce', 'nonce' );
+		check_ajax_referer( 'efml-sync-info-nonce', 'nonce' );
 
 		// get the running marker.
 		$running = absint( get_option( 'eml_sync_running', 0 ) );
@@ -1440,7 +1406,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function sync_state_change_via_ajax(): void {
 		// check nonce.
-		check_ajax_referer( 'eml-sync-state-nonce', 'nonce' );
+		check_ajax_referer( 'efml-sync-state-nonce', 'nonce' );
 
 		// get term ID.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
@@ -1458,106 +1424,6 @@ class Synchronization extends Tools_Base {
 
 		// send ok.
 		wp_send_json_success();
-	}
-
-	/**
-	 * Save new configuration for single synchronization schedule.
-	 *
-	 * @return void
-	 */
-	public function save_config_via_ajax(): void {
-		// check referer.
-		check_ajax_referer( 'eml-sync-save-config-nonce', 'nonce' );
-
-		// create the dialog for failures.
-		$dialog = array(
-			'className' => 'efml',
-			'title'     => __( 'Configuration not saved', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p>' . __( 'The configuration for this synchronization could not be saved.', 'external-files-in-media-library' ) . '</p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'closeDialog();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// get the fields.
-		$fields = isset( $_POST['fields'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['fields'] ) ) : array();
-
-		// bail if interval is not given.
-		if ( empty( $fields['interval'] ) ) {
-			$dialog['texts'][] = '<p>' . __( 'Interval has not been selected.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// bail if term ID is not given.
-		if ( 0 === absint( $fields['term_id'] ) ) {
-			$dialog['texts'][] = '<p>' . __( 'No external source chosen.', 'external-files-in-media-library' ) . '</p>';
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// get the term ID.
-		$term_id = absint( $fields['term_id'] );
-
-		// get the interval.
-		$interval = $fields['interval'];
-
-		// check if the given interval exists.
-		$intervals = wp_get_schedules();
-		if ( empty( $intervals[ $interval ] ) ) {
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// save this interval on the term as setting.
-		update_term_meta( $term_id, 'interval', $interval );
-
-		// save the given email.
-		update_term_meta( $term_id, 'email', $fields['email'] );
-
-		/**
-		 * Run additional tasks during saving a new sync configuration.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array $fields List of fields.
-		 */
-		do_action( 'efml_sync_save_config', $fields );
-
-		// create the dialog.
-		$dialog = array(
-			'className' => 'efml',
-			'title'     => __( 'Configuration saved', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p>' . __( 'The new configuration for this synchronization has been saved.', 'external-files-in-media-library' ) . '</p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'location.reload();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
-		);
-
-		// get the sync schedule object for this term_id.
-		$sync_schedule_obj = $this->get_schedule_by_term_id( $term_id );
-
-		// bail if no schedule found, but also send OK back.
-		if ( ! $sync_schedule_obj instanceof Schedules\Synchronization ) {
-			wp_send_json( array( 'detail' => $dialog ) );
-		}
-
-		// set the new interval.
-		$sync_schedule_obj->set_interval( $interval );
-
-		// re-install schedule.
-		$sync_schedule_obj->reset();
-
-		// send ok.
-		wp_send_json( array( 'detail' => $dialog ) );
 	}
 
 	/**
@@ -1949,5 +1815,34 @@ class Synchronization extends Tools_Base {
 
 		// forward user.
 		wp_safe_redirect( (string) wp_get_referer() );
+	}
+
+	/**
+	 * Return the "not supported" hint for table-view.
+	 *
+	 * @param object|false $listing_obj The used service object.
+	 *
+	 * @return string
+	 */
+	private function get_not_supported_hint( object|false $listing_obj ): string {
+		// create the dialog for sync now.
+		$dialog = array(
+			'className' => 'efml',
+			'title'     => __( 'Synchronisation not supported', 'external-files-in-media-library' ),
+			'texts'     => array(
+				/* translators: %1$s will be replaced by a title. */
+				'<p>' . sprintf( __( 'Synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+				/* translators: %1$s will be replaced by a URL. */
+				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
 	}
 }

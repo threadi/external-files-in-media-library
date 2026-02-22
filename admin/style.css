@@ -96,11 +96,14 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 	font-weight: 600;
 }
 
-.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text select, .easy-dialog-for-wordpress-text #youtube_channel_id {
+.efml .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text input[type="url"], .efml-export-config .easy-dialog-for-wordpress-text select, .easy-dialog-for-wordpress-text #youtube_channel_id,
+.efml-sync-config .easy-dialog-for-wordpress-text input[type="email"], .efml-sync-config select {
 	display: block;
 	margin-bottom: 0.5em;
 	width: 100%;
 }
+
+.efml-sync-config .easy-dialog-for-wordpress-text input[type="email"], .efml-sync-config select { width: 400px }
 
 .efml .easy-dialog-for-wordpress-text textarea {
 	display: block;

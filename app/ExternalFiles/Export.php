@@ -184,6 +184,7 @@ class Export extends Tools_Base {
 		$field->set_title( __( 'Options for export', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your export dialog. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
+		$field->add_depend( $setting_export, 1 );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -563,6 +564,8 @@ class Export extends Tools_Base {
 				'export_config_nonce'      => wp_create_nonce( 'efml-export-config-nonce' ),
 				'save_export_config_nonce' => wp_create_nonce( 'efml-export-save-config-nonce' ),
 				'export_state_nonce'       => wp_create_nonce( 'efml-export-state-nonce' ),
+				'title_loading'                       => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'                        => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
 	}
