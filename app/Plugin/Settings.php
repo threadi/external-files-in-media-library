@@ -620,6 +620,49 @@ class Settings {
 		$field->add_class( 'easy-dialog-for-wordpress' );
 		$setting->set_field( $field );
 
+		// create reset URL.
+		$download_url = add_query_arg(
+			array(
+				'action' => 'efml_download_key',
+				'nonce'  => wp_create_nonce( 'efml-download-key' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// create the dialog.
+		$download_dialog = array(
+			'title'   => __( 'Download installation key', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Do you real want to download the installation key?', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'The installation key is used to encrypt the plugins data. Without it, you would no longer be able to access this encrypted content.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Keep this file in a safe place.', 'personio-integration' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'location.href="' . $download_url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, download it', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'efmlDownloadKey' );
+		$setting->set_section( $advanced_plugin );
+		$setting->prevent_export( true );
+		$field = new Button();
+		$field->set_title( __( 'Download installation key', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Download key', 'external-files-in-media-library' ) );
+		$field->set_button_url( $download_url );
+		$field->add_data( 'dialog', Helper::get_json( $download_dialog ) );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$setting->set_field( $field );
+
 		// create a hidden page for hidden settings.
 		$hidden_page = $settings_obj->add_page( 'hidden_page' );
 

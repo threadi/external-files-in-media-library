@@ -351,7 +351,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if file could not be imported as real file.
-		if( ! $this->can_be_imported( $external_file_obj ) ) {
+		if ( ! $this->can_be_imported( $external_file_obj ) ) {
 			return;
 		}
 
@@ -409,7 +409,7 @@ class Real_Import extends Extension_Base {
 	 */
 	private function import_local( File $external_file_obj ): bool {
 		// bail if this file cannot be imported.
-		if( ! $this->can_be_imported( $external_file_obj ) ) {
+		if ( ! $this->can_be_imported( $external_file_obj ) ) {
 			return false;
 		}
 
@@ -746,7 +746,7 @@ class Real_Import extends Extension_Base {
 		$external_file_obj = Files::get_instance()->get_file( $post->ID );
 
 		// bail if file cannot be imported.
-		if( ! $this->can_be_imported( $external_file_obj ) ) {
+		if ( ! $this->can_be_imported( $external_file_obj ) ) {
 			return $actions;
 		}
 
