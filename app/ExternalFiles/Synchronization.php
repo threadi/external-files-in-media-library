@@ -103,6 +103,8 @@ class Synchronization extends Tools_Base {
 		// add AJAX endpoints.
 		add_action( 'wp_ajax_efml_sync_from_directory', array( $this, 'sync_via_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_get_sync_info', array( $this, 'sync_info' ), 10, 0 );
+		add_action( 'wp_ajax_efml_delete_synced_from_directory', array( $this, 'delete_synced_via_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_efml_get_delete_synced_info', array( $this, 'delete_synced_info' ), 10, 0 );
 		add_action( 'wp_ajax_efml_change_sync_state', array( $this, 'sync_state_change_via_ajax' ) );
 
 		// add admin actions.
@@ -114,7 +116,7 @@ class Synchronization extends Tools_Base {
 		add_filter( 'admin_body_class', array( $this, 'add_sync_marker_on_edit_page' ) );
 		add_filter( 'media_row_actions', array( $this, 'remove_delete_action' ), 10, 2 );
 		add_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), 10, 2 );
-		add_action( 'pre_delete_term', array( $this, 'delete_synced_files' ), 10, 2 );
+		add_action( 'pre_delete_term', array( $this, 'delete_synced_files_on_term_deletion' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'delete_schedule' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'add_style' ) );
 	}
@@ -265,6 +267,8 @@ class Synchronization extends Tools_Base {
 				'sync_nonce'             => wp_create_nonce( 'efml-sync-nonce' ),
 				'sync_config_nonce'      => wp_create_nonce( 'efml-sync-config-nonce' ),
 				'get_info_sync_nonce'    => wp_create_nonce( 'efml-sync-info-nonce' ),
+				'delete_sync_nonce'             => wp_create_nonce( 'efml-deleted-synced-nonce' ),
+				'get_delete_sync_info_nonce'    => wp_create_nonce( 'efml-deleted-synced-info-nonce' ),
 				'sync_state_nonce'       => wp_create_nonce( 'efml-sync-state-nonce' ),
 				'sync_save_config_nonce' => wp_create_nonce( 'efml-sync-save-config-nonce' ),
 				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
@@ -353,6 +357,17 @@ class Synchronization extends Tools_Base {
 			return '0';
 		}
 
+		// get the type name.
+		$type = get_term_meta( $term_id, 'type', true );
+
+		// get the listing object by this name.
+		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+
+		// bail if listing object could not be loaded.
+		if( ! $listing_obj instanceof Service_Base ) {
+			return '0';
+		}
+
 		// create URL to show the list.
 		$url = add_query_arg(
 			array(
@@ -383,7 +398,7 @@ class Synchronization extends Tools_Base {
 			),
 			'buttons'   => array(
 				array(
-					'action'  => 'location.href="' . $url_delete . '"',
+					'action'  => 'efml_delete_synced_from_directory("' . $listing_obj->get_name() . '", ' . $term_id . ');',
 					'variant' => 'primary',
 					'text'    => __( 'Yes, delete them', 'external-files-in-media-library' ),
 				),
@@ -531,8 +546,11 @@ class Synchronization extends Tools_Base {
 		 * Filter whether the given URL should be synchronized.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
+		 *
 		 * @param bool $false True for prevent the synchronization.
 		 * @param string $url The URL to synchronize.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
 		 */
 		if ( apply_filters( 'efml_prevent_sync', $false, $url ) ) {
 			// log this event.
@@ -780,6 +798,113 @@ class Synchronization extends Tools_Base {
 				absint( get_option( 'eml_sync_url_max', 0 ) ),
 				$running,
 				wp_kses_post( get_option( 'eml_sync_title', '' ) ),
+				$dialog,
+			)
+		);
+	}
+
+	/**
+	 * Call deletion of synced files for specific external source via AJAX request.
+	 *
+	 * @return void
+	 */
+	public function delete_synced_via_ajax(): void {
+		// check nonce.
+		check_ajax_referer( 'efml-deleted-synced-nonce', 'nonce' );
+
+		// get log object.
+		$log = Log::get_instance();
+
+		// get method.
+		$service_name = filter_input( INPUT_POST, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no method is given.
+		if ( is_null( $service_name ) ) {
+			$log->create( __( 'No service given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+			wp_send_json_error();
+		}
+
+		// get the method object by its name.
+		$directory_listing_obj = Services::get_instance()->get_service_by_name( $service_name );
+
+		// bail if no service could be found.
+		if ( ! $directory_listing_obj ) {
+			$log->create( __( 'Requested service is unknown:', 'external-files-in-media-library' ) . ' <code>' . $service_name . '</code>', '', 'error' );
+			wp_send_json_error();
+		}
+
+		// get the requested directory term.
+		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if no term_id is given.
+		if ( $term_id <= 0 ) {
+			$log->create( __( 'No external source given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+			wp_send_json_error();
+		}
+
+		// mark sync as running.
+		update_option( 'eml_delete_synced_files_running', time() );
+
+		// reset counter.
+		update_option( 'eml_delete_synced_files_count', 0 );
+		update_option( 'eml_delete_synced_files_max', 0 );
+
+		// set initial title.
+		update_option( 'eml_delete_synced_files_title', __( 'Deletion of synchronized files starting ...', 'external-files-in-media-library' ) );
+
+		// run the synchronization.
+		$this->delete_synced_files( $term_id );
+
+		// mark sync as not running.
+		delete_option( 'eml_delete_synced_files_running' );
+
+		// send success.
+		wp_send_json_success();
+	}
+
+	/**
+	 * Return info about running sync via AJAX.
+	 *
+	 * @return void
+	 */
+	public function delete_synced_info(): void {
+		// check nonce.
+		check_ajax_referer( 'efml-deleted-synced-info-nonce', 'nonce' );
+
+		// get the running marker.
+		$running = absint( get_option( 'eml_delete_synced_files_running', 0 ) );
+
+		// create the dialog.
+		$dialog = array(
+			'detail' => array(
+				'className' => 'efml',
+				'title'     => __( 'Deletion of synchronized files has been executed', 'external-files-in-media-library' ),
+				'texts'     => array(
+					'<p><strong>' . __( 'The synchronized files of this external source has been deleted from media library.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p>' . __( 'They are still available in the external source and can be reused at any time.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'buttons'   => array(
+					array(
+						'action'  => 'location.reload();',
+						'variant' => 'primary',
+						'text'    => __( 'OK', 'external-files-in-media-library' ),
+					),
+					array(
+						'action'  => 'location.href="' . Helper::get_media_library_url() . '";',
+						'variant' => 'secondary',
+						'text'    => __( 'Go to media library', 'external-files-in-media-library' ),
+					),
+				),
+			),
+		);
+
+		// return sync info.
+		wp_send_json(
+			array(
+				absint( get_option( 'eml_delete_synced_files_count', 0 ) ),
+				absint( get_option( 'eml_delete_synced_files_max', 0 ) ),
+				$running,
+				wp_kses_post( get_option( 'eml_delete_synced_files_title', '' ) ),
 				$dialog,
 			)
 		);
@@ -1063,7 +1188,7 @@ class Synchronization extends Tools_Base {
 	 *
 	 * @return void
 	 */
-	public function delete_synced_files( int $term_id, string $taxonomy ): void {
+	public function delete_synced_files_on_term_deletion( int $term_id, string $taxonomy ): void {
 		// bail if this is not our archive taxonomy.
 		if ( Taxonomy::get_instance()->get_name() !== $taxonomy ) {
 			return;
@@ -1101,14 +1226,30 @@ class Synchronization extends Tools_Base {
 			return;
 		}
 
+		// delete them.
+		$this->delete_synced_files( $term_id );
+	}
+
+	/**
+	 * Delete the synced files of a given term.
+	 *
+	 * @param int $term_id The term ID.
+	 *
+	 * @return void
+	 */
+	private function delete_synced_files( int $term_id ): void {
 		// remove the prevent-deletion for this moment.
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
-		// get the URL.
-		$url = $listing_obj->get_url( (string) get_term_meta( $term_id, 'path', true ) );
-
 		// remove all synced files from this URL.
-		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
+		foreach ( $this->get_synced_files_by_term( $term_id ) as $post_id ) {
+			// get the file name.
+			$file_name = get_post_field( 'post_name', $post_id );
+
+			// update the title in AJAX progress modal.
+			update_option( 'eml_delete_synced_files_title', sprintf( __( 'Deletion of synchronized file %1$s ...', 'external-files-in-media-library' ), $file_name ) ) ;
+
+			// delete the file.
 			wp_delete_attachment( $post_id, true );
 		}
 	}
@@ -1423,21 +1564,8 @@ class Synchronization extends Tools_Base {
 			wp_safe_redirect( $referer );
 		}
 
-		// get all files, which are assigned to this term.
-		$files = $this->get_synced_files_by_term( $term_id );
-
-		// bail if no files could be found.
-		if ( empty( $files ) ) {
-			wp_safe_redirect( $referer );
-		}
-
-		// remove the prevent-deletion for this moment.
-		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
-
-		// loop through the files and delete them.
-		foreach ( $files as $post_id ) {
-			wp_delete_attachment( $post_id, true );
-		}
+		// delete them.
+		$this->delete_synced_files( $term_id );
 
 		// return the user.
 		wp_safe_redirect( $referer );

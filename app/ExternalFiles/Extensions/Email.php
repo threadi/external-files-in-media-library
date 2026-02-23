@@ -233,6 +233,11 @@ class Email extends Extension_Base {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function send_mail_after_sync( string $url, array $term_data, int $term_id ): void {
+		// bail if the extension is not enabled for it.
+		if( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// get the to-email from settings.
 		$to = get_term_meta( $term_id, 'email', true );
 

@@ -163,6 +163,11 @@ class Real_Import extends Extension_Base {
 			exit;
 		}
 
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $result;
+		}
+
 		// get value from request.
 		$real_import = isset( $_POST['real_import'] ) ? absint( $_POST['real_import'] ) : -1;
 
@@ -189,6 +194,11 @@ class Real_Import extends Extension_Base {
 		// check nonce.
 		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;
+		}
+
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $post_array;
 		}
 
 		// get value from request.
@@ -292,6 +302,11 @@ class Real_Import extends Extension_Base {
 			exit;
 		}
 
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $options;
+		}
+
 		// bail if our option is not set.
 		if ( ! isset( $_POST['real_import'] ) ) {
 			return $options;
@@ -300,6 +315,7 @@ class Real_Import extends Extension_Base {
 		// add the option to the list.
 		$options['real_import'] = absint( $_POST['real_import'] );
 
+		// return the resulting options.
 		return $options;
 	}
 
@@ -656,6 +672,11 @@ class Real_Import extends Extension_Base {
 			exit;
 		}
 
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// bail if settings is not set.
 		if ( ! isset( $_POST['real_import'] ) || 1 !== absint( $_POST['real_import'] ) ) {
 			return;
@@ -678,6 +699,11 @@ class Real_Import extends Extension_Base {
 		// check nonce.
 		if ( isset( $_POST['efml-nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['efml-nonce'] ) ), 'efml-nonce' ) ) {
 			exit;
+		}
+
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $results;
 		}
 
 		// get value from request.
