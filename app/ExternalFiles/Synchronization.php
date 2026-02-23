@@ -474,6 +474,11 @@ class Synchronization extends Tools_Base {
 			return $this->get_not_supported_hint( $listing_obj );
 		}
 
+		// bail if listing object is disabled.
+		if( $listing_obj->is_disabled() ) {
+			return $this->get_not_enabled_hint( $listing_obj );
+		}
+
 		// create the dialog for sync now.
 		$dialog_sync_now = array(
 			'className' => 'efml',
@@ -1792,7 +1797,7 @@ class Synchronization extends Tools_Base {
 	 * @return string
 	 */
 	private function get_not_supported_hint( object|false $listing_obj ): string {
-		// bail if object is not a "Extension_Base".
+		// bail if object is not an "Extension_Base" object.
 		if ( ! $listing_obj instanceof Service_Base ) {
 			return '';
 		}
@@ -1816,5 +1821,38 @@ class Synchronization extends Tools_Base {
 			),
 		);
 		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
+	}
+
+	/**
+	 * Return the "not enabled" hint for table-view.
+	 *
+	 * @param object|false $listing_obj The used service object.
+	 *
+	 * @return string
+	 */
+	private function get_not_enabled_hint( object|false $listing_obj ): string {
+		// bail if object is not an "Extension_Base" object.
+		if ( ! $listing_obj instanceof Service_Base ) {
+			return '';
+		}
+
+		// create the dialog for sync now.
+		$dialog = array(
+			'className' => 'efml',
+			/* translators: %1$s will be replaced by a title. */
+			'title'     => sprintf( __( '%1$s is not enabled', 'external-files-in-media-library' ), $listing_obj->get_label() ),
+			'texts'     => array(
+				/* translators: %1$s will be replaced by a title. */
+				'<p>' . sprintf( __( 'Synchronisation for %1$s cannot be run as the service is not available.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not enabled', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
 	}
 }
