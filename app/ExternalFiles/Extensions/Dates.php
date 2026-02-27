@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 
 /**
@@ -144,6 +145,11 @@ class Dates extends Extension_Base {
 			exit;
 		}
 
+		// bail if this is a running synchronization, and the extension is not enabled for it.
+		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return $post_array;
+		}
+
 		// get value from request.
 		$use_date = isset( $_POST['use_dates'] ) ? absint( $_POST['use_dates'] ) : -1;
 
@@ -163,7 +169,7 @@ class Dates extends Extension_Base {
 		}
 
 		// add the last-modified date.
-		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', $file_data['last-modified'] );
+		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', absint( $file_data['last-modified'] ) );
 
 		// return the resulting array.
 		return $post_array;

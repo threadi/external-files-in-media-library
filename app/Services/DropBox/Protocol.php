@@ -97,6 +97,11 @@ class Protocol extends Protocol_Base {
 		// remove our marker from the URL.
 		$url = str_replace( $dropbox_obj->get_name(), '', strtolower( $this->get_url() ) );
 
+		// set URL for "/" is it is empty (which would not be load anything).
+		if( empty( $url ) ) {
+			$url = '/';
+		}
+
 		// if the URL is only "/", get all files from DropBox.
 		if ( '/' === $url ) {
 			$files_from_dropbox = $client->listFolder( '/', true );

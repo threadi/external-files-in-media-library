@@ -199,3 +199,87 @@ function efml_sync_save_config() {
     }
   });
 }
+
+/**
+* Start deletion of synced entries from given directory.
+*
+* @param method
+* @param term_id
+*/
+function efml_delete_synced_from_directory( method, term_id ) {
+  // send request.
+  jQuery.ajax({
+    url: efmlJsSyncVars.ajax_url,
+    type: 'post',
+    data: {
+      action: 'efml_delete_synced_from_directory',
+      method: method,
+      term: term_id,
+      nonce: efmlJsSyncVars.delete_sync_nonce,
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    beforeSend: function() {
+      // show progress.
+      let dialog_config = {
+        detail: {
+          className: 'eml',
+          title: efmlJsSyncVars.title_sync_progress,
+          progressbar: {
+            active: true,
+            progress: 0,
+            id: 'progress',
+            label_id: 'progress_status'
+          },
+        }
+      }
+      efml_create_dialog( dialog_config );
+
+      // get info about progress.
+      setTimeout(function() { efml_delete_synced_get_info() }, efmlJsSyncVars.info_timeout);
+    }
+  });
+}
+
+/**
+ * Get info about running deletion of synced files.
+ */
+function efml_delete_synced_get_info() {
+  jQuery.ajax( {
+    type: "POST",
+    url: efmlJsSyncVars.ajax_url,
+    data: {
+      'action': 'efml_get_delete_synced_info',
+      'nonce': efmlJsSyncVars.get_delete_sync_info_nonce
+    },
+    error: function( jqXHR, textStatus, errorThrown ) {
+      efml_ajax_error_dialog( errorThrown )
+    },
+    success: function (data) {
+      let count = parseInt( data[0] );
+      let max = parseInt( data[1] );
+      let running = parseInt( data[2] );
+      let status = data[3];
+      let dialog_config = data[4];
+
+      // show progress.
+      jQuery( '#progress' ).attr( 'value', (count / max) * 100 );
+      jQuery( '#progress_status' ).html( status );
+
+      /**
+       * If import is still running, get next info in xy ms.
+       * If import is not running and error occurred, show the error.
+       * If import is not running and no error occurred, show ok-message.
+       */
+      if ( running >= 1 ) {
+        setTimeout( function () {
+          efml_delete_synced_get_info()
+        }, efmlJsSyncVars.info_timeout );
+      }
+      else {
+        efml_create_dialog( dialog_config );
+      }
+    }
+  });
+}
