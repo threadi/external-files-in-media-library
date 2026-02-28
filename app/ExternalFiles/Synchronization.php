@@ -263,18 +263,18 @@ class Synchronization extends Tools_Base {
 			'eml-sync-admin',
 			'efmlJsSyncVars',
 			array(
-				'ajax_url'               => admin_url( 'admin-ajax.php' ),
-				'sync_nonce'             => wp_create_nonce( 'efml-sync-nonce' ),
-				'sync_config_nonce'      => wp_create_nonce( 'efml-sync-config-nonce' ),
-				'get_info_sync_nonce'    => wp_create_nonce( 'efml-sync-info-nonce' ),
-				'delete_sync_nonce'             => wp_create_nonce( 'efml-deleted-synced-nonce' ),
-				'get_delete_sync_info_nonce'    => wp_create_nonce( 'efml-deleted-synced-info-nonce' ),
-				'sync_state_nonce'       => wp_create_nonce( 'efml-sync-state-nonce' ),
-				'sync_save_config_nonce' => wp_create_nonce( 'efml-sync-save-config-nonce' ),
-				'title_sync_progress'    => __( 'Synchronization in progress', 'external-files-in-media-library' ),
-				'info_timeout'           => $info_timeout,
-				'title_loading'          => __( 'Loading ..', 'external-files-in-media-library' ),
-				'text_loading'           => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
+				'ajax_url'                   => admin_url( 'admin-ajax.php' ),
+				'sync_nonce'                 => wp_create_nonce( 'efml-sync-nonce' ),
+				'sync_config_nonce'          => wp_create_nonce( 'efml-sync-config-nonce' ),
+				'get_info_sync_nonce'        => wp_create_nonce( 'efml-sync-info-nonce' ),
+				'delete_sync_nonce'          => wp_create_nonce( 'efml-deleted-synced-nonce' ),
+				'get_delete_sync_info_nonce' => wp_create_nonce( 'efml-deleted-synced-info-nonce' ),
+				'sync_state_nonce'           => wp_create_nonce( 'efml-sync-state-nonce' ),
+				'sync_save_config_nonce'     => wp_create_nonce( 'efml-sync-save-config-nonce' ),
+				'title_sync_progress'        => __( 'Synchronization in progress', 'external-files-in-media-library' ),
+				'info_timeout'               => $info_timeout,
+				'title_loading'              => __( 'Loading ..', 'external-files-in-media-library' ),
+				'text_loading'               => __( 'Please wait for a moment.', 'external-files-in-media-library' ),
 			)
 		);
 	}
@@ -364,7 +364,7 @@ class Synchronization extends Tools_Base {
 		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
 		// bail if listing object could not be loaded.
-		if( ! $listing_obj instanceof Service_Base ) {
+		if ( ! $listing_obj instanceof Service_Base ) {
 			return '0';
 		}
 
@@ -490,7 +490,7 @@ class Synchronization extends Tools_Base {
 		}
 
 		// bail if listing object is disabled.
-		if( $listing_obj->is_disabled() ) {
+		if ( $listing_obj->is_disabled() ) {
 			return $this->get_not_enabled_hint( $listing_obj );
 		}
 
@@ -1237,7 +1237,7 @@ class Synchronization extends Tools_Base {
 	 *
 	 * @return void
 	 */
-	private function delete_synced_files( int $term_id ): void {
+	public function delete_synced_files( int $term_id ): void {
 		// remove the prevent-deletion for this moment.
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
@@ -1246,8 +1246,12 @@ class Synchronization extends Tools_Base {
 			// get the file name.
 			$file_name = get_post_field( 'post_name', $post_id );
 
-			// update the title in AJAX progress modal.
-			update_option( 'eml_delete_synced_files_title', sprintf( __( 'Deletion of synchronized file %1$s ...', 'external-files-in-media-library' ), $file_name ) ) ;
+			// do not update the progress, if "post_name" could not be loaded.
+			if ( is_string( $file_name ) ) {
+				// update the title in AJAX progress modal.
+				/* translators: %1$s will be replaced by a file name. */
+				update_option( 'eml_delete_synced_files_title', sprintf( __( 'Deletion of synchronized file %1$s ...', 'external-files-in-media-library' ), $file_name ) );
+			}
 
 			// delete the file.
 			wp_delete_attachment( $post_id, true );

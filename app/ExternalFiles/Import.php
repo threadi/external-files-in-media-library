@@ -824,4 +824,13 @@ class Import extends Directory_Listing_Base {
 	public function get_permission_name(): string {
 		return 'efml_cap_' . $this->get_name();
 	}
+
+	/**
+	 * Return the default roles, which should be allowed to use this service after install.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_default_roles(): array {
+		return array( 'administrator', 'editor' );
+	}
 }

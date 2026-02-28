@@ -142,7 +142,7 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
-	 * Add settings for AWS S3 support.
+	 * Add settings for ZIP support.
 	 *
 	 * @return void
 	 */

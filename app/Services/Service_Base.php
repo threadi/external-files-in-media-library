@@ -141,7 +141,7 @@ class Service_Base extends Directory_Listing_Base {
 			$field = new Select();
 			$field->set_title( __( 'Location where credentials are stored', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
-			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. The use of files in the media library is not affected.', 'external-files-in-media-library' ), $this->get_label() ) );
+			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. This does not affect files in the media library.', 'external-files-in-media-library' ), $this->get_label() ) );
 			$field->set_options( $this->get_modes() );
 			$setting->set_field( $field );
 		}
@@ -169,6 +169,15 @@ class Service_Base extends Directory_Listing_Base {
 		 * @param Service_Base $instance The service object.
 		 */
 		return apply_filters( 'efml_service_modes', $modes, $instance );
+	}
+
+	/**
+	 * Return the forward URL after activating this as plugin.
+	 *
+	 * @return string
+	 */
+	public function get_forward_url(): string {
+		return Directory_Listing::get_instance()->get_view_directory_url( $this );
 	}
 
 	/**
@@ -470,7 +479,7 @@ class Service_Base extends Directory_Listing_Base {
 	 *
 	 * @return bool
 	 */
-	private function has_credentials(): bool {
+	protected function has_credentials(): bool {
 		// set initial value.
 		$has_credentials = false;
 
@@ -555,5 +564,14 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_permission_name(): string {
 		return 'efml_cap_' . $this->get_name();
+	}
+
+	/**
+	 * Return the default roles, which should be allowed to use this service after install.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_default_roles(): array {
+		return array( 'administrator', 'editor' );
 	}
 }

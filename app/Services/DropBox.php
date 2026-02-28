@@ -1212,7 +1212,7 @@ class DropBox extends Service_Base implements Service {
 	 *
 	 * @return array<string,mixed>|WP_Error
 	 */
-	public function get_real_request_headers( array|WP_Error $response, HTTP $http_object, string $url ): array|WP_Error {
+	public function get_real_request_headers( array|WP_Error $response, Http $http_object, string $url ): array|WP_Error {
 		// bail if URL is not a Dropbox content URL.
 		if ( ! str_contains( $url, 'dropboxusercontent.com' ) ) {
 			return $response;

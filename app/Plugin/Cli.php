@@ -642,7 +642,7 @@ class Cli {
 			$term_id = $result->terms[0]->term_id;
 
 			// delete the synced files of this external source.
-			$sync_obj->delete_synced_files( $term_id, $taxonomy_obj->get_name() );
+			$sync_obj->delete_synced_files( $term_id );
 		}
 
 		// show ok message.

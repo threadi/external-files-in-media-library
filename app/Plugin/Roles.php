@@ -196,7 +196,7 @@ class Roles {
 			$setting = $settings_obj->add_setting( 'eml_service_' . $service_obj->get_name() . '_allowed_roles' );
 			$setting->set_section( $permissions_tab_source );
 			$setting->set_type( 'array' );
-			$setting->set_default( array( 'administrator', 'editor' ) );
+			$setting->set_default( method_exists( $service_obj, 'get_default_roles' ) ? $service_obj->get_default_roles() : array( 'administrator', 'editor' ) );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_service' ) );
 			$field = new MultiSelect();
 			$field->set_title( $service_obj->get_label() );

@@ -219,7 +219,7 @@ class Plugins {
 		}
 
 		// forward user to the service page.
-		wp_safe_redirect( Directory_Listing::get_instance()->get_view_directory_url( $service_obj ) );
+		wp_safe_redirect( $service_obj->get_forward_url() );
 	}
 
 	/**
@@ -662,7 +662,7 @@ class Plugins {
 
 			// set the button as link if service could be loaded.
 			if ( empty( $result ) && $service_obj instanceof Service_Base ) {
-				$buttons[0]['action'] = 'location.href="' . Directory_Listing::get_instance()->get_view_directory_url( $service_obj ) . '"';
+				$buttons[0]['action'] = 'location.href="' . $service_obj->get_forward_url() . '"';
 			}
 
 			// show other text in multisite.

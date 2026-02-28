@@ -108,12 +108,12 @@ class Services {
 			return;
 		}
 
-		// add new tab for services.
+		// add a new tab for services.
 		$tab = $settings_page->add_tab( 'services', 20 );
 		$tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
 		$tab->set_hide_save( true );
 
-		// add tab for hint.
+		// add a tab for the hint.
 		$main_services_tab = $tab->add_tab( 'services', 0 );
 		$main_services_tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
 		$main_services_tab->set_hide_save( true );
