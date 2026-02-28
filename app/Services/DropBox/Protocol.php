@@ -98,7 +98,7 @@ class Protocol extends Protocol_Base {
 		$url = str_replace( $dropbox_obj->get_name(), '', strtolower( $this->get_url() ) );
 
 		// set URL for "/" is it is empty (which would not be load anything).
-		if( empty( $url ) ) {
+		if ( empty( $url ) ) {
 			$url = '/';
 		}
 

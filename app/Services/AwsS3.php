@@ -1,6 +1,6 @@
 <?php
 /**
- * File to add a hint for support of the AWS S3 platform.
+ * File to add a hint for support of the AWS S3-compatible platforms.
  *
  * @package external-files-in-media-library
  */
@@ -8,6 +8,8 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -26,7 +28,7 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	 *
 	 * @var string
 	 */
-	protected string $label = 'AWS S3';
+	protected string $label = 'AWS S3-compatible';
 
 	/**
 	 * Set the configuration for the external source of this service plugin.
@@ -86,7 +88,7 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	 * @return string
 	 */
 	public function get_plugin_label(): string {
-		return __( 'External Files from AWS S3', 'external-files-in-media-library' );
+		return __( 'External Files from AWS S3-compatible platforms', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -96,7 +98,7 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	 */
 	protected function get_install_dialog_description(): array {
 		return array(
-			'<p>' . __( 'It will enable you to use files from AWS S3 in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
+			'<p>' . __( 'It will enable you to use files from AWS S3-compatible platforms in your WordPress, export them there, and synchronize them.<br>This applies, for example, to AWS S3 itself or Cloudflare R2.', 'external-files-in-media-library' ) . '</p>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}

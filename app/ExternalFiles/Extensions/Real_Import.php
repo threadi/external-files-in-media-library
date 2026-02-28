@@ -164,7 +164,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $result;
 		}
 
@@ -197,7 +197,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $post_array;
 		}
 
@@ -303,7 +303,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $options;
 		}
 
@@ -673,7 +673,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return;
 		}
 
@@ -702,7 +702,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $results;
 		}
 
