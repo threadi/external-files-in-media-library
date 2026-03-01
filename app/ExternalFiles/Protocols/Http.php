@@ -67,6 +67,14 @@ class Http extends Protocol_Base {
 	 * @return bool
 	 */
 	public function check_url( string $url ): bool {
+		/**
+		 * Filter the URL before we check it.
+		 *
+		 * @since 5.0.0 Available 5.0.0.
+		 * @param string $url The URL.
+		 */
+		$url = apply_filters( 'efml_check_url_before', $url );
+
 		// given string is not a url.
 		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
 			// log event.
