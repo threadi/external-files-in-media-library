@@ -599,11 +599,11 @@ class Admin {
 		// create the array with the hash key.
 		$content = array();
 		if ( defined( 'EDLFW_HASH' ) ) {
-			$content[] = get_option( EDLFW_HASH );
+			$content[] = EDLFW_HASH;
 		}
 
 		if ( defined( 'EDLFW_SODIUM_HASH' ) ) {
-			$content[] = get_option( EDLFW_SODIUM_HASH );
+			$content[] = EDLFW_SODIUM_HASH;
 		}
 
 		// return the JSON file for the download.
