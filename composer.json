@@ -32,7 +32,7 @@
             "phpstan/extension-installer": true
         },
         "optimize-autoloader": true,
-        "classmap-authoritative": true,
+        "classmap-authoritative": false,
         "apcu-autoloader": true,
         "prepend-autoloader": false,
         "platform-check": false

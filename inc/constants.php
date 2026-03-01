@@ -1,6 +1,6 @@
 <?php
 /**
- * File which holds all constants this plugin is using.
+ * File, which holds all constants this plugin is using.
  *
  * @package external-files-in-media-library
  */
