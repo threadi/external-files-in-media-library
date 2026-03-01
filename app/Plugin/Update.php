@@ -10,16 +10,19 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
-use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_Term_Query;
 
 /**
  * Helper-function for updates of this plugin.
@@ -93,11 +96,21 @@ class Update {
 			if ( ! defined( 'EFML_UPDATE_RUNNING ' ) ) {
 				define( 'EFML_UPDATE_RUNNING', 1 );
 			}
-			$this->version200();
-			$this->version201();
-			$this->version300();
-			$this->version400();
-			$this->version500();
+			if ( version_compare( $db_plugin_version, '2.0.0', '<' ) ) {
+				$this->version200();
+			}
+			if ( version_compare( $db_plugin_version, '2.0.1', '<' ) ) {
+				$this->version201();
+			}
+			if ( version_compare( $db_plugin_version, '3.0.0', '<' ) ) {
+				$this->version300();
+			}
+			if ( version_compare( $db_plugin_version, '4.0.0', '<' ) ) {
+				$this->version400();
+			}
+			if ( version_compare( $db_plugin_version, '5.0.0', '<' ) ) {
+				$this->version500();
+			}
 
 			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -279,5 +292,42 @@ class Update {
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );
+
+		// convert the installation hash.
+		define( 'EDLFW_HASH', get_option( 'edlfw_hash', '' ) );
+
+		// migrate existing external sources to new format.
+		$query = array(
+			'taxonomy' => 'edlfw_archive',
+			'hide_empty' => false
+		);
+		$terms = new WP_Term_Query( $query );
+		foreach ( $terms->terms as $term ) {
+			// bail if path is set.
+			if( ! empty( get_term_meta( $term->term_id, 'path', true ) ) ) {
+				continue;
+			}
+
+			// get the name, which contains the URL.
+			$url = $term->name;
+
+			// get the protocol handler for this URL.
+			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+			// bail if this is not an FTP protocol.
+			if( ! $protocol_handler instanceof FTP ) {
+				continue;
+			}
+
+			// set path.
+			update_term_meta( $term->term_id, 'path', $term->name );
+
+			// create fields.
+			$fields = $protocol_handler->get_fields();
+			$fields['server']['value'] = $url;
+			$fields['login']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'login', true ) );
+			$fields['password']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'password', true ) );
+			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
+		}
 	}
 }
