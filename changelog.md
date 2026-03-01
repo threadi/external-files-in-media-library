@@ -97,6 +97,7 @@
 - Directory reload no shows the progress
 - Optimized ZIP service: no also allows to extract complete ZIP files in media library
 - Updated some unfavorable text descriptions
+- Updated crypt-methods for any privacy data
 - Updated dependencies
 - Active folder in directory listing is now marked
 - Optimized styling of directory listings
