@@ -597,9 +597,14 @@ class Admin {
 		check_admin_referer( 'efml-download-key', 'nonce' );
 
 		// create the array with the hash key.
-		$content = array(
-			get_option( EDLFW_HASH ),
-		);
+		$content = array();
+		if ( defined( 'EDLFW_HASH' ) ) {
+			$content[] = get_option( EDLFW_HASH );
+		}
+
+		if ( defined( 'EDLFW_SODIUM_HASH' ) ) {
+			$content[] = get_option( EDLFW_SODIUM_HASH );
+		}
 
 		// return the JSON file for the download.
 		header( 'Content-disposition: attachment; filename=' . gmdate( 'YmdHi' ) . '_efml_installation_key.json' );
