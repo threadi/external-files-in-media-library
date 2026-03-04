@@ -12,7 +12,7 @@ Only released mime types in the plugin can be added to the Media Library as exte
 
 The following mime types are always available for selection:
 
-* AVIF
+* ~~AVIF~~
 * GIF
 * JPEG
 * MP4
@@ -27,7 +27,7 @@ The following mime types are always available for selection:
 To add a mime type to the list, you need to add the following PHP code to your project:
 
 ```
-add_filter( 'efml_supported_mime_types', function( $list ) {
+add_filter( 'eml_supported_mime_types', function( $list ) {
   $list['your/mime'] = array(
       'label' => 'Title of your mime',
       'ext' => 'yourmimeextension'

@@ -12,7 +12,7 @@ Nur im Plugin freigegebene MIME-Types können auch als externe Dateien in die Me
 
 Möglich zur Auswahl sind immer folgende MIME-Types:
 
-* AVIF
+* ~~AVIF~~
 * GIF
 * JPEG
 * MP4
@@ -27,7 +27,7 @@ Möglich zur Auswahl sind immer folgende MIME-Types:
 Um einen MIME-Typ in der Liste zu ergänzen, musst Du folgenden PHP-Code in Deinem Projekt hinterlegen:
 
 ```
-add_filter( 'efml_supported_mime_types', function( $list ) {
+add_filter( 'eml_supported_mime_types', function( $list ) {
   $list['your/mime'] = array(
       'label' => 'Title of your mime',
       'ext' => 'yourmimeextension'
