@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\DropBox;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
+use Spatie\Dropbox\Exceptions\BadRequest;
 
 /**
  * Object to handle different protocols.
@@ -89,7 +90,12 @@ class Protocol extends Protocol_Base {
 		$dropbox_obj->set_fields( $this->get_fields() );
 
 		// get the client with the given token.
-		$client = new Client( $dropbox_obj->get_access_token() );
+		$client = $dropbox_obj->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client instanceof Client ) {
+			return array();
+		}
 
 		// prepare the entries array.
 		$entries = array();
@@ -112,7 +118,7 @@ class Protocol extends Protocol_Base {
 			// get the data for a single file.
 			try {
 				$entries[] = $client->getMetadata( $url );
-			} catch ( ClientException | \Spatie\Dropbox\Exceptions\BadRequest $e ) {
+			} catch ( ClientException | BadRequest $e ) {
 				// log this event.
 				Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e ) . '</code>', $url, 'error' );
 

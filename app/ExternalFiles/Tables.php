@@ -71,6 +71,7 @@ class Tables {
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_columns' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_user' ), 10, 3 );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_date' ), 10, 3 );
+		add_filter( 'efml_directory_listing_column', array( $this, 'show_unknown_type' ), 10, 2 );
 	}
 
 	/**
@@ -509,5 +510,23 @@ class Tables {
 
 		// return the formatted date.
 		return Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', $date ) );
+	}
+
+	/**
+	 * Show info about unknown type.
+	 *
+	 * @param string $content The column content.
+	 * @param string $column_name The column name.
+	 *
+	 * @return string
+	 */
+	public function show_unknown_type( string $content, string $column_name ): string {
+		// bail if this is not the "type" column.
+		if ( 'type' !== $column_name ) {
+			return $content;
+		}
+
+		// return hint on unknown type.
+		return '<em>' . __( 'Unknown', 'external-files-in-media-library' ) . '</em>';
 	}
 }

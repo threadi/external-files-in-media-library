@@ -82,6 +82,10 @@ class Export extends Export_Base {
 		// set the credentials.
 		$dropbox_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
 
+		// get the access token.
+		$access_token_data = $dropbox_obj->get_access_token();
+		$access_token = $access_token_data['access_token'];
+
 		// get the file path.
 		$file_path = get_attached_file( $attachment_id, true );
 
@@ -132,7 +136,7 @@ class Export extends Export_Base {
 		$start = $this->dropbox_curl_request(
 			'https://content.dropboxapi.com/2/files/upload_session/start',
 			array(
-				'Authorization: Bearer ' . $dropbox_obj->get_access_token(),
+				'Authorization: Bearer ' . $access_token,
 				'Content-Type: application/octet-stream',
 				'Dropbox-API-Arg: ' . wp_json_encode( array( 'close' => false ), JSON_UNESCAPED_SLASHES ),
 			),
@@ -165,7 +169,7 @@ class Export extends Export_Base {
 			$result = $this->dropbox_curl_request(
 				'https://content.dropboxapi.com/2/files/upload_session/append_v2',
 				array(
-					'Authorization: Bearer ' . $dropbox_obj->get_access_token(),
+					'Authorization: Bearer ' . $access_token,
 					'Content-Type: application/octet-stream',
 					'Dropbox-API-Arg: ' . wp_json_encode(
 						array(
@@ -199,7 +203,7 @@ class Export extends Export_Base {
 		$result = $this->dropbox_curl_request(
 			'https://content.dropboxapi.com/2/files/upload_session/finish',
 			array(
-				'Authorization: Bearer ' . $dropbox_obj->get_access_token(),
+				'Authorization: Bearer ' . $access_token,
 				'Content-Type: application/octet-stream',
 				'Dropbox-API-Arg: ' . wp_json_encode(
 					array(
@@ -228,7 +232,12 @@ class Export extends Export_Base {
 		update_post_meta( $attachment_id, 'efml_dropbox_path', $result['path_lower'] );
 
 		// get the shared files to get the public URL of the uploaded file.
-		$client = new Client( $dropbox_obj->get_access_token() );
+		$client = $dropbox_obj->get_client();
+
+		// bail if client could not be loaded.
+		if( ! $client instanceof Client ) {
+			return false;
+		}
 
 		// create the shared link for this file.
 		try {

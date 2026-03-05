@@ -122,9 +122,11 @@ class DropBox extends Service_Base implements Service {
 		// use hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_js_admin' ) );
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ), 10, 0 );
+		add_filter( 'query_vars', array( $this, 'set_query_vars' ) );
+		add_filter( 'template_include', array( $this, 'check_for_oauth_return_url' ), 10, 1 );
 
 		// use AJAX hook.
-		add_action( 'wp_ajax_efml_add_access_token', array( $this, 'add_access_token_by_ajax' ), 10, 0 );
+		add_action( 'wp_ajax_efml_dropbox_setup_connection', array( $this, 'add_connection_by_ajax' ), 10, 0 );
 		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token_by_ajax' ), 10, 0 );
 
 		// use our own hooks.
@@ -146,6 +148,9 @@ class DropBox extends Service_Base implements Service {
 		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
 		}
+
+		// add the endpoint for DropBox OAuth.
+		add_rewrite_rule( $this->get_oauth_slug() . '?$', 'index.php?' . $this->get_oauth_slug() . '=1', 'top' );
 
 		// get the settings object.
 		$settings_obj = Settings::get_instance();
@@ -202,12 +207,8 @@ class DropBox extends Service_Base implements Service {
 
 			// show connect button if no token is set.
 			if ( empty( $access_token ) ) {
-				// create the dialog.
-				$dialog = $this->get_connect_dialog();
-
-				$field = new Button();
+				$field = new TextInfo();
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
-				$field->set_button_title( __( 'Connect now', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_help() );
 			} else {
 				// create the dialog.
@@ -217,9 +218,9 @@ class DropBox extends Service_Base implements Service {
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
 				$field->set_button_title( __( 'Disconnect', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_connect_info() );
+				$field->add_class( 'easy-dialog-for-wordpress' );
+				$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
 			}
-			$field->add_class( 'easy-dialog-for-wordpress' );
-			$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
 			$setting->set_field( $field );
 		}
 
@@ -328,7 +329,7 @@ class DropBox extends Service_Base implements Service {
 		if ( 'eml_settings' === $page && 'global' === $this->get_mode() && $this->get_settings_subtab_slug() === $subtab ) {
 			$use_it = true;
 		}
-		if ( 'profile.php' === $pagenow && 'user' === $this->get_mode() ) {
+		if ( 'profile.php' === $pagenow ) {
 			$use_it = true;
 		}
 
@@ -352,32 +353,35 @@ class DropBox extends Service_Base implements Service {
 			'efmlJsVarsDropBox',
 			array(
 				'ajax_url'                      => admin_url( 'admin-ajax.php' ),
-				'access_token_connect_nonce'    => wp_create_nonce( 'efml-dropbox-save-access-token' ),
+				'dropbox_connect_nonce'         => wp_create_nonce( 'efml-dropbox-save-access-token' ),
 				'access_token_disconnect_nonce' => wp_create_nonce( 'efml-dropbox-remove-access-token' ),
 			)
 		);
 	}
 
 	/**
-	 * Add access token via AJAX request.
+	 * Setup connection to DropBox API via AJAX request.
 	 *
 	 * @return void
 	 */
-	public function add_access_token_by_ajax(): void {
+	public function add_connection_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-dropbox-save-access-token', 'nonce' );
 
-		// get the token.
-		$access_token = filter_input( INPUT_POST, 'access_token', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		// get the API key.
+		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
-		// bail if token is empty.
-		if ( empty( $access_token ) ) {
+		// get the API secret.
+		$api_secret = filter_input( INPUT_POST, 'api_secret', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if any value is missing.
+		if ( empty( $api_key ) || empty( $api_secret ) ) {
 			// create the dialog.
 			$dialog = array(
 				'className' => 'efml',
 				'title'     => __( 'Error', 'external-files-in-media-library' ),
 				'texts'     => array(
-					'<p>' . __( 'Please enter an access token!', 'external-files-in-media-library' ) . '</p>',
+					'<p>' . __( 'Please enter the API credentials!', 'external-files-in-media-library' ) . '</p>',
 				),
 				'buttons'   => array(
 					array(
@@ -393,106 +397,249 @@ class DropBox extends Service_Base implements Service {
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
-		// add the token.
-		$this->set_access_token( $access_token );
+		// save the values.
+		$this->set_api_key( $api_key );
+		$this->set_api_secret( $api_secret );
 
-		// create the dialog.
-		$dialog = array(
-			'className' => 'efml',
-			'title'     => __( 'DropBox access token saved', 'external-files-in-media-library' ),
-			'texts'     => array(
-				'<p>' . __( 'You will now be able to use DropBox as your external source.', 'external-files-in-media-library' ) . '</p>',
-			),
-			'buttons'   => array(
-				array(
-					'action'  => 'location.reload();',
-					'variant' => 'primary',
-					'text'    => __( 'OK', 'external-files-in-media-library' ),
-				),
-			),
+		// run connection.
+		$params = array(
+			'client_id'         => $api_key,
+			'response_type'     => 'code',
+			'redirect_uri'      => $this->get_real_redirect_uri(),
+			'token_access_type' => 'offline',
 		);
 
-		// return ok.
-		wp_send_json_success( array( 'detail' => $dialog ) );
+		// redirect the user to dropbox for authorization.
+		wp_send_json_success( array( 'url' => $this->get_oauth_url_step_2() . http_build_query( $params ) ) );
 	}
 
 	/**
-	 * Return access token for actual WordPress user.
+	 * Return access token data.
 	 *
-	 * @return string
+	 * @return array<string,mixed>
 	 */
-	public function get_access_token(): string {
-		// get the access token from settings.
-		if ( ! empty( $this->fields['access_token']['value'] ) ) {
-			return $this->fields['access_token']['value'];
-		}
-
+	public function get_access_token(): array {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
-			return (string) get_option( 'efml_dropbox_access_tokens', '' );
-		}
-
-		// save it user-specific, if this is enabled.
-		if ( $this->is_mode( 'user' ) ) {
+			$data = get_option( 'efml_dropbox_access_tokens', array() );
+		} else {
 			// get current user.
 			$user = $this->get_user();
 
 			// bail if user is not available.
 			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-				return '';
+				return array();
 			}
 
 			// get and return the value.
-			return Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
+			$data = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
 		}
 
-		// return nothing.
-		return '';
+		// convert JSON to array.
+		if ( ! is_array( $data ) ) {
+			$data = json_decode( $data, true );
+			if ( ! is_array( $data ) ) {
+				return array();
+			}
+		}
+
+		// check the expires time.
+		$expires = $data['expires'];
+
+		// refresh token if it is expiring.
+		if ( time() >= ( $expires - 60 ) ) {
+			$data = $this->refresh_token( $data );
+		}
+
+		// return the resulting access_token data.
+		return $data;
 	}
 
 	/**
-	 * Set the access token depending on actual setting.
+	 * Set the access token data array from DropBox.
 	 *
-	 * @param string $access_token The access token.
+	 * @param array<string,mixed> $data The data for the access token.
+	 *
+	 * @return void
+	 */
+	private function set_access_token( array $data ): void {
+		// save it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'New DropBox API access token has been saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+			// save the updated token.
+			update_option( 'efml_dropbox_access_tokens', $data );
+		}
+
+		// get the user_id from the session if it is not set.
+		$user    = $this->get_user();
+		$user_id = 0;
+		if ( $user instanceof WP_User ) {
+			$user_id = $user->ID;
+		}
+
+		// bail if no user could be found.
+		if ( 0 === $user_id ) {
+			return;
+		}
+
+		// log event.
+		/* translators: %1$s will be replaced by the username. */
+		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . ( $user instanceof WP_User ? $user->display_name : '' ) . '</em>' ), '', 'info', 2 );
+
+		// save the token.
+		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+	}
+
+	/**
+	 * Return the used API key.
+	 *
+	 * @param int $user_id The user ID.
+	 *
+	 * @return string
+	 */
+	public function get_api_key( int $user_id = 0 ): string {
+		// get the global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			return (string) get_option( 'efml_dropbox_api_key', '' );
+		}
+
+		// get the user_id from the session if it is not set.
+		if ( 0 === $user_id ) {
+			// get the user.
+			$user = $this->get_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+			$user_id = $user->ID;
+		} else {
+			// get the user object.
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+		}
+
+		// return the decrypted API key.
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_key', true ) );
+	}
+
+	/**
+	 * Set the API key depending on actual setting.
+	 *
+	 * @param string $key The API key.
 	 * @param int    $user_id The user ID (optional).
 	 *
 	 * @return void
 	 */
-	public function set_access_token( string $access_token, int $user_id = 0 ): void {
+	public function set_api_key( string $key, int $user_id = 0 ): void {
 		// save it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			// log event.
-			Log::get_instance()->create( __( 'New DropBox access token saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
+			Log::get_instance()->create( __( 'New DropBox API key saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			// save the updated token.
-			update_option( 'efml_dropbox_access_tokens', $access_token );
+			update_option( 'efml_dropbox_api_key', $key );
 		}
 
-		// save it user-specific, if this is enabled.
-		if ( $this->is_mode( 'user' ) ) {
-			// get the user_id from the session if it is not set.
-			if ( 0 === $user_id ) {
-				// get the user.
-				$user = $this->get_user();
-				if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-					return;
-				}
-				$user_id = $user->ID;
-			} else {
-				// get the user object.
-				$user = get_user_by( 'id', $user_id );
-				if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
-					return;
-				}
+		// get the user_id from the session if it is not set.
+		if ( 0 === $user_id ) {
+			// get the user.
+			$user = $this->get_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return;
 			}
-
-			// log event.
-			/* translators: %1$s will be replaced by the username. */
-			Log::get_instance()->create( sprintf( __( 'New DropBox access token saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
-
-			// save the token.
-			update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( $access_token ) );
+			$user_id = $user->ID;
+		} else {
+			// get the user object.
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+				return;
+			}
 		}
+
+		// log event.
+		/* translators: %1$s will be replaced by the username. */
+		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
+
+		// save the token.
+		update_user_meta( $user_id, 'efml_dropbox_api_key', Crypt::get_instance()->encrypt( $key ) );
+	}
+
+	/**
+	 * Return the used API key.
+	 *
+	 * @param int $user_id The user ID.
+	 *
+	 * @return string
+	 */
+	public function get_api_secret( int $user_id = 0 ): string {
+		// get the global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			return (string) get_option( 'efml_dropbox_api_secret', '' );
+		}
+
+		// get the user_id from the session if it is not set.
+		if ( 0 === $user_id ) {
+			// get the user.
+			$user = $this->get_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+			$user_id = $user->ID;
+		} else {
+			// get the user object.
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+				return '';
+			}
+		}
+
+		// return the decrypted API key.
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_secret', true ) );
+	}
+
+	/**
+	 * Set the API key depending on actual setting.
+	 *
+	 * @param string $secret The API secret.
+	 * @param int    $user_id The user ID (optional).
+	 *
+	 * @return void
+	 */
+	public function set_api_secret( string $secret, int $user_id = 0 ): void {
+		// save it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			// log event.
+			Log::get_instance()->create( __( 'New DropBox API secret saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+			// save the updated token.
+			update_option( 'efml_dropbox_api_secret', $secret );
+		}
+
+		// get the user_id from the session if it is not set.
+		if ( 0 === $user_id ) {
+			// get the user.
+			$user = $this->get_user();
+			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+				return;
+			}
+			$user_id = $user->ID;
+		} else {
+			// get the user object.
+			$user = get_user_by( 'id', $user_id );
+			if ( ! $user instanceof WP_User ) {  // @phpstan-ignore instanceof.alwaysTrue
+				return;
+			}
+		}
+
+		// log event.
+		/* translators: %1$s will be replaced by the username. */
+		Log::get_instance()->create( sprintf( __( 'New DropBox API secret saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
+
+		// save the token.
+		update_user_meta( $user_id, 'efml_dropbox_api_secret', Crypt::get_instance()->encrypt( $secret ) );
 	}
 
 	/**
@@ -504,18 +651,15 @@ class DropBox extends Service_Base implements Service {
 		// delete it global.
 		update_option( 'efml_dropbox_access_tokens', '' );
 
-		// save it user-specific, if this is enabled.
-		if ( $this->is_mode( 'user' ) ) {
-			// get the user.
-			$user = $this->get_user();
-			if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
-				return false;
-			}
-			$user_id = $user->ID;
-
-			// clear the user meta.
-			delete_user_meta( $user_id, 'efml_dropbox_access_tokens' );
+		// get the user.
+		$user = $this->get_user();
+		if ( ! $user instanceof WP_User ) { // @phpstan-ignore instanceof.alwaysTrue
+			return false;
 		}
+		$user_id = $user->ID;
+
+		// clear the user meta.
+		delete_user_meta( $user_id, 'efml_dropbox_access_tokens' );
 
 		// return true as token has been removed.
 		return true;
@@ -582,10 +726,9 @@ class DropBox extends Service_Base implements Service {
 		$help = esc_html__( 'Follow these steps:', 'external-files-in-media-library' ) . '</p><ol>';
 		/* translators: %1$s will be replaced by a URL. */
 		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>. ', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
-		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL:', 'external-files-in-media-library' ) . ' <code>' . get_option( 'home' ) . '</code></li>';
-		$help .= '<li>' . esc_html__( 'Copy the access token.', 'external-files-in-media-library' ) . '</li>';
-		$help .= '<li>' . esc_html__( 'Click on the button "Connect" above here.', 'external-files-in-media-library' ) . '</li>';
-		$help .= '</ol><p>';
+		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL for this app:', 'external-files-in-media-library' ) . ' <code>' . $this->get_real_redirect_uri() . '</code></li>';
+		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li>';
+		$help .= '</ol><p><a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="' . esc_attr( Helper::get_json( $this->get_connect_dialog() ) ) . '">' . esc_html__( 'Connect now', 'external-files-in-media-library' ) . '</a>';
 		return $help;
 	}
 
@@ -595,8 +738,13 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	private function get_connect_info(): string {
-		// get the client with the given token.
-		$client = new Client( $this->get_access_token() );
+		// get the client.
+		$client = $this->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client instanceof Client ) {
+			return '';
+		}
 
 		// get the account infos.
 		$account_infos = array();
@@ -608,7 +756,7 @@ class DropBox extends Service_Base implements Service {
 
 		// bail if account infos are empty.
 		if ( empty( $account_infos ) ) {
-			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please try to reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';
+			return '<strong>' . esc_html__( 'Could not load the DropBox account infos.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This usually means that the access token is no longer valid. Please reconnect with a new access token.', 'external-files-in-media-library' ) . '<br>';
 		}
 
 		// collect the text for return.
@@ -631,7 +779,12 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// get the client with the given token.
-		$client = new Client( $this->get_access_token() );
+		$client = $this->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client instanceof Client ) {
+			return array();
+		}
 
 		// collect the list of files.
 		$listing = array(
@@ -886,21 +1039,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function do_login( string $directory ): bool {
-		// check if all fields are set.
-		$counter = 0;
-		$fields  = 0;
-		foreach ( $this->fields as $field ) {
-			++$fields;
-			if ( ! empty( $field['value'] ) ) {
-				++$counter;
-			}
-		}
+		// get the client with the given token.
+		$client = $this->get_client();
 
-		// bail if credentials are missing.
-		if ( $fields !== $counter ) {
-			// log this event.
-			Log::get_instance()->create( __( 'No access token for DropBox given!', 'external-files-in-media-library' ), '', 'error', 1 );
-
+		// client could not be loaded.
+		if ( ! $client instanceof Client ) {
 			// create error.
 			$error = new WP_Error();
 			/* translators: %1$s will be replaced with a URL. */
@@ -909,11 +1052,9 @@ class DropBox extends Service_Base implements Service {
 			// add error.
 			$this->add_error( $error );
 
+			// do nothing more.
 			return false;
 		}
-
-		// get the client with the given token.
-		$client = new Client( $this->get_access_token() );
 
 		// start a simple request to check if access token could be used.
 		try {
@@ -951,8 +1092,8 @@ class DropBox extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function add_user_settings(): void {
-		// bail if settings are not user-specific.
-		if ( ! $this->is_mode( 'user' ) ) {
+		// bail if settings are global.
+		if ( $this->is_mode( 'global' ) ) {
 			return;
 		}
 
@@ -972,7 +1113,6 @@ class DropBox extends Service_Base implements Service {
 		// if no token is set, show hint.
 		if ( empty( $access_token ) ) {
 			?>
-				<a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="<?php echo esc_attr( Helper::get_json( $this->get_connect_dialog() ) ); ?>"><?php echo esc_html__( 'Connect now', 'external-files-in-media-library' ); ?></a>
 				<p><?php echo wp_kses_post( $this->get_help() ); ?></p>
 			<?php
 		} else {
@@ -994,11 +1134,13 @@ class DropBox extends Service_Base implements Service {
 	private function get_connect_dialog(): array {
 		return array(
 			'className' => 'efml efml-dropbox-dialog',
-			'title'     => __( 'Connect DropBox', 'external-files-in-media-library' ),
+			'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Please enter your access token below:', 'external-files-in-media-library' ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
-				'<div><label for="efml_dropbox_access_token">' . esc_html__( 'Access Token', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_access_token" name="access_token" value="" placeholder="' . __( 'Enter your access token', 'external-files-in-media-library' ) . '"> ' . sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</div>',
+				'<p><strong>' . sprintf( __( 'Please fill our the form. Get your API credentials for your DropBox app <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</strong></p>',
+				/* translators: %1$s will be replaced by a URL. */
+				'<div><label for="efml_dropbox_api_key">' . esc_html__( 'App key', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_api_key" name="api_key" value="" placeholder="' . __( 'Enter your API key', 'external-files-in-media-library' ) . '"></div>',
+				'<div><label for="efml_dropbox_api_secret">' . esc_html__( 'App secret', 'external-files-in-media-library' ) . '</label><input type="password" id="efml_dropbox_api_secret" name="api_secret" value="" placeholder="' . __( 'Enter your API secret', 'external-files-in-media-library' ) . '"></div>',
 			),
 			'buttons'   => array(
 				array(
@@ -1054,35 +1196,6 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
-	 * Return list of fields we need for this listing.
-	 *
-	 * @return array<string,array<string,mixed>>
-	 */
-	public function get_fields(): array {
-		// set fields, if they are empty atm.
-		if ( empty( $this->fields ) ) {
-			// get the fields.
-			$fields = $this->get_field_values();
-
-			// set the fields.
-			$this->fields = array(
-				'access_token' => array(
-					'name'        => 'access_token',
-					'type'        => $this->is_mode( 'global' ) || $this->is_mode( 'user' ) ? 'password' : 'text',
-					'label'       => __( 'Access Token', 'external-files-in-media-library' ),
-					'placeholder' => __( 'Enter your access token', 'external-files-in-media-library' ),
-					'credential'  => true,
-					'value'       => $fields['access_token'],
-					'readonly'    => ! empty( $fields['access_token'] ) || $this->is_mode( 'global' ) || $this->is_mode( 'user' ),
-				),
-			);
-		}
-
-		// return the list of fields.
-		return parent::get_fields();
-	}
-
-	/**
 	 * Return the form title.
 	 *
 	 * @return string
@@ -1119,53 +1232,14 @@ class DropBox extends Service_Base implements Service {
 			return sprintf( __( 'Your access token is already set <a href="%1$s">here</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
 		}
 
-		// if access token is set per user.
-		if ( $this->is_mode( 'user' ) ) {
-			if ( empty( $token ) ) {
-				/* translators: %1$s will be replaced by a URL. */
-				return sprintf( __( 'Set your access token <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
-			}
-
+		// if access token is set per user or individuell.
+		if ( empty( $token ) ) {
 			/* translators: %1$s will be replaced by a URL. */
-			return sprintf( __( 'Your access token is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
+			return sprintf( __( 'Configure your connection <a href="%1$s">in your profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() );
 		}
 
 		/* translators: %1$s will be replaced by a URL. */
-		return sprintf( __( 'Get your API Key <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() );
-	}
-
-	/**
-	 * Return the values depending on actual mode.
-	 *
-	 * @return array<string,mixed>
-	 */
-	private function get_field_values(): array {
-		// prepare the return array.
-		$values = array(
-			'access_token' => '',
-		);
-
-		// get it global, if this is enabled.
-		if ( $this->is_mode( 'global' ) ) {
-			$values['access_token'] = get_option( 'efml_dropbox_access_tokens', '' );
-		}
-
-		// save it user-specific, if this is enabled.
-		if ( $this->is_mode( 'user' ) ) {
-			// get the user set on the object.
-			$user = $this->get_user();
-
-			// bail if user is not available.
-			if ( ! $user instanceof WP_User ) {
-				return array();
-			}
-
-			// get the values.
-			$values['access_token'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
-		}
-
-		// return the resulting list of values.
-		return $values;
+		return sprintf( __( 'Your access token is already set <a href="%1$s">in your profile</a>. Just connect for show the files.', 'external-files-in-media-library' ), $this->get_config_url() );
 	}
 
 	/**
@@ -1322,5 +1396,248 @@ class DropBox extends Service_Base implements Service {
 		 * @param string $url The URL.
 		 */
 		return apply_filters( 'efml_dropbox_access_token_url', $url );
+	}
+
+	/**
+	 * Return the config URL.
+	 *
+	 * @return string
+	 */
+	protected function get_config_url(): string {
+		// use the global settings in the global mode.
+		if ( $this->is_mode( 'global' ) ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				return '';
+			}
+			return \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+		}
+
+		// use the profile in user mode.
+		return get_admin_url() . 'profile.php#efml-' . $this->get_name();
+	}
+
+	/**
+	 * Return the real return URL where the user will land after successfully connection via OAuth.
+	 *
+	 * @return string
+	 */
+	private function get_real_redirect_uri(): string {
+		// set the token.
+		$real_redirect_uri = get_option( 'siteurl' ) . '/' . $this->get_oauth_slug() . '/';
+
+		/**
+		 * Filter the real redirect URI to connect the Google OAuth Client.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $real_redirect_uri The real redirect URI.
+		 */
+		return apply_filters( 'efmlgd_dropbox_real_redirect_uri', $real_redirect_uri );
+	}
+
+	/**
+	 * Add our OAuth slug to the allowed vars.
+	 *
+	 * @param array<int,string> $query_vars List of vars.
+	 *
+	 * @return array<int,string>
+	 */
+	public function set_query_vars( array $query_vars ): array {
+		$query_vars[] = $this->get_oauth_slug();
+		return $query_vars;
+	}
+
+	/**
+	 * Return the OAuth slug for the real return URL.
+	 *
+	 * @return string
+	 */
+	private function get_oauth_slug(): string {
+		return 'efml-' . $this->get_name() . '-oauth';
+	}
+
+	/**
+	 * Return the DropBox OAuth URL for step 1.
+	 *
+	 * @return string
+	 */
+	private function get_oauth_url(): string {
+		$url = 'https://api.dropbox.com/oauth2/token';
+
+		/**
+		 * Filter the DropBox OAuth URL.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 */
+		return apply_filters( 'efml_dropbox_oauth_url', $url );
+	}
+
+	/**
+	 * Check for requested OAuth return URL.
+	 *
+	 * @param string $template The requested template.
+	 *
+	 * @return string
+	 */
+	public function check_for_oauth_return_url( string $template ): string {
+		// bail if the slug is unused.
+		if ( empty( get_query_var( $this->get_oauth_slug() ) ) ) {
+			return $template;
+		}
+
+		// get the code.
+		$code = filter_input( INPUT_GET, 'code', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if no code is set.
+		if ( empty( $code ) ) {
+			return Helper::get_404_template();
+		}
+
+		// create the query for the next request.
+		$query = array(
+			'body' => array(
+				'code'          => $code,
+				'grant_type'    => 'authorization_code',
+				'client_id'     => $this->get_api_key(),
+				'client_secret' => $this->get_api_secret(),
+				'redirect_uri'  => $this->get_real_redirect_uri(),
+			),
+		);
+
+		// request the credentials.
+		$response = wp_remote_post( $this->get_oauth_url(), $query );
+
+		// bail if response results in failure.
+		if ( is_wp_error( $response ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'OAuth-request to DropBox results in the following error:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response ) . '</code>', '', 'error' );
+
+			// return 404-page.
+			return Helper::get_404_template();
+		}
+
+		// get the response data.
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// bail if data is empty.
+		if ( empty( $data ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Got empty data from DropBox OAuth response.', 'external-files-in-media-library' ), '', 'error' );
+
+			// return 404-page.
+			return Helper::get_404_template();
+		}
+
+		// bail if the response contains an "error"-entry.
+		if ( ! empty( $data['error'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Got error from DropBox OAuth response:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $data ) . '</code>', '', 'error' );
+
+			// return 404-page.
+			return Helper::get_404_template();
+		}
+
+		// update the expires time.
+		$data['expires'] = time() + $data['expires_in'];
+
+		// save the response data.
+		$this->set_access_token( $data );
+
+		// forward user.
+		wp_safe_redirect( $this->get_config_url() );
+		exit;
+	}
+
+	/**
+	 * Return the Client object for DropBox connections with actual access token.
+	 *
+	 * @return Client|false
+	 */
+	public function get_client(): Client|false {
+		// get the access token data.
+		$data = $this->get_access_token();
+
+		// bail if data is empty or access token is missing.
+		if ( empty( $data ) || empty( $data['access_token'] ) ) {
+			return false;
+		}
+
+		// get the client with the given token.
+		return new Client( $data['access_token'] );
+	}
+
+	/**
+	 * Return the OAuth URL for step 2.
+	 *
+	 * @return string
+	 */
+	private function get_oauth_url_step_2(): string {
+		$url = 'https://www.dropbox.com/oauth2/authorize?';
+
+		/**
+		 * Filter the DropBox OAuth URL for step 2
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 * @param string $url The URL.
+		 */
+		return apply_filters( 'efml_dropbox_oauth_url_step_2', $url );
+	}
+
+	/**
+	 * Refresh the token.
+	 *
+	 * @param array<string,mixed> $data The token data.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function refresh_token( array $data ): array {
+		// create the query for the next request.
+		$query = array(
+			'body' => array(
+				'grant_type'    => 'refresh_token',
+				'refresh_token' => $data['refresh_token'],
+				'client_id'     => $this->get_api_key(),
+				'client_secret' => $this->get_api_secret(),
+			),
+		);
+
+		// request the credentials.
+		$response = wp_remote_post( $this->get_oauth_url(), $query );
+
+		// bail on error.
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
+		// get the new data.
+		$new_data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// bail if data is empty.
+		if ( empty( $new_data ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Got empty data from DropBox OAuth response to refresh the token.', 'external-files-in-media-library' ), '', 'error' );
+
+			// return 404-page.
+			return array();
+		}
+
+		// bail if the response contains an "error"-entry.
+		if ( ! empty( $new_data['error'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Got error from DropBox OAuth response to refresh the token', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $new_data ) . '</code>', '', 'error' );
+
+			// return 404-page.
+			return array();
+		}
+
+		// get the updated data.
+		$data['access_token'] = $new_data['access_token'];
+		$data['expires']      = time() + $new_data['expires_in'];
+
+		// save the updated access token data.
+		$this->set_access_token( $data );
+
+		// and return them.
+		return $data;
 	}
 }

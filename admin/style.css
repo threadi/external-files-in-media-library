@@ -529,7 +529,7 @@ body.settings_page_eml_settings .ui-sortable-handle:before {
 	vertical-align: middle;
 }
 
-.efml-term-change-name input[type="text"], .efml-dropbox-dialog input[type="text"] {
+.efml-term-change-name input[type="text"], .efml-dropbox-dialog input[type="text"], .efml-dropbox-dialog input[type="password"] {
 	width: 100%;
 }
 

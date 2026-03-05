@@ -298,13 +298,13 @@ class Update {
 
 		// migrate existing external sources to new format.
 		$query = array(
-			'taxonomy' => 'edlfw_archive',
-			'hide_empty' => false
+			'taxonomy'   => 'edlfw_archive',
+			'hide_empty' => false,
 		);
 		$terms = new WP_Term_Query( $query );
 		foreach ( $terms->terms as $term ) {
 			// bail if path is set.
-			if( ! empty( get_term_meta( $term->term_id, 'path', true ) ) ) {
+			if ( ! empty( get_term_meta( $term->term_id, 'path', true ) ) ) {
 				continue;
 			}
 
@@ -315,7 +315,7 @@ class Update {
 			$protocol_handler = Protocols::get_instance()->get_protocol_object_for_url( $url );
 
 			// bail if this is not an FTP protocol.
-			if( ! $protocol_handler instanceof FTP ) {
+			if ( ! $protocol_handler instanceof FTP ) {
 				continue;
 			}
 
@@ -323,9 +323,9 @@ class Update {
 			update_term_meta( $term->term_id, 'path', $term->name );
 
 			// create fields.
-			$fields = $protocol_handler->get_fields();
-			$fields['server']['value'] = $url;
-			$fields['login']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'login', true ) );
+			$fields                      = $protocol_handler->get_fields();
+			$fields['server']['value']   = $url;
+			$fields['login']['value']    = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'login', true ) );
 			$fields['password']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'password', true ) );
 			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
 		}
