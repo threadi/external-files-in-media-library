@@ -276,7 +276,7 @@ class Multisite extends Service_Base implements Service {
 				'website' => array(
 					'name'    => 'website',
 					'type'    => 'select',
-					'label'   => __( 'Website', 'external-files-from-aws-s3' ),
+					'label'   => __( 'Website', 'external-files-in-media-library' ),
 					'options' => $this->get_websites(),
 					'value'   => '',
 				),

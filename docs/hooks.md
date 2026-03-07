@@ -21,7 +21,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Cli.php](Plugin/Cli.php), [line 75](Plugin/Cli.php#L75-L81)
+Source: [app/Plugin/Cli.php](Plugin/Cli.php), [line 80](Plugin/Cli.php#L80-L86)
 
 ### `efml_switch_to_local_before`
 
@@ -34,7 +34,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 710](ExternalFiles/File.php#L710-L715)
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 776](ExternalFiles/File.php#L776-L781)
 
 ### `efml_switch_to_local_after`
 
@@ -52,7 +52,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 859](ExternalFiles/File.php#L859-L865)
+Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 925](ExternalFiles/File.php#L925-L931)
 
 ### `efml_file_delete`
 
@@ -70,7 +70,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 286](ExternalFiles/Files.php#L286-L292)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 289](ExternalFiles/Files.php#L289-L295)
 
 ### `efml_show_file_info`
 
@@ -88,7 +88,26 @@ Version | Description
 ------- | -----------
 `4.0.0` | Available since 4.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 566](ExternalFiles/Files.php#L566-L572)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 574](ExternalFiles/Files.php#L574-L580)
+
+### `efml_sync_save_config`
+
+*Run additional tasks during saving a new sync configuration.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$fields` | `array` | List of fields.
+`$term_id` | `int` | The term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/SynchronizationDialog.php](ExternalFiles/SynchronizationDialog.php), [line 298](ExternalFiles/SynchronizationDialog.php#L298-L305)
 
 ### `efml_queue_before_process`
 
@@ -106,7 +125,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 365](ExternalFiles/Extensions/Queue.php#L365-L371)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 374](ExternalFiles/Extensions/Queue.php#L374-L380)
 
 ### `efml_queue_after_process`
 
@@ -124,7 +143,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 392](ExternalFiles/Extensions/Queue.php#L392-L398)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 401](ExternalFiles/Extensions/Queue.php#L401-L407)
 
 ### `efml_sftp_directory_import_start`
 
@@ -290,7 +309,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 284](ExternalFiles/Protocols/Http.php#L284-L291)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 292](ExternalFiles/Protocols/Http.php#L292-L299)
 
 ### `efml_http_directory_import_files`
 
@@ -309,7 +328,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 348](ExternalFiles/Protocols/Http.php#L348-L356)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 356](ExternalFiles/Protocols/Http.php#L356-L364)
 
 ### `efml_http_directory_import_file_check`
 
@@ -327,7 +346,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 403](ExternalFiles/Protocols/Http.php#L403-L410)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 411](ExternalFiles/Protocols/Http.php#L411-L418)
 
 ### `efml_http_directory_import_file_before_to_list`
 
@@ -346,7 +365,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 426](ExternalFiles/Protocols/Http.php#L426-L434)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 434](ExternalFiles/Protocols/Http.php#L434-L442)
 
 ### `efml_ftp_directory_import_start`
 
@@ -422,6 +441,24 @@ Version | Description
 
 Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 271](ExternalFiles/Protocols/Ftp.php#L271-L279)
 
+### `efml_export_save_config`
+
+*Run additional tasks after saving an export dialog.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$term_id` | `int` | The used term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 340](ExternalFiles/ExportDialog.php#L340-L346)
+
 ### `efml_filter_query`
 
 *Filter the query.*
@@ -438,7 +475,7 @@ Version | Description
 ------- | -----------
 `4.0.0` | Available since 4.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 183](ExternalFiles/Tables.php#L183-L189)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 185](ExternalFiles/Tables.php#L185-L191)
 
 ### `efml_table_column_source`
 
@@ -456,7 +493,7 @@ Version | Description
 ------- | -----------
 `1.0.0` | Available since 1.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 367](ExternalFiles/Tables.php#L367-L373)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 377](ExternalFiles/Tables.php#L377-L383)
 
 ### `efml_before_sync`
 
@@ -476,7 +513,27 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 615](ExternalFiles/Synchronization.php#L615-L623)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 599](ExternalFiles/Synchronization.php#L599-L607)
+
+### `efml_after_sync`
+
+*Allow to add additional tasks after sync has been running.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$url` | `string` | The used URL.
+`$term_data` | `array<string,string>` | The term data.
+`$term_id` | `int` | The used term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 676](ExternalFiles/Synchronization.php#L676-L684)
 
 ### `efml_before_deleting_synced_files`
 
@@ -494,25 +551,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1137](ExternalFiles/Synchronization.php#L1137-L1143)
-
-### `efml_sync_save_config`
-
-*Run additional tasks during saving a new sync configuration.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$fields` | `array` | List of fields.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1523](ExternalFiles/Synchronization.php#L1523-L1529)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1210](ExternalFiles/Synchronization.php#L1210-L1216)
 
 ### `efml_image_meta_data`
 
@@ -585,7 +624,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 460](ExternalFiles/Forms.php#L460-L466)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 463](ExternalFiles/Forms.php#L463-L469)
 
 ### `efml_import_ajax_end`
 
@@ -603,7 +642,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 584](ExternalFiles/Forms.php#L584-L590)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 587](ExternalFiles/Forms.php#L587-L593)
 
 ### `efml_proxy_before`
 
@@ -634,7 +673,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 129](Services/DropBox/Protocol.php#L129-L137)
+Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 142](Services/DropBox/Protocol.php#L142-L150)
 
 ### `efml_dropbox_directory_import_file_check`
 
@@ -652,7 +691,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 150](Services/DropBox/Protocol.php#L150-L157)
+Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 163](Services/DropBox/Protocol.php#L163-L170)
 
 ## Filters
 
@@ -721,6 +760,42 @@ Argument | Type | Description
 `$directory` |  | 
 
 Source: [app/Plugin/Templates.php](Plugin/Templates.php), [line 85](Plugin/Templates.php#L85-L85)
+
+### `efml_capability_sets`
+
+*Filter the list of possible capability sets.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of capability set objects.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Plugin/CapabilitySets.php](Plugin/CapabilitySets.php), [line 71](Plugin/CapabilitySets.php#L71-L77)
+
+### `efml_configurations`
+
+*Filter the list of possible configurations.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of configurations objects.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Plugin/Configurations.php](Plugin/Configurations.php), [line 78](Plugin/Configurations.php#L78-L84)
 
 ### `efml_log_table_filter`
 
@@ -901,6 +976,20 @@ Version | Description
 
 Source: [app/Plugin/Admin/Help_System.php](Plugin/Admin/Help_System.php), [line 116](Plugin/Admin/Help_System.php#L116-L122)
 
+### `efml_site_health_endpoints`
+
+*Filter the endpoints for Site Health this plugin is using.*
+
+Hint: these are just arrays, which define the endpoints.
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,array<string,mixed>>` | List of endpoints.
+
+Source: [app/Plugin/Admin/Site_Health.php](Plugin/Admin/Site_Health.php), [line 87](Plugin/Admin/Site_Health.php#L87-L94)
+
 ### `efml_plugin_sources`
 
 *Filter the list of possible plugin sources for services of this plugin.*
@@ -917,7 +1006,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Admin/Plugins.php](Plugin/Admin/Plugins.php), [line 340](Plugin/Admin/Plugins.php#L340-L346)
+Source: [app/Plugin/Admin/Plugins.php](Plugin/Admin/Plugins.php), [line 355](Plugin/Admin/Plugins.php#L355-L361)
 
 ### `efml_directory_translations`
 
@@ -935,7 +1024,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 417](Plugin/Admin/Directory_Listing.php#L417-L423)
+Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 509](Plugin/Admin/Directory_Listing.php#L509-L515)
 
 ### `efml_service_plugins`
 
@@ -945,7 +1034,7 @@ Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$list` | `array<int,\ExternalFilesInMediaLibrary\Services\Service_Plugin_Base>` | The list.
+`$list` | `array<string,\ExternalFilesInMediaLibrary\Services\Service_Plugin_Base>` | The list.
 
 **Changelog**
 
@@ -953,7 +1042,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 897](Plugin/Admin/Directory_Listing.php#L897-L903)
+Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 998](Plugin/Admin/Directory_Listing.php#L998-L1004)
 
 ### `efml_plugin_row_meta`
 
@@ -971,7 +1060,7 @@ Version | Description
 ------- | -----------
 `3.1.0` | Available since 3.1.0.
 
-Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 250](Plugin/Admin/Admin.php#L250-L256)
+Source: [app/Plugin/Admin/Admin.php](Plugin/Admin/Admin.php), [line 262](Plugin/Admin/Admin.php#L262-L268)
 
 ### `efml_schedule_our_events`
 
@@ -1137,7 +1226,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 667](ExternalFiles/ImportDialog.php#L667-L674)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 671](ExternalFiles/ImportDialog.php#L671-L678)
 
 ### `efml_add_dialog`
 
@@ -1156,7 +1245,43 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 679](ExternalFiles/ImportDialog.php#L679-L686)
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 683](ExternalFiles/ImportDialog.php#L683-L690)
+
+### `efml_import_dialog_extensions_default`
+
+*Filter the list of default extensions.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of names of the default extensions.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [line 767](ExternalFiles/ImportDialog.php#L767-L773)
+
+### `efml_extension_types`
+
+*Filter the list of supported extension types.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array` | List of supported extension types.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/Extension_Types.php](ExternalFiles/Extension_Types.php), [line 73](ExternalFiles/Extension_Types.php#L73-L79)
 
 ### `efml_file_prevent_proxied_url`
 
@@ -1198,7 +1323,7 @@ Argument | Type | Description
 `$url` |  | 
 `$attachment_id` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 185](ExternalFiles/Files.php#L185-L185)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 188](ExternalFiles/Files.php#L188-L188)
 
 ### `efml_files_query`
 
@@ -1216,7 +1341,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 225](ExternalFiles/Files.php#L225-L231)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 228](ExternalFiles/Files.php#L228-L234)
 
 ### `efml_files_check_content_type`
 
@@ -1227,7 +1352,83 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1222](ExternalFiles/Files.php#L1222-L1222)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1238](ExternalFiles/Files.php#L1238-L1238)
+
+### `efml_sync_dialog_extensions_default`
+
+*Filter the list of default extensions.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of names of the default extensions.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/SynchronizationDialog.php](ExternalFiles/SynchronizationDialog.php), [line 90](ExternalFiles/SynchronizationDialog.php#L90-L96)
+
+### `efml_sync_configure_form`
+
+*Filter the form to configure this external directory.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$form` | `string` | The form HTML-code.
+`$term_id` | `int` | The term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/SynchronizationDialog.php](ExternalFiles/SynchronizationDialog.php), [line 180](ExternalFiles/SynchronizationDialog.php#L180-L187)
+
+### `efml_sync_config_dialog`
+
+*Filter the dialog to configure an export.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$dialog` | `array<string,mixed>` | The dialog.
+`$term_id` | `int` | The term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/SynchronizationDialog.php](ExternalFiles/SynchronizationDialog.php), [line 217](ExternalFiles/SynchronizationDialog.php#L217-L224)
+
+### `efml_sync_validate_config`
+
+*Run additional tasks to validate given values during saving a new sync configuration.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$false` | `bool` | True to prevent saving.
+`$fields` | `array` | List of fields.
+`$dialog` | `array` | The response dialog.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/SynchronizationDialog.php](ExternalFiles/SynchronizationDialog.php), [line 271](ExternalFiles/SynchronizationDialog.php#L271-L279)
 
 ### `efml_import_options`
 
@@ -1246,7 +1447,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 298](ExternalFiles/Extensions/Queue.php#L298-L305)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 307](ExternalFiles/Extensions/Queue.php#L307-L314)
 
 ### `efml_queue_urls`
 
@@ -1264,7 +1465,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 354](ExternalFiles/Extensions/Queue.php#L354-L360)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 363](ExternalFiles/Extensions/Queue.php#L363-L369)
 
 ### `efml_tcp_protocols`
 
@@ -1323,6 +1524,24 @@ Version | Description
 `4.0.0` | Available since 4.0.0.
 
 Source: [app/ExternalFiles/Protocol_Base.php](ExternalFiles/Protocol_Base.php), [line 420](ExternalFiles/Protocol_Base.php#L420-L429)
+
+### `efml_tools`
+
+*Filter the list of main tools for external files.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of tools.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/Tools.php](ExternalFiles/Tools.php), [line 115](ExternalFiles/Tools.php#L115-L121)
 
 ### `efml_external_files_infos`
 
@@ -1445,6 +1664,24 @@ Argument | Type | Description
 
 Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 415](ExternalFiles/Protocols/File.php#L415-L415)
 
+### `efml_check_url_before`
+
+*Filter the URL before we check it.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$url` | `string` | The URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available 5.0.0.
+
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 70](ExternalFiles/Protocols/Http.php#L70-L76)
+
 ### `efml_check_url`
 
 *Filter the resulting for checking an external URL.*
@@ -1462,7 +1699,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 83](ExternalFiles/Protocols/Http.php#L83-L91)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 91](ExternalFiles/Protocols/Http.php#L91-L99)
 
 ### `efml_http_check_content_type_existence`
 
@@ -1473,7 +1710,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 130](ExternalFiles/Protocols/Http.php#L130-L130)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 138](ExternalFiles/Protocols/Http.php#L138-L138)
 
 ### `efml_http_check_content_type`
 
@@ -1484,7 +1721,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 149](ExternalFiles/Protocols/Http.php#L149-L149)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 157](ExternalFiles/Protocols/Http.php#L157-L157)
 
 ### `efml_check_url_availability`
 
@@ -1503,7 +1740,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 161](ExternalFiles/Protocols/Http.php#L161-L169)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 169](ExternalFiles/Protocols/Http.php#L169-L177)
 
 ### `efml_http_header_response`
 
@@ -1523,7 +1760,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 200](ExternalFiles/Protocols/Http.php#L200-L208)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 208](ExternalFiles/Protocols/Http.php#L208-L216)
 
 ### `efml_filter_url_response`
 
@@ -1543,7 +1780,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 254](ExternalFiles/Protocols/Http.php#L254-L262)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 262](ExternalFiles/Protocols/Http.php#L262-L270)
 
 ### `efml_http_directory_regex`
 
@@ -1563,7 +1800,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 322](ExternalFiles/Protocols/Http.php#L322-L333)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 330](ExternalFiles/Protocols/Http.php#L330-L341)
 
 ### `efml_external_files_infos`
 
@@ -1582,7 +1819,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 472](ExternalFiles/Protocols/Http.php#L472-L479)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 480](ExternalFiles/Protocols/Http.php#L480-L487)
 
 ### `efml_external_file_infos`
 
@@ -1602,7 +1839,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 558](ExternalFiles/Protocols/Http.php#L558-L567)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 566](ExternalFiles/Protocols/Http.php#L566-L575)
 
 ### `efml_http_ssl`
 
@@ -1613,7 +1850,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 654](ExternalFiles/Protocols/Http.php#L654-L654)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 662](ExternalFiles/Protocols/Http.php#L662-L662)
 
 ### `efml_http_save_local`
 
@@ -1632,7 +1869,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 672](ExternalFiles/Protocols/Http.php#L672-L679)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 680](ExternalFiles/Protocols/Http.php#L680-L687)
 
 ### `efml_http_ssl`
 
@@ -1643,7 +1880,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 710](ExternalFiles/Protocols/Http.php#L710-L710)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 718](ExternalFiles/Protocols/Http.php#L718-L718)
 
 ### `efml_http_save_local`
 
@@ -1662,7 +1899,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 723](ExternalFiles/Protocols/Http.php#L723-L731)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 731](ExternalFiles/Protocols/Http.php#L731-L739)
 
 ### `efml_http_header_args`
 
@@ -1681,7 +1918,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 763](ExternalFiles/Protocols/Http.php#L763-L770)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 771](ExternalFiles/Protocols/Http.php#L771-L778)
 
 ### `efml_http_states`
 
@@ -1700,7 +1937,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 799](ExternalFiles/Protocols/Http.php#L799-L806)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 807](ExternalFiles/Protocols/Http.php#L807-L814)
 
 ### `efml_locale_file_check`
 
@@ -1719,7 +1956,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 831](ExternalFiles/Protocols/Http.php#L831-L838)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 839](ExternalFiles/Protocols/Http.php#L839-L846)
 
 ### `efml_save_temp_file`
 
@@ -1730,7 +1967,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 870](ExternalFiles/Protocols/Http.php#L870-L870)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 878](ExternalFiles/Protocols/Http.php#L878-L878)
 
 ### `efml_check_url`
 
@@ -1799,7 +2036,74 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 552](ExternalFiles/Protocols/Ftp.php#L552-L552)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 547](ExternalFiles/Protocols/Ftp.php#L547-L547)
+
+### `efml_export_dialog_extensions_default`
+
+*Filter the list of default extensions.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of names of the default extensions.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 91](ExternalFiles/ExportDialog.php#L91-L97)
+
+### `efml_export_config_dialog`
+
+*Filter the dialog to configure an export.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$dialog` | `array<string,mixed>` | The dialog.
+`$term_id` | `int` | The term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 207](ExternalFiles/ExportDialog.php#L207-L214)
+
+### `efml_export_configuration_url_state`
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$result` |  | 
+`$url` |  | 
+
+Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 313](ExternalFiles/ExportDialog.php#L313-L313)
+
+### `efml_export_save_config_dialog`
+
+*Filter the dialog after saving an updated export configuration.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$dialog` | `array` | The dialog.
+`$term_id` | `int` | The term ID.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 369](ExternalFiles/ExportDialog.php#L369-L376)
 
 ### `efml_filter_options`
 
@@ -1817,7 +2121,7 @@ Version | Description
 ------- | -----------
 `4.0.0` | Available since 4.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 105](ExternalFiles/Tables.php#L105-L111)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 107](ExternalFiles/Tables.php#L107-L113)
 
 ### `efml_table_column_file_source_dialog`
 
@@ -1836,7 +2140,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 340](ExternalFiles/Tables.php#L340-L347)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 350](ExternalFiles/Tables.php#L350-L357)
 
 ### `efml_table_column_source_title`
 
@@ -1855,7 +2159,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 352](ExternalFiles/Tables.php#L352-L359)
+Source: [app/ExternalFiles/Tables.php](ExternalFiles/Tables.php), [line 362](ExternalFiles/Tables.php#L362-L369)
 
 ### `efml_import_info_timeout`
 
@@ -1873,18 +2177,18 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 233](ExternalFiles/Synchronization.php#L233-L239)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 253](ExternalFiles/Synchronization.php#L253-L259)
 
-### `efml_sync_configure_form`
+### `efml_prevent_sync`
 
-*Filter the form to configure this external directory.*
+*Filter whether the given URL should be synchronized.*
 
 **Arguments**
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$form` | `string` | The form HTML-code.
-`$term_id` | `int` | The term ID.
+`$false` | `bool` | True for prevent the synchronization.
+`$url` | `string` | The URL to synchronize.
 
 **Changelog**
 
@@ -1892,7 +2196,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 515](ExternalFiles/Synchronization.php#L515-L522)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 545](ExternalFiles/Synchronization.php#L545-L555)
 
 ### `efml_protocols`
 
@@ -1928,25 +2232,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 138](ExternalFiles/Extensions.php#L138-L144)
-
-### `efml_extensions_default`
-
-*Filter the list of default extensions.*
-
-**Arguments**
-
-Argument | Type | Description
--------- | ---- | -----------
-`$list` | `array<int,string>` | List of names of the default extensions.
-
-**Changelog**
-
-Version | Description
-------- | -----------
-`5.0.0` | Available since 5.0.0.
-
-Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 160](ExternalFiles/Extensions.php#L160-L166)
+Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 151](ExternalFiles/Extensions.php#L151-L157)
 
 ### `efml_import_info_timeout`
 
@@ -1964,7 +2250,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 132](ExternalFiles/Forms.php#L132-L138)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 135](ExternalFiles/Forms.php#L135-L141)
 
 ### `efml_import_urls`
 
@@ -1983,7 +2269,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 474](ExternalFiles/Forms.php#L474-L481)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 477](ExternalFiles/Forms.php#L477-L484)
 
 ### `efml_import_fields`
 
@@ -2003,7 +2289,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 483](ExternalFiles/Forms.php#L483-L491)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 486](ExternalFiles/Forms.php#L486-L494)
 
 ### `efml_import_url`
 
@@ -2021,7 +2307,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 522](ExternalFiles/Forms.php#L522-L528)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 525](ExternalFiles/Forms.php#L525-L531)
 
 ### `efml_import_urls_errors`
 
@@ -2039,7 +2325,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 550](ExternalFiles/Forms.php#L550-L556)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 553](ExternalFiles/Forms.php#L553-L559)
 
 ### `efml_dialog_after_adding`
 
@@ -2057,7 +2343,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 658](ExternalFiles/Forms.php#L658-L664)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 661](ExternalFiles/Forms.php#L661-L667)
 
 ### `efml_import_url`
 
@@ -2075,7 +2361,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 810](ExternalFiles/Forms.php#L810-L816)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 813](ExternalFiles/Forms.php#L813-L819)
 
 ### `efml_import_urls_errors`
 
@@ -2093,7 +2379,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 830](ExternalFiles/Forms.php#L830-L836)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 833](ExternalFiles/Forms.php#L833-L839)
 
 ### `efml_file_type_compatibility_result`
 
@@ -2205,7 +2491,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Zip.php](Services/Zip.php), [line 860](Services/Zip.php#L860-L866)
+Source: [app/Services/Zip.php](Services/Zip.php), [line 877](Services/Zip.php#L877-L883)
 
 ### `efml_zip_max_size_limit`
 
@@ -2216,7 +2502,7 @@ Argument | Type | Description
 `$limit` |  | 
 `$settings` |  | 
 
-Source: [app/Services/Zip.php](Services/Zip.php), [line 1045](Services/Zip.php#L1045-L1045)
+Source: [app/Services/Zip.php](Services/Zip.php), [line 1062](Services/Zip.php#L1062-L1062)
 
 ### `efml_dropbox_access_token_url`
 
@@ -2234,7 +2520,43 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1318](Services/DropBox.php#L1318-L1324)
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1392](Services/DropBox.php#L1392-L1398)
+
+### `efml_dropbox_oauth_url`
+
+*Filter the DropBox OAuth URL.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$url` | `string` | The URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1466](Services/DropBox.php#L1466-L1472)
+
+### `efml_dropbox_oauth_url_step_2`
+
+*Filter the DropBox OAuth URL for step 2*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$url` | `string` | The URL.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.0.0` | Available since 5.0.0.
+
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1577](Services/DropBox.php#L1577-L1583)
 
 ### `efml_services_support`
 
@@ -2252,7 +2574,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/Services/Services.php](Services/Services.php), [line 157](Services/Services.php#L157-L163)
+Source: [app/Services/Services.php](Services/Services.php), [line 158](Services/Services.php#L158-L164)
 
 ### `efml_export_service_filename`
 
@@ -2270,7 +2592,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Services.php](Services/Services.php), [line 398](Services/Services.php#L398-L405)
+Source: [app/Services/Services.php](Services/Services.php), [line 399](Services/Services.php#L399-L406)
 
 ### `efml_service_ftp_hide_file`
 
@@ -2400,7 +2722,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 152](ThirdParty/ThirdPartySupport.php#L152-L158)
+Source: [app/ThirdParty/ThirdPartySupport.php](ThirdParty/ThirdPartySupport.php), [line 154](ThirdParty/ThirdPartySupport.php#L154-L160)
 
 
 <p align="center"><a href="https://github.com/pronamic/wp-documentor"><img src="https://cdn.jsdelivr.net/gh/pronamic/wp-documentor@main/logos/pronamic-wp-documentor.svgo-min.svg" alt="Pronamic WordPress Documentor" width="32" height="32"></a><br><em>Generated by <a href="https://github.com/pronamic/wp-documentor">Pronamic WordPress Documentor</a> <code>1.2.0</code></em><p>
