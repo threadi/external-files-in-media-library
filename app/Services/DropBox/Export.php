@@ -70,7 +70,7 @@ class Export extends Export_Base {
 		// bail if the detected protocol handler is not our own Protocol.
 		if ( ! $protocol_handler_obj instanceof Protocol ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a Dropbox-URL.', 'external-files-in-media-library' ), $target, 'error' );
+			Log::get_instance()->create( __( 'Given path is not a DropBox-URL.', 'external-files-in-media-library' ), $target, 'error' );
 
 			// do nothing more.
 			return false;
@@ -274,7 +274,7 @@ class Export extends Export_Base {
 			}
 		} catch ( Exception $e ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Error occurred during request for public Dropbox URL of a given file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $target, 'error' );
+			Log::get_instance()->create( __( 'Error occurred during request for public DropBox URL of a given file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $target, 'error' );
 
 			// return empty array to not load anything more.
 			return false;
@@ -320,7 +320,7 @@ class Export extends Export_Base {
 		// bail if the detected protocol handler is not our own Protocol.
 		if ( ! $protocol_handler_obj instanceof Protocol ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a Dropbox-URL.', 'external-files-in-media-library' ), $url, 'error' );
+			Log::get_instance()->create( __( 'Given path is not a DropBox-URL.', 'external-files-in-media-library' ), $url, 'error' );
 
 			// do nothing more.
 			return false;
@@ -348,7 +348,7 @@ class Export extends Export_Base {
 			$client->delete( $dropbox_path );
 		} catch ( Exception $e ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Error occurred during request to delete a file from Dropbox:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
+			Log::get_instance()->create( __( 'Error occurred during request to delete a file from DropBox:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
 
 			// return empty array to not load anything more.
 			return false;

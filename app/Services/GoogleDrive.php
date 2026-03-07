@@ -100,7 +100,7 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	 * @return string
 	 */
 	public function get_plugin_label(): string {
-		return __( 'External Files from Google Drive', 'external-files-in-media-library' );
+		return __( 'External Files from Google Drive in Media Library', 'external-files-in-media-library' );
 	}
 
 	/**
@@ -177,7 +177,7 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_type( 'hint' );
 		$transient_obj->set_name( 'eml_hint_for_old_google_drive_usage' );
-		$transient_obj->set_message( '<strong>' . __( 'You have used the Google Drive integration with our plugin before version 5.0.0!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'Support for Google Drive has been moved to a separate plugin for licensing reasons. To continue using Google Drive as external source for your files, you have to install and activate this plugin. To do so, click on the following button.', 'external-files-in-media-library' ) . '<br><br><a href="' . esc_url( $activate_url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Install and activate External Files for Google Drive', 'external-files-in-media-library' ) . '</a>' );
+		$transient_obj->set_message( '<strong>' . __( 'You have used the Google Drive integration with our plugin before version 5.0.0!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'Support for Google Drive has been moved to a separate plugin for licensing reasons. To continue using Google Drive as external source for your files, you have to install and activate this plugin. To do so, click on the following button.', 'external-files-in-media-library' ) . '<br><br><a href="' . esc_url( $activate_url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Install and activate External Files from Google Drive in Media Library', 'external-files-in-media-library' ) . '</a>' );
 		$transient_obj->save();
 	}
 

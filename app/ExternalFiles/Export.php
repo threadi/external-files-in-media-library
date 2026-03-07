@@ -447,7 +447,7 @@ class Export extends Tools_Base {
 			'texts'     => array(
 				'<p><strong>' . __( 'Are you sure you want to delete these exported files?', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'The files will be deleted in your media library AND the external source.', 'external-files-in-media-library' ) . '</p>',
-				'<p>' . __( 'When the files are used on the website, they are no longer visible or usable on your website.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'When the files are deleted, they will be no longer visible or usable on your website.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Some typos
+
+## [5.0.0] - 07.03.2026
+
 ### Added
 
 - Added an intro for first time users of this plugin

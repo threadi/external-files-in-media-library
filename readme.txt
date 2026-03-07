@@ -31,7 +31,7 @@ And even more:
 
 == Support for other plugins ==
 
-Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these e.g., via AN FTP).
+Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these e.g., via an FTP).
 
 Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
 
@@ -76,7 +76,7 @@ Support for additional platforms as external sources is enabled by additional se
 ➕ [External files from Google Drive in Media Library](https://github.com/threadi/external-files-from-google-drive)
 ➕ [External files from WebDav in Media Library](https://github.com/threadi/external-files-from-webdav) (incl. any WebDav-provider like NextCloud or Seafile)
 
-They can be installed manually or in the backend of your WordPress under Media Library > External Sources.
+They can be installed manually or in the backend of your WordPress under Media Library > Add External Files.
 
 == Use cases ==
 

@@ -255,7 +255,7 @@ class Intro {
 				'step_1_title'        => __( 'Intro', 'external-files-in-media-library' ),
 				'step_1_intro'        => __( 'Thank you for installing "External Files in Media Library". We will show you some basics to use this plugin.', 'external-files-in-media-library' ),
 				'step_2_title'        => __( 'Start adding URLs', 'external-files-in-media-library' ),
-				'step_2_intro'        => __( 'Go to on Media Library > New<br><br>We will forward you there now. Please wait for a moment.', 'external-files-in-media-library' ),
+				'step_2_intro'        => __( 'Go to on Media > New<br><br>We will forward you there now. Please wait for a moment.', 'external-files-in-media-library' ),
 				'step_3_title'        => __( 'Open import dialog', 'external-files-in-media-library' ),
 				'step_3_intro'        => __( 'Click here to get the import dialog for external files. We will do this for you now.', 'external-files-in-media-library' ),
 				'step_4_title'        => __( 'Add your URL', 'external-files-in-media-library' ),

@@ -702,9 +702,9 @@ class Rest extends Service_Base implements Service {
 				'label' => __( 'Use this URL', 'external-files-in-media-library' ),
 			),
 		);
-		$translations['loading_directory'] = __( 'One page of pagination request is loading', 'external-files-in-media-library' );
+		$translations['loading_directory'] = __( 'Single page request is loading', 'external-files-in-media-library' );
 		/* translators: %1$s will be replaced by a number. */
-		$translations['loading_directories'] = __( '%1$d pages of pagination requests are loading', 'external-files-in-media-library' );
+		$translations['loading_directories'] = __( '%1$d page requests are to be loaded', 'external-files-in-media-library' );
 
 		// return the resulting translations.
 		return $translations;
