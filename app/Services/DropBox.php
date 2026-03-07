@@ -725,7 +725,7 @@ class DropBox extends Service_Base implements Service {
 	private function get_help(): string {
 		$help = esc_html__( 'Follow these steps:', 'external-files-in-media-library' ) . '</p><ol>';
 		/* translators: %1$s will be replaced by a URL. */
-		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>. ', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
+		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL for this app:', 'external-files-in-media-library' ) . ' <code>' . $this->get_real_redirect_uri() . '</code></li>';
 		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li>';
 		$help .= '</ol><p><a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="' . esc_attr( Helper::get_json( $this->get_connect_dialog() ) ) . '">' . esc_html__( 'Connect now', 'external-files-in-media-library' ) . '</a>';
@@ -1103,7 +1103,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		?>
-		<h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'Dropbox', 'external-files-in-media-library' ); ?></h3>
+		<h3 id="efml-<?php echo esc_attr( $this->get_name() ); ?>"><?php echo esc_html__( 'DropBox', 'external-files-in-media-library' ); ?></h3>
 		<div class="efml-user-settings">
 		<?php
 
@@ -1339,7 +1339,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'Start check for converting the Dropbox URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
+		Log::get_instance()->create( __( 'Start check for converting the DropBox URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
 
 		// create the direct download URL.
 		$dropbox_url = add_query_arg(
@@ -1355,7 +1355,7 @@ class DropBox extends Service_Base implements Service {
 		// bail if result is false.
 		if ( ! $response instanceof CaseInsensitiveDictionary ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Request to Dropbox URL results in error.', 'external-files-in-media-library' ), $url, 'error' );
+			Log::get_instance()->create( __( 'Request to DropBox URL results in error.', 'external-files-in-media-library' ), $url, 'error' );
 
 			// return the given URL.
 			return $url;
@@ -1367,7 +1367,7 @@ class DropBox extends Service_Base implements Service {
 		// bail if no location is set.
 		if ( empty( $response_array['location'] ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'No forward URL returned from Dropbox.', 'external-files-in-media-library' ), $url, 'error' );
+			Log::get_instance()->create( __( 'No forward URL returned from DropBox.', 'external-files-in-media-library' ), $url, 'error' );
 
 			// return the given URL.
 			return $url;

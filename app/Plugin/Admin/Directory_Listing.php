@@ -755,7 +755,7 @@ class Directory_Listing {
 		// return OK.
 		$result_dialog['detail']['title'] = __( 'The external source has been deleted', 'external-files-in-media-library' );
 		$result_dialog['detail']['texts'] = array(
-			'<p><strong>' . __( 'The directory has been deleted from your external source.', 'external-files-in-media-library' ) . '</strong></p>',
+			'<p><strong>' . __( 'The directory has been deleted from your external sources.', 'external-files-in-media-library' ) . '</strong></p>',
 		);
 		wp_send_json( $result_dialog );
 	}

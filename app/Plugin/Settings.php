@@ -950,7 +950,7 @@ class Settings {
 					<td>
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo wp_kses_post( sprintf( __( 'The Dropbox logo is a trademark of <a href="%1$s" target="_blank">Dropbox International Unlimited Company (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/official-teams-page' ) );
+							echo wp_kses_post( sprintf( __( 'The DropBox logo is a trademark of <a href="%1$s" target="_blank">DropBox International Unlimited Company (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/official-teams-page' ) );
 						?>
 					</td>
 				</tr>

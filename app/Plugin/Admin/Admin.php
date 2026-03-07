@@ -419,7 +419,7 @@ class Admin {
 
 		register_importer(
 			'efml-importer',
-			__( 'External files for Media Library', 'external-files-in-media-library' ),
+			__( 'External files in Media Library', 'external-files-in-media-library' ),
 			__( 'Import of external files in your media library.', 'external-files-in-media-library' ),
 			'__return_true'
 		);

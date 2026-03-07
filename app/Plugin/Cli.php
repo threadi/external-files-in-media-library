@@ -120,7 +120,7 @@ class Cli {
 				$results[] = sprintf( __( '%1$s has been saved in media library.', 'external-files-in-media-library' ), $url );
 			} else {
 				/* translators: %1$s will be replaced by URL. */
-				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log (Settings > External files in Media Library) for details.', 'external-files-in-media-library' ), $url );
+				$results[] = sprintf( __( '%1$s could not be saved in media library. Take a look in the log (Settings > External files in Media Library > Logs) for details.', 'external-files-in-media-library' ), $url );
 			}
 
 			// show progress.

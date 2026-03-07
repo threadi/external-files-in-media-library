@@ -93,7 +93,7 @@ class Synchronization extends Schedules_Base {
 
 		// bail if the "term_data" could not be loaded.
 		if ( empty( $term_data ) ) {
-			Log::get_instance()->create( __( 'The external directory does not have any configuration for synchronization.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
+			Log::get_instance()->create( __( 'The external source does not have any configuration for synchronization.', 'external-files-in-media-library' ) . ' <code>' . $args['method'] . '</code>', '', 'error' );
 			return;
 		}
 
