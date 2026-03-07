@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
@@ -282,7 +281,7 @@ class Directory_Listing {
 		if ( is_null( $method ) ) {
 			?>
 			<div class="wrap">
-				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source for your external files', 'external-files-in-media-library' ); ?></h1>
+				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {

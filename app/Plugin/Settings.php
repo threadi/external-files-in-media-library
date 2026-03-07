@@ -632,8 +632,8 @@ class Settings {
 			'title'   => __( 'Download installation key', 'external-files-in-media-library' ),
 			'texts'   => array(
 				'<p><strong>' . __( 'Do you real want to download the installation key?', 'external-files-in-media-library' ) . '</strong></p>',
-				'<p>' . __( 'The installation key is used to encrypt the plugins data. Without it, you would no longer be able to access this encrypted content.', 'external-files-in-media-library' ) . '</p>',
-				'<p>' . __( 'Keep this file in a safe place.', 'personio-integration' ) . '</p>',
+				'<p>' . __( 'The installation key is used to encrypt the plugin data. Without it, you would no longer be able to access this encrypted content.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Keep this file in a safe place.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons' => array(
 				array(

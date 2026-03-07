@@ -858,4 +858,49 @@ class Helper {
 		// return the resulting list of possible mime types for the settings.
 		return $mime_types;
 	}
+
+	/**
+	 * Generate URL from its components.
+	 *
+	 * This is essentially the opposite of built-in php function, parse_url().
+	 *
+	 * @source https://www.hashbangcode.com/snippets/reverse-parseurl-php-function
+	 *
+	 * @param array<string,mixed> $parsed_url The parts of the parse_url() array.
+	 *
+	 * @return string The reconstructed URL.
+	 */
+	public static function rebuild_url( array $parsed_url ): string {
+		$parts = array(
+			'credentials' => '',
+			'port'        => '',
+		);
+
+		$parts['scheme'] = isset( $parsed_url['scheme'] ) ? $parsed_url['scheme'] . '://' : '';
+		$parts['host']   = $parsed_url['host'] ?? '';
+
+		if ( isset( $parsed_url['port'] ) ) {
+			if ( ( 'http' === $parsed_url['scheme'] && '80' !== $parsed_url['port'] ) || ( 'https' === $parsed_url['scheme'] && '443' !== $parsed_url['port'] ) ) {
+				$parts['port'] = ':' . $parsed_url['port'];
+			}
+		}
+
+		$parts['username'] = $parsed_url['username'] ?? '';
+		$parts['password'] = $parsed_url['password'] ?? '';
+		if ( ! empty( $parts['username'] ) && ! empty( $parts['password'] ) ) {
+			$parts['credentials'] = $parts['username'] . ':' . $parts['password'] . '@';
+		}
+
+		$parts['path']     = $parsed_url['path'] ?? '';
+		$parts['query']    = isset( $parsed_url['query'] ) ? '?' . $parsed_url['query'] : '';
+		$parts['fragment'] = isset( $parsed_url['fragment'] ) ? '#' . $parsed_url['fragment'] : '';
+
+		return $parts['scheme'] .
+				$parts['credentials'] .
+				$parts['host'] .
+				$parts['port'] .
+				$parts['path'] .
+				$parts['query'] .
+				$parts['fragment'];
+	}
 }

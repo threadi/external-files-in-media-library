@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Forms;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
@@ -144,6 +145,9 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 			get_admin_url() . 'admin.php'
 		);
 
+		// embed our JS-files.
+		Forms::get_instance()->add_styles_and_js_admin( 'media-new.php' );
+
 		// create the dialog with the hint to activate this plugin.
 		$dialog = array(
 			'className' => 'efml',
@@ -175,5 +179,14 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 		$transient_obj->set_name( 'eml_hint_for_old_google_drive_usage' );
 		$transient_obj->set_message( '<strong>' . __( 'You have used the Google Drive integration with our plugin before version 5.0.0!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'Support for Google Drive has been moved to a separate plugin for licensing reasons. To continue using Google Drive as external source for your files, you have to install and activate this plugin. To do so, click on the following button.', 'external-files-in-media-library' ) . '<br><br><a href="' . esc_url( $activate_url ) . '" class="button button-primary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Install and activate External Files for Google Drive', 'external-files-in-media-library' ) . '</a>' );
 		$transient_obj->save();
+	}
+
+	/**
+	 * Run additional tasks during plugin uninstallation.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		delete_option( 'eml_google_drive_access_tokens' );
 	}
 }

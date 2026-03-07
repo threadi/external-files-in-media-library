@@ -300,10 +300,25 @@ class Rest extends Service_Base implements Service {
 		 * Prepare the resulting tree before directory listings own @Rest.php generates the tree.
 		 */
 		if ( ! str_contains( $directory, 'per_page=' ) ) {
-			// remove the possible REST API paths from the given URL.
-			foreach ( $this->get_rest_api_paths() as $path ) {
-				$directory = str_replace( $path, '', $directory );
+			// parse the URL to get the query params.
+			$parsed_url = wp_parse_url( $directory );
+
+			// bail if URL could not be parsed.
+			if ( ! is_array( $parsed_url ) ) {
+				return array();
 			}
+
+			// prepare the query.
+			$query = '';
+
+			// get the query params.
+			if ( isset( $parsed_url['query'] ) ) {
+				$query = $parsed_url['query'];
+				unset( $parsed_url['query'] );
+			}
+
+			// rebuild the URL without the params.
+			$directory = Helper::rebuild_url( $parsed_url );
 
 			// get the URL to use.
 			$url_to_use = $this->get_url_to_use( $directory );
@@ -324,14 +339,27 @@ class Rest extends Service_Base implements Service {
 				return array();
 			}
 
-			// extend the given URL.
-			$url = add_query_arg(
-				array(
-					'page'     => 1,
-					'per_page' => $this->get_page_limit(),
-				),
-				$url_to_use
+			// create the query parameter.
+			$queries = array(
+				'page'     => 1,
+				'per_page' => $this->get_page_limit(),
 			);
+
+			// add the original parameter to the query.
+			$query_parts = array();
+			if ( ! empty( $query ) ) {
+				parse_str( $query, $query_parts );
+				if ( isset( $query_parts['page'] ) ) {
+					unset( $query_parts['page'] );
+				}
+				if ( isset( $query_parts['per_page'] ) ) {
+					unset( $query_parts['per_page'] );
+				}
+				$queries = array_merge( $queries, $query_parts );
+			}
+
+			// extend the given URL.
+			$url = add_query_arg( $queries, $url_to_use );
 
 			// request the header of the external WordPress REST-API to get the max pages for given limit.
 			$response = wp_safe_remote_head( $url );
@@ -381,6 +409,7 @@ class Rest extends Service_Base implements Service {
 			if ( ! empty( $search ) ) {
 				$query['search'] = $search;
 			}
+			$query = array_merge( $query, $query_parts );
 
 			// add the pagination URLs to the list as directories.
 			for ( $p = 1; $p <= $max_pages; $p++ ) {
@@ -1005,7 +1034,7 @@ class Rest extends Service_Base implements Service {
 			return false;
 		}
 
-		// return the result.
+		// create the resulting URL.
 		return $url_to_use . $this->get_default_endpoint();
 	}
 

@@ -103,7 +103,7 @@ Run in the main directory:
 
 ## Generate documentation
 
-`vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php --exclude=Page.php --exclude=Rest.php`
+`vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=eml_ --exclude=Section.php --exclude=Tab.php --exclude=Import.php --exclude=Export.php --exclude=Field_Base.php --exclude=Settings.php --exclude=Page.php --exclude=Rest.php --exclude=Transients.php`
 
 ## Check for WordPress VIP Coding Standards
 

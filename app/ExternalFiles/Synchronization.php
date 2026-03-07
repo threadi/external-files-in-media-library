@@ -440,7 +440,7 @@ class Synchronization extends Tools_Base {
 		// show a simple hint for users without capability to change settings.
 		$dialog = array(
 			'className' => 'efml',
-			'title'     => __( 'Synchronize your media files', 'external-files-in-media-library' ),
+			'title'     => __( 'Synchronize media files', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'Get your files from this external source and have them updated automatically.', 'external-files-in-media-library' ) . '</strong></p>',
 				'<p>' . __( 'Ask your website administrator about the possibility of activating this feature.', 'external-files-in-media-library' ) . '</p>',
