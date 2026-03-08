@@ -8,8 +8,6 @@
 namespace ExternalFilesInMediaLibrary\Services;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -73,6 +71,15 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Return the label.
+	 *
+	 * @return string
+	 */
+	public function get_label(): string {
+		return __( 'AWS S3-compatible', 'external-files-in-media-library' );
 	}
 
 	/**
