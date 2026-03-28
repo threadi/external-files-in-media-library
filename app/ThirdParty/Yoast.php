@@ -10,7 +10,7 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Field_Base;
+use easySettingsForWordPress\Field_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**

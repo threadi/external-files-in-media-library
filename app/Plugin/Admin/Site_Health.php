@@ -10,12 +10,12 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_REST_Server;
 
 /**
@@ -160,7 +160,7 @@ class Site_Health {
 		);
 
 		// loop through all settings and add them as fields if their export is allowed.
-		foreach ( Settings::get_instance()->get_settings() as $setting ) {
+		foreach ( Settings::get_instance()->get_settings_obj()->get_settings() as $setting ) {
 			// create the entry.
 			$entry = array(
 				'label'   => $setting->get_name(),
@@ -183,7 +183,7 @@ class Site_Health {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the main settings page.
 		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -214,7 +214,7 @@ class Site_Health {
 		$setting->set_section( $advanced_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Disable site health checks', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled we will not check for missing cronjobs or failed external sources.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );

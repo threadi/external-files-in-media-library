@@ -12,12 +12,12 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Init;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Password;
+use easySettingsForWordPress\Fields\Text;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -133,7 +133,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// get the settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
@@ -174,7 +174,7 @@ class Ftp extends Service_Base implements Service {
 			$setting->set_section( $section );
 			$setting->set_type( 'string' );
 			$setting->set_default( '' );
-			$field = new Text();
+			$field = new Text( $settings_obj );
 			$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
 			$field->set_setting( $setting );
 			$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
@@ -188,7 +188,7 @@ class Ftp extends Service_Base implements Service {
 			$setting->set_default( '' );
 			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
 			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Text();
+			$field = new Text( $settings_obj );
 			$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
 			$field->set_setting( $setting );
 			$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
@@ -202,7 +202,7 @@ class Ftp extends Service_Base implements Service {
 			$setting->set_default( '' );
 			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
 			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password();
+			$field = new Password( $settings_obj );
 			$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
 			$field->set_setting( $setting );
 			$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
@@ -215,7 +215,7 @@ class Ftp extends Service_Base implements Service {
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
 			$setting->prevent_export( true );
-			$field = new TextInfo();
+			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
@@ -232,7 +232,7 @@ class Ftp extends Service_Base implements Service {
 	 */
 	public function get_directory_listing( string $directory ): array {
 		// prepend a directory with ftp:// if that is not given.
-		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
+		if ( ! ( stripos( $directory, 'ftp://' ) || stripos( $directory, 'ftps://' ) ) ) {
 			$directory = 'ftp://' . $directory;
 		}
 
@@ -497,7 +497,7 @@ class Ftp extends Service_Base implements Service {
 		$directory = $this->fields['server']['value'];
 
 		// prepend the directory with ftp:// if that is not given.
-		if ( ! ( absint( stripos( $directory, 'ftp://' ) ) >= 0 || absint( stripos( $directory, 'ftps://' ) ) > 0 ) ) {
+		if ( ! ( stripos( $directory, 'ftp://' ) || stripos( $directory, 'ftps://' ) ) ) {
 			$directory = 'ftp://' . $directory;
 		}
 

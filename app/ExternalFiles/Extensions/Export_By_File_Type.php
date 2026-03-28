@@ -10,15 +10,15 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Post;
 
 /**
@@ -106,7 +106,7 @@ class Export_By_File_Type extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -130,7 +130,7 @@ class Export_By_File_Type extends Extension_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Chose the file types that should be exported to external sources. If none are selected, all file types are allowed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_possible_mime_types_for_settings() );

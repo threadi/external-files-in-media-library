@@ -10,8 +10,8 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use easySettingsForWordPress\Fields\Button;
+use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
@@ -81,7 +81,7 @@ class Statistics {
 	 */
 	public function init_statistics(): void {
 		// get the settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
@@ -165,11 +165,11 @@ class Statistics {
 		$setting->set_default( 0 );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
-		$field = new Button();
+		$field = new Button( $settings_obj );
 		$field->set_title( __( 'Reset file statistics', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
+		$field->set_custom_attributes( array( 'data-dialog' => Helper::get_json( $dialog ) ) );
 		$setting->set_field( $field );
 	}
 

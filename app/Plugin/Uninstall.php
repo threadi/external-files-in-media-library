@@ -83,10 +83,11 @@ class Uninstall {
 		do_action( 'init' );
 
 		// enable the settings.
-		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
+		$settings_obj->activation();
 
 		// clean managed settings.
-		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->delete_settings();
+		$settings_obj->delete_settings();
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();

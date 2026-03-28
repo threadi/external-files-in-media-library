@@ -12,16 +12,16 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
@@ -128,7 +128,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function init_synchronize(): void {
 		// get settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -171,7 +171,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'array' );
 		$setting->set_default( SynchronizationDialog::get_instance()->get_default_extensions() );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your configuration dialog for each synchronization. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
@@ -184,7 +184,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable automatic synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled every new external source will automatically be synchronized.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
@@ -195,7 +195,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'string' );
 		$setting->set_default( 'efml_hourly' );
-		$field = new Select();
+		$field = new Select( $settings_obj );
 		$field->set_title( __( 'Interval for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Serves as a preset for new external sources. This setting can be changed on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_intervals() );
@@ -208,7 +208,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Delete unused files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Delete files in the media library that are no longer in the external source after each synchronization.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
@@ -219,7 +219,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Delete synchronized files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Delete files in media library belonging to an external source when the connection to the external source is deleted.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );

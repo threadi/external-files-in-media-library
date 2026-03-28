@@ -12,13 +12,12 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Init;
+use easySettingsForWordPress\Fields\Button;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use Error;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
@@ -27,6 +26,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\DropBox\Export;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
@@ -153,7 +153,7 @@ class DropBox extends Service_Base implements Service {
 		add_rewrite_rule( $this->get_oauth_slug() . '?$', 'index.php?' . $this->get_oauth_slug() . '=1', 'top' );
 
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -207,19 +207,19 @@ class DropBox extends Service_Base implements Service {
 
 			// show connect button if no token is set.
 			if ( empty( $access_token ) ) {
-				$field = new TextInfo();
+				$field = new TextInfo( $settings_obj );
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_help() );
 			} else {
 				// create the dialog.
 				$dialog = $this->get_disconnect_dialog();
 
-				$field = new Button();
+				$field = new Button( $settings_obj );
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
 				$field->set_button_title( __( 'Disconnect', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_connect_info() );
 				$field->add_class( 'easy-dialog-for-wordpress' );
-				$field->set_custom_attributes( array( 'data-dialog' => wp_json_encode( $dialog ) ) );
+				$field->set_custom_attributes( array( 'data-dialog' => Helper::get_json( $dialog ) ) );
 			}
 			$setting->set_field( $field );
 		}
@@ -229,7 +229,7 @@ class DropBox extends Service_Base implements Service {
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
 			$setting->prevent_export( true );
-			$field = new TextInfo();
+			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );

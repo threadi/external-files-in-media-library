@@ -10,13 +10,13 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Number;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Handler controls the option for sync only specific file types.
@@ -106,7 +106,7 @@ class Sync_By_Size extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -130,7 +130,7 @@ class Sync_By_Size extends Extension_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Minimum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );
@@ -142,7 +142,7 @@ class Sync_By_Size extends Extension_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Maximum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );

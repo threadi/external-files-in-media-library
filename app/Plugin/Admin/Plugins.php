@@ -19,7 +19,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
+use easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -91,7 +91,7 @@ class Plugins {
 	 */
 	public function add_settings(): void {
 		// get settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the hidden section.
 		$hidden_section = Settings::get_instance()->get_hidden_section();

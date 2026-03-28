@@ -5,6 +5,8 @@
 ### Changed
 
 - Some typos
+- Using updated settings library
+- Updated compatibility with PHPStan
 - Update dependencies
 
 ### Fixed

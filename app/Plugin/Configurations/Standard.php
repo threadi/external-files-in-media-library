@@ -10,10 +10,10 @@ namespace ExternalFilesInMediaLibrary\Plugin\Configurations;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\Plugin\Configuration_Base;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Object for the standard mode.
@@ -62,7 +62,7 @@ class Standard extends Configuration_Base {
 		Roles::get_instance()->trigger_update();
 
 		// get the setting.
-		$setting_obj = Settings::get_instance()->get_setting( 'eml_import_extensions' );
+		$setting_obj = Settings::get_instance()->get_settings_obj()->get_setting( 'eml_import_extensions' );
 
 		/**
 		 * Configuration:

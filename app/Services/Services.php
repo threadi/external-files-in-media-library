@@ -15,10 +15,10 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Object to handle support for specific services.
@@ -97,11 +97,8 @@ class Services {
 	 * @return void
 	 */
 	public function init_settings(): void {
-		// get the settings object.
-		$settings_obj = Settings::get_instance();
-
 		// get the settings page.
-		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+		$settings_page = Settings::get_instance()->get_settings_obj()->get_page( Settings::get_instance()->get_menu_slug() );
 
 		// bail if page does not exist.
 		if ( ! $settings_page instanceof Page ) {

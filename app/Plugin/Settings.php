@@ -10,20 +10,17 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Export;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Import;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Button;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Fields\Text;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Types;
-use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
@@ -34,6 +31,12 @@ use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
  * Object, which handles the settings of this plugin.
  */
 class Settings {
+	/**
+	 * The settings object.
+	 *
+	 * @var ?\easySettingsForWordPress\Settings
+	 */
+	private ?\easySettingsForWordPress\Settings $settings_obj = null;
 
 	/**
 	 * Instance of actual object.
@@ -148,17 +151,15 @@ class Settings {
 		/**
 		 * Configure the basic settings object.
 		 */
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
-		$settings_obj->set_slug( 'efml' );
-		$settings_obj->set_plugin_slug( EFML_PLUGIN );
-		$settings_obj->set_path( Helper::get_plugin_dir() . 'app/Dependencies/easySettingsForWordPress/' );
-		$settings_obj->set_url( Helper::get_plugin_url() . 'app/Dependencies/easySettingsForWordPress/' );
-		$settings_obj->set_menu_title( __( 'External files in Media Library', 'external-files-in-media-library' ) );
-		$settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
-		$settings_obj->set_menu_slug( $this->get_menu_slug() );
-		$settings_obj->set_menu_parent_slug( $this->get_php_page() );
-		$settings_obj->set_capability( $this->is_disabled() ? 'god' : 'manage_options' );
-		$settings_obj->set_translations(
+		$this->settings_obj = $this->get_settings_obj();
+		$this->settings_obj->set_slug( 'efml' );
+		$this->settings_obj->set_plugin_slug( EFML_PLUGIN );
+		$this->settings_obj->set_menu_title( __( 'External files in Media Library', 'external-files-in-media-library' ) );
+		$this->settings_obj->set_title( __( 'Settings for External files in Media Library', 'external-files-in-media-library' ) );
+		$this->settings_obj->set_menu_slug( $this->get_menu_slug() );
+		$this->settings_obj->set_menu_parent_slug( $this->get_php_page() );
+		$this->settings_obj->set_capability( $this->is_disabled() ? 'god' : 'manage_options' );
+		$this->settings_obj->set_translations(
 			array(
 				'title_settings_import_file_missing' => __( 'A required file is missing', 'external-files-in-media-library' ),
 				'text_settings_import_file_missing'  => __( 'Please choose a JSON-file with settings to import.', 'external-files-in-media-library' ),
@@ -196,9 +197,12 @@ class Settings {
 		);
 
 		/**
-		 * Add the settings page.
+		 * Get the settings page.
 		 */
-		$settings_page = $settings_obj->add_page( $this->get_menu_slug() );
+		$settings_page = $this->settings_obj->get_page( $this->get_menu_slug() );
+		if ( ! $settings_page instanceof Page ) {
+			return;
+		}
 
 		/**
 		 * Configure all tabs for this object.
@@ -247,22 +251,22 @@ class Settings {
 		// the main section.
 		$general_tab_main = $general_tab->add_section( 'settings_section_main', 10 );
 		$general_tab_main->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
-		$general_tab_main->set_setting( $settings_obj );
+		$general_tab_main->set_setting( $this->get_settings_obj() );
 
 		// the dialog section.
 		$general_tab_dialog = $general_tab->add_section( 'settings_section_dialog', 20 );
 		$general_tab_dialog->set_title( __( 'Options for saving external files', 'external-files-in-media-library' ) );
-		$general_tab_dialog->set_setting( $settings_obj );
+		$general_tab_dialog->set_setting( $this->get_settings_obj() );
 
 		// the proxy section.
 		$proxy_tab_proxy = $proxy_tab->add_section( 'settings_section_proxy', 10 );
 		$proxy_tab_proxy->set_title( __( 'Proxy settings', 'external-files-in-media-library' ) );
-		$proxy_tab_proxy->set_setting( $settings_obj );
+		$proxy_tab_proxy->set_setting( $this->get_settings_obj() );
 
 		// the advanced section.
 		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced', 10 );
 		$advanced_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
-		$advanced_tab_advanced->set_setting( $settings_obj );
+		$advanced_tab_advanced->set_setting( $this->get_settings_obj() );
 
 		/**
 		 * Add the settings to the settings object.
@@ -282,32 +286,32 @@ class Settings {
 		$description = apply_filters( 'efml_setting_description_attachment_pages', $description );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_disable_attachment_pages' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_disable_attachment_pages' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_help( '<p>' . $description . '</p>' );
-		$field = new Checkbox();
+		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable the attachment page for URL-files', 'external-files-in-media-library' ) );
 		$field->set_description( $description );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_modes' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_modes' );
 		$setting->set_section( $general_tab_main );
 		$setting->prevent_export( true );
-		$field = new TextInfo();
+		$field = new TextInfo( $this->get_settings_obj() );
 		$field->set_title( __( 'Choose configuration', 'external-files-in-media-library' ) );
 		$field->set_description( $this->show_modes() );
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_allowed_mime_types' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_allowed_mime_types' );
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $this->get_settings_obj() );
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
 		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
@@ -317,7 +321,7 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_delete_on_deinstallation' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
@@ -331,7 +335,7 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_switch_on_uninstallation' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_switch_on_uninstallation' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
@@ -344,7 +348,7 @@ class Settings {
 		$setting->set_default( 0 );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_preview' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_preview' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
@@ -357,7 +361,7 @@ class Settings {
 		$setting->set_default( 0 );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_directory_listing_hide_not_supported_file_types' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_not_supported_file_types' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
 			array(
@@ -370,7 +374,7 @@ class Settings {
 		$setting->set_default( 1 );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_add_user_agent' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_add_user_agent' );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$setting->set_section( $advanced_tab_advanced );
@@ -383,7 +387,7 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_show_all_external_sources' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_show_all_external_sources' );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_section( $advanced_tab_advanced );
@@ -396,7 +400,7 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_play_sound' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_play_sound' );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$setting->set_section( $advanced_tab_advanced );
@@ -409,7 +413,7 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_hide_begging_for_review' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_hide_begging_for_review' );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_section( $advanced_tab_advanced );
@@ -423,11 +427,11 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_user_assign' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_user_assign' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( Users::get_instance()->get_first_administrator_user() );
-		$field = new Select();
+		$field = new Select( $this->get_settings_obj() );
 		$field->set_title( __( 'Assign new files to this user', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is only a fallback if the actual user is not available (e.g., via WP CLI import or synchronisation). New files are normally assigned to the user who adds them.', 'external-files-in-media-library' ) );
 		$field->set_options( Roles::get_instance()->get_user_for_settings() );
@@ -435,7 +439,7 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_timeout' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_timeout' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 30 );
@@ -449,33 +453,33 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_max_execution_check' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_max_execution_check' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Enable max execution check', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled after every URL during import the max execution of the PHP-processes is checked regarding the PHP-<i>max_execution_time</i>-setting in your hosting.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_job_show_link' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_job_show_link' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Show job link on each imported file', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When enabled, a link is displayed for each external file in the media library, which can be used to filter all files from the same import. This allows you to find them more quickly and delete them again if necessary.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_log_mode' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_log_mode' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
 		$setting->set_default( Helper::is_development_mode() ? 2 : 0 );
-		$field = new Select();
+		$field = new Select( $this->get_settings_obj() );
 		$field->set_title( __( 'Log-mode', 'external-files-in-media-library' ) );
 		$field->set_options(
 			array(
@@ -489,48 +493,48 @@ class Settings {
 		// add the import/export section in advanced.
 		$advanced_plugin = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
 		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
-		$advanced_plugin->set_setting( $settings_obj );
+		$advanced_plugin->set_setting( $this->get_settings_obj() );
 
 		// add setting.
-		$gprd_hint_setting = $settings_obj->add_setting( 'eml_disable_gprd_warning' );
+		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_gprd_warning' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
 		$gprd_hint_setting->set_show_in_rest( false );
 		$gprd_hint_setting->set_type( 'integer' );
 		$gprd_hint_setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable GPRD-hint', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If disabled we will not warn you about the GPRD regulations regarding external files in websites.', 'external-files-in-media-library' ) );
 		$gprd_hint_setting->set_field( $field );
 
 		// add setting.
-		$gprd_hint_setting = $settings_obj->add_setting( 'eml_disable_plugin_hints' );
+		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_plugin_hints' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
 		$gprd_hint_setting->set_show_in_rest( false );
 		$gprd_hint_setting->set_type( 'integer' );
 		$gprd_hint_setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable hints for plugins', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If disabled we will not show you any hint for additional service plugins.', 'external-files-in-media-library' ) );
 		$gprd_hint_setting->set_field( $field );
 
 		// add setting to change the proxy path.
-		$proxy_path_setting = $settings_obj->add_setting( 'eml_proxy_path' );
+		$proxy_path_setting = $this->get_settings_obj()->add_setting( 'eml_proxy_path' );
 		$proxy_path_setting->set_section( $proxy_tab_proxy );
 		$proxy_path_setting->set_show_in_rest( false );
 		$proxy_path_setting->set_type( 'string' );
 		$proxy_path_setting->set_default( 'cache/eml/' );
 		$proxy_path_setting->set_save_callback( array( $this, 'save_proxy_path' ) );
-		$field = new Text();
+		$field = new Text( $this->get_settings_obj() );
 		$field->set_title( __( 'Proxy path', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This is the path on the filesystem of your WordPress relativ to the <i>wp-content</i> directory. If you change it, the new directory should not exist. All cached files will be copied to the new path.', 'external-files-in-media-library' ) );
 		$proxy_path_setting->set_field( $field );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_proxy_clear' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_proxy_clear' );
 		$setting->set_section( $proxy_tab_proxy );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
-		$field = new Button();
+		$field = new Button( $this->get_settings_obj() );
 		$field->set_title( __( 'Reset proxy cache', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
@@ -538,7 +542,7 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_user_settings' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_user_settings' );
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_field(
 			array(
@@ -558,20 +562,83 @@ class Settings {
 		}
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_import_extensions' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_import_extensions' );
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_type( 'array' );
 		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $this->get_settings_obj() );
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
-		// add import/export settings.
-		Import::get_instance()->add_settings( $settings_obj, $advanced_plugin );
-		Export::get_instance()->add_settings( $settings_obj, $advanced_plugin );
+		// create import dialog.
+		$dialog = array(
+			'title'   => __( 'Import settings', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Choose the JSON-file with the settings.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<input type="file" accept="application/json" name="import_settings_file" id="import_settings_file">',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'settings_import_file();',
+					'variant' => 'primary',
+					'text'    => __( 'Import now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'import_settings' );
+		$setting->set_section( $advanced_plugin );
+		$setting->set_autoload( false );
+		$setting->prevent_export( true );
+		$field = new Button( $this->get_settings_obj() );
+		$field->set_title( __( 'Import', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Import now', 'external-files-in-media-library' ) );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$field->set_custom_attributes( array( 'data-dialog' => (string) wp_json_encode( $dialog ) ) );
+		$setting->set_field( $field );
+
+		// create export dialog.
+		$dialog = array(
+			'title'   => __( 'Export settings', 'external-files-in-media-library' ),
+			'texts'   => array(
+				'<p><strong>' . __( 'Click on the following button to download the settings as JSON-file.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'You can import this JSON-file in other projects using this WordPress plugin or theme.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons' => array(
+				array(
+					'action'  => 'closeDialog();location.href="' . $this->get_settings_obj()->get_export_obj()->get_download_url() . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Export now', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+
+		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'export_settings' );
+		$setting->set_section( $advanced_plugin );
+		$setting->set_autoload( false );
+		$setting->prevent_export( true );
+		$field = new Button( $this->get_settings_obj() );
+		$field->set_title( __( 'Export', 'external-files-in-media-library' ) );
+		$field->set_button_title( __( 'Export now', 'external-files-in-media-library' ) );
+		$field->set_button_url( $this->get_settings_obj()->get_export_obj()->get_download_url() );
+		$field->add_class( 'easy-dialog-for-wordpress' );
+		$field->set_custom_attributes( array( 'data-dialog' => (string) wp_json_encode( $dialog ) ) );
+		$setting->set_field( $field );
 
 		// create reset URL.
 		$reset_url = add_query_arg(
@@ -607,10 +674,10 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_reset' );
+		$setting = $this->get_settings_obj()->add_setting( 'eml_reset' );
 		$setting->set_section( $advanced_plugin );
 		$setting->prevent_export( true );
-		$field = new Button();
+		$field = new Button( $this->get_settings_obj() );
 		$field->set_title( __( 'Reset plugin', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset plugin', 'external-files-in-media-library' ) );
 		$field->set_button_url( $reset_url );
@@ -650,10 +717,10 @@ class Settings {
 		);
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'efmlDownloadKey' );
+		$setting = $this->get_settings_obj()->add_setting( 'efmlDownloadKey' );
 		$setting->set_section( $advanced_plugin );
 		$setting->prevent_export( true );
-		$field = new Button();
+		$field = new Button( $this->get_settings_obj() );
 		$field->set_title( __( 'Download installation key', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Download key', 'external-files-in-media-library' ) );
 		$field->set_button_url( $download_url );
@@ -662,17 +729,17 @@ class Settings {
 		$setting->set_field( $field );
 
 		// create a hidden page for hidden settings.
-		$hidden_page = $settings_obj->add_page( 'hidden_page' );
+		$hidden_page = $this->get_settings_obj()->add_page( 'hidden_page' );
 
 		// create a hidden tab on this page.
 		$hidden_tab = $hidden_page->add_tab( 'hidden_tab', 10 );
 
 		// the hidden section for any not visible settings.
 		$hidden = $hidden_tab->add_section( 'hidden_section', 20 );
-		$hidden->set_setting( $settings_obj );
+		$hidden->set_setting( $this->get_settings_obj() );
 
 		// initialize this settings object.
-		$settings_obj->init();
+		$this->get_settings_obj()->init();
 	}
 
 	/**
@@ -762,7 +829,7 @@ class Settings {
 		$this->add_settings();
 
 		// run the installation of them.
-		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
+		$this->get_settings_obj()->activation();
 	}
 
 	/**
@@ -787,14 +854,14 @@ class Settings {
 		$content .= '<p>' . sprintf( __( 'You can adjust the behavior of the plugin to your own requirements in many places via <a href="%1$s">the settings</a>. The possible settings are described in more detail below.', 'external-files-in-media-library' ), esc_url( $this->get_url() ) ) . '</p>';
 
 		// get help texts from each setting, which have one.
-		foreach ( \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->get_settings() as $settings_obj ) {
+		foreach ( $this->get_settings_obj()->get_settings() as $setting_obj ) {
 			// bail if setting has no help text.
-			if ( ! $settings_obj->has_help() ) {
+			if ( ! $setting_obj->has_help() ) {
 				continue;
 			}
 
 			// get the field.
-			$field = $settings_obj->get_field();
+			$field = $setting_obj->get_field();
 
 			// bail if field could not be found.
 			if ( ! $field ) {
@@ -802,7 +869,7 @@ class Settings {
 			}
 
 			// add this setting to the help page.
-			$content .= '<h3>' . $field->get_title() . '</h3>' . $settings_obj->get_help();
+			$content .= '<h3>' . $field->get_title() . '</h3>' . $setting_obj->get_help();
 		}
 
 		// add help for the settings of this plugin.
@@ -992,11 +1059,8 @@ class Settings {
 	 * @return false|Section
 	 */
 	public function get_hidden_section(): Section|false {
-		// get settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
-
 		// create a hidden page for hidden settings.
-		$hidden_page = $settings_obj->get_page( 'hidden_page' );
+		$hidden_page = $this->get_settings_obj()->get_page( 'hidden_page' );
 
 		// bail if page could not be found.
 		if ( ! $hidden_page instanceof Page ) {
@@ -1061,5 +1125,22 @@ class Settings {
 			return '';
 		}
 		return $content;
+	}
+
+	/**
+	 * Return the configured settings object.
+	 *
+	 * @return \easySettingsForWordPress\Settings
+	 */
+	public function get_settings_obj(): \easySettingsForWordPress\Settings {
+		/**
+		 * Get the object one time.
+		 */
+		if ( null === $this->settings_obj ) {
+			$this->settings_obj = new \easySettingsForWordPress\Settings( EFML_PLUGIN );
+		}
+
+		// return it.
+		return $this->settings_obj;
 	}
 }

@@ -17,10 +17,10 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Button;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Button;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 
 /**
@@ -299,7 +299,7 @@ class Intro {
 	 */
 	public function add_settings(): void {
 		// get settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the main settings page.
 		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -330,7 +330,7 @@ class Intro {
 		$setting->set_section( $advanced_section );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
-		$field = new Button();
+		$field = new Button( $settings_obj );
 		$field->set_title( __( 'Intro', 'external-files-in-media-library' ) );
 		if ( $this->is_closed() ) {
 			$field->set_button_title( __( 'Reset to run intro', 'external-files-in-media-library' ) );

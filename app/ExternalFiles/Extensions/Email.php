@@ -11,12 +11,12 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Text;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Term;
 
 /**
@@ -101,7 +101,7 @@ class Email extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -125,7 +125,7 @@ class Email extends Extension_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'string' );
 		$setting->set_default( '' );
-		$field = new Text();
+		$field = new Text( $settings_obj );
 		$field->set_title( __( 'Email', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Enter the email address to which a notification should be sent after each synchronization. You can also set this for each external source.', 'external-files-in-media-library' ) );
 		$field->set_placeholder( 'info@example.com' );
