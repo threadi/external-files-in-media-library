@@ -11,10 +11,10 @@ namespace ExternalFilesInMediaLibrary\Plugin\CapabilitySets;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use easySettingsForWordPress\Setting;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Plugin\CapabilitySet_Base;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Object for this capability set.
@@ -49,7 +49,7 @@ class Standard extends CapabilitySet_Base {
 	 */
 	public function run(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// set capabilities for each tool to default.
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {

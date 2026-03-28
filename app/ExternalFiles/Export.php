@@ -12,16 +12,16 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use WP_Post;
 use WP_Query;
@@ -135,7 +135,7 @@ class Export extends Tools_Base {
 	 */
 	public function init_export(): void {
 		// get settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get main settings page.
 		$page = $settings_obj->get_page( 'eml_settings' );
@@ -159,7 +159,7 @@ class Export extends Tools_Base {
 		$setting_export->set_section( $section );
 		$setting_export->set_type( 'integer' );
 		$setting_export->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable export', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
 		$field->set_description( sprintf( __( 'If enabled you have to configure one or more of <a href="%1$s">your external sources</a> as export target. Every new file in media library will be exported to the configured source and used as external file.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) );
@@ -177,7 +177,7 @@ class Export extends Tools_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'array' );
 		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for export', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your export dialog. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( $extensions );
@@ -190,7 +190,7 @@ class Export extends Tools_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Do not delete local files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When enabled, exported files are no longer deleted from local hosting. Note that this means you will be storing the files twice: once in your hosting and once in the external source. Files delivered via the proxy still take up storage space on it. However, the proxy cache is emptied regularly so that only files that are actually needed to take up storage space.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
@@ -215,11 +215,11 @@ class Export extends Tools_Base {
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		if ( empty( $external_sources ) ) {
-			$field = new TextInfo();
+			$field = new TextInfo( $settings_obj );
 			/* translators: %1$s will be replaced by a URL. */
 			$field->set_description( sprintf( __( 'You have not enabled export for any external sources. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) );
 		} else {
-			$field = new Select();
+			$field = new Select( $settings_obj );
 			$field->set_options( $external_sources );
 			/* translators: %1$s will be replaced by a URL. */
 			$field->set_description( sprintf( __( 'Select the external source with export enabled to which all new media files should be assigned. Other external sources with export enabled that are not selected here will also be used, but will not be assigned to the new files. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) );
@@ -234,7 +234,7 @@ class Export extends Tools_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
@@ -1419,7 +1419,7 @@ class Export extends Tools_Base {
 	/**
 	 * Return a list of names of the external sources with enabled export option.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,string>
 	 */
 	private function get_external_sources_as_name_list(): array {
 		// bail if this is not in the backend.
@@ -1432,7 +1432,7 @@ class Export extends Tools_Base {
 			return array();
 		}
 
-		// get all terms.
+		// get all terms of our listing taxonomy.
 		$terms = get_terms(
 			array(
 				'taxonomy'   => Taxonomy::get_instance()->get_name(),
@@ -1456,11 +1456,11 @@ class Export extends Tools_Base {
 			}
 
 			// add this source.
-			$external_sources[ $term->term_id ] = $term->name;
+			$external_sources[ (string) $term->term_id ] = $term->name;
 		}
 
 		// return the resulting list.
-		return $external_sources;
+		return $external_sources; // @phpstan-ignore return.type
 	}
 
 	/**

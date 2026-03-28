@@ -697,7 +697,10 @@ class Import extends Directory_Listing_Base {
 		$mime_types = Helper::get_possible_mime_types();
 
 		// get basename of path, if available.
-		$title = basename( $url_info['path'] );
+		$title = '';
+		if ( ! empty( $url_info['path'] ) ) {
+			$title = basename( $url_info['path'] );
+		}
 
 		// add file extension if we support the mime-type and if the title does not have any atm.
 		if ( ! empty( $mime_types[ $file_data['mime-type'] ] ) && empty( pathinfo( $title, PATHINFO_EXTENSION ) ) ) {

@@ -10,10 +10,9 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
@@ -21,6 +20,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Handler controls how to check the availability of external files.
@@ -107,7 +107,7 @@ class Availability extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -135,7 +135,7 @@ class Availability extends Extension_Base {
 		$setting->set_type( 'string' );
 		$setting->set_default( 'efml_24hourly' );
 		$setting->set_help( __( 'Defines the time interval in which files with URLs are automatically checked for its availability.', 'external-files-in-media-library' ) );
-		$field = new Select();
+		$field = new Select( $settings_obj );
 		$field->set_title( __( 'Interval for availability check', 'external-files-in-media-library' ) );
 		$field->set_description( $setting->get_help() );
 		$field->set_options( Helper::get_intervals() );

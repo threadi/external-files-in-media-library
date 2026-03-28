@@ -10,10 +10,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Fields\Number;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 
@@ -77,7 +77,7 @@ class File_Types {
 	 */
 	public function add_settings(): void {
 		// get settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get main settings page.
 		$settings_page = $settings_obj->get_page( Settings::get_instance()->get_menu_slug() );
@@ -118,7 +118,7 @@ class File_Types {
 			$setting->set_section( $section );
 			$setting->set_type( 'string' );
 			$setting->set_default( 'external' );
-			$field = new Select();
+			$field = new Select( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Mode for %1$s handling', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
@@ -137,7 +137,7 @@ class File_Types {
 			$setting->set_section( $section );
 			$setting->set_type( 'integer' );
 			$setting->set_default( $file_type_obj->is_proxy_default_enabled() ? 1 : 0 );
-			$field = new Checkbox();
+			$field = new Checkbox( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
@@ -150,7 +150,7 @@ class File_Types {
 			$setting->set_section( $section );
 			$setting->set_type( 'integer' );
 			$setting->set_default( $file_type_obj->get_default_proxy_max_age() );
-			$field = new Number();
+			$field = new Number( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Max age for cached %1$s in proxy in hours', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'Defines how long these files, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );

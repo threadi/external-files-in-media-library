@@ -223,7 +223,7 @@ class Zip extends Zip_Base {
 					// bail for last entry (which is a file).
 					if ( $key === $last_key ) {
 						// add the file to the last iterated directory.
-						$folders[ $last_dir ]['files'][] = $entry;
+						$folders[ $last_dir ]['files'][] = $entry; // @phpstan-ignore offsetAssign.dimType
 						continue;
 					}
 
@@ -242,9 +242,9 @@ class Zip extends Zip_Base {
 					}
 
 					// add the directory if it does not exist atm in the main folder list.
-					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) {
+					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) { // @phpstan-ignore isset.offset
 						// add the directory to the list.
-						$folders[ $last_dir ]['dirs'][ $index ] = array(
+						$folders[ $last_dir ]['dirs'][ $index ] = array(  // @phpstan-ignore offsetAssign.dimType
 							'title' => $dir,
 							'files' => array(),
 							'dirs'  => array(),

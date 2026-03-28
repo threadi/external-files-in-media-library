@@ -11,12 +11,11 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Setting;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Setting;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Plugin\CapabilitySets\Standard;
 use WP_Role;
@@ -75,7 +74,7 @@ class Roles {
 	 */
 	public function init_settings(): void {
 		// get the settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -113,7 +112,7 @@ class Roles {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to add external files.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
@@ -129,11 +128,11 @@ class Roles {
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
 		if ( 0 === count( $users_for_setting ) ) {
-			$field = new TextInfo();
+			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
 			$field->set_description( __( 'No users can be configured here at this moment.', 'external-files-in-media-library' ) );
 		} else {
-			$field = new MultiSelect();
+			$field = new MultiSelect( $settings_obj );
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
 			$field->set_description( __( 'Users selected on this list are not allowed to use external files in media library regardless of their role.', 'external-files-in-media-library' ) );
 			$field->set_options( $users_for_setting );
@@ -146,7 +145,7 @@ class Roles {
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Use custom settings', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select roles, which should be allowed to use custom settings for the import of external URLs. Users with these role can edit their settings on their own profile page in WordPress backend.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
@@ -171,7 +170,7 @@ class Roles {
 			$setting->set_type( 'array' );
 			$setting->set_default( $tools_obj->get_capability_default() );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
-			$field = new MultiSelect();
+			$field = new MultiSelect( $settings_obj );
 			$field->set_title( $tools_obj->get_title() );
 			$field->set_description( $tools_obj->get_capability_description() );
 			$field->set_options( $user_roles );
@@ -198,7 +197,7 @@ class Roles {
 			$setting->set_type( 'array' );
 			$setting->set_default( method_exists( $service_obj, 'get_default_roles' ) ? $service_obj->get_default_roles() : array( 'administrator', 'editor' ) );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_service' ) );
-			$field = new MultiSelect();
+			$field = new MultiSelect( $settings_obj );
 			$field->set_title( $service_obj->get_label() );
 			$field->set_options( $user_roles );
 			$setting->set_field( $field );
@@ -357,7 +356,7 @@ class Roles {
 	 *
 	 * @param bool $ignore_actual_user True if the actual user should not be included in list.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,string>
 	 */
 	public function get_user_for_settings( bool $ignore_actual_user = false ): array {
 		// load user-list only on specific requests.
@@ -375,12 +374,12 @@ class Roles {
 				}
 
 				// add to the list.
-				$users[ $user->ID ] = $user->display_name;
+				$users[ (string) $user->ID ] = $user->display_name;
 			}
 		}
 
 		// return list of users.
-		return $users;
+		return $users; // @phpstan-ignore return.type
 	}
 
 	/**
@@ -456,7 +455,7 @@ class Roles {
 		$standard_capability_set->run();
 
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// set capabilities for each tool.
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {

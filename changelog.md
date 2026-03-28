@@ -5,6 +5,13 @@
 ### Changed
 
 - Some typos
+- Using updated settings library
+- Updated compatibility with PHPStan
+- Update dependencies
+
+### Fixed
+
+- Fixed the missing translation for some service titles
 
 ## [5.0.0] - 07.03.2026
 

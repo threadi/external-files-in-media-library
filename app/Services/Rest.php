@@ -11,18 +11,18 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Init;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Number;
+use easySettingsForWordPress\Fields\Text;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use Error;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use JsonException;
 use WP_Error;
 use WP_Image_Editor;
@@ -139,7 +139,7 @@ class Rest extends Service_Base implements Service {
 		}
 
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -178,7 +178,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 5 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Limit per request', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the amount of files requested per request. The higher the number, the higher the probability of timeouts during retrieval. The number is limited to a maximum of 100 by WordPress itself.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
@@ -188,7 +188,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 100 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Max requests', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Sets the amount of requests. The higher the number, the longer it will take to retrieve large media databases via REST API.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
@@ -198,7 +198,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_section( $section );
 		$setting->set_type( 'string' );
 		$setting->set_default( '' );
-		$field = new Text();
+		$field = new Text( $settings_obj );
 		$field->set_title( __( 'Search', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When set, the REST API searches for this string. This allows you to filter for specific file names, for example.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
@@ -208,7 +208,7 @@ class Rest extends Service_Base implements Service {
 		$setting->set_section( $section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 10 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );
@@ -1088,7 +1088,7 @@ class Rest extends Service_Base implements Service {
 		}
 
 		// get the URL to use.
-		$url_to_use = $this->get_url_to_use( $file_url_parts['scheme'] . '://' . $file_url_parts['host'] );
+		$url_to_use = $this->get_url_to_use( $file_url_parts['scheme'] . '://' . $file_url_parts['host'] ); // @phpstan-ignore offsetAccess.notFound,offsetAccess.notFound
 
 		// bail if no URL could be found to load.
 		if ( ! $url_to_use ) {

@@ -44,7 +44,7 @@ Run the following commands in this order:
 6. `vendor/bin/phpstan analyse`
 7. `vendor/bin/phpcbf --standard=ruleset.xml .`
 8. `vendor/bin/phpcs --standard=ruleset.xml .`
-9. Set version nummer in _readme.txt_ and _external-files-in-media-library.php_
+9. Set version nummer in _readme.txt_ and _external-files-in-media-library.php_.
 10. Create the release ZIP with all necessary folders and files.
 
 ### From local environment with ant

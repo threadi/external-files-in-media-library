@@ -11,14 +11,14 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_User;
 
 /**
@@ -103,7 +103,7 @@ class Service_Base extends Directory_Listing_Base {
 		}
 
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -138,7 +138,7 @@ class Service_Base extends Directory_Listing_Base {
 			$setting->set_type( 'string' );
 			$setting->set_default( 'manually' );
 			$setting->set_section( $section );
-			$field = new Select();
+			$field = new Select( $settings_obj );
 			$field->set_title( __( 'Location where credentials are stored', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
 			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. This does not affect files in the media library.', 'external-files-in-media-library' ), $this->get_label() ) );

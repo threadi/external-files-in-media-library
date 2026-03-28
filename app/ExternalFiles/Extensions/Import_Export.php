@@ -10,16 +10,16 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Checkbox;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Checkbox;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 
@@ -105,7 +105,7 @@ class Import_Export extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the main settings page.
 		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -136,7 +136,7 @@ class Import_Export extends Extension_Base {
 		$setting->set_section( $advanced_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
-		$field = new Checkbox();
+		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable the import/export of files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled you will be able to import and export any external files as JSON-files. These JSON-files contain all necessary settings to import the specified file.', 'external-files-in-media-library' ) );
 		$field->set_setting( $setting );

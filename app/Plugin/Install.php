@@ -83,7 +83,7 @@ class Install {
 		Extensions::get_instance()->install();
 
 		// enable the settings.
-		\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance()->activation();
+		Settings::get_instance()->get_settings_obj()->activation();
 
 		// flush rewrite rules.
 		Proxy::get_instance()->set_refresh();

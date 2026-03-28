@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
@@ -22,6 +21,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Post;
 use WP_Query;
 
@@ -126,7 +126,7 @@ class Real_Import extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the advanced section.
 		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );

@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -59,6 +58,8 @@ class Init {
 	 * @return void
 	 */
 	public function init(): void {
+		$this->deprecated();
+
 		// update handling.
 		Update::get_instance()->init();
 
@@ -167,5 +168,16 @@ class Init {
 
 		// return resulting list of additional intervals.
 		return $intervals;
+	}
+
+	/**
+	 * Set deprecated for backwarts compatibility.
+	 *
+	 * @return void
+	 */
+	private function deprecated(): void {
+		if( ! class_exists( '\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' ) ) {
+			class_alias('\ExternalFilesInMediaLibrary\Plugin\DeprecatedSettings', 'ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings');
+		}
 	}
 }

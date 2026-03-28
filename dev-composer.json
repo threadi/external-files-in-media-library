@@ -73,5 +73,14 @@
         "threadi/easy-settings-for-wordpress": "@beta",
         "threadi/easy-transients-for-wordpress": "^1.4.7",
         "spatie/dropbox-api": "^1.23"
-    }
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../../easy-settings-for-wordpress/",
+            "options": {
+                "symlink": true
+            }
+        }
+    ]
 }

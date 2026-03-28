@@ -10,11 +10,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Number;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Select;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Number;
+use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
@@ -23,6 +22,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use JsonException;
 use mysqli_result;
 use wpdb;
@@ -119,7 +119,7 @@ class Queue extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -146,7 +146,7 @@ class Queue extends Extension_Base {
 		$queue_interval_setting->set_section( $queue_section );
 		$queue_interval_setting->set_type( 'string' );
 		$queue_interval_setting->set_default( 'efml_hourly' );
-		$field = new Select();
+		$field = new Select( $settings_obj );
 		$field->set_title( __( 'Set interval for queue processing', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Defines the time interval in which the queue for new URLs will be processed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_intervals() );
@@ -159,7 +159,7 @@ class Queue extends Extension_Base {
 		$setting->set_section( $queue_section );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 10 );
-		$field = new Number();
+		$field = new Number( $settings_obj );
 		$field->set_title( __( 'To process per queue cycle', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Specify the amount of URLs to be processed per cycle.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );

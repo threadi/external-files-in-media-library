@@ -11,19 +11,19 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Crypt;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Password;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\Text;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\TextInfo;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Section;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\Password;
+use easySettingsForWordPress\Fields\Text;
+use easySettingsForWordPress\Fields\TextInfo;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Templates;
 use JsonException;
 use WP_Error;
@@ -159,7 +159,7 @@ class Youtube extends Service_Base implements Service {
 		}
 
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
@@ -177,7 +177,7 @@ class Youtube extends Service_Base implements Service {
 			return;
 		}
 
-		// add new tab for settings.
+		// add a new tab for settings.
 		$tab = $services_tab->get_tab( $this->get_settings_subtab_slug() );
 
 		// bail if tab does not exist.
@@ -185,7 +185,7 @@ class Youtube extends Service_Base implements Service {
 			return;
 		}
 
-		// add section for file statistics.
+		// add a section for file statistics.
 		$section = $tab->get_section( 'section_' . $this->get_name() . '_main' );
 
 		// bail if tab does not exist.
@@ -200,7 +200,7 @@ class Youtube extends Service_Base implements Service {
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
 			$setting->set_type( 'string' );
-			$field = new Text();
+			$field = new Text( $settings_obj );
 			$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
 			$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
@@ -212,7 +212,7 @@ class Youtube extends Service_Base implements Service {
 			$setting->set_type( 'string' );
 			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
 			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password();
+			$field = new Password( $settings_obj );
 			$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
 			$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
 			$setting->set_field( $field );
@@ -224,7 +224,7 @@ class Youtube extends Service_Base implements Service {
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
 			$setting->prevent_export( true );
-			$field = new TextInfo();
+			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
 			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );

@@ -10,11 +10,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
-use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 
 /**
  * Handler controls how to import external files with their original dates.
@@ -105,7 +104,7 @@ class Dates extends Extension_Base {
 	 */
 	public function add_settings(): void {
 		// get the settings object.
-		$settings_obj = Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the advanced section.
 		$advanced_tab_advanced = $settings_obj->get_section( 'settings_section_dialog' );

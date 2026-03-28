@@ -14,9 +14,9 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Fields\MultiSelect;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Page;
-use ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Tab;
+use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
@@ -143,7 +143,7 @@ class Directory_Listing {
 	 */
 	public function init_settings(): void {
 		// get the settings object.
-		$settings_obj = \ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings::get_instance();
+		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
 		$settings_page = $settings_obj->get_page( 'eml_settings' );
@@ -181,7 +181,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Manage external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to manage external sources.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
@@ -194,7 +194,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Read external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to read external sources.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
@@ -207,7 +207,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
-		$field = new MultiSelect();
+		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Delete external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to delete external sources.', 'external-files-in-media-library' ) );
 		$field->set_options( $user_roles );
