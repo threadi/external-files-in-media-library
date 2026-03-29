@@ -176,8 +176,8 @@ class Init {
 	 * @return void
 	 */
 	private function deprecated(): void {
-		if( ! class_exists( '\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' ) ) {
-			class_alias('\ExternalFilesInMediaLibrary\Plugin\DeprecatedSettings', 'ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings');
+		if ( ! class_exists( '\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' ) ) {
+			class_alias( '\ExternalFilesInMediaLibrary\Plugin\DeprecatedSettings', 'ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' );
 		}
 	}
 }

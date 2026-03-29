@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.0.1] - 29.03.2026
 
 ### Changed
 
@@ -8,6 +8,7 @@
 - Using updated settings library
 - Updated compatibility with PHPStan
 - Update dependencies
+- Set compatibility with WordPress 7.0
 
 ### Fixed
 
