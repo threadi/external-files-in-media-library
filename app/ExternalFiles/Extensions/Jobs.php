@@ -177,16 +177,16 @@ class Jobs extends Extension_Base {
 	 * @return void
 	 */
 	public function use_filter_options( WP_Query $query ): void {
-		// bail if user has not the capability for this.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
-			return;
-		}
-
 		// get filter value.
 		$filter = filter_input( INPUT_GET, 'filter_job_id', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if filter is not set.
 		if ( is_null( $filter ) ) {
+			return;
+		}
+
+		// bail if user has not the capability for this.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 

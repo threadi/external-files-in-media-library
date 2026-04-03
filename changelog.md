@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fixed a potential error for missing function wp_get_current_user() if other plugins running "WP_Query" without being embed in any hook
+
 ## [5.0.1] - 29.03.2026
 
 ### Changed

@@ -133,7 +133,15 @@ class Tables {
 	 * @return void
 	 */
 	public function add_media_do_filter( WP_Query $query ): void {
-		// bail if this is not admin.
+		// get filter value.
+		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// bail if filter is not set.
+		if ( is_null( $filter ) ) {
+			return;
+		}
+
+		// bail if this is not the backend.
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -145,14 +153,6 @@ class Tables {
 
 		// bail if this is not the attachment post type.
 		if ( 'attachment' !== $query->query_vars['post_type'] ) {
-			return;
-		}
-
-		// get filter value.
-		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if filter is not set.
-		if ( is_null( $filter ) ) {
 			return;
 		}
 
