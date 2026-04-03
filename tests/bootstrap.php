@@ -2,7 +2,7 @@
 /**
  * PHPUnit bootstrap file.
  *
- * @package Easy_Language
+ * @package external-files-in-media-library
  */
 
 define( 'TESTS_PLUGIN_DIR', dirname( __DIR__ ) );

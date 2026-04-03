@@ -35,7 +35,6 @@ jQuery(document).ready(function($) {
       add_file_button.innerHTML = efmlJsVars.title_add_external_source;
       add_file_button.onclick = function(e) {
         e.preventDefault();
-        console.log(efmlJsVars.add_external_source_dialog);
         efml_create_dialog( efmlJsVars.add_external_source_dialog );
       }
       this.after(add_file_button);
