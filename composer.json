@@ -70,7 +70,7 @@
         "ext-zlib": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "^4.0.13",
-        "threadi/easy-settings-for-wordpress": "^2.0.0",
+        "threadi/easy-settings-for-wordpress": "^2.1.0",
         "threadi/easy-transients-for-wordpress": "^1.4.7",
         "spatie/dropbox-api": "^1.23"
     }
