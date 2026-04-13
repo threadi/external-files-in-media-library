@@ -258,6 +258,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function is_disabled(): bool {
+		// bail if no SSL is used by this project (necessary for OAuth).
+		if ( ! is_ssl() ) {
+			return true;
+		}
+
 		// not disabled if mode is set to "manually".
 		if ( $this->is_mode( 'manually' ) ) {
 			return false;
@@ -273,6 +278,11 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_description(): string {
+		// show hint if no SSL is used (necessary for OAuth).
+		if ( ! is_ssl() ) {
+			return '<p>' . __( 'SSL is required in your hosting', 'external-files-in-media-library' ) . '</p>';
+		}
+
 		// show no description on manual connection mode.
 		if ( $this->is_mode( 'manually' ) ) {
 			return '';
@@ -1639,5 +1649,14 @@ class DropBox extends Service_Base implements Service {
 
 		// and return them.
 		return $data;
+	}
+
+	/**
+	 * Return whether this service is using credentials by checking its field configuration.
+	 *
+	 * @return bool
+	 */
+	protected function has_credentials(): bool {
+		return true;
 	}
 }

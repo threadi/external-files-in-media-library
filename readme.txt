@@ -176,16 +176,17 @@ WordPress website.
 
 1. Field to add external files in Media > Add New Media File.
 2. Dialog to add URLs of external files.
+3. Success message after adding the URL of an external file.
+4. An external file in the media library.
+5. View directories and files in Google Drive.
 
 == Changelog ==
 
 = @@VersionNumber@@ =
 
-- Changed some typos
-- Using updated settings library
-- Updated compatibility with PHPStan
-- Update dependencies
-- Set compatibility with WordPress 7.0
-- Fixed the missing translation for some service titles
+- Show warning if SSL is not available in hosting for using Dropbox (necessary for OAuth)
+- Updated dependencies
+- Fixed a potential error for missing function wp_get_current_user() if other plugins running "WP_Query" without being embed in any hook
+- Fixed missing setting where Dropbox could be connected
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
