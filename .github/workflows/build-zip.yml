@@ -40,6 +40,8 @@ jobs:
           rm changelog.md
           rm readme.md
           rm CODE_OF_CONDUCT.md
+          rm -fr tests
+          rm -fr bin
 
       - name: Generate autoloader
         run: composer dump-autoload -oa --no-dev
@@ -68,6 +70,12 @@ jobs:
           files: 'readme.txt'
           search-text: '@@VersionNumber@@'
           replacement-text: ${{ github.ref_name }}
+
+      - name: More cleanup
+        run: |
+          rm phpunit.xml.dist
+          rm ruleset.xml
+          rm -fr .github
 
       - name: Run PCP check
         uses: wordpress/plugin-check-action@v1
