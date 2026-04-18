@@ -184,9 +184,6 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Show warning if SSL is not available in hosting for using Dropbox (necessary for OAuth)
-- Updated dependencies
-- Fixed a potential error for missing function wp_get_current_user() if other plugins running "WP_Query" without being embed in any hook
-- Fixed missing setting where Dropbox could be connected
+- Fixed some issues regarding composer packages used by this plugin
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

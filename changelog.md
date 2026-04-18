@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.0.3] - 18.04.2026
+
+### Fixed
+
+- Fixed some issues regarding composer packages used by this plugin
+
 ## [5.0.2] - 13.04.2026
 
 ### Changed
