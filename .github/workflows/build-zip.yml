@@ -76,6 +76,8 @@ jobs:
           rm phpunit.xml.dist
           rm ruleset.xml
           rm -fr .github
+          rm .gitattributes
+          rm dev-composer.sh
 
       - name: Run PCP check
         uses: wordpress/plugin-check-action@v1
