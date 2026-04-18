@@ -74,7 +74,6 @@ jobs:
       - name: More cleanup
         run: |
           rm phpunit.xml.dist
-          rm ruleset.xml
           rm -fr .github
           rm .gitattributes
           rm dev-composer.sh
