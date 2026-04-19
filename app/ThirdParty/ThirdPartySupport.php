@@ -142,6 +142,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
 			'ExternalFilesInMediaLibrary\ThirdParty\RealMediaLibrary',
+			'ExternalFilesInMediaLibrary\ThirdParty\RoboGallery',
 			'ExternalFilesInMediaLibrary\ThirdParty\WooCommerce',
 			'ExternalFilesInMediaLibrary\ThirdParty\WpConsentApi',
 			'ExternalFilesInMediaLibrary\ThirdParty\WpExtraFileTypes',

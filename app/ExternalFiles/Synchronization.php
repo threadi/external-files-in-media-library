@@ -1929,9 +1929,14 @@ class Synchronization extends Tools_Base {
 	 * @return string
 	 */
 	private function get_not_supported_hint( object|false $listing_obj ): string {
-		// bail if object is not an "Extension_Base" object.
-		if ( ! $listing_obj instanceof Service_Base ) {
+		// bail if object is not given.
+		if ( ! $listing_obj ) {
 			return '';
+		}
+
+		// bail if object is not an "Extension_Base" object.
+		if ( ! method_exists( $listing_obj, 'get_label' ) ) {
+			return __( 'Not supported', 'external-files-in-media-library' );
 		}
 
 		// create the dialog for sync now.

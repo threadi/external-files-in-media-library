@@ -185,7 +185,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 		// get our fields from request.
 		$folderly_categories = isset( $_POST['fields']['folderly_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folderly_categories'] ) ) : array();
 
-		// if folderly_categories is empty, just remove the setting.
+		// if "folderly_categories" is empty, just remove the setting.
 		if ( empty( $folderly_categories ) ) {
 			delete_term_meta( $term_id, 'folderly_categories' );
 			return;
@@ -226,7 +226,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// get the folder setting from this term ID.
+		// get the folder setting for this term ID.
 		$categories = get_term_meta( $this->get_term_id(), 'folderly_categories', true );
 
 		// bail if no categories are set.
@@ -270,7 +270,7 @@ class Folderly extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to a category', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		return $dialog;
 	}
 }
