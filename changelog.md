@@ -2,9 +2,18 @@
 
 ## [Unreleased]
 
+## Added
+
+- Added support to import and synchronize external images in galleries
+  from the plugins "NextGen Gallery" and "Robo Gallery"
+
 ## Changes
 
 - Small optimizations for the multisite support
+
+### Fixed
+
+- Fixed missing hint for not existing synchronisation support for local external sources
 
 ## [5.0.3] - 18.04.2026
 

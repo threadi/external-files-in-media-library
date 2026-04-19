@@ -421,7 +421,7 @@ class Import extends Directory_Listing_Base {
 					$wp_filesystem->delete( $file_data['tmp-file'] );
 
 					// log this event.
-					$log->create( __( 'The temp file for the import was deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identifier() );
+					$log->create( __( 'The temporary file for the import has been deleted.', 'external-files-in-media-library' ), $file_url, 'info', 2, $this->get_identifier() );
 				}
 			} else {
 				// log this event.
@@ -472,7 +472,7 @@ class Import extends Directory_Listing_Base {
 			 *
 			 * @param bool $no_external_object The marker, must be true to import the file of external URL as local file.
 			 * @param string $url The used URL.
-			 * @param array $file_data The file data.
+			 * @param array<string,mixed> $file_data The file data.
 			 * @param File $external_file_obj The resulting external file (without any configuration yet).
 			 *
 			 * @noinspection PhpConditionAlreadyCheckedInspection
@@ -486,7 +486,7 @@ class Import extends Directory_Listing_Base {
 				 *
 				 * @since 2.0.0 Available since 2.0.0.
 				 * @param File $external_file_obj The object of the external file.
-				 * @param array $file_data The array with the file data.
+				 * @param array<string,mixed> $file_data The array with the file data.
 				 * @param string $file_url The source URL.
 				 */
 				do_action( 'efml_after_file_save', $external_file_obj, $file_data, $file_url );
