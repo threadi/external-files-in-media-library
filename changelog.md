@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+## Changes
+
+- Small optimizations for the multisite support
+
 ## [5.0.3] - 18.04.2026
 
 ### Fixed

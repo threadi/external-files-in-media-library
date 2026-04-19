@@ -104,7 +104,7 @@ class Settings {
 					</td>
 				</tr>
 				<tr>
-					<th scope="row"><label for="efml_hide_options"><?php esc_html__( 'Hide options', 'external-files-in-media-library' ); ?></label></th>
+					<th scope="row"><label for="efml_hide_options"><?php echo esc_html__( 'Hide options', 'external-files-in-media-library' ); ?></label></th>
 					<td>
 						<input type="checkbox" name="efml_hide_options" id="efml_hide_options" value="1"<?php echo ( $efml_hide_options ? ' checked="checked"' : '' ); ?>>
 						<p><?php echo esc_html__( 'If enabled no user will be able to use external files options in any multisite except the one configured above.', 'external-files-in-media-library' ); ?></p>
@@ -140,6 +140,13 @@ class Settings {
 
 				// remove them.
 				foreach ( $terms as $term_id ) {
+					// disable the export state of the term.
+					Export::get_instance()->set_state_for_term( $term_id, 0 );
+
+					// remove the sync state of this term.
+					Synchronization::get_instance()->set_state( $term_id, 0 );
+
+					// delete the term.
 					Taxonomy::get_instance()->delete( $term_id );
 				}
 
@@ -179,7 +186,7 @@ class Settings {
 				// enable the export tool.
 				update_option( 'eml_export', 1 );
 
-				// add the entry for the export.
+				// add the entry for the sync and export.
 				$term_id = Taxonomy::get_instance()->add( 'multisite', $url, $fields );
 
 				// bail if term_id could not be loaded.
@@ -190,7 +197,7 @@ class Settings {
 				// set the URL on the export.
 				update_term_meta( $term_id, 'efml_export_url', $url );
 
-				// set is as default for export in this site.
+				// set this as default export target in this site.
 				Export::get_instance()->set_state_for_term( $term_id, 1 );
 
 				// enable sync in this site.
