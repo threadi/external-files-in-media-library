@@ -58,10 +58,14 @@
     <target name="npm-install">
         <delete file="${log.dir}/npm-install1.txt"/>
         <delete file="${log.dir}/npm-install2.txt"/>
-        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install1.txt">
+        <delete file="${log.dir}/npm-install3.txt"/>
+        <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install1.txt">
             <arg line="install"/>
         </exec>
-        <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install2.txt">
+        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install2.txt">
+            <arg line="install"/>
+        </exec>
+        <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install3.txt">
             <arg line="install"/>
         </exec>
     </target>
