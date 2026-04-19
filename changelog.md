@@ -4,7 +4,8 @@
 
 ## Added
 
-- Added support to import images in galleries from the plugin "Robo Gallery"
+- Added support to import and synchronize external images in galleries
+  from the plugins "NextGen Gallery" and "Robo Gallery"
 
 ## Changes
 

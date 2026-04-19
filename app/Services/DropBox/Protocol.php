@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\Services\DropBox;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
 use Spatie\Dropbox\Exceptions\BadRequest;
+use WP_Filesystem_Base;
 
 /**
  * Object to handle different protocols.
@@ -286,5 +287,53 @@ class Protocol extends Protocol_Base {
 	 */
 	public function is_url_reachable(): bool {
 		return false;
+	}
+
+	/**
+	 * Return temp file from given URL.
+	 *
+	 * @param string             $url The given URL.
+	 * @param WP_Filesystem_Base $filesystem The file system handler.
+	 *
+	 * @return bool|string
+	 */
+	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// cleanup the URL.
+		$url = str_replace( $dropbox_obj->get_name(), '', $url );
+
+		// set the fields.
+		$dropbox_obj->set_fields( $this->get_fields() );
+
+		// get the client with the given token.
+		$client = $dropbox_obj->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client instanceof Client ) {
+			return false;
+		}
+
+		// get the file from DropBox.
+		$content = stream_get_contents( $client->download( $url ) );
+
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the tmp file name.
+		$tmp_file_name = wp_tempnam();
+
+		// get mime type.
+		$mime_type = wp_check_filetype( $url );
+
+		// set the file as tmp-file for import.
+		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+		// save the data.
+		$wp_filesystem->put_contents( $tmp_file, $content );
+
+		// return the name and path of the tmp file.
+		return $tmp_file;
 	}
 }

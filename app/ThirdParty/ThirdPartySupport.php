@@ -138,6 +138,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaCloudSync',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryAssistant',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryOrganizer',
+			'ExternalFilesInMediaLibrary\ThirdParty\NextGen',
 			'ExternalFilesInMediaLibrary\ThirdParty\Polylang',
 			'ExternalFilesInMediaLibrary\ThirdParty\PreventDirectAccess',
 			'ExternalFilesInMediaLibrary\ThirdParty\RankMath',
