@@ -167,4 +167,19 @@ class Extensions {
 	public function add_extensions_as_tools( array $tools ): array {
 		return array_merge( $tools, $this->get_extensions() );
 	}
+
+	/**
+	 * Initialize all services.
+	 *
+	 * @return void
+	 */
+	public function init_extensions(): void {
+		foreach ( $this->get_extensions_as_objects() as $obj ) {
+			// initialize this object.
+			$obj->init();
+			if ( defined( 'EFML_ACTIVATION_RUNNING' ) && method_exists( $obj, 'add_settings' ) ) {
+				$obj->add_settings();
+			}
+		}
+	}
 }

@@ -79,7 +79,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function init(): void {
 		// add setting.
-		add_action( 'init', array( $this, 'init_synchronize' ), 20 );
+		add_action( 'init', array( $this, 'add_settings' ), 20 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 
@@ -126,7 +126,7 @@ class Synchronization extends Tools_Base {
 	 *
 	 * @return void
 	 */
-	public function init_synchronize(): void {
+	public function add_settings(): void {
 		// get settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
@@ -285,7 +285,7 @@ class Synchronization extends Tools_Base {
 	 * @return void
 	 */
 	public function activation(): void {
-		$this->init_synchronize();
+		$this->add_settings();
 	}
 
 	/**

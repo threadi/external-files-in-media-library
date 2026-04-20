@@ -120,4 +120,21 @@ class Tools {
 		 */
 		return apply_filters( 'efml_tools', $list );
 	}
+
+	/**
+	 * Initialize all services.
+	 *
+	 * @return void
+	 */
+	public function init_tools(): void {
+		foreach ( $this->get_tools_as_objects() as $obj ) {
+			// initialize this object.
+			if ( method_exists( $obj, 'init' ) ) {
+				$obj->init();
+			}
+			if ( defined( 'EFML_ACTIVATION_RUNNING' ) && method_exists( $obj, 'add_settings' ) ) {
+				$obj->add_settings();
+			}
+		}
+	}
 }

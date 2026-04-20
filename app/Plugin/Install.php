@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
@@ -67,14 +68,11 @@ class Install {
 		// initialize database-table for logs.
 		Log::get_instance()->install();
 
-		// initialize services.
-		Services::get_instance()->init_services();
+		// initialize environment.
 		Services::get_instance()->init_settings();
-
-		/**
-		 * Run the global init to initialize all components.
-		 */
-		do_action( 'init' );
+		Services::get_instance()->init_services();
+		Extensions::get_instance()->init_extensions();
+		Tools::get_instance()->init_tools();
 
 		// install settings.
 		Settings::get_instance()->activation();

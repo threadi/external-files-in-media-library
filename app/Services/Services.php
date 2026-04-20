@@ -127,6 +127,9 @@ class Services {
 		foreach ( $this->get_services_as_objects() as $obj ) {
 			// initialize this object.
 			$obj->init();
+			if ( defined( 'EFML_ACTIVATION_RUNNING' ) && method_exists( $obj, 'add_settings' ) ) {
+				$obj->add_settings();
+			}
 		}
 	}
 

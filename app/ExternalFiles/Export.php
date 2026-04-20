@@ -85,7 +85,7 @@ class Export extends Tools_Base {
 	 */
 	public function init(): void {
 		// add the settings.
-		add_action( 'init', array( $this, 'init_export' ), 20 );
+		add_action( 'init', array( $this, 'add_settings' ), 20 );
 		add_action( 'post-upload-ui', array( $this, 'show_export_hint_on_file_add_page' ) );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
@@ -133,7 +133,7 @@ class Export extends Tools_Base {
 	 *
 	 * @return void
 	 */
-	public function init_export(): void {
+	public function add_settings(): void {
 		// get settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 

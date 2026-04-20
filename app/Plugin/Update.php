@@ -270,10 +270,10 @@ class Update {
 		Services::get_instance()->init_services();
 
 		// initiate the settings for roles.
-		Roles::get_instance()->init_settings();
+		Roles::get_instance()->add_settings();
 
 		// initiate the directory listing settings.
-		Directory_Listing::get_instance()->init_settings();
+		Directory_Listing::get_instance()->add_settings();
 
 		// add the file types settings.
 		File_Types::get_instance()->add_settings();

@@ -10,6 +10,7 @@
 ## Changes
 
 - Small optimizations for the multisite support
+- Changed initialization of the plugin during activation and deactivation for better compatibility with other plugins
 
 ### Fixed
 

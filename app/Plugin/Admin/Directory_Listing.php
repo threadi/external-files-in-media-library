@@ -97,7 +97,7 @@ class Directory_Listing {
 		// add the page in te backend.
 		add_action( 'admin_menu', array( $this, 'add_view_directory_page' ) );
 		add_action( 'init', array( $this, 'register_directory_listing' ) );
-		add_action( 'init', array( $this, 'init_settings' ), 30 );
+		add_action( 'init', array( $this, 'add_settings' ), 30 );
 		add_filter( 'hidden_columns', array( $this, 'hide_columns' ), 10, 3 );
 
 		// misc.
@@ -141,7 +141,7 @@ class Directory_Listing {
 	 *
 	 * @return void
 	 */
-	public function init_settings(): void {
+	public function add_settings(): void {
 		// get the settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 

@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transien
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_User;
 
@@ -70,23 +71,20 @@ class Uninstall {
 			define( 'EFML_DEINSTALLATION_RUNNING', 1 );
 		}
 
-		/**
-		 * Set all settings.
-		 */
-
 		// initialize the plugin.
 		Init::get_instance()->init();
 
-		/**
-		 * Run the global init to initialize all components.
-		 */
-		do_action( 'init' );
+		// initialize environment.
+		Services::get_instance()->init_settings();
+		Services::get_instance()->init_services();
+		Extensions::get_instance()->init_extensions();
+		Tools::get_instance()->init_tools();
 
 		// enable the settings.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 		$settings_obj->activation();
 
-		// clean managed settings.
+		// clean the managed settings.
 		$settings_obj->delete_settings();
 
 		// remove schedules.

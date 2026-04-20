@@ -106,7 +106,7 @@ class Service_Base extends Directory_Listing_Base {
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
-		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+		$settings_page = $settings_obj->get_page( $settings_obj->get_menu_slug() );
 
 		// bail if page does not exist.
 		if ( ! $settings_page instanceof Page ) {
