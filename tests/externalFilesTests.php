@@ -76,7 +76,7 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			do_action( 'init' );
 			do_action( 'rest_api_init' );
 
-			// prevent external requests from Personio APIs.
+			// prevent external requests from external sources.
 			add_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ), 10, 3 );
 			add_filter( 'wp_mail', array( self::class, 'filter_wp_mail' ) );
 

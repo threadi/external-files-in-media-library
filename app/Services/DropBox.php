@@ -33,6 +33,7 @@ use Spatie\Dropbox\Client;
 use WP_Error;
 use WP_Image_Editor;
 use WP_User;
+use WP_User_Query;
 use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
 
 /**
@@ -1201,8 +1202,24 @@ class DropBox extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function uninstall(): void {
-		// TODO bei allen Nutzern löschen.
+		// remove the global token.
 		$this->delete_access_token();
+
+		// get all users with a token and delete their tokens.
+		$query = array(
+			'meta_query' => array(
+				array(
+					'key'     => 'efml_dropbox_api_key',
+					'compare' => 'EXISTS',
+				),
+			),
+		);
+		$users = new WP_User_Query( $query );
+		foreach ( $users->get_results() as $user ) {
+			delete_user_meta( $user->ID, 'efml_dropbox_api_key' );
+			delete_user_meta( $user->ID, 'efml_dropbox_api_secret' );
+			delete_user_meta( $user->ID, 'efml_dropbox_access_tokens' );
+		}
 	}
 
 	/**

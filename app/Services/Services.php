@@ -518,4 +518,15 @@ class Services {
 		$new_filetypes['json'] = 'application/json';
 		return array_merge( $file_types, $new_filetypes );
 	}
+
+	/**
+	 * Run the uninstallation routine for every service.
+	 *
+	 * @return void
+	 */
+	public function uninstall(): void {
+		foreach ( $this->get_services_as_objects() as $service ) {
+			$service->uninstall();
+		}
+	}
 }
