@@ -29,7 +29,7 @@ class Tools {
 	 */
 	private function __construct() {}
 
-    /**
+	/**
 	 * Prevent cloning of this object.
 	 *
 	 * @return void
@@ -129,8 +129,10 @@ class Tools {
 	public function init_tools(): void {
 		foreach ( $this->get_tools_as_objects() as $obj ) {
 			// initialize this object.
-			$obj->init();
-			if( defined( 'EFML_ACTIVATION_RUNNING' ) && method_exists( $obj, 'add_settings' ) ) {
+			if ( method_exists( $obj, 'init' ) ) {
+				$obj->init();
+			}
+			if ( defined( 'EFML_ACTIVATION_RUNNING' ) && method_exists( $obj, 'add_settings' ) ) {
 				$obj->add_settings();
 			}
 		}

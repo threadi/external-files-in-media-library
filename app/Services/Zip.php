@@ -110,7 +110,7 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
 
 		// add settings.
-		add_action( 'init', array( $this, 'init_zip' ), 30 );
+		add_action( 'init', array( $this, 'add_settings' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -146,7 +146,7 @@ class Zip extends Service_Base implements Service {
 	 *
 	 * @return void
 	 */
-	public function init_zip(): void {
+	public function add_settings(): void {
 		// bail if user has no capability for this service.
 		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;

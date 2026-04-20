@@ -109,7 +109,7 @@ class DropBox extends Service_Base implements Service {
 		parent::init();
 
 		// add settings.
-		add_action( 'init', array( $this, 'init_drop_box' ), 30 );
+		add_action( 'init', array( $this, 'add_settings' ), 30 );
 
 		// bail if user has no capability for this service.
 		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
@@ -143,7 +143,7 @@ class DropBox extends Service_Base implements Service {
 	 *
 	 * @return void
 	 */
-	public function init_drop_box(): void {
+	public function add_settings(): void {
 		// bail if user has no capability for this service.
 		if ( ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -156,7 +156,7 @@ class DropBox extends Service_Base implements Service {
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
 		// get the settings page.
-		$settings_page = $settings_obj->get_page( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_menu_slug() );
+		$settings_page = $settings_obj->get_page( $settings_obj->get_menu_slug() );
 
 		// bail if page does not exist.
 		if ( ! $settings_page instanceof Page ) {

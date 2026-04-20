@@ -63,7 +63,7 @@ class Roles {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'init', array( $this, 'init_settings' ), 30 );
+		add_action( 'init', array( $this, 'add_settings' ), 30 );
 		add_filter( 'user_has_cap', array( $this, 'check_user_cap' ), 10, 2 );
 	}
 
@@ -72,7 +72,7 @@ class Roles {
 	 *
 	 * @return void
 	 */
-	public function init_settings(): void {
+	public function add_settings(): void {
 		// get the settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
