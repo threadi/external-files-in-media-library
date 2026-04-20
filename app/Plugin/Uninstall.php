@@ -180,6 +180,9 @@ class Uninstall {
 		// run the uninstallation tasks for each file handling extension.
 		Extensions::get_instance()->uninstall();
 
+		// run the uninstallation tasks for each service.
+		Services::get_instance()->uninstall();
+
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();
 

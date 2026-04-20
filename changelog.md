@@ -11,6 +11,8 @@
 
 - Small optimizations for the multisite support
 - Changed initialization of the plugin during activation and deactivation for better compatibility with other plugins
+- Optimized the uninstallation of services
+- User-token for Dropbox as now also deleted on uninstallation
 
 ### Fixed
 
