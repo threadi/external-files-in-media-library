@@ -17,6 +17,7 @@
 ### Fixed
 
 - Fixed missing hint for not existing synchronisation support for local external sources
+- Fixed wrong spelled plugin slugs in some hooks
 
 ## [5.0.3] - 18.04.2026
 
