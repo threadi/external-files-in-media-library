@@ -1,6 +1,6 @@
 {
 	"name": "@threadi/external-files-in-media-library",
-	"version": "5.0.0",
+	"version": "5.1.0",
 	"description": "Changes support for YouTube-videos in the video block.",
 	"author": "threadi",
 	"license": "GPL-2.0-or-later",
@@ -9,8 +9,12 @@
 		"format": "wp-scripts format",
 		"lint:css": "wp-scripts lint-style",
 		"lint:js": "wp-scripts lint-js",
-		"start": "wp-scripts start blocks/src/index.js --output-path=blocks/build/",
-		"build": "wp-scripts build blocks/src/index.js --output-path=blocks/build/",
+        "build": "concurrently --kill-others \"npm run build:replacer\" \"npm run build:commands\"",
+        "start": "concurrently --kill-others \"npm run start:replacer\" \"npm run start:commands\"",
+		"start:replacer": "wp-scripts start blocks/src/index.js --output-path=blocks/build/",
+		"build:replacer": "wp-scripts build blocks/src/index.js --output-path=blocks/build/",
+        "start:commands": "wp-scripts start src/commands.js --output-path=js/commands",
+        "build:commands": "wp-scripts build src/commands.js --output-path=js/commands",
 		"packages-update": "wp-scripts packages-update"
 	},
 	"devDependencies": {
@@ -19,6 +23,8 @@
         "@go-task/cli": "^3.43.3"
 	},
     "dependencies": {
-        "intro.js": "^8.3.2"
+        "@wordpress/icons": "^12.2.0",
+        "intro.js": "^8.3.2",
+        "concurrently": "^9.2.1"
     }
 }

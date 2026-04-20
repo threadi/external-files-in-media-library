@@ -6,6 +6,7 @@
 
 - Added support to import and synchronize external images in galleries
   from the plugins "NextGen Gallery" and "Robo Gallery"
+- Added 2 command palette commands to quick jump to external services or sources
 
 ## Changes
 

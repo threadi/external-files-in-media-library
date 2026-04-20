@@ -75,14 +75,18 @@
         <delete file="${log.dir}/npm-build1.txt"/>
         <delete file="${log.dir}/npm-build2.txt"/>
         <delete file="${log.dir}/npm-build3.txt"/>
+        <delete file="${log.dir}/npm-build4.txt"/>
         <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
-            <arg line="run build"/>
+            <arg line="run build:replacer"/>
         </exec>
         <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build2.txt">
             <arg line="run build"/>
         </exec>
         <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build3.txt">
             <arg line="run build"/>
+        </exec>
+        <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build4.txt">
+            <arg line="run build:commands"/>
         </exec>
     </target>
 
@@ -150,6 +154,9 @@
             <zipfileset dir="${src.dir}/blocks/build/" prefix="${plugin.slug}/blocks/build/" />
             <zipfileset dir="${src.dir}/gfx" prefix="${plugin.slug}/gfx" />
             <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
+            <zipfileset dir="${src.dir}/js" prefix="${plugin.slug}/js">
+                <exclude name="**/.gitkeep" />
+            </zipfileset>
             <zipfileset dir="${src.dir}/templates" prefix="${plugin.slug}/templates" />
             <zipfileset dir="${src.dir}/vendor" includes="autoload.php" fullpath="${plugin.slug}/vendor/autoload.php" />
             <zipfileset dir="${src.dir}/vendor/composer" prefix="${plugin.slug}/vendor/composer" />
