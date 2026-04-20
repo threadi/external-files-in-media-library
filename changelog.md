@@ -18,6 +18,7 @@
 
 - Fixed missing hint for not existing synchronisation support for local external sources
 - Fixed wrong spelled plugin slugs in some hooks
+- Fixed check for file type and size on sync even if this extensions are not enabled
 
 ## [5.0.3] - 18.04.2026
 

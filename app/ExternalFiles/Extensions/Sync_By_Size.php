@@ -84,6 +84,11 @@ class Sync_By_Size extends Extension_Base {
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 20 );
 
+		// only add if it is enabled in settings.
+		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return;
+		}
+
 		// use our own hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'extend_sync_form_in_dialog' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_config' ), 10, 2 );
@@ -159,11 +164,6 @@ class Sync_By_Size extends Extension_Base {
 	 * @return string
 	 */
 	public function extend_sync_form_in_dialog( string $form, int $term_id ): string {
-		// only add if it is enabled in settings.
-		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
-			return $form;
-		}
-
 		// get the actual setting for this term.
 		$min_size = absint( get_term_meta( $term_id, 'eml_sync_min_size', true ) );
 		$max_size = absint( get_term_meta( $term_id, 'eml_sync_max_size', true ) );
@@ -187,11 +187,6 @@ class Sync_By_Size extends Extension_Base {
 	public function save_sync_config( array $fields, int $term_id ): void {
 		// check for nonce.
 		if ( isset( $_GET['nonce'] ) && ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['nonce'] ) ), 'eml-nonce' ) ) {
-			return;
-		}
-
-		// only add if it is enabled in settings.
-		if ( ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return;
 		}
 
