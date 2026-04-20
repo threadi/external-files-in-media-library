@@ -19,6 +19,8 @@ use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use WP_REST_Request;
+use WP_REST_Server;
 
 /**
  * Object to handle support for specific services.
@@ -89,6 +91,7 @@ class Services {
 		add_action( 'init', array( $this, 'init_services' ) );
 		add_action( 'cli_init', array( $this, 'init_services' ) );
 		add_action( 'rest_api_init', array( $this, 'init_services' ) );
+		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
 	}
 
 	/**
@@ -131,6 +134,39 @@ class Services {
 				$obj->add_settings();
 			}
 		}
+	}
+
+	/**
+	 * Register our custom REST endpoints.
+	 *
+	 * @return void
+	 */
+	public function register_endpoints(): void {
+		// register endpoint to return the possible services.
+		register_rest_route(
+			'external-files-in-media-library/v1',
+			'/services/',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_services_via_rest' ),
+				'permission_callback' => function () {
+					return current_user_can( EFML_CAP_NAME );
+				},
+			)
+		);
+
+		// register endpoint to return the external sources.
+		register_rest_route(
+			'external-files-in-media-library/v1',
+			'/sources/',
+			array(
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_sources_via_rest' ),
+				'permission_callback' => function () {
+					return current_user_can( EFML_CAP_NAME );
+				},
+			)
+		);
 	}
 
 	/**
@@ -528,5 +564,109 @@ class Services {
 		foreach ( $this->get_services_as_objects() as $service ) {
 			$service->uninstall();
 		}
+	}
+
+	/**
+	 * Return list of available services via AJAX.
+	 *
+	 * @param WP_REST_Request $data The REST API request data.
+	 *
+	 * @return array<int,array<string,int|string>>
+	 */
+	public function get_services_via_rest( WP_REST_Request $data ): array {
+		// get the params.
+		$params = $data->get_params();
+
+		// bail if search is empty.
+		if ( empty( $params['search'] ) ) {
+			return array();
+		}
+
+		// prepare the list.
+		$list = array();
+
+		// add each service to the list.
+		foreach ( $this->get_services_as_objects() as $service ) {
+			// bail if disabled.
+			if ( method_exists( $service, 'is_disabled' ) && $service->is_disabled() ) {
+				continue;
+			}
+
+			// bail if methods are missing.
+			if ( ! method_exists( $service, 'get_label' ) || ! method_exists( $service, 'get_name' ) ) {
+				continue;
+			}
+
+			// bail if name or label are empty.
+			if ( empty( $service->get_name() ) || empty( $service->get_label() ) ) {
+				continue;
+			}
+
+			// bail if user is not allowed to use this service.
+			if ( ! current_user_can( 'efml_cap_' . $service->get_name() ) ) {
+				continue;
+			}
+
+			// bail if search does not contain name or label.
+			if ( ! str_contains( $service->get_name(), $params['search'] ) && ! str_contains( $service->get_label(), $params['search'] ) ) {
+				continue;
+			}
+
+			// add the service to the list.
+			$list[] = array(
+				'id'    => count( $list ) + 1,
+				'label' => $service->get_label(),
+				'value' => $service->get_name(),
+			);
+		}
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Return list of available sources via AJAX.
+	 *
+	 * @param WP_REST_Request $data The REST API request data.
+	 *
+	 * @return array<int,array<string,int|string>>
+	 */
+	public function get_sources_via_rest( WP_REST_Request $data ): array {
+		// get the params.
+		$params = $data->get_params();
+
+		// bail if search is empty.
+		if ( empty( $params['search'] ) ) {
+			return array();
+		}
+
+		// get all terms of our listing taxonomy.
+		$terms = get_terms(
+			array(
+				'taxonomy'   => Taxonomy::get_instance()->get_name(),
+				'hide_empty' => false,
+			)
+		);
+
+		// bail if no terms could be loaded.
+		if ( ! is_array( $terms ) ) {
+			return array();
+		}
+
+		// prepare the list.
+		$list = array();
+
+		// add each term to the list.
+		foreach ( $terms as $term ) {
+			$list[] = array(
+				'id'     => count( $list ) + 1,
+				'label'  => $term->name,
+				'value'  => $term->term_id,
+				'method' => get_term_meta( $term->term_id, 'type', true ),
+			);
+		}
+
+		// return the resulting list.
+		return $list;
 	}
 }

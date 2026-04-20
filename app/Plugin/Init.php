@@ -91,6 +91,9 @@ class Init {
 		// initialize the user management.
 		Users::get_instance()->init();
 
+		// initialize the command palette.
+		Commands::get_instance()->init();
+
 		// initialize the network settings.
 		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();
 
