@@ -29,7 +29,8 @@ jobs:
           composer install
           composer update
           npm i
-          npm run build
+          npm run build:replacer
+          npm run build:commands
           cd vendor/threadi/easy-dialog-for-wordpress/
           npm i
           npm run build
