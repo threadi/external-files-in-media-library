@@ -7,12 +7,14 @@
 - Added support to import and synchronize external images in galleries
   from the plugins "NextGen Gallery" and "Robo Gallery"
 - Added 2 command palette commands to quick jump to external services or sources
+- Added PHPUnitTests for uninstallation of the plugin
 
 ## Changes
 
 - Small optimizations for the multisite support
 - Changed initialization of the plugin during activation and deactivation for better compatibility with other plugins
 - Optimized the uninstallation of services
+- Optimized the uninstallation of settings
 - User-token for Dropbox as now also deleted on uninstallation
 
 ### Fixed

@@ -84,9 +84,6 @@ class Uninstall {
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 		$settings_obj->activation();
 
-		// clean the managed settings.
-		$settings_obj->delete_settings();
-
 		// remove schedules.
 		Schedules::get_instance()->delete_all();
 
@@ -152,6 +149,9 @@ class Uninstall {
 			delete_user_meta( $user->ID, 'efml_no_privacy_hint' );
 			delete_user_meta( $user->ID, 'efml_last_job_id' );
 		}
+
+		// clean the managed settings.
+		$settings_obj->delete_settings();
 
 		// delete options this plugin has used.
 		$options = array(
