@@ -107,21 +107,21 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			$file_type = wp_check_filetype( basename( $url ) );
 
 			// create the response object.
-			$requests_response = new \WpOrg\Requests\Response();
+			$requests_response = new \WpOrg\Requests\Response;
 			$requests_response->status_code = 200;
 			$requests_response->url = $url;
 			$requests_response->headers = new \WpOrg\Requests\Response\Headers(
 				array(
 					'Content-Type' => $file_type['type'],
 					'Content-Length' => $file_size,
-					'Content-Disposition' => 'attachment; filename="' . $file_info['basename'] . '"'
+					'Content-Disposition' => 'attachment; filename="' . $file_info['basename'] . '"',
 				)
 			);
 			$requests_response->success = true;
 
 			// create the header response.
 			return array(
-				'status' => 200,
+				'response' => array( 'code' => 200 ),
 				'http_response' => new WP_HTTP_Requests_Response( $requests_response, $parsed_args['filename'] )
 			);
 		}
@@ -129,30 +129,48 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		// create a local response for the HEAD request on a faulty URL.
 		if( 'HEAD' === $parsed_args['method'] && $url === self::get_faulty_test_file( $file_info['extension'], 'http' ) ) {
 			// create the response object.
-			$requests_response = new \WpOrg\Requests\Response();
+			$requests_response = new \WpOrg\Requests\Response;
 			$requests_response->status_code = 404;
 			$requests_response->url = $url;
 
 			// create the header response.
 			return array(
-				'status' => 404,
+				'response' => array( 'code' => 404 ),
 				'http_response' => new WP_HTTP_Requests_Response( $requests_response, $parsed_args['filename'] )
 			);
 		}
 
 		// create a local response for the GET request.
-		if( 'GET' === $parsed_args['method'] && ! empty( $file_info['extension'] ) && $url === self::get_test_file( $file_info['extension'], 'http' ) ) {
+		if( 'GET' === $parsed_args['method'] && ! empty( $parsed_args['filename'] ) && ! empty( $file_info['extension'] ) && $url === self::get_test_file( $file_info['extension'], 'http' ) ) {
+			// get the "WP_Filesystem" handler.
+			$wp_filesystem = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem();
+
 			// get the local test file.
-			$content = \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem()->get_contents( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . self::get_test_file( $file_info['extension'], 'http' ) );
+			$content = $wp_filesystem->get_contents( self::get_test_file( $file_info['extension'], 'file' ) );
+
+			// save in on given 'filename'
+			$wp_filesystem->put_contents( $parsed_args['filename'], $content );
+
+			// get the file size of our test file.
+			$file_size = $wp_filesystem->size( $parsed_args['filename'] );
+
+			// get file type infos.
+			$file_type = wp_check_filetype( basename( $url ) );
 
 			// create the response object.
-			$requests_response = new \WpOrg\Requests\Response();
+			$requests_response = new \WpOrg\Requests\Response;
 			$requests_response->status_code = 200;
 
 			// create the header response.
 			return array(
+				'response' => array( 'code' => 200 ),
+				'headers' => array(
+					'content-type' => $file_type['type'],
+					'Content-Length' => $file_size,
+					'Content-Disposition' => 'attachment; filename="' . $file_info['basename'] . '"',
+				),
 				'http_response' => new WP_HTTP_Requests_Response( $requests_response, $parsed_args['filename'] ),
-				'body' => $content
+				'filename' => $parsed_args['filename']
 			);
 		}
 
