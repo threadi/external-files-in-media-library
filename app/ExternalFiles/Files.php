@@ -1691,13 +1691,18 @@ class Files {
 	/**
 	 * Forward the ability-request to the hook-funktion.
 	 *
-	 * @param array<int,mixed> $input The input from ability.
+	 * @param array<string,mixed> $input The input from ability.
 	 *
 	 * @return int
 	 */
 	public function add_urls_by_ability( array $input ): int {
 		// bail if the input is empty.
 		if ( empty( $input ) ) {
+			return 0;
+		}
+
+		// bail if attachment and URL is missing.
+		if( ! isset( $input['attachment_id'] ) && ! isset( $input['url'] ) ) {
 			return 0;
 		}
 
@@ -1713,7 +1718,7 @@ class Files {
 	/**
 	 * Delete the ability request to delete a single URL from media library.
 	 *
-	 * @param array<int,mixed> $input The input from ability.
+	 * @param array<string,mixed> $input The input from ability.
 	 *
 	 * @return bool
 	 */
@@ -1724,7 +1729,7 @@ class Files {
 		}
 
 		// bail if no URL is given.
-		if( empty( $input['url'] ) ) {
+		if( ! isset( $input['url'] ) ) {
 			return false;
 		}
 
