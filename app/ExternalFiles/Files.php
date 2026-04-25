@@ -1671,13 +1671,13 @@ class Files {
 				'description'         => __( 'Adds the ability to delete external URLs in the media library.', 'external-files-in-media-library' ),
 				'category'            => 'site',
 				'input_schema'        => array(
-					'type' => 'object',
+					'type'       => 'object',
 					'properties' => array(
-						'url'           => array(
+						'url' => array(
 							'type'        => 'string',
 							'description' => __( 'The URL to add in the media library.', 'external-files-in-media-library' ),
 						),
-					)
+					),
 				),
 				'output_schema'       => array(
 					'type' => 'boolean',
@@ -1702,7 +1702,7 @@ class Files {
 		}
 
 		// bail if attachment and URL is missing.
-		if( ! isset( $input['attachment_id'] ) && ! isset( $input['url'] ) ) {
+		if ( ! isset( $input['attachment_id'] ) && ! isset( $input['url'] ) ) {
 			return 0;
 		}
 
@@ -1729,7 +1729,7 @@ class Files {
 		}
 
 		// bail if no URL is given.
-		if( ! isset( $input['url'] ) ) {
+		if ( ! isset( $input['url'] ) ) {
 			return false;
 		}
 
