@@ -16,13 +16,15 @@
 - Changed initialization of the plugin during activation and deactivation for better compatibility with other plugins
 - Optimized the uninstallation of services
 - Optimized the uninstallation of settings
+- Optimized permalink refresh after plugin activation
 - User-token for Dropbox as now also deleted on uninstallation
+- Updated the blueprint.json for an optimal preview in the playground
 
 ### Fixed
 
 - Fixed missing hint for not existing synchronisation support for local external sources
 - Fixed wrong spelled plugin slugs in some hooks
-- Fixed check for file type and size on sync even if this extensions are not enabled
+- Fixed check for file type and size on sync even if these extensions are not enabled
 
 ## [5.0.3] - 18.04.2026
 
