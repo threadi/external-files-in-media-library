@@ -1671,7 +1671,13 @@ class Files {
 				'description'         => __( 'Adds the ability to delete external URLs in the media library.', 'external-files-in-media-library' ),
 				'category'            => 'site',
 				'input_schema'        => array(
-					'type' => 'string',
+					'type' => 'object',
+					'properties' => array(
+						'url'           => array(
+							'type'        => 'string',
+							'description' => __( 'The URL to add in the media library.', 'external-files-in-media-library' ),
+						),
+					)
 				),
 				'output_schema'       => array(
 					'type' => 'boolean',
@@ -1696,29 +1702,34 @@ class Files {
 		}
 
 		// do not use credentials, if not set.
-		if ( ! isset( $input[2] ) && ! isset( $input[3] ) ) {
-			return $this->add_urls_by_hook( $input[0], $input[1] );
+		if ( ! isset( $input['login'] ) && ! isset( $input['password'] ) ) {
+			return $this->add_urls_by_hook( $input['attachment_id'], $input['url'] );
 		}
 
 		// use it with credentials.
-		return $this->add_urls_by_hook( $input[0], $input[1], $input[2], $input[3] );
+		return $this->add_urls_by_hook( $input['attachment_id'], $input['url'], $input['login'], $input['password'] );
 	}
 
 	/**
 	 * Delete the ability request to delete a single URL from media library.
 	 *
-	 * @param string $url The URL to delete.
+	 * @param array<int,mixed> $input The input from ability.
 	 *
 	 * @return bool
 	 */
-	public function delete_url_by_ability( string $url ): bool {
+	public function delete_url_by_ability( array $input ): bool {
+		// bail if no input is given.
+		if ( empty( $input ) ) {
+			return false;
+		}
+
 		// bail if no URL is given.
-		if ( empty( $url ) ) {
+		if( empty( $input['url'] ) ) {
 			return false;
 		}
 
 		// get the external files object for this URL.
-		$external_file_obj = $this->get_file_by_url( $url );
+		$external_file_obj = $this->get_file_by_url( $input['url'] );
 
 		// bail if external file could not be loaded.
 		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {

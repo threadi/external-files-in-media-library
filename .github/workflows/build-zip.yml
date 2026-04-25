@@ -26,8 +26,7 @@ jobs:
           npm run build:commands
           cd vendor/threadi/easy-dialog-for-wordpress/
           npm i
-          npm run build:replacer
-          npm run build:commands
+          npm run build
           cd ../../../
           cd vendor/threadi/easy-directory-listing-for-wordpress/
           npm i
