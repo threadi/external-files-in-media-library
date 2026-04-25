@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Updated support for Abilities API
+
+## [5.1.0] - 25.04.2026
+
 ## Added
 
 - Added support to import and synchronize external images in galleries
