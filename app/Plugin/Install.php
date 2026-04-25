@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transien
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
@@ -84,7 +85,8 @@ class Install {
 		Settings::get_instance()->get_settings_obj()->activation();
 
 		// flush rewrite rules.
-		Proxy::get_instance()->set_refresh();
+		Proxy::get_instance()->wp_init();
+		Proxy::do_refresh();
 
 		// install the schedules.
 		Schedules::get_instance()->create_schedules();
@@ -93,6 +95,7 @@ class Install {
 		Roles::get_instance()->install();
 
 		// get the transients object.
+		Admin::get_instance()->configure_transients();
 		$transients_obj = Transients::get_instance();
 
 		// trigger a welcome message, if it is not hidden.
