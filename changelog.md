@@ -7,6 +7,7 @@
 - Added support to import and synchronize external images in galleries
   from the plugins "NextGen Gallery" and "Robo Gallery"
 - Added 2 command palette commands to quick jump to external services or sources
+- Added support for Abilities API for add and remove URls from the media library
 - Added PHPUnitTests for uninstallation of the plugin
 
 ## Changes

@@ -122,6 +122,9 @@ class Files {
 
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
+
+		// misc.
+		add_action( 'wp_abilities_api_init', array( $this, 'add_abilities' ) );
 	}
 
 	/**
@@ -1616,5 +1619,116 @@ class Files {
 
 		// return false to prevent any preview from external images.
 		return false;
+	}
+
+	/**
+	 * Add abilities this plugin provides.
+	 *
+	 * @return void
+	 */
+	public function add_abilities(): void {
+		// add the ability to add a URL.
+		wp_register_ability(
+			'external-files-in-media-library/add',
+			array(
+				'label'               => __( 'Add an external URL in media library', 'external-files-in-media-library' ),
+				'description'         => __( 'Adds the ability to add external URLs in the media library.', 'external-files-in-media-library' ),
+				'category'            => 'site',
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => array(
+						'attachment_id' => array(
+							'type'        => 'integer',
+							'description' => __( 'The attachment ID. Should be 0 to add a URL.', 'external-files-in-media-library' ),
+						),
+						'url'           => array(
+							'type'        => 'string',
+							'description' => __( 'The URL to add in the media library.', 'external-files-in-media-library' ),
+						),
+						'login'         => array(
+							'type'        => 'string',
+							'description' => __( 'The login, if required by the given URL', 'external-files-in-media-library' ),
+						),
+						'password'      => array(
+							'type'        => 'string',
+							'description' => __( 'The password, if required by the given URL', 'external-files-in-media-library' ),
+						),
+					),
+				),
+				'output_schema'       => array(
+					'type' => 'integer',
+				),
+				'execute_callback'    => array( $this, 'add_urls_by_ability' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+
+		// add the ability to delete a URL.
+		wp_register_ability(
+			'external-files-in-media-library/delete',
+			array(
+				'label'               => __( 'Delete an external URL in media library', 'external-files-in-media-library' ),
+				'description'         => __( 'Adds the ability to delete external URLs in the media library.', 'external-files-in-media-library' ),
+				'category'            => 'site',
+				'input_schema'        => array(
+					'type' => 'string',
+				),
+				'output_schema'       => array(
+					'type' => 'boolean',
+				),
+				'execute_callback'    => array( $this, 'delete_url_by_ability' ),
+				'permission_callback' => '__return_true',
+			)
+		);
+	}
+
+	/**
+	 * Forward the ability-request to the hook-funktion.
+	 *
+	 * @param array<int,mixed> $input The input from ability.
+	 *
+	 * @return int
+	 */
+	public function add_urls_by_ability( array $input ): int {
+		// bail if the input is empty.
+		if ( empty( $input ) ) {
+			return 0;
+		}
+
+		// do not use credentials, if not set.
+		if ( ! isset( $input[2] ) && ! isset( $input[3] ) ) {
+			return $this->add_urls_by_hook( $input[0], $input[1] );
+		}
+
+		// use it with credentials.
+		return $this->add_urls_by_hook( $input[0], $input[1], $input[2], $input[3] );
+	}
+
+	/**
+	 * Delete the ability request to delete a single URL from media library.
+	 *
+	 * @param string $url The URL to delete.
+	 *
+	 * @return bool
+	 */
+	public function delete_url_by_ability( string $url ): bool {
+		// bail if no URL is given.
+		if ( empty( $url ) ) {
+			return false;
+		}
+
+		// get the external files object for this URL.
+		$external_file_obj = $this->get_file_by_url( $url );
+
+		// bail if external file could not be loaded.
+		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
+			return false;
+		}
+
+		// delete it.
+		$external_file_obj->delete();
+
+		// return true as it has been deleted.
+		return true;
 	}
 }
