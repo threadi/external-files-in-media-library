@@ -104,6 +104,7 @@ class Init {
 		// misc.
 		add_action( 'cli_init', array( $this, 'cli' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_cron_intervals' ) );
+		add_filter( 'external-files-in-media-library_crypt_constant', array( $this, 'set_crypt_constant_name' ), 10, 0 );
 	}
 
 	/**
@@ -183,5 +184,14 @@ class Init {
 		if ( ! class_exists( '\ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' ) ) {
 			class_alias( '\ExternalFilesInMediaLibrary\Plugin\DeprecatedSettings', 'ExternalFilesInMediaLibrary\Dependencies\easySettingsForWordPress\Settings' );
 		}
+	}
+
+	/**
+	 * Set the cryptographic constant name.
+	 *
+	 * @return string
+	 */
+	public function set_crypt_constant_name(): string {
+		return 'EDLFW_HASH';
 	}
 }

@@ -119,6 +119,7 @@ class Directory_Listing {
 
 		// initialize the serverside tasks object for directory listing.
 		$directory_listing_obj = Init::get_instance();
+		$directory_listing_obj->set_plugin_path( EFML_PLUGIN );
 		$directory_listing_obj->set_path( Helper::get_plugin_dir() );
 		$directory_listing_obj->set_url( Helper::get_plugin_url() );
 		$directory_listing_obj->set_prefix( 'efml' );

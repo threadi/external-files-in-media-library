@@ -4,3 +4,7 @@ cd vendor/threadi/easy-dialog-for-wordpress/
 npm install
 npm run build
 cd ../../../
+cd vendor/threadi/easy-directory-listing-for-wordpress/
+npm install
+npm run build
+cd ../../../
