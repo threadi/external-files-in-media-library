@@ -5,6 +5,7 @@
 ### Changed
 
 - Updated support for Abilities API
+- Updated dependencies
 
 ## [5.1.0] - 25.04.2026
 

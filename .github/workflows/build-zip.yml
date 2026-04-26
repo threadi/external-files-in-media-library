@@ -78,6 +78,7 @@ jobs:
           rm -fr .github
           rm .gitattributes
           rm dev-composer.sh
+          rm js/.gitkeep
 
       - name: Run PCP check
         uses: wordpress/plugin-check-action@v1
