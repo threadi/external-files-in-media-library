@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Optimized documentation if check for duplicates is disabled during synchronisation (they are not imported twice, however)
 - Updated support for Abilities API
 - Updated dependencies
 

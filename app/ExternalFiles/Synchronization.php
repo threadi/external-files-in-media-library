@@ -566,7 +566,7 @@ class Synchronization extends Tools_Base {
 		}
 
 		// disable duplicate check during synchronisation.
-		add_filter( 'efml_duplicate_check', array( $this, 'disable_duplicate_check' ) );
+		add_filter( 'efml_duplicate_check', array( $this, 'disable_duplicate_check' ), 10, 2 );
 
 		// and get the post_id of the existing file to update it.
 		add_filter( 'efml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
@@ -913,9 +913,14 @@ class Synchronization extends Tools_Base {
 	/**
 	 * Disable duplicate check during synchronisation.
 	 *
+	 * @param bool   $return_value The return value.
+	 * @param string $url The used URL.
+	 *
 	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function disable_duplicate_check(): bool {
+	public function disable_duplicate_check( bool $return_value, string $url ): bool {
+		Log::get_instance()->create( __( 'Check for duplicates is disabled during synchronisation.', 'external-files-in-media-library' ), $url, 'info', 2 );
 		return true;
 	}
 
