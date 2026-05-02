@@ -701,10 +701,16 @@ class Directory_Listing {
 			/* translators: %1$s will be replaced by a URL, %2$s by a title. */
 			'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a> with the name %2$s.', 'external-files-in-media-library' ), self::get_instance()->get_url(), '<em>' . $term->name . '</em>' ) . '</p>',
 		);
+		$result_dialog['detail']['buttons'][0]['text'] = __( 'Close dialog', 'external-files-in-media-library' );
 		$result_dialog['detail']['buttons'][] = array(
 			'action'  => 'efml_delete_directory(' . $term_id . ');',
 			'variant' => 'secondary',
 			'text'    => __( 'Undo', 'external-files-in-media-library' ),
+		);
+		$result_dialog['detail']['buttons'][] = array(
+			'action'  => 'location.href="' . self::get_instance()->get_url() . '"',
+			'variant' => 'secondary',
+			'text'    => __( 'Show external sources', 'external-files-in-media-library' ),
 		);
 		wp_send_json( $result_dialog );
 	}
