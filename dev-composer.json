@@ -68,6 +68,7 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
+        "threadi/crypt-for-wordpress": "*",
         "threadi/easy-dialog-for-wordpress": "^1.0.1",
         "threadi/easy-directory-listing-for-wordpress": "*",
         "threadi/easy-settings-for-wordpress": "*",
@@ -85,6 +86,13 @@
         {
             "type": "path",
             "url": "../../../easy-settings-for-wordpress/",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../../crypt-for-wordpress/",
             "options": {
                 "symlink": true
             }

@@ -5,6 +5,7 @@
 ### Added
 
 - Added files to secure the direct access to the cache directory for the proxy
+- Added compatibility with the new WordPress desktop mode
 
 ### Changed
 
