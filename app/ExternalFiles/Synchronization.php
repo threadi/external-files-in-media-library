@@ -693,6 +693,11 @@ class Synchronization extends Tools_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-sync-nonce', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
+
 		// get log object.
 		$log = Log::get_instance();
 
@@ -811,6 +816,11 @@ class Synchronization extends Tools_Base {
 	public function delete_synced_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-deleted-synced-nonce', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
 
 		// get log object.
 		$log = Log::get_instance();

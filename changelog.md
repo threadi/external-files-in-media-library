@@ -2,9 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added files to secure the direct access to the cache directory for the proxy
+
 ### Changed
 
 - Optimized documentation if check for duplicates is disabled during synchronisation (they are not imported twice, however)
+- Optimized option to hide the welcome notice
+- Optimized security for handling of local files in hosting
+- Prevent usage of credentials for URLs in the import dialog if the website does not use SSL
 - Updated support for Abilities API
 - Updated dependencies
 

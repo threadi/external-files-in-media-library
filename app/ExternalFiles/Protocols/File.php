@@ -277,13 +277,20 @@ class File extends Protocol_Base {
 		 * @param string $file_path The absolute file path.
 		 */
 		if ( apply_filters( 'efml_file_check_existence', $true, $file_path ) && ! $wp_filesystem->exists( $file_path ) ) {
-			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->sanitize_local_path( $this->get_url() ), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'File-URL does not exist.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 			// return empty array as we cannot get infos about a file, which does not exist.
 			return array();
 		}
 
 		// get the mime types.
-		$mime_type            = wp_check_filetype( $results['title'] );
+		$mime_type = wp_check_filetype( $results['title'] );
+
+		// bail if no type could be read.
+		if ( empty( $mime_type['type'] ) ) {
+			Log::get_instance()->create( __( 'File-URL does not have a mime-type.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			return array();
+		}
+
 		$results['mime-type'] = $mime_type['type'];
 
 		// get the last modified date.
@@ -488,6 +495,81 @@ class File extends Protocol_Base {
 	 * @return string
 	 */
 	private function sanitize_local_path( string $url ): string {
-		return 'file://' . realpath( str_replace( 'file://', '', $url ) ) . ( str_ends_with( $url, '/' ) ? '/' : '' );
+		// get path without the protocol.
+		$path = str_starts_with( $url, 'file://' )
+			? wp_parse_url( $url, PHP_URL_PATH )
+			: $url;
+
+		// bail if path could not be read.
+		if ( is_null( $path ) || false === $path ) {
+			return '';
+		}
+
+		// get the real path.
+		$real_path = realpath( $path );
+
+		// bail if no real path could be read.
+		if ( ! $real_path ) {
+			return '';
+		}
+
+		// get the hosting root.
+		$base = $this->get_hosting_root();
+
+		/**
+		 * Filter the allowed base directory for local files.
+		 *
+		 * @since 5.2.0 Available since 5.2.0.
+		 * @param null|string $base The detected base directory.
+		 */
+		$base = apply_filters( 'efml_file_base', $base );
+
+		// bail if no hosting root could be read.
+		if ( is_null( $base ) ) {
+			return '';
+		}
+
+		// get the real path.
+		$base_real = realpath( $base );
+
+		// bail if real path could not be read.
+		if ( ! $base_real ) {
+			return '';
+		}
+
+		// bail if both paths does not match (e.g., for a path outside the web-directory).
+		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . DIRECTORY_SEPARATOR ) ) {
+			return '';
+		}
+
+		// if the original URL ends with a slash, add it to the real path.
+		if ( str_ends_with( $url, '/' ) ) {
+			$real_path .= DIRECTORY_SEPARATOR;
+		}
+
+		// return the real path with protocol.
+		return 'file://' . $real_path;
+	}
+
+	/**
+	 * Return the absolute hosting root path.
+	 *
+	 * @return string|null
+	 */
+	private function get_hosting_root(): ?string {
+		// check for document root.
+		if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) ) {
+			$real = realpath( sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ) );
+			return false !== $real ? $real : null;
+		}
+
+		// check for the WordPress-own ABSPATH.
+		if ( defined( 'ABSPATH' ) ) {
+			$real = realpath( dirname( ABSPATH ) );
+			return false !== $real ? $real : null;
+		}
+
+		// return null as no allowed hosting root has been found.
+		return null;
 	}
 }

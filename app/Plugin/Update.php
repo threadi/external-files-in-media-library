@@ -111,6 +111,9 @@ class Update {
 			if ( version_compare( $db_plugin_version, '5.0.0', '<' ) ) {
 				$this->version500();
 			}
+			if ( version_compare( $db_plugin_version, '5.2.0', '<' ) ) {
+				$this->version520();
+			}
 
 			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -329,5 +332,21 @@ class Update {
 			$fields['password']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'password', true ) );
 			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
 		}
+	}
+
+	/**
+	 * To run on the update to version 5.2.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version520(): void {
+		// get the proxy object.
+		$proxy = Proxy::get_instance();
+
+		// get the proxy cache path.
+		$path = $proxy->get_cache_directory();
+
+		// secure it.
+		$proxy->secure_cache_directory( $path );
 	}
 }

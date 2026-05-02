@@ -296,7 +296,11 @@ class Proxy {
 		if ( false === wp_mkdir_p( $path ) ) {
 			/* translators: %1$s will be replaced by the path. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
+			return;
 		}
+
+		// run securing the cache directory.
+		$this->secure_cache_directory( $path );
 	}
 
 	/**
@@ -408,5 +412,80 @@ class Proxy {
 	public function show_cache_state_in_info_dialog( array $dialog, File $external_file ): array {
 		$dialog['texts'][] = '<p><strong>' . __( 'Proxied', 'external-files-in-media-library' ) . ':</strong> ' . ( $external_file->is_cached() ? __( 'will be used.', 'external-files-in-media-library' ) : __( 'will not be used.', 'external-files-in-media-library' ) ) . '</p>';
 		return $dialog;
+	}
+
+	/**
+	 * Secure the cache directory.
+	 *
+	 * We add files there depending on the used web-server.
+	 *
+	 * @param string $path The path to the directory.
+	 *
+	 * @return void
+	 */
+	public function secure_cache_directory( string $path ): void {
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get file system permissions as int.
+		$mode = 0644;
+		/**
+		 * Filter the filesystem permissions.
+		 *
+		 * @since 5.2.0 Available since 5.2.0.
+		 * @param int $mode The mode as int, e.g., 0644.
+		 */
+		$mode = apply_filters( 'efml_fs_chmod', $mode );
+
+		// add "index.php" to prevent directoryListing on each webserver.
+		if ( ! file_exists( $path . 'index.php' ) ) {
+			// create the default content for this file.
+			$index_php = '.';
+
+			/**
+			 * Change content of index.php to prevent access of cache file directory.
+			 *
+			 * @since 5.2.0 Available since 5.2.0.
+			 * @param string $index_php The content of the file.
+			 */
+			$index_php = apply_filters( 'efml_cache_file_index_php', $index_php );
+
+			// save the file.
+			$wp_filesystem->put_contents( $path . 'index.php', $index_php, $mode );
+		}
+
+		// add ".htaccess" to prevent for all requests for Apache webserver.
+		if ( isset( $_SERVER['SERVER_SOFTWARE'] ) && ! file_exists( $path . '.htaccess' ) && str_contains( strtolower( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ), 'apache' ) ) {
+			// create the default content for this file.
+			$htaccess = 'Require all denied';
+
+			/**
+			 * Change content of .htaccess to prevent access of cache files.
+			 *
+			 * @since 5.2.0 Available since 5.2.0.
+			 * @param string $htaccess The content of the file.
+			 */
+			$htaccess = apply_filters( 'efml_cache_file_htaccess', $htaccess );
+
+			// save the file.
+			$wp_filesystem->put_contents( $path . '.htaccess', $htaccess, $mode );
+		}
+
+		// add "web.config" to prevent all requests for IIS webserver.
+		if ( ! file_exists( $path . 'web.config' ) ) {
+			// create the default content for this file.
+			$web_config = "<configuration>\n<system.webServer>\n<authorization>\n<deny users=\"*\" />\n</authorization>\n</system.webServer>\n</configuration>\n";
+
+			/**
+			 * Change content of web.config to prevent access of cache files.
+			 *
+			 * @since 5.2.0 Available since 5.2.0.
+			 * @param string $htaccess The content of the file.
+			 */
+			$web_config = apply_filters( 'efml_cache_file_web_config', $web_config );
+
+			// save the file.
+			$wp_filesystem->put_contents( $path . 'web.config', $web_config, $mode );
+		}
 	}
 }

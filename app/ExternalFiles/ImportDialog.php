@@ -214,6 +214,12 @@ class ImportDialog {
 			return $dialog;
 		}
 
+		// bail if the project does not use SSL.
+		if ( ! is_ssl() ) {
+			$dialog['texts'][] = '<details><summary>' . __( 'Use credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><p>' . esc_html__( 'You are not using an SSL certificate for your website. For security reasons, you cannot enter your login credentials here.', 'external-files-in-media-library' ) . '</p></div></details>';
+			return $dialog;
+		}
+
 		// add the fields.
 		$dialog['texts'][] = '<details><summary>' . __( 'Add credentials to access these URLs', 'external-files-in-media-library' ) . '</summary><div><label for="use_credentials"><input type="checkbox" name="use_credentials" value="1" id="use_credentials"> ' . esc_html__( 'Use below credentials to import these URLs', 'external-files-in-media-library' ) . '</label></div><div><label for="eml_login">' . __( 'Login', 'external-files-in-media-library' ) . ':</label><input type="text" id="login" name="login" value="" autocomplete="off" readonly></div><div><label for="password">' . __( 'Password', 'external-files-in-media-library' ) . ':</label><input type="password" id="password" name="password" value="" autocomplete="off" readonly></div><p><strong>' . __( 'Hint:', 'external-files-in-media-library' ) . '</strong> ' . __( 'Files with credentials are saved locally.', 'external-files-in-media-library' ) . '</p></details>';
 
