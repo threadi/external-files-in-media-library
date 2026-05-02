@@ -52,6 +52,7 @@ class ImportZipViaFile extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_import_zip_via_file(): void {
+		add_filter( 'efml_file_base', array( $this, 'set_plugin_path_as_base' ) );
 		$result = \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'zip', 'file' ) );
 		$this->assertIsBool( $result );
 		$this->assertTrue( $result );

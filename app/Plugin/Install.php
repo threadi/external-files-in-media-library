@@ -114,6 +114,7 @@ class Install {
 				array(
 					'action'  => 'efml_hide_welcome',
 					'forward' => urlencode( Helper::get_add_media_url() ),
+					'nonce'   => wp_create_nonce( 'efml-hide-welcome' ),
 				),
 				get_admin_url() . 'admin.php'
 			);
@@ -124,6 +125,7 @@ class Install {
 				array(
 					'action'  => 'efml_hide_welcome',
 					'forward' => urlencode( Helper::get_media_library_url() ),
+					'nonce'   => wp_create_nonce( 'efml-hide-welcome' ),
 				),
 				get_admin_url() . 'admin.php'
 			);

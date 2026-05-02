@@ -282,4 +282,13 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		wp_set_auth_cookie( 0 );
 		do_action('wp_login' );
 	}
+
+	/**
+	 * Set the plugin path as base.
+	 *
+	 * @return string
+	 */
+	public function set_plugin_path_as_base(): string {
+		return \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path();
+	}
 }

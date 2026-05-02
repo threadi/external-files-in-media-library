@@ -502,12 +502,12 @@ class Admin {
 	/**
 	 * Hide welcome hint by request and forward user to target.
 	 *
-	 * Hint: we do not use a nonce here as this might also result from installing via WP CLI,
-	 * which as no WP-user env.
-	 *
 	 * @return void
 	 */
 	public function hide_welcome_by_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-hide-welcome', 'nonce' );
+
 		// dismiss the welcome hint.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
@@ -515,11 +515,11 @@ class Admin {
 		// get URL from request.
 		$url = filter_input( INPUT_GET, 'forward', FILTER_SANITIZE_URL );
 		if ( is_null( $url ) ) {
-			$url = (string) wp_get_referer();
+			$url = wp_get_referer();
 		}
 
 		// redirect the user.
-		wp_safe_redirect( $url );
+		wp_safe_redirect( (string) $url );
 	}
 
 	/**
