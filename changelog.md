@@ -12,8 +12,10 @@
 - Optimized documentation if check for duplicates is disabled during synchronisation (they are not imported twice, however)
 - Optimized option to hide the welcome notice
 - Optimized security for handling of local files in hosting
+- Optimized formatting of some descriptions in the settings
 - Prevent usage of credentials for URLs in the import dialog if the website does not use SSL
 - Extended the dialog after saving an external source with more options
+- Do not add an unused capability during saving the permission settings
 - Updated support for Abilities API
 - Updated dependencies
 

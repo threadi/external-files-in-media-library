@@ -130,11 +130,11 @@ class Roles {
 		if ( 0 === count( $users_for_setting ) ) {
 			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'No users can be configured here at this moment.', 'external-files-in-media-library' ) );
+			$field->set_description( '<p>' . __( 'No users can be configured here at this moment.', 'external-files-in-media-library' ) . '</p>' );
 		} else {
 			$field = new MultiSelect( $settings_obj );
 			$field->set_title( __( 'Prevent access for these users', 'external-files-in-media-library' ) );
-			$field->set_description( __( 'Users selected on this list are not allowed to use external files in media library regardless of their role.', 'external-files-in-media-library' ) );
+			$field->set_description( '<p>' . __( 'Users selected on this list are not allowed to use external files in media library regardless of their role.', 'external-files-in-media-library' ) . '</p>' );
 			$field->set_options( $users_for_setting );
 		}
 		$setting->set_field( $field );

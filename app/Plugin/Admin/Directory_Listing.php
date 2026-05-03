@@ -1071,8 +1071,14 @@ class Directory_Listing {
 			$service = '';
 		}
 
+		// prepare the sub-capability (like read or write).
+		$capability_suffix = '_' . $service;
+		if( empty( $service ) ) {
+			$capability_suffix = '';
+		}
+
 		// create the capability name.
-		$capability = EFML_CAP_NAME . '_' . $service;
+		$capability = EFML_CAP_NAME . $capability_suffix;
 
 		// set the capability to the roles.
 		Roles::get_instance()->set( $roles_to_set, $capability );

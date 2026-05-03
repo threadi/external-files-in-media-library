@@ -217,12 +217,12 @@ class Export extends Tools_Base {
 		if ( empty( $external_sources ) ) {
 			$field = new TextInfo( $settings_obj );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'You have not enabled export for any external sources. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) );
+			$field->set_description( '<p>' . sprintf( __( 'You have not enabled export for any external sources. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) . '</p>' );
 		} else {
 			$field = new Select( $settings_obj );
 			$field->set_options( $external_sources );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'Select the external source with export enabled to which all new media files should be assigned. Other external sources with export enabled that are not selected here will also be used, but will not be assigned to the new files. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) );
+			$field->set_description( '<p>' . sprintf( __( 'Select the external source with export enabled to which all new media files should be assigned. Other external sources with export enabled that are not selected here will also be used, but will not be assigned to the new files. Manage them <a href="%1$s">here</a>.', 'external-files-in-media-library' ), $url ) . '</p>' );
 		}
 		$field->set_title( __( 'Choose your primary external source', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
@@ -236,7 +236,7 @@ class Export extends Tools_Base {
 		$setting->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
+		$field->set_description( '<p>' . __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) . '</p>' );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
