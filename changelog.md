@@ -14,6 +14,7 @@
 - Optimized security for handling of local files in hosting
 - Prevent usage of credentials for URLs in the import dialog if the website does not use SSL
 - Extended the dialog after saving an external source with more options
+- Optimized output of YouTube URLs
 - Updated support for Abilities API
 - Updated dependencies
 
