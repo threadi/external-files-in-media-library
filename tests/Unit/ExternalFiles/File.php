@@ -87,7 +87,7 @@ class File extends externalFilesTests {
 	}
 
 	/**
-	 * Test if the returning variable is a string and the required extension for the test URL:
+	 * Test if the returning variable is a string, and the required extension for the test URL:
 	 *
 	 * @return void
 	 */

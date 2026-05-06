@@ -695,19 +695,19 @@ class Directory_Listing {
 		}
 
 		// return OK.
-		$result_dialog['detail']['title']     = __( 'The external source has been saved', 'external-files-in-media-library' );
-		$result_dialog['detail']['texts']     = array(
+		$result_dialog['detail']['title']              = __( 'The external source has been saved', 'external-files-in-media-library' );
+		$result_dialog['detail']['texts']              = array(
 			'<p><strong>' . __( 'The directory has been saved as your external source.', 'external-files-in-media-library' ) . '</strong></p>',
 			/* translators: %1$s will be replaced by a URL, %2$s by a title. */
 			'<p>' . sprintf( __( 'You can find and use it <a href="%1$s">in your external sources</a> with the name %2$s.', 'external-files-in-media-library' ), self::get_instance()->get_url(), '<em>' . $term->name . '</em>' ) . '</p>',
 		);
 		$result_dialog['detail']['buttons'][0]['text'] = __( 'Close dialog', 'external-files-in-media-library' );
-		$result_dialog['detail']['buttons'][] = array(
+		$result_dialog['detail']['buttons'][]          = array(
 			'action'  => 'efml_delete_directory(' . $term_id . ');',
 			'variant' => 'secondary',
 			'text'    => __( 'Undo', 'external-files-in-media-library' ),
 		);
-		$result_dialog['detail']['buttons'][] = array(
+		$result_dialog['detail']['buttons'][]          = array(
 			'action'  => 'location.href="' . self::get_instance()->get_url() . '"',
 			'variant' => 'secondary',
 			'text'    => __( 'Show external sources', 'external-files-in-media-library' ),
@@ -1071,8 +1071,14 @@ class Directory_Listing {
 			$service = '';
 		}
 
+		// prepare the sub-capability (like read or write).
+		$capability_suffix = '_' . $service;
+		if ( empty( $service ) ) {
+			$capability_suffix = '';
+		}
+
 		// create the capability name.
-		$capability = EFML_CAP_NAME . '_' . $service;
+		$capability = EFML_CAP_NAME . $capability_suffix;
 
 		// set the capability to the roles.
 		Roles::get_instance()->set( $roles_to_set, $capability );

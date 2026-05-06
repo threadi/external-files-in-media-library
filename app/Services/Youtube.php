@@ -1188,7 +1188,7 @@ class Youtube extends Service_Base implements Service {
 	 */
 	public function clean_url( string $url ): string {
 		// bail if this is not a YouTube URL.
-		if( ! $this->is_youtube_video( $url ) ) {
+		if ( ! $this->is_youtube_video( $url ) ) {
 			return $url;
 		}
 

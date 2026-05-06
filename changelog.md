@@ -1,10 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [5.2.0] - 06.05.2026
 
 ### Added
 
-- Added files to secure the direct access to the cache directory for the proxy
+- Added files to secure the direct access to the cache directory of the proxy
 - Added compatibility with the new WordPress desktop mode
 
 ### Changed
