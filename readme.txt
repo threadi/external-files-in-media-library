@@ -184,20 +184,15 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Added support to import and synchronize external images in galleries
-  from the plugins "NextGen Gallery" and "Robo Gallery"
-- Added 2 command palette commands to quick jump to external services or sources
-- Added support for Abilities API for add and remove URls from the media library
-- Added PHPUnitTests for uninstallation of the plugin
-- Small optimizations for the multisite support
-- Changed initialization of the plugin during activation and deactivation for better compatibility with other plugins
-- Optimized the uninstallation of services
-- Optimized the uninstallation of settings
-- Optimized permalink refresh after plugin activation
-- User-token for Dropbox as now also deleted on uninstallation
-- Updated the blueprint.json for an optimal preview in the playground
-- Fixed missing hint for not existing synchronisation support for local external sources
-- Fixed wrong spelled plugin slugs in some hooks
-- Fixed check for file type and size on sync even if these extensions are not enabled
+- Added files to secure the direct access to the cache directory of the proxy
+- Added compatibility with the new WordPress desktop mode
+- Optimized documentation if check for duplicates is disabled during synchronisation (they are not imported twice, however)
+- Optimized option to hide the welcome notice
+- Optimized security for handling of local files in hosting
+- Prevent usage of credentials for URLs in the import dialog if the website does not use SSL
+- Extended the dialog after saving an external source with more options
+- Optimized output of YouTube URLs
+- Updated support for Abilities API
+- Updated dependencies
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

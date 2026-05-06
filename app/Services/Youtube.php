@@ -142,6 +142,7 @@ class Youtube extends Service_Base implements Service {
 		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
 		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
 		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
+		add_filter( 'wp_get_attachment_url', array( $this, 'clean_url' ) );
 
 		// misc.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -373,7 +374,7 @@ class Youtube extends Service_Base implements Service {
 			return $block_content;
 		}
 
-		// bail if id is not given.
+		// bail if ID is not given.
 		if ( empty( $block['attrs']['id'] ) ) {
 			return $block_content;
 		}
@@ -1176,5 +1177,25 @@ class Youtube extends Service_Base implements Service {
 		 * @param array<string,mixed> $list The list of settings.
 		 */
 		return apply_filters( 'efml_service_youtube_user_settings', $list );
+	}
+
+	/**
+	 * Clean the URL if it is a YouTube URL.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	public function clean_url( string $url ): string {
+		// bail if this is not a YouTube URL.
+		if ( ! $this->is_youtube_video( $url ) ) {
+			return $url;
+		}
+
+		// get upload directory.
+		$uploads = wp_get_upload_dir();
+
+		// replace the base URL.
+		return str_replace( $uploads['baseurl'] . '/', '', $url );
 	}
 }
