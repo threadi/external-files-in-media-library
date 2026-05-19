@@ -184,15 +184,7 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Added files to secure the direct access to the cache directory of the proxy
-- Added compatibility with the new WordPress desktop mode
-- Optimized documentation if check for duplicates is disabled during synchronisation (they are not imported twice, however)
-- Optimized option to hide the welcome notice
-- Optimized security for handling of local files in hosting
-- Prevent usage of credentials for URLs in the import dialog if the website does not use SSL
-- Extended the dialog after saving an external source with more options
-- Optimized output of YouTube URLs
-- Updated support for Abilities API
 - Updated dependencies
+- Fixed missing crypt library in release
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
