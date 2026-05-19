@@ -1,5 +1,15 @@
 # Changelog
 
+## [5.2.1] - 19.05.2026
+
+### Changed
+
+- Updated dependencies
+
+### Fixed
+
+- Fixed missing crypt library in release
+
 ## [5.2.0] - 06.05.2026
 
 ### Added
