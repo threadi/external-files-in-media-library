@@ -292,7 +292,7 @@ class Availability extends Extension_Base {
 	}
 
 	/**
-	 * Check the availability of all external files.
+	 * Check the availability of all external files, if their protocol handler supports it.
 	 *
 	 * @return void
 	 */
@@ -312,6 +312,11 @@ class Availability extends Extension_Base {
 
 			// bail if handler is false.
 			if ( ! $protocol_handler ) {
+				continue;
+			}
+
+			// bail if this protocol handler could not check for availability.
+			if( ! $protocol_handler->can_check_availability() ) {
 				continue;
 			}
 

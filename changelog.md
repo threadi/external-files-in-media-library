@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Ignore protocol handler without support for availability check for file check schedule
+
 ## [5.2.1] - 19.05.2026
 
 ### Changed
