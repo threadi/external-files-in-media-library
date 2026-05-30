@@ -5,6 +5,7 @@
 ### Changed
 
 - Ignore protocol handler without support for availability check for file check schedule
+- Use user object instead of get_user() for better compatibility with older WordPress
 
 ## [5.2.1] - 19.05.2026
 
