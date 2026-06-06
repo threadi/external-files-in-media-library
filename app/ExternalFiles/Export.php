@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\MultiSelect;
@@ -576,6 +577,11 @@ class Export extends Tools_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-export-state-nonce', 'nonce' );
 
+		// bail if capability is not set.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+			return;
+		}
+
 		// get term ID.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
@@ -1128,11 +1134,17 @@ class Export extends Tools_Base {
 		// check referer.
 		check_admin_referer( 'efml-exported-synced-files', 'nonce' );
 
-		// get the term ID from request.
-		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
-
 		// get referer.
 		$referer = wp_get_referer();
+
+		// bail if cap is missing.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// get the term ID from request.
+		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
 
 		// if referer is false, set empty string.
 		if ( ! $referer ) {

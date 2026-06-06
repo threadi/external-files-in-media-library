@@ -302,7 +302,7 @@ class Forms {
 		check_ajax_referer( 'eml-urls-upload-nonce', 'nonce' );
 
 		// check capability.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			wp_send_json( array() );
 		}
 
@@ -611,6 +611,11 @@ class Forms {
 		// check nonce.
 		check_ajax_referer( 'eml-url-upload-info-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			wp_send_json( array() );
+		}
+
 		// get the user ID.
 		$user_id = get_current_user_id();
 
@@ -689,7 +694,7 @@ class Forms {
 		check_admin_referer( 'efml-add-external-files', 'nonce' );
 
 		// bail if user is missing the capability.
-		if ( false === current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}

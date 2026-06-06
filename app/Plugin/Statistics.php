@@ -257,11 +257,15 @@ class Statistics {
 	 * Recalc the file statistic by request.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function recalc_files_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'eml-recalc-files', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// get all external files.
 		$files = Files::get_instance()->get_files();

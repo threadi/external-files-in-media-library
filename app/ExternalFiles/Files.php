@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
+use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Pdf;
@@ -595,6 +596,11 @@ class Files {
 		// check nonce.
 		check_ajax_referer( 'eml-switch-hosting-nonce', 'nonce' );
 
+		// bail if capability is not set.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
 		// create error-result.
 		$result = array(
 			'state'   => 'error',
@@ -1095,6 +1101,11 @@ class Files {
 	public function reset_thumbnails_by_request(): void {
 		// check referer.
 		check_admin_referer( 'eml-reset-thumbnails', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// get the file ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
@@ -1627,7 +1638,7 @@ class Files {
 	 * @return void
 	 */
 	public function add_abilities(): void {
-		if( ! function_exists( 'wp_register_ability' ) ) {
+		if ( ! function_exists( 'wp_register_ability' ) ) {
 			return;
 		}
 

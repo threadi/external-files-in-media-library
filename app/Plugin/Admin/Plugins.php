@@ -612,6 +612,11 @@ class Plugins {
 		// check nonce.
 		check_ajax_referer( 'efml-get-install-and-activate-plugin-info-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return;
+		}
+
 		// get the running marker.
 		$running = absint( get_option( 'eml_service_plugins_ia' ) );
 

@@ -908,6 +908,11 @@ class Settings {
 		// check referer.
 		check_admin_referer( 'eml-disable-gprd-hint', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( self::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
+
 		// set the option.
 		update_option( 'eml_disable_gprd_warning', 1 );
 
@@ -992,6 +997,11 @@ class Settings {
 	public function reset_plugin_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'external-files-in-media-library-reset', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( self::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// uninstall all.
 		Uninstall::get_instance()->run();

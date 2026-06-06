@@ -379,6 +379,11 @@ class DropBox extends Service_Base implements Service {
 		// check nonce.
 		check_ajax_referer( 'efml-dropbox-save-access-token', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+
 		// get the API key.
 		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -684,6 +689,11 @@ class DropBox extends Service_Base implements Service {
 	public function remove_access_token_by_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-dropbox-remove-access-token', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
 
 		// remove the token.
 		if ( ! $this->delete_access_token() ) {

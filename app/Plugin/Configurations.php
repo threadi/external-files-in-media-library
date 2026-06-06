@@ -209,6 +209,11 @@ class Configurations {
 		// check nonce.
 		check_admin_referer( 'efml-set-configuration', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// get the name of the set.
 		$configuration_name = filter_input( INPUT_GET, 'configuration_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 

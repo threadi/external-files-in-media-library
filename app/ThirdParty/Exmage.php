@@ -181,11 +181,15 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	 * Migrate per request in backend.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function migrate_per_request(): void {
 		// check nonce.
 		check_admin_referer( 'eml-migrate-exmage', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
 
 		// run the migration.
 		$this->migrate();

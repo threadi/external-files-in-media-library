@@ -281,6 +281,11 @@ class Admin {
 		// check the nonce.
 		check_admin_referer( 'eml-empty-log', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
+
 		// empty the table.
 		Log::get_instance()->truncate_log();
 
@@ -306,6 +311,11 @@ class Admin {
 	public function delete_log_entry(): void {
 		// check the nonce.
 		check_admin_referer( 'eml-log-delete-entry', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// get the ID from request.
 		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
@@ -508,6 +518,11 @@ class Admin {
 		// check nonce.
 		check_admin_referer( 'efml-hide-welcome', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
+
 		// dismiss the welcome hint.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
@@ -595,6 +610,11 @@ class Admin {
 	public function export_installation_key(): void {
 		// check nonce.
 		check_admin_referer( 'efml-download-key', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// create the array with the hash key.
 		$content = array();
