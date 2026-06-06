@@ -1627,6 +1627,10 @@ class Files {
 	 * @return void
 	 */
 	public function add_abilities(): void {
+		if( ! function_exists( 'wp_register_ability' ) ) {
+			return;
+		}
+
 		// add the ability to add a URL.
 		wp_register_ability(
 			'external-files-in-media-library/add',

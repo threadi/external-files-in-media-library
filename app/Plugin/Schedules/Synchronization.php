@@ -100,10 +100,10 @@ class Synchronization extends Schedules_Base {
 		// get the user to use for this schedule, if set.
 		if ( $args['user_id'] > 0 ) {
 			// get the user object.
-			$user = get_user( $args['user_id'] );
+			$user = new WP_User( absint( $args['user_id'] ) );
 
 			// set the user.
-			if ( $user instanceof WP_User && method_exists( $directory_listing_obj, 'set_user' ) ) {
+			if ( method_exists( $directory_listing_obj, 'set_user' ) ) {
 				$directory_listing_obj->set_user( $user );
 			}
 		}

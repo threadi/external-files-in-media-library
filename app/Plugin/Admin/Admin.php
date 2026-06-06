@@ -350,7 +350,7 @@ class Admin {
 		}
 
 		// bail if WordPress is in developer mode.
-		if ( function_exists( 'wp_is_development_mode' ) && wp_is_development_mode( 'plugin' ) ) {
+		if ( Helper::is_development_mode() ) {
 			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
 			return;
 		}
