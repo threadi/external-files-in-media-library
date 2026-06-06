@@ -180,6 +180,11 @@ class Revert extends Extension_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-revert', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// get the last job ID for the actual user.
 		$job_id = Jobs::get_instance()->get_last_job_id();
 

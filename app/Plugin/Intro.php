@@ -121,6 +121,11 @@ class Intro {
 		// check nonce.
 		check_ajax_referer( 'efml-intro-closed', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			wp_send_json( array() );
+		}
+
 		// save that intro has been closed.
 		$this->set_closed();
 
@@ -136,6 +141,11 @@ class Intro {
 	public function started(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-intro-started', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			wp_send_json( array() );
+		}
 
 		// remove the transient after installation.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
@@ -277,11 +287,15 @@ class Intro {
 	 * Reset intro via request.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function reset_intro_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'efml-intro-reset', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// delete the actual setting.
 		$this->reset_intro();

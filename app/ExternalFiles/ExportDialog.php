@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -105,6 +106,11 @@ class ExportDialog {
 	public function get_dialog(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-export-config-nonce', 'nonce' );
+
+		// bail if capability is not set.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+			return;
+		}
 
 		// create the dialog for failures.
 		$dialog = array(
@@ -225,6 +231,11 @@ class ExportDialog {
 	public function save_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
+
+		// bail if capability is not set.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+			return;
+		}
 
 		// create the dialog for any failures.
 		$dialog = array(

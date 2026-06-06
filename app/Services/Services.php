@@ -402,11 +402,15 @@ class Services {
 	 * Return a single service configuration as JSON.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function export_external_source(): void {
 		// check nonce.
 		check_admin_referer( 'eml-export-external-source', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
 
 		// get the term ID.
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
@@ -456,6 +460,11 @@ class Services {
 	public function import_external_source_json_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-import-external-source', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// create the dialog for response.
 		$dialog = array(

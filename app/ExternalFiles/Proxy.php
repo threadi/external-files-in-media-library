@@ -321,6 +321,11 @@ class Proxy {
 		// check referer.
 		check_ajax_referer( 'eml-reset-proxy-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			wp_send_json( array() );
+		}
+
 		// reset by deleting the directory.
 		$this->delete_cache_directory();
 

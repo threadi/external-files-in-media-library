@@ -89,6 +89,11 @@ class ImportDialog {
 		// check nonce.
 		check_ajax_referer( 'efml-import-dialog-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			wp_send_json( array() );
+		}
+
 		// get settings from request.
 		$settings = array();
 		if ( isset( $_POST['settings'] ) ) {

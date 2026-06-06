@@ -105,6 +105,11 @@ class SynchronizationDialog {
 		// check nonce.
 		check_ajax_referer( 'efml-sync-config-nonce', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
+
 		// create the dialog for failures.
 		$dialog = array(
 			'className' => 'efml',
@@ -235,6 +240,11 @@ class SynchronizationDialog {
 	public function save_via_ajax(): void {
 		// check referer.
 		check_ajax_referer( 'efml-sync-save-config-nonce', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
 
 		// create the dialog for failures.
 		$dialog = array(

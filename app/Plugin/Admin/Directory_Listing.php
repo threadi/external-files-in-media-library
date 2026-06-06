@@ -618,6 +618,11 @@ class Directory_Listing {
 		// check nonce.
 		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['get_capability'] ) ) {
+			wp_send_json( array() );
+		}
+
 		// create initial response dialog.
 		$result_dialog = array(
 			'detail' =>
@@ -723,6 +728,11 @@ class Directory_Listing {
 	public function delete_archive_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'eml-delete-archive-nonce', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['delete_terms'] ) ) {
+			wp_send_json( array() );
+		}
 
 		// create initial response dialog.
 		$result_dialog = array(
@@ -857,6 +867,11 @@ class Directory_Listing {
 	public function save_new_listing_name_via_ajax(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-change-term-name', 'nonce' );
+
+		// check capability.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+			wp_send_json( array() );
+		}
 
 		// create the dialog for response.
 		$dialog = array(

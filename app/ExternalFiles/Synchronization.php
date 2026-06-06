@@ -769,6 +769,11 @@ class Synchronization extends Tools_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-sync-info-nonce', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
+
 		// get the running marker.
 		$running = absint( get_option( 'eml_sync_running', 0 ) );
 
@@ -880,6 +885,11 @@ class Synchronization extends Tools_Base {
 	public function delete_synced_info(): void {
 		// check nonce.
 		check_ajax_referer( 'efml-deleted-synced-info-nonce', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
 
 		// get the running marker.
 		$running = absint( get_option( 'eml_delete_synced_files_running', 0 ) );
@@ -1540,6 +1550,11 @@ class Synchronization extends Tools_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-sync-state-nonce', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
+
 		// get term ID.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
@@ -1566,6 +1581,11 @@ class Synchronization extends Tools_Base {
 	public function delete_synced_file_via_request(): void {
 		// check referer.
 		check_admin_referer( 'efml-deleted-synced-files', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
 
 		// get the term ID from request.
 		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_NUMBER_INT ) );
@@ -1926,6 +1946,11 @@ class Synchronization extends Tools_Base {
 	public function add_cron_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'efml-create-sync-schedule', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( 'efml_cap_tools_sync' ) ) {
+			return;
+		}
 
 		// get all external sources with enabled sync and check their cronjobs.
 		foreach ( $this->get_sync_terms() as $term_id ) {

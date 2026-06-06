@@ -470,6 +470,11 @@ class Queue extends Extension_Base {
 		// check the nonce.
 		check_admin_referer( 'eml-queue-process', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// process the queue.
 		$this->process_queue();
 
@@ -495,6 +500,11 @@ class Queue extends Extension_Base {
 	public function process_queue_entry_by_request(): void {
 		// check the nonce.
 		check_admin_referer( 'eml-queue-process-entry', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// get the ID from request.
 		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
@@ -545,6 +555,11 @@ class Queue extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-queue-clear', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// clear the queue.
 		$this->clear();
 
@@ -570,6 +585,11 @@ class Queue extends Extension_Base {
 	public function delete_errors_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'eml-queue-clear-errors', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// delete the error entries.
 		$this->clear_error_entries();
@@ -818,6 +838,11 @@ class Queue extends Extension_Base {
 	public function delete_entry_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'eml-queue-delete-entry', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// get the ID from request.
 		$id = absint( filter_input( INPUT_GET, 'id', FILTER_SANITIZE_NUMBER_INT ) );
@@ -1115,6 +1140,11 @@ class Queue extends Extension_Base {
 	public function add_cron_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'efml-create-queue-schedule', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// recreate the schedule.
 		$schedule_obj = new \ExternalFilesInMediaLibrary\Plugin\Schedules\Queue();

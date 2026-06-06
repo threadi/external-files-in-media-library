@@ -334,6 +334,11 @@ class Import_Export extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-export-external-file', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
+
 		// get the post ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 

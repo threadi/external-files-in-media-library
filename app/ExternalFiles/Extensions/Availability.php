@@ -233,6 +233,11 @@ class Availability extends Extension_Base {
 		// check nonce.
 		check_ajax_referer( 'eml-availability-check-nonce', 'nonce' );
 
+		// check capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			wp_send_json( array() );
+		}
+
 		// create error-result.
 		$result = array(
 			'state'   => 'error',
@@ -316,7 +321,7 @@ class Availability extends Extension_Base {
 			}
 
 			// bail if this protocol handler could not check for availability.
-			if( ! $protocol_handler->can_check_availability() ) {
+			if ( ! $protocol_handler->can_check_availability() ) {
 				continue;
 			}
 
@@ -487,6 +492,11 @@ class Availability extends Extension_Base {
 	public function add_cron_by_request(): void {
 		// check nonce.
 		check_admin_referer( 'efml-create-availability-schedule', 'nonce' );
+
+		// bail if user has not the capability.
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+			return;
+		}
 
 		// recreate the schedule.
 		$schedule_obj = new Check_Files();

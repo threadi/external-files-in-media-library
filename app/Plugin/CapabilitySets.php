@@ -199,6 +199,11 @@ class CapabilitySets {
 		// check nonce.
 		check_admin_referer( 'efml-use-capability-set', 'nonce' );
 
+		// bail if user has not the capability.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			return;
+		}
+
 		// get the name of the set.
 		$set_name = filter_input( INPUT_GET, 'set_name', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
