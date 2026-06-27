@@ -184,7 +184,10 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
+- Ignore protocol handler without support for availability check for file check schedule
+- Use user object instead of get_user() for better compatibility with older WordPress
+- Optimized usage of capability checks
 - Updated dependencies
-- Fixed missing crypt library in release
+- Fixed handling of FTP-URLs
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

@@ -1,12 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## [5.2.2] - 27.06.2026
 
 ### Changed
 
 - Ignore protocol handler without support for availability check for file check schedule
 - Use user object instead of get_user() for better compatibility with older WordPress
 - Optimized usage of capability checks
+- Updated dependencies
+
+### Fixed
+
+- Fixed handling of FTP-URLs
 
 ## [5.2.1] - 19.05.2026
 
