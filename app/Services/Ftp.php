@@ -231,8 +231,8 @@ class Ftp extends Service_Base implements Service {
 	 * @return array<int|string,mixed>
 	 */
 	public function get_directory_listing( string $directory ): array {
-		// prepend a directory with ftp:// if that is not given.
-		if ( ! ( stripos( $directory, 'ftp://' ) || stripos( $directory, 'ftps://' ) ) ) {
+		// prepend the directory with ftp:// if that is not given.
+		if ( 0 !== stripos( $directory, 'ftp://' ) && 0 !== stripos( $directory, 'ftps://' ) ) {
 			$directory = 'ftp://' . $directory;
 		}
 
@@ -494,15 +494,15 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// override the directory.
-		$directory = $this->fields['server']['value'];
+		$server = $this->fields['server']['value'];
 
 		// prepend the directory with ftp:// if that is not given.
-		if ( ! ( stripos( $directory, 'ftp://' ) || stripos( $directory, 'ftps://' ) ) ) {
-			$directory = 'ftp://' . $directory;
+		if ( 0 !== stripos( $server, 'ftp://' ) && 0 !== stripos( $server, 'ftps://' ) ) {
+			$server = 'ftp://' . $server;
 		}
 
 		// get the protocol handler for this URL.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $directory );
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $server );
 
 		// bail if handler is not FTP.
 		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
