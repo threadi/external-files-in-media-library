@@ -437,7 +437,7 @@ class DropBox extends Service_Base implements Service {
 	public function get_access_token(): array {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
-			$data = get_option( 'efml_dropbox_access_tokens', array() );
+			$data = Crypt::get_instance()->decrypt( get_option( 'efml_dropbox_access_tokens', array() ) );
 		} else {
 			// get current user.
 			$user = $this->get_user();
@@ -452,11 +452,9 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// convert JSON to array.
+		$data = json_decode( $data, true );
 		if ( ! is_array( $data ) ) {
-			$data = json_decode( $data, true );
-			if ( ! is_array( $data ) ) {
-				return array();
-			}
+			return array();
 		}
 
 		// check the expires time.
@@ -485,7 +483,7 @@ class DropBox extends Service_Base implements Service {
 			Log::get_instance()->create( __( 'New DropBox API access token has been saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			// save the updated token.
-			update_option( 'efml_dropbox_access_tokens', $data );
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
 		}
 
 		// get the user_id from the session if it is not set.

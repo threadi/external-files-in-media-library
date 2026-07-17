@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Use encryption for the globale Dropbox token
+
 ## [5.2.2] - 27.06.2026
 
 ### Changed
