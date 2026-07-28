@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup WP-CLI
         uses: godaddy-wordpress/setup-wp-cli@1
@@ -20,7 +20,6 @@ jobs:
       - name: Run package installs and builds
         run: |
           composer install
-          composer update
           npm i
           npm run build:replacer
           npm run build:commands
@@ -59,14 +58,14 @@ jobs:
       - uses: anchore/sbom-action@v0
 
       - name: Set version number 1
-        uses: richardrigutins/replace-in-files@v2
+        uses: richardrigutins/replace-in-files@v3
         with:
           files: 'external-files-in-media-library.php'
           search-text: '@@VersionNumber@@'
           replacement-text: ${{ github.ref_name }}
 
       - name: Set version number 2
-        uses: richardrigutins/replace-in-files@v2
+        uses: richardrigutins/replace-in-files@v3
         with:
           files: 'readme.txt'
           search-text: '@@VersionNumber@@'

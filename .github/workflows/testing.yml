@@ -6,6 +6,40 @@ on:
       - master
 
 jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Set version number 1
+        uses: richardrigutins/replace-in-files@v3
+        with:
+          files: 'external-files-in-media-library.php'
+          search-text: '@@VersionNumber@@'
+          replacement-text: ${{ github.ref_name }}
+
+      - name: Set version number 2
+        uses: richardrigutins/replace-in-files@v3
+        with:
+          files: 'readme.txt'
+          search-text: '@@VersionNumber@@'
+          replacement-text: ${{ github.ref_name }}
+
+      - name: Run PHPStan check
+        run: vendor/bin/phpstan analyse
+
+      - name: Run WordPress Coding Standard checks
+        run: vendor/bin/phpcs .
+
+      - name: PHP Compatibility check
+        run: vendor/bin/phpcs -p app --standard=PHPCompatibilityWP --runtime-set testVersion 8.2- --ignore=*/Crypt.php
+
+
   phpunit:
     name: Run tests
     runs-on: ubuntu-latest
@@ -22,12 +56,11 @@ jobs:
           - 3306:3306
     steps:
       - name: Check out source code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Run package installs and builds
         run: |
           composer install
-          composer update
           npm i
           npm run build:replacer
           npm run build:commands
