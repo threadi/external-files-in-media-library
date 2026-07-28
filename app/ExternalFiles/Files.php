@@ -1716,7 +1716,7 @@ class Files {
 	 */
 	public function add_urls_by_ability( array $input ): int {
 		// bail if capability is missing.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return 0;
 		}
 
@@ -1748,7 +1748,7 @@ class Files {
 	 */
 	public function delete_url_by_ability( array $input ): bool {
 		// bail if capability is missing.
-		if( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return 0;
 		}
 

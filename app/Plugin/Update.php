@@ -361,7 +361,7 @@ class Update {
 	private function version523(): void {
 		// encrypt the global Dropbox token.
 		$data = get_option( 'efml_dropbox_access_tokens', array() );
-		if( ! empty( $data ) ) {
+		if ( ! empty( $data ) ) {
 			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
 		}
 	}

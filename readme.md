@@ -42,8 +42,8 @@ Run the following commands in this order:
 4. `composer test-install`
 5. `composer test`
 6. `vendor/bin/phpstan analyse`
-7. `vendor/bin/phpcbf --standard=ruleset.xml .`
-8. `vendor/bin/phpcs --standard=ruleset.xml .`
+7. `vendor/bin/phpcbf .`
+8. `vendor/bin/phpcs .`
 9. Set version nummer in _readme.txt_ and _external-files-in-media-library.php_.
 10. Create the release ZIP with all necessary folders and files.
 
@@ -95,11 +95,11 @@ Run in the main directory:
 
 ### Run
 
-`vendor/bin/phpcs --standard=ruleset.xml .`
+`vendor/bin/phpcs .`
 
 ### Repair
 
-`vendor/bin/phpcbf --standard=ruleset.xml .`
+`vendor/bin/phpcbf .`
 
 ## Generate documentation
 
