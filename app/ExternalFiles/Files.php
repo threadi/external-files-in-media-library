@@ -1748,8 +1748,8 @@ class Files {
 	 */
 	public function delete_url_by_ability( array $input ): bool {
 		// bail if capability is missing.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
-			return 0;
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return false;
 		}
 
 		// bail if no input is given.
