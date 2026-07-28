@@ -9,7 +9,7 @@
 
 ### Fixed
 
-- Fixed missing permission check of the abilities (thanks to Philipp Beick)
+- Fixed missing permission check of the abilities (thanks to [Philipp Beick](https://www.linkedin.com/in/philipp-beick/))
 
 ## [5.2.2] - 27.06.2026
 
