@@ -5,6 +5,7 @@
 ### Changed
 
 - Use encryption for the globale Dropbox token
+- Updated dependencies
 
 ### Fixed
 
