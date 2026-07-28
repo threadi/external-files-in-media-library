@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Use encryption for the globale Dropbox token
+
+### Fixed
+
+- Fixed missing permission check of the abilities (thanks to Philipp Beick)
+
 ## [5.2.2] - 27.06.2026
 
 ### Changed

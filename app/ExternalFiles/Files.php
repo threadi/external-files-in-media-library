@@ -1674,7 +1674,9 @@ class Files {
 					'type' => 'integer',
 				),
 				'execute_callback'    => array( $this, 'add_urls_by_ability' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function () {
+					return current_user_can( EFML_CAP_NAME );
+				},
 			)
 		);
 
@@ -1698,7 +1700,9 @@ class Files {
 					'type' => 'boolean',
 				),
 				'execute_callback'    => array( $this, 'delete_url_by_ability' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function () {
+					return current_user_can( EFML_CAP_NAME );
+				},
 			)
 		);
 	}
@@ -1711,6 +1715,11 @@ class Files {
 	 * @return int
 	 */
 	public function add_urls_by_ability( array $input ): int {
+		// bail if capability is missing.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return 0;
+		}
+
 		// bail if the input is empty.
 		if ( empty( $input ) ) {
 			return 0;
@@ -1738,6 +1747,11 @@ class Files {
 	 * @return bool
 	 */
 	public function delete_url_by_ability( array $input ): bool {
+		// bail if capability is missing.
+		if( ! current_user_can( EFML_CAP_NAME ) ) {
+			return false;
+		}
+
 		// bail if no input is given.
 		if ( empty( $input ) ) {
 			return false;

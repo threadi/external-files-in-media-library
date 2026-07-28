@@ -114,6 +114,9 @@ class Update {
 			if ( version_compare( $db_plugin_version, '5.2.0', '<' ) ) {
 				$this->version520();
 			}
+			if ( version_compare( $db_plugin_version, '5.2.3', '<' ) ) {
+				$this->version523();
+			}
 
 			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -348,5 +351,18 @@ class Update {
 
 		// secure it.
 		$proxy->secure_cache_directory( $path );
+	}
+
+	/**
+	 * To run on the update to version 5.2.2 or newer.
+	 *
+	 * @return void
+	 */
+	private function version523(): void {
+		// encrypt the global Dropbox token.
+		$data = get_option( 'efml_dropbox_access_tokens', array() );
+		if( ! empty( $data ) ) {
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+		}
 	}
 }
