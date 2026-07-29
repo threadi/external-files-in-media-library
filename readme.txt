@@ -153,7 +153,7 @@ No, there is no fixed size limit for external files. Limits are determined by th
 = Can I import from my local server? =
 
 Yes, you can. Simply use the Local tool under Media > "Add external files" or enter the absolute path with file-protocol,
-e.g.: `file:///var/www/path/to/file.png` - see also [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/file.md).
+e.g., `file:///var/www/path/to/file.png` - see also [our documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/file.md).
 
 = Can I import external product images for WooCommerce? =
 
@@ -184,10 +184,8 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Ignore protocol handler without support for availability check for file check schedule
-- Use user object instead of get_user() for better compatibility with older WordPress
-- Optimized usage of capability checks
+- Use encryption for the globale Dropbox token
 - Updated dependencies
-- Fixed handling of FTP-URLs
+- Fixed missing permission check of the abilities (thanks to [Philipp Beick](https://www.linkedin.com/in/philipp-beick/))
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
