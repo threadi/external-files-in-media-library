@@ -150,7 +150,6 @@ class Synchronization extends Tools_Base {
 		// add setting to enable sync support.
 		$sync_settings_setting = $settings_obj->add_setting( 'eml_sync' );
 		$sync_settings_setting->set_section( $sync_settings_section );
-		$sync_settings_setting->set_type( 'integer' );
 		$sync_settings_setting->set_default( 0 );
 		$sync_settings_setting->set_field(
 			array(
@@ -182,7 +181,6 @@ class Synchronization extends Tools_Base {
 		// add setting to enable automatic sync for every new external directory.
 		$setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
 		$setting->set_section( $sync_settings_section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable automatic synchronization', 'external-files-in-media-library' ) );
@@ -206,7 +204,6 @@ class Synchronization extends Tools_Base {
 		// add setting for unused files after sync.
 		$setting = $settings_obj->add_setting( 'eml_sync_delete_unused_files_after_sync' );
 		$setting->set_section( $sync_settings_section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Delete unused files', 'external-files-in-media-library' ) );
@@ -217,7 +214,6 @@ class Synchronization extends Tools_Base {
 		// add setting for deletion of files on deletion of its archive.
 		$setting = $settings_obj->add_setting( 'eml_sync_delete_file_on_archive_deletion' );
 		$setting->set_section( $sync_settings_section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Delete synchronized files', 'external-files-in-media-library' ) );

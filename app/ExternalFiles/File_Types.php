@@ -135,7 +135,6 @@ class File_Types {
 			// add setting.
 			$setting = $settings_obj->add_setting( 'eml_' . $name . '_proxy' );
 			$setting->set_section( $section );
-			$setting->set_type( 'integer' );
 			$setting->set_default( $file_type_obj->is_proxy_default_enabled() ? 1 : 0 );
 			$field = new Checkbox( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */

@@ -202,7 +202,6 @@ class Zip extends Service_Base implements Service {
 		// add setting to show also trashed files.
 		$setting = $settings_obj->add_setting( 'eml_zip_allow_gz' );
 		$setting->set_section( $section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Allow the upload of .tar.gz', 'external-files-in-media-library' ) );

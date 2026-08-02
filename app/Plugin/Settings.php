@@ -288,7 +288,6 @@ class Settings {
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_disable_attachment_pages' );
 		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_help( '<p>' . $description . '</p>' );
 		$field = new Checkbox( $this->get_settings_obj() );
@@ -330,7 +329,6 @@ class Settings {
 				'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -344,7 +342,6 @@ class Settings {
 				'description' => __( 'If this option is enabled all external files will be saved local during uninstallation of this plugin.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 
 		// add setting.
@@ -357,7 +354,6 @@ class Settings {
 				'description' => __( 'If this option is enabled the file preview in directory listings will not be used. This might increase the loading speed of directory listings.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 
 		// add setting.
@@ -370,12 +366,10 @@ class Settings {
 				'description' => __( 'If this option is enabled not supported file types will not be visible in directory listings. Disable this option will not allow you to import these files.', 'external-files-in-media-library' ),
 			)
 		);
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_add_user_agent' );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
@@ -388,7 +382,6 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_show_all_external_sources' );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
@@ -401,7 +394,6 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_play_sound' );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
@@ -414,7 +406,6 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_hide_begging_for_review' );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_field(
@@ -455,7 +446,6 @@ class Settings {
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_max_execution_check' );
 		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Enable max execution check', 'external-files-in-media-library' ) );
@@ -466,7 +456,6 @@ class Settings {
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_job_show_link' );
 		$setting->set_section( $advanced_tab_advanced );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Show job link on each imported file', 'external-files-in-media-library' ) );
@@ -499,7 +488,6 @@ class Settings {
 		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_gprd_warning' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
 		$gprd_hint_setting->set_show_in_rest( false );
-		$gprd_hint_setting->set_type( 'integer' );
 		$gprd_hint_setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable GPRD-hint', 'external-files-in-media-library' ) );
@@ -510,7 +498,6 @@ class Settings {
 		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_plugin_hints' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
 		$gprd_hint_setting->set_show_in_rest( false );
-		$gprd_hint_setting->set_type( 'integer' );
 		$gprd_hint_setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable hints for plugins', 'external-files-in-media-library' ) );
@@ -552,7 +539,6 @@ class Settings {
 				'description' => sprintf( __( 'If this option is enabled WordPress-user can choose their own settings for import of external URLs. Choose in <a href="%1$s">permissions</a> the roles, which could use it.', 'external-files-in-media-library' ), esc_url( $this->get_url( 'eml_permissions' ) ) ),
 			)
 		);
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 
 		// get the available extensions for import.
