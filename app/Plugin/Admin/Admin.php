@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\Plugin\Languages;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Configurations;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use WP_Error;
 
 /**
  * Initialize the admin tasks for this plugin.
@@ -108,6 +109,7 @@ class Admin {
 		add_action( 'admin_action_efml_hide_welcome', array( $this, 'hide_welcome_by_request' ) );
 		add_action( 'init', array( $this, 'configure_transients' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ), 10, 0 );
+		add_action( 'admin_init', array( $this, 'get_settings_errors' ), 20 );
 
 		// misc.
 		add_filter( 'plugin_action_links_' . plugin_basename( EFML_PLUGIN ), array( $this, 'add_setting_link' ) );
@@ -631,5 +633,33 @@ class Admin {
 		header( 'Content-type: application/json' );
 		echo wp_json_encode( $content );
 		exit;
+	}
+
+	/**
+	 * Process any settings error.
+	 *
+	 * @return void
+	 */
+	public function get_settings_errors(): void {
+		// get the settings object.
+		$settings_obj = Settings::get_instance()->get_settings_obj();
+
+		// bail if we have no errors.
+		if ( ! $settings_obj->has_errors() ) {
+			return;
+		}
+
+		// get the errors.
+		$errors = $settings_obj->get_errors();
+
+		// bail if errors are not set.
+		if ( ! $errors instanceof WP_Error ) {
+			return;
+		}
+
+		// log these errors.
+		foreach ( $errors->errors as $key => $errors ) {
+			_doing_it_wrong( '\easySettingsForWordPress\Settings::add_settings()', '<em>' . esc_html( $key ) . '</em>: ' . esc_html( implode( ' ', $errors ) ), '1.0.0' );
+		}
 	}
 }

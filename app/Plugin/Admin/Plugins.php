@@ -134,6 +134,7 @@ class Plugins {
 		$setting->set_section( $hidden_section );
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
+		$setting->set_show_in_rest( array( 'schema' => array( 'type' => 'string' ) ) );
 		$setting->prevent_export( true );
 
 		// add setting.

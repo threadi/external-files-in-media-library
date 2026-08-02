@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- PHP 8.2 or newer is now required
+- Updated dialog lib to 2.0.0
+- Updated settings lib to 3.0.0
+
 ## [5.2.3] - 29.07.2026
 
 ### Changed
