@@ -4,7 +4,8 @@
 
 ### Changed
 
-- PHP 8.2 or newer is now required
+- Now PHP 8.2 or newer is required
+- Compatible with WordPress 7.1
 - Updated dialog lib to 2.0.0
 - Updated settings lib to 3.0.0
 
