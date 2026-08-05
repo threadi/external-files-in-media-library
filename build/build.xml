@@ -62,9 +62,6 @@
         <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install1.txt">
             <arg line="install"/>
         </exec>
-        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install2.txt">
-            <arg line="install"/>
-        </exec>
         <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install3.txt">
             <arg line="install"/>
         </exec>
@@ -79,9 +76,6 @@
         <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
             <arg line="run build:replacer"/>
         </exec>
-        <exec dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build2.txt">
-            <arg line="run build"/>
-        </exec>
         <exec dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build3.txt">
             <arg line="run build"/>
         </exec>
@@ -93,10 +87,10 @@
     <!-- check WCS compatibility -->
     <target name="check-wcs" depends="composer-install">
         <exec dir="${src.dir}" failonerror="false" executable="vendor/bin/phpcbf">
-            <arg line="--standard=ruleset.xml ."/>
+            <arg line="."/>
         </exec>
         <exec dir="${src.dir}" failonerror="true" executable="vendor/bin/phpcs">
-            <arg line="--standard=ruleset.xml ."/>
+            <arg line="."/>
         </exec>
     </target>
 

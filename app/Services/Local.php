@@ -142,7 +142,6 @@ class Local extends Service_Base implements Service {
 		// add setting to enable the uploads-loading.
 		$setting = $settings_obj->add_setting( 'eml_local_load_upload_dir' );
 		$setting->set_section( $section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Load WordPress upload directory', 'external-files-in-media-library' ) );

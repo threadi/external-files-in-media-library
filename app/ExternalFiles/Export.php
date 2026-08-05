@@ -189,7 +189,6 @@ class Export extends Tools_Base {
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_do_not_delete_local_files' );
 		$setting->set_section( $section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Do not delete local files', 'external-files-in-media-library' ) );
@@ -233,7 +232,6 @@ class Export extends Tools_Base {
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_local_files' );
 		$setting->set_section( $section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );

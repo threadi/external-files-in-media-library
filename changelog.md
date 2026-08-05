@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Now PHP 8.2 or newer is required
+- Compatible with WordPress 7.1
+- Updated dialog lib to 2.0.0
+- Updated directory listing lib
+- Updated settings lib to 3.0.0
+- Updated crypt lib to 3.0.0
+
 ## [5.2.3] - 29.07.2026
 
 ### Changed

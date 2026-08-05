@@ -120,7 +120,6 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// add setting to enable the WooCommerce-support.
 		$woocommerce_settings_setting = $settings_obj->add_setting( 'eml_woocommerce' );
 		$woocommerce_settings_setting->set_section( $woocommerce_settings_section );
-		$woocommerce_settings_setting->set_type( 'integer' );
 		$woocommerce_settings_setting->set_default( 1 );
 		$woocommerce_settings_setting->set_field(
 			array(

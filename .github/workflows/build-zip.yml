@@ -23,10 +23,6 @@ jobs:
           npm i
           npm run build:replacer
           npm run build:commands
-          cd vendor/threadi/easy-dialog-for-wordpress/
-          npm i
-          npm run build
-          cd ../../../
           cd vendor/threadi/easy-directory-listing-for-wordpress/
           npm i
           npm run build
@@ -112,7 +108,7 @@ jobs:
           cp ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

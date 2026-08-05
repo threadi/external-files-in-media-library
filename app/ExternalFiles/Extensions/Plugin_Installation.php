@@ -133,7 +133,6 @@ class Plugin_Installation extends Extension_Base {
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_plugin_installation' );
 		$setting->set_section( $advanced_section );
-		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Allow installation of plugin from external sources', 'external-files-in-media-library' ) );

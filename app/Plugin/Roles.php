@@ -126,6 +126,7 @@ class Roles {
 		$setting = $settings_obj->add_setting( 'eml_user_forbidden' );
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
+		$setting->set_show_in_rest( array( 'schema' => array( 'type' => 'string' ) ) );
 		$setting->set_default( array() );
 		if ( 0 === count( $users_for_setting ) ) {
 			$field = new TextInfo( $settings_obj );

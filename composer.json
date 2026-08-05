@@ -61,16 +61,15 @@
         "wp-phpunit/wp-phpunit": "^6.3"
     },
     "require": {
-        "php": "^8.1",
+        "php": ">=8.2",
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "ext-mysqli": "*",
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-dialog-for-wordpress": "^1.0.6",
         "threadi/easy-directory-listing-for-wordpress": "^4.0.13",
-        "threadi/easy-settings-for-wordpress": "^2.2.2",
+        "threadi/easy-settings-for-wordpress": "^3.0.1",
         "threadi/easy-transients-for-wordpress": "^1.4.7",
         "spatie/dropbox-api": "^1.23"
     }
