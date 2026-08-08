@@ -107,7 +107,7 @@ Run in the main directory:
 
 ## Check for WordPress VIP Coding Standards
 
-Hint: this check runs against the VIP-GO-platform which is not our target for this plugin. Many warnings can be ignored.
+Hint: this check runs against the VIP-GO-platform, not our target for this plugin. Many warnings can be ignored.
 
 ### Run
 
@@ -117,7 +117,7 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 
 `vendor/bin/phpcs -p app --standard=PHPCompatibilityWP`
 
-## Analyse with PHPStan
+## Analyze with PHPStan
 
 `vendor/bin/phpstan analyse`
 
@@ -134,3 +134,16 @@ Hint: this check runs against the VIP-GO-platform which is not our target for th
 ### Run them
 
 `composer test`
+
+## Playwright
+
+### Prepare
+
+```
+npm install
+npx playwright install chromium
+```
+
+### Run
+
+`npx playwright test`

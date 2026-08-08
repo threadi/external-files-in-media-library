@@ -1,14 +1,14 @@
 {
-	"name": "@threadi/external-files-in-media-library",
-	"version": "5.2.2",
-	"description": "Changes support for YouTube-videos in the video block.",
-	"author": "threadi",
-	"license": "GPL-2.0-or-later",
-	"main": "blocks/build/index.js",
-	"scripts": {
-		"format": "wp-scripts format",
-		"lint:css": "wp-scripts lint-style",
-		"lint:js": "wp-scripts lint-js",
+    "name": "@threadi/external-files-in-media-library",
+    "version": "5.2.4",
+    "description": "Changes support for YouTube-videos in the video block.",
+    "author": "threadi",
+    "license": "GPL-2.0-or-later",
+    "main": "blocks/build/index.js",
+    "scripts": {
+        "format": "wp-scripts format",
+        "lint:css": "wp-scripts lint-style",
+        "lint:js": "wp-scripts lint-js",
         "build": "concurrently --kill-others \"npm run build:replacer\" \"npm run build:commands\"",
         "start": "concurrently --kill-others \"npm run start:replacer\" \"npm run start:commands\"",
 		"start:replacer": "wp-scripts start blocks/src/index.js --output-path=blocks/build/",
@@ -24,7 +24,7 @@
 	},
     "dependencies": {
         "@wordpress/icons": "^12.2.0",
-        "intro.js": "^8.3.2",
-        "concurrently": "^10.0.4"
+        "concurrently": "^10.0.4",
+        "intro.js": "^8.3.2"
     }
 }
