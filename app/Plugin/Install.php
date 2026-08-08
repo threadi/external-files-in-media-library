@@ -86,6 +86,7 @@ class Install {
 
 		// flush rewrite rules.
 		Proxy::get_instance()->wp_init();
+		Proxy::get_instance()->set_refresh();
 		Proxy::do_refresh();
 
 		// install the schedules.
