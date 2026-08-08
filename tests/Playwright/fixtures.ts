@@ -20,7 +20,7 @@ function ensureComposerDeps(): void {
         return;
     }
     console.log('Running composer install …');
-    execSync('composer install --no-dev --optimize-autoloader', {
+    execSync('composer install --optimize-autoloader', {
         cwd: pluginRoot,
         stdio: 'inherit',
     });
