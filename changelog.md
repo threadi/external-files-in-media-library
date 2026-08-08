@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added smoke test to check if fresh released plugin can be activated
+
 ### Changed
 
 - Now PHP 8.2 or newer is required

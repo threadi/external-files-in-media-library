@@ -114,3 +114,27 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: ${{ github.event.repository.name }}_${{ github.ref_name }}.zip
+
+      - name: Smoke test the release zip in WordPress Playground
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/smoke
+          unzip -q ${{ github.event.repository.name }}_*.zip -d /tmp/smoke
+
+          npx @wp-playground/cli@latest run-blueprint \
+            --blueprint=./.github/blueprints/smoke.json \
+            --mount=/tmp/smoke/${{ github.event.repository.name }}:/wordpress/wp-content/plugins/${{ github.event.repository.name }} \
+            --verbosity=debug \
+            --debug \
+            2>&1 | tee /tmp/smoke.log
+
+          echo "----- Vollständiges Playground-Log -----"
+          cat /tmp/smoke.log
+
+          echo "----- Inhalt smoke-result.txt -----"
+          cat /tmp/smoke/${{ github.event.repository.name }}/smoke-result.txt || echo "(File not found)"
+
+          if ! grep -q "SMOKE_OK" /tmp/smoke/${{ github.event.repository.name }}/smoke-result.txt; then
+            echo "::error::SMOKE_OK not found in smoke-result.txt - check log above."
+            exit 1
+          fi

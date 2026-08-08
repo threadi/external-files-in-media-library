@@ -1,0 +1,15 @@
+{
+    "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+    "preferredVersions": { "php": "8.4", "wp": "latest" },
+    "login": true,
+    "steps": [
+        {
+            "step": "activatePlugin",
+            "pluginPath": "external-files-in-media-library/external-files-in-media-library.php"
+        },
+        {
+            "step": "runPHP",
+            "code": "<?php require_once '/wordpress/wp-load.php'; if ( ! defined( 'EFML_PLUGIN_VERSION' ) ) { throw new Exception( 'plugin constants missing' ); } file_put_contents( '/wordpress/wp-content/plugins/external-files-in-media-library/smoke-result.txt', 'SMOKE_OK' );"
+        }
+    ]
+}
