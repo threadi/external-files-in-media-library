@@ -15,6 +15,7 @@
 - Updated directory listing lib
 - Updated settings lib to 3.0.0
 - Updated crypt lib to 3.0.0
+- Updated all other dependencies
 
 ## [5.2.3] - 29.07.2026
 

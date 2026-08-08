@@ -137,6 +137,8 @@ Hint: this check runs against the VIP-GO-platform, not our target for this plugi
 
 ## Playwright
 
+See: https://wordpress.github.io/wordpress-playground/guides/e2e-testing-with-playwright/
+
 ### Prepare
 
 ```
