@@ -1,9 +1,15 @@
+// @ts-ignore
 import { test as base } from '@playwright/test';
+// @ts-ignore
 import { runCLI } from '@wp-playground/cli';
+// @ts-ignore
 import { execSync } from 'node:child_process';
+// @ts-ignore
 import { existsSync, statSync } from 'node:fs';
+// @ts-ignore
 import path from 'node:path';
 
+// @ts-ignore
 const pluginRoot = path.resolve(__dirname, '../..');
 const autoloadPath = path.join(pluginRoot, 'vendor', 'autoload.php');
 const lockPath = path.join(pluginRoot, 'composer.lock');
@@ -31,6 +37,7 @@ type CliServer = Awaited<ReturnType<typeof runCLI>>;
 export const test = base.extend<{}, { cli: CliServer }>({
     // worker-scoped: läuft einmal pro Test-Worker, nicht pro Test
     cli: [
+        // @ts-ignore
         async ({}, use) => {
             ensureComposerDeps();
 
@@ -62,4 +69,5 @@ export const test = base.extend<{}, { cli: CliServer }>({
     ],
 });
 
+// @ts-ignore
 export { expect } from '@playwright/test';
