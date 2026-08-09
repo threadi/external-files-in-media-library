@@ -78,7 +78,7 @@ jobs:
         uses: wordpress/plugin-check-action@v1
         with:
           exclude-directories:
-            app/Dependencies/easyTransientsForWordPress/
+            .github,tests,app/Dependencies/easyTransientsForWordPress/
           ignore-codes:
             WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
           include-experimental: false
