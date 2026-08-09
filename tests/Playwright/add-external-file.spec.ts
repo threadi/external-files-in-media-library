@@ -2,6 +2,7 @@ import { test, expect } from './fixtures';
 
 const TEST_FILE_URL = '${cli.serverUrl}/tests/Data/example.pdf';
 
+// @ts-ignore
 test('Add an external file via dialog', async ({ page, cli }) => {
     await page.goto(`${cli.serverUrl}/wp-admin/media-new.php`);
 
