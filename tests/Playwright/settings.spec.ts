@@ -3,6 +3,7 @@ import { test, expect } from './fixtures';
 test.describe('Settings', () => {
     // @ts-ignore
     test('Settings-Seite lädt ohne Fehler', async ({ page, cli }) => {
+        // @ts-ignore
         await page.goto(`${cli.serverUrl}/wp-admin/options-general.php?page=eml_settings`);
         await expect(page.getByRole('heading', { level: 1 })).toContainText(
             'External files in Media Library'
@@ -11,6 +12,7 @@ test.describe('Settings', () => {
 
     // @ts-ignore
     test('Timeout-Wert im Advanced-Tab kann gespeichert werden', async ({ page, cli }) => {
+        // @ts-ignore
         await page.goto(`${cli.serverUrl}/wp-admin/options-general.php?page=eml_settings`);
 
         // Zum "Advanced"-Tab wechseln (semantischer Link statt hartkodierter URL,
