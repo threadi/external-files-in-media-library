@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 
 test.describe('Settings', () => {
     // @ts-ignore
-    test('Settings-Seite lädt ohne Fehler', async ({ page, cli }) => {
+    test('Loading settings page without error', async ({ page, cli }) => {
         // @ts-ignore
         await page.goto(`${cli.serverUrl}/wp-admin/options-general.php?page=eml_settings`);
         await expect(page.getByRole('heading', { level: 1 })).toContainText(
@@ -11,7 +11,7 @@ test.describe('Settings', () => {
     });
 
     // @ts-ignore
-    test('Timeout-Wert im Advanced-Tab kann gespeichert werden', async ({ page, cli }) => {
+    test('Save timeout value in advanved tab', async ({ page, cli }) => {
         // @ts-ignore
         await page.goto(`${cli.serverUrl}/wp-admin/options-general.php?page=eml_settings`);
 
