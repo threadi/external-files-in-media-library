@@ -11,6 +11,7 @@
 - Now PHP 8.2 or newer is required
 - Compatible with WordPress 7.1
 - Set refresh of permalinks via notice action on installation
+- Optimized support for plain permalinks with Dropbox
 - Updated dialog lib to 2.0.0
 - Updated directory listing lib
 - Updated settings lib to 3.0.0

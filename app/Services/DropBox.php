@@ -1458,7 +1458,13 @@ class DropBox extends Service_Base implements Service {
 	 */
 	private function get_real_redirect_uri(): string {
 		// set the token.
-		$real_redirect_uri = get_option( 'siteurl' ) . '/' . $this->get_oauth_slug() . '/';
+		$real_redirect_uri = trailingslashit( get_home_url() ) . '/' . $this->get_oauth_slug() . '/';
+
+		// if no permalink structure is set, generate a parameterized URL.
+		if ( empty( get_option( 'permalink_structure', '' ) ) ) {
+			// return link for simple permalinks.
+			$real_redirect_uri = trailingslashit( get_home_url() ) . '?' . $this->get_oauth_slug() . '=1';
+		}
 
 		/**
 		 * Filter the real redirect URI to connect the Google OAuth Client.
