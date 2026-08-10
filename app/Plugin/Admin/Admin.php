@@ -118,6 +118,7 @@ class Admin {
 		add_action( 'efml_directory_listing_added', array( $this, 'mark_directory_listing_as_used' ) );
 		add_action( 'delete_' . Taxonomy::get_instance()->get_name(), array( $this, 'check_if_directory_listing_is_used' ) );
 		add_action( 'admin_action_efml_download_key', array( $this, 'export_installation_key' ) );
+		add_action( 'external-files-in-media-library_crypt_error', array( $this, 'save_crypt_error' ), 10, 3 );
 
 		// register our own importer in the backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );
@@ -413,7 +414,7 @@ class Admin {
 			$transient_obj->set_dismissible_days( 30 );
 			$transient_obj->set_type( 'hint' );
 			$transient_obj->set_name( 'eml_fs_method_faulty' );
-			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviours during the usage of the plugin <i>External Files in Media Library</i>.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator, or your hosts support team.', 'external-files-in-media-library' ) );
+			$transient_obj->set_message( '<strong>' . __( 'Your website is running in possible faulty file system mode!', 'external-files-in-media-library' ) . '</strong><br><br>' . __( 'The constant <em>FS_CHMOD_FILE</em> is set. This could lead to unexpected behaviors during the usage of the plugin <i>External Files in Media Library</i>.<br><br>Remove this mode by editing the file <em>wp-config.php</em> of your WordPress project. If you have any questions, please contact your web administrator, or your hosts support team.', 'external-files-in-media-library' ) );
 			$transient_obj->save();
 		}
 	}
@@ -661,5 +662,39 @@ class Admin {
 		foreach ( $errors->errors as $key => $errors ) {
 			_doing_it_wrong( '\easySettingsForWordPress\Settings::add_settings()', '<em>' . esc_html( $key ) . '</em>: ' . esc_html( implode( ' ', $errors ) ), '1.0.0' );
 		}
+	}
+
+	/**
+	 * Save any error from the crypt library.
+	 *
+	 * @param string              $code    The error code.
+	 * @param string              $message The message.
+	 * @param array<string,mixed> $data    The data.
+	 *
+	 * @return void
+	 */
+	public function save_crypt_error( string $code, string $message, array $data ): void {
+		// collect the data for the log entry.
+		$log_entry = array(
+			__( 'Error Code', 'external-files-in-media-library' ) => '<code>' . $code . '</code>',
+			__( 'Message', 'external-files-in-media-library' ) => '<code>' . $message . '</code>',
+			__( 'Data', 'external-files-in-media-library' )    => '<code>' . Helper::get_json( $data ) . '</code>',
+		);
+
+		// log the data.
+		Log::get_instance()->create(
+			'<strong>' . __( 'Error in encryption:', 'external-files-in-media-library' ) . '</strong><br>' . wp_kses_post(
+				implode(
+					'<br>',
+					array_map(
+						static fn( $key, $value ) => "$key: $value",
+						array_keys( $log_entry ),
+						$log_entry
+					)
+				)
+			),
+			'error',
+			'system'
+		);
 	}
 }
