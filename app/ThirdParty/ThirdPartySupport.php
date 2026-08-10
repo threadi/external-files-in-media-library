@@ -10,6 +10,8 @@
 namespace ExternalFilesInMediaLibrary\ThirdParty;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -124,6 +126,7 @@ class ThirdPartySupport {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ThirdParty\AdvancedMediaOffloader',
 			'ExternalFilesInMediaLibrary\ThirdParty\BlockEditor',
+			'ExternalFilesInMediaLibrary\ThirdParty\Brizy',
 			'ExternalFilesInMediaLibrary\ThirdParty\CatFolders',
 			'ExternalFilesInMediaLibrary\ThirdParty\Downloadlist',
 			'ExternalFilesInMediaLibrary\ThirdParty\Elementor',
