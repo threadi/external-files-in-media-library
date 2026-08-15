@@ -208,9 +208,12 @@ class DropBox extends Service_Base implements Service {
 
 			// show connect button if no token is set.
 			if ( empty( $access_token ) ) {
-				$field = new TextInfo( $settings_obj );
+				$field = new Button( $settings_obj );
 				$field->set_title( __( 'API connection', 'external-files-in-media-library' ) );
-				$field->set_description( $this->get_help() );
+				$field->set_button_title( __( 'Connect', 'external-files-in-media-library' ) );
+				$field->set_description( $this->get_help( false ) );
+				$field->add_class( 'easy-dialog-for-wordpress' );
+				$field->add_data( 'dialog', Helper::get_json( $this->get_connect_dialog() ) );
 			} else {
 				// create the dialog.
 				$dialog = $this->get_disconnect_dialog();
@@ -220,7 +223,7 @@ class DropBox extends Service_Base implements Service {
 				$field->set_button_title( __( 'Disconnect', 'external-files-in-media-library' ) );
 				$field->set_description( $this->get_connect_info() );
 				$field->add_class( 'easy-dialog-for-wordpress' );
-				$field->set_custom_attributes( array( 'data-dialog' => Helper::get_json( $dialog ) ) );
+				$field->add_data( 'dialog', Helper::get_json( $dialog ) );
 			}
 			$setting->set_field( $field );
 		}
@@ -336,8 +339,7 @@ class DropBox extends Service_Base implements Service {
 		// - we are on plugin settings and location is set to "global".
 		$use_it = false;
 		$page   = filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		$subtab = filter_input( INPUT_GET, 'subtab', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( 'eml_settings' === $page && 'global' === $this->get_mode() && $this->get_settings_subtab_slug() === $subtab ) {
+		if ( 'eml_settings' === $page && 'global' === $this->get_mode() ) {
 			$use_it = true;
 		}
 		if ( 'profile.php' === $pagenow ) {
@@ -741,13 +743,15 @@ class DropBox extends Service_Base implements Service {
 	 *
 	 * @return string
 	 */
-	private function get_help(): string {
+	private function get_help( bool $with_button = true ): string {
 		$help = esc_html__( 'Follow these steps:', 'external-files-in-media-library' ) . '</p><ol>';
 		/* translators: %1$s will be replaced by a URL. */
 		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL for this app:', 'external-files-in-media-library' ) . ' <code>' . $this->get_real_redirect_uri() . '</code></li>';
-		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li>';
-		$help .= '</ol><p><a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="' . esc_attr( Helper::get_json( $this->get_connect_dialog() ) ) . '">' . esc_html__( 'Connect now', 'external-files-in-media-library' ) . '</a>';
+		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li></ol>';
+		if( $with_button ) {
+			$help .= '<p><a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="' . esc_attr( Helper::get_json( $this->get_connect_dialog() ) ) . '">' . esc_html__( 'Connect now', 'external-files-in-media-library' ) . '</a>';
+		}
 		return $help;
 	}
 
@@ -1444,7 +1448,7 @@ class DropBox extends Service_Base implements Service {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return '';
 			}
-			return \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+			return Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
 		}
 
 		// use the profile in user mode.
@@ -1458,7 +1462,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	private function get_real_redirect_uri(): string {
 		// set the token.
-		$real_redirect_uri = trailingslashit( get_home_url() ) . '/' . $this->get_oauth_slug() . '/';
+		$real_redirect_uri = trailingslashit( get_home_url() ) . $this->get_oauth_slug() . '/';
 
 		// if no permalink structure is set, generate a parameterized URL.
 		if ( empty( get_option( 'permalink_structure', '' ) ) ) {

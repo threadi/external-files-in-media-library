@@ -169,7 +169,7 @@ class Statistics {
 		$field->set_title( __( 'Reset file statistics', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => Helper::get_json( $dialog ) ) );
+		$field->add_data( 'dialog', Helper::get_json( $dialog ) );
 		$setting->set_field( $field );
 	}
 

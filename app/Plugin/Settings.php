@@ -195,6 +195,12 @@ class Settings {
 				'drag_n_drop'                        => __( 'Hold to drag & drop', 'external-files-in-media-library' ),
 			)
 		);
+		if ( method_exists( $this->settings_obj, 'set_view' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$this->settings_obj->set_view( get_option( 'eml_setting_view', 'classic' ) );
+		}
+		if ( method_exists( $this->settings_obj, 'set_update_version' ) ) {
+			$this->settings_obj->set_update_version( EFML_PLUGIN_VERSION );
+		}
 
 		/**
 		 * Get the settings page.
@@ -231,13 +237,14 @@ class Settings {
 
 		// the copyright tab.
 		$copyright_tab = $settings_page->add_tab( 'copyright', 900 );
-		$copyright_tab->set_title( '&nbsp;' );
+		$copyright_tab->set_title( ' ' );
 		$copyright_tab->set_tab_class( 'copyright' );
 		$copyright_tab->set_hide_save( true );
 		$copyright_tab->set_callback( array( $this, 'show_copyright' ) );
 
 		// the helper tab.
 		$helper_tab = $settings_page->add_tab( 'eml_helper', 1000 );
+		$helper_tab->set_title( ' ' );
 		$helper_tab->set_url( Helper::get_plugin_support_url() );
 		$helper_tab->set_url_target( '_blank' );
 		$helper_tab->set_tab_class( 'nav-tab-help dashicons dashicons-editor-help' );
@@ -479,10 +486,19 @@ class Settings {
 		);
 		$setting->set_field( $field );
 
+		// add a section.
+		$import_export_section = $advanced_tab->add_section( 'personio_integration_import_export_section', 20 );
+		$import_export_section->set_title( __( 'Secure settings', 'external-files-in-media-library' ) );
+		if( method_exists( $import_export_section, 'set_collapsed' ) ) {
+			$import_export_section->set_collapsed( true );
+		}
+
 		// add the import/export section in advanced.
 		$advanced_plugin = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
 		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
-		$advanced_plugin->set_setting( $this->get_settings_obj() );
+		if( method_exists( $advanced_plugin, 'set_collapsed' ) ) {
+			$advanced_plugin->set_collapsed( true );
+		}
 
 		// add setting.
 		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_gprd_warning' );
@@ -503,6 +519,25 @@ class Settings {
 		$field->set_title( __( 'Disable hints for plugins', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If disabled we will not show you any hint for additional service plugins.', 'external-files-in-media-library' ) );
 		$gprd_hint_setting->set_field( $field );
+
+		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'eml_setting_view' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'classic' );
+		$field = new Select( $this->get_settings_obj() );
+		$field->set_title( __( 'Settings view', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Choose the view for the settings of this plugin. DataView is only available for WordPress 7 or newer.', 'personio-integration-light' ) );
+		$field->set_options(
+			array(
+				'classic'  => __( 'Classic', 'external-files-in-media-library' ),
+				'dataview' => __( 'DataView', 'external-files-in-media-library' ),
+			)
+		);
+		if( method_exists( $setting, 'set_reload_on_save' ) ) {
+			$setting->set_reload_on_save( true );
+		}
+		$setting->set_field( $field );
 
 		// add setting to change the proxy path.
 		$proxy_path_setting = $this->get_settings_obj()->add_setting( 'eml_proxy_path' );
@@ -525,7 +560,7 @@ class Settings {
 		$field->set_title( __( 'Reset proxy cache', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Reset now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => $this->get_proxy_reset_dialog() ) );
+		$field->add_data( 'dialog', $this->get_proxy_reset_dialog() );
 		$setting->set_field( $field );
 
 		// add setting.
@@ -582,14 +617,14 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'import_settings' );
-		$setting->set_section( $advanced_plugin );
+		$setting->set_section( $import_export_section );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
 		$field = new Button( $this->get_settings_obj() );
 		$field->set_title( __( 'Import', 'external-files-in-media-library' ) );
 		$field->set_button_title( __( 'Import now', 'external-files-in-media-library' ) );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => (string) wp_json_encode( $dialog ) ) );
+		$field->add_data( 'dialog', (string) wp_json_encode( $dialog ) );
 		$setting->set_field( $field );
 
 		// create export dialog.
@@ -615,7 +650,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'export_settings' );
-		$setting->set_section( $advanced_plugin );
+		$setting->set_section( $import_export_section );
 		$setting->set_autoload( false );
 		$setting->prevent_export( true );
 		$field = new Button( $this->get_settings_obj() );
@@ -623,7 +658,7 @@ class Settings {
 		$field->set_button_title( __( 'Export now', 'external-files-in-media-library' ) );
 		$field->set_button_url( $this->get_settings_obj()->get_export_obj()->get_download_url() );
 		$field->add_class( 'easy-dialog-for-wordpress' );
-		$field->set_custom_attributes( array( 'data-dialog' => (string) wp_json_encode( $dialog ) ) );
+		$field->add_data( 'dialog', (string) wp_json_encode( $dialog ) );
 		$setting->set_field( $field );
 
 		// create reset URL.

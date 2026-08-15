@@ -16,6 +16,7 @@ use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Views\DataView;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -111,7 +112,10 @@ class Services {
 		// add a new tab for services.
 		$tab = $settings_page->add_tab( 'services', 20 );
 		$tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
-		$tab->set_hide_save( true );
+		$view = Settings::get_instance()->get_settings_obj()->get_views()->get_view();
+		if( ! $view instanceof DataView ) {
+			$tab->set_hide_save( true );
+		}
 
 		// add a tab for the hint.
 		$main_services_tab = $tab->add_tab( 'services', 0 );
