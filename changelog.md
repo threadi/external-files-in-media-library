@@ -7,6 +7,7 @@
 - Added support for image handling through the page builder Brizy
 - Added smoke test to check if fresh released plugin can be activated
 - Added logging of crypt errors
+- Added a hint during loading of the listing
 
 ### Changed
 
