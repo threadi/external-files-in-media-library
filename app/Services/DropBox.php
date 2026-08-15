@@ -741,6 +741,8 @@ class DropBox extends Service_Base implements Service {
 	/**
 	 * Create the help to create an app and get access token.
 	 *
+	 * @param bool $with_button Show button or not.
+	 *
 	 * @return string
 	 */
 	private function get_help( bool $with_button = true ): string {
@@ -749,7 +751,7 @@ class DropBox extends Service_Base implements Service {
 		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL for this app:', 'external-files-in-media-library' ) . ' <code>' . $this->get_real_redirect_uri() . '</code></li>';
 		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li></ol>';
-		if( $with_button ) {
+		if ( $with_button ) {
 			$help .= '<p><a href="#" class="easy-dialog-for-wordpress button button-secondary" data-dialog="' . esc_attr( Helper::get_json( $this->get_connect_dialog() ) ) . '">' . esc_html__( 'Connect now', 'external-files-in-media-library' ) . '</a>';
 		}
 		return $help;

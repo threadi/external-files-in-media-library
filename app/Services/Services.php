@@ -113,7 +113,7 @@ class Services {
 		$tab = $settings_page->add_tab( 'services', 20 );
 		$tab->set_title( __( 'Services', 'external-files-in-media-library' ) );
 		$view = Settings::get_instance()->get_settings_obj()->get_views()->get_view();
-		if( ! $view instanceof DataView ) {
+		if ( ! $view instanceof DataView ) {
 			$tab->set_hide_save( true );
 		}
 

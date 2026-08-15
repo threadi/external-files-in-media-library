@@ -143,7 +143,7 @@ class Service_Base extends Directory_Listing_Base {
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
 			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. This does not affect files in the media library.', 'external-files-in-media-library' ), $this->get_label() ) );
 			$field->set_options( $this->get_modes() );
-			if( method_exists( $setting, 'set_reload_on_save' ) ) {
+			if ( method_exists( $setting, 'set_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				$setting->set_reload_on_save( true );
 			}
 			$setting->set_field( $field );
