@@ -597,3 +597,7 @@ body.settings_page_eml_settings {
 		}
 	}
 }
+
+.efml-transient img {
+	width: 24px;
+}

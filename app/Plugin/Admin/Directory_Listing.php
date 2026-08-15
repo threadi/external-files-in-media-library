@@ -399,7 +399,7 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ); ?>"></div>
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ); ?>"><?php echo wp_kses_post( $this->get_error_help() ); ?></div>
 				<?php
 			}
 			?>
@@ -1246,5 +1246,14 @@ class Directory_Listing {
 
 		// return the list of terms.
 		return $terms;
+	}
+
+	/**
+	 * Return the error helper if Directory Listing is not loading.
+	 *
+	 * @return string
+	 */
+	private function get_error_help(): string {
+		return '<div class="efml-transient notice notice-success"><h3>' . wp_kses_post( Helper::get_logo_img() ) . ' ' . esc_html( Helper::get_plugin_name() ) . '</h3><p><strong>' . __( 'Listing is loading', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Please wait while we load the listing.', 'external-files-in-media-library' ) . '<br>' . __( 'This should not take long time.', 'external-files-in-media-library' ) . '</p></div>';
 	}
 }
