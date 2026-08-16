@@ -198,7 +198,7 @@ class Settings {
 		if ( method_exists( $this->settings_obj, 'set_view' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_view( get_option( 'eml_setting_view', 'classic' ) );
 		}
-		if ( method_exists( $this->settings_obj, 'set_update_version' ) ) {
+		if ( method_exists( $this->settings_obj, 'set_update_version' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_update_version( EFML_PLUGIN_VERSION );
 		}
 
@@ -489,14 +489,14 @@ class Settings {
 		// add a section.
 		$import_export_section = $advanced_tab->add_section( 'personio_integration_import_export_section', 20 );
 		$import_export_section->set_title( __( 'Secure settings', 'external-files-in-media-library' ) );
-		if( method_exists( $import_export_section, 'set_collapsed' ) ) {
+		if ( method_exists( $import_export_section, 'set_collapsed' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$import_export_section->set_collapsed( true );
 		}
 
 		// add the import/export section in advanced.
 		$advanced_plugin = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
 		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
-		if( method_exists( $advanced_plugin, 'set_collapsed' ) ) {
+		if ( method_exists( $advanced_plugin, 'set_collapsed' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$advanced_plugin->set_collapsed( true );
 		}
 
@@ -534,7 +534,7 @@ class Settings {
 				'dataview' => __( 'DataView', 'external-files-in-media-library' ),
 			)
 		);
-		if( method_exists( $setting, 'set_reload_on_save' ) ) {
+		if ( method_exists( $setting, 'set_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$setting->set_reload_on_save( true );
 		}
 		$setting->set_field( $field );

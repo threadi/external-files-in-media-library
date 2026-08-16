@@ -102,7 +102,7 @@ class Brizy extends ThirdParty_Base implements ThirdParty {
 		$protocol_handler->set_fields( $external_files_obj->get_fields() );
 
 		// get the temp directory as Brizy need the file local.
-		$tmp_file = $protocol_handler->get_temp_file( $external_files_obj->get_url( true ), \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem() );
+		$tmp_file = $protocol_handler->get_temp_file( $external_files_obj->get_url( true ), Helper::get_wp_filesystem() );
 
 		// bail if not tmp file could be loaded.
 		if ( ! $tmp_file ) {

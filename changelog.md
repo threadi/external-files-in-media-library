@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.3.0] - 16.08.2026
 
 ### Added
 
@@ -16,10 +16,15 @@
 - Set refresh of permalinks via notice action on installation
 - Optimized support for plain permalinks with Dropbox
 - Updated dialog lib to 2.0.0
-- Updated directory listing lib
-- Updated settings lib to 3.0.0
+- Updated directory listing lib to 4.1.3
+- Updated settings lib to 3.1.2
 - Updated crypt lib to 3.0.0
 - Updated all other dependencies
+
+### Fixed
+
+- Fixed missing psr library in releases
+- Fixed wrong check for capabilities on saving terms as external sources
 
 ## [5.2.3] - 29.07.2026
 

@@ -126,7 +126,7 @@ class Youtube extends Service_Base implements Service {
 		}
 
 		// set title for service.
-		$this->title = __( 'Choose video(s) from a Youtube channel', 'external-files-in-media-library' );
+		$this->title = __( 'Choose video(s) from a YouTube channel', 'external-files-in-media-library' );
 
 		// use our own hooks to allow import of YouTube videos and channels.
 		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
@@ -669,7 +669,7 @@ class Youtube extends Service_Base implements Service {
 		if ( empty( $fields['channel_id']['value'] ) ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_youtube', __( 'Channel ID missing for Youtube channel', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_youtube', __( 'Channel ID missing for YouTube channel', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -682,7 +682,7 @@ class Youtube extends Service_Base implements Service {
 		if ( empty( $fields['api_key']['value'] ) ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_youtube', __( 'API Key missing for Youtube channel', 'external-files-in-media-library' ) );
+			$error->add( 'efml_service_youtube', __( 'API Key missing for YouTube channel', 'external-files-in-media-library' ) );
 
 			// add it to the list.
 			$this->add_error( $error );
@@ -1040,7 +1040,7 @@ class Youtube extends Service_Base implements Service {
 		// if access token is set in plugin settings.
 		if ( $this->is_mode( 'global' ) ) {
 			if ( $has_credentials_set && ! current_user_can( 'manage_options' ) ) {
-				return __( 'The credentials has already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
+				return __( 'The credentials have already been set by an administrator in the plugin settings. Just connect for show the files.', 'external-files-in-media-library' );
 			}
 
 			if ( ! $has_credentials_set && ! current_user_can( 'manage_options' ) ) {

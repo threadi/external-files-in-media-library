@@ -101,7 +101,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 		$woocommerce_settings_setting->set_field(
 			array(
 				'title'       => __( 'Enable support for Polylang', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled each new external file will be added in each language, which is configured in Polylang.', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled each new external file will be added in each language, configured in Polylang.', 'external-files-in-media-library' ),
 				'type'        => 'Checkbox',
 			)
 		);

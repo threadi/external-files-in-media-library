@@ -92,7 +92,7 @@ class File_Types {
 		$file_types_tab = $settings_page->add_tab( 'eml_file_types', 30 );
 		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$view = Settings::get_instance()->get_settings_obj()->get_views()->get_view();
-		if( ! $view instanceof DataView ) {
+		if ( ! $view instanceof DataView ) {
 			$file_types_tab->set_hide_save( true );
 		}
 

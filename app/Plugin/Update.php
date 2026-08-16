@@ -300,7 +300,9 @@ class Update {
 		add_option( 'efml_directory_listing_used', 0, '', true );
 
 		// convert the installation hash.
-		define( 'EDLFW_HASH', get_option( 'edlfw_hash', '' ) );
+		if ( ! defined( 'EDLFW_HASH' ) ) {
+			define( 'EDLFW_HASH', get_option( 'edlfw_hash', '' ) );
+		}
 
 		// migrate existing external sources to new format.
 		$query = array(

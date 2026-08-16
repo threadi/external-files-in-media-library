@@ -263,7 +263,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			// check and set availability.
 			$external_files_obj->set_availability( $protocol_handler->check_availability( $url ) );
 
-			// set the meta-data for this file.
+			// set the metadata for this file.
 			$external_files_obj->set_metadata();
 
 			// remove exmage marker from this item.
