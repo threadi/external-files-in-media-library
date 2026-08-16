@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Remove filter to use unsafe URLs after they have been used
+
 ## [5.3.0] - 16.08.2026
 
 ### Added

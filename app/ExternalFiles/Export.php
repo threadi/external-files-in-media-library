@@ -887,6 +887,11 @@ class Export extends Tools_Base {
 				continue;
 			}
 
+			// remove the filter.
+			if( method_exists( $listing_obj, 'disable_check_for_unsafe_urls' ) ) {
+				remove_filter( 'efml_http_header_args', array( $listing_obj, 'disable_check_for_unsafe_urls' ) );
+			}
+
 			// mark export as successfully.
 			$successfully_exported = true;
 
