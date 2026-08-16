@@ -113,7 +113,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		$term_folder = absint( get_term_meta( $term_id, 'fildbirdfolder', true ) );
 
 		// add the HTML-code.
-		$form .= '<div><label for="filebirdfolders">' . __( 'Choose folder as target:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $term_folder ) . '</div>';
+		$form .= '<div><label for="filebirdfolders">' . __( 'Choose a folder as target:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( $term_folder ) . '</div>';
 
 		// return the resulting html-code for the form.
 		return $form;
@@ -261,7 +261,7 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of Filebird', 'external-files-in-media-library' ) . '</summary><div><label for="filebirdfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Import in a specific folder of Filebird', 'external-files-in-media-library' ) . '</summary><div><label for="filebirdfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
 	}
 }

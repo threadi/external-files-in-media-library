@@ -306,7 +306,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// log event.
-		Log::get_instance()->create( __( 'Trying to import main image of WooCommerce product as external image.', 'external-files-in-media-library' ), (string) $data['raw_image_id'], 'info', 2 );
+		Log::get_instance()->create( __( 'Trying to import the main image of WooCommerce product as external image.', 'external-files-in-media-library' ), (string) $data['raw_image_id'], 'info', 2 );
 
 		// get the import object.
 		$import = Import::get_instance();

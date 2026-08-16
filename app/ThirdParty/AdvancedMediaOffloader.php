@@ -10,8 +10,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use CatFolders\Models\FolderModel;
-use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 

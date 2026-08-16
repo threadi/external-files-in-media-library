@@ -184,8 +184,20 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Use encryption for the globale Dropbox token
-- Updated dependencies
-- Fixed missing permission check of the abilities (thanks to [Philipp Beick](https://www.linkedin.com/in/philipp-beick/))
+- Added support for image handling through the page builder Brizy
+- Added smoke test to check if fresh released plugin can be activated
+- Added logging of crypt errors
+- Added a hint during loading of the listing
+- Now PHP 8.2 or newer is required
+- Compatible with WordPress 7.1
+- Set refresh of permalinks via notice action on installation
+- Optimized support for plain permalinks with Dropbox
+- Updated dialog lib to 2.0.0
+- Updated directory listing lib to 4.1.3
+- Updated settings lib to 3.1.2
+- Updated crypt lib to 3.0.0
+- Updated all other dependencies
+- Fixed missing psr library in releases
+- Fixed wrong check for capabilities on saving terms as external sources
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

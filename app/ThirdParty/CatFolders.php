@@ -260,7 +260,7 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	 * @return array<string,mixed>
 	 */
 	public function add_option_for_folder_import( array $dialog ): array {
-		$dialog['texts'][] = '<details><summary>' . __( 'Import in specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose a folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
+		$dialog['texts'][] = '<details><summary>' . __( 'Import in a specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose a folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
 	}
 }

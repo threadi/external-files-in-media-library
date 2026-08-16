@@ -377,7 +377,7 @@ class Service_Base extends Directory_Listing_Base {
 			if ( ! current_user_can( 'manage_options' ) ) {
 				return '';
 			}
-			return \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+			return Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
 		}
 
 		// use the profile in user mode.

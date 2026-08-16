@@ -301,7 +301,7 @@ class DropBox extends Service_Base implements Service {
 			}
 
 			// get the URL for the global settings.
-			$url = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+			$url = Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
 		}
 
 		// return the description with link to settings.
@@ -982,7 +982,7 @@ class DropBox extends Service_Base implements Service {
 					'label'  => __( 'Go to DropBox', 'external-files-in-media-library' ),
 				),
 				array(
-					'action' => 'location.href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
+					'action' => 'location.href="' . esc_url( Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() ) ) . '";',
 					'label'  => __( 'Settings', 'external-files-in-media-library' ),
 				),
 				array(

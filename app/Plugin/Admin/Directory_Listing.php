@@ -619,7 +619,7 @@ class Directory_Listing {
 		check_ajax_referer( 'eml-add-archive-nonce', 'nonce' );
 
 		// check capability.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['get_capability'] ) ) {
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
 			wp_send_json( array() );
 		}
 

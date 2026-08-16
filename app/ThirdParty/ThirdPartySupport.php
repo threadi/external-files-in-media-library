@@ -10,8 +10,6 @@
 namespace ExternalFilesInMediaLibrary\ThirdParty;
 
 // prevent direct access.
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-
 defined( 'ABSPATH' ) || exit;
 
 /**
