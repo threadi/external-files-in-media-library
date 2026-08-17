@@ -140,7 +140,7 @@ class File_Types_Base {
 	}
 
 	/**
-	 * Set meta-data for the file by given file data.
+	 * Set metadata for the file by given file data.
 	 *
 	 * @return void
 	 */

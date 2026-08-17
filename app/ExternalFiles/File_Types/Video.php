@@ -127,7 +127,7 @@ class Video extends File_Types_Base {
 	}
 
 	/**
-	 * Set meta-data for the file if it is hosted extern and with proxy.
+	 * Set metadata for the file if it is hosted extern and with proxy.
 	 *
 	 * @return void
 	 */
@@ -154,11 +154,20 @@ class Video extends File_Types_Base {
 		do_action_deprecated( 'eml_video_meta_data', array( $external_file_obj ), '5.0.0', 'efml_video_meta_data' );
 
 		/**
-		 * Run additional tasks to add custom meta data on external hostet files.
+		 * Run additional tasks to add custom metadata on external hostet files.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
 		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 */
 		do_action( 'efml_video_meta_data', $external_file_obj );
+	}
+
+	/**
+	 * Return whether files of this type are proxied by default.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_default_enabled(): bool {
+		return false;
 	}
 }

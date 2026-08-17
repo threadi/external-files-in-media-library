@@ -869,7 +869,7 @@ class Directory_Listing {
 		check_ajax_referer( 'efml-change-term-name', 'nonce' );
 
 		// check capability.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
 			wp_send_json( array() );
 		}
 

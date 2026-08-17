@@ -107,17 +107,13 @@ class ExportDialog {
 		// check nonce.
 		check_ajax_referer( 'efml-export-config-nonce', 'nonce' );
 
-		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
-			return;
-		}
-
 		// create the dialog for failures.
 		$dialog = array(
 			'className' => 'efml',
 			'title'     => __( 'Configuration could not be loaded', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'The export configuration for this target could not be loaded.', 'external-files-in-media-library' ) . '</strong></p>',
+				'<p>' . __( 'Check the permissions in the plugin settings.', 'external-files-in-media-library' ) . '</p>'
 			),
 			'buttons'   => array(
 				array(
@@ -127,6 +123,11 @@ class ExportDialog {
 				),
 			),
 		);
+
+		// bail if capability is not set.
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
+			wp_send_json( array( 'detail' => $dialog ) );
+		}
 
 		// get term ID from request.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
@@ -233,7 +234,7 @@ class ExportDialog {
 		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
 
 		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
 			return;
 		}
 

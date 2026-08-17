@@ -576,7 +576,7 @@ class Export extends Tools_Base {
 		check_ajax_referer( 'efml-export-state-nonce', 'nonce' );
 
 		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
 			return;
 		}
 
