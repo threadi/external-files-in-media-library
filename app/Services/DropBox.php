@@ -748,7 +748,7 @@ class DropBox extends Service_Base implements Service {
 	private function get_help( bool $with_button = true ): string {
 		$help = esc_html__( 'Follow these steps:', 'external-files-in-media-library' ) . '</p><ol>';
 		/* translators: %1$s will be replaced by a URL. */
-		$help .= '<li>' . sprintf( __( 'Create your own app <a href="$1%s" target="_blank">here</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</li>';
+		$help .= '<li>' . sprintf( __( 'Create your own app <a href="%1$s" target="_blank">here%2$s</a>.', 'external-files-in-media-library' ), $this->get_token_url(), Helper::get_a11n_window_hint() ) . '</li>';
 		$help .= '<li>' . esc_html__( 'Enter the following as OAuth2 Redirect URL for this app:', 'external-files-in-media-library' ) . ' <code>' . $this->get_real_redirect_uri() . '</code></li>';
 		$help .= '<li>' . esc_html__( 'Click on the following button.', 'external-files-in-media-library' ) . '</li></ol>';
 		if ( $with_button ) {
@@ -1162,7 +1162,7 @@ class DropBox extends Service_Base implements Service {
 			'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
 			'texts'     => array(
 				/* translators: %1$s will be replaced by a URL. */
-				'<p><strong>' . sprintf( __( 'Please fill our the form. Get your API credentials for your DropBox app <a href="%1$s" target="_blank">here (opens in a new window)</a>.', 'external-files-in-media-library' ), $this->get_token_url() ) . '</strong></p>',
+				'<p><strong>' . sprintf( __( 'Please fill our the form. Get your API credentials for your DropBox app <a href="%1$s" target="_blank">here%2$s</a>.', 'external-files-in-media-library' ), $this->get_token_url(), Helper::get_a11n_window_hint() ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
 				'<div><label for="efml_dropbox_api_key">' . esc_html__( 'App key', 'external-files-in-media-library' ) . '</label><input type="text" id="efml_dropbox_api_key" name="api_key" value="" placeholder="' . __( 'Enter your API key', 'external-files-in-media-library' ) . '"></div>',
 				'<div><label for="efml_dropbox_api_secret">' . esc_html__( 'App secret', 'external-files-in-media-library' ) . '</label><input type="password" id="efml_dropbox_api_secret" name="api_secret" value="" placeholder="' . __( 'Enter your API secret', 'external-files-in-media-library' ) . '"></div>',

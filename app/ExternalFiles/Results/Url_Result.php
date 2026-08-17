@@ -94,7 +94,7 @@ class Url_Result extends Result_Base {
 		}
 
 		// otherwise link it.
-		return '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url ) ) . '</a> ' . $edit_html . '<br>' . wp_kses_post( $this->get_result_text() );
+		return '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url ) ) . Helper::get_a11n_window_hint() . '</a> ' . $edit_html . '<br>' . wp_kses_post( $this->get_result_text() );
 	}
 
 	/**

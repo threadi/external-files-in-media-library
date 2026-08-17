@@ -73,7 +73,7 @@
         "threadi/easy-dialog-for-wordpress": "*",
         "threadi/easy-directory-listing-for-wordpress": "*",
         "threadi/easy-settings-for-wordpress": "*",
-        "threadi/easy-transients-for-wordpress": "^1.4.7",
+        "threadi/easy-transients-for-wordpress": "^1.4.8",
         "spatie/dropbox-api": "^1.23"
     },
     "repositories": [

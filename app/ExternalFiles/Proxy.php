@@ -172,6 +172,9 @@ class Proxy {
 			$external_file_obj->add_to_proxy();
 		}
 
+		// remove the filter.
+		remove_filter( 'efml_http_header_args', array( $external_file_obj, 'disable_check_for_unsafe_urls' ) );
+
 		// get cached file path.
 		$cached_file_path = $external_file_obj->get_cache_file( $dimensions );
 

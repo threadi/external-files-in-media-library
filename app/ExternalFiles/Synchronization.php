@@ -1983,7 +1983,7 @@ class Synchronization extends Tools_Base {
 				/* translators: %1$s will be replaced by a title. */
 				'<p>' . sprintf( __( 'Synchronisation for %1$s is not supported.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
 				/* translators: %1$s will be replaced by a URL. */
-				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum%2$s</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url(), Helper::get_a11n_window_hint() ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

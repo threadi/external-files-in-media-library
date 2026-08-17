@@ -331,7 +331,7 @@ class Sftp extends Protocol_Base {
 			// create the error entry.
 			$error_obj = new Url_Result();
 			/* translators: %1$s will be replaced by a URL. */
-			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $url ) ) );
+			$error_obj->set_result_text( sprintf( __( 'Error occurred during requesting this file. Check the <a href="%1$s" target="_blank">log%2$s</a> for detailed information.', 'external-files-in-media-library' ), Helper::get_log_url( $url ), Helper::get_a11n_window_hint() ) );
 			$error_obj->set_url( $url );
 			$error_obj->set_error( true );
 
