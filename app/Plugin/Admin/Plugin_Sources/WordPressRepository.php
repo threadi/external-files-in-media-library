@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin\Plugin_Sources;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Admin\Plugin_Sources_Base;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle the WordPress Repository as source for a service plugin.
@@ -71,6 +72,6 @@ class WordPressRepository extends Plugin_Sources_Base {
 	 */
 	public function get_description( array $config ): string {
 		/* translators: %1$s will be replaced by a URL. */
-		return '<p>' . sprintf( __( 'The newest release from <a href="%1$s" target="_blank">this WordPress plugin (opens new windows)</a> will be loaded.', 'external-files-in-media-library' ), 'https://wordpress.org/plugins/' . $config['plugin_slug'] . '/' ) . '</p>';
+		return '<p>' . sprintf( __( 'The newest release from <a href="%1$s" target="_blank">this WordPress plugin%2$s</a> will be loaded.', 'external-files-in-media-library' ), 'https://wordpress.org/plugins/' . $config['plugin_slug'] . '/', Helper::get_a11n_window_hint() ) . '</p>';
 	}
 }

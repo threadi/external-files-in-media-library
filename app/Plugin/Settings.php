@@ -320,7 +320,7 @@ class Settings {
 		$field = new MultiSelect( $this->get_settings_obj() );
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
-		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks (opens in a new window)</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ) ) );
+		$field->set_description( sprintf( __( 'Select the MIME types that you want to allow as external URLs. Changing this setting does not affect the accessibility of external files already in use in the frontend. If you miss a MIME type, take a look <a href="%1$s" target="_blank">at our hooks%2$s</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_mimetypes_doc_url() ), Helper::get_a11n_window_hint() ) );
 		$field->set_options( Helper::get_possible_mime_types_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'validate_allowed_mime_types' ) );
 		$setting->set_field( $field );
@@ -420,7 +420,7 @@ class Settings {
 				'type'        => 'Checkbox',
 				'title'       => __( 'Hide begging for review', 'external-files-in-media-library' ),
 				/* translators: %1$s will be replaced by a URL. */
-				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them (opens in a new window)</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url() ),
+				'description' => sprintf( __( 'When activated, you will no longer see any references to reviews for this plugin. However, you are still welcome <a href="%1$s" target="_blank">to leave them%2$s</a> :)', 'external-files-in-media-library' ), Helper::get_plugin_review_url(), Helper::get_a11n_window_hint() ),
 			)
 		);
 
@@ -1048,7 +1048,7 @@ class Settings {
 					<td>
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo wp_kses_post( sprintf( __( 'The DropBox logo is a trademark of <a href="%1$s" target="_blank">DropBox International Unlimited Company (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/official-teams-page' ) );
+							echo wp_kses_post( sprintf( __( 'The DropBox logo is a trademark of <a href="%1$s" target="_blank">DropBox International Unlimited Company%2$s</a>.', 'external-files-in-media-library' ), 'https://www.dropbox.com/official-teams-page', Helper::get_a11n_window_hint() ) );
 						?>
 					</td>
 				</tr>
@@ -1057,7 +1057,7 @@ class Settings {
 					<td>
 						<?php
 						/* translators: %1$s will be replaced by a URL. */
-						echo wp_kses_post( sprintf( __( 'The Google logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc. (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://abc.xyz' ) );
+						echo wp_kses_post( sprintf( __( 'The Google logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc.%2$s</a>.', 'external-files-in-media-library' ), 'https://abc.xyz', Helper::get_a11n_window_hint() ) );
 						?>
 					</td>
 				</tr>
@@ -1066,7 +1066,7 @@ class Settings {
 					<td>
 						<?php
 						/* translators: %1$s will be replaced by a URL. */
-						echo wp_kses_post( sprintf( __( 'The Amazon logo is a trademark of <a href="%1$s" target="_blank">Amazon.com, Inc.  (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://www.amazon.com' ) );
+						echo wp_kses_post( sprintf( __( 'The Amazon logo is a trademark of <a href="%1$s" target="_blank">Amazon.com, Inc.%2$s</a>.', 'external-files-in-media-library' ), 'https://www.amazon.com', Helper::get_a11n_window_hint() ) );
 						?>
 					</td>
 				</tr>
@@ -1075,7 +1075,7 @@ class Settings {
 					<td>
 						<?php
 						/* translators: %1$s will be replaced by a URL. */
-						echo wp_kses_post( sprintf( __( 'The YouTube logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc.  (opens in a new window)</a>.', 'external-files-in-media-library' ), 'https://abc.xyz' ) );
+						echo wp_kses_post( sprintf( __( 'The YouTube logo is a trademark of <a href="%1$s" target="_blank">Alphabet Inc.%2$s</a>.', 'external-files-in-media-library' ), 'https://abc.xyz', Helper::get_a11n_window_hint() ) );
 						?>
 					</td>
 				</tr>

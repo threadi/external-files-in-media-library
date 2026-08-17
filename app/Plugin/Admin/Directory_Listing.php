@@ -317,7 +317,7 @@ class Directory_Listing {
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
-							echo '<p>' . wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) ) . '</p>';
+							echo '<p>' . wp_kses_post( sprintf( __( 'Missing an external source like FlickR, Instagram, Google Photo .. ? Ask in our <a href="%1$s" target="_blank">supportforum%2$s</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url(), Helper::get_a11n_window_hint() ) ) . '</p>';
 						if ( current_user_can( 'manage_options' ) ) {
 							?>
 							<p><a href="<?php echo esc_url( Settings::get_instance()->get_url() ); ?>" title="<?php echo esc_attr__( 'Go to settings', 'external-files-in-media-library' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a></p>

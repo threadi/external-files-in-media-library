@@ -888,7 +888,7 @@ class Export extends Tools_Base {
 			}
 
 			// remove the filter.
-			if( method_exists( $listing_obj, 'disable_check_for_unsafe_urls' ) ) {
+			if ( method_exists( $listing_obj, 'disable_check_for_unsafe_urls' ) ) {
 				remove_filter( 'efml_http_header_args', array( $listing_obj, 'disable_check_for_unsafe_urls' ) );
 			}
 
@@ -2034,7 +2034,7 @@ class Export extends Tools_Base {
 			'texts'     => array(
 				'<p><strong>' . __( 'Export for this external source is not supported.', 'external-files-in-media-library' ) . '</strong></p>',
 				/* translators: %1$s will be replaced by a URL. */
-				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum (opens in a new window)</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url() ) . '</p>',
+				'<p>' . sprintf( __( 'If you have any questions, please feel free to ask them <a href="%1$s" target="_blank">in our support forum%2$s</a>.', 'external-files-in-media-library' ), Helper::get_plugin_support_url(), Helper::get_a11n_window_hint() ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

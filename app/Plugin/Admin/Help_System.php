@@ -96,7 +96,7 @@ class Help_System {
 	 */
 	private function add_sidebar( WP_Screen $screen ): void {
 		// get content for the sidebar.
-		$sidebar_content = '<p><strong>' . __( 'Question not answered?', 'external-files-in-media-library' ) . '</strong></p><p><a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank">' . esc_html__( 'Ask in our forum', 'external-files-in-media-library' ) . '</a></p>';
+		$sidebar_content = '<p><strong>' . __( 'Question not answered?', 'external-files-in-media-library' ) . '</strong></p><p><a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank">' . esc_html__( 'Ask in our forum', 'external-files-in-media-library' ) . Helper::get_a11n_window_hint() . '</a></p>';
 
 		// add help sidebar with the given content.
 		$screen->set_help_sidebar( $sidebar_content );

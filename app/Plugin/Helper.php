@@ -903,4 +903,13 @@ class Helper {
 				$parts['query'] .
 				$parts['fragment'];
 	}
+
+	/**
+	 * Return the a11n window hint.
+	 *
+	 * @return string
+	 */
+	public static function get_a11n_window_hint(): string {
+		return '<span class="screen-reader-text"> ' . __( 'opens a new window', 'external-files-in-media-library' ) . '</span>';
+	}
 }
