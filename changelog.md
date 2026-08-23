@@ -4,6 +4,7 @@
 
 ### Changed
 
+- Log any server-side error during loading of a directory
 - Use screen reader text for open new window hint
 - Remove filter to use unsafe URLs after they have been used
 - Videos are not proxied by default anymore to save this space

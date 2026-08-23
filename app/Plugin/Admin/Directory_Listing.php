@@ -28,6 +28,7 @@ use ExternalFilesInMediaLibrary\Services\HelloDolly;
 use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\Services\WebDav;
+use Throwable;
 use WP_REST_Request;
 use WP_Screen;
 use WP_Term;
@@ -331,6 +332,8 @@ class Directory_Listing {
 			return;
 		}
 
+		try {
+
 		// get the method object by its name.
 		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
 
@@ -405,6 +408,10 @@ class Directory_Listing {
 			?>
 		</div>
 		<?php
+		} catch( Throwable $e ) {
+			Log::get_instance()->create( __( 'Server-side error during initialization of directory listing:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+			echo '<div class="wrap"><div class="eml_add_external_files_wrapper"><p>' . wp_kses_post( sprintf( __( 'The external source could not be loaded. See <a href="%1$s">log</a> for details.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_logs' ) ) ) . '</p></div></div>';
+		}
 	}
 
 	/**
