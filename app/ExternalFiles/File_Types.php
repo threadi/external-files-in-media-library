@@ -14,7 +14,6 @@ use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\Number;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
-use easySettingsForWordPress\Views\DataView;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 
@@ -91,10 +90,6 @@ class File_Types {
 		// add file types tab.
 		$file_types_tab = $settings_page->add_tab( 'eml_file_types', 30 );
 		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
-		$view = Settings::get_instance()->get_settings_obj()->get_views()->get_view();
-		if ( ! $view instanceof DataView ) {
-			$file_types_tab->set_hide_save( true );
-		}
 
 		// add settings for each supported file type.
 		foreach ( $this->get_file_types_as_objects() as $index => $file_type_obj ) {

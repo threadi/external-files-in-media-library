@@ -8,12 +8,13 @@
 - Use screen reader text for open new window hint
 - Remove filter to use unsafe URLs after they have been used
 - Videos are not proxied by default anymore to save this space
-- Updated dependencies
+- Updated settings and dialog library
 
 ### Fixed
 
 - Fixed a wrong placeholder to use an external link to Dropbox
 - Fixed wrong capabilities for some term handlings
+- Fixed check for development mode in WordPress < 6.3
 
 ## [5.3.0] - 16.08.2026
 
