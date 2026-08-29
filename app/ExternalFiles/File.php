@@ -240,13 +240,13 @@ class File {
 		);
 		wp_update_post( $query );
 
-		// get the meta-data for this attachment.
+		// get the metadata for this attachment.
 		$meta = (array) wp_get_attachment_metadata( $this->get_id(), true );
 
 		// set the mime type.
 		$meta['mime_type'] = $mime_type;
 
-		// save the updated meta-data.
+		// save the updated metadata.
 		wp_update_attachment_metadata( $this->get_id(), $meta );
 	}
 
@@ -773,12 +773,14 @@ class File {
 			return false;
 		}
 
+		$instance = $this;
 		/**
 		 * Run tasks before we switch a file to local.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
+		 * @param File $instance The file object.
 		 */
-		do_action( 'efml_switch_to_local_before' );
+		do_action( 'efml_switch_to_local_before', $instance );
 
 		// prevent duplicate check for this file.
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
@@ -845,10 +847,10 @@ class File {
 			return false;
 		}
 
-		// get meta-data from uploaded temporary file.
+		// get metadata from uploaded temporary file.
 		$temp_meta_data = wp_get_attachment_metadata( $temp_attachment_id );
 
-		// create an array for meta-data of we got "false" from metadata request.
+		// create an array for metadata of we got "false" from metadata request.
 		if ( ! is_array( $temp_meta_data ) ) {
 			$temp_meta_data = array();
 		}
@@ -927,8 +929,9 @@ class File {
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param int $attachment_id The attachment ID.
+		 * @param File $instance The file object.
 		 */
-		do_action( 'efml_switch_to_local_after', $this->get_id() );
+		do_action( 'efml_switch_to_local_after', $this->get_id(), $instance );
 
 		// return true if switch was successfully.
 		return true;
@@ -938,33 +941,35 @@ class File {
 	 * Switch hosting of this file to external.
 	 *
 	 * Only if used protocol supports this.
-	 * And no credentials are used.
 	 *
 	 * @return bool
 	 */
 	public function switch_to_external(): bool {
-		// bail if credentials are used.
-		if ( $this->has_credentials() ) {
-			return false;
-		}
-
 		// get protocol object for this file.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		// bail if protocol handler could not be loaded.
 		if ( ! $protocol_handler_obj ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Protocol handler for URL could not be found.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
 		// bail if protocol does not support external hosting.
-		if ( $protocol_handler_obj->should_be_saved_local() ) {
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Files from this service must remain saved locally.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
 		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 
-		// bail if meta-data could not be loaded.
+		// bail if metadata could not be loaded.
 		if ( ! $meta_data ) {
 			$meta_data = array();
 		}
@@ -982,6 +987,10 @@ class File {
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Could not read file.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 

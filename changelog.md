@@ -9,12 +9,16 @@
 - Remove filter to use unsafe URLs after they have been used
 - Videos are not proxied by default anymore to save this space
 - Updated settings and dialog library
+- Optimized some hooks with more parameters
+- Optimized the switch to external hosting incl. more log entries
 
 ### Fixed
 
 - Fixed a wrong placeholder to use an external link to Dropbox
 - Fixed wrong capabilities for some term handlings
 - Fixed check for development mode in WordPress < 6.3
+- Fixed missing set of fields during protocol detection for files
+- Fixed JavaScript to show any error during hosting switch
 
 ## [5.3.0] - 16.08.2026
 

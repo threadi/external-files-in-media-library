@@ -297,7 +297,7 @@ class Cli {
 	/**
 	 * Switch hosting of files to external.
 	 *
-	 * Except for those with credentials or un-supported protocols.
+	 * Except for un-supported protocols.
 	 * If no URLs given all external files will be switched.
 	 *
 	 * [<URLs>]

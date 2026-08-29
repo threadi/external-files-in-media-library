@@ -245,6 +245,9 @@ class Protocol_Base {
 	 * @return bool True if duplicate has been found.
 	 */
 	public function check_for_duplicate( string $url ): bool {
+		// URLs are saved decoded in media library, so compare the decoded form.
+		$url = urldecode( $url );
+
 		// show deprecated hint for the old hook.
 		$false = apply_filters_deprecated( 'eml_duplicate_check', array( false, $url ), '5.0.0', 'efml_duplicate_check' );
 

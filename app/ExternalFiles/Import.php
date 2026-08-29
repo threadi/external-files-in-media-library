@@ -202,7 +202,7 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Get the handler for this URL depending on its protocol.
 		 */
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url, $fields );
 
 		/**
 		 * Do nothing if URL is using a not supported tcp protocol (event will be logged via @Protocols in detail).
