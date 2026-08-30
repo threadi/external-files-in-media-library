@@ -14,6 +14,7 @@ use Error;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -298,6 +299,14 @@ class Protocol extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		// use the HTTP handler for public URLs, e.g. of exported files.
+		if ( str_starts_with( $url, 'http://' ) || str_starts_with( $url, 'https://' ) ) {
+			$http_protocol_handler = new Http( $url );
+			$http_protocol_handler->set_fields( $this->get_fields() );
+
+			return $http_protocol_handler->get_temp_file( $url, $filesystem );
+		}
+
 		// get the DropBox object.
 		$dropbox_obj = DropBox::get_instance();
 
@@ -318,9 +327,6 @@ class Protocol extends Protocol_Base {
 		// get the file from DropBox.
 		$content = stream_get_contents( $client->download( $url ) );
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
 		// get the tmp file name.
 		$tmp_file_name = wp_tempnam();
 
@@ -331,9 +337,28 @@ class Protocol extends Protocol_Base {
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
 		// save the data.
-		$wp_filesystem->put_contents( $tmp_file, $content );
+		$filesystem->put_contents( $tmp_file, $content );
 
 		// return the name and path of the tmp file.
 		return $tmp_file;
+	}
+
+	/**
+	 * Return infos about a single given URL.
+	 *
+	 * Exported files are available under a public HTTPS-URL, so we use the
+	 * HTTP protocol handler to get its infos.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_url_info( string $url ): array {
+		// get the HTTP protocol handler.
+		$http_protocol_handler = new Http( $url );
+		$http_protocol_handler->set_fields( $this->get_fields() );
+
+		// return the results from the HTTP handler.
+		return $http_protocol_handler->get_url_info( $url );
 	}
 }
