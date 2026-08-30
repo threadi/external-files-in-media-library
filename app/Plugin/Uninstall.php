@@ -21,7 +21,7 @@ use ExternalFilesInMediaLibrary\Services\Services;
 use WP_User;
 
 /**
- * Uninstall this plugin.
+ * Handle the uninstallation of this plugin.
  */
 class Uninstall {
 
@@ -138,7 +138,6 @@ class Uninstall {
 
 			// loop through all services and remove their settings.
 			foreach ( Services::get_instance()->get_services_as_objects() as $service_obj ) {
-
 				foreach ( $service_obj->get_user_settings() as $user_setting_name => $user_setting ) {
 					delete_user_meta( $user->ID, 'efml_' . $user_setting_name );
 				}
@@ -148,6 +147,12 @@ class Uninstall {
 			delete_user_meta( $user->ID, 'efml_hide_dialog' );
 			delete_user_meta( $user->ID, 'efml_no_privacy_hint' );
 			delete_user_meta( $user->ID, 'efml_last_job_id' );
+			delete_option( 'eml_import_running_' . $user->ID );
+			delete_option( 'eml_import_title_' . $user->ID );
+			delete_option( 'eml_import_url_count_' . $user->ID );
+			delete_option( 'eml_import_url_max_' . $user->ID );
+			delete_option( 'eml_import_url_loading_more_' . $user->ID );
+			delete_option( 'efml_import_results_' . $user->ID );
 		}
 
 		// clean the managed settings.

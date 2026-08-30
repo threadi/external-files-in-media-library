@@ -489,7 +489,7 @@ class Cli {
 			$query  = array(
 				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
-				'meta_query' => array(
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for meta.
 					array(
 						'key'     => 'path',
 						'value'   => $name,
@@ -553,7 +553,7 @@ class Cli {
 			$query  = array(
 				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
-				'meta_query' => array(
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 					array(
 						'key'     => 'path',
 						'value'   => $name,
@@ -623,7 +623,7 @@ class Cli {
 			$query  = array(
 				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
-				'meta_query' => array(
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 					array(
 						'key'     => 'path',
 						'value'   => $name,
@@ -709,7 +709,7 @@ class Cli {
 			$query  = array(
 				'taxonomy'   => $taxonomy_obj->get_name(),
 				'hide_empty' => false,
-				'meta_query' => array(
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 					array(
 						'key'     => 'path',
 						'value'   => $name,
@@ -765,7 +765,7 @@ class Cli {
 			'post_status'    => 'any',
 			'posts_per_page' => -1,
 			'fields'         => 'ids',
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => EFML_POST_META_URL,
 					'compare' => 'NOT EXISTS',

@@ -480,6 +480,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'Protocol handler for the given URL could not be found!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -495,6 +498,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type for the file could not be detected!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -503,6 +509,9 @@ class File {
 		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 			// other mime-type received => do not proxy this file.
 			return;
@@ -520,6 +529,9 @@ class File {
 				// add log entry.
 				Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
 
+				// remove our filter.
+				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 				// do nothing more.
 				return;
 			}
@@ -535,6 +547,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'File is empty! Found during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -545,6 +560,9 @@ class File {
 		if ( $binary_mime_type !== $file_data['mime-type'] ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 			// do nothing more.
 			return;
@@ -572,12 +590,18 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
 
 		// add log entry.
 		Log::get_instance()->create( __( 'File has been added to proxy cache.', 'external-files-in-media-library' ), $this->get_url( true ), 'info', 2 );
+
+		// remove our filter.
+		remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 		// save that file has been cached.
 		update_post_meta( $this->get_id(), 'eml_proxied', time() );
@@ -756,6 +780,15 @@ class File {
 		if ( ! $protocol_handler_obj ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Protocol handler for URL could not be found.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// bail if protocol does not support external hosting.
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Files from this service must remain saved external.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
 			// do nothing more.
 			return false;

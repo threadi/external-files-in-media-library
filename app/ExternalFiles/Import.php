@@ -626,6 +626,9 @@ class Import extends Directory_Listing_Base {
 			return;
 		}
 
+		// check at 80 percent of the max execution time, but never below 5 seconds.
+		$max_execution_time = max( 5, (int) floor( $max_execution_time * 0.8 ) );
+
 		// get the actual runtime.
 		$runtime = microtime( true ) - $this->get_import_start_time();
 

@@ -50,13 +50,10 @@ class Schedules {
 	 * @return void
 	 */
 	public function init(): void {
-		// action to create all registered schedules.
+		// use hooks.
 		add_action( 'init', array( $this, 'init_schedules' ) );
 		add_filter( 'schedule_event', array( $this, 'add_schedule_to_list' ) );
 		add_action( 'shutdown', array( $this, 'check_events_on_shutdown' ) );
-
-		// use our own hooks.
-		add_filter( 'efml_schedule_our_events', array( $this, 'check_events' ) );
 	}
 
 	/**
@@ -75,18 +72,39 @@ class Schedules {
 				continue;
 			}
 
-			// set attributes in an object, if available.
-			if ( ! empty( $event['settings'][ array_key_first( $event['settings'] ) ]['args'] ) ) {
-				$schedule_obj->set_args( $event['settings'][ array_key_first( $event['settings'] ) ]['args'] );
-			}
-
 			// define action hook to run the schedule.
-			add_action( $schedule_obj->get_name(), array( $schedule_obj, 'run' ), 10, 0 );
+			add_action( $schedule_obj->get_name(), array( $this, 'run_schedule' ), 10, 10 );
 		}
 	}
 
 	/**
-	 * Get our own active events from WP-list.
+	 * Run the schedule which matches the fired cron event.
+	 *
+	 * The arguments are taken from the event itself, as multiple events may share
+	 * one hook name with different arguments.
+	 *
+	 * @param mixed ...$args The arguments of the fired cron event.
+	 *
+	 * @return void
+	 */
+	public function run_schedule( ...$args ): void {
+		// get the schedule object for the fired event.
+		$schedule_obj = $this->get_schedule_object_by_name( (string) current_action() );
+
+		// bail if no schedule object could be found.
+		if ( ! $schedule_obj instanceof Schedules_Base ) {
+			return;
+		}
+
+		// set the arguments of the event which has been fired.
+		$schedule_obj->set_args( $args ); // @phpstan-ignore argument.type
+
+		// run the schedule.
+		$schedule_obj->run();
+	}
+
+	/**
+	 * Return our own active events from WP-list.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -148,53 +166,69 @@ class Schedules {
 			return $our_events;
 		}
 
+		// return resulting list.
+		return $this->reconcile_events( $our_events );
+	}
+
+	/**
+	 * Reconcile our schedule events against the WP-cron array: install missing
+	 * enabled events, remove present disabled events and heal interval drift on
+	 * existing enabled events.
+	 *
+	 * Split out from check_events() so the reconcile can run - and be tested -
+	 * independently of the activation guard in check_events().
+	 *
+	 * @param array<string,mixed> $our_events The currently scheduled events.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function reconcile_events( array $our_events ): array {
 		// check the schedule objects if they are set.
-		foreach ( $this->get_schedule_object_names() as $object_name ) {
-			// bail if class name does not exist.
-			if ( ! class_exists( $object_name ) ) {
-				continue;
-			}
-
-			// get the object.
-			$obj = new $object_name();
-
-			// bail if object is not "Schedules_Base".
-			if ( ! $obj instanceof Schedules_Base ) {
+		foreach ( $this->get_schedules_as_objects() as $schedule_obj ) {
+			// bail if this schedule manages its own events.
+			if ( ! $schedule_obj->is_reconcilable() ) {
 				continue;
 			}
 
 			// install if schedule is enabled and not in list of our schedules.
-			if ( $obj->is_enabled() && ! isset( $our_events[ $obj->get_name() ] ) ) {
+			if ( $schedule_obj->is_enabled() && ! isset( $our_events[ $schedule_obj->get_name() ] ) ) {
 				// reinstall the missing event.
-				$obj->install();
+				$schedule_obj->install();
 
 				// log this event.
 				/* translators: %1$s will be replaced by the event name. */
-				Log::get_instance()->create( sprintf( __( 'Missing cron event <i>%1$s</i> automatically re-installed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 'info', 2 );
+				Log::get_instance()->create( sprintf( __( 'Missing cron event <i>%1$s</i> automatically re-installed.', 'external-files-in-media-library' ), esc_html( $schedule_obj->get_name() ) ), '', 'info', 2 );
 
 				// re-run the check for WP-cron-events.
 				$our_events = $this->get_wp_events();
+			} elseif ( $schedule_obj->is_enabled() && isset( $our_events[ $schedule_obj->get_name() ] ) ) {
+				// the event exists and is enabled: make sure its interval still
+				// matches the configuration. install() reschedules only if the
+				// interval drifted (e.g. after the user picked another interval);
+				// otherwise it is a no-op. This is what makes a changed interval
+				// take effect without any extra wiring.
+				$schedule_obj->install();
 			}
 
 			// add args to object, if set.
-			if ( isset( $our_events[ $obj->get_name() ] ) ) {
-				$obj->set_args( $our_events[ $obj->get_name() ]['settings'][ array_key_first( $our_events[ $obj->get_name() ]['settings'] ) ]['args'] );
+			if ( isset( $our_events[ $schedule_obj->get_name() ] ) ) {
+				$schedule_obj->set_args( $our_events[ $schedule_obj->get_name() ]['settings'][ array_key_first( $our_events[ $schedule_obj->get_name() ]['settings'] ) ]['args'] );
 			}
 
 			// delete if schedule is in list of our events and not enabled.
-			if ( ! $obj->is_enabled() && isset( $our_events[ $obj->get_name() ] ) ) {
-				$obj->delete();
+			if ( ! $schedule_obj->is_enabled() && isset( $our_events[ $schedule_obj->get_name() ] ) ) {
+				$schedule_obj->delete();
 
 				// log this event.
 				/* translators: %1$s will be replaced by the event name. */
-				Log::get_instance()->create( sprintf( __( 'Not enabled cron event <i>%1$s</i> automatically removed.', 'external-files-in-media-library' ), esc_html( $obj->get_name() ) ), '', 'info', 2 );
+				Log::get_instance()->create( sprintf( __( 'Not enabled cron event <i>%1$s</i> automatically removed.', 'external-files-in-media-library' ), esc_html( $schedule_obj->get_name() ) ), '', 'info', 2 );
 
 				// re-run the check for WP-cron-events.
 				$our_events = $this->get_wp_events();
 			}
 		}
 
-		// return resulting list.
+		// return the resulting list.
 		return $our_events;
 	}
 
@@ -204,16 +238,9 @@ class Schedules {
 	 * @return void
 	 */
 	public function delete_all(): void {
-		foreach ( $this->get_schedule_object_names() as $obj_name ) {
-			$schedule_obj = new $obj_name();
-
-			// bail if this is not a "Schedules_Base" object.
-			if ( ! $schedule_obj instanceof Schedules_Base ) {
-				continue;
-			}
-
-			// delete the schedule.
-			$schedule_obj->delete();
+		foreach ( $this->get_schedules_as_objects() as $schedule_obj ) {
+			// delete the schedule independent of their arguments.
+			$schedule_obj->delete_all_events();
 		}
 	}
 
@@ -224,15 +251,13 @@ class Schedules {
 	 */
 	public function create_schedules(): void {
 		// install the schedules if they do not exist atm.
-		foreach ( $this->get_schedule_object_names() as $obj_name ) {
-			$schedule_obj = new $obj_name();
-
-			// bail if this is not a "Schedules_Base" object.
-			if ( ! $schedule_obj instanceof Schedules_Base ) {
+		foreach ( $this->get_schedules_as_objects() as $schedule_obj ) {
+			// bail if this schedule is not enabled.
+			if ( ! $schedule_obj->is_enabled() ) {
 				continue;
 			}
 
-			// delete the schedule.
+			// create the schedule.
 			$schedule_obj->install();
 		}
 	}
@@ -265,29 +290,59 @@ class Schedules {
 	}
 
 	/**
-	 * Get schedule object by its name.
+	 * Return the list of schedule objects.
+	 *
+	 * @return array<int,Schedules_Base>
+	 */
+	private function get_schedules_as_objects(): array {
+		// prepare the list of objects.
+		$list_of_objects = array();
+
+		// install the schedules if they do not exist atm.
+		foreach ( $this->get_schedule_object_names() as $obj_name ) {
+			// bail if the class does not exist.
+			if ( ! class_exists( $obj_name ) ) {
+				continue;
+			}
+
+			// get the object.
+			$schedule_obj = new $obj_name();
+
+			// bail if this is not a "Schedules_Base" object.
+			if ( ! $schedule_obj instanceof Schedules_Base ) {
+				continue;
+			}
+
+			// add it to the list.
+			$list_of_objects[] = $schedule_obj;
+		}
+
+		// return the resulting list.
+		return $list_of_objects;
+	}
+
+	/**
+	 * Return schedule object by its name.
 	 *
 	 * @param string $name The name of the object.
 	 *
 	 * @return false|Schedules_Base
 	 */
 	private function get_schedule_object_by_name( string $name ): false|Schedules_Base {
-		foreach ( $this->get_schedule_object_names() as $object_name ) {
-			$obj = new $object_name();
-
+		foreach ( $this->get_schedules_as_objects() as $schedule_obj ) {
 			// bail if it does not match.
-			if ( ! ( $obj instanceof Schedules_Base && $name === $obj->get_name() ) ) {
+			if ( $name !== $schedule_obj->get_name() ) {
 				continue;
 			}
 
 			// return the object.
-			return $obj;
+			return $schedule_obj;
 		}
 		return false;
 	}
 
 	/**
-	 * Get our own events from WP-cron-event-list.
+	 * Return our own events from WP-cron-event-list.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -309,12 +364,17 @@ class Schedules {
 	}
 
 	/**
-	 * Run check for cronjobs in the frontend, if enabled.
+	 * Run check for cronjob in the backend.
 	 *
 	 * @return void
 	 */
 	public function check_events_on_shutdown(): void {
-		$this->check_events( $this->get_events() );
+		// bail if we are not in wp-admin.
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$this->check_events( $this->get_wp_events() );
 	}
 
 	/**
@@ -335,6 +395,11 @@ class Schedules {
 			return $event;
 		}
 
+		// bail if this is not an event of our plugin.
+		if ( ! str_starts_with( (string) $event->hook, 'eml_' ) ) {
+			return $event;
+		}
+
 		// get our object.
 		$schedule_obj = $this->get_schedule_object_by_name( $event->hook );
 
@@ -342,6 +407,9 @@ class Schedules {
 		if ( ! $schedule_obj ) {
 			return $event;
 		}
+
+		// add the args to the event.
+		$schedule_obj->set_args( isset( $event->args ) && is_array( $event->args ) ? $event->args : array() ); // @phpstan-ignore property.notFound
 
 		// get the actual list.
 		$list = get_option( 'eml_schedules' );

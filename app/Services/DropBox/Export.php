@@ -109,7 +109,7 @@ class Export extends Export_Base {
 		$chunk_size = 8 * 1024 * 1024;
 
 		// open the file handle.
-		$handle = fopen( $file_path, 'rb' );
+		$handle = fopen( $file_path, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 
 		// bail if handle could not be loaded.
 		if ( ! $handle ) {
@@ -125,7 +125,7 @@ class Export extends Export_Base {
 		/**
 		 * Step 1: Start the session to upload the file.
 		 */
-		$first_chunk = fread( $handle, $chunk_size );
+		$first_chunk = fread( $handle, $chunk_size ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 
 		// bail if chunk could not be loaded.
 		if ( ! $first_chunk ) {
@@ -158,7 +158,7 @@ class Export extends Export_Base {
 		 * Step 2: add the chunks of the file in session.
 		 */
 		while ( ! feof( $handle ) ) {
-			$chunk = fread( $handle, $chunk_size );
+			$chunk = fread( $handle, $chunk_size ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread
 
 			// bail if chunk could not be loaded.
 			if ( ! $chunk ) {
@@ -195,7 +195,7 @@ class Export extends Export_Base {
 		}
 
 		// close the file handle.
-		fclose( $handle );
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
 
 		/**
 		 * Step 3: save the session content as file in the Dropbox.
@@ -371,6 +371,7 @@ class Export extends Export_Base {
 	 */
 	private function dropbox_curl_request( string $url, array $headers, string $body = '' ): array|bool {
 		// create the request.
+		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_error, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_close
 		$ch = curl_init( $url );
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
@@ -384,6 +385,7 @@ class Export extends Export_Base {
 
 		// close the connection.
 		curl_close( $ch );
+		// phpcs:enable
 
 		// bail on error.
 		if ( $err ) {

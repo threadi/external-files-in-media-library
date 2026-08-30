@@ -759,6 +759,7 @@ class Http extends Protocol_Base {
 
 			// set the header with the credentials for AuthBasic.
 			$args['headers'] = array(
+				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64 is the encoding required for HTTP Basic authentication (RFC 7617).
 				'Authorization' => 'Basic ' . base64_encode( $fields['login']['value'] . ':' . $fields['password']['value'] ),
 			);
 		}

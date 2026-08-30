@@ -360,7 +360,7 @@ class Helper {
 	}
 
 	/**
-	 * Generate a sizes filename.
+	 * Generate a sizes' filename.
 	 *
 	 * @param string $filename The original filename.
 	 * @param int    $width    The width to use.
@@ -384,41 +384,6 @@ class Helper {
 
 		// return concat string for the filename.
 		return $file_path_info['filename'] . '-' . $width . 'x' . $height . '.' . $file_path_info['extension'];
-	}
-
-	/**
-	 * Return the possible intervals as array.
-	 *
-	 * @return array<string>
-	 */
-	public static function get_intervals(): array {
-		// collect the list.
-		$values = array();
-
-		// add disable option first.
-		$values['eml_disable_check'] = __( 'Disabled', 'external-files-in-media-library' );
-
-		// loop through all possible intervals from WordPress and add them to the list.
-		foreach ( wp_get_schedules() as $name => $interval ) {
-			$true = str_starts_with( (string) $name, 'efml_' );
-			/**
-			 * Disable all schedules, not only our own.
-			 *
-			 * @since 5.0.0 Available since 5.0.0.
-			 * @param bool $true Set to "false", to use all schedules.
-			 * @param string $name The name of the schedule.
-			 * @param array<string,mixed> $interval The schedule configuration.
-			 */
-			if ( ! apply_filters( 'efml_own_cron_schedules', $true, (string) $name, $interval ) ) {
-				continue;
-			}
-
-			// add the schedule to the list.
-			$values[ (string) $name ] = $interval['display'];
-		}
-
-		// return the resulting list.
-		return $values;
 	}
 
 	/**
@@ -627,7 +592,7 @@ class Helper {
 	 *
 	 * @param mixed $results The results from $wpdb->get_row().
 	 *
-	 * @return array<string>
+	 * @return array<string,string>
 	 */
 	public static function get_db_result( mixed $results ): array {
 		// bail if results are not an array.
@@ -825,7 +790,7 @@ class Helper {
 
 		// query for the list of blogs.
 		global $wpdb;
-		return $wpdb->get_results(
+		return $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
 				'
 	            SELECT blog_id

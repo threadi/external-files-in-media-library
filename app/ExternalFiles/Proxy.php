@@ -13,11 +13,19 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 
 /**
  * Object, which handles all proxy tasks.
  */
 class Proxy {
+	/**
+	 * Marker if cache directory has been checked.
+	 *
+	 * @var bool
+	 */
+	private bool $cache_directory_checked = false;
+
 	/**
 	 * Instance of actual object.
 	 *
@@ -89,6 +97,7 @@ class Proxy {
 		// misc.
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_cache_state_in_info_dialog' ), 10, 2 );
+		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
 	}
 
 	/**
@@ -290,15 +299,21 @@ class Proxy {
 	 * @return void
 	 */
 	private function create_cache_directory( string $path ): void {
-		// bail if path exist.
-		if ( file_exists( $path ) ) {
+		// check only once per request.
+		if ( $this->cache_directory_checked ) {
 			return;
 		}
+		$this->cache_directory_checked = true;
 
-		// create the directory and check response.
-		if ( false === wp_mkdir_p( $path ) ) {
+		// get the WP_Filesystem handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// create the directory if it does not exist yet.
+		if ( ! $wp_filesystem->exists( $path ) && false === $wp_filesystem->mkdir( $path ) ) {
 			/* translators: %1$s will be replaced by the path. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
+
+			// do nothing more.
 			return;
 		}
 
@@ -446,7 +461,7 @@ class Proxy {
 		$mode = apply_filters( 'efml_fs_chmod', $mode );
 
 		// add "index.php" to prevent directoryListing on each webserver.
-		if ( ! file_exists( $path . 'index.php' ) ) {
+		if ( ! $wp_filesystem->exists( $path . 'index.php' ) ) {
 			// create the default content for this file.
 			$index_php = '.';
 
@@ -462,8 +477,8 @@ class Proxy {
 			$wp_filesystem->put_contents( $path . 'index.php', $index_php, $mode );
 		}
 
-		// add ".htaccess" to prevent for all requests for Apache webserver.
-		if ( isset( $_SERVER['SERVER_SOFTWARE'] ) && ! file_exists( $path . '.htaccess' ) && str_contains( strtolower( sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) ) ), 'apache' ) ) {
+		// create a .htaccess with the required entries also if Apache is not used (could be nginx with .htaccess-support).
+		if ( ! $wp_filesystem->exists( $path . '.htaccess' ) ) {
 			// create the default content for this file.
 			$htaccess = 'Require all denied';
 
@@ -480,7 +495,7 @@ class Proxy {
 		}
 
 		// add "web.config" to prevent all requests for IIS webserver.
-		if ( ! file_exists( $path . 'web.config' ) ) {
+		if ( ! $wp_filesystem->exists( $path . 'web.config' ) ) {
 			// create the default content for this file.
 			$web_config = "<configuration>\n<system.webServer>\n<authorization>\n<deny users=\"*\" />\n</authorization>\n</system.webServer>\n</configuration>\n";
 
@@ -495,5 +510,169 @@ class Proxy {
 			// save the file.
 			$wp_filesystem->put_contents( $path . 'web.config', $web_config, $mode );
 		}
+
+		// add the probe file used to check the public availability of this directory.
+		if ( ! $wp_filesystem->exists( $path . $this->get_probe_file_name() ) ) {
+			$wp_filesystem->put_contents( $path . $this->get_probe_file_name(), wp_generate_password( 32, false ), $mode );
+		}
+	}
+
+	/**
+	 * Add a custom endpoint for site health.
+	 *
+	 * @param array<int,array<string,mixed>> $endpoints List of endpoints.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_site_health_endpoint( array $endpoints ): array {
+		// add the endpoint.
+		$endpoints[] = array(
+			'label'     => Helper::get_plugin_name() . ' ' . __( 'Proxy', 'external-files-in-media-library' ),
+			'namespace' => 'efml/v1',
+			'route'     => '/proxy/',
+			'callback'  => array( $this, 'check_proxy' ),
+			'args'      => array(),
+		);
+
+		// return the resulting list of endpoints.
+		return $endpoints;
+	}
+
+	/**
+	 * Return result after checking cronjob-states.
+	 *
+	 * @return array<string,mixed>
+	 * @noinspection PhpUnused
+	 */
+	public function check_proxy(): array {
+		// define default results.
+		$result = array(
+			'label'       => __( 'Proxy cache directory is protected', 'external-files-in-media-library' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'External Files in Media Library', 'external-files-in-media-library' ),
+				'color' => 'gray',
+			),
+			'description' => __( 'We check the protection of the proxy cache directory.<br><strong>All ok with the directory!</strong>', 'external-files-in-media-library' ),
+			'actions'     => '',
+			'test'        => 'efml_test_proxy',
+		);
+
+		// get the state of the cache directory.
+		$is_public = $this->is_cache_directory_public();
+
+		// show a hint if the check could not be run.
+		if ( is_null( $is_public ) ) {
+			$result['label']       = __( 'Protection of the proxy cache directory could not be checked', 'external-files-in-media-library' );
+			$result['status']      = 'recommended';
+			$result['description'] = '<p>' . __( 'We tried to request a test file from the proxy cache directory of <em>External Files in Media Library</em>, but the request did not reach your site. This often happens if loopback requests are blocked, which is common on local or firewalled installations.', 'external-files-in-media-library' ) . '</p><p>' . __( 'This is not an error by itself. It only means we cannot tell you whether cached files are reachable from the outside.', 'external-files-in-media-library' ) . '</p>';
+
+			// return this result.
+			return $result;
+		}
+
+		// return the good result if the directory is protected.
+		if ( ! $is_public ) {
+			return $result;
+		}
+
+		// the directory is public - explain the consequence and how to fix it.
+		$result['label']  = __( 'Proxy cache directory is publicly reachable', 'external-files-in-media-library' );
+		$result['status'] = 'recommended';
+
+		$result['description']  = '<p>' . __( 'Files cached by the proxy of <em>External Files in Media Library</em> can be requested directly through your web server, bypassing the proxy. Your web server appears to ignore the <code>.htaccess</code> file we placed in the cache directory, which is normal for nginx and Caddy.', 'external-files-in-media-library' ) . '</p>';
+		$result['description'] .= '<p>' . __( 'Anyone who learns a cache URL can keep using it.', 'external-files-in-media-library' ) . '</p>';
+		/* translators: %1$s will be replaced by the path of the cache directory. */
+		$result['description'] .= '<p>' . sprintf( __( 'To close this gap, deny access to <code>%1$s</code> in your web server configuration. For nginx, add the following inside your server block and reload the configuration:', 'external-files-in-media-library' ), esc_html( $this->get_cache_url() ) ) . '</p>';
+		$result['description'] .= '<code>location ^~ ' . esc_html( (string) wp_parse_url( $this->get_cache_url(), PHP_URL_PATH ) ) . " {\n    deny all;\n}</code>";
+		$result['description'] .= '<p>' . __( 'If you cannot change the server configuration, ask your hosting provider to add this rule for you.', 'external-files-in-media-library' ) . '</p>';
+
+		/* translators: %1$s will be replaced by a URL. */
+		$result['actions'] = '<p><a href="' . esc_url( Helper::get_plugin_support_url() ) . '" target="_blank">' . __( 'Ask for help in our support forum', 'external-files-in-media-library' ) . '</a></p>';
+
+		// return the result.
+		return $result;
+	}
+
+	/**
+	 * Return the public URL of the cache directory.
+	 *
+	 * @return string Empty string if the directory is not inside the content directory.
+	 */
+	public function get_cache_url(): string {
+		// get the absolute paths, normalized for a reliable comparison.
+		$cache_path   = wp_normalize_path( $this->get_cache_directory() );
+		$content_path = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+
+		// bail if the cache directory is outside the content directory - it has no public URL then.
+		if ( ! str_starts_with( $cache_path, $content_path ) ) {
+			return '';
+		}
+
+		// replace the path part with the matching URL.
+		return trailingslashit( content_url() ) . substr( $cache_path, strlen( $content_path ) );
+	}
+
+	/**
+	 * Return the name of the file used to check the public availability of the cache directory.
+	 *
+	 * @return string
+	 */
+	private function get_probe_file_name(): string {
+		return 'efml-probe.txt';
+	}
+
+	/**
+	 * Return whether the cache directory is publicly reachable via HTTP.
+	 *
+	 * @return bool|null True if reachable, false if blocked, null if it could not be checked.
+	 */
+	public function is_cache_directory_public(): ?bool {
+		// get the URL of the cache directory.
+		$cache_url = $this->get_cache_url();
+
+		// bail if no public URL could be determined.
+		if ( '' === $cache_url ) {
+			return null;
+		}
+
+		// get the probe file.
+		$probe_file = $this->get_cache_directory() . $this->get_probe_file_name();
+
+		// bail if the probe file does not exist.
+		if ( ! file_exists( $probe_file ) ) {
+			return null;
+		}
+
+		// get its content, which is the token we expect in the response.
+		$wp_filesystem = Helper::get_wp_filesystem();
+		$token         = trim( (string) $wp_filesystem->get_contents( $probe_file ) );
+
+		// bail if the token could not be read.
+		if ( '' === $token ) {
+			return null;
+		}
+
+		// request the probe file.
+		$response = wp_remote_get(
+			$cache_url . $this->get_probe_file_name(),
+			array(
+				'timeout'   => 5,
+				'sslverify' => false,
+			)
+		);
+
+		// bail if the request itself failed - we cannot tell anything then.
+		if ( is_wp_error( $response ) ) {
+			return null;
+		}
+
+		// bail if the response is not a 200.
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return false;
+		}
+
+		// compare the body with the token to rule out soft-404s and caching layers.
+		return trim( wp_remote_retrieve_body( $response ) ) === $token;
 	}
 }

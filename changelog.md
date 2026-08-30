@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added our own list of intervals for schedules as expendable objects
+- Added a hook to add custom result handler
+- Added setting for max age of log entries
+- Added new site health check for accessibility of the proxy folder
+
 ### Changed
 
 - Log any server-side error during loading of a directory
@@ -11,6 +18,12 @@
 - Updated settings and dialog library
 - Optimized some hooks with more parameters
 - Optimized the switch to external hosting incl. more log entries
+- Send optimized HTTP header via proxy
+- Optimized deletion of old log entries
+- Our custom log table is now compatible with strict database systems
+- Secure proxy folder also in versions before 5.2.0
+- Optimized check for max execution time
+- Typos
 
 ### Fixed
 
@@ -19,6 +32,8 @@
 - Fixed check for development mode in WordPress < 6.3
 - Fixed missing set of fields during protocol detection for files
 - Fixed JavaScript to show any error during hosting switch
+- Fixed error in calculation for Audio files in proxy
+- Do not load support for PreventDirectAccess on every page in the backend
 
 ## [5.3.0] - 16.08.2026
 

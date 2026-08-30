@@ -16,8 +16,10 @@ use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\MultiSelect;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Intervals;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules;
 use ExternalFilesInMediaLibrary\Plugin\Schedules_Base;
@@ -83,7 +85,7 @@ class Synchronization extends Tools_Base {
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 
-		// bail if synchronization support is not enabled or user is not allowed to use it.
+		// bail if synchronization support is not enabled.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return;
 		}
@@ -119,6 +121,7 @@ class Synchronization extends Tools_Base {
 		add_action( 'pre_delete_term', array( $this, 'delete_synced_files_on_term_deletion' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'delete_schedule' ), 10, 2 );
 		add_action( 'admin_head', array( $this, 'add_style' ) );
+		add_action( 'init', array( $this, 'recreate_schedules' ), 20 );
 	}
 
 	/**
@@ -196,7 +199,7 @@ class Synchronization extends Tools_Base {
 		$field = new Select( $settings_obj );
 		$field->set_title( __( 'Interval for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Serves as a preset for new external sources. This setting can be changed on each external source.', 'external-files-in-media-library' ) );
-		$field->set_options( Helper::get_intervals() );
+		$field->set_options( Intervals::get_instance()->get_intervals_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
@@ -220,6 +223,21 @@ class Synchronization extends Tools_Base {
 		$field->set_description( __( 'Delete files in media library belonging to an external source when the connection to the external source is deleted.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
 		$setting->set_field( $field );
+
+		// get the hidden section.
+		$hidden_section = Settings::get_instance()->get_hidden_section();
+
+		// bail if hidden section could not be loaded.
+		if ( ! $hidden_section instanceof Section ) {
+			return;
+		}
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'efml_recreate_sync_schedules' );
+		$setting->set_section( $hidden_section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$setting->prevent_export( true );
 	}
 
 	/**
@@ -513,12 +531,12 @@ class Synchronization extends Tools_Base {
 			),
 		);
 
-		// get the sync schedule object for this term_id.
-		$sync_schedule_obj = self::get_instance()->get_schedule_by_term_id( $term_id );
+		// get the marker whether this sync is active.
+		$schedule_active = 1 === absint( get_term_meta( $term_id, 'sync', true ) );
 
 		// define actions.
 		$actions = array(
-			'<div class="eml-switch-toggle"><input id="state-on-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id ) . '" value="1" type="radio"' . ( $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-on-' . absint( $term_id ) . '" class="green">' . __( 'On', 'external-files-in-media-library' ) . '</label><input id="state-off-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id ) . '" value="0"' . ( ! $sync_schedule_obj ? ' checked' : '' ) . ' /><label for="state-off-' . absint( $term_id ) . '" class="red">' . __( 'Off', 'external-files-in-media-library' ) . '</label></div>',
+			'<div class="eml-switch-toggle"><input id="state-on-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id ) . '" value="1" type="radio"' . ( $schedule_active ? ' checked' : '' ) . ' /><label for="state-on-' . absint( $term_id ) . '" class="green">' . __( 'On', 'external-files-in-media-library' ) . '</label><input id="state-off-' . absint( $term_id ) . '" name="sync-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id ) . '" value="0"' . ( ! $schedule_active ? ' checked' : '' ) . ' /><label for="state-off-' . absint( $term_id ) . '" class="red">' . __( 'Off', 'external-files-in-media-library' ) . '</label></div>',
 			'<a href="#" class="button button-secondary easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog_sync_now ) ) . '">' . __( 'Now', 'external-files-in-media-library' ) . '</a>',
 			'<span class="button button-secondary efml-sync" data-term-id="' . absint( $term_id ) . '">' . __( 'Configure', 'external-files-in-media-library' ) . '</a>',
 		);
@@ -624,7 +642,7 @@ class Synchronization extends Tools_Base {
 			$query  = array(
 				'post_type'      => 'attachment',
 				'post_status'    => array( 'inherit', 'trash' ),
-				'meta_query'     => array(
+				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 					'relation' => 'AND',
 					array(
 						'key'     => EFML_POST_META_URL,
@@ -639,7 +657,7 @@ class Synchronization extends Tools_Base {
 						'compare' => 'NOT EXISTS',
 					),
 				),
-				'tax_query'      => array(
+				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 					array(
 						'taxonomy' => Taxonomy::get_instance()->get_name(),
 						'field'    => 'name',
@@ -1313,45 +1331,37 @@ class Synchronization extends Tools_Base {
 	 * @return Schedules\Synchronization|false
 	 */
 	public function get_schedule_by_term_id( int $term_id ): Schedules\Synchronization|false {
-		// get all schedules.
-		foreach ( _get_cron_array() as $event ) {
-			// get first entry key.
-			$key = array_key_first( $event );
-
-			// bail if key is not a string.
-			if ( ! is_string( $key ) ) {
+		// loop through all timestamps of the cron system.
+		foreach ( _get_cron_array() as $hooks ) {
+			// bail if no sync event exists on this timestamp.
+			if ( ! isset( $hooks['eml_sync'] ) || ! is_array( $hooks['eml_sync'] ) ) {
 				continue;
 			}
 
-			// bail if key starts not with "eml_sync".
-			if ( ! str_starts_with( $key, 'eml_sync' ) ) {
-				continue;
+			// loop through each event of our sync hook on this timestamp.
+			foreach ( $hooks['eml_sync'] as $event ) {
+				// bail if no term_id is set.
+				if ( ! isset( $event['args']['term_id'] ) ) {
+					continue;
+				}
+
+				// bail if term_id does not match.
+				if ( absint( $event['args']['term_id'] ) !== $term_id ) {
+					continue;
+				}
+
+				// get schedule object.
+				$schedule_obj = new Schedules\Synchronization();
+
+				// set the args.
+				$schedule_obj->set_args( $event['args'] );
+
+				// set interval.
+				$schedule_obj->set_interval( Helper::get_interval_by_time( absint( $event['interval'] ) ) );
+
+				// return this object.
+				return $schedule_obj;
 			}
-
-			// get the array content.
-			$array = current( $event['eml_sync'] );
-
-			// bail if no term_id is set.
-			if ( ! isset( $array['args']['term_id'] ) ) {
-				continue;
-			}
-
-			// bail if term_id does not match.
-			if ( $term_id !== $array['args']['term_id'] ) {
-				continue;
-			}
-
-			// get schedule object.
-			$schedule_obj = new Schedules\Synchronization();
-
-			// set the args.
-			$schedule_obj->set_args( $array['args'] );
-
-			// set interval.
-			$schedule_obj->set_interval( Helper::get_interval_by_time( absint( $array['interval'] ) ) );
-
-			// return this object.
-			return $schedule_obj;
 		}
 
 		// return false if no schedule object has been found.
@@ -1370,14 +1380,14 @@ class Synchronization extends Tools_Base {
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				'relation' => 'AND',
 				array(
 					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
 				),
 			),
-			'tax_query'      => array(
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
 					'field'    => 'name',
@@ -1489,7 +1499,10 @@ class Synchronization extends Tools_Base {
 		$schedule_obj->set_interval( $interval );
 
 		// install it.
-		$schedule_obj->install();
+		if ( $schedule_obj->install() ) {
+			// save the state so it survives a deactivation of the plugin.
+			update_term_meta( $term_id, 'sync', 1 );
+		}
 	}
 
 	/**
@@ -1618,7 +1631,7 @@ class Synchronization extends Tools_Base {
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				'relation' => 'AND',
 				array(
 					'key'     => EFML_POST_META_URL,
@@ -1629,7 +1642,7 @@ class Synchronization extends Tools_Base {
 					'compare' => 'EXISTS',
 				),
 			),
-			'tax_query'      => array(
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
 					'field'    => 'term_id',
@@ -1717,11 +1730,18 @@ class Synchronization extends Tools_Base {
 	 */
 	public function set_state( int $term_id, int $state ): void {
 		if ( 1 === $state ) {
+			// save the state so it survives a deactivation of the plugin.
+			update_term_meta( $term_id, 'sync', 1 );
+
+			// add the schedule.
 			$this->add_schedule( $term_id );
 		} else {
+			// save the state.
+			update_term_meta( $term_id, 'sync', 0 );
+
 			// get the schedule object.
 			$schedule_obj = $this->get_schedule_by_term_id( $term_id );
-			if ( $schedule_obj instanceof Schedules_Base ) {
+			if ( $schedule_obj instanceof Schedules\Synchronization ) {
 				$schedule_obj->delete();
 			}
 		}
@@ -1769,7 +1789,7 @@ class Synchronization extends Tools_Base {
 	 * @return bool
 	 */
 	public function is_in_use(): bool {
-		// bail with false if synchronisation is disabled.
+		// bail with false if synchronization is disabled.
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return false;
 		}
@@ -1789,12 +1809,16 @@ class Synchronization extends Tools_Base {
 	public function get_sync_terms(): array {
 		// get the terms with enable sync.
 		$query = array(
-			'taxonomy'     => Taxonomy::get_instance()->get_name(),
-			'hide_empty'   => false,
-			'count'        => false,
-			'meta_key'     => 'interval',
-			'meta_compare' => 'EXISTS',
-			'fields'       => 'ids',
+			'taxonomy'   => Taxonomy::get_instance()->get_name(),
+			'hide_empty' => false,
+			'count'      => false,
+			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
+				array(
+					'key'   => 'sync',
+					'value' => 1,
+				),
+			),
+			'fields'     => 'ids',
 		);
 		$terms = new WP_Term_Query( $query );
 
@@ -2027,5 +2051,34 @@ class Synchronization extends Tools_Base {
 			),
 		);
 		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not enabled', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
+	}
+
+	/**
+	 * Recreate schedules
+	 *
+	 * @return void
+	 */
+	public function recreate_schedules(): void {
+		// bail if no re-creation is pending.
+		if ( 1 !== absint( get_option( 'efml_recreate_sync_schedules' ) ) ) {
+			return;
+		}
+
+		// remove the marker first, so a failure does not repeat on every request.
+		delete_option( 'efml_recreate_sync_schedules' );
+
+		// add the schedules.
+		$this->add_schedules();
+	}
+
+	/**
+	 * Add the schedules for all external sources with enabled synchronization.
+	 *
+	 * @return void
+	 */
+	public function add_schedules(): void {
+		foreach ( $this->get_sync_terms() as $term_id ) {
+			$this->add_schedule( $term_id );
+		}
 	}
 }

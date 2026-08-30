@@ -266,7 +266,7 @@ class Protocol_Base {
 		$query   = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => EFML_POST_META_URL,
 					'value'   => $url,

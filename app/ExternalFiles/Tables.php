@@ -159,7 +159,7 @@ class Tables {
 		// filter to any external file.
 		if ( 'external' === $filter ) {
 			$query->set(
-				'meta_query',
+				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					array(
 						'key'     => EFML_POST_META_URL,
@@ -172,7 +172,7 @@ class Tables {
 		// filter for any non-external file.
 		if ( 'non-external' === $filter ) {
 			$query->set(
-				'meta_query',
+				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					array(
 						'key'     => EFML_POST_META_URL,

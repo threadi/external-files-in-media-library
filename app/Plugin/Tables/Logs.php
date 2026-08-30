@@ -36,25 +36,6 @@ class Logs extends WP_List_Table {
 	}
 
 	/**
-	 * Get the table data
-	 *
-	 * @return array<int,array<string,mixed>>
-	 */
-	private function table_data(): array {
-		// get state filter.
-		$state = 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
-
-		// get URL-filter.
-		$url = filter_input( INPUT_GET, 's', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-		if ( is_null( $url ) ) {
-			$url = '';
-		}
-
-		// get logs.
-		return Log::get_instance()->get_logs( $url, $state );
-	}
-
-	/**
 	 * Get the log-table for the table-view.
 	 *
 	 * @return void
@@ -64,11 +45,20 @@ class Logs extends WP_List_Table {
 		$hidden   = $this->get_hidden_columns();
 		$sortable = $this->get_sortable_columns();
 
-		$data = $this->table_data();
-
 		$per_page     = 50;
 		$current_page = $this->get_pagenum();
-		$total_items  = count( $data );
+
+		// build the filter arguments from the request.
+		$args = array(
+			'state'    => 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '',
+			'url'      => (string) filter_input( INPUT_GET, 's', FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+			'url_like' => true,
+			'orderby'  => (string) filter_input( INPUT_GET, 'orderby', FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+			'order'    => (string) filter_input( INPUT_GET, 'order', FILTER_SANITIZE_FULL_SPECIAL_CHARS ),
+		);
+
+		// get the total amount for the pagination.
+		$total_items = Log::get_instance()->get_entry_count( $args );
 
 		$this->set_pagination_args(
 			array(
@@ -77,10 +67,12 @@ class Logs extends WP_List_Table {
 			)
 		);
 
-		$data = array_slice( $data, ( ( $current_page - 1 ) * $per_page ), $per_page );
+		// load only the entries of the actual page.
+		$args['limit']  = $per_page;
+		$args['offset'] = ( $current_page - 1 ) * $per_page;
 
 		$this->_column_headers = array( $columns, $hidden, $sortable );
-		$this->items           = $data;
+		$this->items           = Log::get_instance()->get_entries( $args );
 	}
 
 	/**

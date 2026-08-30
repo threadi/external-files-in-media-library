@@ -548,7 +548,7 @@ class ImportDialog {
 	 * @return bool
 	 */
 	public function is_customization_allowed(): bool {
-		// bail if global setting is disabled.
+		// bail if global setting to allow user-specific services is disabled.
 		if ( 1 !== absint( get_option( 'eml_user_settings' ) ) ) {
 			return false;
 		}

@@ -490,7 +490,7 @@ class Export extends Tools_Base {
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for meta.
 				'relation' => 'AND',
 				array(
 					'key'     => EFML_POST_META_URL,
@@ -656,7 +656,7 @@ class Export extends Tools_Base {
 			'taxonomy'     => Taxonomy::get_instance()->get_name(),
 			'hide_empty'   => false,
 			'count'        => false,
-			'meta_key'     => 'efml_export',
+			'meta_key'     => 'efml_export',  // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Filter for meta.
 			'meta_compare' => 'EXISTS',
 			'fields'       => 'ids',
 		);
@@ -1547,7 +1547,7 @@ class Export extends Tools_Base {
 			$query   = array(
 				'post_type'   => 'attachment',
 				'post_status' => array( 'inherit', 'trash' ),
-				'meta_query'  => array(
+				'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 					'relation' => 'AND',
 					array(
 						'key'   => '_wp_attached_file',

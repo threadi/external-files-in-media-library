@@ -26,6 +26,7 @@ parameters:
     - "#EDLFW_HASH#"
   earlyTerminatingFunctionCalls:
     - wp_send_json
+    - wp_send_json_error
   paths:
     - app
     - external-files-in-media-library.php

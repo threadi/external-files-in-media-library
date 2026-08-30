@@ -276,7 +276,7 @@ class Real_Import extends Extension_Base {
 
 		// add link to global settings.
 		if ( current_user_can( 'manage_options' ) ) {
-			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) .'"><span class="dashicons dashicons-admin-generic"></span></a>';
+			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
 		}
 
 		// end the text.

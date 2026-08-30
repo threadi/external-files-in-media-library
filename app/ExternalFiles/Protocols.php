@@ -79,8 +79,8 @@ class Protocols {
 	 *
 	 * This can be used before an external file object for this URL exist.
 	 *
-	 * @param string $url The URL to check.
-	 * @param array  $fields List of fields to use.
+	 * @param string              $url The URL to check.
+	 * @param array<string,mixed> $fields List of fields to use.
 	 *
 	 * @return Protocol_Base|false
 	 */

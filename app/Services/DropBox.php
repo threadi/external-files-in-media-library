@@ -382,7 +382,7 @@ class DropBox extends Service_Base implements Service {
 		check_ajax_referer( 'efml-dropbox-save-access-token', 'nonce' );
 
 		// check capability.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -664,8 +664,14 @@ class DropBox extends Service_Base implements Service {
 	 * @return bool
 	 */
 	public function delete_access_token(): bool {
-		// delete it global.
-		update_option( 'efml_dropbox_access_tokens', '' );
+		// save it global, if this is enabled.
+		if ( $this->is_mode( 'global' ) ) {
+			// delete it global.
+			update_option( 'efml_dropbox_access_tokens', '' );
+
+			// we are done, do nothing more.
+			return true;
+		}
 
 		// get the user.
 		$user = $this->get_user();
@@ -691,7 +697,7 @@ class DropBox extends Service_Base implements Service {
 		check_ajax_referer( 'efml-dropbox-remove-access-token', 'nonce' );
 
 		// check capability.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -715,7 +721,6 @@ class DropBox extends Service_Base implements Service {
 
 			// return this message.
 			wp_send_json_error( array( 'detail' => $dialog ) );
-			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
 		// create the dialog.
@@ -1221,7 +1226,7 @@ class DropBox extends Service_Base implements Service {
 
 		// get all users with a token and delete their tokens.
 		$query = array(
-			'meta_query' => array(
+			'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => 'efml_dropbox_api_key',
 					'compare' => 'EXISTS',

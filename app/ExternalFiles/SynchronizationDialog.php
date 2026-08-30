@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Intervals;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use WP_Term;
 
@@ -171,7 +172,7 @@ class SynchronizationDialog {
 
 		// create the interval field.
 		$form = '<div><label for="interval">' . __( 'Choose an interval:', 'external-files-in-media-library' ) . '</label><select id="interval">';
-		foreach ( Helper::get_intervals() as $name => $label ) {
+		foreach ( Intervals::get_instance()->get_intervals_for_settings() as $name => $label ) {
 			// bail if this is the disabled entry.
 			if ( 'eml_disable_check' === $name ) {
 				continue;

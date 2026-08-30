@@ -113,7 +113,7 @@ class ExportDialog {
 			'title'     => __( 'Configuration could not be loaded', 'external-files-in-media-library' ),
 			'texts'     => array(
 				'<p><strong>' . __( 'The export configuration for this target could not be loaded.', 'external-files-in-media-library' ) . '</strong></p>',
-				'<p>' . __( 'Check the permissions in the plugin settings.', 'external-files-in-media-library' ) . '</p>'
+				'<p>' . __( 'Check the permissions in the plugin settings.', 'external-files-in-media-library' ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

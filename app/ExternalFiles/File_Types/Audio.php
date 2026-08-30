@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle audios.
@@ -58,7 +57,6 @@ class Audio extends File_Types_Base {
 	 * Output of proxied file.
 	 *
 	 * @return void
-	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
 	 */
 	public function get_proxied_file(): void {
 		// bail if no file is set.
@@ -69,30 +67,8 @@ class Audio extends File_Types_Base {
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
-		// set start byte.
-		$start = 0;
-
-		// set end byte to size - 1.
-		$end = $external_file_obj->get_filesize() - 1;
-
-		// set content type in the header.
-		header( 'Content-type: ' . $external_file_obj->get_mime_type() );
-
-		// set ranges.
-		header( 'Accept-Ranges: bytes' );
-
-		// set bytes for response.
-		header( 'Content-Range: bytes ' . ( $start - $end / $external_file_obj->get_filesize() ) );
-
-		// set max length.
-		header( 'Content-Length: ' . $external_file_obj->get_filesize() );
-
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// return file content via WP filesystem.
-		echo $wp_filesystem->get_contents( $external_file_obj->get_cache_file() ); // phpcs:ignore WordPress.Security.EscapeOutput
-		exit;
+		// deliver this file.
+		$this->deliver_file( $external_file_obj->get_cache_file() );
 	}
 
 	/**
@@ -134,7 +110,7 @@ class Audio extends File_Types_Base {
 	}
 
 	/**
-	 * Set meta-data for the file if it is hosted extern and with proxy.
+	 * Set metadata for the file if it is hosted extern and with proxy.
 	 *
 	 * @return void
 	 */
@@ -161,11 +137,20 @@ class Audio extends File_Types_Base {
 		do_action_deprecated( 'eml_audio_meta_data', array( $external_file_obj ), '5.0.0', 'efml_audio_meta_data' );
 
 		/**
-		 * Run additional tasks to add custom meta data on external hostet files.
+		 * Run additional tasks to add custom metadata on external hostet files.
 		 *
 		 * @since 3.1.0 Available since 3.1.0.
 		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File $external_file_obj The external files object.
 		 */
 		do_action( 'efml_audio_meta_data', $external_file_obj );
+	}
+
+	/**
+	 * Return whether files of this type should be delivered with range support.
+	 *
+	 * @return bool
+	 */
+	protected function supports_ranges(): bool {
+		return true;
 	}
 }

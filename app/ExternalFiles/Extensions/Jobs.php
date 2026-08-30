@@ -198,7 +198,7 @@ class Jobs extends Extension_Base {
 
 		// extend the filter.
 		$query->set(
-			'meta_query',
+			'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for meta.
 			array_merge(
 				$meta_query,
 				array(

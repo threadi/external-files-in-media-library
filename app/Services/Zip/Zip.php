@@ -360,6 +360,11 @@ class Zip extends Zip_Base {
 		// get content type of this file.
 		$mime_type = wp_check_filetype( $file_stat['name'] );
 
+		// bail if mime type is not given.
+		if ( empty( $mime_type['type'] ) ) {
+			return array();
+		}
+
 		// collect the response array.
 		$results = array(
 			'title'     => basename( $file_stat['name'] ),

@@ -129,4 +129,16 @@ class Synchronization extends Schedules_Base {
 	public function is_enabled(): bool {
 		return 'eml_disable_check' !== get_option( $this->get_interval_option_name() ) && ! empty( $this->get_args() );
 	}
+
+	/**
+	 * Return whether this schedule can be reconciled automatically.
+	 *
+	 * Schedules which use arguments may exist multiple times under the same hook
+	 * name. A single object cannot represent them, so they manage themselves.
+	 *
+	 * @return bool
+	 */
+	public function is_reconcilable(): bool {
+		return false;
+	}
 }

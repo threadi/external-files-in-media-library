@@ -20,6 +20,13 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
  */
 class Url_Result extends Result_Base {
 	/**
+	 * The internal name of the object.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'url_result';
+
+	/**
 	 * The error text.
 	 *
 	 * @var string
@@ -155,5 +162,36 @@ class Url_Result extends Result_Base {
 	 */
 	public function set_attachment_id( int $attachment_id ): void {
 		$this->attachment_id = $attachment_id;
+	}
+
+	/**
+	 * Return the persistable state of this object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_state(): array {
+		return array_merge(
+			parent::get_state(),
+			array(
+				'url'           => $this->get_url(),
+				'attachment_id' => $this->get_attachment_id(),
+				'result_text'   => $this->get_result_text(),
+			)
+		);
+	}
+
+	/**
+	 * Restore this object from a persisted state.
+	 *
+	 * @param array<string,mixed> $state The state to restore.
+	 *
+	 * @return void
+	 */
+	public function set_state( array $state ): void {
+		parent::set_state( $state );
+
+		$this->set_url( (string) ( ! empty( $state['url'] ) ? $state['url'] : '' ) );
+		$this->set_attachment_id( absint( $state['attachment_id'] ?? 0 ) );
+		$this->set_result_text( (string) ( ! empty( $state['result_text'] ) ? $state['result_text'] : '' ) );
 	}
 }

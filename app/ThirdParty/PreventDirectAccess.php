@@ -61,6 +61,7 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
+		// use hooks.
 		add_action( 'admin_head', array( $this, 'add_style' ) );
 	}
 
@@ -70,7 +71,14 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function add_style(): void {
-		// get external files as list.
+		global $pagenow;
+
+		// bail if we are not on "upload.php".
+		if ( 'upload.php' !== $pagenow ) {
+			return;
+		}
+
+		// get all external files as list.
 		$external_files = Files::get_instance()->get_files();
 
 		// output the custom CSS.

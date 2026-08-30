@@ -22,6 +22,7 @@ use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Tables\Logs;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -437,6 +438,18 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'efml_max_age_log_entries' );
+		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 50 );
+		$setting->set_field(
+			array(
+				'type'  => 'Number',
+				'title' => __( 'Max. Age for log entries in days', 'external-files-in-media-library' ),
+			)
+		);
+
+		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_timeout' );
 		$setting->set_section( $advanced_tab_advanced );
 		$setting->set_type( 'integer' );
@@ -487,7 +500,7 @@ class Settings {
 		$setting->set_field( $field );
 
 		// add a section.
-		$import_export_section = $advanced_tab->add_section( 'personio_integration_import_export_section', 20 );
+		$import_export_section = $advanced_tab->add_section( 'efml_import_export_section', 20 );
 		$import_export_section->set_title( __( 'Secure settings', 'external-files-in-media-library' ) );
 		if ( method_exists( $import_export_section, 'set_collapsed' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$import_export_section->set_collapsed( true );
@@ -527,7 +540,7 @@ class Settings {
 		$setting->set_default( 'classic' );
 		$field = new Select( $this->get_settings_obj() );
 		$field->set_title( __( 'Settings view', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'Choose the view for the settings of this plugin. DataView is only available for WordPress 7 or newer.', 'personio-integration-light' ) );
+		$field->set_description( __( 'Choose the view for the settings of this plugin. DataView is only available for WordPress 7 or newer.', 'external-files-in-media-library' ) );
 		$field->set_options(
 			array(
 				'classic'  => __( 'Classic', 'external-files-in-media-library' ),
@@ -943,10 +956,10 @@ class Settings {
 	}
 
 	/**
-	 * Check the proxy path if it has been changed.
+	 * Validate and apply the new proxy path.
 	 *
-	 * @param string $new_value The old value.
-	 * @param string $old_value The new value.
+	 * @param string $new_value The new value.
+	 * @param string $old_value The old value.
 	 *
 	 * @return string
 	 */
@@ -956,22 +969,61 @@ class Settings {
 			return $old_value;
 		}
 
-		// create the absolute path for new value.
-		$new_value_path = trailingslashit( WP_CONTENT_DIR ) . $new_value;
+		// normalize the value: no slashes at the beginning, exactly one at the end.
+		$new_value = trailingslashit( ltrim( wp_normalize_path( trim( $new_value ) ), '/' ) );
 
-		// create the absolute path for old value.
-		$old_value_path = trailingslashit( WP_CONTENT_DIR ) . $old_value;
+		// bail if the value is empty - this would use the content directory itself.
+		if ( '/' === $new_value ) {
+			add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The proxy path must not be empty.', 'external-files-in-media-library' ) );
+			return $old_value;
+		}
+
+		// build the absolute paths.
+		$content_path   = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+		$new_value_path = $content_path . $new_value;
+		$old_value_path = $content_path . trailingslashit( ltrim( wp_normalize_path( $old_value ), '/' ) );
+
+		// bail if the resulting path would leave the content directory.
+		if ( ! str_starts_with( $new_value_path, $content_path ) || str_contains( $new_value, '../' ) ) {
+			add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The proxy path must be located inside the wp-content directory.', 'external-files-in-media-library' ) );
+			return $old_value;
+		}
 
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// bail if new path already exist.
+		// bail if new path already exists - we would not know what else is stored there.
 		if ( $wp_filesystem->exists( $new_value_path ) ) {
+			add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The given proxy path already exists. Please choose a directory which does not exist yet.', 'external-files-in-media-library' ) );
 			return $old_value;
 		}
 
+		// just create the new directory if the old one does not exist (e.g. after a manual deletion).
+		if ( ! $wp_filesystem->exists( $old_value_path ) ) {
+			if ( false === $wp_filesystem->mkdir( $new_value_path ) ) {
+				add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The new proxy directory could not be created. Please check the file permissions of your wp-content directory.', 'external-files-in-media-library' ) );
+				return $old_value;
+			}
+
+			// secure the new directory.
+			Proxy::get_instance()->secure_cache_directory( $new_value_path );
+
+			// return the value with the new path.
+			return $new_value;
+		}
+
 		// move all files from old to new directory.
-		$wp_filesystem->move( $old_value_path, $new_value_path );
+		if ( false === $wp_filesystem->move( $old_value_path, $new_value_path ) ) {
+			add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The cached files could not be moved to the new proxy directory. The setting has not been changed.', 'external-files-in-media-library' ) );
+			return $old_value;
+		}
+
+		// secure the new directory, as the protection files might not have been moved.
+		Proxy::get_instance()->secure_cache_directory( $new_value_path );
+
+		// log this event.
+		/* translators: %1$s will be replaced by the old path, %2$s by the new path. */
+		Log::get_instance()->create( sprintf( __( 'Proxy path has been changed from %1$s to %2$s.', 'external-files-in-media-library' ), '<code>' . $old_value . '</code>', '<code>' . $new_value . '</code>' ), '', 'info', 2 );
 
 		// return the new value.
 		return $new_value;
