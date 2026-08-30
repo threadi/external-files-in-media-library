@@ -68,18 +68,14 @@ class Image extends File_Types_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// return header.
-		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
-		header( 'Content-Disposition: inline; filename="' . basename( $external_file_obj->get_url() ) . '"' );
-		header( 'Content-Length: ' . wp_filesize( $cached_file ) );
-
-		// return file content via WP filesystem.
+		// send optimized headers for proxy.
+		$this->send_proxy_headers( $cached_file );
 		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput
 		exit;
 	}
 
 	/**
-	 * Set meta-data for the file if it is hosted extern and with proxy.
+	 * Set metadata for the file if it is hosted extern and with proxy.
 	 *
 	 * @return void
 	 */

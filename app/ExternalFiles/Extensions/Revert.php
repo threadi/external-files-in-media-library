@@ -197,7 +197,7 @@ class Revert extends Extension_Base {
 			'post_type'      => 'attachment',
 			'post_status'    => 'any',
 			'posts_per_page' => -1,
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for meta.
 				array(
 					'key'     => 'eml_job_id',
 					'value'   => $job_id,

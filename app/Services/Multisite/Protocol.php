@@ -119,7 +119,7 @@ class Protocol extends Protocol_Base {
 		$query  = array(
 			'post_type'   => 'attachment',
 			'post_status' => 'any',
-			'meta_query'  => array(
+			'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for meta.
 				array(
 					'key'     => '_wp_attached_file',
 					'value'   => $path,

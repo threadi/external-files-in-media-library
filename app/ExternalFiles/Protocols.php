@@ -79,11 +79,12 @@ class Protocols {
 	 *
 	 * This can be used before an external file object for this URL exist.
 	 *
-	 * @param string $url The URL to check.
+	 * @param string              $url The URL to check.
+	 * @param array<string,mixed> $fields List of fields to use.
 	 *
 	 * @return Protocol_Base|false
 	 */
-	public function get_protocol_object_for_url( string $url ): Protocol_Base|false {
+	public function get_protocol_object_for_url( string $url, array $fields = array() ): Protocol_Base|false {
 		// bail if no URL is given.
 		if ( empty( $url ) ) {
 			return false;
@@ -115,6 +116,9 @@ class Protocols {
 				Log::get_instance()->create( sprintf( __( 'Protocol %1$s is not a "Protocol_Base" object.', 'external-files-in-media-library' ), ' <code>' . esc_html( $protocol_name ) . '</code>' ), esc_html( $url ), 'error', 2 );
 				continue;
 			}
+
+			// set the fields.
+			$obj->set_fields( $fields );
 
 			// bail if protocol could not be used.
 			if ( ! $obj->is_available() ) {
@@ -166,6 +170,10 @@ class Protocols {
 		if ( ! empty( $service_name ) ) {
 			$protocol_obj = $this->get_protocol_by_name( $service_name, $external_file );
 			if ( $protocol_obj instanceof Protocol_Base ) {
+				// configure its fields.
+				$protocol_obj->set_fields( $external_file->get_fields() );
+
+				// return the resulting object.
 				return $protocol_obj;
 			}
 		}
@@ -185,7 +193,7 @@ class Protocols {
 				continue;
 			}
 
-			// configure its fields, even it nothing are set.
+			// configure its fields.
 			$protocol_obj->set_fields( $external_file->get_fields() );
 
 			// bail if URL is compatible.

@@ -28,6 +28,7 @@ use ExternalFilesInMediaLibrary\Services\HelloDolly;
 use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\Services\WebDav;
+use Throwable;
 use WP_REST_Request;
 use WP_Screen;
 use WP_Term;
@@ -331,64 +332,66 @@ class Directory_Listing {
 			return;
 		}
 
-		// get the method object by its name.
-		$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
+		try {
 
-		// bail if no object could be loaded.
-		if ( ! $directory_listing_obj instanceof Directory_Listing_Base ) {
-			$this->show_error( '<p>' . __( 'Requested service for external files could not be found!', 'external-files-in-media-library' ) . '</p>' );
-			return;
-		}
+			// get the method object by its name.
+			$directory_listing_obj = Services::get_instance()->get_service_by_name( $method );
 
-		// get the service object for this listing and bail if it is a plugin.
-		if ( method_exists( $directory_listing_obj, 'is_plugin' ) && $directory_listing_obj->is_plugin() ) {
-			$this->show_error( '<p>' . __( 'Requested service is a plugin, that is not installed and activate!', 'external-files-in-media-library' ) . '</p>' );
-			return;
-		}
-
-		// bail if user has no capability for it.
-		if ( ! current_user_can( 'efml_cap_' . $directory_listing_obj->get_name() ) ) {
-			$this->show_error( '<p>' . __( 'Missing permission to use this service for external files! Contact your administrator for clarification.', 'external-files-in-media-library' ) . '</p>' );
-			return;
-		}
-
-		// set nonce on listing object configuration.
-		$config          = $directory_listing_obj->get_config();
-		$config['nonce'] = wp_create_nonce( $this->get_nonce_name() );
-
-		// get directory to connect to from request.
-		$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
-		if ( $term_id > 0 ) {
-			// get the user_ids which saved this entry.
-			$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
-
-			// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
-			if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
-				$this->show_error( '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
+			// bail if no object could be loaded.
+			if ( ! $directory_listing_obj instanceof Directory_Listing_Base ) {
+				$this->show_error( '<p>' . __( 'Requested service for external files could not be found!', 'external-files-in-media-library' ) . '</p>' );
 				return;
 			}
 
-			// set term in the config.
-			$config['term'] = $term_id;
-
-			// get the URL to load.
-			$url = get_term_meta( $term_id, 'path', true );
-
-			// bail if URL is not a string.
-			if ( ! is_string( $url ) ) {
-				$this->show_error( '<p>' . __( 'URL of saved external source could not be loaded.', 'external-files-in-media-library' ) . '</p>' );
+			// get the service object for this listing and bail if it is a plugin.
+			if ( method_exists( $directory_listing_obj, 'is_plugin' ) && $directory_listing_obj->is_plugin() ) {
+				$this->show_error( '<p>' . __( 'Requested service is a plugin, that is not installed and activate!', 'external-files-in-media-library' ) . '</p>' );
 				return;
 			}
 
-			// update the directory to load.
-			$config['directory'] = $url;
-		}
+			// bail if user has no capability for it.
+			if ( ! current_user_can( 'efml_cap_' . $directory_listing_obj->get_name() ) ) {
+				$this->show_error( '<p>' . __( 'Missing permission to use this service for external files! Contact your administrator for clarification.', 'external-files-in-media-library' ) . '</p>' );
+				return;
+			}
 
-		// log the used credentials in debug mode.
-		Log::get_instance()->create( __( 'Used configuration for directory listing:', 'external-files-in-media-library' ) . ' <code>' . wp_strip_all_tags( Helper::get_json( $config ) ) . '</code>', '', 'info', 2 );
+			// set nonce on listing object configuration.
+			$config          = $directory_listing_obj->get_config();
+			$config['nonce'] = wp_create_nonce( $this->get_nonce_name() );
 
-		// output.
-		?>
+			// get directory to connect to from request.
+			$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
+			if ( $term_id > 0 ) {
+				// get the user_ids which saved this entry.
+				$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
+
+				// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
+				if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
+					$this->show_error( '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
+					return;
+				}
+
+				// set term in the config.
+				$config['term'] = $term_id;
+
+				// get the URL to load.
+				$url = get_term_meta( $term_id, 'path', true );
+
+				// bail if URL is not a string.
+				if ( ! is_string( $url ) ) {
+					$this->show_error( '<p>' . __( 'URL of saved external source could not be loaded.', 'external-files-in-media-library' ) . '</p>' );
+					return;
+				}
+
+				// update the directory to load.
+				$config['directory'] = $url;
+			}
+
+			// log the used credentials in debug mode.
+			Log::get_instance()->create( __( 'Used configuration for directory listing:', 'external-files-in-media-library' ) . ' <code>' . wp_strip_all_tags( Helper::get_json( $config ) ) . '</code>', '', 'info', 2 );
+
+			// output.
+			?>
 		<div class="wrap">
 			<h1 class="wp-heading-inline"><?php echo esc_html( $directory_listing_obj->get_title() ); ?></h1>
 			<?php
@@ -404,7 +407,12 @@ class Directory_Listing {
 			}
 			?>
 		</div>
-		<?php
+			<?php
+		} catch ( Throwable $e ) {
+			Log::get_instance()->create( __( 'Server-side error during initialization of directory listing:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
+			/* translators: %1$s will be replaced by a URL. */
+			echo '<div class="wrap"><div class="eml_add_external_files_wrapper"><p>' . wp_kses_post( sprintf( __( 'The external source could not be loaded. See <a href="%1$s">log</a> for details.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_logs' ) ) ) . '</p></div></div>';
+		}
 	}
 
 	/**
@@ -869,7 +877,7 @@ class Directory_Listing {
 		check_ajax_referer( 'efml-change-term-name', 'nonce' );
 
 		// check capability.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['edit_terms'] ) ) {
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
 			wp_send_json( array() );
 		}
 

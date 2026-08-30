@@ -91,24 +91,29 @@ jQuery(document).ready(function($) {
             efml_create_dialog( dialog_config );
           },
           success: function (response) {
-            let dialog_config = {
-              detail: {
-                className: 'eml',
-                title: efmlJsVars.title_hosting_changed,
-                texts: [
-                  '<p>' + efmlJsVars.text_hosting_has_been_changed + '</p>'
-                ],
-                buttons: [
-                  {
-                    'action': 'location.reload();',
-                    'variant': 'primary',
-                    'text': efmlJsVars.lbl_ok
-                  },
-                ]
+            if ( response.state === 'success' ) {
+              let dialog_config = {
+                detail: {
+                  className: 'eml',
+                  title: efmlJsVars.title_hosting_changed,
+                  texts: [
+                    '<p>' + efmlJsVars.text_hosting_has_been_changed + '</p>'
+                  ],
+                  buttons: [
+                    {
+                      'action': 'location.reload();',
+                      'variant': 'primary',
+                      'text': efmlJsVars.lbl_ok
+                    },
+                  ]
+                }
               }
+              efml_create_dialog( dialog_config );
+              obj.html(response.message);
             }
-            obj.html(response.message);
-            efml_create_dialog( dialog_config );
+            else {
+              efml_ajax_error_dialog( response.message );
+            }
           }
         });
     })

@@ -53,7 +53,7 @@ class Helper extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_get_intervals(): void {
-		$intervals = \ExternalFilesInMediaLibrary\Plugin\Helper::get_intervals();
+		$intervals = \ExternalFilesInMediaLibrary\Plugin\Intervals::get_instance()->get_intervals_for_settings();
 		$this->assertIsArray( $intervals );
 		$this->assertArrayHasKey( 'eml_disable_check', $intervals );
 	}

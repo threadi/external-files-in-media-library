@@ -140,11 +140,14 @@ class Imgur implements Service {
 			return $results;
 		}
 
-		// list of "Imgur"-URLs, which cannot be used for <img>-elements.
+		// List of "Imgur"-URLs, which cannot be used for <img>-elements.
+		// These are compared against, not loaded - this is not offloaded content.
+		// phpcs:disable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 		$blacklist = array(
 			'http://imgur.com',
 			'https://imgur.com',
 		);
+		// phpcs:enable PluginCheck.CodeAnalysis.Offloading.OffloadedContent
 
 		// check the URL against the blacklist.
 		$match = false;

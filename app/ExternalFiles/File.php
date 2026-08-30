@@ -240,13 +240,13 @@ class File {
 		);
 		wp_update_post( $query );
 
-		// get the meta-data for this attachment.
+		// get the metadata for this attachment.
 		$meta = (array) wp_get_attachment_metadata( $this->get_id(), true );
 
 		// set the mime type.
 		$meta['mime_type'] = $mime_type;
 
-		// save the updated meta-data.
+		// save the updated metadata.
 		wp_update_attachment_metadata( $this->get_id(), $meta );
 	}
 
@@ -480,6 +480,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'Protocol handler for the given URL could not be found!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -495,6 +498,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type for the file could not be detected!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -503,6 +509,9 @@ class File {
 		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 			// other mime-type received => do not proxy this file.
 			return;
@@ -520,6 +529,9 @@ class File {
 				// add log entry.
 				Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
 
+				// remove our filter.
+				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 				// do nothing more.
 				return;
 			}
@@ -535,6 +547,9 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'File is empty! Found during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
@@ -545,6 +560,9 @@ class File {
 		if ( $binary_mime_type !== $file_data['mime-type'] ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 			// do nothing more.
 			return;
@@ -572,12 +590,18 @@ class File {
 			// add log entry.
 			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
 			// do nothing more.
 			return;
 		}
 
 		// add log entry.
 		Log::get_instance()->create( __( 'File has been added to proxy cache.', 'external-files-in-media-library' ), $this->get_url( true ), 'info', 2 );
+
+		// remove our filter.
+		remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
 		// save that file has been cached.
 		update_post_meta( $this->get_id(), 'eml_proxied', time() );
@@ -761,6 +785,15 @@ class File {
 			return false;
 		}
 
+		// bail if protocol does not support external hosting.
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Files from this service must remain saved external.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
 		// get the upload directory settings.
 		$upload_dir = wp_get_upload_dir();
 
@@ -773,12 +806,14 @@ class File {
 			return false;
 		}
 
+		$instance = $this;
 		/**
 		 * Run tasks before we switch a file to local.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
+		 * @param File $instance The file object.
 		 */
-		do_action( 'efml_switch_to_local_before' );
+		do_action( 'efml_switch_to_local_before', $instance );
 
 		// prevent duplicate check for this file.
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_checks' ), 10, 2 );
@@ -845,10 +880,10 @@ class File {
 			return false;
 		}
 
-		// get meta-data from uploaded temporary file.
+		// get metadata from uploaded temporary file.
 		$temp_meta_data = wp_get_attachment_metadata( $temp_attachment_id );
 
-		// create an array for meta-data of we got "false" from metadata request.
+		// create an array for metadata of we got "false" from metadata request.
 		if ( ! is_array( $temp_meta_data ) ) {
 			$temp_meta_data = array();
 		}
@@ -927,8 +962,9 @@ class File {
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param int $attachment_id The attachment ID.
+		 * @param File $instance The file object.
 		 */
-		do_action( 'efml_switch_to_local_after', $this->get_id() );
+		do_action( 'efml_switch_to_local_after', $this->get_id(), $instance );
 
 		// return true if switch was successfully.
 		return true;
@@ -938,33 +974,35 @@ class File {
 	 * Switch hosting of this file to external.
 	 *
 	 * Only if used protocol supports this.
-	 * And no credentials are used.
 	 *
 	 * @return bool
 	 */
 	public function switch_to_external(): bool {
-		// bail if credentials are used.
-		if ( $this->has_credentials() ) {
-			return false;
-		}
-
 		// get protocol object for this file.
 		$protocol_handler_obj = $this->get_protocol_handler_obj();
 
 		// bail if protocol handler could not be loaded.
 		if ( ! $protocol_handler_obj ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Protocol handler for URL could not be found.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
 		// bail if protocol does not support external hosting.
-		if ( $protocol_handler_obj->should_be_saved_local() ) {
+		if ( ! $protocol_handler_obj->can_change_hosting() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Files from this service must remain saved locally.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
 		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 
-		// bail if meta-data could not be loaded.
+		// bail if metadata could not be loaded.
 		if ( ! $meta_data ) {
 			$meta_data = array();
 		}
@@ -982,6 +1020,10 @@ class File {
 
 		// bail if file is not a string.
 		if ( ! is_string( $file ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Could not read file.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// do nothing more.
 			return false;
 		}
 

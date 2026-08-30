@@ -81,10 +81,8 @@ class Pdf extends File_Types_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// return header.
-		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
-		header( 'Content-Disposition: inline; filename="' . basename( $external_file_obj->get_url() ) . '"' );
-		header( 'Content-Length: ' . wp_filesize( $cached_file ) );
+		// send optimized headers for proxy.
+		$this->send_proxy_headers( $cached_file );
 
 		// return file content via WP filesystem.
 		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput

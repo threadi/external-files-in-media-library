@@ -202,7 +202,7 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Get the handler for this URL depending on its protocol.
 		 */
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url, $fields );
 
 		/**
 		 * Do nothing if URL is using a not supported tcp protocol (event will be logged via @Protocols in detail).
@@ -625,6 +625,9 @@ class Import extends Directory_Listing_Base {
 		if ( $max_execution_time <= 0 ) {
 			return;
 		}
+
+		// check at 80 percent of the max execution time, but never below 5 seconds.
+		$max_execution_time = max( 5, (int) floor( $max_execution_time * 0.8 ) );
 
 		// get the actual runtime.
 		$runtime = microtime( true ) - $this->get_import_start_time();

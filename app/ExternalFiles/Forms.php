@@ -624,7 +624,7 @@ class Forms {
 
 		// if import is not running anymore, build the dialog for the response.
 		$dialog = array();
-		if ( 1 !== $running ) {
+		if ( 0 === $running ) {
 			// collect result text.
 			$text = '';
 

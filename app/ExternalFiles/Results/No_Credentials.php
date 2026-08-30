@@ -17,6 +17,13 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Result_Base;
  */
 class No_Credentials extends Result_Base {
 	/**
+	 * The internal name of the object.
+	 *
+	 * @var string
+	 */
+	protected string $name = 'no_credentials';
+
+	/**
 	 * Constructor for this object.
 	 */
 	public function __construct() {}

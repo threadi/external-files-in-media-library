@@ -219,7 +219,7 @@ class Files {
 		$query = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
@@ -331,7 +331,7 @@ class Files {
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => EFML_POST_META_URL,
 					'value'   => $url,
@@ -379,7 +379,7 @@ class Files {
 			'title'          => $title,
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array(
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => EFML_POST_META_URL,
 					'compare' => 'EXISTS',
@@ -597,7 +597,7 @@ class Files {
 		check_ajax_referer( 'eml-switch-hosting-nonce', 'nonce' );
 
 		// bail if capability is not set.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
 		}
 
@@ -1345,7 +1345,7 @@ class Files {
 
 		// extend the filter.
 		$query->set(
-			'tax_query',
+			'tax_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 			array(
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),

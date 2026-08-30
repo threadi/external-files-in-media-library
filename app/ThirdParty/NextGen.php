@@ -330,6 +330,6 @@ class NextGen extends ThirdParty_Base implements ThirdParty {
 	 */
 	private function get_galleries(): array {
 		global $wpdb;
-		return $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . 'ngg_gallery', ARRAY_A );
+		return $wpdb->get_results( 'SELECT * FROM ' . $wpdb->prefix . 'ngg_gallery', ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 }

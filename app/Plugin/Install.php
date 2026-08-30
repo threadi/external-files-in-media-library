@@ -114,7 +114,7 @@ class Install {
 			$url      = add_query_arg(
 				array(
 					'action'  => 'efml_hide_welcome',
-					'forward' => urlencode( Helper::get_add_media_url() ),
+					'forward' => rawurlencode( Helper::get_add_media_url() ),
 					'nonce'   => wp_create_nonce( 'efml-hide-welcome' ),
 				),
 				get_admin_url() . 'admin.php'
@@ -125,7 +125,7 @@ class Install {
 			$url      = add_query_arg(
 				array(
 					'action'  => 'efml_hide_welcome',
-					'forward' => urlencode( Helper::get_media_library_url() ),
+					'forward' => rawurlencode( Helper::get_media_library_url() ),
 					'nonce'   => wp_create_nonce( 'efml-hide-welcome' ),
 				),
 				get_admin_url() . 'admin.php'
@@ -153,6 +153,9 @@ class Install {
 			$transient_obj->set_prioritized( true );
 			$transient_obj->save();
 		}
+
+		// set flag to enable syncs later.
+		update_option( 'efml_recreate_sync_schedules', 1, false );
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );

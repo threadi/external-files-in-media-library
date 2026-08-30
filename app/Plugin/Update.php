@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Crypt;
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
@@ -19,6 +20,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -66,7 +68,7 @@ class Update {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'init', array( $this, 'run' ) );
+		add_action( 'init', array( $this, 'run' ), 20 );
 	}
 
 	/**
@@ -93,7 +95,7 @@ class Update {
 
 		// compare version if we are not in development-mode.
 		if ( ! Helper::is_development_mode() && version_compare( $installed_plugin_version, $db_plugin_version, '>' ) ) {
-			if ( ! defined( 'EFML_UPDATE_RUNNING ' ) ) {
+			if ( ! defined( 'EFML_UPDATE_RUNNING' ) ) {
 				define( 'EFML_UPDATE_RUNNING', 1 );
 			}
 			if ( version_compare( $db_plugin_version, '2.0.0', '<' ) ) {
@@ -116,6 +118,9 @@ class Update {
 			}
 			if ( version_compare( $db_plugin_version, '5.2.3', '<' ) ) {
 				$this->version523();
+			}
+			if ( version_compare( $db_plugin_version, '5.4.0', '<' ) ) {
+				$this->version540();
 			}
 
 			// save new plugin-version in the DB.
@@ -356,7 +361,7 @@ class Update {
 	}
 
 	/**
-	 * To run on the update to version 5.2.2 or newer.
+	 * To run on the update to version 5.2.3 or newer.
 	 *
 	 * @return void
 	 */
@@ -365,6 +370,53 @@ class Update {
 		$data = get_option( 'efml_dropbox_access_tokens', array() );
 		if ( ! empty( $data ) ) {
 			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+		}
+	}
+
+	/**
+	 * To run on the update to version 5.4.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version540(): void {
+		global $wpdb;
+
+		// update the table structure.
+		Log::get_instance()->install();
+
+		// remove the obsolete unique key on the primary column, if it still exists.
+		$index = $wpdb->get_var( $wpdb->prepare( 'SHOW INDEX FROM ' . $wpdb->prefix . 'eml_logs WHERE Key_name = %s', array( 'id' ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( ! is_null( $index ) ) {
+			$wpdb->query( 'ALTER TABLE ' . $wpdb->prefix . 'eml_logs DROP INDEX `id`' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
+		// get the terms with set interval as < 5.4.0 has it done.
+		$query      = array(
+			'taxonomy'     => Taxonomy::get_instance()->get_name(),
+			'hide_empty'   => false,
+			'count'        => false,
+			'meta_key'     => 'interval', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Filter for meta.
+			'meta_compare' => 'EXISTS',
+			'fields'       => 'ids',
+		);
+		$sync_terms = new WP_Term_Query( $query );
+
+		// bail if no terms could be loaded.
+		if ( is_array( $sync_terms->terms ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			// update their settings.
+			foreach ( $sync_terms->terms as $term_id ) {
+				// get the schedule object for this term.
+				$schedule_obj = Synchronization::get_instance()->get_schedule_by_term_id( $term_id );
+
+				// bail if this term does not have a schedule.
+				if ( ! $schedule_obj instanceof Schedules\Synchronization ) {
+					continue;
+				}
+
+				// set the new state.
+				update_term_meta( $term_id, 'sync', 1 );
+			}
 		}
 	}
 }

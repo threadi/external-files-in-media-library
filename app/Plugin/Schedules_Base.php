@@ -107,12 +107,48 @@ class Schedules_Base {
 	/**
 	 * Install this schedule, if it does not exist atm.
 	 *
-	 * @return void
+	 * @return bool
 	 */
-	public function install(): void {
-		if ( ! wp_next_scheduled( $this->get_name(), $this->get_args() ) ) { // @phpstan-ignore argument.type
-			wp_schedule_event( time(), $this->get_interval(), $this->get_name(), $this->get_args(), true ); // @phpstan-ignore argument.type
+	public function install(): bool {
+		// determine the interval to use: validated against the registered
+		// cron-schedules, with a fallback to the default if it is unknown.
+		$interval = $this->get_scheduled_interval();
+
+		// if the schedule already exists, only (re)schedule it if its interval
+		// changed - otherwise there is nothing to do.
+		if ( wp_next_scheduled( $this->get_name(), $this->get_args() ) ) { // @phpstan-ignore argument.type
+			// the recurrence currently stored in WP-cron for this event.
+			$current_interval = wp_get_schedule( $this->get_name(), $this->get_args() ); // @phpstan-ignore argument.type
+
+			// nothing to do if the interval is unchanged.
+			if ( $current_interval === $interval ) {
+				return true;
+			}
+
+			// the interval changed: remove the existing event so it is recreated
+			// below with the new interval. wp_schedule_event() would otherwise
+			// refuse to change the interval of an already-scheduled event.
+			$this->delete();
+
+			// log the re-schedule.
+			/* translators: %1$s will be replaced by the name of the schedule, %2$s by the old interval, %3$s by the new interval. */
+			Log::get_instance()->create( sprintf( __( 'Interval of schedule %1$s changed from %2$s to %3$s - rescheduling.', 'external-files-in-media-library' ), $this->get_name(), (string) $current_interval, $interval ), '', 'info', 1 );
 		}
+
+		// create the schedule.
+		$result = wp_schedule_event( time(), $interval, $this->get_name(), $this->get_args(), true ); // @phpstan-ignore argument.type
+
+		// log event if the schedule could not be created.
+		if ( is_wp_error( $result ) ) { // @phpstan-ignore function.impossibleType
+			/* translators: %1$s will be replaced by the name of the schedule. */
+			Log::get_instance()->create( sprintf( __( 'Error during creation of schedule %1$s:', 'external-files-in-media-library' ), $this->get_name() ) . ' <code>' . Helper::get_json( $result->get_error_messages() ) . '</code>', '', 'error' );
+
+			// return false as an error occurred.
+			return false;
+		}
+
+		// return true as anything was ok.
+		return true;
 	}
 
 	/**
@@ -121,7 +157,13 @@ class Schedules_Base {
 	 * @return void
 	 */
 	public function delete(): void {
-		wp_clear_scheduled_hook( $this->get_name(), $this->get_args() ); // @phpstan-ignore argument.type
+		// delete the schedule.
+		$result = wp_clear_scheduled_hook( $this->get_name(), $this->get_args(), true ); // @phpstan-ignore argument.type
+
+		// log event if the schedule could not be deleted.
+		if ( is_wp_error( $result ) ) { // @phpstan-ignore function.impossibleType
+			Log::get_instance()->create( __( 'Error during deleting of schedule:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $result->get_error_message() ) . '</code>', '', 'error' );
+		}
 	}
 
 	/**
@@ -229,5 +271,63 @@ class Schedules_Base {
 	 */
 	public function get_default_interval(): string {
 		return $this->default_interval;
+	}
+
+	/**
+	 * Return the interval to schedule this event with.
+	 *
+	 * @return string
+	 */
+	protected function get_scheduled_interval(): string {
+		// get the interval of this schedule.
+		$interval = $this->get_interval();
+
+		// get all schedules.
+		$schedules = Intervals::get_instance()->get_intervals_for_settings();
+
+		// use the configured interval if it is registered.
+		if ( isset( $schedules[ $interval ] ) ) {
+			return $interval;
+		}
+
+		// otherwise fall back to the class default, but only if that one is
+		// actually registered. If neither is available we keep the configured
+		// value and let wp_schedule_event() report the error (as before).
+		if ( isset( $this->default_interval, $schedules[ $this->default_interval ] ) && '' !== $this->default_interval ) {
+			// log the fallback so the misconfiguration is visible.
+			/* translators: %1$s will be replaced by the invalid interval, %2$s by the name of the schedule, %3$s by the fallback interval. */
+			Log::get_instance()->create( sprintf( __( 'The configured interval %1$s for schedule %2$s is not registered - falling back to %3$s.', 'external-files-in-media-library' ), '<code>' . $interval . '</code>', '<code>' . $this->get_name() . '</code>', '<code>' . $this->default_interval . '</code>' ), '', 'info', 1 );
+
+			// return the default interval.
+			return $this->default_interval;
+		}
+
+		// use the configured value if nothing better available.
+		return $interval;
+	}
+
+	/**
+	 * Delete all events of this schedule, regardless of their arguments.
+	 *
+	 * Multiple events may share one hook name with different arguments, e.g. one
+	 * synchronization per external source. delete() only removes the event which
+	 * matches the arguments of this object.
+	 *
+	 * @return void
+	 */
+	public function delete_all_events(): void {
+		wp_unschedule_hook( $this->get_name() );
+	}
+
+	/**
+	 * Return whether this schedule can be reconciled automatically.
+	 *
+	 * Schedules which use arguments may exist multiple times under the same hook
+	 * name. A single object cannot represent them, so they manage themselves.
+	 *
+	 * @return bool
+	 */
+	public function is_reconcilable(): bool {
+		return true;
 	}
 }

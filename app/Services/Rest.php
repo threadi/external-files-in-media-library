@@ -305,6 +305,11 @@ class Rest extends Service_Base implements Service {
 
 			// bail if URL could not be parsed.
 			if ( ! is_array( $parsed_url ) ) {
+				// remove our filter.
+				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+				remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
+
+				// return an empty array as we read nothing.
 				return array();
 			}
 
@@ -334,6 +339,10 @@ class Rest extends Service_Base implements Service {
 
 				// log this event.
 				Log::get_instance()->create( __( 'No WordPress REST API appears to be available at the specified URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+				// remove our filter.
+				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+				remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
 
 				// return empty array to not load anything more.
 				return array();
@@ -378,6 +387,10 @@ class Rest extends Service_Base implements Service {
 
 				// log this event.
 				Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>', $directory, 'error' );
+
+				// remove our filter.
+				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+				remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
 
 				// return empty array to not load anything more.
 				return array();
@@ -454,6 +467,10 @@ class Rest extends Service_Base implements Service {
 			// log this event.
 			Log::get_instance()->create( __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>', $directory, 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+			remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
+
 			// return empty array to not load anything more.
 			return array();
 		}
@@ -497,6 +514,10 @@ class Rest extends Service_Base implements Service {
 
 			// log this event.
 			Log::get_instance()->create( __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ), $directory, 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+			remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
 
 			// return empty array to not load anything more.
 			return array();
@@ -606,9 +627,17 @@ class Rest extends Service_Base implements Service {
 			// log this event.
 			Log::get_instance()->create( __( 'Error occurred during reading the REST API response:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $directory, 'error' );
 
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+			remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
+
 			// return empty array to not load anything more.
 			return array();
 		}
+
+		// remove our filter.
+		remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+		remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
 
 		// return the resulting list.
 		return $listing;
@@ -786,8 +815,8 @@ class Rest extends Service_Base implements Service {
 	/**
 	 * Return the list of files from given REST API-URL.
 	 *
-	 * @param string $directory The given URL.
-	 * @param Http   $http_obj The HTTP object.
+	 * @param string         $directory The given URL.
+	 * @param Protocols\Http $http_obj The HTTP object.
 	 *
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */

@@ -82,10 +82,8 @@ class Zip extends File_Types_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// return header.
-		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
-		header( 'Content-Disposition: inline; filename="' . basename( $external_file_obj->get_url() ) . '"' );
-		header( 'Content-Length: ' . wp_filesize( $cached_file ) );
+		// send optimized headers for proxy.
+		$this->send_proxy_headers( $cached_file );
 
 		// return file content via WP filesystem.
 		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput
@@ -128,5 +126,15 @@ class Zip extends File_Types_Base {
 
 		// compare cache file date with max proxy age.
 		return filemtime( $this->get_file()->get_cache_file() ) < ( time() - absint( get_option( 'eml_zip_proxy_max_age', 168 ) ) * 60 * 60 );
+	}
+
+	/**
+	 * Return the content disposition for files of this type.
+	 *
+	 * @return string
+	 */
+	protected function get_content_disposition(): string {
+		// never render unknown or script-capable types inline.
+		return 'attachment';
 	}
 }

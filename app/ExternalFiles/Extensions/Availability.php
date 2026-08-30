@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Intervals;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -138,7 +139,7 @@ class Availability extends Extension_Base {
 		$field = new Select( $settings_obj );
 		$field->set_title( __( 'Interval for availability check', 'external-files-in-media-library' ) );
 		$field->set_description( $setting->get_help() );
-		$field->set_options( Helper::get_intervals() );
+		$field->set_options( Intervals::get_instance()->get_intervals_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
 		$setting->set_save_callback( array( $this, 'update_interval_setting' ) );
 		$setting->set_field( $field );
