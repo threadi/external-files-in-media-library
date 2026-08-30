@@ -184,20 +184,33 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Added support for image handling through the page builder Brizy
-- Added smoke test to check if fresh released plugin can be activated
-- Added logging of crypt errors
-- Added a hint during loading of the listing
-- Now PHP 8.2 or newer is required
-- Compatible with WordPress 7.1
-- Set refresh of permalinks via notice action on installation
-- Optimized support for plain permalinks with Dropbox
-- Updated dialog lib to 2.0.0
-- Updated directory listing lib to 4.1.3
-- Updated settings lib to 3.1.2
-- Updated crypt lib to 3.0.0
-- Updated all other dependencies
-- Fixed missing psr library in releases
-- Fixed wrong check for capabilities on saving terms as external sources
+- Added our own list of intervals for schedules as expendable objects
+- Added a hook to add custom result handler
+- Added setting for max age of log entries
+- Added new site health check for accessibility of the proxy folder
+- Log any server-side error during loading of a directory
+- Use screen reader text for open new window hint
+- Remove filter to use unsafe URLs after they have been used
+- Videos are not proxied by default anymore to save this space
+- Updated settings and dialog library
+- Optimized some hooks with more parameters
+- Optimized the switch to external hosting incl. more log entries
+- Send optimized HTTP header via proxy
+- Optimized deletion of old log entries
+- Our custom log table is now compatible with strict database systems
+- Secure proxy folder also in versions before 5.2.0
+- Optimized check for max execution time
+- Show the availability of services to export files
+- Do not export not allowed mime types
+- Typos
+- Fixed a wrong placeholder to use an external link to Dropbox
+- Fixed wrong capabilities for some term handlings
+- Fixed check for development mode in WordPress < 6.3
+- Fixed missing set of fields during protocol detection for files
+- Fixed JavaScript to show any error during hosting switch
+- Fixed error in calculation for Audio files in proxy
+- Do not load support for PreventDirectAccess on every page in the backend
+- Fixed export of files to Dropbox
+- Fixed missing thumbnails after image has been uploaded and exported to external service
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
