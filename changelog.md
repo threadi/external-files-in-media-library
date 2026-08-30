@@ -23,6 +23,7 @@
 - Our custom log table is now compatible with strict database systems
 - Secure proxy folder also in versions before 5.2.0
 - Optimized check for max execution time
+- Show the availability of services to export files
 - Typos
 
 ### Fixed
