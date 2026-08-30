@@ -400,6 +400,7 @@ class Protocol_Base {
 	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
+		_doing_it_wrong( '\ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base::get_url_info()', esc_html__( 'Protocol for a service should use its own get_url_info() handler.', 'external-files-in-media-library' ), '5.4.0' );
 		if ( empty( $url ) ) {
 			return array();
 		}

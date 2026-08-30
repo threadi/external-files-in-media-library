@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.4.0] - 30.08.2026
 
 ### Added
 
@@ -23,6 +23,8 @@
 - Our custom log table is now compatible with strict database systems
 - Secure proxy folder also in versions before 5.2.0
 - Optimized check for max execution time
+- Show the availability of services to export files
+- Do not export not allowed mime types
 - Typos
 
 ### Fixed
@@ -34,6 +36,8 @@
 - Fixed JavaScript to show any error during hosting switch
 - Fixed error in calculation for Audio files in proxy
 - Do not load support for PreventDirectAccess on every page in the backend
+- Fixed export of files to Dropbox
+- Fixed missing thumbnails after image has been uploaded and exported to external service
 
 ## [5.3.0] - 16.08.2026
 

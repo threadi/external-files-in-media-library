@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\DropBox;
 use Spatie\Dropbox\Client;
+use Spatie\Dropbox\Exceptions\BadRequest;
 use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
 
 /**
@@ -314,23 +315,15 @@ class Export extends Export_Base {
 	 * @return bool
 	 */
 	public function delete_exported_file( string $url, array $credentials, int $attachment_id ): bool {
-		// get the protocol handler for this URL.
-		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
-
-		// bail if the detected protocol handler is not our own Protocol.
-		if ( ! $protocol_handler_obj instanceof Protocol ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Given path is not a DropBox-URL.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
-		// get the Dropbox path for this file.
+		// get the Dropbox path for this file, saved during the export.
 		$dropbox_path = get_post_meta( $attachment_id, 'efml_dropbox_path', true );
 
-		// bail if path is not set.
-		if ( empty( $dropbox_path ) ) {
+		// bail if no path is saved for this attachment.
+		if ( ! is_string( $dropbox_path ) || '' === $dropbox_path ) {
+			/* translators: %1$d will be replaced by the attachment ID. */
+			Log::get_instance()->create( sprintf( __( 'No DropBox path is saved for attachment %1$d. The file cannot be deleted in DropBox.', 'external-files-in-media-library' ), $attachment_id ), $url, 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
@@ -342,15 +335,29 @@ class Export extends Export_Base {
 
 		// get the shared files to get the public URL of the uploaded file.
 		try {
-			$client = new Client( $dropbox_obj->get_access_token() );
+			$client = $dropbox_obj->get_client();
+
+			// bail if client could not be loaded.
+			if ( ! $client instanceof Client ) {
+				Log::get_instance()->create( __( 'DropBox client could not be loaded. Please check your DropBox connection.', 'external-files-in-media-library' ), $url, 'error' );
+
+				// do nothing more.
+				return false;
+			}
 
 			// delete the file.
 			$client->delete( $dropbox_path );
 		} catch ( Exception $e ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Error occurred during request to delete a file from DropBox:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url, 'error' );
+			// get the message, fall back to the raw response body as Spatie's BadRequest
+			// leaves the message empty if the response is not valid JSON.
+			$message = $e->getMessage();
+			if ( '' === $message && $e instanceof BadRequest ) {
+				$message = (string) $e->response->getBody();
+			}
 
-			// return empty array to not load anything more.
+			// log this event.
+			Log::get_instance()->create( __( 'Error occurred during request to delete a file from DropBox:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $message ) . '</code>', $url, 'error' );
+
 			return false;
 		}
 

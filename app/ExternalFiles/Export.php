@@ -119,7 +119,7 @@ class Export extends Tools_Base {
 
 		// use hooks.
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
-		add_action( 'add_attachment', array( $this, 'export_file_by_upload' ) );
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'export_file_by_upload' ), 20, 2 );
 		add_filter( 'wp_unique_filename', array( $this, 'check_for_exported_filenames' ), 10, 3 );
 		add_action( 'delete_attachment', array( $this, 'delete_exported_file' ) );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'update_attachment_metadata' ), 10, 2 );
@@ -370,6 +370,11 @@ class Export extends Tools_Base {
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			return $this->get_not_supported_hint( $listing_obj );
+		}
+
+		// bail if listing object is disabled.
+		if ( $listing_obj->is_disabled() ) {
+			return $this->get_not_enabled_hint( $listing_obj );
 		}
 
 		// get the export object.
@@ -695,17 +700,44 @@ class Export extends Tools_Base {
 	 *
 	 * @return void
 	 */
-	public function export_file_by_upload( int $attachment_id ): void {
+	/**
+	 * Export a new uploaded file to the enabled external sources.
+	 *
+	 * Runs after WordPress created the metadata for the upload, as the export
+	 * deletes the local files afterward.
+	 *
+	 * @param mixed $metadata The metadata WordPress created for this attachment.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function export_file_by_upload( mixed $metadata, int $attachment_id ): mixed {
 		// bail if sync or import is running.
 		if ( defined( 'EFML_URL_IMPORT_RUNNING' ) || $this->is_sync_running() ) {
-			return;
+			return $metadata;
+		}
+
+		// use an array for the further handling.
+		if ( ! is_array( $metadata ) ) {
+			$metadata = array();
 		}
 
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
-		// export the file (we do not use the response as we are not in user-env atm).
-		$this->export_file( $attachment_id );
+		// save the metadata now, so the cleanup during the export knows which local files exist.
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+
+		// bail if the file has not been exported.
+		if ( ! $this->export_file( $attachment_id ) ) {
+			return $metadata;
+		}
+
+		// remove the sizes, as their local files have been deleted during the export.
+		unset( $metadata['sizes'] );
+
+		// return the metadata WordPress will save now.
+		return $metadata;
 	}
 
 	/**
@@ -728,7 +760,16 @@ class Export extends Tools_Base {
 		// bail if this is already an external file.
 		if ( $external_file_obj->is_valid() ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Given file for export is already saved as external file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error', 0 );
+			Log::get_instance()->create( __( 'Given file for export is already saved as external file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// bail if mime is not allowed.
+		if ( ! $external_file_obj->is_mime_type_allowed() ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Given file uses a mime type, not allowed according to the plugin settings.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error' );
 
 			// do nothing more.
 			return false;
@@ -937,8 +978,14 @@ class Export extends Tools_Base {
 				$meta_data = array();
 			}
 
-			// delete local files.
-			$this->update_attachment_metadata( $meta_data, $external_file_obj->get_id() );
+			// remove the sizes, as their local files will be deleted.
+			unset( $meta_data['sizes'] );
+
+			// save the metadata - this triggers update_attachment_metadata(), which deletes the local files.
+			wp_update_attachment_metadata( $external_file_obj->get_id(), $meta_data );
+
+			// point the attachment at the external URL - after the local files have been removed.
+			update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
 
 			// add this term to the list of export sources of this file.
 			$export_sources = get_post_meta( $external_file_obj->get_id(), 'efml_export_sources', true );
@@ -1254,7 +1301,7 @@ class Export extends Tools_Base {
 		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $attachment_id );
 
-		// bail if meta-data could not be loaded.
+		// bail if metadata could not be loaded.
 		if ( ! is_array( $meta_data ) ) {
 			$meta_data = array();
 		}
@@ -1281,10 +1328,13 @@ class Export extends Tools_Base {
 		}
 
 		// log this event.
-		Log::get_instance()->create( __( 'Cleanup the attachment files starting.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
+		Log::get_instance()->create( __( 'Cleanup the attachment files starting.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2, $file );
 
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
+
+		// remove the sizes from the metadata, as their local files do not exist anymore.
+		unset( $data['sizes'] );
 
 		// get WP_Filesystem.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -1304,7 +1354,7 @@ class Export extends Tools_Base {
 		$wp_filesystem->delete( $path );
 
 		// log this event.
-		Log::get_instance()->create( __( 'Cleanup the attachment files completed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), $file );
+		Log::get_instance()->create( __( 'Cleanup the attachment files completed.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2, $file );
 
 		// return the metadata.
 		return $data;
@@ -2053,5 +2103,38 @@ class Export extends Tools_Base {
 
 		// return the resulting link.
 		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not supported', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
+	}
+
+	/**
+	 * Return the "not enabled" hint for table-view.
+	 *
+	 * @param object|false $listing_obj The used service object.
+	 *
+	 * @return string
+	 */
+	private function get_not_enabled_hint( object|false $listing_obj ): string {
+		// bail if object is not an "Extension_Base" object.
+		if ( ! $listing_obj instanceof Service_Base ) {
+			return '';
+		}
+
+		// create the dialog for sync now.
+		$dialog = array(
+			'className' => 'efml',
+			/* translators: %1$s will be replaced by a title. */
+			'title'     => sprintf( __( '%1$s is not enabled', 'external-files-in-media-library' ), $listing_obj->get_label() ),
+			'texts'     => array(
+				/* translators: %1$s will be replaced by a title. */
+				'<p>' . sprintf( __( 'Export to %1$s cannot be used as the service is not available.', 'external-files-in-media-library' ), $listing_obj->get_label() ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
+		return '<span class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '" title="' . esc_attr__( 'Not enabled', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-editor-help"></span></span>';
 	}
 }
