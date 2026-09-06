@@ -202,6 +202,10 @@ class Helper {
 				'label' => __( 'ZIP', 'external-files-in-media-library' ),
 				'ext'   => 'zip',
 			),
+			'audio/mpeg'      => array(
+				'label' => __( 'MP3', 'external-files-in-media-library' ),
+				'ext'   => 'mp3',
+			),
 			'video/mp4'       => array(
 				'label' => __( 'MP4 Video', 'external-files-in-media-library' ),
 				'ext'   => 'mp4',

@@ -516,6 +516,9 @@ class Http extends Protocol_Base {
 		$response_headers_obj = $response['http_response']->get_headers();
 		$response_headers     = $response_headers_obj->getAll();
 
+		// log the response headers.
+		Log::get_instance()->create( __( 'HTTP-Header:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response_headers ) . '</code>', esc_url( $this->get_url() ), 'info', 1 );
+
 		// initialize basic array for file data.
 		$results = array(
 			'title'         => basename( $url ),

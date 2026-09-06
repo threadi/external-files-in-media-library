@@ -490,13 +490,13 @@ class File {
 		// set the fields.
 		$protocol_handler_obj->set_fields( $this->get_fields() );
 
-		// get info about the file.
-		$file_data = $protocol_handler_obj->get_url_info( $this->get_url( true ) );
+		// use the mime type of this file, which has been validated during its import.
+		$mime_type = $this->get_mime_type();
 
-		// do not proxy this file if no mime-type has been received.
-		if ( empty( $file_data['mime-type'] ) ) {
+		// do not proxy this file if no mime-type is set.
+		if ( '' === $mime_type ) {
 			// add log entry.
-			Log::get_instance()->create( __( 'Mime type for the file could not be detected!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+			Log::get_instance()->create( __( 'Mime type for the file is not set!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -505,38 +505,22 @@ class File {
 			return;
 		}
 
-		// compare the retrieved mime-type with the saved mime-type.
-		if ( $file_data['mime-type'] !== $this->get_mime_type() ) {
+		// get used WP Filesystem handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the file as temp file.
+		$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
+
+		// bail if temp file could not be loaded.
+		if ( ! is_string( $tmp_file ) ) {
 			// add log entry.
-			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+			Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
 
-			// other mime-type received => do not proxy this file.
+			// do nothing more.
 			return;
-		}
-
-		// get used WP Filesystem handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// get temp file, if no already set.
-		if ( empty( $file_data['tmp-file'] ) ) {
-			$tmp_file = $protocol_handler_obj->get_temp_file( $this->get_url( true ), $wp_filesystem );
-
-			// bail if temp file could not be loaded.
-			if ( ! is_string( $tmp_file ) ) {
-				// add log entry.
-				Log::get_instance()->create( __( 'Temp file could not be saved during adding this file for proxy! Uses protocol handler:', 'external-files-in-media-library' ) . ' <em>' . $protocol_handler_obj->get_title() . '</em>', $this->get_url( true ), 'error' );
-
-				// remove our filter.
-				remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
-
-				// do nothing more.
-				return;
-			}
-		} else {
-			$tmp_file = $file_data['tmp-file'];
 		}
 
 		// get the content of this file.
@@ -557,7 +541,7 @@ class File {
 		// check mime-type of the binary-data and compare it with header-data.
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
 		$binary_mime_type = $binary_data_info->buffer( $body );
-		if ( $binary_mime_type !== $file_data['mime-type'] ) {
+		if ( $binary_mime_type !== $mime_type ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
