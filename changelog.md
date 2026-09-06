@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added mp3 as additional allowed file to upload
+
 ### Changed
 
 - Proxies does use the already present mime-type instead of getting it again and again
