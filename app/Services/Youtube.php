@@ -223,12 +223,11 @@ class Youtube extends Service_Base implements Service {
 		if ( 'user' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
 			$setting = $settings_obj->add_setting( 'eml_youtube_credential_location_hint' );
 			$setting->set_section( $section );
-			$setting->set_show_in_rest( false );
 			$setting->prevent_export( true );
 			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Hint', 'external-files-in-media-library' ) );
 			/* translators: %1$s will be replaced by a URL. */
-			$field->set_description( sprintf( __( 'Each user will find its settings in his own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
+			$field->set_description( sprintf( __( 'Each user will find its settings in their own <a href="%1$s">user profile</a>.', 'external-files-in-media-library' ), $this->get_config_url() ) );
 			$setting->set_field( $field );
 		}
 	}

@@ -136,6 +136,7 @@ class Sync_By_File_Type extends Extension_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'array' );
 		$setting->set_default( array() );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Chose the file types that should be sync from external sources. If none are selected, all file types are allowed.', 'external-files-in-media-library' ) );

@@ -173,6 +173,7 @@ class Synchronization extends Tools_Base {
 		$setting->set_section( $sync_settings_section );
 		$setting->set_type( 'array' );
 		$setting->set_default( SynchronizationDialog::get_instance()->get_default_extensions() );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your configuration dialog for each synchronization. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );

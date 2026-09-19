@@ -318,6 +318,7 @@ class Settings {
 		$setting->set_section( $general_tab_main );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'application/pdf', 'image/jpeg', 'image/png' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $this->get_settings_obj() );
 		$field->set_title( __( 'Select allowed mime-types', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by the external hook-documentation-URL */
@@ -516,7 +517,6 @@ class Settings {
 		// add setting.
 		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_gprd_warning' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
-		$gprd_hint_setting->set_show_in_rest( false );
 		$gprd_hint_setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable GPRD-hint', 'external-files-in-media-library' ) );
@@ -526,7 +526,6 @@ class Settings {
 		// add setting.
 		$gprd_hint_setting = $this->get_settings_obj()->add_setting( 'eml_disable_plugin_hints' );
 		$gprd_hint_setting->set_section( $advanced_tab_advanced );
-		$gprd_hint_setting->set_show_in_rest( false );
 		$gprd_hint_setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Disable hints for plugins', 'external-files-in-media-library' ) );
@@ -555,7 +554,6 @@ class Settings {
 		// add setting to change the proxy path.
 		$proxy_path_setting = $this->get_settings_obj()->add_setting( 'eml_proxy_path' );
 		$proxy_path_setting->set_section( $proxy_tab_proxy );
-		$proxy_path_setting->set_show_in_rest( false );
 		$proxy_path_setting->set_type( 'string' );
 		$proxy_path_setting->set_default( 'cache/eml/' );
 		$proxy_path_setting->set_save_callback( array( $this, 'save_proxy_path' ) );
@@ -600,6 +598,7 @@ class Settings {
 		$setting->set_section( $general_tab_dialog );
 		$setting->set_type( 'array' );
 		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $this->get_settings_obj() );
 		$field->set_title( __( 'Options for import', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your import dialog. You will be able to enable or disable these settings before you add external files.', 'external-files-in-media-library' ) );

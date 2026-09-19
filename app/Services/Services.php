@@ -324,8 +324,8 @@ class Services {
 	 */
 	public function show_settings_services_hint(): void {
 		echo '<h2>' . esc_html__( 'Settings for services', 'external-files-in-media-library' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Services help you access external data sources for files.', 'external-files-in-media-library' ) . '</p>';
-		echo '<p><strong>' . esc_html__( 'Select one of the services to access its settings.', 'external-files-in-media-library' ) . '</strong></p>';
+		echo '<p>' . esc_html__( 'Services help you access external data sources for files.', 'external-files-in-media-library' );
+		echo '<br><strong>' . esc_html__( 'Select one of the services to access its settings.', 'external-files-in-media-library' ) . '</strong></p>';
 	}
 
 	/**
