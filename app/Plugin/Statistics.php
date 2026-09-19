@@ -120,6 +120,7 @@ class Statistics {
 		$file_size_setting->set_default( 0 );
 		$file_size_setting->set_autoload( false );
 		$file_size_setting->prevent_export( true );
+		$file_size_setting->set_read_callback( array( $this, 'format_file_sizes' ) );
 		$file_size_setting->set_field(
 			array(
 				'type'        => 'Value',
@@ -319,5 +320,16 @@ class Statistics {
 		// forward user.
 		wp_safe_redirect( $referer );
 		exit;
+	}
+
+	/**
+	 * Format the file size in KB or MB with 2 decimals.
+	 *
+	 * @param int $value The value to format.
+	 *
+	 * @return string
+	 */
+	public function format_file_sizes( int $value ): string {
+		return size_format( $value, 2 );
 	}
 }

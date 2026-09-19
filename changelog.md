@@ -13,6 +13,7 @@
 - Updated the crypt and the settings library
 - Proxy settings for each file type is only visible if the files are saved external
 - Optimized some texts
+- Format bytes in statistics
 
 ## [5.4.0] - 30.08.2026
 
