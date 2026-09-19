@@ -5,6 +5,8 @@
 ### Added
 
 - Added mp3 as additional allowed file to upload
+- Added list of file sizes per service in statistics
+- Added some new hooks
 
 ### Changed
 
