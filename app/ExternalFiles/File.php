@@ -1023,6 +1023,16 @@ class File {
 		// add to cache.
 		$this->add_to_proxy();
 
+		$instance = $this;
+		/**
+		 * Run tasks after we switch a file to local.
+		 *
+		 * @since 5.4.1 Available since 5.4.1.
+		 * @param int $attachment_id The attachment ID.
+		 * @param File $instance The file object.
+		 */
+		do_action( 'efml_switch_to_external_after', $this->get_id(), $instance );
+
 		// return true if switch was successfully.
 		return true;
 	}

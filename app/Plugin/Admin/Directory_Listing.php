@@ -183,6 +183,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Manage external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to manage external sources.', 'external-files-in-media-library' ) );
@@ -196,6 +197,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Read external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to read external sources.', 'external-files-in-media-library' ) );
@@ -209,6 +211,7 @@ class Directory_Listing {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Delete external sources', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to delete external sources.', 'external-files-in-media-library' ) );

@@ -11,15 +11,22 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 defined( 'ABSPATH' ) || exit;
 
 use easySettingsForWordPress\Fields\Button;
+use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 
 /**
  * Object to handle statistics.
  */
 class Statistics {
+	/**
+	 * The cache key.
+	 */
+	public const CACHE_KEY = 'efml_sizes_per_service';
 
 	/**
 	 * Instance of actual object.
@@ -69,6 +76,8 @@ class Statistics {
 		add_action( 'efml_file_delete', array( $this, 'sub_file_sizes' ) );
 		add_action( 'efml_real_import_local', array( $this, 'sub_file_count' ), 10, 0 );
 		add_action( 'efml_real_import_local', array( $this, 'sub_file_sizes' ) );
+		add_action( 'efml_switch_to_local_after', array( $this, 'clear_sizes_per_service_cache' ), 10, 0 );
+		add_action( 'efml_switch_to_external_after', array( $this, 'clear_sizes_per_service_cache' ), 10, 0 );
 
 		// add actions.
 		add_action( 'admin_action_eml_recalc_files', array( $this, 'recalc_files_by_request' ) );
@@ -120,6 +129,7 @@ class Statistics {
 		$file_size_setting->set_default( 0 );
 		$file_size_setting->set_autoload( false );
 		$file_size_setting->prevent_export( true );
+		$file_size_setting->set_read_callback( array( $this, 'format_file_sizes' ) );
 		$file_size_setting->set_field(
 			array(
 				'type'        => 'Value',
@@ -127,6 +137,17 @@ class Statistics {
 				'description' => __( 'The value is in bytes.', 'external-files-in-media-library' ),
 			)
 		);
+
+		// add setting to list the file sizes per external service.
+		$service_sizes_setting = $settings_obj->add_setting( 'eml_file_sizes_per_service' );
+		$service_sizes_setting->set_section( $section_files );
+		$service_sizes_setting->set_type( 'string' );
+		$service_sizes_setting->set_autoload( false );
+		$service_sizes_setting->prevent_export( true );
+		$service_sizes_field = new TextInfo( $settings_obj );
+		$service_sizes_field->set_title( __( 'External file sizes per service', 'external-files-in-media-library' ) );
+		$service_sizes_field->set_description( $this->get_sizes_per_service_as_html() );
+		$service_sizes_setting->set_field( $service_sizes_field );
 
 		// create re-calc URL.
 		$url = add_query_arg(
@@ -229,6 +250,9 @@ class Statistics {
 	 */
 	public function add_file_sizes( File $external_file_obj ): void {
 		update_option( 'eml_file_sizes', $this->get_file_sizes() + $external_file_obj->get_filesize() );
+
+		// clear the cache.
+		$this->clear_sizes_per_service_cache();
 	}
 
 	/**
@@ -240,6 +264,9 @@ class Statistics {
 	 */
 	public function sub_file_sizes( File $external_file_obj ): void {
 		update_option( 'eml_file_sizes', $this->get_file_sizes() - $external_file_obj->get_filesize() );
+
+		// clear the cache.
+		$this->clear_sizes_per_service_cache();
 	}
 
 	/**
@@ -280,8 +307,12 @@ class Statistics {
 
 		// if no files could be loaded, set all settings to 0.
 		if ( empty( $files ) ) {
+			// reset the sizes.
 			$this->set_file_count( 0 );
 			$this->set_file_sizes( 0 );
+
+			// clear the cache.
+			$this->clear_sizes_per_service_cache();
 
 			// trigger ok message.
 			$transients_obj = Transients::get_instance();
@@ -308,6 +339,9 @@ class Statistics {
 		$this->set_file_count( $file_count );
 		$this->set_file_sizes( $file_size );
 
+		// clear the cache.
+		$this->clear_sizes_per_service_cache();
+
 		// trigger ok message.
 		$transients_obj = Transients::get_instance();
 		$transient_obj  = $transients_obj->add();
@@ -319,5 +353,112 @@ class Statistics {
 		// forward user.
 		wp_safe_redirect( $referer );
 		exit;
+	}
+
+	/**
+	 * Format the file size in KB or MB with 2 decimals.
+	 *
+	 * @param int $value The value to format.
+	 *
+	 * @return string
+	 */
+	public function format_file_sizes( int $value ): string {
+		return (string) size_format( $value, 2 );
+	}
+
+	/**
+	 * Return the total file size, in bytes, per external service currently in use.
+	 *
+	 * Only files which are actually hosted on the external platform are counted:
+	 * files which have been switched to local hosting keep their URL-meta (and
+	 * therefore still show up in Files::get_files()) but no longer occupy space
+	 * on the external service, so they are excluded here.
+	 *
+	 * @return array<string,int> List of service name => size in bytes, sorted descending by size.
+	 */
+	private function get_sizes_per_service(): array {
+		$sizes = array();
+
+		// get all external files.
+		foreach ( Files::get_instance()->get_files() as $external_file_obj ) {
+			// bail if this file is locally saved - it is not really hosted external (anymore).
+			if ( $external_file_obj->is_locally_saved() ) {
+				continue;
+			}
+
+			// get the name of the used service, use a fallback if it is unknown.
+			$service_name = $external_file_obj->get_service_name();
+			if ( empty( $service_name ) ) {
+				$service_label = __( 'Unknown', 'external-files-in-media-library' );
+			} else {
+				$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+				if ( $service_obj instanceof Service_Base ) {
+					$service_label = $service_obj->get_label();
+				} else {
+					$service_label = $service_name;
+				}
+			}
+
+			// add up the file size for this service.
+			$sizes[ $service_label ] = ( ! empty( $sizes[ $service_name ] ) ? $sizes[ $service_name ] : 0 ) + $external_file_obj->get_filesize();
+		}
+
+		// sort the list by size, biggest first.
+		arsort( $sizes );
+
+		/**
+		 * Filter the resulting list of file sizes per service.
+		 *
+		 * @since 5.4.1 Available since 5.4.1.
+		 * @param array<string,int> $sizes List of service name => size in bytes.
+		 */
+		return apply_filters( 'efml_sizes_per_service', $sizes );
+	}
+
+	/**
+	 * Return the list of file sizes per external service, rendered as an HTML table.
+	 *
+	 * @return string
+	 */
+	public function get_sizes_per_service_as_html(): string {
+		// get the content from cache.
+		$html = get_transient( self::CACHE_KEY );
+
+		// if cache is empty, create it.
+		if ( false === $html ) {
+
+			// get the sizes per service.
+			$sizes = $this->get_sizes_per_service();
+
+			// bail if list is empty.
+			if ( empty( $sizes ) ) {
+				return '<p>' . esc_html__( 'No external hosted files found.', 'external-files-in-media-library' ) . '</p>';
+			}
+
+			// build the table.
+			$html  = '<table class="widefat striped">';
+			$html .= '<thead><tr><th>' . esc_html__( 'Service', 'external-files-in-media-library' ) . '</th><th>' . esc_html__( 'Size', 'external-files-in-media-library' ) . '</th></tr></thead>';
+			$html .= '<tbody>';
+			foreach ( $sizes as $service_name => $size ) {
+				$html .= '<tr><td>' . esc_html( $service_name ) . '</td><td>' . esc_html( size_format( $size, 2 ) ) . '</td></tr>';
+			}
+			$html .= '</tbody>';
+			$html .= '</table>';
+
+			// save this in cache.
+			set_transient( self::CACHE_KEY, $html, WEEK_IN_SECONDS );
+		}
+
+		// return the resulting HTML code.
+		return $html;
+	}
+
+	/**
+	 * Delete the cached list of file sizes per service.
+	 *
+	 * @return void
+	 */
+	public function clear_sizes_per_service_cache(): void {
+		delete_transient( self::CACHE_KEY );
 	}
 }

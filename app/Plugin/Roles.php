@@ -112,6 +112,7 @@ class Roles {
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
 		$setting->set_save_callback( array( $this, 'set_capabilities' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Add external files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the roles that should be allowed to add external files.', 'external-files-in-media-library' ) );
@@ -126,7 +127,7 @@ class Roles {
 		$setting = $settings_obj->add_setting( 'eml_user_forbidden' );
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
-		$setting->set_show_in_rest( array( 'schema' => array( 'type' => 'string' ) ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$setting->set_default( array() );
 		if ( 0 === count( $users_for_setting ) ) {
 			$field = new TextInfo( $settings_obj );
@@ -146,6 +147,7 @@ class Roles {
 		$setting->set_section( $permissions_tab_files );
 		$setting->set_type( 'array' );
 		$setting->set_default( array( 'administrator', 'editor' ) );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Use custom settings', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select roles, which should be allowed to use custom settings for the import of external URLs. Users with these role can edit their settings on their own profile page in WordPress backend.', 'external-files-in-media-library' ) );
@@ -171,6 +173,7 @@ class Roles {
 			$setting->set_type( 'array' );
 			$setting->set_default( $tools_obj->get_capability_default() );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_tools' ) );
+			$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 			$field = new MultiSelect( $settings_obj );
 			$field->set_title( $tools_obj->get_title() );
 			$field->set_description( $tools_obj->get_capability_description() );
@@ -198,6 +201,7 @@ class Roles {
 			$setting->set_type( 'array' );
 			$setting->set_default( method_exists( $service_obj, 'get_default_roles' ) ? $service_obj->get_default_roles() : array( 'administrator', 'editor' ) );
 			$setting->set_save_callback( array( $this, 'save_capabilities_for_service' ) );
+			$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 			$field = new MultiSelect( $settings_obj );
 			$field->set_title( $service_obj->get_label() );
 			$field->set_options( $user_roles );

@@ -113,10 +113,10 @@ class File_Types {
 			$section->set_setting( $settings_obj );
 
 			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_' . $name . '_mode' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( 'external' );
+			$mode_setting = $settings_obj->add_setting( 'eml_' . $name . '_mode' );
+			$mode_setting->set_section( $section );
+			$mode_setting->set_type( 'string' );
+			$mode_setting->set_default( 'external' );
 			$field = new Select( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Mode for %1$s handling', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
@@ -128,8 +128,8 @@ class File_Types {
 					'local'    => __( 'download and host them local', 'external-files-in-media-library' ),
 				)
 			);
-			$setting->set_field( $field );
-			$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+			$mode_setting->set_field( $field );
+			$mode_setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 			// add setting.
 			$setting = $settings_obj->add_setting( 'eml_' . $name . '_proxy' );
@@ -139,7 +139,7 @@ class File_Types {
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
-			$field->set_readonly( 'external' !== get_option( 'eml_' . $name . '_mode', '' ) );
+			$field->add_depend( $mode_setting, 'external' );
 			$setting->set_field( $field );
 			$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
@@ -152,6 +152,7 @@ class File_Types {
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Max age for cached %1$s in proxy in hours', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
 			$field->set_description( __( 'Defines how long these files, which are loaded via our own proxy, are saved locally. After this time their cache will be renewed.', 'external-files-in-media-library' ) );
+			$field->add_depend( $mode_setting, 'external' );
 			$setting->set_field( $field );
 			$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 		}

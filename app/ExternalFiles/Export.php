@@ -178,6 +178,7 @@ class Export extends Tools_Base {
 		$setting->set_section( $section );
 		$setting->set_type( 'array' );
 		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
+		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for export', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your export dialog. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );

@@ -5,11 +5,17 @@
 ### Added
 
 - Added mp3 as additional allowed file to upload
+- Added list of file sizes per service in statistics
+- Added some new hooks
 
 ### Changed
 
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
+- Updated the crypt and the settings library
+- Proxy settings for each file type is only visible if the files are saved external
+- Optimized some texts
+- Format bytes in statistics
 
 ## [5.4.0] - 30.08.2026
 

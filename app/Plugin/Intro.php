@@ -367,7 +367,6 @@ class Intro {
 		// add setting.
 		$setting = $settings_obj->add_setting( 'efml_intro' );
 		$setting->set_section( $advanced_section );
-		$setting->set_show_in_rest( true );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 0 );
 	}
