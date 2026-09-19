@@ -41,10 +41,6 @@
         <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/composer-install.txt">
             <arg line="install"/>
         </exec>
-        <delete file="${log.dir}/composer-update.txt"/>
-        <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/composer-update.txt">
-            <arg line="update"/>
-        </exec>
     </target>
 
     <!-- generate documentation -->
