@@ -440,7 +440,7 @@ class Statistics {
 			$html .= '<thead><tr><th>' . esc_html__( 'Service', 'external-files-in-media-library' ) . '</th><th>' . esc_html__( 'Size', 'external-files-in-media-library' ) . '</th></tr></thead>';
 			$html .= '<tbody>';
 			foreach ( $sizes as $service_name => $size ) {
-				$html .= '<tr><td>' . esc_html( $service_name ) . '</td><td>' . esc_html( size_format( $size, 2 ) ) . '</td></tr>';
+				$html .= '<tr><td>' . esc_html( $service_name ) . '</td><td>' . esc_html( (string) size_format( $size, 2 ) ) . '</td></tr>';
 			}
 			$html .= '</tbody>';
 			$html .= '</table>';
