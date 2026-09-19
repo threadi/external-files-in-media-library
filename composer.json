@@ -1,6 +1,6 @@
 {
     "name": "threadi/efml",
-    "version": "5.3.0",
+    "version": "5.4.1",
     "scripts": {
         "post-install-cmd": [
             "\"vendor/bin/mozart\" compose",
