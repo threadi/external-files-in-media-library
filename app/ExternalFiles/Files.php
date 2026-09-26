@@ -30,6 +30,11 @@ use WP_Term;
  */
 class Files {
 	/**
+	 * The name for the ability category.
+	 */
+	public const ABILITY_CATEGORY = 'efml';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Files|null
@@ -126,6 +131,7 @@ class Files {
 
 		// misc.
 		add_action( 'wp_abilities_api_init', array( $this, 'add_abilities' ) );
+		add_action( 'wp_abilities_api_categories_init', array( $this, 'add_ability_category' ) );
 	}
 
 	/**
@@ -1648,7 +1654,7 @@ class Files {
 			array(
 				'label'               => __( 'Add an external URL in media library', 'external-files-in-media-library' ),
 				'description'         => __( 'Adds the ability to add external URLs in the media library.', 'external-files-in-media-library' ),
-				'category'            => 'site',
+				'category'            => self::ABILITY_CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -1677,6 +1683,15 @@ class Files {
 				'permission_callback' => function () {
 					return current_user_can( EFML_CAP_NAME );
 				},
+				'meta'                => array(
+					'show_in_rest' => true,
+					'mcp'          => array( 'public' => true ), // expose via the MCP Adapter of WordPress.
+					'annotations'  => array(
+						'readonly'    => false,
+						'destructive' => false,
+						'idempotent'  => true,
+					),
+				),
 			)
 		);
 
@@ -1686,7 +1701,7 @@ class Files {
 			array(
 				'label'               => __( 'Delete an external URL in media library', 'external-files-in-media-library' ),
 				'description'         => __( 'Adds the ability to delete external URLs in the media library.', 'external-files-in-media-library' ),
-				'category'            => 'site',
+				'category'            => self::ABILITY_CATEGORY,
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -1703,6 +1718,15 @@ class Files {
 				'permission_callback' => function () {
 					return current_user_can( EFML_CAP_NAME );
 				},
+				'meta'                => array(
+					'show_in_rest' => true,
+					'mcp'          => array( 'public' => true ), // expose via the MCP Adapter of WordPress.
+					'annotations'  => array(
+						'readonly'    => false,
+						'destructive' => true,
+						'idempotent'  => true,
+					),
+				),
 			)
 		);
 	}
@@ -1775,5 +1799,26 @@ class Files {
 
 		// return true as it has been deleted.
 		return true;
+	}
+
+	/**
+	 * Add our own ability category.
+	 *
+	 * @return void
+	 */
+	public function add_ability_category(): void {
+		// bail if function does not exist.
+		if ( ! function_exists( 'wp_register_ability_category' ) ) {
+			return;
+		}
+
+		// add the category.
+		wp_register_ability_category(
+			self::ABILITY_CATEGORY,
+			array(
+				'label'       => __( 'Connector for Propstack', 'connector-for-propstack' ),
+				'description' => __( 'Abilities for managing objects from Propstack in WordPress.', 'connector-for-propstack' ),
+			)
+		);
 	}
 }
