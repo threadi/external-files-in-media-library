@@ -124,8 +124,8 @@ class ExportDialog {
 			),
 		);
 
-		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
+		// bail if capability is not set (the user must be allowed to manage external sources and to use the export).
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) || ! current_user_can( 'efml_cap_tools_export' ) ) {
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
@@ -174,7 +174,7 @@ class ExportDialog {
 		$form = '<div><label for="enable">' . __( 'Enable:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="enable" id="enable" value="1"' . ( $enabled > 0 ? ' checked="checked"' : '' ) . '></div>';
 
 		// -> marker for main export source, if user has the capability for it.
-		if ( current_user_can( 'efml_cap_tools_export' ) ) {
+		if ( current_user_can( 'efml_cap_tools_export' ) ) { // @phpstan-ignore if.alwaysTrue
 			/* translators: %1$s will be replaced by a URL. */
 			$description = sprintf( __( 'Manage this setting <a href="%1$s">here</a>.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_export' ) );
 			$form       .= '<div><label for="main_export">' . __( 'Main export:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="main_export" id="main_export" value="1"' . ( absint( get_option( 'eml_export_main_source' ) ) === $term_id ? ' checked="checked"' : '' ) . '> ' . $description . '</div>';
@@ -233,11 +233,6 @@ class ExportDialog {
 		// check nonce.
 		check_ajax_referer( 'efml-export-save-config-nonce', 'nonce' );
 
-		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
-			return;
-		}
-
 		// create the dialog for any failures.
 		$dialog = array(
 			'className' => 'efml',
@@ -253,6 +248,12 @@ class ExportDialog {
 				),
 			),
 		);
+
+		// bail if capability is not set (the user must be allowed to manage external sources and to use the export).
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) || ! current_user_can( 'efml_cap_tools_export' ) ) {
+			$dialog['texts'][] = '<p>' . __( 'Check the permissions in the plugin settings.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( array( 'detail' => $dialog ) );
+		}
 
 		// get term ID from request.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );

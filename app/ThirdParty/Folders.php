@@ -287,14 +287,19 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	/**
 	 * Remove meta box to replace external files.
 	 *
-	 * @param string  $post_type The requested post type.
-	 * @param WP_Post $post The post object.
+	 * @param string $post_type The requested post type.
+	 * @param mixed  $post The post object (core also uses comment and link objects on this hook).
 	 *
 	 * @return void
 	 */
-	public function remove_meta_boxes( string $post_type, WP_Post $post ): void {
+	public function remove_meta_boxes( string $post_type, mixed $post ): void {
 		// bail if post type is not attachment.
 		if ( 'attachment' !== $post_type ) {
+			return;
+		}
+
+		// bail if this is not a post object.
+		if ( ! $post instanceof WP_Post ) {
 			return;
 		}
 

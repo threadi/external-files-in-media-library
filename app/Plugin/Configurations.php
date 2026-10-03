@@ -209,8 +209,8 @@ class Configurations {
 		// check nonce.
 		check_admin_referer( 'efml-set-configuration', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability to change the settings.
+		if ( ! current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
 			return;
 		}
 

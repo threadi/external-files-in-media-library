@@ -133,7 +133,8 @@ class Settings {
 
 		// add URL, if set.
 		if ( ! empty( $url ) ) {
-			$array['s'] = $url;
+			// encode the value as add_query_arg() does not do this and the URL could contain any character.
+			$array['s'] = rawurlencode( $url );
 		}
 
 		// return the URL.

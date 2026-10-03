@@ -140,28 +140,35 @@ class Proxy {
 		// get the query-value.
 		$title = get_query_var( $this->get_slug() );
 
-		// get basename from request for sized images depending on its dimensions.
-		$dimensions = array();
-		if ( 1 === preg_match( '/(.*)-(.*)x(.*)\.(.*)/', $title, $matches ) ) {
-			$dimensions = array(
-				absint( $matches[2] ),
-				absint( $matches[3] ),
-			);
-			$title      = $matches[1] . '.' . $matches[4];
+		// bail if the value is not a usable string (e.g. an array via "?emlproxy[]=x" or an overlong value).
+		// This request can be sent by anyone, so we do not log it.
+		if ( ! is_string( $title ) || strlen( $title ) > 1024 ) {
+			return $template;
 		}
 
 		// log this event.
 		/* translators: %1$s will be replaced by the detected filename. */
-		Log::get_instance()->create( sprintf( __( 'Proxy tries to load the filename %1$s.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'Proxy tries to load the filename %1$s.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
 
-		// get file object.
+		// first try to get the file object with the complete requested name.
+		$dimensions        = array();
 		$external_file_obj = Files::get_instance()->get_file_by_title( $title );
+
+		// if no file has been found, check if a sized image has been requested, e.g. "example-150x150.jpg".
+		if ( ! $external_file_obj instanceof File && 1 === preg_match( '/^(.+)-(\d+)x(\d+)\.([A-Za-z0-9]+)$/', $title, $matches ) ) {
+			$dimensions        = array(
+				absint( $matches[2] ),
+				absint( $matches[3] ),
+			);
+			$title             = $matches[1] . '.' . $matches[4];
+			$external_file_obj = Files::get_instance()->get_file_by_title( $title );
+		}
 
 		// bail if no file object could be loaded, or the loaded object is not valid.
 		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
-			// log this event.
+			// log this event only in debug mode, as this request can be sent by anyone with any value.
 			/* translators: %1$s will be replaced by the detected filename. */
-			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . $title . '</code>' ), '', 'error' );
+			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'error', 2 );
 
 			// fallback to 404.
 			return $template;

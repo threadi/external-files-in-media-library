@@ -716,6 +716,11 @@ class Helper {
 	 * @return string
 	 */
 	public static function get_plugin_name(): string {
+		// load the required file if the function is not available (frontend in WordPress < 6.8).
+		if ( ! function_exists( 'get_plugin_data' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
 		$plugin_data = get_plugin_data( EFML_PLUGIN, false, false );
 		if ( ! empty( $plugin_data['Name'] ) ) {
 			return $plugin_data['Name'];
@@ -757,7 +762,7 @@ class Helper {
 			return (string) filemtime( $filepath );
 		}
 
-		$plugin_version = EFML_PLUGIN;
+		$plugin_version = EFML_PLUGIN_VERSION;
 
 		/**
 		 * Filter the used file version (for JS- and CSS-files, which get enqueued).
@@ -877,5 +882,106 @@ class Helper {
 	 */
 	public static function get_a11n_window_hint(): string {
 		return '<span class="screen-reader-text"> ' . __( 'opens a new window', 'external-files-in-media-library' ) . '</span>';
+	}
+
+	/**
+	 * Return whether the given local path (with or without "file://") is located in the base directory,
+	 * which is allowed for local files. For not existing files the directory of the file is checked.
+	 *
+	 * This uses the same base directory as the import of local files: the document root of the hosting
+	 * (or the parent directory of ABSPATH), changeable via the filter "efml_file_base".
+	 *
+	 * @param string $path The path to check.
+	 *
+	 * @return bool
+	 */
+	public static function is_local_path_allowed( string $path ): bool {
+		// remove the protocol.
+		if ( str_starts_with( $path, 'file://' ) ) {
+			$path = substr( $path, 7 );
+		}
+
+		// bail on empty path.
+		if ( '' === $path ) {
+			return false;
+		}
+
+		// get the real path. If the path itself does not exist (e.g., a file to create), use its directory.
+		$real_path = realpath( $path );
+		if ( ! $real_path ) {
+			$real_path = realpath( dirname( $path ) );
+		}
+
+		// bail if no real path could be read.
+		if ( ! $real_path ) {
+			return false;
+		}
+
+		// get the hosting root.
+		$base = null;
+		if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) ) {
+			$base = sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) );
+		} elseif ( defined( 'ABSPATH' ) ) {
+			$base = dirname( ABSPATH );
+		}
+
+		/**
+		 * Filter the allowed base directory for local files.
+		 *
+		 * @since 5.2.0 Available since 5.2.0.
+		 * @param null|string $base The detected base directory.
+		 */
+		$base = apply_filters( 'efml_file_base', $base );
+
+		// bail if no base could be read.
+		if ( ! is_string( $base ) || '' === $base ) {
+			return false;
+		}
+
+		// get the real path of the base.
+		$base_real = realpath( $base );
+
+		// bail if real path could not be read.
+		if ( ! $base_real ) {
+			return false;
+		}
+
+		// return whether the path is the base or is located in it.
+		return $real_path === $base_real || str_starts_with( $real_path, rtrim( $base_real, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR );
+	}
+
+	/**
+	 * Return the given text reduced to the few HTML-elements we use in log entries and result texts.
+	 *
+	 * This is intentionally stricter than wp_kses_post(): log entries can contain data from external
+	 * servers (headers, error messages, file names) and must never contain attributes like "data-*"
+	 * or event handlers ("class" is only allowed on "span" for the screen reader text).
+	 *
+	 * @param string $text The text to clean.
+	 *
+	 * @return string
+	 */
+	public static function kses_log( string $text ): string {
+		return wp_kses(
+			$text,
+			array(
+				'a'      => array(
+					'href'   => true,
+					'target' => true,
+					'rel'    => true,
+				),
+				'br'     => array(),
+				'code'   => array(),
+				'em'     => array(),
+				'i'      => array(),
+				'b'      => array(),
+				'strong' => array(),
+				'p'      => array(),
+				'span'   => array(
+					'class' => true,
+				),
+			),
+			array( 'http', 'https' )
+		);
 	}
 }

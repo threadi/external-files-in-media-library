@@ -5,17 +5,54 @@
 ### Added
 
 - Added mp3 as additional allowed file to upload
+- Added search field in directory listing for search for file names in the complete directory tree
+  of the external source
 - Added list of file sizes per service in statistics
-- Added some new hooks
+- Added some new hooks & PHP Unit tests
 
 ### Changed
 
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
-- Updated the crypt and the settings library
 - Proxy settings for each file type is only visible if the files are saved external
+- Optimized the abilities for interactions with AI/MCP
 - Optimized some texts
 - Format bytes in statistics
+- Hide generic directories (e.g., "vendor" and "node_modules") in local service
+- Log entries and import results are reduced to a small set of allowed HTML elements
+- Requests to the proxy for unknown files are only logged in debug mode
+- External sources saved by other users can only be used by administrators (or if the setting to show all sources is enabled)
+- Export settings, and the bulk export require the capability to use the export tool
+- Changing the global DropBox connection requires the capability to manage the settings
+- DropBox OAuth requests are now protected by a state parameter
+- Multisite service checks whether the user is allowed to access the requested website
+- Our post meta fields on attachments are now protected against manual changes
+- Local files used as export target or temp file must be located in the allowed base directory
+- Credentials are no longer written to the debug log and only exported by administrators
+- Updated dependencies
+
+### Fixed
+
+- Fixed possible XSS via HTTP header of external files in the import result dialog
+- Fixed missing output escaping of URLs in the log table and media modal
+- Fixed fatal error in the frontend with WordPress older than 6.8 using the page builder Brizy
+- Fixed fatal error for shortcodes without attributes with WordPress older than 6.5
+- Fixed only first YouTube or Vimeo video per page being rendered
+- Fixed plugin installation from a ZIP not stopping on failed checks
+- Fixed deletion of synchronized files if the external source could not be read
+- Fixed queue being blocked by URLs without credentials
+- Fixed deletion of files on export targets for files, which were never exported
+- Fixed export not being paused during switch to local hosting
+- Fixed already exported files being exported again via bulk action
+- Fixed type errors on core image filters if other plugins return unexpected values
+- Fixed type errors with Brizy and Folders
+- Fixed proxy not finding files with a hyphen and an "x" in their name
+- Fixed thumbnails of squared sizes being re-generated on every request
+- Fixed statistics being calculated on every request if no external hosted files exist
+- Fixed the interval "every 20 minutes" running every 15 minutes
+- Fixed wrong version parameter on enqueued files
+- Fixed missing sync settings if Download List Block is active without any list
+- Fixed search in the log for URLs with special characters
 
 ## [5.4.0] - 30.08.2026
 

@@ -492,7 +492,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if user has not the capability for this.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_real_import' ) ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -564,6 +564,11 @@ class Real_Import extends Extension_Base {
 	public function run_bulk_action( string $sendback, string $doaction, array $items ): string {
 		// bail if action is not ours.
 		if ( 'eml-real-import' !== $doaction ) {
+			return $sendback;
+		}
+
+		// bail if user has not the capability for this.
+		if ( ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_tools_real_import' ) ) {
 			return $sendback;
 		}
 

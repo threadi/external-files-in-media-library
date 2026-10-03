@@ -157,7 +157,7 @@ class Http extends Protocol_Base {
 		if ( isset( $response_headers['content-type'] ) && ! empty( $response_headers['content-type'] && apply_filters( 'efml_http_check_content_type', $true, $url ) ) && false === in_array( Helper::get_content_type_from_string( $response_headers['content-type'] ), Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
 			/* translators: %1$s will be replaced by its Mime-Type */
-			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . $response_headers['content-type'] . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( sprintf( __( 'Specified URL response with a not allowed mime-type %1$s.', 'external-files-in-media-library' ), '<code>' . esc_html( is_string( $response_headers['content-type'] ) ? $response_headers['content-type'] : (string) wp_json_encode( $response_headers['content-type'] ) ) . '</code>' ), esc_url( $url ), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return false as file has wrong content type.
 			return false;

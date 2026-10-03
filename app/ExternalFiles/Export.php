@@ -109,6 +109,8 @@ class Export extends Tools_Base {
 		add_action( 'efml_real_import_local', array( $this, 'delete_exported_file_during_import' ) );
 		add_action( 'efml_switch_to_local_before', array( $this, 'prevent_export_checks_on_local_switch' ), 10, 0 );
 		add_action( 'efml_switch_to_local_after', array( $this, 'cleanup_exported_file' ) );
+		add_action( 'efml_switch_to_local_after', array( $this, 'allow_export_checks_after_local_switch' ), 20, 0 );
+		add_action( 'efml_switch_to_local_failed', array( $this, 'allow_export_checks_after_local_switch' ), 20, 0 );
 
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_exported_files', array( $this, 'delete_exported_file_via_request' ) );
@@ -581,9 +583,9 @@ class Export extends Tools_Base {
 		// check nonce.
 		check_ajax_referer( 'efml-export-state-nonce', 'nonce' );
 
-		// bail if capability is not set.
-		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) ) {
-			return;
+		// bail if capability is not set (the user must be allowed to manage external sources and to use the export).
+		if ( ! current_user_can( Init::get_instance()->get_capabilities()['manage_terms'] ) || ! current_user_can( 'efml_cap_tools_export' ) ) {
+			wp_send_json_error();
 		}
 
 		// get term ID.
@@ -1001,6 +1003,11 @@ class Export extends Tools_Base {
 			Log::get_instance()->create( sprintf( __( 'File has been exported to the external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
 		}
 
+		// reset the cached statistics, as this file is now an external hosted file.
+		if ( $successfully_exported ) {
+			\ExternalFilesInMediaLibrary\Plugin\Statistics::get_instance()->clear_sizes_per_service_cache();
+		}
+
 		// return the result.
 		return $successfully_exported;
 	}
@@ -1026,6 +1033,15 @@ class Export extends Tools_Base {
 			return;
 		}
 
+		// get the external sources this file has been exported to.
+		$export_sources = $this->get_export_sources_of_file( $attachment_id );
+
+		// bail if this file has not been exported by us. Without this check any deleted external file
+		// would result in the deletion of a file with the same name on each external source.
+		if ( empty( $export_sources ) ) {
+			return;
+		}
+
 		// get the file name.
 		$file = get_attached_file( $attachment_id, true );
 
@@ -1039,6 +1055,11 @@ class Export extends Tools_Base {
 
 		// check each term.
 		foreach ( $this->get_export_terms() as $term_id ) {
+			// bail if this file has not been exported to this external source.
+			if ( ! in_array( absint( $term_id ), $export_sources, true ) ) {
+				continue;
+			}
+
 			// get the listing object by this name.
 			$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
 
@@ -1076,7 +1097,43 @@ class Export extends Tools_Base {
 		// cleanup after a successfully deletion.
 		if ( $successfully_deleted ) {
 			$this->cleanup_exported_file( $attachment_id );
+			delete_post_meta( $attachment_id, 'efml_former_export_sources' );
 		}
+	}
+
+	/**
+	 * Return the list of external sources (as term IDs) a file has been exported to.
+	 *
+	 * This also returns the external sources of a file, which has been switched to local hosting
+	 * after its export, as its exported copy still exists on the external source.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array<int,int>
+	 */
+	private function get_export_sources_of_file( int $attachment_id ): array {
+		// if this file is not marked as exported, use the list we saved during the switch to local hosting.
+		if ( 0 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) ) {
+			$former_export_sources = get_post_meta( $attachment_id, 'efml_former_export_sources', true );
+			return is_array( $former_export_sources ) ? array_values( array_map( 'absint', $former_export_sources ) ) : array();
+		}
+
+		// get the external sources this file has been exported to.
+		$export_sources = get_post_meta( $attachment_id, 'efml_export_sources', true );
+		if ( ! is_array( $export_sources ) ) {
+			$export_sources = array();
+		}
+
+		// fallback for files without this list: use the external sources this file is assigned to.
+		if ( empty( $export_sources ) ) {
+			$assigned_terms = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name(), array( 'fields' => 'ids' ) );
+			if ( is_array( $assigned_terms ) ) {
+				$export_sources = $assigned_terms;
+			}
+		}
+
+		// return the list.
+		return array_values( array_map( 'absint', $export_sources ) );
 	}
 
 	/**
@@ -1802,6 +1859,11 @@ class Export extends Tools_Base {
 	 * @return array<string,string>
 	 */
 	public function add_bulk_action( array $actions ): array {
+		// bail if user has not the capability to export files.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			return $actions;
+		}
+
 		// bail if export is disabled.
 		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
 			return $actions;
@@ -1842,6 +1904,16 @@ class Export extends Tools_Base {
 			return $sendback;
 		}
 
+		// bail if user has not the capability to export files.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			return $sendback;
+		}
+
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return $sendback;
+		}
+
 		// bail if option is disabled.
 		if ( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
 			return $sendback;
@@ -1860,8 +1932,16 @@ class Export extends Tools_Base {
 
 		// check the files and change its state.
 		foreach ( $items as $attachment_id ) {
-			// bail if file is already exported.
-			if ( 1 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) ) {
+			// get the ID as integer.
+			$attachment_id = absint( $attachment_id );
+
+			// bail if the user is not allowed to edit this file.
+			if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+				continue;
+			}
+
+			// bail if file is already exported (the marker contains the time of the export).
+			if ( absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) > 0 ) {
 				continue;
 			}
 
@@ -1912,7 +1992,18 @@ class Export extends Tools_Base {
 	 * @return void
 	 */
 	public function prevent_export_checks_on_local_switch(): void {
-		remove_action( 'add_attachment', array( $this, 'export_file_by_upload' ) );
+		remove_filter( 'wp_generate_attachment_metadata', array( $this, 'export_file_by_upload' ), 20 );
+	}
+
+	/**
+	 * Re-enable the usage of export functions after the hosting switch to local (also if it failed).
+	 *
+	 * @return void
+	 */
+	public function allow_export_checks_after_local_switch(): void {
+		if ( false === has_filter( 'wp_generate_attachment_metadata', array( $this, 'export_file_by_upload' ) ) ) {
+			add_filter( 'wp_generate_attachment_metadata', array( $this, 'export_file_by_upload' ), 20, 2 );
+		}
 	}
 
 	/**
@@ -1923,6 +2014,14 @@ class Export extends Tools_Base {
 	 * @return void
 	 */
 	public function cleanup_exported_file( int $attachment_id ): void {
+		// remember the external sources this file has been exported to, as the exported copy
+		// still exists there and must be deletable later (e.g., during a real import or if the file is deleted).
+		$export_sources = $this->get_export_sources_of_file( $attachment_id );
+		if ( ! empty( $export_sources ) ) {
+			update_post_meta( $attachment_id, 'efml_former_export_sources', $export_sources );
+		}
+
+		// remove the export markers.
 		delete_post_meta( $attachment_id, 'eml_exported_file' );
 		delete_post_meta( $attachment_id, 'efml_export_sources' );
 	}

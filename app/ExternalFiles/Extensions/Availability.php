@@ -290,7 +290,7 @@ class Availability extends Extension_Base {
 		$result = array(
 			'state'   => 'error',
 			/* translators: %1$s will be replaced by the URL for the logs */
-			'message' => sprintf( __( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), Helper::get_log_url( $external_file_obj->get_url( true ) ) ),
+			'message' => sprintf( __( 'File-URL is NOT available! Check <a href="%1$s">the log</a> for details.', 'external-files-in-media-library' ), esc_url( Helper::get_log_url( $external_file_obj->get_url( true ) ) ) ),
 		);
 
 		// send response as JSON.

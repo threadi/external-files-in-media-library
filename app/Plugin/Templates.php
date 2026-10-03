@@ -57,10 +57,6 @@ class Templates {
 	 * @return string
 	 */
 	public function get_template( string $template ): string {
-		if ( is_embed() ) {
-			return $template;
-		}
-
 		// check if requested template exist in the theme.
 		$theme_template = locate_template( trailingslashit( basename( dirname( EFML_PLUGIN ) ) ) . $template );
 		if ( $theme_template ) {

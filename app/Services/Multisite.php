@@ -143,6 +143,11 @@ class Multisite extends Service_Base implements Service {
 			return array();
 		}
 
+		// bail if the actual user is not allowed to access this blog.
+		if ( ! $this->is_blog_allowed( $blog_id ) ) {
+			return array();
+		}
+
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
 
@@ -151,6 +156,10 @@ class Multisite extends Service_Base implements Service {
 
 		// bail on no results.
 		if ( 0 === $results->found_posts ) {
+			// restore the current blog.
+			restore_current_blog();
+
+			// return empty array.
 			return array();
 		}
 
@@ -288,6 +297,50 @@ class Multisite extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return whether the actual user is allowed to access the media files of the given blog.
+	 *
+	 * Without this check each user with access to this service could read, import, add and delete
+	 * media files of every website in the network.
+	 *
+	 * @param int $blog_id The blog ID to check.
+	 *
+	 * @return bool
+	 */
+	public function is_blog_allowed( int $blog_id ): bool {
+		// bail if no blog ID is given.
+		if ( $blog_id <= 0 ) {
+			return false;
+		}
+
+		// background tasks (cron, WP CLI) do not have an interactive user we could check.
+		$allowed = Helper::is_cli() || wp_doing_cron();
+
+		// super admins are allowed to access every blog.
+		if ( ! $allowed && is_super_admin() ) {
+			$allowed = true;
+		}
+
+		// the main media library of the network (configured by the network administration) is usable for every user.
+		if ( ! $allowed && \ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->get_main_media_library_site_id() === $blog_id ) {
+			$allowed = true;
+		}
+
+		// other users must be allowed to upload files in the requested blog.
+		if ( ! $allowed ) {
+			$allowed = is_user_member_of_blog( get_current_user_id(), $blog_id ) && function_exists( 'current_user_can_for_site' ) && current_user_can_for_site( $blog_id, 'upload_files' );
+		}
+
+		/**
+		 * Filter whether the actual user is allowed to access the media files of the given blog.
+		 *
+		 * @since 5.5.0 Available since 5.5.0.
+		 * @param bool $allowed True if the access is allowed.
+		 * @param int $blog_id The requested blog ID.
+		 */
+		return (bool) apply_filters( 'efml_multisite_blog_allowed', $allowed, $blog_id );
+	}
+
+	/**
 	 * Return list of websites in this multisite.
 	 *
 	 * @return array<int,array<string,string>>
@@ -306,6 +359,11 @@ class Multisite extends Service_Base implements Service {
 
 		// add the sites to the list.
 		foreach ( $websites as $website ) {
+			// bail if the actual user is not allowed to access this website.
+			if ( ! $this->is_blog_allowed( absint( $website->blog_id ) ) ) { // @phpstan-ignore property.notFound
+				continue;
+			}
+
 			// get the URL of this website.
 			$url = get_blogaddress_by_id( $website->blog_id ); // @phpstan-ignore property.notFound
 
@@ -413,7 +471,12 @@ class Multisite extends Service_Base implements Service {
 		$this->set_fields( $fields );
 
 		// get the blog ID from the configuration.
-		$blog_id = absint( $fields['website']['value'] );
+		$blog_id = isset( $fields['website']['value'] ) ? absint( $fields['website']['value'] ) : 0;
+
+		// bail if no blog is set or the actual user is not allowed to access this blog.
+		if ( ! $this->is_blog_allowed( $blog_id ) ) {
+			return array();
+		}
 
 		// switch to the given blog.
 		switch_to_blog( $blog_id );

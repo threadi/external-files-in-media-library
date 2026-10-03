@@ -385,6 +385,11 @@ class DropBox extends Service_Base implements Service {
 			return;
 		}
 
+		// the connection for the whole website must only be changed by users who are allowed to manage the settings.
+		if ( $this->is_mode( 'global' ) && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'detail' => $this->get_not_allowed_dialog() ) );
+		}
+
 		// get the API key.
 		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -418,12 +423,18 @@ class DropBox extends Service_Base implements Service {
 		$this->set_api_key( $api_key );
 		$this->set_api_secret( $api_secret );
 
+		// create a random state for this request and save it for the actual user.
+		// It is checked on return from DropBox to prevent that a foreign authorization is saved here.
+		$state = wp_generate_password( 32, false );
+		update_user_meta( get_current_user_id(), 'efml_dropbox_oauth_state', $state );
+
 		// run connection.
 		$params = array(
 			'client_id'         => $api_key,
 			'response_type'     => 'code',
 			'redirect_uri'      => $this->get_real_redirect_uri(),
 			'token_access_type' => 'offline',
+			'state'             => $state,
 		);
 
 		// redirect the user to dropbox for authorization.
@@ -698,6 +709,11 @@ class DropBox extends Service_Base implements Service {
 		// check capability.
 		if ( ! current_user_can( EFML_CAP_NAME ) ) {
 			return;
+		}
+
+		// the connection for the whole website must only be changed by users who are allowed to manage the settings.
+		if ( $this->is_mode( 'global' ) && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'detail' => $this->get_not_allowed_dialog() ) );
 		}
 
 		// remove the token.
@@ -1544,6 +1560,27 @@ class DropBox extends Service_Base implements Service {
 			return Helper::get_404_template();
 		}
 
+		// the connection for the whole website must only be changed by users who are allowed to manage the settings.
+		if ( $this->is_mode( 'global' ) && ! current_user_can( 'manage_options' ) ) {
+			return Helper::get_404_template();
+		}
+
+		// get the state from the request and the state we saved for the actual user as we started the connection.
+		$state          = filter_input( INPUT_GET, 'state', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$expected_state = get_user_meta( get_current_user_id(), 'efml_dropbox_oauth_state', true );
+
+		// bail if the state does not match: this request has not been started by this user.
+		if ( ! is_string( $state ) || ! is_string( $expected_state ) || '' === $expected_state || ! hash_equals( $expected_state, $state ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The OAuth-response from DropBox does not match the request of this user and has been ignored.', 'external-files-in-media-library' ), '', 'error' );
+
+			// return 404-page.
+			return Helper::get_404_template();
+		}
+
+		// the state must only be usable once.
+		delete_user_meta( get_current_user_id(), 'efml_dropbox_oauth_state' );
+
 		// create the query for the next request.
 		$query = array(
 			'body' => array(
@@ -1589,7 +1626,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// update the expires time.
-		$data['expires'] = time() + $data['expires_in'];
+		$data['expires'] = time() + ( isset( $data['expires_in'] ) ? absint( $data['expires_in'] ) : 0 );
 
 		// save the response data.
 		$this->set_access_token( $data );
@@ -1597,6 +1634,28 @@ class DropBox extends Service_Base implements Service {
 		// forward user.
 		wp_safe_redirect( $this->get_config_url() );
 		exit;
+	}
+
+	/**
+	 * Return the dialog to show if the actual user is not allowed to change the DropBox connection.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_not_allowed_dialog(): array {
+		return array(
+			'className' => 'efml',
+			'title'     => __( 'Error', 'external-files-in-media-library' ),
+			'texts'     => array(
+				'<p>' . __( 'The DropBox connection of this website can only be changed by an administrator in the plugin settings.', 'external-files-in-media-library' ) . '</p>',
+			),
+			'buttons'   => array(
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'primary',
+					'text'    => __( 'OK', 'external-files-in-media-library' ),
+				),
+			),
+		);
 	}
 
 	/**

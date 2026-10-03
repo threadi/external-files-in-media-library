@@ -107,7 +107,7 @@ class Logs extends WP_List_Table {
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
 			'url' => $this->get_url( $item[ $column_name ] ),
-			'log' => wp_kses_post( $item[ $column_name ] ),
+			'log' => Helper::kses_log( (string) $item[ $column_name ] ),
 			default => '',
 		};
 	}
@@ -320,6 +320,6 @@ class Logs extends WP_List_Table {
 		}
 
 		// return the linked, but shortened URL.
-		return '<a href="' . esc_url( $url ) . '" target="_blank" title="' . esc_attr( $url ) . '">' . url_shorten( $url, 50 ) . '</a>';
+		return '<a href="' . esc_url( $url ) . '" target="_blank" title="' . esc_attr( $url ) . '">' . esc_html( url_shorten( $url, 50 ) ) . '</a>';
 	}
 }

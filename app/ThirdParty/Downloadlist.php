@@ -129,9 +129,9 @@ class Downloadlist extends ThirdParty_Base implements ThirdParty {
 			)
 		);
 
-		// bail if no lists exist.
-		if ( empty( $terms ) ) {
-			return '';
+		// bail if no lists exist: return the form unchanged, as it contains the other settings.
+		if ( empty( $terms ) || ! is_array( $terms ) ) {
+			return $form;
 		}
 
 		// get the actual setting.

@@ -434,6 +434,15 @@ class File extends Protocol_Base {
 		// get the file path.
 		$file_path = $url_info['path'];
 
+		// bail if the file is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $file_path ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The requested local file is not located in the allowed directory for local files.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
 		// get file infos.
 		$file_info = pathinfo( $file_path );
 

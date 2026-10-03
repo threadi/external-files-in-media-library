@@ -101,6 +101,11 @@ class Protocol extends Protocol_Base {
 			return array();
 		}
 
+		// bail if the actual user is not allowed to access this blog.
+		if ( ! Multisite::get_instance()->is_blog_allowed( $blog_id ) ) {
+			return array();
+		}
+
 		// switch to the other site.
 		switch_to_blog( $blog_id );
 

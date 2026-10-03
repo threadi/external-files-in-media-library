@@ -380,7 +380,7 @@ class Rest extends Service_Base implements Service {
 			if ( is_wp_error( $response ) ) {
 				// create error object.
 				$error = new WP_Error();
-				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>' );
+				$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . esc_html( Helper::get_json( $response->get_error_messages() ) ) . '</code>' );
 
 				// add the error to the list for response.
 				$this->add_error( $error );
@@ -459,7 +459,7 @@ class Rest extends Service_Base implements Service {
 		if ( is_wp_error( $response ) ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . Helper::get_json( $response->get_error_messages() ) . '</code>' );
+			$error->add( 'efml_service_' . $this->get_name(), __( 'External URL is not reachable. Error occurred:', 'external-files-in-media-library' ) . ' <code>' . esc_html( Helper::get_json( $response->get_error_messages() ) ) . '</code>' );
 
 			// add the error to the list for response.
 			$this->add_error( $error );

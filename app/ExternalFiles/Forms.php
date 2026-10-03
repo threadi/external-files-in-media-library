@@ -421,6 +421,17 @@ class Forms {
 
 		// get the term for credentials from Directory Listing Archive, if set.
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// do not use the external source if the actual user is not allowed to use it (e.g., saved by another user).
+		if ( $term_id > 0 && ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The requested external source has been saved by another user and has not been used for this import.', 'external-files-in-media-library' ), '', 'error' );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
 		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
@@ -762,6 +773,17 @@ class Forms {
 
 		// get the term for credentials from Directory Listing Archive, if set.
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// do not use the external source if the actual user is not allowed to use it (e.g., saved by another user).
+		if ( $term_id > 0 && ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The requested external source has been saved by another user and has not been used for this import.', 'external-files-in-media-library' ), '', 'error' );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
 		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );

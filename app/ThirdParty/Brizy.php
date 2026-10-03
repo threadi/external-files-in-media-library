@@ -26,6 +26,13 @@ class Brizy extends ThirdParty_Base implements ThirdParty {
 	private static ?Brizy $instance = null;
 
 	/**
+	 * List of temp files created during this request, indexed by attachment ID.
+	 *
+	 * @var array<int,string>
+	 */
+	private array $tmp_files = array();
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -70,12 +77,17 @@ class Brizy extends ThirdParty_Base implements ThirdParty {
 	 *
 	 * Example: https://localhost/?brizy_media=wp-abcded.jpg&brizy_crop=original
 	 *
-	 * @param array<int,mixed> $image The image data.
-	 * @param mixed            $attachment_id The attachment ID.
+	 * @param mixed $image The image data (core uses false here if no image is available).
+	 * @param mixed $attachment_id The attachment ID.
 	 *
-	 * @return array<int,mixed>
+	 * @return mixed
 	 */
-	public function change_image_src( array $image, mixed $attachment_id ): array {
+	public function change_image_src( mixed $image, mixed $attachment_id ): mixed {
+		// bail if no image data are given (core uses false here if no image is available).
+		if ( ! is_array( $image ) ) {
+			return $image;
+		}
+
 		// bail if parameter brizy_media is not set in request.
 		$brizy_media = filter_input( INPUT_GET, 'brizy_media', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 		if ( is_null( $brizy_media ) ) {
@@ -101,6 +113,13 @@ class Brizy extends ThirdParty_Base implements ThirdParty {
 		// set the fields (for logins in external systems).
 		$protocol_handler->set_fields( $external_files_obj->get_fields() );
 
+		// use the already loaded temp file for this attachment, if it has been requested before in this request.
+		$attachment_id = absint( $attachment_id );
+		if ( isset( $this->tmp_files[ $attachment_id ] ) ) {
+			$image[0] = $this->tmp_files[ $attachment_id ];
+			return $image;
+		}
+
 		// get the temp directory as Brizy need the file local.
 		$tmp_file = $protocol_handler->get_temp_file( $external_files_obj->get_url( true ), Helper::get_wp_filesystem() );
 
@@ -109,10 +128,28 @@ class Brizy extends ThirdParty_Base implements ThirdParty {
 			return $image;
 		}
 
+		// remember the temp file and remove all of them at the end of this request.
+		if ( empty( $this->tmp_files ) ) {
+			add_action( 'shutdown', array( $this, 'delete_tmp_files' ) );
+		}
+		$this->tmp_files[ $attachment_id ] = (string) $tmp_file;
+
 		// add the tmp file to the image data.
-		$image[0] = $tmp_file;
+		$image[0] = (string) $tmp_file;
 
 		// return the resulting image data.
 		return $image;
+	}
+
+	/**
+	 * Delete the temp files we created during this request.
+	 *
+	 * @return void
+	 */
+	public function delete_tmp_files(): void {
+		foreach ( $this->tmp_files as $tmp_file ) {
+			wp_delete_file( $tmp_file );
+		}
+		$this->tmp_files = array();
 	}
 }
