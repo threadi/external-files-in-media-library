@@ -94,6 +94,15 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// bail if the target is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $local_target ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			Log::get_instance()->create( sprintf( __( 'The target %1$s is not located in the allowed directory for local files.', 'external-files-in-media-library' ), '<em>' . esc_html( $local_target ) . '</em>' ), $target, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
 		// bail if target file does already exist.
 		if ( $wp_filesystem->exists( $local_target ) ) {
 			/* translators: %1$s will be replaced by the service title. */
@@ -132,13 +141,25 @@ class Export extends Export_Base {
 		// get the WP filesystem object.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// bail if file does not exist.
-		if ( ! $wp_filesystem->exists( $url ) ) {
+		// remove protocol from the URL.
+		$local_file = str_replace( 'file://', '', $url );
+
+		// bail if file does not exist or is not a file.
+		if ( ! $wp_filesystem->exists( $local_file ) || ! $wp_filesystem->is_file( $local_file ) ) {
+			return false;
+		}
+
+		// bail if the file is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $local_file ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			Log::get_instance()->create( sprintf( __( 'The file %1$s is not located in the allowed directory for local files and has not been deleted.', 'external-files-in-media-library' ), '<em>' . esc_html( $local_file ) . '</em>' ), $url, 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
 		// delete the file.
-		$wp_filesystem->delete( $url );
+		$wp_filesystem->delete( $local_file );
 
 		// return true as file has been deleted.
 		return true;

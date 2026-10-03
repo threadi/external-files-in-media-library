@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Multisite;
 use WP_Post;
 
 /**
@@ -105,6 +106,17 @@ class Export extends Export_Base {
 
 		// bail if protocol handler could not be loaded.
 		if ( ! $protocol_handler instanceof Protocol_Base ) {
+			return false;
+		}
+
+		// bail if no blog is set or the actual user is not allowed to access this blog.
+		// This is checked before any temporary file is created.
+		$requested_blog_id = isset( $fields['website']['value'] ) ? absint( $fields['website']['value'] ) : 0;
+		if ( ! Multisite::get_instance()->is_blog_allowed( $requested_blog_id ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The actual user is not allowed to access the media library of the requested website.', 'external-files-in-media-library' ), $target, 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
@@ -235,6 +247,15 @@ class Export extends Export_Base {
 		if ( 0 === $external_attachment_id ) {
 			// log this event.
 			Log::get_instance()->create( __( 'External attachment ID for a file to delete in multisite could not be loaded.', 'external-files-in-media-library' ), $url, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// bail if the actual user is not allowed to access this blog.
+		if ( ! Multisite::get_instance()->is_blog_allowed( $blog_id ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The actual user is not allowed to access the media library of the requested website.', 'external-files-in-media-library' ), $url, 'error' );
 
 			// do nothing more.
 			return false;

@@ -219,7 +219,12 @@ class Plugin_Installation extends Extension_Base {
 
 		// bail if cap is missing.
 		if ( ! current_user_can( 'install_plugins' ) ) {
-			wp_safe_redirect( wp_get_referer() );
+			$this->redirect_back();
+		}
+
+		// bail if the installation of plugins is not enabled.
+		if ( 1 !== absint( get_option( 'eml_plugin_installation' ) ) ) {
+			$this->redirect_back();
 		}
 
 		// get the attachment ID from request.
@@ -227,12 +232,12 @@ class Plugin_Installation extends Extension_Base {
 
 		// bail if no attachment ID is given.
 		if ( 0 === $attachment_id ) {
-			wp_safe_redirect( wp_get_referer() );
+			$this->redirect_back();
 		}
 
 		// bail if file is NOT an external file.
 		if ( 0 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) ) {
-			wp_safe_redirect( wp_get_referer() );
+			$this->redirect_back();
 		}
 
 		// get the external file object for this file.
@@ -244,7 +249,8 @@ class Plugin_Installation extends Extension_Base {
 		$files = $zip_obj->get_files_from_zip();
 
 		// prepare the slug.
-		$slug = '';
+		$slug  = '';
+		$depth = PHP_INT_MAX;
 
 		// check the files.
 		foreach ( $files as $file ) {
@@ -253,18 +259,26 @@ class Plugin_Installation extends Extension_Base {
 				continue;
 			}
 
-			// get the slug.
-			$slug = dirname( str_replace( $external_file_obj->get_url( true ) . '/', '', $file['url'] ) );
+			// get the directory of this readme.txt within the ZIP.
+			$directory = dirname( str_replace( $external_file_obj->get_url( true ) . '/', '', $file['url'] ) );
+
+			// use the readme.txt which is nearest to the root of the ZIP.
+			$directory_depth = substr_count( $directory, '/' );
+			if ( $directory_depth < $depth ) {
+				$slug  = $directory;
+				$depth = $directory_depth;
+			}
 		}
 
-		// bail if slug could not be loaded.
-		if ( empty( $slug ) ) {
-			wp_safe_redirect( wp_get_referer() );
+		// bail if slug could not be loaded or is not usable as a single directory name.
+		// This prevents the usage of the plugin directory itself (or any path in it) as target.
+		if ( empty( $slug ) || in_array( $slug, array( '.', '..' ), true ) || 1 !== preg_match( '/^[A-Za-z0-9._-]+$/', $slug ) ) {
+			$this->redirect_back();
 		}
 
 		// bail if this plugin is already installed.
 		if ( Helper::is_plugin_installed( $slug ) ) {
-			wp_safe_redirect( wp_get_referer() );
+			$this->redirect_back();
 		}
 
 		// get the protocol handler of this file.
@@ -272,8 +286,7 @@ class Plugin_Installation extends Extension_Base {
 
 		// bail if protocol handler could not be loaded.
 		if ( ! $protocol_handler_obj instanceof Protocol_Base ) {
-			wp_safe_redirect( wp_get_referer() );
-			return;
+			$this->redirect_back();
 		}
 
 		// get the file for local installation.
@@ -281,24 +294,30 @@ class Plugin_Installation extends Extension_Base {
 
 		// bail if file could not be loaded.
 		if ( ! is_string( $file ) ) {
-			wp_safe_redirect( wp_get_referer() );
-			return;
+			$this->redirect_back();
 		}
 
-		// unpack this package in the plugin directory.
+		// unpack this package in the plugin directory. We never clear the destination here,
+		// as the target must not exist at this point.
 		include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 		$upgrader       = new WP_Upgrader( new Upgrader_Skin() );
 		$install_result = $upgrader->run(
 			array(
-				'package'           => $file,
-				'destination'       => WP_PLUGIN_DIR . '/' . $slug,
-				'clear_destination' => true,
+				'package'                     => $file,
+				'destination'                 => WP_PLUGIN_DIR . '/' . $slug,
+				'clear_destination'           => false,
+				'abort_if_destination_exists' => true,
 			)
 		);
 
+		// remove the temporary file, but only if it is really located in the temp directory.
+		if ( str_starts_with( wp_normalize_path( $file ), wp_normalize_path( get_temp_dir() ) ) ) {
+			wp_delete_file( $file );
+		}
+
 		// bail if the unpacking was not successfully.
-		if ( is_wp_error( $install_result ) ) {
-			wp_safe_redirect( wp_get_referer() );
+		if ( is_wp_error( $install_result ) || false === $install_result ) {
+			$this->redirect_back();
 		}
 
 		// forward user to the plugin list and filter for the slug.
@@ -310,5 +329,23 @@ class Plugin_Installation extends Extension_Base {
 			get_admin_url() . 'plugins.php'
 		);
 		wp_safe_redirect( $url );
+		exit;
+	}
+
+	/**
+	 * Redirect the user back to the page he came from and end the request.
+	 *
+	 * @return never
+	 */
+	private function redirect_back(): never {
+		// get the referer and use the media library as fallback.
+		$referer = wp_get_referer();
+		if ( ! is_string( $referer ) || empty( $referer ) ) {
+			$referer = get_admin_url() . 'upload.php';
+		}
+
+		// redirect the user and stop here.
+		wp_safe_redirect( $referer );
+		exit;
 	}
 }

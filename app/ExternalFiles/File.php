@@ -815,6 +815,14 @@ class File {
 			// log this event.
 			Log::get_instance()->create( __( 'File info for URL could not be loaded.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			/**
+			 * Run additional tasks if the switch to local hosting of an external file failed.
+			 *
+			 * @since 5.5.0 Available since 5.5.0.
+			 * @param File $instance The file object.
+			 */
+			do_action( 'efml_switch_to_local_failed', $instance );
+
 			// do nothing more.
 			return false;
 		}
@@ -842,6 +850,14 @@ class File {
 			// log this event.
 			Log::get_instance()->create( __( 'The temporary file could not be saved.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
 
+			/**
+			 * Run additional tasks if the switch to local hosting of an external file failed.
+			 *
+			 * @since 5.5.0 Available since 5.5.0.
+			 * @param File $instance The file object.
+			 */
+			do_action( 'efml_switch_to_local_failed', $instance );
+
 			// do nothing more.
 			return false;
 		}
@@ -859,6 +875,14 @@ class File {
 		if ( is_wp_error( $temp_attachment_id ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Inserting temporary file resulted in error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $temp_attachment_id ) . '</code>', $this->get_url( true ), 'error' );
+
+			/**
+			 * Run additional tasks if the switch to local hosting of an external file failed.
+			 *
+			 * @since 5.5.0 Available since 5.5.0.
+			 * @param File $instance The file object.
+			 */
+			do_action( 'efml_switch_to_local_failed', $instance );
 
 			// do nothing more.
 			return false;
@@ -882,6 +906,14 @@ class File {
 
 			// delete the temporary attachment.
 			wp_delete_attachment( $temp_attachment_id, true );
+
+			/**
+			 * Run additional tasks if the switch to local hosting of an external file failed.
+			 *
+			 * @since 5.5.0 Available since 5.5.0.
+			 * @param File $instance The file object.
+			 */
+			do_action( 'efml_switch_to_local_failed', $instance );
 
 			// do nothing more.
 			return false;
@@ -1027,7 +1059,7 @@ class File {
 		/**
 		 * Run tasks after we switch a file to local.
 		 *
-		 * @since 5.4.1 Available since 5.4.1.
+		 * @since 5.5.0 Available since 5.5.0.
 		 * @param int $attachment_id The attachment ID.
 		 * @param File $instance The file object.
 		 */

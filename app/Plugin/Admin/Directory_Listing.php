@@ -365,11 +365,8 @@ class Directory_Listing {
 			// get directory to connect to from request.
 			$term_id = absint( filter_input( INPUT_GET, 'term', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) );
 			if ( $term_id > 0 ) {
-				// get the user_ids which saved this entry.
-				$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
-
-				// bail if ID is set, does not match the actual user and this is not an administrator and setting is disabled.
-				if ( ! Helper::has_current_user_role( 'administrator' ) && ! in_array( get_current_user_id(), $user_ids, true ) && 1 !== absint( get_option( 'eml_show_all_external_sources' ) ) ) {
+				// bail if the actual user is not allowed to use this entry (not saved by this user, no administrator and setting is disabled).
+				if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
 					$this->show_error( '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
 					return;
 				}
@@ -390,8 +387,17 @@ class Directory_Listing {
 				$config['directory'] = $url;
 			}
 
-			// log the used credentials in debug mode.
-			Log::get_instance()->create( __( 'Used configuration for directory listing:', 'external-files-in-media-library' ) . ' <code>' . wp_strip_all_tags( Helper::get_json( $config ) ) . '</code>', '', 'info', 2 );
+			// log the used configuration in debug mode, but never with the values of the fields as they could contain credentials.
+			$config_for_log = $config;
+			if ( ! empty( $config_for_log['fields'] ) && is_array( $config_for_log['fields'] ) ) {
+				foreach ( $config_for_log['fields'] as $field_name => $field ) {
+					if ( is_array( $field ) && ! empty( $field['value'] ) ) {
+						$config_for_log['fields'][ $field_name ]['value'] = '***';
+					}
+				}
+			}
+			unset( $config_for_log['nonce'] );
+			Log::get_instance()->create( __( 'Used configuration for directory listing:', 'external-files-in-media-library' ) . ' <code>' . wp_strip_all_tags( Helper::get_json( $config_for_log ) ) . '</code>', '', 'info', 2 );
 
 			// output.
 			?>
@@ -459,6 +465,27 @@ class Directory_Listing {
 			'config_missing'                => __( 'Configuration for Directory Listing missing!', 'external-files-in-media-library' ),
 			'nonce_missing'                 => __( 'Secure token for Directory Listing missing!', 'external-files-in-media-library' ),
 			'empty_directory'               => __( 'Loaded an empty directory. This could also mean the files in the directory cannot be imported into WordPress, e.g., because they have a non-approved file type.', 'external-files-in-media-library' ),
+			'search_label'                  => __( 'Search for files in the loaded directories', 'external-files-in-media-library' ),
+			'search_placeholder'            => __( 'Search files …', 'external-files-in-media-library' ),
+			'search_clear'                  => __( 'Clear search', 'external-files-in-media-library' ),
+			'search_end'                    => __( 'End search', 'external-files-in-media-library' ),
+			'search_reset'                  => __( 'Reset search', 'external-files-in-media-library' ),
+			/* translators: %1$d will be replaced by a number. */
+			'search_min_chars'              => __( 'Please enter at least %1$d characters.', 'external-files-in-media-library' ),
+			/* translators: %1$s will be replaced by the search term. */
+			'search_hit'                    => __( '1 hit for “%1$s”', 'external-files-in-media-library' ),
+			/* translators: %1$d will be replaced by a number, %2$s by the search term. */
+			'search_hits_dir'               => __( '%1$d hits in 1 directory for “%2$s”', 'external-files-in-media-library' ),
+			/* translators: %1$d and %2$d will be replaced by numbers, %3$s by the search term. */
+			'search_hits_dirs'              => __( '%1$d hits in %2$d directories for “%3$s”', 'external-files-in-media-library' ),
+			/* translators: %1$s will be replaced by the search term. */
+			'search_no_hits'                => __( 'No files found for “%1$s”', 'external-files-in-media-library' ),
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			'search_scope'                  => __( '%1$d files in %2$d directories have been searched.', 'external-files-in-media-library' ),
+			/* translators: %1$s will be replaced by the path of a directory. */
+			'search_in_directory'           => __( 'in %1$s', 'external-files-in-media-library' ),
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			'search_limited'                => __( 'Only the first %1$d of %2$d hits are shown. Refine your search to see the others.', 'external-files-in-media-library' ),
 			'error_title'                   => __( 'The following error occurred:', 'external-files-in-media-library' ),
 			'errors_title'                  => __( 'The following errors occurred:', 'external-files-in-media-library' ),
 			'serverside_error'              => __( 'Incorrect response received from the server, possibly a server-side error.', 'external-files-in-media-library' ),
@@ -669,6 +696,12 @@ class Directory_Listing {
 		// get the credentials from the used term.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 		if ( $term_id > 0 ) {
+			// bail if the actual user is not allowed to use this external source.
+			if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
+				$result_dialog['detail']['texts'][] = '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>';
+				wp_send_json( $result_dialog );
+			}
+
 			// get the term.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
 
@@ -771,6 +804,12 @@ class Directory_Listing {
 			wp_send_json( $result_dialog );
 		}
 
+		// bail if the actual user is not allowed to use this external source.
+		if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
+			$result_dialog['detail']['texts'][] = '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
+
 		// delete the term.
 		$delete_result = Taxonomy::get_instance()->delete( $term_id );
 
@@ -786,6 +825,44 @@ class Directory_Listing {
 			'<p><strong>' . __( 'The directory has been deleted from your external sources.', 'external-files-in-media-library' ) . '</strong></p>',
 		);
 		wp_send_json( $result_dialog );
+	}
+
+	/**
+	 * Return whether the actual user is allowed to use the given external source.
+	 *
+	 * This is the case if:
+	 * - the user is an administrator
+	 * - or the setting to show all external sources to all users is enabled
+	 * - or the user has saved this external source.
+	 *
+	 * This is checked in each request handler of this plugin, where an external source (and with it
+	 * its saved credentials) is requested by its ID.
+	 *
+	 * @param int $term_id The term ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_source_allowed_for_current_user( int $term_id ): bool {
+		// bail if no ID is given.
+		if ( $term_id <= 0 ) {
+			return false;
+		}
+
+		// administrators are allowed to use every external source.
+		if ( Helper::has_current_user_role( 'administrator' ) || is_super_admin() ) {
+			return true;
+		}
+
+		// every user is allowed, if this is enabled in the settings.
+		if ( 1 === absint( get_option( 'eml_show_all_external_sources' ) ) ) {
+			return true;
+		}
+
+		// get the user_ids which saved this entry.
+		$user_ids = array_map( 'absint', get_term_meta( $term_id, 'user_id', false ) );
+
+		// return whether the actual user is one of them.
+		return in_array( get_current_user_id(), $user_ids, true );
 	}
 
 	/**
@@ -906,6 +983,13 @@ class Directory_Listing {
 		// bail if no term ID is given.
 		if ( 0 === $term_id ) {
 			$dialog['texts'][] = __( 'Term is missing!', 'external-files-in-media-library' );
+			wp_send_json( array( 'detail' => $dialog ) );
+			exit; // @phpstan-ignore deadCode.unreachable
+		}
+
+		// bail if the actual user is not allowed to use this external source.
+		if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
+			$dialog['texts'][] = '<p>' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 			exit; // @phpstan-ignore deadCode.unreachable
 		}

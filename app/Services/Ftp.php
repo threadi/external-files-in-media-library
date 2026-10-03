@@ -540,7 +540,7 @@ class Ftp extends Service_Base implements Service {
 		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
 			// create error object.
 			$error = new WP_Error();
-			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed! Reason:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $ftp_connection->errors ) . '</code>' );
+			$error->add( 'efml_service_ftp', __( 'Connection to FTP failed! Reason:', 'external-files-in-media-library' ) . ' <code>' . esc_html( (string) wp_json_encode( $ftp_connection->errors ) ) . '</code>' );
 
 			// add it to the list.
 			$this->add_error( $error );

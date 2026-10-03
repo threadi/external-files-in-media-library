@@ -80,7 +80,7 @@ class Url_Result extends Result_Base {
 
 			// bail if external file does not exist, show the original URL with the error text.
 			if ( ! $external_file_obj instanceof File ) {
-				return $url . '<br>' . $this->get_result_text();
+				return esc_html( $url ) . '<br>' . Helper::kses_log( $this->get_result_text() );
 			}
 
 			// if external file is valid, get its edit-URL.
@@ -97,11 +97,11 @@ class Url_Result extends Result_Base {
 
 		// if string is not a valid URL just show it.
 		if ( ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			return $url . ' ' . $edit_html . '<br>' . $this->get_result_text();
+			return esc_html( $url ) . ' ' . $edit_html . '<br>' . Helper::kses_log( $this->get_result_text() );
 		}
 
 		// otherwise link it.
-		return '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url ) ) . Helper::get_a11n_window_hint() . '</a> ' . $edit_html . '<br>' . wp_kses_post( $this->get_result_text() );
+		return '<a href="' . esc_url( $url ) . '" target="_blank">' . esc_html( Helper::shorten_url( $url ) ) . Helper::get_a11n_window_hint() . '</a> ' . $edit_html . '<br>' . Helper::kses_log( $this->get_result_text() );
 	}
 
 	/**

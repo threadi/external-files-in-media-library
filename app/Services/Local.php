@@ -252,6 +252,7 @@ class Local extends Service_Base implements Service {
 	 *
 	 * @param bool   $result The result - should be true to prevent the usage.
 	 * @param string $path   The file path.
+	 * @param string $directory The used directory.
 	 *
 	 * @return bool Return true to prevent.
 	 */
@@ -265,7 +266,7 @@ class Local extends Service_Base implements Service {
 		$ignore_list = array(
 			'node_modules',
 			'vendor',
-			'tmp'
+			'tmp',
 		);
 
 		// return whether this directory is in ignore list or not.

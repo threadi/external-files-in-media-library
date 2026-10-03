@@ -409,7 +409,7 @@ class Statistics {
 		/**
 		 * Filter the resulting list of file sizes per service.
 		 *
-		 * @since 5.4.1 Available since 5.4.1.
+		 * @since 5.5.0 Available since 5.5.0.
 		 * @param array<string,int> $sizes List of service name => size in bytes.
 		 */
 		return apply_filters( 'efml_sizes_per_service', $sizes );
@@ -432,7 +432,14 @@ class Statistics {
 
 			// bail if list is empty.
 			if ( empty( $sizes ) ) {
-				return '<p>' . esc_html__( 'No external hosted files found.', 'external-files-in-media-library' ) . '</p>';
+				// create the hint.
+				$html = '<p>' . esc_html__( 'No external hosted files found.', 'external-files-in-media-library' ) . '</p>';
+
+				// save also this result in cache to prevent the calculation on every request.
+				set_transient( self::CACHE_KEY, $html, WEEK_IN_SECONDS );
+
+				// return the hint.
+				return $html;
 			}
 
 			// build the table.

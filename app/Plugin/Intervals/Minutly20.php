@@ -29,7 +29,7 @@ class Minutly20 extends Interval_Base {
 	 *
 	 * @var int
 	 */
-	protected int $time = 15 * MINUTE_IN_SECONDS;
+	protected int $time = 20 * MINUTE_IN_SECONDS;
 
 	/**
 	 * Instance of this object.

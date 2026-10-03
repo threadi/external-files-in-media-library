@@ -423,8 +423,20 @@ class Queue extends Extension_Base {
 		// get the files object.
 		$import = Import::get_instance();
 
+		// get the fields. Entries without credentials are saved with an empty string, which results in an empty list.
+		$fields = array();
+		if ( ! empty( $url_data['fields'] ) && is_string( $url_data['fields'] ) ) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
+			$fields = json_decode( Crypt::get_instance()->decrypt( $url_data['fields'] ), true );
+			if ( ! is_array( $fields ) ) {
+				$fields = array();
+			}
+		}
+
 		// set the fields.
-		$import->set_fields( json_decode( Crypt::get_instance()->decrypt( $url_data['fields'] ), true ) );
+		$import->set_fields( $fields );
+
+		// remember the POST-values we change for this entry to restore them afterwards.
+		$original_post_values = array();
 
 		// set the options, if set.
 		if ( ! empty( $url_data['options'] ) ) {
@@ -435,21 +447,39 @@ class Queue extends Extension_Base {
 				// set options in POST-request-array as extension use this for their tasks.
 				if ( is_array( $options ) ) {
 					foreach ( $options as $key => $value ) {
-						$_POST[ $key ] = $value;
+						$original_post_values[ $key ] = array_key_exists( $key, $_POST ) ? array( $_POST[ $key ] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput -- Only saved to restore the value after the import.
+						$_POST[ $key ]                = $value;
 					}
 				}
 			} catch ( JsonException $e ) {
-				Log::get_instance()->create( __( 'Error decoding options to import this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identifier() );
+				Log::get_instance()->create( __( 'Error decoding options to import this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identifier() );
 			}
 		}
 
 		// import the URL.
-		if ( $import->add_url( $url_data['url'] ) ) {
-			// remove URL from queue.
-			$this->remove_url( absint( $url_data['id'] ) );
-		} else {
-			// mark URL with state "error" to prevent usage.
+		try {
+			if ( $import->add_url( $url_data['url'] ) ) {
+				// remove URL from queue.
+				$this->remove_url( absint( $url_data['id'] ) );
+			} else {
+				// mark URL with state "error" to prevent usage.
+				$this->set_url_state( absint( $url_data['id'] ), 'error' );
+			}
+		} catch ( \Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during the import of this URL via queue:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url_data['url'], 'error', 0, Import::get_instance()->get_identifier() );
+
+			// mark URL with state "error" to prevent that this entry blocks the queue.
 			$this->set_url_state( absint( $url_data['id'] ), 'error' );
+		} finally {
+			// restore the POST-values to prevent that options of this entry are used for the next entry.
+			foreach ( $original_post_values as $key => $value ) {
+				if ( is_array( $value ) ) {
+					$_POST[ $key ] = $value[0];
+					continue;
+				}
+				unset( $_POST[ $key ] );
+			}
 		}
 	}
 

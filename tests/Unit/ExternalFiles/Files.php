@@ -220,4 +220,84 @@ class Files extends externalFilesTests {
 		// reset the attachment pages.
 		update_option( 'eml_disable_attachment_pages', 0 );
 	}
+
+	/**
+	 * Test if our post meta keys are protected against manual changes, but other keys are not.
+	 *
+	 * @return void
+	 */
+	public function test_protect_meta_keys(): void {
+		// our own keys on posts are protected.
+		foreach ( array( EFML_POST_META_URL, EFML_POST_META_AVAILABILITY, 'eml_fields', 'eml_exported_file', 'efml_export_sources' ) as $meta_key ) {
+			$this->assertTrue( is_protected_meta( $meta_key, 'post' ), $meta_key );
+		}
+
+		// other keys and other object types are not changed.
+		$this->assertFalse( is_protected_meta( 'my_custom_field', 'post' ) );
+		$this->assertFalse( is_protected_meta( EFML_POST_META_URL, 'term' ) );
+		$this->assertTrue( is_protected_meta( '_edit_lock', 'post' ) );
+	}
+
+	/**
+	 * Test if a user who is allowed to edit an attachment is not allowed to change our post meta fields.
+	 *
+	 * @return void
+	 */
+	public function test_post_meta_is_not_editable_by_users(): void {
+		// create an author with an own attachment.
+		$user_id = self::factory()->user->create( array( 'role' => 'author' ) );
+		wp_set_current_user( $user_id );
+		$attachment_id = self::factory()->attachment->create( array( 'post_author' => $user_id ) );
+
+		// the user can edit the attachment, but not our field on it.
+		$this->assertTrue( current_user_can( 'edit_post', $attachment_id ) );
+		$this->assertTrue( current_user_can( 'edit_post_meta', $attachment_id, 'my_custom_field' ) );
+		$this->assertFalse( current_user_can( 'edit_post_meta', $attachment_id, EFML_POST_META_URL ) );
+		$this->assertFalse( current_user_can( 'add_post_meta', $attachment_id, EFML_POST_META_URL ) );
+	}
+
+	/**
+	 * Test if our callbacks on image filters of WordPress do not fail if other values than arrays are used,
+	 * as WordPress itself and other plugins use e.g. false there.
+	 *
+	 * @return void
+	 */
+	public function test_image_filters_with_unexpected_values(): void {
+		$files_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance();
+
+		// via the direct calls.
+		$this->assertFalse( $files_obj->get_image_srcset( false, array(), '', array(), 0 ) );
+		$this->assertFalse( $files_obj->check_srcset_meta( false, array(), '', 0 ) );
+		$this->assertFalse( $files_obj->get_attachment_metadata( false, 0 ) );
+		$this->assertNull( $files_obj->get_attachment_metadata( null, '0' ) );
+
+		// via the hooks of WordPress.
+		$this->assertFalse( apply_filters( 'wp_calculate_image_srcset', false, array(), '', array(), 0 ) );
+		$this->assertFalse( apply_filters( 'wp_calculate_image_srcset_meta', false, array(), '', 0 ) );
+		$this->assertFalse( apply_filters( 'wp_get_attachment_metadata', false, 0 ) );
+	}
+
+	/**
+	 * Test if the image filters do not change the values for files, which are not external files.
+	 *
+	 * @return void
+	 */
+	public function test_image_filters_for_not_external_files(): void {
+		$attachment_id = self::factory()->attachment->create();
+		$sources       = array(
+			300 => array(
+				'url'        => 'https://example.org/image-300x200.jpg',
+				'descriptor' => 'w',
+				'value'      => 300,
+			),
+		);
+		$image_meta    = array(
+			'file'   => 'image.jpg',
+			'width'  => 600,
+			'height' => 400,
+		);
+		$files_obj     = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance();
+		$this->assertEquals( $sources, $files_obj->get_image_srcset( $sources, array( 300, 200 ), '', $image_meta, $attachment_id ) );
+		$this->assertEquals( $image_meta, $files_obj->check_srcset_meta( $image_meta, array( 300, 200 ), '', $attachment_id ) );
+	}
 }

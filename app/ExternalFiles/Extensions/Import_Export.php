@@ -244,7 +244,7 @@ class Import_Export extends Extension_Base {
 		$file_data = json_decode( html_entity_decode( $urls ), true );
 
 		// bail if JSON could not be decoded.
-		if ( empty( $file_data ) ) {
+		if ( empty( $file_data ) || ! is_array( $file_data ) ) {
 			return $fields;
 		}
 
@@ -267,7 +267,7 @@ class Import_Export extends Extension_Base {
 		}
 
 		// bail if no fields are set in JSON.
-		if ( empty( $file_data['fields'] ) ) {
+		if ( empty( $file_data['fields'] ) || ! is_array( $file_data['fields'] ) ) {
 			return $fields;
 		}
 
@@ -344,6 +344,7 @@ class Import_Export extends Extension_Base {
 		// bail if ID is not given.
 		if ( 0 === $post_id ) {
 			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// get the external file object of this file.
@@ -352,6 +353,7 @@ class Import_Export extends Extension_Base {
 		// bail if this is not an external file.
 		if ( ! $external_file_obj->is_valid() ) {
 			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// collect the file data for the JSON-file.
@@ -359,7 +361,8 @@ class Import_Export extends Extension_Base {
 			'url'     => $external_file_obj->get_url( true ),
 			'type'    => $external_file_obj->get_file_type_obj()->get_name(),
 			'service' => $external_file_obj->get_service_name(),
-			'fields'  => $external_file_obj->get_fields(),
+			// the fields contain the decrypted credentials of this file: export them only for users who are allowed to manage this website.
+			'fields'  => current_user_can( 'manage_options' ) ? $external_file_obj->get_fields() : array(),
 		);
 
 		// create the filename for the JSON-download-file.

@@ -133,4 +133,82 @@ class Helper extends externalFilesTests {
 		$this->assertIsString( $plugin_name );
 		$this->assertEquals( 'External files in Media Library', $plugin_name );
 	}
+
+	/**
+	 * Test if not allowed HTML is removed from texts for log entries and results.
+	 *
+	 * @return void
+	 */
+	public function test_kses_log_removes_not_allowed_html(): void {
+		// an image with event handler, e.g. from an HTTP header of an external server.
+		$text = \ExternalFilesInMediaLibrary\Plugin\Helper::kses_log( '<code>x<img src=x onerror=alert(1)></code>' );
+		$this->assertEquals( '<code>x</code>', $text );
+
+		// a script.
+		$text = \ExternalFilesInMediaLibrary\Plugin\Helper::kses_log( 'a<script>alert(1)</script>b' );
+		$this->assertStringNotContainsString( '<script', $text );
+
+		// a link with attributes, which could be used to open a dialog, and a not allowed protocol.
+		$text = \ExternalFilesInMediaLibrary\Plugin\Helper::kses_log( '<a class="easy-dialog-for-wordpress" data-dialog="{}" href="javascript:alert(1)">link</a>' );
+		$this->assertStringNotContainsString( 'class=', $text );
+		$this->assertStringNotContainsString( 'data-dialog', $text );
+		$this->assertStringNotContainsString( 'javascript', $text );
+	}
+
+	/**
+	 * Test if the HTML we use ourselves in log entries and results is not removed.
+	 *
+	 * @return void
+	 */
+	public function test_kses_log_keeps_allowed_html(): void {
+		$text = 'Check the <a href="https://example.com/wp-admin/" target="_blank">log' . \ExternalFilesInMediaLibrary\Plugin\Helper::get_a11n_window_hint() . '</a> for <code>details</code>, <em>please</em>.<br>';
+		$this->assertEquals( $text, \ExternalFilesInMediaLibrary\Plugin\Helper::kses_log( $text ) );
+	}
+
+	/**
+	 * Test the check for local paths, which must be located in the allowed base directory.
+	 *
+	 * @return void
+	 */
+	public function test_is_local_path_allowed(): void {
+		// use the plugin path as allowed base directory.
+		add_filter( 'efml_file_base', array( $this, 'set_plugin_path_as_base' ) );
+		$plugin_path = \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path();
+
+		// existing file with and without protocol.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( $plugin_path . 'tests/Data/example.pdf' ) );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( 'file://' . $plugin_path . 'tests/Data/example.pdf' ) );
+
+		// not existing file in an existing directory (e.g., the target of an export).
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( $plugin_path . 'tests/Data/not-existing-file.pdf' ) );
+
+		// file outside the base directory.
+		$outside_file = wp_tempnam( 'efml-outside' );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( $outside_file ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( 'file://' . $outside_file ) );
+
+		// path, which leaves the base directory.
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( $plugin_path . 'tests/Data/../../../' . basename( $outside_file ) ) );
+
+		// not existing directory and empty path.
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( $plugin_path . 'not-existing-directory/sub/file.pdf' ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_local_path_allowed( '' ) );
+
+		// cleanup.
+		wp_delete_file( $outside_file );
+		remove_filter( 'efml_file_base', array( $this, 'set_plugin_path_as_base' ) );
+	}
+
+	/**
+	 * Test if the file version for enqueued files is not the path of the plugin.
+	 *
+	 * @return void
+	 */
+	public function test_get_file_version(): void {
+		$file_version = \ExternalFilesInMediaLibrary\Plugin\Helper::get_file_version( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'admin/js.js' );
+		$this->assertIsString( $file_version );
+		$this->assertNotEmpty( $file_version );
+		$this->assertStringNotContainsString( '/', $file_version );
+		$this->assertStringNotContainsString( '.php', $file_version );
+	}
 }

@@ -632,13 +632,19 @@ class Synchronization extends Tools_Base {
 		Log::get_instance()->create( __( 'Synchronization started.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// and run the import of this directory.
-		$import->add_url( $url );
+		$import_result = $import->add_url( $url );
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
-		// delete unused files, if enabled.
-		if ( 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
+		// do not delete any files if the external source could not be read or did not return any file,
+		// as we could not know then, which files are really not existing anymore.
+		if ( ! $import_result && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
+			Log::get_instance()->create( __( 'Synchronization cleanup has been skipped as no files could be read from the external source.', 'external-files-in-media-library' ), $url, 'error' );
+		}
+
+		// delete unused files, if enabled and the external source could be read.
+		if ( $import_result && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
 			// get again all files from given source URL but, which does not have the update marker.
 			$query  = array(
 				'post_type'      => 'attachment',

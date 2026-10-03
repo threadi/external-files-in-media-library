@@ -110,6 +110,7 @@ class Files {
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
 		add_filter( 'media_meta', array( $this, 'show_media_info_in_modal' ), 10, 2 );
 		add_filter( 'wp_get_attachment_image_src', array( $this, 'prevent_images' ), 10, 2 );
+		add_filter( 'is_protected_meta', array( $this, 'protect_meta_keys' ), 10, 3 );
 
 		// add ajax hooks.
 		add_action( 'wp_ajax_eml_switch_hosting', array( $this, 'switch_hosting_via_ajax' ), 10, 0 );
@@ -364,6 +365,57 @@ class Files {
 
 		// return the object.
 		return $external_file_obj;
+	}
+
+	/**
+	 * Mark the post meta keys we use for external files as protected.
+	 *
+	 * Without this each user who is allowed to edit an attachment could set these fields
+	 * (e.g., via custom fields or XML-RPC) and turn any attachment into an "external file"
+	 * with any URL, which our proxy would then request.
+	 *
+	 * @param mixed $is_protected Whether the key is protected.
+	 * @param mixed $meta_key The meta key.
+	 * @param mixed $meta_type The type of object the meta is for.
+	 *
+	 * @return mixed
+	 */
+	public function protect_meta_keys( mixed $is_protected, mixed $meta_key, mixed $meta_type ): mixed {
+		// bail if this is not for posts or the key is already protected.
+		if ( $is_protected || 'post' !== $meta_type || ! is_string( $meta_key ) ) {
+			return $is_protected;
+		}
+
+		// define the list of our own meta keys.
+		$meta_keys = array(
+			EFML_POST_META_URL,
+			EFML_POST_META_AVAILABILITY,
+			EFML_POST_IMPORT_MARKER,
+			'eml_external_file_date',
+			'eml_fields',
+			'eml_service',
+			'eml_locally_saved',
+			'eml_proxied',
+			'eml_synced',
+			'eml_synced_time',
+			'eml_job_id',
+			'eml_exported_file',
+			'efml_export_sources',
+			'efml_former_export_sources',
+			'efml_multisite_attachment_id',
+			'efml_dropbox_path',
+		);
+
+		/**
+		 * Filter the list of post meta keys of this plugin, which are protected against manual changes.
+		 *
+		 * @since 5.5.0 Available since 5.5.0.
+		 * @param array<int,string> $meta_keys List of meta keys.
+		 */
+		$meta_keys = apply_filters( 'efml_protected_meta_keys', $meta_keys );
+
+		// return whether the given key is one of them.
+		return in_array( $meta_key, $meta_keys, true );
 	}
 
 	/**
@@ -840,6 +892,9 @@ class Files {
 			);
 		}
 
+		// get the key for this size in the meta-data before the size is changed below.
+		$size_key = $size[0] . 'x' . $size[1];
+
 		// generate the filename for the thumb.
 		$generated_filename = Helper::generate_sizes_filename( basename( $external_file_obj->get_cache_file() ), $size[0], $size[1], $external_file_obj->get_file_extension() );
 
@@ -850,16 +905,17 @@ class Files {
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// use the already existing thumb.
-		if ( ! empty( $image_data['sizes'][ $size[0] . 'x' . $size[1] ] ) && $wp_filesystem->exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
+		if ( ! empty( $image_data['sizes'][ $size_key ] ) && $wp_filesystem->exists( Proxy::get_instance()->get_cache_directory() . $generated_filename ) ) {
 			// log the event.
 			/* translators: %1$s will be replaced by the image sizes. */
 			Log::get_instance()->create( sprintf( __( 'Loading the thumb from cache for %1$s', 'external-files-in-media-library' ), $size[0] . 'x' . $size[1] ), $external_file_obj->get_url( true ), 'info', 2 );
 
-			// return the thumb.
+			// return the thumb with the same sizes as they are returned for a new generated thumb
+			// (for squared sizes the height is set to 0 to prevent scaled images, see below).
 			return array(
 				trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $public_filename,
 				absint( $size[0] ),
-				absint( $size[1] ),
+				$size[0] === $size[1] ? 0 : absint( $size[1] ),
 				false,
 			);
 		}
@@ -915,7 +971,7 @@ class Files {
 		$new_image_data['file'] = $public_filename;
 
 		// update the meta data.
-		$image_data['sizes'][ $size[0] . 'x' . $size[1] ] = $new_image_data;
+		$image_data['sizes'][ $size_key ] = $new_image_data;
 		wp_update_attachment_metadata( absint( $attachment_id ), $image_data );
 
 		// log the event.
@@ -1006,16 +1062,21 @@ class Files {
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/wp_calculate_image_srcset/
 	 *
-	 * @param array<string> $sources Array with srcset-data if the image.
-	 * @param array<string> $size_array Array with sizes for images.
-	 * @param string        $image_src The src of the image.
-	 * @param array<string> $image_meta The image meta-data.
-	 * @param int           $attachment_id The attachment-ID.
+	 * @param mixed  $sources Array with srcset-data if the image (other plugins could return other types here).
+	 * @param mixed  $size_array Array with sizes for images.
+	 * @param string $image_src The src of the image.
+	 * @param mixed  $image_meta The image meta-data.
+	 * @param int    $attachment_id The attachment-ID.
 	 *
-	 * @return array<string>
+	 * @return mixed
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function get_image_srcset( array $sources, array $size_array, string $image_src, array $image_meta, int $attachment_id ): array {
+	public function get_image_srcset( mixed $sources, mixed $size_array, string $image_src, mixed $image_meta, int $attachment_id ): mixed {
+		// bail if the given value is not an array (core and other plugins could use false here).
+		if ( ! is_array( $sources ) ) {
+			return $sources;
+		}
+
 		// get the external file object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
@@ -1046,12 +1107,17 @@ class Files {
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/wp_get_attachment_metadata/
 	 *
-	 * @param array<string,string> $data The image-data.
-	 * @param int|string           $attachment_id The attachment-ID (also as string for compatibility with other plugins).
+	 * @param mixed      $data The image-data (other plugins could return other types than an array here).
+	 * @param int|string $attachment_id The attachment-ID (also as string for compatibility with other plugins).
 	 *
-	 * @return array<string,string>
+	 * @return mixed
 	 */
-	public function get_attachment_metadata( array $data, int|string $attachment_id ): array {
+	public function get_attachment_metadata( mixed $data, int|string $attachment_id ): mixed {
+		// bail if the given value is not an array (core and other plugins could use false here).
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+
 		// bail if attachment pages are not disabled.
 		if ( 0 === absint( get_option( 'eml_disable_attachment_pages', 0 ) ) ) {
 			return $data;
@@ -1193,15 +1259,20 @@ class Files {
 	 * Check the srcset metadata for external files. Remove 'file' entry if file could not have thumbs
 	 * as this results in possible warnings via @media.php.
 	 *
-	 * @param array<string,mixed> $image_meta The meta data.
-	 * @param array<string,mixed> $size_array The size array.
-	 * @param string              $image_src The src.
-	 * @param int                 $attachment_id The attachment ID.
+	 * @param mixed  $image_meta The meta data (core uses false here if no meta data exist).
+	 * @param mixed  $size_array The size array.
+	 * @param string $image_src The src.
+	 * @param int    $attachment_id The attachment ID.
 	 *
-	 * @return array<string,mixed>
+	 * @return mixed
 	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function check_srcset_meta( array $image_meta, array $size_array, string $image_src, int $attachment_id ): array {
+	public function check_srcset_meta( mixed $image_meta, mixed $size_array, string $image_src, int $attachment_id ): mixed {
+		// bail if the given value is not an array (core uses false here if no meta data exist).
+		if ( ! is_array( $image_meta ) ) {
+			return $image_meta;
+		}
+
 		// get external file object.
 		$external_file_obj = $this->get_file( $attachment_id );
 
@@ -1257,7 +1328,7 @@ class Files {
 		 */
 		if ( apply_filters( 'efml_files_check_content_type', $true, $url ) && ! in_array( $results['mime-type'], Helper::get_allowed_mime_types(), true ) ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Mime-type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . $results['mime-type'] . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
+			Log::get_instance()->create( __( 'Mime-type of this file is not allowed. Used mime type:', 'external-files-in-media-library' ) . ' <code>' . esc_html( (string) $results['mime-type'] ) . '</code>', $url, 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array to not import this file.
 			return array();
@@ -1292,7 +1363,7 @@ class Files {
 		}
 
 		// add infos about the external file.
-		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_attr( $external_file_obj->get_url( true ) ) . '">' . Helper::shorten_url( $external_file_obj->get_url( true ) ) . '</span></div>';
+		$html .= '<div class="efml-attachment-url"><strong>' . __( 'External file from:', 'external-files-in-media-library' ) . '</strong> <span title="' . esc_attr( $external_file_obj->get_url( true ) ) . '">' . esc_html( Helper::shorten_url( $external_file_obj->get_url( true ) ) ) . '</span></div>';
 
 		// get the protocol handler.
 		$protocol_handler = $external_file_obj->get_protocol_handler_obj();

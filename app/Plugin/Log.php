@@ -102,12 +102,12 @@ class Log {
 			return;
 		}
 
-		// add log entry.
+		// add log entry. The message is reduced to the HTML we use ourselves, as it can contain data from external servers.
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prefix . 'eml_logs',
 			array(
 				'time'       => gmdate( 'Y-m-d H:i:s' ),
-				'log'        => $message,
+				'log'        => Helper::kses_log( $message ),
 				'url'        => $url,
 				'state'      => $state,
 				'identifier' => $identifier,
@@ -218,8 +218,15 @@ class Log {
 		// filter by URL.
 		if ( ! empty( $args['url'] ) ) {
 			if ( ! empty( $args['url_like'] ) ) {
-				$where[]  = '`url` LIKE %s';
-				$values[] = '%' . $wpdb->esc_like( (string) $args['url'] ) . '%';
+				// search for the given value and for its variant with decoded entities, as the requested value
+				// could be entity-encoded by the sanitizing of the request (e.g. "&amp;" instead of "&").
+				$variants   = array_unique( array( (string) $args['url'], html_entity_decode( (string) $args['url'], ENT_QUOTES | ENT_HTML5 ) ) );
+				$conditions = array();
+				foreach ( $variants as $variant ) {
+					$conditions[] = '`url` LIKE %s';
+					$values[]     = '%' . $wpdb->esc_like( $variant ) . '%';
+				}
+				$where[] = '( ' . implode( ' OR ', $conditions ) . ' )';
 			} else {
 				$where[]  = '`url` = %s';
 				$values[] = (string) $args['url'];
