@@ -96,6 +96,7 @@ class Local extends Service_Base implements Service {
 
 		// use our own hooks.
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
+		add_filter( 'efml_service_local_hide_file', array( $this, 'hide_generic_directories' ), 10, 3 );
 		add_filter( 'efml_directory_listing_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
 		add_filter( 'efml_export_object', array( $this, 'change_export_object' ) );
 	}
@@ -223,7 +224,7 @@ class Local extends Service_Base implements Service {
 	 * @param bool   $result The result - should be true to prevent the usage.
 	 * @param string $path The file path.
 	 *
-	 * @return bool
+	 * @return bool Return true to prevent.
 	 */
 	public function prevent_not_allowed_files( bool $result, string $path ): bool {
 		// bail if setting is disabled.
@@ -244,6 +245,31 @@ class Local extends Service_Base implements Service {
 
 		// return whether this file type is allowed (false) or not (true).
 		return ! in_array( $mime_type['type'], Helper::get_allowed_mime_types(), true );
+	}
+
+	/**
+	 * Hide generic directories from local listings.
+	 *
+	 * @param bool   $result The result - should be true to prevent the usage.
+	 * @param string $path   The file path.
+	 *
+	 * @return bool Return true to prevent.
+	 */
+	public function hide_generic_directories( bool $result, string $path, string $directory ): bool {
+		// bail if this is not a directory.
+		if ( ! is_dir( $path ) ) {
+			return $result;
+		}
+
+		// list of directories to ignore.
+		$ignore_list = array(
+			'node_modules',
+			'vendor',
+			'tmp'
+		);
+
+		// return whether this directory is in ignore list or not.
+		return in_array( basename( $directory ), $ignore_list, true );
 	}
 
 	/**

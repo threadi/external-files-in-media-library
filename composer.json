@@ -55,7 +55,7 @@
         "szepeviktor/phpstan-wordpress": "^2.0",
         "phpstan/extension-installer": "^1.4",
         "php-stubs/wp-cli-stubs": "^2.11",
-        "coenjacobs/mozart": "^0.7.1",
+        "coenjacobs/mozart": "~1.1.6",
         "phpcompatibility/phpcompatibility-wp": "^2.1",
         "dealerdirect/phpcodesniffer-composer-installer": "^1.2",
         "yoast/phpunit-polyfills": "^1.0",
@@ -69,8 +69,8 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-directory-listing-for-wordpress": "^4.0.13",
-        "threadi/easy-settings-for-wordpress": "^3.5.0",
+        "threadi/easy-directory-listing-for-wordpress": "^4.1.4",
+        "threadi/easy-settings-for-wordpress": "^3.6.4",
         "threadi/easy-transients-for-wordpress": "^1.4.8",
         "spatie/dropbox-api": "^1.23"
     }

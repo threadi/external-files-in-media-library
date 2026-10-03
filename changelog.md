@@ -12,11 +12,12 @@
 
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
-- Updated the crypt and the settings library
 - Proxy settings for each file type is only visible if the files are saved external
 - Optimized the abilities for interactions with AI/MCP
 - Optimized some texts
 - Format bytes in statistics
+- Hide generic directories (e.g., "vendor" and "node_modules") in local service
+- Updated dependencies
 
 ## [5.4.0] - 30.08.2026
 
