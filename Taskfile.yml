@@ -4,26 +4,12 @@ tasks:
   default:
     - task: prepare
 
-  build_dialog:
-    dir: vendor/threadi/easy-dialog-for-wordpress/
-    cmds:
-      - npm i
-      - npm run build
-
-  build_directory:
-    dir: vendor/threadi/easy-directory-listing-for-wordpress/
-    cmds:
-      - npm i
-      - npm run build
-
   prepare:
     cmds:
       - composer install
       - composer update
       - npm i
       - npm run build
-      - task: build_dialog
-      - task: build_directory
 
   check:
     cmds:
@@ -37,17 +23,12 @@ tasks:
       - zip -rq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml.dist" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "*/.editorconfig" "*/build/*" "*/releases/*" "*/svn/*" "*/languages/*" "*/changelog.md" "*/readme.md" "*/ruleset.xml" "*/assets/*" "*/external-files-in-media-library-dev.php" "*/readme-dev.txt" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*"
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/autoload.php
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/composer/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/google/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/brick/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ramsey/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ralouphie/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/rize/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/firebase/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/symfony/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/monolog/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/psr/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ralouphie/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/symfony/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/guzzlehttp/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/phpseclib/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/spatie/*
+      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/graham-campbell/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/build/*
       - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/lib/*
 

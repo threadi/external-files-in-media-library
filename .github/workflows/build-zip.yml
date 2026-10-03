@@ -23,10 +23,6 @@ jobs:
           npm i
           npm run build:replacer
           npm run build:commands
-          cd vendor/threadi/easy-directory-listing-for-wordpress/
-          npm i
-          npm run build
-          cd ../../../
           rm -fr build
           rm -fr releases
           rm -fr svn
