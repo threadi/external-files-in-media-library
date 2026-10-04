@@ -154,7 +154,7 @@ class Site_Health {
 	 * @return array<string,mixed>
 	 */
 	public function add_debug_info( array $debug_information ): array {
-		$debug_information[ Helper::get_plugin_slug() ] = array(
+		$debug_information[ dirname( Helper::get_plugin_slug() ) ] = array(
 			'label'  => Helper::get_plugin_name(),
 			'fields' => array(),
 		);
@@ -169,7 +169,7 @@ class Site_Health {
 			);
 
 			// add it to the list.
-			$debug_information[ Helper::get_plugin_slug() ]['fields'][ $setting->get_name() ] = $entry;
+			$debug_information[ dirname( Helper::get_plugin_slug() ) ]['fields'][ $setting->get_name() ] = $entry;
 		}
 
 		// return the resulting list of debug information.

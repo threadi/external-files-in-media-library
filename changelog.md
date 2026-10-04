@@ -53,6 +53,7 @@
 - Fixed wrong version parameter on enqueued files
 - Fixed missing sync settings if Download List Block is active without any list
 - Fixed search in the log for URLs with special characters
+- Fixed to show the debug informations in site health
 
 ## [5.4.0] - 30.08.2026
 
