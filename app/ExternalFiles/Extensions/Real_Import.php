@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -164,7 +165,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $result;
 		}
 
@@ -197,7 +198,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $post_array;
 		}
 
@@ -303,7 +304,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $options;
 		}
 
@@ -678,7 +679,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return;
 		}
 
@@ -707,7 +708,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $results;
 		}
 

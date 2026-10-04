@@ -49,4 +49,46 @@ class Synchronization extends externalFilesTests {
 		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
 		update_option( 'eml_sync_delete_file_on_archive_deletion', 1 );
 	}
+
+	/**
+	 * Marker whether the synchronization was marked as running during the import.
+	 *
+	 * @var bool
+	 */
+	private bool $was_running_during_import = false;
+
+	/**
+	 * Save whether the synchronization is marked as running.
+	 *
+	 * @return void
+	 */
+	public function check_running_state(): void {
+		$this->was_running_during_import = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->is_running();
+	}
+
+	/**
+	 * Test if a synchronization is only marked as running while it is running.
+	 *
+	 * @return void
+	 */
+	public function test_is_running(): void {
+		$sync_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance();
+
+		// not running before the synchronization.
+		$this->assertFalse( $sync_obj->is_running() );
+
+		// create the external source with a URL, which is not readable.
+		$url     = self::get_faulty_test_file( 'pdf', 'http' );
+		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'http', $url, array() );
+		$this->assertGreaterThan( 0, $term_id );
+
+		// run the synchronization and check the state during the import.
+		add_action( 'efml_before_import', array( $this, 'check_running_state' ) );
+		$sync_obj->sync( $url, \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id ), $term_id );
+		remove_action( 'efml_before_import', array( $this, 'check_running_state' ) );
+		$this->assertTrue( $this->was_running_during_import );
+
+		// not running after the synchronization.
+		$this->assertFalse( $sync_obj->is_running() );
+	}
 }

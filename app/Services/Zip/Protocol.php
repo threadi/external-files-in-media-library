@@ -43,8 +43,14 @@ class Protocol extends Protocol_Base {
 	 * @return bool
 	 */
 	public function is_url_compatible(): bool {
-		// bail if this is not a DropBox URL.
-		if ( ! str_contains( '.zip/', $this->get_url() ) ) {
+		// bail if this is not an HTTP-URL, as this protocol loads the ZIP-file via HTTP.
+		// ZIP-files from other sources (e.g., local files) are handled by their own protocols.
+		if ( 0 !== stripos( $this->get_url(), 'http://' ) && 0 !== stripos( $this->get_url(), 'https://' ) ) {
+			return false;
+		}
+
+		// bail if this is not a URL of a file in a ZIP-file.
+		if ( ! str_contains( $this->get_url(), '.zip/' ) ) {
 			return false;
 		}
 
