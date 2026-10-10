@@ -322,7 +322,6 @@ class Abilities extends externalFilesTests {
 	 */
 	public function test_urls_are_completed_with_directory_of_source(): void {
 		$method = new \ReflectionMethod( \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::class, 'get_urls_for_source' );
-		$method->setAccessible( true );
 		$abilities_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::get_instance();
 
 		// a source like DropBox, whose files are no real URLs and could contain spaces.
