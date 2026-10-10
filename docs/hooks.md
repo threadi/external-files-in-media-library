@@ -1298,7 +1298,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Plugin/Intro.php](Plugin/Intro.php), [line 364](Plugin/Intro.php#L364-L370)
+Source: [app/Plugin/Intro.php](Plugin/Intro.php), [line 361](Plugin/Intro.php#L361-L367)
 
 ### `efml_schedule_interval`
 
