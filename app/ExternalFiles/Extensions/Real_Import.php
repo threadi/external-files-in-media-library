@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\ExternalFiles\SynchronizationDialog;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -164,7 +165,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $result;
 		}
 
@@ -197,7 +198,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $post_array;
 		}
 
@@ -276,7 +277,7 @@ class Real_Import extends Extension_Base {
 
 		// add link to global settings.
 		if ( current_user_can( 'manage_options' ) ) {
-			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_advanced' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
+			$text .= '<a href="' . esc_url( \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_general' ) ) . '" target="_blank" title="' . esc_attr__( 'Go to plugin settings', 'external-files-in-media-library' ) . '"><span class="dashicons dashicons-admin-generic"></span></a>';
 		}
 
 		// end the text.
@@ -303,7 +304,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $options;
 		}
 
@@ -678,7 +679,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return;
 		}
 
@@ -707,7 +708,7 @@ class Real_Import extends Extension_Base {
 		}
 
 		// bail if this is a running synchronization, and the extension is not enabled for it.
-		if ( has_action( 'efml_before_sync' ) && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		if ( Synchronization::get_instance()->is_running() && ! in_array( $this->get_name(), SynchronizationDialog::get_instance()->get_enabled_extensions(), true ) ) {
 			return $results;
 		}
 

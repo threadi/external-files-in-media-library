@@ -130,9 +130,8 @@ class Files {
 		// add admin actions.
 		add_action( 'admin_action_eml_reset_thumbnails', array( $this, 'reset_thumbnails_by_request' ) );
 
-		// misc.
-		add_action( 'wp_abilities_api_init', array( $this, 'add_abilities' ) );
-		add_action( 'wp_abilities_api_categories_init', array( $this, 'add_ability_category' ) );
+		// initialize the abilities for the Abilities API.
+		Abilities::get_instance()->init();
 	}
 
 	/**
@@ -1710,104 +1709,13 @@ class Files {
 	}
 
 	/**
-	 * Add abilities this plugin provides.
+	 * Forward the ability-request to add a URL.
 	 *
-	 * @return void
-	 */
-	public function add_abilities(): void {
-		if ( ! function_exists( 'wp_register_ability' ) ) {
-			return;
-		}
-
-		// add the ability to add a URL.
-		wp_register_ability(
-			'external-files-in-media-library/add',
-			array(
-				'label'               => __( 'Add an external URL in media library', 'external-files-in-media-library' ),
-				'description'         => __( 'Adds the ability to add external URLs in the media library.', 'external-files-in-media-library' ),
-				'category'            => self::ABILITY_CATEGORY,
-				'input_schema'        => array(
-					'type'       => 'object',
-					'properties' => array(
-						'attachment_id' => array(
-							'type'        => 'integer',
-							'description' => __( 'The attachment ID. Should be 0 to add a URL.', 'external-files-in-media-library' ),
-						),
-						'url'           => array(
-							'type'        => 'string',
-							'description' => __( 'The URL to add in the media library.', 'external-files-in-media-library' ),
-						),
-						'login'         => array(
-							'type'        => 'string',
-							'description' => __( 'The login, if required by the given URL', 'external-files-in-media-library' ),
-						),
-						'password'      => array(
-							'type'        => 'string',
-							'description' => __( 'The password, if required by the given URL', 'external-files-in-media-library' ),
-						),
-					),
-				),
-				'output_schema'       => array(
-					'type' => 'integer',
-				),
-				'execute_callback'    => array( $this, 'add_urls_by_ability' ),
-				'permission_callback' => function () {
-					return current_user_can( EFML_CAP_NAME );
-				},
-				'meta'                => array(
-					'show_in_rest' => true,
-					'mcp'          => array( 'public' => true ), // expose via the MCP Adapter of WordPress.
-					'annotations'  => array(
-						'readonly'    => false,
-						'destructive' => false,
-						'idempotent'  => true,
-					),
-				),
-			)
-		);
-
-		// add the ability to delete a URL.
-		wp_register_ability(
-			'external-files-in-media-library/delete',
-			array(
-				'label'               => __( 'Delete an external URL in media library', 'external-files-in-media-library' ),
-				'description'         => __( 'Adds the ability to delete external URLs in the media library.', 'external-files-in-media-library' ),
-				'category'            => self::ABILITY_CATEGORY,
-				'input_schema'        => array(
-					'type'       => 'object',
-					'properties' => array(
-						'url' => array(
-							'type'        => 'string',
-							'description' => __( 'The URL to add in the media library.', 'external-files-in-media-library' ),
-						),
-					),
-				),
-				'output_schema'       => array(
-					'type' => 'boolean',
-				),
-				'execute_callback'    => array( $this, 'delete_url_by_ability' ),
-				'permission_callback' => function () {
-					return current_user_can( EFML_CAP_NAME );
-				},
-				'meta'                => array(
-					'show_in_rest' => true,
-					'mcp'          => array( 'public' => true ), // expose via the MCP Adapter of WordPress.
-					'annotations'  => array(
-						'readonly'    => false,
-						'destructive' => true,
-						'idempotent'  => true,
-					),
-				),
-			)
-		);
-	}
-
-	/**
-	 * Forward the ability-request to the hook-funktion.
+	 * @deprecated 5.5.0 Use the ability "external-files-in-media-library/add" instead.
 	 *
 	 * @param array<string,mixed> $input The input from ability.
 	 *
-	 * @return int
+	 * @return int The attachment ID or 0 if the URL could not be added.
 	 */
 	public function add_urls_by_ability( array $input ): int {
 		// bail if capability is missing.
@@ -1815,27 +1723,17 @@ class Files {
 			return 0;
 		}
 
-		// bail if the input is empty.
-		if ( empty( $input ) ) {
-			return 0;
-		}
+		// add the URL.
+		$result = Abilities::get_instance()->add_url( $input );
 
-		// bail if attachment and URL is missing.
-		if ( ! isset( $input['attachment_id'] ) && ! isset( $input['url'] ) ) {
-			return 0;
-		}
-
-		// do not use credentials, if not set.
-		if ( ! isset( $input['login'] ) && ! isset( $input['password'] ) ) {
-			return $this->add_urls_by_hook( $input['attachment_id'], $input['url'] );
-		}
-
-		// use it with credentials.
-		return $this->add_urls_by_hook( $input['attachment_id'], $input['url'], $input['login'], $input['password'] );
+		// return 0 on any error.
+		return is_wp_error( $result ) ? 0 : $result;
 	}
 
 	/**
-	 * Delete the ability request to delete a single URL from media library.
+	 * Forward the ability-request to delete a single URL from media library.
+	 *
+	 * @deprecated 5.5.0 Use the ability "external-files-in-media-library/delete" instead.
 	 *
 	 * @param array<string,mixed> $input The input from ability.
 	 *
@@ -1847,49 +1745,7 @@ class Files {
 			return false;
 		}
 
-		// bail if no input is given.
-		if ( empty( $input ) ) {
-			return false;
-		}
-
-		// bail if no URL is given.
-		if ( ! isset( $input['url'] ) ) {
-			return false;
-		}
-
-		// get the external files object for this URL.
-		$external_file_obj = $this->get_file_by_url( $input['url'] );
-
-		// bail if external file could not be loaded.
-		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
-			return false;
-		}
-
-		// delete it.
-		$external_file_obj->delete();
-
-		// return true as it has been deleted.
-		return true;
-	}
-
-	/**
-	 * Add our own ability category.
-	 *
-	 * @return void
-	 */
-	public function add_ability_category(): void {
-		// bail if function does not exist.
-		if ( ! function_exists( 'wp_register_ability_category' ) ) {
-			return;
-		}
-
-		// add the category.
-		wp_register_ability_category(
-			self::ABILITY_CATEGORY,
-			array(
-				'label'       => __( 'Connector for Propstack', 'connector-for-propstack' ),
-				'description' => __( 'Abilities for managing objects from Propstack in WordPress.', 'connector-for-propstack' ),
-			)
-		);
+		// return whether the URL has been deleted.
+		return true === Abilities::get_instance()->delete_url( $input );
 	}
 }

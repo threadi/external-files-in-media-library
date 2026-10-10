@@ -403,6 +403,18 @@ class Helper {
 	}
 
 	/**
+	 * Return the abilities documentation URL.
+	 *
+	 * @return string
+	 */
+	public static function get_abilities_doc_url(): string {
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/abilities_de.md';
+		}
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/abilities.md';
+	}
+
+	/**
 	 * Return a shortened URL with the domain and filename on base of given URL.
 	 *
 	 * @param string $url The given URL.

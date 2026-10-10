@@ -11,9 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 defined( 'ABSPATH' ) || exit;
 
 use easySettingsForWordPress\Fields\Checkbox;
-use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
-use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
@@ -103,24 +101,8 @@ class Revert extends Extension_Base {
 		// get the settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
-		// get the main settings page.
-		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
-
-		// bail if page could not be loaded.
-		if ( ! $main_settings_page instanceof Page ) {
-			return;
-		}
-
-		// get the advanced tab.
-		$advanced_tab = $main_settings_page->get_tab( 'eml_advanced' );
-
-		// bail if page could not be loaded.
-		if ( ! $advanced_tab instanceof Tab ) {
-			return;
-		}
-
-		// get the advanced section.
-		$advanced_section = $advanced_tab->get_section( 'settings_section_advanced' );
+		// get the files section in the advanced tab.
+		$advanced_section = Settings::get_instance()->get_advanced_section( 'eml_advanced_files', 'settings_section_advanced_files' );
 
 		// bail if section could not be loaded.
 		if ( ! $advanced_section instanceof Section ) {

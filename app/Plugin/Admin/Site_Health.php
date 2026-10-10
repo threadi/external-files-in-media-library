@@ -11,9 +11,7 @@ namespace ExternalFilesInMediaLibrary\Plugin\Admin;
 defined( 'ABSPATH' ) || exit;
 
 use easySettingsForWordPress\Fields\Checkbox;
-use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
-use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_REST_Server;
@@ -154,7 +152,7 @@ class Site_Health {
 	 * @return array<string,mixed>
 	 */
 	public function add_debug_info( array $debug_information ): array {
-		$debug_information[ Helper::get_plugin_slug() ] = array(
+		$debug_information[ dirname( Helper::get_plugin_slug() ) ] = array(
 			'label'  => Helper::get_plugin_name(),
 			'fields' => array(),
 		);
@@ -169,7 +167,7 @@ class Site_Health {
 			);
 
 			// add it to the list.
-			$debug_information[ Helper::get_plugin_slug() ]['fields'][ $setting->get_name() ] = $entry;
+			$debug_information[ dirname( Helper::get_plugin_slug() ) ]['fields'][ $setting->get_name() ] = $entry;
 		}
 
 		// return the resulting list of debug information.
@@ -185,24 +183,8 @@ class Site_Health {
 		// get the settings object.
 		$settings_obj = Settings::get_instance()->get_settings_obj();
 
-		// get the main settings page.
-		$main_settings_page = $settings_obj->get_page( 'eml_settings' );
-
-		// bail if page could not be loaded.
-		if ( ! $main_settings_page instanceof Page ) {
-			return;
-		}
-
-		// get the advanced tab.
-		$advanced_tab = $main_settings_page->get_tab( 'eml_advanced' );
-
-		// bail if page could not be loaded.
-		if ( ! $advanced_tab instanceof Tab ) {
-			return;
-		}
-
-		// get the advanced section.
-		$advanced_section = $advanced_tab->get_section( 'settings_section_advanced' );
+		// get the misc section in the advanced tab.
+		$advanced_section = Settings::get_instance()->get_advanced_section( 'eml_advanced_misc', 'settings_section_advanced' );
 
 		// bail if section could not be loaded.
 		if ( ! $advanced_section instanceof Section ) {

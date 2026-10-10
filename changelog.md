@@ -4,18 +4,27 @@
 
 ### Added
 
-- Added mp3 as additional allowed file to upload
+- Added mp3 as additional allowed external file
 - Added search field in directory listing for search for file names in the complete directory tree
   of the external source
 - Added list of file sizes per service in statistics
+- Added abilities for AI/MCP to list and check external files, to import multiple URLs, to manage external sources,
+  the synchronization, the queue and the export, see [documentation](docs/abilities.md)
+- Added settings for the abilities: enable or disable them and choose between "read only" (default) and "all"
+- Added status of the abilities and hint for the needed MCP plugin in the settings
 - Added some new hooks & PHP Unit tests
 
 ### Changed
 
+- Advanced settings are divided into the sub-tabs "Plugin", "Files", "Abilities" and "Miscellaneous"
+- The intro has its own section in the advanced settings in the sub-tab "Plugin"
+- Links to the settings in the import dialog are now leading to the general settings
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
 - Proxy settings for each file type is only visible if the files are saved external
 - Optimized the abilities for interactions with AI/MCP
+- Abilities return an error with the reason instead of 0 or false if they fail
+- The ability to delete a URL also accepts the attachment ID and checks if the user is allowed to delete the file
 - Optimized some texts
 - Format bytes in statistics
 - Hide generic directories (e.g., "vendor" and "node_modules") in local service
@@ -33,6 +42,12 @@
 
 ### Fixed
 
+- Fixed fatal error if the ability to add a URL is used without attachment ID or with a login only
+- Fixed wrong name of the ability category
+- Fixed real import and usage of external file dates during import, which only worked if they were enabled for the
+  synchronization (the real import created broken files in the media library otherwise)
+- Fixed detection of URLs of files in ZIP-files by the ZIP protocol
+- Fixed sum of file sizes per service in statistics, which only showed the size of a single file
 - Fixed possible XSS via HTTP header of external files in the import result dialog
 - Fixed missing output escaping of URLs in the log table and media modal
 - Fixed fatal error in the frontend with WordPress older than 6.8 using the page builder Brizy
@@ -53,6 +68,7 @@
 - Fixed wrong version parameter on enqueued files
 - Fixed missing sync settings if Download List Block is active without any list
 - Fixed search in the log for URLs with special characters
+- Fixed to show the debug informations in site health
 
 ## [5.4.0] - 30.08.2026
 

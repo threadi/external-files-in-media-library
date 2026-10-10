@@ -512,7 +512,7 @@ class DropBox extends Service_Base implements Service {
 
 		// log event.
 		/* translators: %1$s will be replaced by the username. */
-		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . ( $user instanceof WP_User ? $user->display_name : '' ) . '</em>' ), '', 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . ( $user instanceof WP_User ? $user->display_name : '' ) . '</em>' ), '', 'info', 2 ); // @phpstan-ignore instanceof.alwaysTrue
 
 		// save the token.
 		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );

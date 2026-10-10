@@ -1755,6 +1755,17 @@ class Synchronization extends Tools_Base {
 	}
 
 	/**
+	 * Return whether a synchronization is running at this moment.
+	 *
+	 * This is the case if the synchronization of an external source has been started, but is not finished yet.
+	 *
+	 * @return bool
+	 */
+	public function is_running(): bool {
+		return did_action( 'efml_before_sync' ) > did_action( 'efml_after_sync' );
+	}
+
+	/**
 	 * Return the object title.
 	 *
 	 * @return string

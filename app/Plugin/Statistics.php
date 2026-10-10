@@ -400,7 +400,7 @@ class Statistics {
 			}
 
 			// add up the file size for this service.
-			$sizes[ $service_label ] = ( ! empty( $sizes[ $service_name ] ) ? $sizes[ $service_name ] : 0 ) + $external_file_obj->get_filesize();
+			$sizes[ $service_label ] = ( ! empty( $sizes[ $service_label ] ) ? $sizes[ $service_label ] : 0 ) + $external_file_obj->get_filesize();
 		}
 
 		// sort the list by size, biggest first.

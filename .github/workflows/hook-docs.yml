@@ -1,0 +1,56 @@
+name: Hook documentation
+
+on:
+  pull_request:
+    branches:
+      - master
+    # only if PHP code of the plugin changed.
+    paths:
+      - 'app/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# never two runs at the same time, the second one could not push.
+concurrency:
+  group: hook-docs
+
+jobs:
+  docs:
+    name: Update docs/hooks.md
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      # this job commits the generated file.
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.head_ref }}
+
+      - name: Install dependencies
+        # also runs Mozart, which copies easy-transients-for-wordpress to app/Dependencies.
+        run: composer install --no-interaction --no-progress
+
+      - name: Generate hook documentation
+        run: vendor/bin/wp-documentor parse app --format=markdown --output=docs/hooks.md --prefix=efml_ --exclude=Transients.php
+
+      - name: Commit the documentation if it changed
+        env:
+          # the token is handed to this step only.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain -- docs/hooks.md)" ]; then
+            echo "docs/hooks.md is up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/hooks.md
+          git commit -m "Update hook documentation"
+          # on a pull request push to its branch, on a manual run to the branch it was started on.
+          BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:${BRANCH}"

@@ -7,10 +7,15 @@ export default defineConfig({
     // @ts-ignore
     forbidOnly: !!process.env.CI,
     // @ts-ignore
-    retries: process.env.CI ? 2 : 0,
+    retries: process.env.CI ? 1 : 0,
+    // @ts-ignore
+    maxFailures: process.env.CI ? 5 : 0,
     workers: 1,
-    reporter: 'html',
-    timeout: 120_000,
+    // @ts-ignore
+    reporter: process.env.CI
+        ? [['github'], ['list'], ['html', { open: 'never' }]]
+        : 'html',
+    timeout: 60_000,
     expect: {
         timeout: 30_000,
     },

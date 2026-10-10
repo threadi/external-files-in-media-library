@@ -3,8 +3,23 @@ name: Build release zip
 on:
   push:
     tags:
-      - '*'
+      # only tags which look like a version number start a release, e.g. 5.5.0 or 5.5.0-beta.1
+      - '[0-9]+.[0-9]+.[0-9]+*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for a test build, e.g. 5.5.1-beta.1 (no release is created)'
+        required: true
+        type: string
+
+# nothing in this workflow may write to the repository, unless a job asks for it itself (see "release").
+permissions:
+  contents: read
+
+env:
+  # the name of the plugin folder and of the zip. Independent of how the repository is called.
+  # do not call this PLUGIN_SLUG: wordpress/plugin-check-action sets a variable of that name itself.
+  RELEASE_SLUG: external-files-in-media-library
 
 jobs:
   build:
@@ -12,146 +27,248 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # do not leave the access token in .git/config, where every following script could read it.
+          persist-credentials: false
 
-      - name: Setup WP-CLI
-        uses: godaddy-wordpress/setup-wp-cli@1
-
-      - name: Run package installs and builds
+      - name: Determine version number
+        env:
+          # hand the input over as a variable, never write it into the script itself.
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
-          composer install
-          npm i
-          npm run build:replacer
-          npm run build:commands
-          rm -fr build
-          rm -fr releases
-          rm -fr svn
-          rm -fr languages
-          rm .gitignore
-          rm .editorconfig
-          rm changelog.md
-          rm readme.md
-          rm CODE_OF_CONDUCT.md
-          rm -fr bin
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then
+            VERSION="$GITHUB_REF_NAME"
+          else
+            VERSION="$INPUT_VERSION"
+          fi
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::'$VERSION' is not a version number like 5.5.0 or 5.5.0-beta.1."
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      - name: Generate autoloader
-        run: composer dump-autoload -oa --no-dev
-
-      - name: Run PHPStan analyse
-        run: vendor/bin/phpstan analyse
-
-      - name: PHP Compatibility check
-        run: vendor/bin/phpcs -p app --standard=PHPCompatibilityWP
-
-      - name: Run WordPress Coding Standard fixes
-        run: vendor/bin/phpcbf .
-
-      - uses: anchore/sbom-action@v0
-
-      - name: Set version number 1
-        uses: richardrigutins/replace-in-files@v3
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          files: 'external-files-in-media-library.php'
-          search-text: '@@VersionNumber@@'
-          replacement-text: ${{ github.ref_name }}
+          # the Playground packages in package-lock.json need Node 24.
+          node-version: 24
 
-      - name: Set version number 2
-        uses: richardrigutins/replace-in-files@v3
-        with:
-          files: 'readme.txt'
-          search-text: '@@VersionNumber@@'
-          replacement-text: ${{ github.ref_name }}
+      # --- install and compile -------------------------------------------------------------------------
 
-      - name: More cleanup
+      - name: Install PHP packages
+        # also runs Mozart, which copies easy-transients-for-wordpress to app/Dependencies.
+        run: composer install --no-interaction --no-progress
+
+      - name: Build block editor script and commands
+        # also installs intro.js, which is shipped from node_modules.
         run: |
-          rm phpcs.xml.dist
-          rm phpunit.xml.dist
-          rm .gitattributes
-          rm dev-composer.sh
-          rm js/.gitkeep
+          npm ci
+          npm run build
 
-      - name: Run PCP check
-        uses: wordpress/plugin-check-action@v1
+      - name: Remove dev packages and generate the release autoloader
+        run: |
+          composer install --no-dev --no-scripts --no-interaction --no-progress
+          # its classes are shipped in app/Dependencies (see above). Without this line the
+          # autoloader would also know them under their original names.
+          rm -rf vendor/threadi/easy-transients-for-wordpress
+          composer dump-autoload -oa --no-dev
+
+      # --- collect the release, check it, zip it -------------------------------------------------------
+
+      - name: Collect the files of the release and set the version number
+        run: |
+          DIST="dist/${RELEASE_SLUG}"
+          mkdir -p "$DIST"
+
+          # only what is listed here ends up in the zip. Nothing is deleted from the checkout.
+          # rsync stops with an error if one of these paths does not exist.
+          rsync -aR --exclude='.*' --exclude='node_modules/' \
+            "${RELEASE_SLUG}.php" uninstall.php readme.txt LICENSE composer.json \
+            admin app gfx inc templates \
+            blocks/build \
+            js/commands \
+            vendor/autoload.php vendor/composer \
+            vendor/graham-campbell vendor/guzzlehttp vendor/psr vendor/ralouphie vendor/spatie vendor/symfony \
+            vendor/threadi/crypt-for-wordpress/src \
+            vendor/threadi/easy-dialog-for-wordpress/build \
+            vendor/threadi/easy-directory-listing-for-wordpress/build \
+            vendor/threadi/easy-directory-listing-for-wordpress/lib \
+            vendor/threadi/easy-settings-for-wordpress \
+            "$DIST/"
+
+          # the intro uses intro.js directly from node_modules, which is excluded above.
+          rsync -aR node_modules/intro.js/minified "$DIST/"
+
+          # instructions for AI agents of the settings library: not needed on a website.
+          rm -rf "$DIST/vendor/threadi/easy-settings-for-wordpress/skills"
+
+          # set the version number - in the copy only.
+          sed -i "s/@@VersionNumber@@/${VERSION}/g" "$DIST/${RELEASE_SLUG}.php" "$DIST/readme.txt"
+
+      - name: Run Plugin Check
+        uses: wordpress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
         with:
-          exclude-directories:
-            .github,tests,app/Dependencies/easyTransientsForWordPress/
-          ignore-codes:
+          build-dir: dist/${{ env.RELEASE_SLUG }}
+          slug: ${{ env.RELEASE_SLUG }}
+          # copy of easy-transients-for-wordpress made by Mozart.
+          exclude-directories: |
+            app/Dependencies
+          ignore-codes: |
             WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
           include-experimental: false
           error-severity: 7
           warning-severity: 6
           include-low-severity-errors: true
-        continue-on-error: true
 
-      - name: Create ZIP release
-        run: |
-          cd ..
-          zip -rq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "/.editorconfig" "*/assets/*" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*" "*/.github/*" "*/tests/*"
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/autoload.php
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/composer/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/ralouphie/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/symfony/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/guzzlehttp/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/spatie/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/psr/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/graham-campbell/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/build/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/lib/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/src/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/vendor/threadi/*/assets/*
-          zip -urq ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/node_modules/intro.js/minified/*
-          cp ${{ github.event.repository.name }}_${{ github.ref_name }}.zip ${{ github.event.repository.name }}/
+      - name: Create the zip
+        working-directory: dist
+        run: zip -rqX "../${RELEASE_SLUG}.zip" "$RELEASE_SLUG"
 
-      - name: Smoke test the release zip in WordPress Playground
+      - name: Create SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
+        with:
+          # describe what is shipped, not the tools which were used to build it.
+          path: dist/${{ env.RELEASE_SLUG }}
+          format: spdx-json
+          output-file: ${{ env.RELEASE_SLUG }}.spdx.json
+          # the job "release" attaches the file. Doing it here would need write access.
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Smoke test the zip in WordPress Playground
         run: |
           set -o pipefail
-          mkdir -p /tmp/smoke
-          unzip -q ${{ github.event.repository.name }}_*.zip -d /tmp/smoke
+          SMOKE="$RUNNER_TEMP/smoke"
+          rm -rf "$SMOKE"
+          mkdir -p "$SMOKE"
+          unzip -q "${RELEASE_SLUG}.zip" -d "$SMOKE"
 
-          npx @wp-playground/cli@latest run-blueprint \
-            --blueprint=./.github/blueprints/smoke.json \
-            --mount=/tmp/smoke/${{ github.event.repository.name }}:/wordpress/wp-content/plugins/${{ github.event.repository.name }} \
-            --verbosity=debug \
-            --debug \
-            2>&1 | tee /tmp/smoke.log
-
-          echo "----- Vollständiges Playground-Log -----"
-          cat /tmp/smoke.log
-
-          echo "----- Inhalt smoke-result.txt -----"
-          cat /tmp/smoke/${{ github.event.repository.name }}/smoke-result.txt || echo "(File not found)"
-
-          if ! grep -q "SMOKE_OK" /tmp/smoke/${{ github.event.repository.name }}/smoke-result.txt; then
-            echo "::error::SMOKE_OK not found in smoke-result.txt - check log above."
+          # check the zip itself first, so a wrong zip is not mistaken for a problem of Playground.
+          if [ ! -f "$SMOKE/${RELEASE_SLUG}/${RELEASE_SLUG}.php" ]; then
+            ls -la "$SMOKE"
+            echo "::error::The zip does not contain ${RELEASE_SLUG}/${RELEASE_SLUG}.php - see the listing above."
             exit 1
           fi
 
+          # "--no": use the version from package-lock.json, never download another one.
+          npx --no -- @wp-playground/cli run-blueprint \
+            --blueprint=./.github/blueprints/smoke.json \
+            --mount="$SMOKE/${RELEASE_SLUG}:/wordpress/wp-content/plugins/${RELEASE_SLUG}" \
+            --verbosity=debug \
+            --debug \
+            2>&1 | tee "$RUNNER_TEMP/smoke.log"
+
+          if ! grep -qs "SMOKE_OK" "$SMOKE/${RELEASE_SLUG}/smoke-result.txt"; then
+            echo "::error::SMOKE_OK not found in smoke-result.txt - check the log above."
+            exit 1
+          fi
+
+      - name: Read the release notes from changelog.md
+        if: github.event_name == 'push'
+        run: |
+          # the section of this version: from its heading up to the next "## " heading.
+          # the heading may be "## 5.5.0", "## [5.5.0]" or "## [5.5.0] - 10.10.2026".
+          awk -v v="$VERSION" '
+            /^## / { if (on) exit; h=$0; sub(/^## +\[?/, "", h); if (h == v || index(h, v "]") == 1 || index(h, v " ") == 1) { on=1; next } }
+            on' changelog.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            echo "::error::No section for ${VERSION} found in changelog.md."
+            exit 1
+          fi
+
+      - name: Hand over the zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-zip
+          path: |
+            ${{ env.RELEASE_SLUG }}.zip
+            ${{ env.RELEASE_SLUG }}.spdx.json
+            release-notes.md
+          if-no-files-found: error
+
+  # runs at the same time as "build", on a machine of its own.
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+
+      - name: Install PHP packages
+        run: composer install --no-interaction --no-progress
+
+      - name: Build block editor script and commands
+        run: |
+          npm ci
+          npm run build
+
       - name: Cache Playwright browsers
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium --with-deps
+        run: npx playwright install chromium
+
+      - name: Install Playwright system dependencies
+        run: npx playwright install-deps chromium
 
       - name: Run E2E tests
         run: npx playwright test
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v3
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # the only job which may write to the repository - and it runs no code from the repository or from npm.
+  release:
+    name: Publish the release
+    needs: [build, e2e]
+    # only for a pushed tag, never for a manual run.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fetch the zip
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          files: ${{ github.event.repository.name }}_${{ github.ref_name }}.zip
+          name: release-zip
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # there is no checkout in this job, so tell gh which repository is meant.
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            # the release was created by hand, together with the tag: add the zip to it.
+            gh release upload "$TAG" "${RELEASE_SLUG}.zip" "${RELEASE_SLUG}.spdx.json" --clobber
+            # use the text from changelog.md, unless a text was written by hand.
+            if [ -z "$(gh release view "$TAG" --json body --jq '.body')" ]; then
+              gh release edit "$TAG" --notes-file release-notes.md
+            fi
+            exit 0
+          fi
+
+          ARGS=(--verify-tag --notes-file release-notes.md)
+          case "$TAG" in *-*) ARGS+=(--prerelease);; esac
+          gh release create "$TAG" "${RELEASE_SLUG}.zip" "${RELEASE_SLUG}.spdx.json" "${ARGS[@]}"
