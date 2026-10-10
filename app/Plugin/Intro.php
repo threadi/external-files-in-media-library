@@ -154,9 +154,9 @@ class Intro {
 	}
 
 	/**
-	 * Add the intro.js-scripts and -styles.
+	 * Add the scripts and styles of Driver.js for the intro.
 	 *
-	 * @source https://introjs.com/docs/examples/basic/hello-world
+	 * @source https://driverjs.com
 	 *
 	 * @return void
 	 */
@@ -182,24 +182,21 @@ class Intro {
 			return;
 		}
 
-		// embed necessary scripts for the dialog.
-		$path = Helper::get_plugin_path() . 'node_modules/intro.js/minified/';
-		$url  = Helper::get_plugin_url() . 'node_modules/intro.js/minified/';
+		// get the path and URL of Driver.js (copied there via "npm run build").
+		$path = Helper::get_plugin_path() . 'admin/driverjs/';
+		$url  = Helper::get_plugin_url() . 'admin/driverjs/';
 
-		// get WP_Filesystem.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// bail if path does not exist.
-		if ( ! $wp_filesystem->exists( $path ) ) {
+		// bail if the script of Driver.js does not exist.
+		if ( ! file_exists( $path . 'driver.js.iife.js' ) ) {
 			return;
 		}
 
-		// embed the JS-script from intro.js.
+		// embed the JS-script from Driver.js.
 		wp_enqueue_script(
-			'efml-intro',
-			$url . 'intro.min.js',
+			'efml-driver',
+			$url . 'driver.js.iife.js',
 			array(),
-			Helper::get_file_version( $path . 'intro.min.js' ),
+			Helper::get_file_version( $path . 'driver.js.iife.js' ),
 			true
 		);
 
@@ -207,24 +204,24 @@ class Intro {
 		wp_enqueue_script(
 			'efml-intro-custom',
 			Helper::get_plugin_url() . 'admin/intro.js',
-			array( 'efml-intro' ),
+			array( 'jquery', 'efml-driver' ),
 			Helper::get_file_version( Helper::get_plugin_path() . 'admin/intro.js' ),
 			true
 		);
 
-		// embed the CSS-file.
+		// embed the CSS-file from Driver.js.
 		wp_enqueue_style(
-			'efml-intro',
-			$url . 'introjs.min.css',
+			'efml-driver',
+			$url . 'driver.css',
 			array(),
-			Helper::get_file_version( $path . 'introjs.min.css' ),
+			Helper::get_file_version( $path . 'driver.css' ),
 		);
 
 		// embed the CSS-file.
 		wp_enqueue_style(
 			'efml-intro-custom',
 			Helper::get_plugin_url() . 'admin/intro.css',
-			array(),
+			array( 'efml-driver' ),
 			Helper::get_file_version( Helper::get_plugin_path() . 'admin/intro.css' ),
 		);
 

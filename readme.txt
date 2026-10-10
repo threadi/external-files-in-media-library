@@ -184,33 +184,66 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Added our own list of intervals for schedules as expendable objects
-- Added a hook to add custom result handler
-- Added setting for max age of log entries
-- Added new site health check for accessibility of the proxy folder
-- Log any server-side error during loading of a directory
-- Use screen reader text for open new window hint
-- Remove filter to use unsafe URLs after they have been used
-- Videos are not proxied by default anymore to save this space
-- Updated settings and dialog library
-- Optimized some hooks with more parameters
-- Optimized the switch to external hosting incl. more log entries
-- Send optimized HTTP header via proxy
-- Optimized deletion of old log entries
-- Our custom log table is now compatible with strict database systems
-- Secure proxy folder also in versions before 5.2.0
-- Optimized check for max execution time
-- Show the availability of services to export files
-- Do not export not allowed mime types
-- Typos
-- Fixed a wrong placeholder to use an external link to Dropbox
-- Fixed wrong capabilities for some term handlings
-- Fixed check for development mode in WordPress < 6.3
-- Fixed missing set of fields during protocol detection for files
-- Fixed JavaScript to show any error during hosting switch
-- Fixed error in calculation for Audio files in proxy
-- Do not load support for PreventDirectAccess on every page in the backend
-- Fixed export of files to Dropbox
-- Fixed missing thumbnails after image has been uploaded and exported to external service
+- Added mp3 as additional allowed external file
+- Added search field in directory listing for search for file names in the complete directory tree
+  of the external source
+- Added list of file sizes per service in statistics
+- Added abilities for AI/MCP to list and check external files, to import multiple URLs, to manage external sources,
+  the synchronization, the queue and the export, see [documentation](docs/abilities.md)
+- Added settings for the abilities: enable or disable them and choose between "read only" (default) and "all"
+- Added status of the abilities and hint for the needed MCP plugin in the settings
+- Added some new hooks & PHP Unit tests
+- Advanced settings are divided into the sub-tabs "Plugin", "Files", "Abilities" and "Miscellaneous"
+- The intro has its own section in the advanced settings in the sub-tab "Plugin"
+- The intro now uses Driver.js instead of Intro.js
+- Links to the settings in the import dialog are now leading to the general settings
+- Proxies does use the already present mime-type instead of getting it again and again
+- Logging what we get via HTTP
+- Proxy settings for each file type is only visible if the files are saved external
+- Optimized the abilities for interactions with AI/MCP
+- Abilities return an error with the reason instead of 0 or false if they fail
+- The ability to delete a URL also accepts the attachment ID and checks if the user is allowed to delete the file
+- Optimized some texts
+- Format bytes in statistics
+- Hide generic directories (e.g., "vendor" and "node_modules") in local service
+- Log entries and import results are reduced to a small set of allowed HTML elements
+- Requests to the proxy for unknown files are only logged in debug mode
+- External sources saved by other users can only be used by administrators (or if the setting to show all sources is enabled)
+- Export settings, and the bulk export require the capability to use the export tool
+- Changing the global DropBox connection requires the capability to manage the settings
+- DropBox OAuth requests are now protected by a state parameter
+- Multisite service checks whether the user is allowed to access the requested website
+- Our post meta fields on attachments are now protected against manual changes
+- Local files used as export target or temp file must be located in the allowed base directory
+- Credentials are no longer written to the debug log and only exported by administrators
+- Updated dependencies
+- Fixed the events after loading the import dialog and after the import: the intro stopped after opening the import dialog and the sound after the import was not played
+- Fixed fatal error if the ability to add a URL is used without attachment ID or with a login only
+- Fixed wrong name of the ability category
+- Fixed real import and usage of external file dates during import, which only worked if they were enabled for the
+  synchronization (the real import created broken files in the media library otherwise)
+- Fixed detection of URLs of files in ZIP-files by the ZIP protocol
+- Fixed sum of file sizes per service in statistics, which only showed the size of a single file
+- Fixed possible XSS via HTTP header of external files in the import result dialog
+- Fixed missing output escaping of URLs in the log table and media modal
+- Fixed fatal error in the frontend with WordPress older than 6.8 using the page builder Brizy
+- Fixed fatal error for shortcodes without attributes with WordPress older than 6.5
+- Fixed only first YouTube or Vimeo video per page being rendered
+- Fixed plugin installation from a ZIP not stopping on failed checks
+- Fixed deletion of synchronized files if the external source could not be read
+- Fixed queue being blocked by URLs without credentials
+- Fixed deletion of files on export targets for files, which were never exported
+- Fixed export not being paused during switch to local hosting
+- Fixed already exported files being exported again via bulk action
+- Fixed type errors on core image filters if other plugins return unexpected values
+- Fixed type errors with Brizy and Folders
+- Fixed proxy not finding files with a hyphen and an "x" in their name
+- Fixed thumbnails of squared sizes being re-generated on every request
+- Fixed statistics being calculated on every request if no external hosted files exist
+- Fixed the interval "every 20 minutes" running every 15 minutes
+- Fixed wrong version parameter on enqueued files
+- Fixed missing sync settings if Download List Block is active without any list
+- Fixed search in the log for URLs with special characters
+- Fixed to show the debug information in site health
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

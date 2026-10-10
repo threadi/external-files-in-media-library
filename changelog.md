@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [5.5.0] - 10.10.2026
 
 ### Added
 
@@ -18,6 +18,7 @@
 
 - Advanced settings are divided into the sub-tabs "Plugin", "Files", "Abilities" and "Miscellaneous"
 - The intro has its own section in the advanced settings in the sub-tab "Plugin"
+- The intro now uses Driver.js instead of Intro.js
 - Links to the settings in the import dialog are now leading to the general settings
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
@@ -42,6 +43,7 @@
 
 ### Fixed
 
+- Fixed the events after loading the import dialog and after the import: the intro stopped after opening the import dialog and the sound after the import was not played
 - Fixed fatal error if the ability to add a URL is used without attachment ID or with a login only
 - Fixed wrong name of the ability category
 - Fixed real import and usage of external file dates during import, which only worked if they were enabled for the
@@ -68,7 +70,7 @@
 - Fixed wrong version parameter on enqueued files
 - Fixed missing sync settings if Download List Block is active without any list
 - Fixed search in the log for URLs with special characters
-- Fixed to show the debug informations in site health
+- Fixed to show the debug information in site health
 
 ## [5.4.0] - 30.08.2026
 
