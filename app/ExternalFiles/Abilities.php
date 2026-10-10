@@ -18,6 +18,7 @@ use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -131,6 +132,11 @@ class Abilities {
 			return;
 		}
 
+		// bail if abilities are disabled.
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
 		// add the category.
 		wp_register_ability_category(
 			Files::ABILITY_CATEGORY,
@@ -152,8 +158,8 @@ class Abilities {
 			return;
 		}
 
-		// register each ability.
-		foreach ( $this->get_abilities() as $name => $ability ) {
+		// register each active ability.
+		foreach ( $this->get_active_abilities() as $name => $ability ) {
 			// bail if the configuration is not usable.
 			if ( empty( $ability['execute_callback'] ) || empty( $ability['permission_callback'] ) ) {
 				continue;
@@ -209,6 +215,194 @@ class Abilities {
 		 * @param array<string,array<string,mixed>> $abilities List of abilities, the key is the name without the plugin prefix.
 		 */
 		return apply_filters( 'efml_abilities', $abilities );
+	}
+
+	/**
+	 * Return the list of abilities which should be provided depending on the settings.
+	 *
+	 * Returns an empty list if the abilities are disabled. In the mode "read only" only abilities,
+	 * which are marked as "readonly" in their annotations, are returned.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_active_abilities(): array {
+		// bail if abilities are disabled.
+		if ( ! $this->is_enabled() ) {
+			return array();
+		}
+
+		// get all abilities.
+		$abilities = $this->get_abilities();
+
+		// return all if all abilities should be provided.
+		if ( ! $this->is_read_only_mode() ) {
+			return $abilities;
+		}
+
+		// return only the read-only abilities.
+		return array_filter( $abilities, array( $this, 'is_read_only_ability' ) );
+	}
+
+	/**
+	 * Return whether the abilities are enabled in the settings.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		$enabled = 1 === absint( get_option( 'efml_abilities_enabled', 1 ) );
+
+		/**
+		 * Filter whether the abilities of this plugin are enabled.
+		 *
+		 * @since 5.5.0 Available since 5.5.0.
+		 * @param bool $enabled True if they are enabled.
+		 */
+		return (bool) apply_filters( 'efml_abilities_enabled', $enabled );
+	}
+
+	/**
+	 * Return the mode for the abilities: "read" for read only (the default) or "all".
+	 *
+	 * @return string
+	 */
+	public function get_mode(): string {
+		$mode = get_option( 'efml_abilities_mode', 'read' );
+
+		/**
+		 * Filter the mode for the abilities of this plugin.
+		 *
+		 * Use "read" to provide only the abilities which do not change anything, or "all" for all abilities.
+		 *
+		 * @since 5.5.0 Available since 5.5.0.
+		 * @param string $mode The mode.
+		 */
+		$mode = apply_filters( 'efml_abilities_mode', is_string( $mode ) ? $mode : 'read' );
+
+		// use "read" for any unknown value, so changes are only allowed if this is explicitly enabled.
+		return 'all' === $mode ? 'all' : 'read';
+	}
+
+	/**
+	 * Return whether the abilities are used in the mode "read only".
+	 *
+	 * @return bool
+	 */
+	public function is_read_only_mode(): bool {
+		return 'read' === $this->get_mode();
+	}
+
+	/**
+	 * Return whether the given ability configuration is marked as "readonly".
+	 *
+	 * Abilities without this annotation are handled as abilities which change data.
+	 *
+	 * @param array<string,mixed> $ability The ability configuration.
+	 *
+	 * @return bool
+	 */
+	public function is_read_only_ability( array $ability ): bool {
+		return isset( $ability['annotations'] ) && is_array( $ability['annotations'] ) && ! empty( $ability['annotations']['readonly'] );
+	}
+
+	/**
+	 * Show the hint for the settings of the abilities.
+	 *
+	 * @return void
+	 */
+	public function show_settings_hint(): void {
+		echo '<p>' . esc_html__( 'Abilities enable AI agents to manage your external files, e.g., to list them, to check their availability or to import new files. They are provided via the Abilities API of WordPress.', 'external-files-in-media-library' ) . '</p>';
+	}
+
+	/**
+	 * Show the status of the abilities in the settings.
+	 *
+	 * @return void
+	 */
+	public function show_status(): void {
+		// collect the rows for the status table.
+		$rows = array();
+
+		// check the Abilities API.
+		$api_available = function_exists( 'wp_register_ability' );
+		$rows[]        = array(
+			'label' => __( 'Abilities API', 'external-files-in-media-library' ),
+			'state' => $api_available,
+			'text'  => $api_available ? __( 'available', 'external-files-in-media-library' ) : __( 'not available, it is part of WordPress 6.9 or newer', 'external-files-in-media-library' ),
+		);
+
+		// check the setting.
+		$rows[] = array(
+			'label' => __( 'Abilities of this plugin', 'external-files-in-media-library' ),
+			'state' => $this->is_enabled(),
+			'text'  => $this->is_enabled() ? __( 'enabled', 'external-files-in-media-library' ) : __( 'disabled', 'external-files-in-media-library' ),
+		);
+
+		// show the mode.
+		if ( $this->is_enabled() ) {
+			$rows[] = array(
+				'label' => __( 'Mode', 'external-files-in-media-library' ),
+				'state' => true,
+				'text'  => $this->is_read_only_mode() ? __( 'read only', 'external-files-in-media-library' ) : __( 'all (read, change and delete)', 'external-files-in-media-library' ),
+			);
+		}
+
+		// get the provided abilities.
+		$all_abilities      = $this->get_abilities();
+		$provided_abilities = $api_available ? $this->get_registered_ability_names() : array();
+		$rows[]             = array(
+			'label' => __( 'Provided abilities', 'external-files-in-media-library' ),
+			'state' => ! empty( $provided_abilities ),
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			'text'  => sprintf( __( '%1$d of %2$d', 'external-files-in-media-library' ), count( $provided_abilities ), count( $all_abilities ) ),
+		);
+
+		// output the table.
+		echo '<table class="widefat striped efml-abilities-status"><tbody>';
+		foreach ( $rows as $row ) {
+			echo '<tr><th scope="row">' . esc_html( $row['label'] ) . '</th><td><span class="dashicons ' . ( $row['state'] ? 'dashicons-yes' : 'dashicons-no-alt' ) . '" aria-hidden="true"></span> ' . esc_html( $row['text'] ) . '</td></tr>';
+		}
+		echo '</tbody></table>';
+
+		// show the list of provided abilities.
+		if ( ! empty( $provided_abilities ) ) {
+			echo '<details><summary>' . esc_html__( 'Show the provided abilities', 'external-files-in-media-library' ) . '</summary><ul>';
+			foreach ( $provided_abilities as $ability_name ) {
+				echo '<li><code>' . esc_html( $ability_name ) . '</code></li>';
+			}
+			echo '</ul></details>';
+		}
+
+		// show the hint for the MCP plugin.
+		echo '<p><strong>' . esc_html__( 'Important:', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'This plugin only provides the abilities. To use them with an AI agent (e.g., via an MCP client in Claude, ChatGPT or your IDE), you need an MCP plugin of your choice which supports the Abilities API of WordPress, e.g., the MCP Adapter of WordPress. Without such a plugin AI agents will not be able to reach the abilities.', 'external-files-in-media-library' ) . '</p>';
+		/* translators: %1$s will be replaced by a URL, %2$s by the hint for the new window. */
+		echo '<p>' . wp_kses_post( sprintf( __( 'You will find the list of all abilities and how to use them <a href="%1$s" target="_blank">in our documentation%2$s</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_abilities_doc_url() ), Helper::get_a11n_window_hint() ) ) . '</p>';
+	}
+
+	/**
+	 * Return the names of the abilities of this plugin, which are registered in the Abilities API.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_registered_ability_names(): array {
+		// bail if function does not exist.
+		if ( ! function_exists( 'wp_get_abilities' ) ) {
+			return array();
+		}
+
+		// collect the names.
+		$names = array();
+		foreach ( wp_get_abilities() as $ability ) {
+			// bail if this is not an ability of this plugin.
+			if ( ! str_starts_with( $ability->get_name(), self::PREFIX ) ) {
+				continue;
+			}
+
+			// add the name to the list.
+			$names[] = $ability->get_name();
+		}
+
+		// return the list.
+		return $names;
 	}
 
 	/**

@@ -11,6 +11,26 @@ All abilities
 * are available via REST API (`show_in_rest`) and marked as public for the MCP Adapter
 * return a `WP_Error` with a readable reason if something fails
 
+## Settings
+
+You find the settings for the abilities under *Settings > External files in Media Library > Advanced > Abilities*:
+
+* **Enable abilities**: enabled by default. If disabled, neither the category nor any ability of this plugin is registered.
+* **Mode for abilities**: `read only` (default) or `all`. In `read only` mode only the abilities marked as
+  `readonly` in their annotations are registered (e.g., `get-file`, `list-files`, `get-log`, `list-sources`).
+  Abilities which add, change or delete anything are only available if you explicitly choose `all`.
+* **Status**: shows whether the Abilities API is available, which mode is active and which abilities are provided.
+
+This plugin only provides the abilities. To use them with an AI agent you need an MCP plugin of your choice
+which supports the Abilities API of WordPress, e.g., the MCP Adapter of WordPress.
+
+Both settings can also be changed via hooks:
+
+```
+add_filter( 'efml_abilities_enabled', '__return_false' );
+add_filter( 'efml_abilities_mode', function() { return 'all'; } );
+```
+
 ## Abilities
 
 ### Files

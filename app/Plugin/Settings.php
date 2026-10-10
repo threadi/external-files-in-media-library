@@ -20,6 +20,7 @@ use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Abilities;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
@@ -232,6 +233,23 @@ class Settings {
 		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 90 );
 		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
 
+		// the sub-tab for the file handling in advanced tab.
+		$advanced_files_tab = $advanced_tab->add_tab( 'eml_advanced_files', 10 );
+		$advanced_files_tab->set_title( __( 'Files', 'external-files-in-media-library' ) );
+		$advanced_tab->set_default_tab( $advanced_files_tab );
+
+		// the sub-tab for the plugin handling in advanced tab.
+		$advanced_plugin_tab = $advanced_tab->add_tab( 'eml_advanced_plugin', 20 );
+		$advanced_plugin_tab->set_title( __( 'Plugin', 'external-files-in-media-library' ) );
+
+		// the sub-tab for the abilities in advanced tab.
+		$advanced_abilities_tab = $advanced_tab->add_tab( 'eml_advanced_abilities', 30 );
+		$advanced_abilities_tab->set_title( __( 'Abilities', 'external-files-in-media-library' ) );
+
+		// the sub-tab for any other advanced settings.
+		$advanced_misc_tab = $advanced_tab->add_tab( 'eml_advanced_misc', 40 );
+		$advanced_misc_tab->set_title( __( 'Miscellaneous', 'external-files-in-media-library' ) );
+
 		// the logs tab.
 		$logs_tab = $settings_page->add_tab( 'eml_logs', 100 );
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
@@ -272,9 +290,42 @@ class Settings {
 		$proxy_tab_proxy->set_title( __( 'Proxy settings', 'external-files-in-media-library' ) );
 		$proxy_tab_proxy->set_setting( $this->get_settings_obj() );
 
-		// the advanced section.
-		$advanced_tab_advanced = $advanced_tab->add_section( 'settings_section_advanced', 10 );
-		$advanced_tab_advanced->set_title( __( 'Advanced settings', 'external-files-in-media-library' ) );
+		// the intro section in the plugin sub-tab.
+		$advanced_intro = $advanced_plugin_tab->add_section( 'settings_section_advanced_intro', 10 );
+		$advanced_intro->set_title( __( 'Start intro', 'external-files-in-media-library' ) );
+		$advanced_intro->set_setting( $this->get_settings_obj() );
+
+		// the import/export section for the settings in the plugin sub-tab.
+		$import_export_section = $advanced_plugin_tab->add_section( 'efml_import_export_section', 20 );
+		$import_export_section->set_title( __( 'Secure settings', 'external-files-in-media-library' ) );
+		$import_export_section->set_setting( $this->get_settings_obj() );
+
+		// the section to manage the plugin in the plugin sub-tab.
+		$advanced_plugin = $advanced_plugin_tab->add_section( 'settings_section_advanced_importexport', 30 );
+		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
+		$advanced_plugin->set_setting( $this->get_settings_obj() );
+
+		// the section for the file handling in the files sub-tab.
+		$advanced_files = $advanced_files_tab->add_section( 'settings_section_advanced_files', 10 );
+		$advanced_files->set_title( __( 'Settings for the file handling', 'external-files-in-media-library' ) );
+		$advanced_files->set_setting( $this->get_settings_obj() );
+
+		// the section for the settings of the abilities in the abilities sub-tab.
+		$advanced_abilities = $advanced_abilities_tab->add_section( 'settings_section_advanced_abilities', 10 );
+		$advanced_abilities->set_title( __( 'Abilities for AI', 'external-files-in-media-library' ) );
+		$advanced_abilities->set_callback( array( Abilities::get_instance(), 'show_settings_hint' ) );
+		$advanced_abilities->set_setting( $this->get_settings_obj() );
+
+		// the section for the status of the abilities in the abilities sub-tab.
+		$advanced_abilities_status = $advanced_abilities_tab->add_section( 'settings_section_advanced_abilities_status', 20 );
+		$advanced_abilities_status->set_title( __( 'Status', 'external-files-in-media-library' ) );
+		$advanced_abilities_status->set_callback( array( Abilities::get_instance(), 'show_status' ) );
+		$advanced_abilities_status->set_setting( $this->get_settings_obj() );
+
+		// the section for any other advanced settings in the misc sub-tab.
+		// hint: the name "settings_section_advanced" is kept for compatibility with extensions using it.
+		$advanced_tab_advanced = $advanced_misc_tab->add_section( 'settings_section_advanced', 10 );
+		$advanced_tab_advanced->set_title( __( 'Miscellaneous settings', 'external-files-in-media-library' ) );
 		$advanced_tab_advanced->set_setting( $this->get_settings_obj() );
 
 		/**
@@ -296,7 +347,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_disable_attachment_pages' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_default( 0 );
 		$setting->set_help( '<p>' . $description . '</p>' );
 		$field = new Checkbox( $this->get_settings_obj() );
@@ -331,7 +382,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_plugin );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -344,7 +395,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_switch_on_uninstallation' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_plugin );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -356,7 +407,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_preview' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -368,7 +419,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_not_supported_file_types' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -381,7 +432,7 @@ class Settings {
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_add_user_agent' );
 		$setting->set_default( 1 );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -393,7 +444,7 @@ class Settings {
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_show_all_external_sources' );
 		$setting->set_default( 0 );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
@@ -429,7 +480,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_user_assign' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_type( 'integer' );
 		$setting->set_default( Users::get_instance()->get_first_administrator_user() );
 		$field = new Select( $this->get_settings_obj() );
@@ -453,7 +504,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_timeout' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_type( 'integer' );
 		$setting->set_default( 30 );
 		$setting->set_field(
@@ -467,7 +518,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_max_execution_check' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Enable max execution check', 'external-files-in-media-library' ) );
@@ -477,7 +528,7 @@ class Settings {
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_job_show_link' );
-		$setting->set_section( $advanced_tab_advanced );
+		$setting->set_section( $advanced_files );
 		$setting->set_default( 0 );
 		$field = new Checkbox( $this->get_settings_obj() );
 		$field->set_title( __( 'Show job link on each imported file', 'external-files-in-media-library' ) );
@@ -501,18 +552,35 @@ class Settings {
 		);
 		$setting->set_field( $field );
 
-		// add a section.
-		$import_export_section = $advanced_tab->add_section( 'efml_import_export_section', 20 );
-		$import_export_section->set_title( __( 'Secure settings', 'external-files-in-media-library' ) );
-		if ( method_exists( $import_export_section, 'set_collapsed' ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			$import_export_section->set_collapsed( true );
-		}
+		// add setting.
+		$abilities_enabled_setting = $this->get_settings_obj()->add_setting( 'efml_abilities_enabled' );
+		$abilities_enabled_setting->set_section( $advanced_abilities );
+		$abilities_enabled_setting->set_default( 1 );
+		$field = new Checkbox( $this->get_settings_obj() );
+		$field->set_title( __( 'Enable abilities', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled this plugin provides its functions as abilities via the Abilities API of WordPress. AI agents can use them to manage external files in your media library. Each ability still checks the permissions of the user who uses it.', 'external-files-in-media-library' ) );
+		$abilities_enabled_setting->set_field( $field );
+		$abilities_enabled_setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
-		// add the import/export section in advanced.
-		$advanced_plugin = $advanced_tab->add_section( 'settings_section_advanced_importexport', 20 );
-		$advanced_plugin->set_title( __( 'Plugin handling', 'external-files-in-media-library' ) );
-		if ( method_exists( $advanced_plugin, 'set_collapsed' ) ) { // @phpstan-ignore function.alreadyNarrowedType
-			$advanced_plugin->set_collapsed( true );
+		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'efml_abilities_mode' );
+		$setting->set_section( $advanced_abilities );
+		$setting->set_type( 'string' );
+		$setting->set_default( 'read' );
+		$field = new Select( $this->get_settings_obj() );
+		$field->set_title( __( 'Mode for abilities', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'Choose which abilities are provided. With "read only" AI agents can only read data, e.g., list files, check their availability or read the log. With "all" they are also able to add, change and delete files, external sources, synchronizations and the queue. Only enable this if you trust the AI agents you are using.', 'external-files-in-media-library' ) );
+		$field->set_options(
+			array(
+				'read' => __( 'read only', 'external-files-in-media-library' ),
+				'all'  => __( 'all (read, change and delete)', 'external-files-in-media-library' ),
+			)
+		);
+		$field->add_depend( $abilities_enabled_setting, 1 );
+		$setting->set_field( $field );
+		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+		if( method_exists( $setting, 'set_soft_reload_on_save' ) ) {
+			$setting->set_soft_reload_on_save( true );
 		}
 
 		// add setting.
@@ -1168,6 +1236,43 @@ class Settings {
 
 		// return the hidden section object.
 		return $hidden_section;
+	}
+
+	/**
+	 * Return a section of a sub-tab in the advanced tab of our main settings page.
+	 *
+	 * @param string $sub_tab_name The name of the sub-tab (e.g., "eml_advanced_files").
+	 * @param string $section_name The name of the section (e.g., "settings_section_advanced_files").
+	 *
+	 * @return false|Section
+	 */
+	public function get_advanced_section( string $sub_tab_name, string $section_name ): Section|false {
+		// get the main settings page.
+		$settings_page = $this->get_settings_obj()->get_page( $this->get_menu_slug() );
+
+		// bail if page could not be found.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// get the advanced tab.
+		$advanced_tab = $settings_page->get_tab( 'eml_advanced' );
+
+		// bail if tab could not be found.
+		if ( ! $advanced_tab instanceof Tab ) {
+			return false;
+		}
+
+		// get the sub-tab.
+		$sub_tab = $advanced_tab->get_tab( $sub_tab_name );
+
+		// bail if sub-tab could not be found.
+		if ( ! $sub_tab instanceof Tab ) {
+			return false;
+		}
+
+		// return the section.
+		return $sub_tab->get_section( $section_name );
 	}
 
 	/**

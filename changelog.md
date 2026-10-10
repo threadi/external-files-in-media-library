@@ -11,10 +11,15 @@
 - Added abilities for AI/MCP to list and check external files, to import multiple URLs, to manage external sources,
   the synchronization, the queue and the export, see [documentation](docs/abilities.md)
 - Added hook to change the list of abilities
+- Added settings for the abilities: enable or disable them and choose between "read only" (default) and "all"
+- Added status of the abilities and hint for the needed MCP plugin in the settings
 - Added some new hooks & PHP Unit tests
 
 ### Changed
 
+- Advanced settings are divided into the sub-tabs "Plugin", "Files", "Abilities" and "Miscellaneous"
+- The intro has its own section in the advanced settings in the sub-tab "Plugin"
+- Links to the settings in the import dialog are now leading to the general settings
 - Proxies does use the already present mime-type instead of getting it again and again
 - Logging what we get via HTTP
 - Proxy settings for each file type is only visible if the files are saved external

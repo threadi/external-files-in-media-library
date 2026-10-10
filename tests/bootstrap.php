@@ -46,6 +46,9 @@ function _manually_load_plugin() {
 
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
+// provide all abilities in tests, not only the read-only abilities (which is the default).
+tests_add_filter( 'efml_abilities_mode', static fn() => 'all' );
+
 // Start up the WP testing environment.
 require "{$_tests_dir}/includes/bootstrap.php";
 

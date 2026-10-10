@@ -11,6 +11,26 @@ Alle Abilities
 * sind über die REST API verfügbar (`show_in_rest`) und für den MCP Adapter als öffentlich markiert
 * geben einen `WP_Error` mit einem lesbaren Grund zurück, wenn etwas fehlschlägt
 
+## Einstellungen
+
+Die Einstellungen für die Abilities findest du unter *Einstellungen > External files in Media Library > Erweitert > Abilities*:
+
+* **Abilities aktivieren**: standardmäßig aktiv. Ist die Option deaktiviert, werden weder die Kategorie noch eine Ability dieses Plugins registriert.
+* **Modus für Abilities**: `nur lesen` (Standard) oder `alle`. Im Modus `nur lesen` werden nur die Abilities registriert,
+  die in ihren Annotationen als `readonly` markiert sind (z.B. `get-file`, `list-files`, `get-log`, `list-sources`).
+  Abilities, die etwas hinzufügen, ändern oder löschen, stehen nur zur Verfügung, wenn du ausdrücklich `alle` auswählst.
+* **Status**: zeigt, ob die Abilities API verfügbar ist, welcher Modus aktiv ist und welche Abilities bereitgestellt werden.
+
+Das Plugin stellt nur die Abilities bereit. Um sie mit einem KI-Agenten zu nutzen, benötigst du ein MCP-Plugin deiner Wahl,
+das die Abilities API von WordPress unterstützt, z.B. den MCP Adapter von WordPress.
+
+Beide Einstellungen lassen sich auch per Hook ändern:
+
+```
+add_filter( 'efml_abilities_enabled', '__return_false' );
+add_filter( 'efml_abilities_mode', function() { return 'all'; } );
+```
+
 ## Abilities
 
 ### Dateien

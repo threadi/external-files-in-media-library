@@ -61,6 +61,67 @@ class Abilities extends externalFilesTests {
 	}
 
 	/**
+	 * Test if only the read-only abilities are provided in the mode "read only".
+	 *
+	 * @return void
+	 */
+	public function test_read_only_mode_provides_only_read_only_abilities(): void {
+		add_filter( 'efml_abilities_mode', static fn() => 'read', 20 );
+
+		$abilities_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::get_instance();
+		$this->assertTrue( $abilities_obj->is_read_only_mode() );
+
+		$abilities = $abilities_obj->get_active_abilities();
+		$this->assertNotEmpty( $abilities );
+		$this->assertLessThan( count( $abilities_obj->get_abilities() ), count( $abilities ) );
+		foreach ( $abilities as $name => $ability ) {
+			$this->assertTrue( $abilities_obj->is_read_only_ability( $ability ), $name );
+		}
+		$this->assertArrayHasKey( 'get-file', $abilities );
+		$this->assertArrayNotHasKey( 'add', $abilities );
+		$this->assertArrayNotHasKey( 'delete', $abilities );
+	}
+
+	/**
+	 * Test if all abilities are provided in the mode "all".
+	 *
+	 * @return void
+	 */
+	public function test_mode_all_provides_all_abilities(): void {
+		add_filter( 'efml_abilities_mode', static fn() => 'all', 20 );
+
+		$abilities_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::get_instance();
+		$this->assertSame( array_keys( $abilities_obj->get_abilities() ), array_keys( $abilities_obj->get_active_abilities() ) );
+	}
+
+	/**
+	 * Test if an unknown mode is handled as "read only".
+	 *
+	 * @return void
+	 */
+	public function test_unknown_mode_is_read_only(): void {
+		add_filter( 'efml_abilities_mode', static fn() => 'unknown', 20 );
+
+		$this->assertSame( 'read', \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::get_instance()->get_mode() );
+	}
+
+	/**
+	 * Test if no abilities are provided if they are disabled.
+	 *
+	 * @return void
+	 */
+	public function test_no_abilities_if_disabled(): void {
+		update_option( 'efml_abilities_enabled', 0 );
+
+		$abilities_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Abilities::get_instance();
+		$this->assertFalse( $abilities_obj->is_enabled() );
+		$this->assertEmpty( $abilities_obj->get_active_abilities() );
+
+		update_option( 'efml_abilities_enabled', 1 );
+		$this->assertTrue( $abilities_obj->is_enabled() );
+	}
+
+	/**
 	 * Test if a URL can be added with the URL as only parameter and if this is idempotent.
 	 *
 	 * @return void
