@@ -4,13 +4,12 @@
 
 ### Added
 
-- Added mp3 as additional allowed file to upload
+- Added mp3 as additional allowed external file
 - Added search field in directory listing for search for file names in the complete directory tree
   of the external source
 - Added list of file sizes per service in statistics
 - Added abilities for AI/MCP to list and check external files, to import multiple URLs, to manage external sources,
   the synchronization, the queue and the export, see [documentation](docs/abilities.md)
-- Added hook to change the list of abilities
 - Added settings for the abilities: enable or disable them and choose between "read only" (default) and "all"
 - Added status of the abilities and hint for the needed MCP plugin in the settings
 - Added some new hooks & PHP Unit tests

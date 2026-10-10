@@ -19,6 +19,9 @@ test.describe('Settings', () => {
         // falls sich die Tab-URL zwischen Versionen ändert)
         await page.getByRole('link', { name: 'Advanced' }).click();
 
+        // the timeout is located in the sub-tab "Files" of the advanced settings.
+        await page.getByRole('link', { name: 'Files', exact: true }).click();
+
         const timeoutInput = page.getByLabel('Max. Timeout in seconds');
         await timeoutInput.fill('45');
         await page.getByRole('button', { name: /save/i }).click();

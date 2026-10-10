@@ -43,6 +43,7 @@ export const test = base.extend<{}, { cli: CliServer }>({
 
             const cli = await runCLI({
                 command: 'server',
+                workers: 6,
                 mount: [
                     {
                         hostPath: './',
