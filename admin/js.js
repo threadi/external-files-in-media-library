@@ -653,3 +653,21 @@ function efml_get_info_about_install_state( plugin_name ) {
     }
   } )
 }
+
+/**
+ * Fire the event that the import dialog has been loaded.
+ *
+ * Used as callback of the import dialog: Easy Dialog for WordPress only calls global functions by their name.
+ */
+function efml_import_dialog_loaded() {
+  document.dispatchEvent( new Event( 'efml-import-dialog-loaded' ) );
+}
+
+/**
+ * Fire the event that the import has been finished.
+ *
+ * Used as callback of the dialog with the import results: Easy Dialog for WordPress only calls global functions by their name.
+ */
+function efml_import_finished() {
+  document.dispatchEvent( new Event( 'efml-import-finished' ) );
+}

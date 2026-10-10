@@ -292,7 +292,7 @@ class Settings {
 
 		// the intro section in the plugin sub-tab.
 		$advanced_intro = $advanced_plugin_tab->add_section( 'settings_section_advanced_intro', 10 );
-		$advanced_intro->set_title( __( 'Start intro', 'external-files-in-media-library' ) );
+		$advanced_intro->set_title( __( 'Intro', 'external-files-in-media-library' ) );
 		$advanced_intro->set_setting( $this->get_settings_obj() );
 
 		// the import/export section for the settings in the plugin sub-tab.

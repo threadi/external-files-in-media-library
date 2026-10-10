@@ -60,8 +60,8 @@ jobs:
         # also runs Mozart, which copies easy-transients-for-wordpress to app/Dependencies.
         run: composer install --no-interaction --no-progress
 
-      - name: Build block editor script and commands
-        # also installs intro.js, which is shipped from node_modules.
+      - name: Build block editor script and commands, copy driver.js
+        # "npm run build" also copies Driver.js for the intro to admin/driverjs.
         run: |
           npm ci
           npm run build
@@ -97,8 +97,13 @@ jobs:
             vendor/threadi/easy-settings-for-wordpress \
             "$DIST/"
 
-          # the intro uses intro.js directly from node_modules, which is excluded above.
-          rsync -aR node_modules/intro.js/minified "$DIST/"
+          # Driver.js is copied to admin/driverjs by "npm run build". Without it the intro would be missing silently.
+          for FILE in driver.js.iife.js driver.css LICENSE; do
+            if [ ! -f "$DIST/admin/driverjs/$FILE" ]; then
+              echo "::error::admin/driverjs/$FILE is missing - check the step which runs npm run build."
+              exit 1
+            fi
+          done
 
           # instructions for AI agents of the settings library: not needed on a website.
           rm -rf "$DIST/vendor/threadi/easy-settings-for-wordpress/skills"
@@ -205,7 +210,7 @@ jobs:
       - name: Install PHP packages
         run: composer install --no-interaction --no-progress
 
-      - name: Build block editor script and commands
+      - name: Build block editor script and commands, copy driver.js
         run: |
           npm ci
           npm run build

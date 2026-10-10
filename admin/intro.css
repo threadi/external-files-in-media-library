@@ -1,0 +1,8 @@
+/**
+ * Styles for the intro with Driver.js.
+ */
+
+/* show the overlay also above the import dialog, so its highlighted elements are visible as in each other step. */
+.driver-overlay {
+  z-index: 100001 !important;
+}

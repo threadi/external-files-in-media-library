@@ -1,6 +1,6 @@
 {
     "name": "threadi/efml",
-    "version": "5.1.0",
+    "version": "5.5.0",
     "scripts": {
         "post-install-cmd": [
             "\"vendor/bin/mozart\" compose",
@@ -32,7 +32,6 @@
         },
         "optimize-autoloader": true,
         "classmap-authoritative": true,
-        "apcu-autoloader": true,
         "prepend-autoloader": false,
         "platform-check": false
     },
@@ -73,7 +72,7 @@
         "threadi/easy-dialog-for-wordpress": "*",
         "threadi/easy-directory-listing-for-wordpress": "*",
         "threadi/easy-settings-for-wordpress": "*",
-        "threadi/easy-transients-for-wordpress": "^1.4.8",
+        "threadi/easy-transients-for-wordpress": "^1.4.9",
         "spatie/dropbox-api": "^1.23"
     },
     "repositories": [
