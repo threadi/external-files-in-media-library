@@ -3268,7 +3268,7 @@ class Abilities {
 	 * @return array<int,int|\WP_Post>
 	 */
 	private function get_posts_of_query( WP_Query $query ): array {
-		return is_array( $query->posts ) ? $query->posts : array();
+		return is_array( $query->posts ) ? $query->posts : array(); // @phpstan-ignore function.alreadyNarrowedType
 	}
 
 	/**

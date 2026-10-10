@@ -579,7 +579,7 @@ class Settings {
 		$field->add_depend( $abilities_enabled_setting, 1 );
 		$setting->set_field( $field );
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
-		if( method_exists( $setting, 'set_soft_reload_on_save' ) ) {
+		if ( method_exists( $setting, 'set_soft_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$setting->set_soft_reload_on_save( true );
 		}
 
