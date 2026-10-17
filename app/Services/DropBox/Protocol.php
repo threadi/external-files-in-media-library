@@ -103,7 +103,7 @@ class Protocol extends Protocol_Base {
 		$entries = array();
 
 		// remove our marker from the URL.
-		$url = str_replace( $dropbox_obj->get_name(), '', strtolower( $this->get_url() ) );
+		$url = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $this->get_url() );
 
 		// set URL for "/" is it is empty (which would not be load anything).
 		if ( empty( $url ) ) {
@@ -311,7 +311,7 @@ class Protocol extends Protocol_Base {
 		$dropbox_obj = DropBox::get_instance();
 
 		// cleanup the URL.
-		$url = str_replace( $dropbox_obj->get_name(), '', $url );
+		$url = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $url );
 
 		// set the fields.
 		$dropbox_obj->set_fields( $this->get_fields() );
