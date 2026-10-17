@@ -122,6 +122,9 @@ class Update {
 			if ( version_compare( $db_plugin_version, '5.4.0', '<' ) ) {
 				$this->version540();
 			}
+			if ( version_compare( $db_plugin_version, '5.5.1', '<' ) ) {
+				$this->version551();
+			}
 
 			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
@@ -417,6 +420,55 @@ class Update {
 				// set the new state.
 				update_term_meta( $term_id, 'sync', 1 );
 			}
+		}
+	}
+
+	/**
+	 * To run on the update to version 5.5.1 or newer.
+	 *
+	 * @return void
+	 */
+	private function version551(): void {
+		global $wpdb;
+
+		// get all queue entries, which contain HTML entities.
+		$entries = $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `url` FROM %i WHERE `url` LIKE %s', array( $wpdb->prefix . 'eml_queue', '%&%;%' ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// bail if no entries found.
+		if ( empty( $entries ) ) {
+			return;
+		}
+
+		foreach ( $entries as $entry ) {
+			// only change URLs with real HTML entities like "&auml;", "&#039;" or "&#x27;".
+			if ( ! preg_match( '/&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]+);/i', $entry['url'] ) ) {
+				continue;
+			}
+
+			// decode the URL.
+			$url = html_entity_decode( $entry['url'], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+			// bail if nothing changed.
+			if ( $url === $entry['url'] ) {
+				continue;
+			}
+
+			// if the decoded URL is already in the queue, remove the broken entry.
+			$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT `id` FROM %i WHERE `url` = %s', array( $wpdb->prefix . 'eml_queue', $url ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $exists ) {
+				$wpdb->delete( $wpdb->prefix . 'eml_queue', array( 'id' => absint( $entry['id'] ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				continue;
+			}
+
+			// save the decoded URL and give it a new chance (also entries with state "error").
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prefix . 'eml_queue',
+				array(
+					'url'   => $url,
+					'state' => 'new',
+				),
+				array( 'id' => absint( $entry['id'] ) )
+			);
 		}
 	}
 }

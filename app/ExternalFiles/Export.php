@@ -162,6 +162,9 @@ class Export extends Tools_Base {
 		$setting_export->set_section( $section );
 		$setting_export->set_type( 'integer' );
 		$setting_export->set_default( 0 );
+		if ( method_exists( $setting_export, 'set_soft_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$setting_export->set_soft_reload_on_save( true );
+		}
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable export', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
@@ -181,6 +184,9 @@ class Export extends Tools_Base {
 		$setting->set_type( 'array' );
 		$setting->set_default( ImportDialog::get_instance()->get_default_extensions() );
 		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
+		if ( method_exists( $setting, 'set_soft_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$setting->set_soft_reload_on_save( true );
+		}
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for export', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your export dialog. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );

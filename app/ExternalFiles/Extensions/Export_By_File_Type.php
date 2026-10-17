@@ -123,7 +123,7 @@ class Export_By_File_Type extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'export_by_file_type', 20 );
 		$section->set_title( __( 'Export by file types', 'external-files-in-media-library' ) );
-		$section->set_callback( array( $this, 'show_info' ) );
+		$section->set_hidden( 1 !== absint( get_option( 'eml_export' ) ) || ! in_array( $this->get_name(), (array) get_option( 'eml_export_extensions' ), true ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_export_file_types' );
@@ -135,7 +135,6 @@ class Export_By_File_Type extends Extension_Base {
 		$field->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Chose the file types that should be exported to external sources. If none are selected, all file types are allowed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_possible_mime_types_for_settings() );
-		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_export_extensions' ), true ) );
 		$setting->set_field( $field );
 	}
 
@@ -307,20 +306,5 @@ class Export_By_File_Type extends Extension_Base {
 
 		// return the resulting list of actions.
 		return $actions;
-	}
-
-	/**
-	 * Show info about disabled settings.
-	 *
-	 * @return void
-	 */
-	public function show_info(): void {
-		// bail if extension is enabled.
-		if ( in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
-			return;
-		}
-
-		// show hint to enable the extension.
-		echo esc_html__( 'Enable the extension in the settings above to use these options.', 'external-files-in-media-library' );
 	}
 }

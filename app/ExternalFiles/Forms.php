@@ -335,6 +335,9 @@ class Forms {
 
 		// get the URLs from request.
 		$urls = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( is_string( $urls ) ) {
+			$urls = html_entity_decode( $urls, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		}
 
 		// bail if no URLs are given.
 		if ( empty( $urls ) ) {
@@ -715,6 +718,9 @@ class Forms {
 
 		// get the URLs from request.
 		$urls = filter_input( INPUT_POST, 'urls', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( is_string( $urls ) ) {
+			$urls = html_entity_decode( $urls, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		}
 
 		// bail if no URLs are given.
 		if ( empty( $urls ) ) {

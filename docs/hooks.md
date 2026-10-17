@@ -348,7 +348,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 809](ExternalFiles/Export.php#L809-L815)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 815](ExternalFiles/Export.php#L815-L821)
 
 ### `efml_export_before_on_service`
 
@@ -369,7 +369,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 881](ExternalFiles/Export.php#L881-L890)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 887](ExternalFiles/Export.php#L887-L896)
 
 ### `efml_import_ajax_start`
 
@@ -387,7 +387,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 474](ExternalFiles/Forms.php#L474-L480)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 477](ExternalFiles/Forms.php#L477-L483)
 
 ### `efml_import_ajax_end`
 
@@ -405,7 +405,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 598](ExternalFiles/Forms.php#L598-L604)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 601](ExternalFiles/Forms.php#L601-L607)
 
 ### `efml_switch_to_local_before`
 
@@ -1092,7 +1092,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/Plugin/Settings.php](Plugin/Settings.php), [line 340](Plugin/Settings.php#L340-L346)
+Source: [app/Plugin/Settings.php](Plugin/Settings.php), [line 341](Plugin/Settings.php#L341-L347)
 
 ### `efml_supported_mime_types`
 
@@ -2110,7 +2110,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 476](ExternalFiles/Export.php#L476-L483)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 482](ExternalFiles/Export.php#L482-L489)
 
 ### `efml_prevent_export`
 
@@ -2129,7 +2129,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 782](ExternalFiles/Export.php#L782-L789)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 788](ExternalFiles/Export.php#L788-L795)
 
 ### `efml_prevent_export_on_service`
 
@@ -2149,7 +2149,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 864](ExternalFiles/Export.php#L864-L872)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 870](ExternalFiles/Export.php#L870-L878)
 
 ### `efml_export_object`
 
@@ -2167,7 +2167,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 1313](ExternalFiles/Export.php#L1313-L1319)
+Source: [app/ExternalFiles/Export.php](ExternalFiles/Export.php), [line 1319](ExternalFiles/Export.php#L1319-L1325)
 
 ### `efml_import_info_timeout`
 
@@ -2204,7 +2204,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 488](ExternalFiles/Forms.php#L488-L495)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 491](ExternalFiles/Forms.php#L491-L498)
 
 ### `efml_import_fields`
 
@@ -2224,7 +2224,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 497](ExternalFiles/Forms.php#L497-L505)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 500](ExternalFiles/Forms.php#L500-L508)
 
 ### `efml_import_url`
 
@@ -2242,7 +2242,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 536](ExternalFiles/Forms.php#L536-L542)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 539](ExternalFiles/Forms.php#L539-L545)
 
 ### `efml_import_urls_errors`
 
@@ -2260,7 +2260,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 564](ExternalFiles/Forms.php#L564-L570)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 567](ExternalFiles/Forms.php#L567-L573)
 
 ### `efml_dialog_after_adding`
 
@@ -2278,7 +2278,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 677](ExternalFiles/Forms.php#L677-L683)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 680](ExternalFiles/Forms.php#L680-L686)
 
 ### `efml_import_url`
 
@@ -2296,7 +2296,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 840](ExternalFiles/Forms.php#L840-L846)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 846](ExternalFiles/Forms.php#L846-L852)
 
 ### `efml_import_urls_errors`
 
@@ -2314,7 +2314,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 860](ExternalFiles/Forms.php#L860-L866)
+Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 866](ExternalFiles/Forms.php#L866-L872)
 
 ### `efml_file_prevent_proxied_url`
 
