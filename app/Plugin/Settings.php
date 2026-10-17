@@ -254,6 +254,7 @@ class Settings {
 		$logs_tab = $settings_page->add_tab( 'eml_logs', 100 );
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
+		$logs_tab->set_hide_save( true );
 
 		// the copyright tab.
 		$copyright_tab = $settings_page->add_tab( 'copyright', 900 );

@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Hide save button on log tab
+
 ## [5.5.0] - 10.10.2026
 
 ### Added
