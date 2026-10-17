@@ -1,16 +1,17 @@
 # Changelog
 
-## [Unreleased]
+## [5.5.1] - 17.10.2026
 
 ### Changed
 
 - Hide the button to save setting on log tab
 - Extended the logging of errors from Dropbox
+- Optimized the visibility of dependent export settings
 - Update dependencies
 
 ### Fixed
 
-- Import via dialog or form failed for URLs containing special characters like umlauts (affected all sources).
+- Import via the dialog or form failed for URLs containing special characters like umlauts (affected all sources).
 
 ## [5.5.0] - 10.10.2026
 
