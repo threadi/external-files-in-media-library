@@ -70,7 +70,8 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           tools: phpunit-polyfills:1.1
-          extensions: mbstring, xml, zip, intl, pdo, mysql
+          # ftp and ssh2 for the tests with the FTP, FTPS and SFTP test servers.
+          extensions: mbstring, xml, zip, intl, pdo, mysql, ftp, ssh2
           coverage: none
 
       - name: Setup Node
@@ -88,11 +89,64 @@ jobs:
           npm ci
           npm run build
 
-      - name: Install SVN
-        run: sudo apt-get update && sudo apt-get install -y subversion
+      # the Python modules are used by the FTP, FTPS and SFTP test servers.
+      - name: Install SVN and Python modules for the test servers
+        run: sudo apt-get update && sudo apt-get install -y subversion python3-pyftpdlib python3-openssl python3-paramiko
 
       - name: Setup tests
         run: bash bin/install-wp-tests.sh wordpress_tests root root 127.0.0.1 latest true
 
+      # runs as the user of the runner, not as root.
+      - name: Start test servers
+        run: bash bin/test-servers.sh start
+
       - name: Run tests
         run: composer test
+        env:
+          # tests for a missing test server fail instead of being skipped.
+          EFML_REQUIRE_TEST_SERVERS: 1
+
+      # the tests for the multisite only run in a multisite.
+      - name: Run tests for multisite
+        run: composer test-multisite
+
+      - name: Stop test servers
+        if: always()
+        run: bash bin/test-servers.sh stop
+
+  playwright:
+    name: Playwright
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, zip, intl
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # the Playground packages in package-lock.json need Node 24.
+          node-version: 24
+
+      - name: Install dependencies
+        run: |
+          composer install --no-interaction --no-progress
+          npm ci
+
+      # the block editor script is loaded without checking whether it exists.
+      - name: Build block editor script and commands
+        run: npm run build
+
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npx playwright test

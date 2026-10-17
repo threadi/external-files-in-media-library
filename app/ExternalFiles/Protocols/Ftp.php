@@ -58,8 +58,10 @@ class Ftp extends Protocol_Base {
 	 */
 	public function __construct( string $url ) {
 		// typically this is not defined, so we set it up if.
+		// PHP stops FTP connections with an error, if the timeout is not greater than 0: use 30 seconds like WordPress then.
 		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
-			define( 'FS_CONNECT_TIMEOUT', get_option( 'eml_timeout' ) );
+			$timeout = absint( get_option( 'eml_timeout' ) );
+			define( 'FS_CONNECT_TIMEOUT', $timeout > 0 ? $timeout : 30 );
 		}
 
 		// load necessary classes.
@@ -163,8 +165,8 @@ class Ftp extends Protocol_Base {
 		// get the scheme.
 		$scheme = $parse_url['scheme'];
 
-		// get the host.
-		$host = $parse_url['host'];
+		// get the host, with the port if one is given.
+		$host = $parse_url['host'] . ( isset( $parse_url['port'] ) ? ':' . absint( $parse_url['port'] ) : '' );
 
 		// get the path.
 		$path = $parse_url['path'];
@@ -362,8 +364,8 @@ class Ftp extends Protocol_Base {
 			return array();
 		}
 
-		// get the file contents.
-		if ( ! $ftp_connection->is_readable( $parse_url['path'] ) ) {
+		// bail if the path is not a file on the server (is_readable() of WordPress returns true for each path via FTP).
+		if ( ! $ftp_connection->is_file( $parse_url['path'] ) ) {
 			Log::get_instance()->create( __( 'FTP-URL is not readable.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
@@ -381,7 +383,16 @@ class Ftp extends Protocol_Base {
 		$results['last-modified'] = absint( $ftp_connection->mtime( $parse_url['path'] ) );
 
 		// get the temp file.
-		$results['tmp-file'] = $this->get_temp_file( $file_path, $ftp_connection );
+		$tmp_file = $this->get_temp_file( $file_path, $ftp_connection );
+
+		// bail if the file could not be loaded (or is empty), as the import would result in an entry without a file.
+		if ( ! is_string( $tmp_file ) ) {
+			Log::get_instance()->create( __( 'The file could not be loaded from the FTP server.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+
+			// return empty array as we got not the file.
+			return array();
+		}
+		$results['tmp-file'] = $tmp_file;
 
 		$response_headers = array();
 
@@ -460,7 +471,7 @@ class Ftp extends Protocol_Base {
 
 		// define ftp connection parameter.
 		$connection_arguments = array(
-			'port'            => $this->get_port_by_protocol( $parse_url['scheme'] ),
+			'port'            => $this->get_port_by_url( $parse_url ),
 			'hostname'        => $parse_url['host'],
 			'username'        => $fields['login']['value'],
 			'password'        => $fields['password']['value'],
@@ -491,6 +502,27 @@ class Ftp extends Protocol_Base {
 			/* translators: %1$s will be replaced by the servername. */
 			Log::get_instance()->create( sprintf( __( 'FTP-Connection failed. Check the servername %1$s and the given credentials. Error: %2$s', 'external-files-in-media-library' ), '<em>' . $connection_arguments['hostname'] . '</em>', '<code>' . wp_json_encode( $connection->errors ) . '</code>' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 			return false;
+		}
+
+		// use the address of the server for data connections in passive mode, not the address the server returns.
+		// servers behind NAT or a firewall often return an internal address, which is not reachable.
+		// the data connection fails then and the listing of a directory is empty (like curl since 7.74.0).
+		$use_pasv_address = false;
+		/**
+		 * Filter whether the address the FTP server returns for passive mode should be used for data connections.
+		 *
+		 * @since 5.5.2 Available since 5.5.2.
+		 * @param bool $use_pasv_address True to use the address returned by the server.
+		 * @param string $url The used URL.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		if ( ! apply_filters( 'efml_ftp_use_pasv_address', $use_pasv_address, $url ) && $connection->link instanceof \FTP\Connection ) {
+			ftp_set_option( $connection->link, FTP_USEPASVADDRESS, false );
+
+			// switch passive mode off and on again, as PHP keeps the address from enabling it in connect().
+			ftp_pasv( $connection->link, false );
+			ftp_pasv( $connection->link, true );
 		}
 
 		// add connection to the list.
@@ -570,17 +602,23 @@ class Ftp extends Protocol_Base {
 		// get local WP Filesystem-handler for temp file.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// get the ftp connection.
+		$ftp_filesystem = $this->get_connection( $url );
+		if ( ! $ftp_filesystem ) {
+			// bail if the given filesystem is the local filesystem, as we would read local files then.
+			if ( 'direct' === $filesystem->method || $filesystem === $wp_filesystem ) {
+				return false;
+			}
+
+			// use the given remote connection.
+			$ftp_filesystem = $filesystem;
+		}
+
 		// get the tmp file name.
 		$tmp_file_name = wp_tempnam();
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
-
-		// get the ftp connection.
-		$ftp_filesystem = $this->get_connection( $url );
-		if ( ! $ftp_filesystem ) {
-			$ftp_filesystem = $filesystem;
-		}
 
 		// get content of the file.
 		$content = $ftp_filesystem->get_contents( $file_path );

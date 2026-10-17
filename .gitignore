@@ -6,3 +6,7 @@ languages/*.json
 /build/build.properties
 /app/Dependencies
 /admin/driverjs/
+/test-results/
+/playwright-report/
+.phpunit.result.cache
+/dist/

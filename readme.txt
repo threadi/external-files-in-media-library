@@ -189,5 +189,34 @@ WordPress website.
 - Optimized the visibility of dependent export settings
 - Update dependencies
 - Import via the dialog or form failed for URLs containing special characters like umlauts (affected all sources).
+- Credentials of REST API external sources are only sent to the host of the external source
+- Special handling for Imgur and Dropbox is only used for URLs on their domains
+- Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source
+- Added more PHP Unit tests and Playwright tests
+- Fixed settings of a synchronized external source (file types, dates) being used for other external sources synchronized in the same request, which could delete their files
+- Fixed minimum and maximum file size in the configuration of a synchronization not being saved
+- Fixed export action in media library being hidden if only a minimum or maximum file size for exports is set
+- Fixed revert of the last import continuing after the redirect
+- Fixed FTP import reading local files if the connection to the FTP server could not be established
+- Fixed check for unsafe URLs staying disabled after errors during loading from an external REST API
+- Fixed detection of the own website in REST API service for URLs without protocol or in other case
+- Fixed import of single files from .tar.gz archives and import of not allowed file types from them
+- Fixed handling of damaged ZIP and .tar.gz files
+- Fixed one file too many being loaded from ZIP files in the import dialog
+- Fixed .gz files not being removed from the allowed file types if they are disabled
+- Fixed closing of foreign output buffers while reading .gz files
+- Fixed missing credentials during import of WooCommerce product images
+- Fixed warning in WP CLI import with login but without password
+- Fixed wrong name of the deprecated hook "eml_schedule_interval"
+- Fixed query for files in Exmage migration
+- Fixed not existing intervals being saved for availability check and synchronization
+- Fixed hiding of generic directories (e.g. "vendor") in local directory listing
+- Fixed credentials with the value "0" not being saved
+- Fixed invalid dates resulting in 1970-01-01 as file date
+- Fixed JSON import being used if it is explicitly disabled
+- Fixed preview of the import in the dialog preventing following imports in the same request
+- Fixed files in trash being delivered by the proxy
+- Fixed title of files with content-disposition header without file name or with path in it
+- Fixed protection against deletion of synchronized files being disabled after deleting synchronized files
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

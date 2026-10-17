@@ -16,6 +16,8 @@
     <exclude-pattern>*/example/*</exclude-pattern>
     <exclude-pattern>*/css/*</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+    <exclude-pattern>*/releases/*</exclude-pattern>
     <exclude-pattern>*/node_modules/*</exclude-pattern>
     <exclude-pattern>*/svn/*</exclude-pattern>
     <exclude-pattern>*/js/*</exclude-pattern>

@@ -560,7 +560,7 @@ class File {
 
 		// save the given content to the path.
 		try {
-			$wp_filesystem->put_contents( $path, $body );
+			$saved = $wp_filesystem->put_contents( $path, $body );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -573,6 +573,18 @@ class File {
 
 			// add log entry.
 			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
+
+			// remove our filter.
+			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+
+			// do nothing more.
+			return;
+		}
+
+		// bail if the file could not be saved (e.g. as the cache directory is not writable).
+		if ( ! $saved ) {
+			/* translators: %1$s will be replaced by the path. */
+			Log::get_instance()->create( sprintf( __( 'File could not be saved in the proxy cache %1$s.', 'external-files-in-media-library' ), '<code>' . esc_html( $path ) . '</code>' ), $this->get_url( true ), 'error' );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -1106,42 +1118,31 @@ class File {
 	 * @return void
 	 */
 	public function delete_thumbs(): void {
-		// bail if this is not cached.
-		if ( ! $this->is_cached() ) {
-			return;
-		}
-
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// get the image meta data.
-		$image_meta_data = wp_get_attachment_metadata( $this->get_id(), true );
+		// get the cache file: its sized images use its name with the size, e.g. "<md5>-150x150.jpg".
+		// the size in the name is the requested size, which differs from the size in the meta data of scaled images.
+		$path_info = pathinfo( $this->get_cache_file() );
+		$directory = trailingslashit( $path_info['dirname'] ?? '' );
 
-		// bail if no sizes are given.
-		if ( empty( $image_meta_data['sizes'] ) ) {
+		// get the files in the cache directory.
+		$files = $wp_filesystem->dirlist( $directory, false );
+
+		// bail if no files could be loaded.
+		if ( empty( $files ) ) {
 			return;
 		}
 
-		// get proxy-object.
-		$proxy_obj = Proxy::get_instance();
-
-		// loop through the sizes.
-		foreach ( $image_meta_data['sizes'] as $size_data ) {
-			// bail if "size_data" is not an array.
-			if ( ! is_array( $size_data ) ) {
-				continue;
-			}
-
-			// create the file path.
-			$file = $proxy_obj->get_cache_directory() . Helper::generate_sizes_filename( basename( $this->get_cache_file() ), absint( $size_data['width'] ), absint( $size_data['height'] ), $this->get_file_extension() );
-
-			// bail if file does not exist.
-			if ( ! $wp_filesystem->exists( $file ) ) {
+		// delete each sized image of this file.
+		foreach ( array_keys( $files ) as $filename ) {
+			// bail if this is not a sized image of this file.
+			if ( 1 !== preg_match( '/^' . preg_quote( $path_info['filename'], '/' ) . '-\d+x\d+(\.|$)/', (string) $filename ) ) {
 				continue;
 			}
 
 			// delete it.
-			$wp_filesystem->delete( $file );
+			$wp_filesystem->delete( $directory . $filename );
 		}
 	}
 

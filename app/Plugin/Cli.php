@@ -70,7 +70,7 @@ class Cli {
 				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '',
 			),
 			'password' => array(
-				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '',
+				'value' => ! empty( $arguments['login'] ) && ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '',
 			),
 		);
 

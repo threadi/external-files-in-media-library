@@ -575,8 +575,8 @@ class Synchronization extends Tools_Base {
 			return;
 		}
 
-		// remove the update marker on all existing synced files for this URL.
-		foreach ( $this->get_synced_files_by_url( $url ) as $post_id ) {
+		// remove the update marker on all existing synced files of this external source.
+		foreach ( $this->get_files_of_source( $term_id ) as $post_id ) {
 			delete_post_meta( $post_id, 'eml_synced' );
 		}
 
@@ -634,6 +634,9 @@ class Synchronization extends Tools_Base {
 		// and run the import of this directory.
 		$import_result = $import->add_url( $url );
 
+		// remove the external source from the import object, so following imports in this request are not assigned to it.
+		$import->set_term_id( 0 );
+
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
@@ -645,7 +648,8 @@ class Synchronization extends Tools_Base {
 
 		// delete unused files, if enabled and the external source could be read.
 		if ( $import_result && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
-			// get again all files from given source URL but, which does not have the update marker.
+			// get again all files from given external source, which does not have the update marker.
+			// use the term ID, as the name of the term is not always the used URL (e.g. for YouTube channels).
 			$query  = array(
 				'post_type'      => 'attachment',
 				'post_status'    => array( 'inherit', 'trash' ),
@@ -667,8 +671,8 @@ class Synchronization extends Tools_Base {
 				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 					array(
 						'taxonomy' => Taxonomy::get_instance()->get_name(),
-						'field'    => 'name',
-						'terms'    => $url,
+						'field'    => 'term_id',
+						'terms'    => $term_id,
 					),
 				),
 				'posts_per_page' => - 1,
@@ -746,6 +750,11 @@ class Synchronization extends Tools_Base {
 		// bail if no term_id is given.
 		if ( $term_id <= 0 ) {
 			$log->create( __( 'No external source given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+			wp_send_json_error();
+		}
+
+		// bail if the actual user is not allowed to use this external source.
+		if ( ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_send_json_error();
 		}
 
@@ -875,6 +884,11 @@ class Synchronization extends Tools_Base {
 		// bail if no term_id is given.
 		if ( $term_id <= 0 ) {
 			$log->create( __( 'No external source given for synchronization.', 'external-files-in-media-library' ), '', 'error' );
+			wp_send_json_error();
+		}
+
+		// bail if the actual user is not allowed to use this external source.
+		if ( ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_send_json_error();
 		}
 
@@ -1285,6 +1299,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function delete_synced_files( int $term_id ): void {
 		// remove the prevent-deletion for this moment.
+		$prevent_deletion_priority = has_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
 		// remove all synced files from this URL.
@@ -1301,6 +1316,11 @@ class Synchronization extends Tools_Base {
 
 			// delete the file.
 			wp_delete_attachment( $post_id, true );
+		}
+
+		// add the prevent-deletion again, if it was used before.
+		if ( false !== $prevent_deletion_priority ) {
+			add_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), absint( $prevent_deletion_priority ), 2 );
 		}
 	}
 
@@ -1376,14 +1396,14 @@ class Synchronization extends Tools_Base {
 	}
 
 	/**
-	 * Return list of synced file by source URL.
+	 * Return list of external files of the given external source.
 	 *
-	 * @param string $url The used URL.
+	 * @param int $term_id The term ID of the external source.
 	 *
 	 * @return array<int,int>
 	 */
-	private function get_synced_files_by_url( string $url ): array {
-		// get all files from given source URL, which are already in media library.
+	private function get_files_of_source( int $term_id ): array {
+		// get all files from given external source, which are already in media library.
 		$query  = array(
 			'post_type'      => 'attachment',
 			'post_status'    => array( 'inherit', 'trash' ),
@@ -1397,8 +1417,8 @@ class Synchronization extends Tools_Base {
 			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
 				array(
 					'taxonomy' => Taxonomy::get_instance()->get_name(),
-					'field'    => 'name',
-					'terms'    => $url,
+					'field'    => 'term_id',
+					'terms'    => $term_id,
 				),
 			),
 			'posts_per_page' => -1,
@@ -1551,6 +1571,9 @@ class Synchronization extends Tools_Base {
 		if ( empty( $intervals[ $value ] ) ) {
 			/* translators: %1$s will be replaced by the name of the used interval */
 			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exist.', 'external-files-in-media-library' ), esc_html( $value ) ) );
+
+			// return the actual saved value to not save the not existing interval.
+			return (string) get_option( $option, '' );
 		}
 
 		// return the value.
@@ -1574,8 +1597,8 @@ class Synchronization extends Tools_Base {
 		// get term ID.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if term ID is not given.
-		if ( 0 === $term_id ) {
+		// bail if term ID is not given or the actual user is not allowed to use this external source.
+		if ( 0 === $term_id || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_send_json_error();
 		}
 
@@ -1614,9 +1637,10 @@ class Synchronization extends Tools_Base {
 			$referer = '';
 		}
 
-		// bail if no term is given.
-		if ( 0 === $term_id ) {
+		// bail if no term is given or the actual user is not allowed to use this external source.
+		if ( 0 === $term_id || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_safe_redirect( $referer );
+			exit;
 		}
 
 		// delete them.

@@ -64,7 +64,7 @@ class Zip extends Zip_Base {
 	 * @return bool
 	 */
 	public function is_compatible( string $file ): bool {
-		return str_contains( $file, '.zip' );
+		return str_contains( $this->get_path_for_compatibility_check( $file ), '.zip' );
 	}
 
 	/**
@@ -114,19 +114,19 @@ class Zip extends Zip_Base {
 		$zip    = new ZipArchive();
 		$opened = $zip->open( $tmp_zip_file, ZipArchive::RDONLY );
 
-		// bail if file could not be opened.
-		if ( ! $opened ) {
+		// bail if file could not be opened because it is not a valid ZIP.
+		if ( ZipArchive::ER_NOZIP === $opened ) {
 			// log event.
-			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
+			Log::get_instance()->create( __( 'Given file is not a valid ZIP.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
 			// return empty array as we cannot get infos about a file, which does not exist.
 			return false;
 		}
 
-		// bail if file could not be opened because it is not a valid ZIP.
-		if ( ZipArchive::ER_NOZIP === $opened ) {
+		// bail if file could not be opened (ZipArchive::open() returns an error code in this case).
+		if ( true !== $opened ) {
 			// log event.
-			Log::get_instance()->create( __( 'Given file is not a valid ZIP.', 'external-files-in-media-library' ), $zip_file, 'error' );
+			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ), $zip_file, 'error' );
 
 			// return empty array as we cannot get infos about a file, which does not exist.
 			return false;
@@ -150,32 +150,10 @@ class Zip extends Zip_Base {
 			return array();
 		}
 
-		// get count of files.
+		// collect the entries of the ZIP.
+		$entries    = array();
 		$file_count = $zip->count();
-
-		// collect the list of files.
-		$listing = array(
-			'title' => basename( $this->get_zip_file() ),
-			'files' => array(),
-			'dirs'  => array(),
-		);
-
-		// collect folders.
-		$folders = array();
-
-		// loop through the files and create the list.
 		for ( $i = 0; $i < $file_count; $i++ ) {
-			// get the name.
-			$name = $zip->getNameIndex( $i );
-
-			// bail if name could not be read.
-			if ( ! is_string( $name ) ) {
-				continue;
-			}
-
-			// get parts of the path.
-			$parts = explode( DIRECTORY_SEPARATOR, $name );
-
 			// get entry data.
 			$file_stat = $zip->statIndex( $i );
 
@@ -184,95 +162,19 @@ class Zip extends Zip_Base {
 				continue;
 			}
 
-			// collect the entry.
-			$entry = array(
-				'title' => basename( $file_stat['name'] ),
+			// add the entry.
+			$entries[] = array(
+				'name'  => (string) $file_stat['name'],
+				'size'  => absint( $file_stat['size'] ),
+				'mtime' => absint( $file_stat['mtime'] ),
 			);
-
-			// if array contains more than 1 entry this file is in a directory.
-			if ( end( $parts ) ) {
-				// get content type of this file.
-				$mime_type = wp_check_filetype( $file_stat['name'] );
-
-				// bail if file is not allowed.
-				if ( empty( $mime_type['type'] ) ) {
-					continue;
-				}
-
-				// add settings for entry.
-				$entry['file']          = $this->get_zip_file() . '/' . $file_stat['name'];
-				$entry['filesize']      = absint( $file_stat['size'] );
-				$entry['mime-type']     = $mime_type['type'];
-				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( ( $file_stat['mtime'] ) ) ) );
-				$entry['preview']       = '';
-			}
-
-			// if array contains more than 1 entry this file is in a directory.
-			if ( count( $parts ) > 1 ) {
-				$the_keys = array_keys( $parts );
-				$last_key = end( $the_keys );
-				$last_dir = '';
-				$dir_path = '';
-				foreach ( $parts as $key => $dir ) {
-					// bail if dir is empty.
-					if ( empty( $dir ) ) {
-						continue;
-					}
-
-					// bail for last entry (which is a file).
-					if ( $key === $last_key ) {
-						// add the file to the last iterated directory.
-						$folders[ $last_dir ]['files'][] = $entry; // @phpstan-ignore offsetAssign.dimType
-						continue;
-					}
-
-					// add the path.
-					$dir_path .= DIRECTORY_SEPARATOR . $dir;
-
-					// add the directory if it does not exist atm in the list.
-					$index = $this->get_zip_file() . '/' . trailingslashit( $dir_path );
-					if ( ! isset( $folders[ $index ] ) ) {
-						// add the directory to the list.
-						$folders[ $index ] = array(
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// add the directory if it does not exist atm in the main folder list.
-					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) { // @phpstan-ignore isset.offset
-						// add the directory to the list.
-						$folders[ $last_dir ]['dirs'][ $index ] = array(  // @phpstan-ignore offsetAssign.dimType
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// mark this dir as last dir for file path.
-					$last_dir = $index;
-				}
-			} else {
-				// simply add the entry to the list if no directory data exist.
-				$listing['files'][] = $entry;
-			}
 		}
 
 		// close the zip handle.
 		$zip->close();
 
-		if ( ! empty( $folders ) ) {
-			$listing['dirs'][ array_key_first( $folders ) ] = array(
-				'title'   => array_key_first( $folders ),
-				'folders' => array(),
-				'dirs'    => array(),
-			);
-		}
-
 		// return the resulting list.
-		return array_merge( array( 'completed' => true ), array( $this->get_zip_file() => $listing ), $folders );
+		return $this->get_listing_of_entries( $entries );
 	}
 
 	/**
@@ -314,7 +216,7 @@ class Zip extends Zip_Base {
 		}
 
 		// get content of the file to extract.
-		$file_content = $zip->getFromName( $file_to_extract );
+		$file_content = $this->get_content_from_zip( $zip, $file_to_extract );
 
 		// bail if no file data could be loaded.
 		if ( ! $file_content ) {
@@ -360,8 +262,8 @@ class Zip extends Zip_Base {
 		// get content type of this file.
 		$mime_type = wp_check_filetype( $file_stat['name'] );
 
-		// bail if mime type is not given.
-		if ( empty( $mime_type['type'] ) ) {
+		// bail if the file type is not allowed.
+		if ( ! $this->is_mime_type_allowed( (string) $mime_type['type'] ) ) {
 			return array();
 		}
 
@@ -477,7 +379,7 @@ class Zip extends Zip_Base {
 			}
 
 			// bail if limit for loaded files has been reached and this is an AJAX-request.
-			if ( wp_doing_ajax() && $loaded_files > absint( get_option( 'eml_zip_import_limit', 10 ) ) ) {
+			if ( wp_doing_ajax() && $loaded_files >= max( 1, absint( get_option( 'eml_zip_import_limit', 10 ) ) ) ) {
 				// set marker to load more.
 				$results['load_more'] = true;
 				continue;
@@ -492,18 +394,12 @@ class Zip extends Zip_Base {
 				$mime_type = wp_check_filetype( $file_stat['name'] );
 
 				// bail if file is not allowed.
-				if ( empty( $mime_type['type'] ) ) {
+				if ( ! $this->is_mime_type_allowed( (string) $mime_type['type'] ) ) {
 					continue;
 				}
 
-				// get tmp file name.
-				$tmp_file_name = wp_tempnam();
-
-				// set the file as tmp-file for import.
-				$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
-
 				// get info about the file to extract.
-				$file_content = $zip->getFromName( $name );
+				$file_content = $this->get_content_from_zip( $zip, $name );
 
 				// bail if no file data could be loaded.
 				if ( ! $file_content ) {
@@ -513,6 +409,12 @@ class Zip extends Zip_Base {
 					// return empty array as we can not get infos about a file which does not exist.
 					continue;
 				}
+
+				// get tmp file name.
+				$tmp_file_name = wp_tempnam();
+
+				// set the file as tmp-file for import.
+				$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
 				// and save the file there.
 				try {
@@ -587,5 +489,41 @@ class Zip extends Zip_Base {
 	 */
 	public function is_file_in_zip(): bool {
 		return ! str_ends_with( $this->get_zip_file(), '.zip' );
+	}
+
+	/**
+	 * Return the content of a file in the ZIP, if it is not larger than the maximum size.
+	 *
+	 * @param ZipArchive $zip The opened ZIP.
+	 * @param string     $name The name of the file in the ZIP.
+	 *
+	 * @return string|false The content or false if it could not be read or is too large.
+	 */
+	private function get_content_from_zip( ZipArchive $zip, string $name ): string|false {
+		// bail if the ZIP says that the file is too large.
+		$file_stat = $zip->statName( $name );
+		if ( is_array( $file_stat ) && ! $this->is_file_size_allowed( absint( $file_stat['size'] ), $name ) ) {
+			return false;
+		}
+
+		// get the file as stream to read only up to the maximum size.
+		$stream = $zip->getStream( $name );
+
+		// bail if the stream could not be opened.
+		if ( ! is_resource( $stream ) ) {
+			return false;
+		}
+
+		// read the content.
+		$content = $this->read_limited(
+			static function ( int $length ) use ( $stream ): string|false {
+				return fread( $stream, max( 1, $length ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Reads the stream of a file in the ZIP, not a file of the filesystem.
+			},
+			$name
+		);
+		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes the stream of a file in the ZIP.
+
+		// return the content.
+		return $content;
 	}
 }

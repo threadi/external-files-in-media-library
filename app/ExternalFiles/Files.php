@@ -42,6 +42,13 @@ class Files {
 	private static ?Files $instance = null;
 
 	/**
+	 * The ID of the attachment, which is deleted at the moment.
+	 *
+	 * @var int
+	 */
+	private int $deleting_attachment_id = 0;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -105,6 +112,8 @@ class Files {
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'get_image_srcset' ), 10, 5 );
 		add_filter( 'wp_import_post_meta', array( $this, 'set_import_marker_for_attachments' ), 10, 2 );
 		add_filter( 'wp_get_attachment_metadata', array( $this, 'get_attachment_metadata' ), 10, 2 );
+		add_filter( 'pre_delete_attachment', array( $this, 'mark_attachment_deletion' ), PHP_INT_MAX, 2 );
+		add_action( 'delete_attachment', array( $this, 'unmark_attachment_deletion' ), 1, 0 );
 		add_action( 'delete_attachment', array( $this, 'log_url_deletion' ), 10, 1 );
 		add_action( 'delete_attachment', array( $this, 'delete_file_from_cache' ), 10, 1 );
 		add_filter( 'wp_calculate_image_srcset_meta', array( $this, 'check_srcset_meta' ), 10, 4 );
@@ -782,6 +791,36 @@ class Files {
 	}
 
 	/**
+	 * Mark the attachment, which will be deleted now, if no other filter prevents its deletion.
+	 *
+	 * @param WP_Post|false|null $delete Whether to go forward with the deletion (null) or not.
+	 * @param WP_Post            $post The attachment.
+	 *
+	 * @return WP_Post|false|null
+	 */
+	public function mark_attachment_deletion( WP_Post|false|null $delete, WP_Post $post ): WP_Post|false|null {
+		// bail if the deletion is prevented.
+		if ( ! is_null( $delete ) ) {
+			return $delete;
+		}
+
+		// mark this attachment.
+		$this->deleting_attachment_id = $post->ID;
+
+		// return the given value.
+		return $delete;
+	}
+
+	/**
+	 * Remove the marker for the deleted attachment, as WordPress has read its file path now.
+	 *
+	 * @return void
+	 */
+	public function unmark_attachment_deletion(): void {
+		$this->deleting_attachment_id = 0;
+	}
+
+	/**
 	 * Prevent output as external file if availability is not given.
 	 *
 	 * @source https://developer.wordpress.org/reference/hooks/get_attached_file/
@@ -809,6 +848,13 @@ class Files {
 		if ( is_string( $file ) && ! $external_file_obj->is_locally_saved() ) {
 			$uploads = wp_get_upload_dir();
 			$file    = str_replace( $uploads['basedir'] . '/', '', $file );
+		}
+
+		// return nothing during the deletion of an external hosted file with a URL as path (like ftp://).
+		// otherwise WordPress checks the URL with is_dir() and is_file(), which results in anonymous
+		// connections to the external server (e.g. failed FTP logins), although nothing has to be deleted there.
+		if ( $this->deleting_attachment_id === $post_id && is_string( $file ) && wp_is_stream( $file ) && ! $external_file_obj->is_locally_saved() ) {
+			return false;
 		}
 
 		// if the basename of the file does not contain a ".", use the file title in the backend.

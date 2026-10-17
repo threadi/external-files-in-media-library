@@ -235,6 +235,7 @@ class Export extends Tools_Base {
 		}
 		$field->set_title( __( 'Choose your primary external source', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
+		$field->set_sanitize_callback( array( $this, 'sanitize_main_source' ) );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
@@ -597,8 +598,8 @@ class Export extends Tools_Base {
 		// get term ID.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if term ID is not given.
-		if ( 0 === $term_id ) {
+		// bail if term ID is not given or the actual user is not allowed to use this external source.
+		if ( 0 === $term_id || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_send_json_error();
 		}
 
@@ -1169,6 +1170,30 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Sanitize the main export source: allow only external sources with enabled export.
+	 *
+	 * The options of the field contain only the external sources, which had the export enabled while the
+	 * settings were loaded. So it does not use them, otherwise a source enabled in the actual request
+	 * could not be saved as main export source.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return int
+	 */
+	public function sanitize_main_source( mixed $value ): int {
+		// get the term ID.
+		$term_id = absint( $value );
+
+		// bail if no source is set.
+		if ( 0 === $term_id ) {
+			return 0;
+		}
+
+		// return the term ID only if the export is enabled for it.
+		return empty( get_term_meta( $term_id, 'efml_export', true ) ) ? 0 : $term_id;
+	}
+
+	/**
 	 * Mark sync as running if synced files are deleted.
 	 *
 	 * @return void
@@ -1265,8 +1290,8 @@ class Export extends Tools_Base {
 			$referer = '';
 		}
 
-		// bail if no term is given.
-		if ( 0 === $term_id ) {
+		// bail if no term is given or the actual user is not allowed to use this external source.
+		if ( 0 === $term_id || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}

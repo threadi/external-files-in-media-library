@@ -33,6 +33,13 @@ class Specific_Date extends Extension_Base {
 	protected array $extension_types = array( 'import_dialog', 'sync_dialog' );
 
 	/**
+	 * Marker whether we have set the request value for a synchronization.
+	 *
+	 * @var bool
+	 */
+	private bool $request_value_set = false;
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Specific_Date|null
@@ -81,6 +88,7 @@ class Specific_Date extends Extension_Base {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
+		add_action( 'efml_after_sync', array( $this, 'remove_action_after_sync' ), 10, 0 );
 	}
 
 	/**
@@ -116,8 +124,16 @@ class Specific_Date extends Extension_Base {
 			return $post_array;
 		}
 
+		// get the timestamp of the given date.
+		$timestamp = strtotime( $use_specific_date );
+
+		// bail if the given value is not a valid date.
+		if ( ! $timestamp ) {
+			return $post_array;
+		}
+
 		// add the last-modified date.
-		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', (int) strtotime( $use_specific_date ) );
+		$post_array['post_date'] = gmdate( 'Y-m-d H:i:s', $timestamp );
 
 		// return the resulting array.
 		return $post_array;
@@ -138,12 +154,20 @@ class Specific_Date extends Extension_Base {
 		$use_specific_date = filter_input( INPUT_POST, 'use_specific_date', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if not set from request.
-		if ( is_null( $use_specific_date ) ) {
+		if ( ! is_string( $use_specific_date ) || empty( $use_specific_date ) ) {
+			return $results;
+		}
+
+		// get the timestamp of the given date.
+		$timestamp = strtotime( $use_specific_date );
+
+		// bail if the given value is not a valid date.
+		if ( ! $timestamp ) {
 			return $results;
 		}
 
 		// add the last-modified date.
-		$results['last-modified'] = strtotime( $use_specific_date );
+		$results['last-modified'] = $timestamp;
 
 		// return the resulting array.
 		return $results;
@@ -265,6 +289,7 @@ class Specific_Date extends Extension_Base {
 
 		// set "use_specific_date" to the given date.
 		$_POST['use_specific_date'] = $value;
+		$this->request_value_set    = true;
 	}
 
 	/**
@@ -276,5 +301,25 @@ class Specific_Date extends Extension_Base {
 	 */
 	public function check_cli_arguments( array $arguments ): void {
 		$_POST['use_specific_date'] = isset( $arguments['use_specific_date'] ) ? sanitize_text_field( wp_unslash( $arguments['use_specific_date'] ) ) : '';
+	}
+
+	/**
+	 * Remove the setting we have set for the synchronization after it has been run.
+	 *
+	 * Without this, the setting would also be used for the next external source synchronized in the same request.
+	 *
+	 * @return void
+	 */
+	public function remove_action_after_sync(): void {
+		// bail if we have not set the value.
+		if ( ! $this->request_value_set ) {
+			return;
+		}
+
+		// remove the value.
+		unset( $_POST['use_specific_date'] );
+
+		// reset the marker.
+		$this->request_value_set = false;
 	}
 }

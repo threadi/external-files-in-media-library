@@ -848,6 +848,11 @@ class Directory_Listing {
 			return false;
 		}
 
+		// bail if the given ID is not an external source of this plugin.
+		if ( ! get_term( $term_id, Taxonomy::get_instance()->get_name() ) instanceof WP_Term ) {
+			return false;
+		}
+
 		// administrators are allowed to use every external source.
 		if ( Helper::has_current_user_role( 'administrator' ) || is_super_admin() ) {
 			return true;

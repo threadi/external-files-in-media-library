@@ -17,33 +17,21 @@ tasks:
       - vendor/bin/phpcbf .
       - vendor/bin/phpcs .
 
+  # creates releases/external-files-in-media-library_<version>.zip, e.g. with "task build_zip -- 5.5.1".
+  # uses bin/build-release.sh like the GitHub Action "Build release zip" and "ant build", so all create the same zip.
+  # "npm run build" must have been run before (e.g. via "task prepare").
   build_zip:
-    dir: ../
     cmds:
-      - zip -rq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/ -x "*/.git/*" "*/.github/*" "*/blocks/*/src/*" "*/docs/*" "*/phpcs.xml.dist" "*/composer.json" "*/composer.lock" "*/package.json" "*/package-lock.json" "*/.gitignore" "*/vendor/*" "*/node_modules/*" "*/.editorconfig" "*/build/*" "*/releases/*" "*/svn/*" "*/languages/*" "*/changelog.md" "*/readme.md" "*/ruleset.xml" "*/assets/*" "*/external-files-in-media-library-dev.php" "*/readme-dev.txt" "*/phpstan.neon" "*/Taskfile.yml" "*/libs/*" "*/src/*"
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/autoload.php
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/composer/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/psr/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/ralouphie/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/symfony/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/guzzlehttp/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/spatie/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/graham-campbell/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/build/*
-      - zip -urq external-files-in-media-library/releases/external-files-in-media-library_{{.CLI_ARGS}}.zip external-files-in-media-library/vendor/threadi/*/lib/*
+      # get the dev packages back at the end, also if one of the following steps fails.
+      - defer: bash bin/build-release.sh restore
+      - bash bin/build-release.sh prepare
+      - bash bin/build-release.sh collect {{.CLI_ARGS}}
+      - bash bin/build-release.sh zip releases/external-files-in-media-library_{{.CLI_ARGS}}.zip
 
+  # runs the checks and creates the release zip, e.g. with "task release -- 5.5.1".
   release:
     cmds:
       - task: prepare
-      - composer dump-autoload -oa --no-dev
       - task: check
-      - cp external-files-in-media-library.php external-files-in-media-library-dev.php
-      - sed -i -e 's/@@VersionNumber@@/{{.CLI_ARGS}}/g' external-files-in-media-library.php
-      - cp readme.txt readme-dev.txt
-      - sed -i -e 's/@@VersionNumber@@/{{.CLI_ARGS}}/g' readme.txt
-      - rm -f releases/external-files-in-media-library_{{.CLI_ARGS}}.zip
       - task: build_zip
-      - cp external-files-in-media-library-dev.php external-files-in-media-library.php
-      - cp readme-dev.txt readme.txt
-      - rm readme-dev.txt external-files-in-media-library-dev.php
       - echo 'Release file generated'

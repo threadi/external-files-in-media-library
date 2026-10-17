@@ -156,4 +156,20 @@ class Directory_Listing extends externalFilesTests {
 		// the saved value must be unchanged.
 		$this->assertEquals( $broken_value, get_term_meta( $this->term_id, 'fields', true ) );
 	}
+
+	/**
+	 * Test if a term of another taxonomy is not allowed, also if all external sources are visible for all users.
+	 *
+	 * @return void
+	 */
+	public function test_term_of_other_taxonomy_is_not_allowed(): void {
+		$category_id = self::factory()->category->create();
+
+		update_option( 'eml_show_all_external_sources', 1 );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'editor' ) ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->is_source_allowed_for_current_user( $category_id ) );
+
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->is_source_allowed_for_current_user( $category_id ) );
+	}
 }

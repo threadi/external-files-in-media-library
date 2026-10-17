@@ -293,6 +293,9 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Loop through the results and save each in the media library.
 		 */
+		// count the saved files.
+		$saved_files = 0;
+
 		foreach ( $files as $file_data ) {
 			/**
 			 * Prevent the import of this file.
@@ -455,6 +458,9 @@ class Import extends Directory_Listing_Base {
 				continue;
 			}
 
+			// count this file as saved.
+			++$saved_files;
+
 			// update title for progress.
 			/* translators: %1$s will be replaced by the URL. */
 			update_option( 'eml_import_title_' . $user_id, sprintf( __( 'Import URL %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $file_url ) ) ) );
@@ -573,8 +579,8 @@ class Import extends Directory_Listing_Base {
 		 */
 		do_action( 'efml_after_import', $url, $fields );
 
-		// return ok.
-		return true;
+		// return whether any file has been saved: the synchronization deletes no files otherwise.
+		return $saved_files > 0;
 	}
 
 	/**
@@ -796,7 +802,7 @@ class Import extends Directory_Listing_Base {
 	 *
 	 * @return int
 	 */
-	private function get_term_id(): int {
+	public function get_term_id(): int {
 		return $this->term_id;
 	}
 

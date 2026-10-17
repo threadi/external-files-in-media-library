@@ -34,4 +34,35 @@ class Local extends externalFilesTests {
 		$this->assertIsString( $directory );
 		$this->assertEmpty( $directory );
 	}
+
+	/**
+	 * Test if generic directories (like "vendor") are hidden in the listing and other directories are not.
+	 *
+	 * @return void
+	 */
+	public function test_hide_generic_directories(): void {
+		// create the directories.
+		$base = trailingslashit( get_temp_dir() ) . 'efml-local-' . wp_generate_password( 8, false ) . '/';
+		wp_mkdir_p( $base . 'node_modules' );
+		wp_mkdir_p( $base . 'vendor' );
+		wp_mkdir_p( $base . 'images' );
+		wp_mkdir_p( $base . 'vendor/package' );
+		file_put_contents( $base . 'vendor.pdf', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
+		$obj = \ExternalFilesInMediaLibrary\Services\Local::get_instance();
+
+		// generic directories are hidden.
+		$this->assertTrue( $obj->hide_generic_directories( false, $base . 'node_modules', $base ) );
+		$this->assertTrue( $obj->hide_generic_directories( false, $base . 'vendor', $base ) );
+
+		// other directories are not hidden, also inside a generic directory.
+		$this->assertFalse( $obj->hide_generic_directories( false, $base . 'images', $base ) );
+		$this->assertFalse( $obj->hide_generic_directories( false, $base . 'vendor/package', $base . 'vendor/' ) );
+
+		// files are not changed.
+		$this->assertFalse( $obj->hide_generic_directories( false, $base . 'vendor.pdf', $base ) );
+
+		// the result of other filters is kept.
+		$this->assertTrue( $obj->hide_generic_directories( true, $base . 'images', $base ) );
+	}
 }

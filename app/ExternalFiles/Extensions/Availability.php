@@ -364,6 +364,9 @@ class Availability extends Extension_Base {
 		if ( empty( $intervals[ $value ] ) ) {
 			/* translators: %1$s will be replaced by the name of the used interval */
 			add_settings_error( $option, $option, sprintf( __( 'The given interval %1$s does not exist.', 'external-files-in-media-library' ), esc_html( $value ) ) );
+
+			// return the actual saved value to not save the not existing interval.
+			return (string) get_option( $option, '' );
 		}
 
 		// return the value.

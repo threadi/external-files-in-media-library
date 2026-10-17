@@ -1,17 +1,23 @@
 import { test, expect } from './fixtures';
 
 // @ts-ignore
-test('Plugin active & list of external sources loading', async ({ page, cli }) => {
-    // @ts-ignore
-    await page.goto(`${cli.serverUrl}/wp-admin/upload.php?page=efml_local_directories`);
-    await expect(page.locator('#wpbody-content')).toBeVisible();
+test('Plugin active & list of external sources loading', async ({ page, wp }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.goto(wp.adminUrl('upload.php?page=efml_local_directories'));
     await expect(page).toHaveTitle(/Add External Files/);
+
+    // the page must not show a PHP error.
+    await expect(page.locator('body')).not.toContainText(/Fatal error|Warning:|Notice:|Deprecated:/);
+
+    // no JavaScript error must occur.
+    expect(errors).toEqual([]);
 });
 
 // @ts-ignore
-test('Plugin settings can be saved', async ({ page, cli }) => {
-    // @ts-ignore
-    await page.goto(`${cli.serverUrl}/wp-admin/options-general.php?page=eml_settings`);
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    await expect(page.getByText('Settings saved')).toBeVisible();
+test('Plugin is listed as active plugin', async ({ page, wp }) => {
+    await page.goto(wp.adminUrl('plugins.php'));
+    // use only the row of the plugin, not the row with the hint about a new version (it has the same data-slug).
+    await expect(page.locator('tr[data-slug="external-files-in-media-library"]:not(.plugin-update-tr)')).toHaveClass(/active/);
 });

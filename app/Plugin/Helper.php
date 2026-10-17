@@ -114,6 +114,43 @@ class Helper {
 	}
 
 	/**
+	 * Create the given directory including all missing parent directories via WP_Filesystem.
+	 *
+	 * WP_Filesystem::mkdir() creates only the last directory of a path, e.g. it fails for "wp-content/cache/eml"
+	 * if "wp-content/cache" does not exist.
+	 *
+	 * @param string $path The absolute path of the directory.
+	 *
+	 * @return bool True if the directory exists now.
+	 */
+	public static function create_directory( string $path ): bool {
+		// get WP Filesystem-handler.
+		$wp_filesystem = self::get_wp_filesystem();
+
+		// get the path without slash at the end.
+		$path = untrailingslashit( wp_normalize_path( $path ) );
+
+		// bail if no path is given.
+		if ( empty( $path ) ) {
+			return false;
+		}
+
+		// bail if the directory does already exist.
+		if ( $wp_filesystem->is_dir( $path ) ) {
+			return true;
+		}
+
+		// create the parent directory first, if it does not exist.
+		$parent = dirname( $path );
+		if ( $parent !== $path && ! $wp_filesystem->is_dir( $parent ) && ! self::create_directory( $parent ) ) {
+			return false;
+		}
+
+		// create the directory.
+		return $wp_filesystem->mkdir( $path );
+	}
+
+	/**
 	 * Return real content type from string.
 	 *
 	 * @param string $content_type The content type string.
@@ -412,6 +449,33 @@ class Helper {
 			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/abilities_de.md';
 		}
 		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/abilities.md';
+	}
+
+	/**
+	 * Return whether the given URL is located on the given domain or one of its subdomains.
+	 *
+	 * Only the host of the URL is checked, not the complete URL. So "https://example.com/?imgur.com" is not on "imgur.com".
+	 *
+	 * @param string $url The URL to check.
+	 * @param string $domain The domain (e.g. "imgur.com").
+	 *
+	 * @return bool
+	 */
+	public static function is_url_on_domain( string $url, string $domain ): bool {
+		// get the host of the URL.
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		// bail if no host could be found.
+		if ( ! is_string( $host ) || empty( $host ) ) {
+			return false;
+		}
+
+		// compare them case-insensitive.
+		$host   = strtolower( $host );
+		$domain = strtolower( $domain );
+
+		// return whether the host is the domain or a subdomain of it.
+		return $host === $domain || str_ends_with( $host, '.' . $domain );
 	}
 
 	/**

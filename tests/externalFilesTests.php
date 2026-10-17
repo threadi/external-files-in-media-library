@@ -72,17 +72,36 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			// initialize the plugin.
 			\ExternalFilesInMediaLibrary\Plugin\Install::get_instance()->activation();
 
+			// start with an empty log, as its table is kept between test runs.
+			\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->truncate_log();
+
 			// run initialization.
 			do_action( 'init' );
 			do_action( 'rest_api_init' );
 
 			// prevent external requests from external sources.
 			add_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ), 10, 3 );
+
+			// allow requests to the local test servers (see bin/test-servers.sh).
+			TestServers::allow_requests();
+
 			add_filter( 'wp_mail', array( self::class, 'filter_wp_mail' ) );
 
 			// mark as loaded.
 			do_action('efml_test_preparation_loaded');
 		}
+	}
+
+	/**
+	 * Cleanup after each test.
+	 *
+	 * @return void
+	 */
+	public function tear_down(): void {
+		// delete the directories on the test servers, which the test has created.
+		TestServers::cleanup();
+
+		parent::tear_down();
 	}
 
 	/**
@@ -95,8 +114,23 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	 * @return false|array|WP_Error
 	 */
 	public static function filter_http_requests( false|array|WP_Error $false, array $parsed_args, string $url ): false|array|WP_Error {
+		// let requests to the local test servers through (see bin/test-servers.sh).
+		if ( TestServers::is_test_server_url( $url ) ) {
+			return $false;
+		}
+
+		// let requests through, which a test has already answered.
+		if ( false !== $false ) {
+			return $false;
+		}
+
 		// get file infos.
 		$file_info = pathinfo( $url );
+
+		// fail for URLs, which are not one of our test files (e.g. of websites without file extension).
+		if ( empty( $file_info['extension'] ) || ( ! isset( self::$test_files[ $file_info['extension'] ] ) && ! isset( self::$test_faulty_files[ $file_info['extension'] ] ) ) ) {
+			self::fail( __( 'Trying an external URL connection, which should not happen during PHP Unit Tests. Used URL:', 'external-files-in-media-library' ) . ' ' . $url );
+		}
 
 		// create a local response for the HEAD request on our test URL.
 		if( 'HEAD' === $parsed_args['method'] && $url === self::get_test_file( $file_info['extension'], 'http' ) ) {
@@ -281,6 +315,114 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		wp_set_current_user( 0 );
 		wp_set_auth_cookie( 0 );
 		do_action('wp_login' );
+	}
+
+	/**
+	 * Call the given AJAX handler with the given request data, like WordPress does it for "wp_ajax_" actions.
+	 *
+	 * Returns the output and the message, with which the handler ended via wp_die() (null if it did not end).
+	 * check_ajax_referer() ends with "-1" for a missing or wrong nonce, wp_send_json() with an empty message.
+	 *
+	 * Hint: the handlers use filter_input( INPUT_POST, ... ), which does not see the data set here.
+	 *
+	 * @param callable            $handler The AJAX handler.
+	 * @param array<string,mixed> $request The request data ($_POST and $_REQUEST).
+	 *
+	 * @return array{output: string, die: string|null}
+	 */
+	protected function call_ajax( callable $handler, array $request = array() ): array {
+		$_POST    = $request;
+		$_REQUEST = $request;
+
+		// end each wp_die() with an exception, like WP_Ajax_UnitTestCase does it.
+		$die_handler = static function ( $message ): void {
+			if ( is_scalar( $message ) && '' !== (string) $message ) {
+				throw new \WPAjaxDieStopException( (string) $message );
+			}
+			throw new \WPAjaxDieContinueException( '' );
+		};
+		$get_die_handler = static function () use ( $die_handler ): callable {
+			return $die_handler;
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $get_die_handler, 1 );
+		add_filter( 'wp_die_handler', $get_die_handler, 1 );
+
+		$die = null;
+		ob_start();
+		try {
+			$handler();
+		} catch ( \WPAjaxDieStopException $e ) {
+			$die = $e->getMessage();
+		} catch ( \WPAjaxDieContinueException $e ) {
+			$die = '';
+		} finally {
+			$output = (string) ob_get_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $get_die_handler, 1 );
+			remove_filter( 'wp_die_handler', $get_die_handler, 1 );
+			$_POST    = array();
+			$_REQUEST = array();
+		}
+
+		return array(
+			'output' => $output,
+			'die'    => $die,
+		);
+	}
+
+	/**
+	 * Replace the HTTP mock of this test class with the given callback for the actual test.
+	 *
+	 * The callback gets the same parameters as the "pre_http_request" filter. Use restore_http_mock() in tear_down().
+	 *
+	 * @param callable $callback The callback, which returns the response.
+	 *
+	 * @return void
+	 */
+	protected function replace_http_mock( callable $callback ): void {
+		remove_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ) );
+		add_filter( 'pre_http_request', $callback, 10, 3 );
+	}
+
+	/**
+	 * Restore the HTTP mock of this test class.
+	 *
+	 * @param callable $callback The callback, which was used by replace_http_mock().
+	 *
+	 * @return void
+	 */
+	protected function restore_http_mock( callable $callback ): void {
+		remove_filter( 'pre_http_request', $callback );
+		if ( ! has_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ) ) ) {
+			add_filter( 'pre_http_request', array( self::class, 'filter_http_requests' ), 10, 3 );
+		}
+	}
+
+	/**
+	 * Return a response array, like WordPress returns it for an HTTP request.
+	 *
+	 * @param string $url The requested URL.
+	 * @param int    $status_code The HTTP status code.
+	 * @param array  $headers The response headers.
+	 * @param string $body The response body.
+	 *
+	 * @return array
+	 */
+	protected static function get_http_response( string $url, int $status_code, array $headers = array(), string $body = '' ): array {
+		// create the response object.
+		$requests_response              = new \WpOrg\Requests\Response();
+		$requests_response->status_code = $status_code;
+		$requests_response->url         = $url;
+		$requests_response->body        = $body;
+		$requests_response->headers     = new \WpOrg\Requests\Response\Headers( $headers );
+		$requests_response->success     = $status_code < 400;
+
+		// return the WordPress response.
+		$http_response = new WP_HTTP_Requests_Response( $requests_response, null );
+		$response      = $http_response->to_array();
+		$response['http_response'] = $http_response;
+		return $response;
 	}
 
 	/**

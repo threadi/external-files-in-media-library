@@ -164,7 +164,7 @@ function efml_sync_save_config() {
 
   // get fields from the form.
   let fields = {};
-  jQuery('.efml-sync-config select, .efml-sync-config input[type="date"], .efml-sync-config input[type="email"]').each(function(){
+  jQuery('.efml-sync-config select, .efml-sync-config input[type="date"], .efml-sync-config input[type="email"], .efml-sync-config input[type="number"]').each(function(){
     fields[jQuery(this).attr('id')] = jQuery(this).val();
   });
   jQuery('.efml-sync-config input[type="checkbox"]').each(function(){

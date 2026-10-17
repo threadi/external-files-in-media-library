@@ -17,8 +17,10 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use Exception;
 use PharData;
 use PharFileInfo;
+use RecursiveIteratorIterator;
 
 /**
  * Object to handle .tar.gz-files.
@@ -99,11 +101,17 @@ class TarGzip extends Zip_Base {
 			return false;
 		}
 
-		// open the tar.gz file.
-		$phar = new PharData( $tmp_zip_file );
+		// open the tar.gz file and extract it to .tar to use its result.
+		try {
+			$phar   = new PharData( $tmp_zip_file );
+			$result = $phar->decompress();
+		} catch ( Exception $e ) {
+			// log event.
+			Log::get_instance()->create( __( 'ZIP-file could not be opened for extracting a file from it.', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $zip_file, 'error' );
 
-		// extract to .tar and use its result.
-		$result = $phar->decompress();
+			// do nothing more.
+			return false;
+		}
 
 		// bail if file could not be extracted.
 		if ( ! $result instanceof PharData ) { // @phpstan-ignore instanceof.alwaysTrue
@@ -135,7 +143,7 @@ class TarGzip extends Zip_Base {
 	 * @return bool
 	 */
 	public function is_compatible( string $file ): bool {
-		return str_contains( $file, '.tar.gz' );
+		return str_contains( $this->get_path_for_compatibility_check( $file ), '.tar.gz' );
 	}
 
 	/**
@@ -144,7 +152,7 @@ class TarGzip extends Zip_Base {
 	 * @return bool
 	 */
 	public function is_file_in_zip(): bool {
-		return ! str_contains( $this->get_zip_file(), '.tar.gz' );
+		return ! str_ends_with( $this->get_zip_file(), '.tar.gz' );
 	}
 
 	/**
@@ -161,115 +169,24 @@ class TarGzip extends Zip_Base {
 			return array();
 		}
 
-		// collect the list of files.
-		$listing = array(
-			'title' => basename( $this->get_zip_file() ),
-			'files' => array(),
-			'dirs'  => array(),
-		);
-
-		// collect folders.
-		$folders = array();
-
-		// loop through the files.
-		foreach ( $zip_file as $file ) {
+		// collect the entries of the archive, also from its subdirectories.
+		$entries = array();
+		foreach ( new RecursiveIteratorIterator( $zip_file ) as $file ) {
 			// bail if this is not PharFileInfo.
 			if ( ! $file instanceof PharFileInfo ) {
 				continue;
 			}
 
-			// get the name.
-			$name = $file->getFilename();
-
-			// get parts of the path.
-			$parts = explode( DIRECTORY_SEPARATOR, $name );
-
-			// collect the entry.
-			$entry = array(
-				'title' => basename( $name ),
-			);
-
-			// if array contains more than 1 entry this file is in a directory.
-			if ( end( $parts ) ) {
-				// get content type of this file.
-				$mime_type = wp_check_filetype( $name );
-
-				// bail if file is not allowed.
-				if ( empty( $mime_type['type'] ) ) {
-					continue;
-				}
-
-				// add settings for entry.
-				$entry['file']          = $this->get_zip_file() . '/' . $name;
-				$entry['filesize']      = absint( $file->getSize() );
-				$entry['mime-type']     = $mime_type['type'];
-				$entry['icon']          = '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type['type'] ) . '"></span>';
-				$entry['last-modified'] = Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', absint( $file->getMTime() ) ) );
-				$entry['preview']       = '';
-			}
-
-			// if array contains more than 1 entry this file is in a directory.
-			if ( count( $parts ) > 1 ) {
-				$the_keys = array_keys( $parts );
-				$last_key = end( $the_keys );
-				$last_dir = '';
-				$dir_path = '';
-				foreach ( $parts as $key => $dir ) {
-					// bail if dir is empty.
-					if ( empty( $dir ) ) {
-						continue;
-					}
-
-					// bail for last entry (which is a file).
-					if ( $key === $last_key ) {
-						// add the file to the last iterated directory.
-						$folders[ $last_dir ]['files'][] = $entry; // @phpstan-ignore offsetAssign.dimType
-						continue;
-					}
-
-					// add the path.
-					$dir_path .= DIRECTORY_SEPARATOR . $dir;
-
-					// add the directory if it does not exist atm in the list.
-					$index = $this->get_zip_file() . '/' . trailingslashit( $dir_path );
-					if ( ! isset( $folders[ $index ] ) ) {
-						// add the directory to the list.
-						$folders[ $index ] = array(
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// add the directory if it does not exist atm in the main folder list.
-					if ( ! empty( $last_dir ) && ! isset( $folders[ $last_dir ]['dirs'][ $index ] ) ) { // @phpstan-ignore isset.offset
-						// add the directory to the list.
-						$folders[ $last_dir ]['dirs'][ $index ] = array( // @phpstan-ignore offsetAssign.dimType
-							'title' => $dir,
-							'files' => array(),
-							'dirs'  => array(),
-						);
-					}
-
-					// mark this dir as last dir for file path.
-					$last_dir = $index;
-				}
-			} else {
-				// simply add the entry to the list if no directory data exist.
-				$listing['files'][] = $entry;
-			}
-		}
-
-		if ( ! empty( $folders ) ) {
-			$listing['dirs'][ array_key_first( $folders ) ] = array(
-				'title'   => array_key_first( $folders ),
-				'folders' => array(),
-				'dirs'    => array(),
+			// add the entry.
+			$entries[] = array(
+				'name'  => $this->get_path_in_archive( $zip_file, $file ),
+				'size'  => absint( $file->getSize() ),
+				'mtime' => absint( $file->getMTime() ),
 			);
 		}
 
 		// return the resulting list.
-		return array_merge( array( 'completed' => true ), array( $this->get_zip_file() => $listing ), $folders );
+		return $this->get_listing_of_entries( $entries );
 	}
 
 	/**
@@ -289,10 +206,20 @@ class TarGzip extends Zip_Base {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_file_info_from_zip( string $file_to_extract ): array {
-		// get the path to the file in the ZIP (+7 for .tar.gz and +1 for the starting "/") we want to extract.
-		$file_to_extract = substr( $file_to_extract, strpos( $file_to_extract, '.tar.gz' ) + 8 );
+		// bail if the given path does not contain a file in an archive.
+		if ( ! str_contains( $file_to_extract, '.tar.gz/' ) ) {
+			return array();
+		}
 
-		// get the zip object for the given file.
+		// get the path to the file in the archive (+7 for .tar.gz and +1 for the starting "/") we want to extract.
+		$file_name = substr( $file_to_extract, absint( strpos( $file_to_extract, '.tar.gz/' ) ) + 8 );
+
+		// bail if no file name is given.
+		if ( empty( $file_name ) ) {
+			return array();
+		}
+
+		// get the archive object for the given file.
 		$zip_file = $this->get_object( $file_to_extract );
 
 		// bail if zip could not be opened.
@@ -300,16 +227,24 @@ class TarGzip extends Zip_Base {
 			return array();
 		}
 
-		// get the requested file name.
-		$file_name = substr( $this->get_zip_file(), absint( strpos( $this->get_zip_file(), '.tar.gz/' ) ) + 8 );
-
-		// bail if file does not exist in zip.
-		if ( ! $zip_file[ $file_name ] instanceof PharFileInfo ) { // @phpstan-ignore instanceof.alwaysTrue
+		// bail if file does not exist in the archive.
+		if ( ! isset( $zip_file[ $file_name ] ) || ! $zip_file[ $file_name ] instanceof PharFileInfo ) { // @phpstan-ignore instanceof.alwaysTrue
 			return array();
 		}
 
 		// get content type of this file.
 		$mime_type = wp_check_filetype( $zip_file[ $file_name ]->getFilename() );
+
+		// bail if file type is not allowed.
+		if ( ! $this->is_mime_type_allowed( (string) $mime_type['type'] ) ) {
+			return array();
+		}
+
+		// get the content of the file, if it is not too large.
+		$content = $this->get_content( $zip_file[ $file_name ], $file_name );
+		if ( ! is_string( $content ) ) {
+			return array();
+		}
 
 		// get the tmp file name.
 		$extracted_file = wp_tempnam();
@@ -321,7 +256,7 @@ class TarGzip extends Zip_Base {
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// save content in the tmp file.
-		$wp_filesystem->put_contents( $extracted_file, $zip_file[ $file_name ]->getContent() );
+		$wp_filesystem->put_contents( $extracted_file, $content );
 
 		// collect the file data.
 		return array(
@@ -345,6 +280,11 @@ class TarGzip extends Zip_Base {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_files_from_zip(): array {
+		// if path does not end with ".tar.gz/", it is a single file request.
+		if ( ! str_ends_with( $this->get_zip_file(), '.tar.gz/' ) ) {
+			return $this->get_file_info_from_zip( $this->get_zip_file() );
+		}
+
 		// get the zip object.
 		$zip_file = $this->get_object( $this->get_zip_file() );
 
@@ -353,26 +293,32 @@ class TarGzip extends Zip_Base {
 			return array();
 		}
 
-		// if path does not end with ".tar.gz/", it is a single file request.
-		if ( ! str_ends_with( $zip_file, '.tar.gz/' ) ) {
-			return $this->get_file_info_from_zip( $zip_file );
-		}
-
 		// get local WP Filesystem-handler for temp file.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// collect the files.
 		$results = array();
 
-		// get the list of files in this zip and return their data.
-		foreach ( $zip_file as $file ) {
-			// bail if this is not PharFileInfo.
-			if ( ! $file instanceof PharFileInfo ) {
+		// get the list of files in this archive, also in its subdirectories, and return their data.
+		foreach ( new RecursiveIteratorIterator( $zip_file ) as $file ) {
+			// bail if this is not PharFileInfo or a directory.
+			if ( ! $file instanceof PharFileInfo || $file->isDir() ) {
 				continue;
 			}
 
 			// get content type of this file.
 			$mime_type = wp_check_filetype( $file->getFilename() );
+
+			// bail if file type is not allowed.
+			if ( ! $this->is_mime_type_allowed( (string) $mime_type['type'] ) ) {
+				continue;
+			}
+
+			// get the content of the file, if it is not too large.
+			$content = $this->get_content( $file, $this->get_path_in_archive( $zip_file, $file ) );
+			if ( ! is_string( $content ) ) {
+				continue;
+			}
 
 			// get the tmp file name.
 			$tmp_file = wp_tempnam();
@@ -381,7 +327,7 @@ class TarGzip extends Zip_Base {
 			$tmp_file = str_replace( '.tmp', '', $tmp_file . '.' . $mime_type['ext'] );
 
 			// save content in the tmp file.
-			$wp_filesystem->put_contents( $tmp_file, $file->getContent() );
+			$wp_filesystem->put_contents( $tmp_file, $content );
 
 			// collect the entry.
 			$entry = array(
@@ -390,7 +336,7 @@ class TarGzip extends Zip_Base {
 				'last-modified' => absint( $file->getMTime() ),
 				'tmp-file'      => $tmp_file,
 				'mime-type'     => $mime_type['type'],
-				'url'           => $this->get_zip_file(),
+				'url'           => $this->get_zip_file() . $this->get_path_in_archive( $zip_file, $file ),
 				'filesize'      => absint( $file->getSize() ),
 			);
 
@@ -400,5 +346,62 @@ class TarGzip extends Zip_Base {
 
 		// return the file list.
 		return $results;
+	}
+
+	/**
+	 * Return the path of the given file in the archive, e.g. "docs/file.pdf".
+	 *
+	 * @param PharData     $archive The archive.
+	 * @param PharFileInfo $file The file in the archive.
+	 *
+	 * @return string
+	 */
+	private function get_path_in_archive( PharData $archive, PharFileInfo $file ): string {
+		// the path name is "phar://<path of the archive>/<path in the archive>".
+		$prefix    = 'phar://' . $archive->getPath() . '/';
+		$path_name = $file->getPathname();
+
+		// use the file name, if the path does not start with the archive.
+		if ( ! str_starts_with( $path_name, $prefix ) ) {
+			return $file->getFilename();
+		}
+
+		// return the path in the archive.
+		return substr( $path_name, strlen( $prefix ) );
+	}
+
+	/**
+	 * Return the content of a file in the archive, if it is not larger than the maximum size.
+	 *
+	 * @param PharFileInfo $file The file in the archive.
+	 * @param string       $name The name of the file in the archive.
+	 *
+	 * @return string|false The content or false if it could not be read or is too large.
+	 */
+	private function get_content( PharFileInfo $file, string $name ): string|false {
+		// bail if the archive says that the file is too large.
+		if ( ! $this->is_file_size_allowed( absint( $file->getSize() ), $name ) ) {
+			return false;
+		}
+
+		// open the file in the archive as stream to read only up to the maximum size.
+		$stream = fopen( $file->getPathname(), 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Opens the stream of a file in the archive (phar://), not a file of the filesystem.
+
+		// bail if the stream could not be opened.
+		if ( ! is_resource( $stream ) ) {
+			return false;
+		}
+
+		// read the content.
+		$content = $this->read_limited(
+			static function ( int $length ) use ( $stream ): string|false {
+				return fread( $stream, max( 1, $length ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- Reads the stream of a file in the archive.
+			},
+			$name
+		);
+		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Closes the stream of a file in the archive.
+
+		// return the content.
+		return $content;
 	}
 }

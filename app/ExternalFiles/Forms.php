@@ -453,7 +453,7 @@ class Forms {
 					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[ $i ] = $term_data['directory'] . $url;
 						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
-							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
+							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . ( ! empty( $term_directory_url['port'] ) ? ':' . $term_directory_url['port'] : '' ) . $url;
 						}
 					}
 				}
@@ -808,7 +808,7 @@ class Forms {
 					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
 						$url_array[ $i ] = $term_data['directory'] . $url; // @phpstan-ignore offsetAccess.nonOffsetAccessible
 						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
-							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
+							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . ( ! empty( $term_directory_url['port'] ) ? ':' . $term_directory_url['port'] : '' ) . $url;
 						}
 					}
 				}

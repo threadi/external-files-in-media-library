@@ -1316,7 +1316,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function allow_wrong_content_type( bool $results, string $url ): bool {
 		// bail if this is not a Dropbox URL.
-		if ( ! str_contains( $url, 'dropboxusercontent.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) ) {
 			return $results;
 		}
 
@@ -1349,7 +1349,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function get_real_request_headers( array|WP_Error $response, Http $http_object, string $url ): array|WP_Error {
 		// bail if URL is not a Dropbox content URL.
-		if ( ! str_contains( $url, 'dropboxusercontent.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) ) {
 			return $response;
 		}
 

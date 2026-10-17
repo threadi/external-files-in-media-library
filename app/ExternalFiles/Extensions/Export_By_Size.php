@@ -337,8 +337,11 @@ class Export_By_Size extends Extension_Base {
 			return $actions;
 		}
 
-		// bail if the file size does match the settings.
-		if ( ( $min_size > 0 && $external_file_obj->get_filesize() > $min_size ) && ( $max_size > 0 && $external_file_obj->get_filesize() < $max_size ) ) {
+		// get the file size.
+		$file_size = $external_file_obj->get_filesize();
+
+		// bail if the file size does match the settings (same rules as for the export itself).
+		if ( ! ( $min_size > 0 && $file_size < $min_size ) && ! ( $max_size > 0 && $file_size > $max_size ) ) {
 			return $actions;
 		}
 

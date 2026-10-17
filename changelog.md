@@ -1,5 +1,87 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Added more PHP Unit tests and Playwright tests
+- Added bin/build-release.sh, which is used by the GitHub Action, Ant and Task to create the same release zip
+- Added error message if the list of files in an FTP directory could not be loaded
+- Added hook "efml_ftp_use_pasv_address" to use the address an FTP server returns for passive mode
+- Added hint for FTPS servers which do not allow the reuse of the TLS session for the data connection
+- Added PHP Unit tests with real FTP, FTPS, SFTP and HTTP servers and a simulated WordPress REST API (see bin/test-servers.sh)
+- Added PHP Unit tests for the export, the settings of synchronizations, the proxy, the security checks of all AJAX requests, archives and the hosting of external files
+- Added "composer test-coverage" to show the code coverage of the PHP Unit tests
+- Added setting for the maximum size of a single file extracted from ZIP, .tar.gz or .gz archives (default: maximum upload size of WordPress) and hook "efml_zip_max_file_size"
+- Added log entry if an exported file is not saved on the FTP server, as a file with this name already exists there
+- Added PHP Unit tests for the synchronization of ZIP files, YouTube channels and websites in a multisite, the directory listing of archives, the export and the checks of schedules and proxy
+- Added "composer test-multisite" to run the PHP Unit tests for multisites
+
+### Changed
+
+- Credentials of REST API external sources are only sent to the host of the external source
+- Special handling for Imgur and Dropbox is only used for URLs on their domains
+- Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source
+- Files in archives are read in parts and only up to the maximum size, instead of loading them completely into memory
+- Archives only list and extract files with a type allowed in the settings, like all other external sources
+
+### Fixed
+
+- Fixed settings of a synchronized external source (file types, dates) being used for other external sources synchronized in the same request, which could delete their files
+- Fixed minimum and maximum file size in the configuration of a synchronization not being saved
+- Fixed export action in media library being hidden if only a minimum or maximum file size for exports is set
+- Fixed revert of the last import continuing after the redirect
+- Fixed FTP import reading local files if the connection to the FTP server could not be established
+- Fixed check for unsafe URLs staying disabled after errors during loading from an external REST API
+- Fixed detection of the own website in REST API service for URLs without protocol or in other case
+- Fixed import of single files from .tar.gz archives and import of not allowed file types from them
+- Fixed handling of damaged ZIP and .tar.gz files
+- Fixed one file too many being loaded from ZIP files in the import dialog
+- Fixed .gz files not being removed from the allowed file types if they are disabled
+- Fixed closing of foreign output buffers while reading .gz files
+- Fixed missing credentials during import of WooCommerce product images
+- Fixed warning in WP CLI import with login but without password
+- Fixed wrong name of the deprecated hook "eml_schedule_interval"
+- Fixed query for files in Exmage migration
+- Fixed not existing intervals being saved for availability check and synchronization
+- Fixed hiding of generic directories (e.g. "vendor") in local directory listing
+- Fixed credentials with the value "0" not being saved
+- Fixed invalid dates resulting in 1970-01-01 as file date
+- Fixed JSON import being used if it is explicitly disabled
+- Fixed preview of the import in the dialog preventing following imports in the same request
+- Fixed files in trash being delivered by the proxy
+- Fixed title of files with content-disposition header without file name or with path in it
+- Fixed protection against deletion of synchronized files being disabled after deleting synchronized files
+- Fixed release zip of the local build containing dev packages and an outdated Driver.js
+- Fixed empty directory listing of FTP servers which return an unreachable address for passive mode (e.g. behind NAT)
+- Fixed port in FTP and SFTP URLs and in URLs of files from HTTP directory listings being ignored
+- Fixed links with absolute paths in HTTP directory listings
+- Fixed synchronization of HTTP directories deleting unchanged files, if the deletion of unused files is enabled
+- Fixed synchronization of WordPress REST API sources not importing any files, also via cron and WP CLI
+- Fixed import reporting success although no file could be saved, which could result in the deletion of synchronized files
+- Fixed import via SFTP not working
+- Fixed import of not existing files via FTP resulting in entries without file
+- Fixed empty file being left on the FTP server after a failed export
+- Fixed synchronization of ZIP files, YouTube channels and websites in a multisite via cron and WP CLI
+- Fixed synchronization of ZIP files not importing the files in them
+- Fixed synchronization of YouTube channels not importing any video
+- Fixed deletion of unused files and update marker after synchronization of external sources, whose name is not their URL (e.g. YouTube channels)
+- Fixed YouTube videos not being shown to visitors without login
+- Fixed availability check of YouTube videos via cron
+- Fixed only the first directory of ZIP and .tar.gz archives being reachable in their directory listing
+- Fixed missing subdirectories of .tar.gz archives in their directory listing
+- Fixed import of the file in a .gz archive from its directory listing
+- Fixed size of files in .gz archives being shown and saved compressed
+- Fixed check for files in .tar.gz archives
+- Fixed first external source with enabled export not being saved as main export source
+- Fixed import of files from local archives in the allowed directory for local files
+- Fixed FTP connections failing if no timeout is set in the settings
+- Fixed proxy not caching any file if the directory wp-content/cache does not exist, although it logged success
+- Fixed change of the proxy path to a directory with not existing parent directories
+- Fixed sized images of external files remaining in the proxy cache after deleting the file
+- Fixed deleting of external files from FTP resulting in anonymous login attempts on the FTP server
+- Fixed files in subdirectories of .tar.gz archives not being imported
+
 ## [5.5.1] - 17.10.2026
 
 ### Changed

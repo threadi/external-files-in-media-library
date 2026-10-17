@@ -9,6 +9,9 @@
     <testsuites>
         <testsuite name="testing">
             <directory suffix=".php">./tests/Unit/</directory>
+            <!-- run the uninstallation as last test: it defines EFML_DEINSTALLATION_RUNNING, which changes the behavior for the rest of the process. -->
+            <exclude>./tests/Unit/Scenarios/Uninstall.php</exclude>
+            <file>./tests/Unit/Scenarios/Uninstall.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

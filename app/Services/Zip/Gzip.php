@@ -130,7 +130,8 @@ class Gzip extends Zip_Base {
 	 * @return bool
 	 */
 	public function is_compatible( string $file ): bool {
-		return str_contains( $file, '.gz' ) && ! str_contains( $file, '.tar.gz' );
+		$path = $this->get_path_for_compatibility_check( $file );
+		return str_contains( $path, '.gz' ) && ! str_contains( $path, '.tar.gz' );
 	}
 
 	/**
@@ -156,11 +157,8 @@ class Gzip extends Zip_Base {
 			return array();
 		}
 
-		// get the content of the zip package (it is a single file).
-		ob_start();
-		readgzfile( $tmp_file );
-		$content = ob_get_clean();
-		ob_end_clean();
+		// get the content of the zip package (it is a single file), only up to the maximum size.
+		$content = $this->get_content( $tmp_file );
 
 		// bail if no contents could be read.
 		if ( ! $content ) {
@@ -187,19 +185,22 @@ class Gzip extends Zip_Base {
 		// get the content type of this file.
 		$mime_type = finfo_file( $file_info, $extracted_file );
 
-		// bail if mime type could not be loaded.
-		if ( ! is_string( $mime_type ) ) {
-			return array();
-		}
-
 		// close the file info.
 		finfo_close( $file_info );
+
+		// remove the temporary file, it was only used to detect the type.
+		$wp_filesystem->delete( $extracted_file );
+
+		// bail if mime type could not be loaded or is not allowed.
+		if ( ! is_string( $mime_type ) || ! $this->is_mime_type_allowed( $mime_type ) ) {
+			return array();
+		}
 
 		// collect the entry.
 		$entry = array(
 			'title'         => basename( $this->get_zip_file(), '.gz' ),
 			'file'          => $this->get_zip_file() . '/' . basename( $this->get_zip_file(), '.gz' ),
-			'filesize'      => absint( filesize( $tmp_file ) ),
+			'filesize'      => strlen( $content ),
 			'mime-type'     => $mime_type,
 			'icon'          => '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $mime_type ) . '"></span>',
 			'last-modified' => Helper::get_format_date_time( gmdate( 'Y-m-d H:i:s', time() ) ),
@@ -231,26 +232,21 @@ class Gzip extends Zip_Base {
 	 *
 	 * @param string $file_to_extract The file.
 	 *
-	 * @return array<int|string,array<string,mixed>|bool>
+	 * @return array<string,mixed>
 	 */
 	public function get_file_info_from_zip( string $file_to_extract ): array {
-		// get the path to the file in the ZIP (+4 for .zip and +1 for the starting "/") we want to extract.
-		$file_to_extract = substr( $file_to_extract, strpos( $file_to_extract, '.zip' ) + 5 );
+		// a .gz contains only one file: extract it from the .gz in the given path.
+		$file = $this->extract( $file_to_extract );
 
-		// get the zip object for the given file.
-		$tmp_file = $this->get_object( $file_to_extract );
-
-		// bail if zip could not be opened.
-		if ( ! is_string( $tmp_file ) ) {
+		// bail if file could not be extracted.
+		if ( empty( $file ) ) {
 			return array();
 		}
 
-		// collect the entry data.
-		return array( // @phpstan-ignore return.type
-			'filesize'      => absint( filesize( $tmp_file ) ),
-			'last-modified' => time(),
-			'tmp-file'      => $tmp_file,
-		);
+		// return the file data with the URL of the file in the .gz.
+		$file['title'] = basename( $file_to_extract );
+		$file['url']   = $file_to_extract;
+		return $file;
 	}
 
 	/**
@@ -261,19 +257,36 @@ class Gzip extends Zip_Base {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_files_from_zip(): array {
+		// extract the single file of the .gz.
+		$file = $this->extract( $this->get_zip_file() );
+
+		// bail if file could not be extracted.
+		if ( empty( $file ) ) {
+			return array();
+		}
+
+		// return the resulting file data.
+		return array( $file );
+	}
+
+	/**
+	 * Extract the single file of the .gz in the given path and return its data for the import.
+	 *
+	 * @param string $file The path of the .gz or of the file in it.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function extract( string $file ): array {
 		// get the zip object.
-		$tmp_file = $this->get_object( $this->get_zip_file() );
+		$tmp_file = $this->get_object( $file );
 
 		// bail if zip could not be opened.
 		if ( ! is_string( $tmp_file ) ) {
 			return array();
 		}
 
-		// get the content of the zip package (it is a single file).
-		ob_start();
-		readgzfile( $tmp_file );
-		$content = ob_get_clean();
-		ob_end_clean();
+		// get the content of the zip package (it is a single file), only up to the maximum size.
+		$content = $this->get_content( $tmp_file );
 
 		// bail if no contents could be read.
 		if ( ! $content ) {
@@ -303,6 +316,12 @@ class Gzip extends Zip_Base {
 		// close the file info.
 		finfo_close( $file_info );
 
+		// bail if mime type could not be detected or is not allowed.
+		if ( ! is_string( $mime_type ) || ! $this->is_mime_type_allowed( $mime_type ) ) {
+			$wp_filesystem->delete( $extracted_file );
+			return array();
+		}
+
 		// rename the tmp file depending on the now detected mime type.
 		$extensions = Helper::get_possible_mime_types();
 		if ( ! empty( $extensions[ $mime_type ] ) ) {
@@ -312,17 +331,46 @@ class Gzip extends Zip_Base {
 			}
 		}
 
-		// return the resulting file data.
+		// return the resulting file data: the title is the name of the file without ".gz".
 		return array(
-			array(
-				'title'         => basename( $this->get_zip_file() ),
-				'local'         => true,
-				'last-modified' => time(),
-				'tmp-file'      => $extracted_file,
-				'mime-type'     => $mime_type,
-				'url'           => $this->get_zip_file(),
-				'filesize'      => absint( filesize( $tmp_file ) ),
-			),
+			'title'         => basename( substr( $file, 0, absint( strpos( $file, '.gz' ) ) ) ),
+			'local'         => true,
+			'last-modified' => time(),
+			'tmp-file'      => $extracted_file,
+			'mime-type'     => $mime_type,
+			'url'           => $file,
+			'filesize'      => strlen( $content ),
 		);
+	}
+
+	/**
+	 * Return the uncompressed content of the given .gz file, if it is not larger than the maximum size.
+	 *
+	 * The format does not contain a reliable size of the uncompressed file, so the read data is counted.
+	 *
+	 * @param string $tmp_file The path to the .gz file.
+	 *
+	 * @return string|false The content or false if it could not be read or is too large.
+	 */
+	private function get_content( string $tmp_file ): string|false {
+		// open the file.
+		$gz = gzopen( $tmp_file, 'rb' );
+
+		// bail if it could not be opened.
+		if ( ! $gz ) {
+			return false;
+		}
+
+		// read the content.
+		$content = $this->read_limited(
+			static function ( int $length ) use ( $gz ): string|false {
+				return gzread( $gz, $length );
+			},
+			basename( $this->get_zip_file(), '.gz' )
+		);
+		gzclose( $gz );
+
+		// return the content.
+		return $content;
 	}
 }

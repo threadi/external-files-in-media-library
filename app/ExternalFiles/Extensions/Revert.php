@@ -172,6 +172,7 @@ class Revert extends Extension_Base {
 		// bail if no job ID is given.
 		if ( empty( $job_id ) ) {
 			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// get all files with this job ID.
@@ -193,10 +194,17 @@ class Revert extends Extension_Base {
 		// bail if no results could be found.
 		if ( 0 === $result->found_posts ) {
 			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// delete all those files.
 		foreach ( $result->posts as $post_id ) {
+			// bail if the user is not allowed to delete this file.
+			if ( ! current_user_can( 'delete_post', absint( $post_id ) ) ) {
+				continue;
+			}
+
+			// delete the file.
 			wp_delete_post( absint( $post_id ), true );
 		}
 
@@ -209,5 +217,6 @@ class Revert extends Extension_Base {
 
 		// redirect the user.
 		wp_safe_redirect( (string) wp_get_referer() );
+		exit;
 	}
 }

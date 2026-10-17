@@ -111,7 +111,8 @@ class Rest extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'init_rest' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 
@@ -240,8 +241,8 @@ class Rest extends Service_Base implements Service {
 			$directory = $fields['server']['value'];
 		}
 
-		// bail if the requested URL is the own URL.
-		if ( false !== str_starts_with( $directory, get_option( 'home' ) ) ) {
+		// bail if the requested URL is the own URL (independent of the used protocol and upper or lower case).
+		if ( $this->is_own_url( $directory ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'Your own website cannot be used to load external files in this way.', 'external-files-in-media-library' ) );
@@ -490,12 +491,19 @@ class Rest extends Service_Base implements Service {
 			// log this event.
 			Log::get_instance()->create( __( 'External URL response with unexpected HTTP-status:', 'external-files-in-media-library' ) . ' <code>' . $http_status . '</code>', $directory, 'error' );
 
+			// remove our request filters.
+			$this->remove_request_filters();
+
 			// return empty array to not load anything more.
 			return array();
 		}
 
 		// bail if response is 400 (means that no more files are there => return the list).
 		if ( 400 === $http_status ) {
+			// remove our request filters.
+			$this->remove_request_filters();
+
+			// return the list.
 			return $listing;
 		}
 
@@ -504,7 +512,7 @@ class Rest extends Service_Base implements Service {
 		$response_headers     = $response_headers_obj->getAll();
 
 		// bail if content-type is not application/json.
-		if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+		if ( ! isset( $response_headers['content-type'] ) || false === str_starts_with( (string) $response_headers['content-type'], 'application/json' ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -535,6 +543,9 @@ class Rest extends Service_Base implements Service {
 
 			// bail if list is not an array.
 			if ( ! is_array( $files ) ) {
+				// remove our request filters.
+				$this->remove_request_filters();
+
 				// return empty array to not load anything more.
 				return array();
 			}
@@ -688,6 +699,62 @@ class Rest extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the HTTP object to use for loading a single file of the external REST API.
+	 *
+	 * The credentials of the external source are only sent to the host of the external source.
+	 * Files located on other hosts (e.g., on a CDN) are loaded without them.
+	 *
+	 * @param string         $file_url The URL of the file.
+	 * @param string         $directory The URL of the external source.
+	 * @param Protocols\Http $http_obj The HTTP object with the credentials of the external source.
+	 *
+	 * @return Protocols\Http
+	 */
+	public function get_http_object_for_file( string $file_url, string $directory, Protocols\Http $http_obj ): Protocols\Http {
+		// get the hosts.
+		$file_host      = strtolower( (string) wp_parse_url( $file_url, PHP_URL_HOST ) );
+		$directory_host = strtolower( (string) wp_parse_url( $directory, PHP_URL_HOST ) );
+
+		// return the given object if the hosts are the same.
+		if ( ! empty( $file_host ) && $file_host === $directory_host ) {
+			return $http_obj;
+		}
+
+		// return a new object without credentials for the file on another host.
+		return new Protocols\Http( $file_url );
+	}
+
+	/**
+	 * Remove the filters we use for the requests to the external REST API.
+	 *
+	 * @return void
+	 */
+	private function remove_request_filters(): void {
+		remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
+		remove_filter( 'http_headers_useragent', array( $this, 'add_user_agent' ) );
+	}
+
+	/**
+	 * Return whether the given URL is an URL of this website.
+	 *
+	 * The check is independent of the used protocol and of upper or lower case.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	public function is_own_url( string $url ): bool {
+		// get the URL of this website without protocol.
+		$home = trailingslashit( (string) preg_replace( '#^[a-z]+://#', '', strtolower( (string) get_option( 'home' ) ) ) );
+
+		// get the given URL without protocol.
+		$url = trailingslashit( (string) preg_replace( '#^[a-z]+://#', '', strtolower( trim( $url ) ) ) );
+
+		// return whether the given URL is part of this website.
+		return str_starts_with( $url, $home );
+	}
+
+	/**
 	 * Disable the check for unsafe URLs.
 	 *
 	 * @param array<string,mixed> $parsed_args List of args for URL request.
@@ -795,16 +862,8 @@ class Rest extends Service_Base implements Service {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_rest_api_files( array $results, string $url, Protocols\Http $http_obj ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return $results;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if this is not an import or synchronization for this service.
+		if ( ! $this->is_actual_service() ) {
 			return $results;
 		}
 
@@ -875,7 +934,7 @@ class Rest extends Service_Base implements Service {
 			$response_headers     = $response_headers_obj->getAll();
 
 			// bail if content-type is not application/json.
-			if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			if ( ! isset( $response_headers['content-type'] ) || false === str_starts_with( (string) $response_headers['content-type'], 'application/json' ) ) {
 				// create error object.
 				$error = new WP_Error();
 				$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -928,7 +987,7 @@ class Rest extends Service_Base implements Service {
 						'mime-type'     => $file['mime_type'],
 						'local'         => $local,
 						'url'           => $file['source_url'],
-						'tmp-file'      => $local ? $http_obj->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
+						'tmp-file'      => $local ? $this->get_http_object_for_file( $file['source_url'], $directory, $http_obj )->get_temp_file( $file['source_url'], Helper::get_wp_filesystem() ) : '',
 						'last-modified' => absint( strtotime( $file['date'] ) ),
 					);
 
@@ -1050,7 +1109,7 @@ class Rest extends Service_Base implements Service {
 			$response_headers     = $response_headers_obj->getAll();
 
 			// bail if content-type is not application/json.
-			if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+			if ( ! isset( $response_headers['content-type'] ) || false === str_starts_with( (string) $response_headers['content-type'], 'application/json' ) ) {
 				continue;
 			}
 
@@ -1095,16 +1154,8 @@ class Rest extends Service_Base implements Service {
 	 * @return array<string,string>
 	 */
 	public function get_file( array $results, string $file_path ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return $results;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if this is not an import or synchronization for this service.
+		if ( ! $this->is_actual_service() ) {
 			return $results;
 		}
 
@@ -1112,22 +1163,25 @@ class Rest extends Service_Base implements Service {
 		$file_url_parts = wp_parse_url( $file_path );
 
 		// bail if scheme and host are not given.
-		if ( empty( $file_url_parts['scheme'] ) && empty( $file_url_parts['host'] ) ) {
+		if ( empty( $file_url_parts['scheme'] ) || empty( $file_url_parts['host'] ) ) {
 			return $results;
 		}
 
-		// get the URL to use.
-		$url_to_use = $this->get_url_to_use( $file_url_parts['scheme'] . '://' . $file_url_parts['host'] ); // @phpstan-ignore offsetAccess.notFound,offsetAccess.notFound
+		// get the URL to use (with the port, if one is given).
+		$url_to_use = $this->get_url_to_use( $file_url_parts['scheme'] . '://' . $file_url_parts['host'] . ( ! empty( $file_url_parts['port'] ) ? ':' . $file_url_parts['port'] : '' ) );
 
 		// bail if no URL could be found to load.
 		if ( ! $url_to_use ) {
 			return $results;
 		}
 
+		// get the file name to search for: the URL of the file, as the given path could be the URL of the REST API request.
+		$file_name = basename( (string) wp_parse_url( ! empty( $results['url'] ) ? $results['url'] : $file_path, PHP_URL_PATH ) );
+
 		// create URL to request the data for this single file.
 		$url_to_use = add_query_arg(
 			array(
-				'search' => basename( $file_path ),
+				'search' => $file_name,
 			),
 			$url_to_use
 		);
@@ -1153,7 +1207,7 @@ class Rest extends Service_Base implements Service {
 		$response_headers     = $response_headers_obj->getAll();
 
 		// bail if content-type is not application/json.
-		if ( false === str_starts_with( $response_headers['content-type'], 'application/json' ) ) {
+		if ( ! isset( $response_headers['content-type'] ) || false === str_starts_with( (string) $response_headers['content-type'], 'application/json' ) ) {
 			// create error object.
 			$error = new WP_Error();
 			$error->add( 'efml_service_' . $this->get_name(), __( 'No WordPress REST API appears to be accessible at the specified URL.', 'external-files-in-media-library' ) );
@@ -1361,20 +1415,12 @@ class Rest extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function change_service_name( File $external_file_obj ): void {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if this is not an import or synchronization for this service.
+		if ( ! $this->is_actual_service() ) {
 			return;
 		}
 
 		// set the service name.
-		$external_file_obj->set_service_name( $service );
+		$external_file_obj->set_service_name( $this->get_name() );
 	}
 }

@@ -1069,7 +1069,7 @@ class Settings {
 
 		// just create the new directory if the old one does not exist (e.g. after a manual deletion).
 		if ( ! $wp_filesystem->exists( $old_value_path ) ) {
-			if ( false === $wp_filesystem->mkdir( $new_value_path ) ) {
+			if ( ! Helper::create_directory( $new_value_path ) ) {
 				add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The new proxy directory could not be created. Please check the file permissions of your wp-content directory.', 'external-files-in-media-library' ) );
 				return $old_value;
 			}
@@ -1079,6 +1079,12 @@ class Settings {
 
 			// return the value with the new path.
 			return $new_value;
+		}
+
+		// create the parent directory of the new path, as the move fails without it.
+		if ( ! Helper::create_directory( dirname( untrailingslashit( $new_value_path ) ) ) ) {
+			add_settings_error( 'eml_proxy_path', 'eml_proxy_path', __( 'The new proxy directory could not be created. Please check the file permissions of your wp-content directory.', 'external-files-in-media-library' ) );
+			return $old_value;
 		}
 
 		// move all files from old to new directory.
