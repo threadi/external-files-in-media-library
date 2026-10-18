@@ -94,6 +94,7 @@ class Sync_By_File_Type extends Extension_Base {
 		add_filter( 'efml_sync_configure_form', array( $this, 'extend_sync_form_in_dialog' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_config' ), 10, 2 );
 		add_action( 'efml_before_sync', array( $this, 'add_hooks_before_sync' ), 10, 3 );
+		add_action( 'efml_after_sync', array( $this, 'remove_hooks_after_sync' ), 10, 0 );
 	}
 
 	/**
@@ -129,7 +130,7 @@ class Sync_By_File_Type extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'sync_by_file_type', 20 );
 		$section->set_title( __( 'Synchronization by file types', 'external-files-in-media-library' ) );
-		$section->set_callback( array( $this, 'show_info' ) );
+		$section->set_hidden( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_file_types' );
@@ -141,7 +142,6 @@ class Sync_By_File_Type extends Extension_Base {
 		$field->set_title( __( 'File types', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Chose the file types that should be sync from external sources. If none are selected, all file types are allowed.', 'external-files-in-media-library' ) );
 		$field->set_options( Helper::get_possible_mime_types_for_settings() );
-		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 		$setting->set_field( $field );
 	}
 
@@ -209,14 +209,23 @@ class Sync_By_File_Type extends Extension_Base {
 	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function add_hooks_before_sync( string $url, array $term_data, int $term_id ): void {
+		// remove the hooks of a previous synchronization in the same request.
+		$this->remove_hooks_after_sync();
+
 		// get global setting.
-		$allow_file_types_global = (array) get_option( 'eml_sync_file_types' );
+		$allow_file_types_global = get_option( 'eml_sync_file_types' );
+		if ( ! is_array( $allow_file_types_global ) ) {
+			$allow_file_types_global = array();
+		}
 
 		// get setting on the term.
-		$allow_file_types_term = (array) get_term_meta( $term_id, 'eml_sync_file_types', true );
+		$allow_file_types_term = get_term_meta( $term_id, 'eml_sync_file_types', true );
+		if ( ! is_array( $allow_file_types_term ) ) {
+			$allow_file_types_term = array();
+		}
 
 		// bail if both are empty.
-		if ( empty( $allow_file_types_global ) && empty( $allow_file_types_term ) ) {
+		if ( empty( array_filter( $allow_file_types_global ) ) && empty( array_filter( $allow_file_types_term ) ) ) {
 			return;
 		}
 
@@ -225,6 +234,22 @@ class Sync_By_File_Type extends Extension_Base {
 
 		// add hooks to prevent the synchronization of single files from the given URL by their file type.
 		add_filter( 'efml_prevent_file_import', array( $this, 'prevent_sync' ), 10, 2 );
+	}
+
+	/**
+	 * Remove our hooks after the synchronization of a single external source has been run.
+	 *
+	 * Without this, the settings of the last synchronized external source would also be used
+	 * for other imports or synchronizations in the same request.
+	 *
+	 * @return void
+	 */
+	public function remove_hooks_after_sync(): void {
+		// reset the used term ID.
+		$this->synced_term_id = 0;
+
+		// remove our filter.
+		remove_filter( 'efml_prevent_file_import', array( $this, 'prevent_sync' ) );
 	}
 
 	/**
@@ -241,6 +266,9 @@ class Sync_By_File_Type extends Extension_Base {
 			return $result;
 		}
 
+		// get the mime type of the file.
+		$mime_type = isset( $file_data['mime-type'] ) ? (string) $file_data['mime-type'] : '';
+
 		// get global setting.
 		$allow_file_types_global = get_option( 'eml_sync_file_types' );
 
@@ -250,7 +278,7 @@ class Sync_By_File_Type extends Extension_Base {
 		}
 
 		// prevent import, if mime type is not in the global list.
-		if ( ! empty( $allow_file_types_global ) && ! in_array( $file_data['mime-type'], $allow_file_types_global, true ) ) {
+		if ( ! empty( $allow_file_types_global ) && ! in_array( $mime_type, $allow_file_types_global, true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization of file has been prevented as it has a not allowed file type.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 
@@ -267,7 +295,7 @@ class Sync_By_File_Type extends Extension_Base {
 		}
 
 		// prevent import, if mime type is not in the specific list.
-		if ( ! empty( $allow_file_types_term ) && ! in_array( $file_data['mime-type'], $allow_file_types_term, true ) ) {
+		if ( ! empty( $allow_file_types_term ) && ! in_array( $mime_type, $allow_file_types_term, true ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Synchronization of file has been prevented as it has a not allowed file type.', 'external-files-in-media-library' ), $file_data['url'], 'info', 2 );
 

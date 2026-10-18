@@ -130,6 +130,10 @@ class Show_What_Will_Be_Done extends Extension_Base {
 		// simulate an import.
 		$test_import_result = $import_obj->add_url( $settings['urls'] );
 
+		// remove the filters, so that following imports in this request are not prevented.
+		remove_filter( 'efml_prevent_file_import', '__return_true' );
+		remove_filter( 'efml_save_temp_file', '__return_false', PHP_INT_MAX );
+
 		// bail if test import ends in error.
 		if ( ! $test_import_result ) {
 			$dialog['texts'][] = __( 'Import will not be possible!', 'external-files-in-media-library' );

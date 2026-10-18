@@ -217,6 +217,45 @@ jQuery(document).ready(function($) {
         audioElement.play();
       } );
     }
+
+    /**
+     * Get and show the import dialog for lists with URLs (CSV or XML) in the media library.
+     *
+     * The links are also added dynamically (e.g., in the details of a file in the grid view).
+     */
+    $(document).on( 'click', '.efml-url-list-import', function(e) {
+      e.preventDefault();
+
+      // close the details of the file in the grid view of the media library, which would cover the dialog.
+      $(this).closest('.media-modal').find('.media-modal-close').trigger('click');
+
+      // get the dialog with the settings.
+      efml_get_import_dialog( $(this).data('settings') );
+    });
+
+    /**
+     * Update the count of URLs to import if the mapping of a list is changed in the import dialog.
+     */
+    $(document).on( 'change', '.efml-url-list-mapping select', function() {
+      let mapping = $(this).closest('.efml-url-list-mapping');
+      let count_obj = mapping.find('.efml-url-list-count[data-text]');
+
+      // bail if no count is shown.
+      if( ! count_obj.length ) {
+        return;
+      }
+
+      // sum the URLs of all fields used for URLs.
+      let count = 0;
+      mapping.find('select').each(function() {
+        if( 'url' === $(this).val() ) {
+          count += parseInt( $(this).data('urls'), 10 ) || 0;
+        }
+      });
+
+      // show the new count.
+      count_obj.text( count_obj.data('text').replace( '%1$s', count.toLocaleString() ) );
+    });
 });
 
 /**

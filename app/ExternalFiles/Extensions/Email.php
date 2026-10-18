@@ -118,7 +118,7 @@ class Email extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'sync_email', 20 );
 		$section->set_title( __( 'Email notification', 'external-files-in-media-library' ) );
-		$section->set_callback( array( $this, 'show_info' ) );
+		$section->set_hidden( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'email_sync_email' );
@@ -130,7 +130,6 @@ class Email extends Extension_Base {
 		$field->set_description( __( 'Enter the email address to which a notification should be sent after each synchronization. You can also set this for each external source.', 'external-files-in-media-library' ) );
 		$field->set_placeholder( 'info@example.com' );
 		$field->set_sanitize_callback( array( $this, 'sanitize_email' ) );
-		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 		$setting->set_field( $field );
 	}
 

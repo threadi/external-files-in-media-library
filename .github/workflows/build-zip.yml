@@ -66,50 +66,14 @@ jobs:
           npm ci
           npm run build
 
+      # the following steps use bin/build-release.sh, which is also used by "ant build". So both create the same zip.
       - name: Remove dev packages and generate the release autoloader
-        run: |
-          composer install --no-dev --no-scripts --no-interaction --no-progress
-          # its classes are shipped in app/Dependencies (see above). Without this line the
-          # autoloader would also know them under their original names.
-          rm -rf vendor/threadi/easy-transients-for-wordpress
-          composer dump-autoload -oa --no-dev
+        run: bash bin/build-release.sh prepare
 
       # --- collect the release, check it, zip it -------------------------------------------------------
 
       - name: Collect the files of the release and set the version number
-        run: |
-          DIST="dist/${RELEASE_SLUG}"
-          mkdir -p "$DIST"
-
-          # only what is listed here ends up in the zip. Nothing is deleted from the checkout.
-          # rsync stops with an error if one of these paths does not exist.
-          rsync -aR --exclude='.*' --exclude='node_modules/' \
-            "${RELEASE_SLUG}.php" uninstall.php readme.txt LICENSE composer.json \
-            admin app gfx inc templates \
-            blocks/build \
-            js/commands \
-            vendor/autoload.php vendor/composer \
-            vendor/graham-campbell vendor/guzzlehttp vendor/psr vendor/ralouphie vendor/spatie vendor/symfony \
-            vendor/threadi/crypt-for-wordpress/src \
-            vendor/threadi/easy-dialog-for-wordpress/build \
-            vendor/threadi/easy-directory-listing-for-wordpress/build \
-            vendor/threadi/easy-directory-listing-for-wordpress/lib \
-            vendor/threadi/easy-settings-for-wordpress \
-            "$DIST/"
-
-          # Driver.js is copied to admin/driverjs by "npm run build". Without it the intro would be missing silently.
-          for FILE in driver.js.iife.js driver.css LICENSE; do
-            if [ ! -f "$DIST/admin/driverjs/$FILE" ]; then
-              echo "::error::admin/driverjs/$FILE is missing - check the step which runs npm run build."
-              exit 1
-            fi
-          done
-
-          # instructions for AI agents of the settings library: not needed on a website.
-          rm -rf "$DIST/vendor/threadi/easy-settings-for-wordpress/skills"
-
-          # set the version number - in the copy only.
-          sed -i "s/@@VersionNumber@@/${VERSION}/g" "$DIST/${RELEASE_SLUG}.php" "$DIST/readme.txt"
+        run: bash bin/build-release.sh collect "$VERSION"
 
       - name: Run Plugin Check
         uses: wordpress/plugin-check-action@10857da14b6c2246d15402b3e69f777edcf8c12e # v1.1.9
@@ -127,8 +91,7 @@ jobs:
           include-low-severity-errors: true
 
       - name: Create the zip
-        working-directory: dist
-        run: zip -rqX "../${RELEASE_SLUG}.zip" "$RELEASE_SLUG"
+        run: bash bin/build-release.sh zip "${RELEASE_SLUG}.zip"
 
       - name: Create SBOM
         uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3

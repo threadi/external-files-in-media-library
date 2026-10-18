@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
@@ -79,7 +80,7 @@ class Imgur implements Service {
 	 */
 	public function add_http_state( array $http_states, string $url ): array {
 		// bail if this is not an imgur-URL.
-		if ( ! str_contains( $url, 'imgur' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
 			return $http_states;
 		}
 
@@ -100,7 +101,7 @@ class Imgur implements Service {
 	 */
 	public function allow_http_response_without_content_type( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! str_contains( $url, 'imgur' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
 			return $results;
 		}
 
@@ -118,7 +119,7 @@ class Imgur implements Service {
 	 */
 	public function force_local_saving( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! str_contains( $url, 'imgur' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
 			return $results;
 		}
 
@@ -136,7 +137,7 @@ class Imgur implements Service {
 	 */
 	public function check_url( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! str_contains( $url, 'imgur' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
 			return $results;
 		}
 

@@ -174,6 +174,16 @@ class Proxy {
 			return $template;
 		}
 
+		// bail if the file is in trash, as it should not be delivered anymore.
+		if ( 'trash' === get_post_status( $external_file_obj->get_id() ) ) {
+			// log this event only in debug mode, as this request can be sent by anyone with any value.
+			/* translators: %1$s will be replaced by the detected filename. */
+			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as it is in trash.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
+
+			// fallback to 404.
+			return $template;
+		}
+
 		/**
 		 * Run additional tasks before proxy tries to load a cached external file.
 		 */
@@ -315,8 +325,8 @@ class Proxy {
 		// get the WP_Filesystem handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// create the directory if it does not exist yet.
-		if ( ! $wp_filesystem->exists( $path ) && false === $wp_filesystem->mkdir( $path ) ) {
+		// create the directory if it does not exist yet, also its parent directories (e.g. "cache" in wp-content).
+		if ( ! $wp_filesystem->exists( $path ) && ! Helper::create_directory( $path ) ) {
 			/* translators: %1$s will be replaced by the path. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not create cache directory %1$s.', 'external-files-in-media-library' ), $path ), '', 'error' );
 
@@ -335,6 +345,9 @@ class Proxy {
 	 */
 	public function delete_cache_directory(): void {
 		Helper::delete_directory_recursively( $this->get_cache_directory() );
+
+		// check the directory again on the next use, so it will be created again.
+		$this->cache_directory_checked = false;
 	}
 
 	/**

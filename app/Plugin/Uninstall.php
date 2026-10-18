@@ -168,7 +168,6 @@ class Uninstall {
 			'eml_delete_synced_files_running',
 			'eml_delete_synced_files_count',
 			'eml_delete_synced_files_max',
-			'eml_delete_synced_files_count',
 			'eml_delete_synced_files_title',
 			'eml_transients',
 			'efmlVersion',

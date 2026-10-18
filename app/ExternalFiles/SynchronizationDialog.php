@@ -11,8 +11,10 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Intervals;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use WP_Term;
 
@@ -139,8 +141,8 @@ class SynchronizationDialog {
 		// get the term.
 		$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
 
-		// bail if no term could be found.
-		if ( ! $term instanceof WP_Term ) {
+		// bail if no term could be found or the actual user is not allowed to use this external source.
+		if ( ! $term instanceof WP_Term || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
@@ -191,6 +193,12 @@ class SynchronizationDialog {
 		 * @param int $term_id The term ID.
 		 */
 		$form = apply_filters( 'efml_sync_configure_form', $form, $term_id );
+
+		// show hint to allowed users if they could extend the settings.
+		if ( empty( self::get_instance()->get_enabled_extensions() ) && current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$form .= sprintf( __( 'Enable more options like email notifications, file dependencies or file dates <a href="%1$s">in the settings</a>.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'synchronization' ) );
+		}
 
 		// add privacy hint at the end of the form, if it is not disabled.
 		if ( 1 !== absint( get_user_meta( get_current_user_id(), 'efml_no_privacy_hint', true ) ) ) {
@@ -272,8 +280,8 @@ class SynchronizationDialog {
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
 
-		// bail if term ID is not given.
-		if ( 0 === absint( $fields['term_id'] ) ) {
+		// bail if term ID is not given or the actual user is not allowed to use this external source.
+		if ( empty( $fields['term_id'] ) || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( absint( $fields['term_id'] ) ) ) {
 			$dialog['texts'][] = '<p>' . __( 'No external source chosen.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}

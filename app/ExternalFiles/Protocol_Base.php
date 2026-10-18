@@ -132,6 +132,28 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Return the port for a parsed URL: the port given in the URL or the default port of its protocol.
+	 *
+	 * @param array<string,mixed> $parse_url The result of wp_parse_url() for the URL.
+	 *
+	 * @return int
+	 */
+	protected function get_port_by_url( array $parse_url ): int {
+		// use the port from the URL, if it is a valid one.
+		if ( isset( $parse_url['port'] ) && absint( $parse_url['port'] ) > 0 && absint( $parse_url['port'] ) <= 65535 ) {
+			return absint( $parse_url['port'] );
+		}
+
+		// bail if no scheme is given.
+		if ( empty( $parse_url['scheme'] ) || ! is_string( $parse_url['scheme'] ) ) {
+			return 0;
+		}
+
+		// return the default port of the protocol.
+		return $this->get_port_by_protocol( $parse_url['scheme'] );
+	}
+
+	/**
 	 * Check if URL is compatible with the given protocol by comparing the protocol handler
 	 * and the start of the given URL with the supported protocols of this protocol handler
 	 * (e.g., 'http' or 'ftp').

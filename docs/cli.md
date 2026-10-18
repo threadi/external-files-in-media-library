@@ -75,6 +75,19 @@ This will remove error URLs from the queue.
 
 `wp eml cleanup_queue`
 
+## Cleanup lists with URLs
+
+This will delete the CSV and XML files, which have been uploaded or downloaded via the CSV or XML service and have not been used for the configured days. The last downloaded version of a URL saved as external source is always kept.
+
+`wp eml cleanup_lists`
+
+Optional parameters:
+
+* `--service=csv` or `--service=xml` to only cleanup the files of one service
+* `--days=3` to delete files, which have not been used for 3 days (instead of the value from the settings)
+* `--force` to run the cleanup even if it is disabled in the settings
+* `--dry-run` to only show the files, which would be deleted
+
 ## Clear queue
 
 This will delete every entry in the queue.

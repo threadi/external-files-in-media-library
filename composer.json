@@ -13,6 +13,11 @@
         ],
         "phpstan": "vendor/bin/phpstan clear-result-cache && vendor/bin/phpstan analyze",
         "test": "phpunit",
+        "test-coverage": "php -d pcov.enabled=1 -d pcov.directory=app vendor/bin/phpunit --coverage-filter app --coverage-text",
+        "test-multisite": [
+            "@putenv WP_MULTISITE=1",
+            "phpunit --filter Multisite"
+        ],
         "test-install": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest",
         "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true"
     },
@@ -69,7 +74,7 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-directory-listing-for-wordpress": "^4.2.0",
+        "threadi/easy-directory-listing-for-wordpress": "^4.4.0",
         "threadi/easy-settings-for-wordpress": "^3.7.0",
         "threadi/easy-transients-for-wordpress": "^1.4.9",
         "spatie/dropbox-api": "^1.25"

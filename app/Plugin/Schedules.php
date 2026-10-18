@@ -272,6 +272,7 @@ class Schedules {
 		$list_of_schedules = array(
 			'\ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files',
 			'\ExternalFilesInMediaLibrary\Plugin\Schedules\Queue',
+			'\ExternalFilesInMediaLibrary\Plugin\Schedules\Url_List_Cleanup',
 		);
 
 		// show deprecated warning for the old hook name.

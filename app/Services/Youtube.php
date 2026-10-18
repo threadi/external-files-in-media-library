@@ -19,6 +19,7 @@ use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
@@ -120,8 +121,22 @@ class Youtube extends Service_Base implements Service {
 		// add settings.
 		add_action( 'init', array( $this, 'init_youtube' ), 30 );
 
+		// handle the imported YouTube videos: their output for all visitors and their checks, which also run
+		// without user (e.g. the availability check via cron). These hooks only change YouTube URLs.
+		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
+		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
+		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
+		add_filter( 'wp_get_attachment_url', array( $this, 'clean_url' ) );
+		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+		add_filter( 'efml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
+		add_filter( 'efml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
+		add_filter( 'efml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
+		add_filter( 'efml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
+		add_filter( 'efml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
+
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 
@@ -129,20 +144,8 @@ class Youtube extends Service_Base implements Service {
 		$this->title = __( 'Choose video(s) from a YouTube channel', 'external-files-in-media-library' );
 
 		// use our own hooks to allow import of YouTube videos and channels.
-		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 2 );
-		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
-		add_filter( 'efml_http_states', array( $this, 'allow_http_states' ), 10, 2 );
-		add_filter( 'efml_http_check_content_type', array( $this, 'do_not_check_content_type' ), 10, 2 );
+		add_filter( 'efml_filter_url_response', array( $this, 'get_video_data' ), 10, 3 );
 		add_filter( 'efml_external_files_infos', array( $this, 'import_videos_from_channel_by_import_obj' ), 10, 2 );
-		add_filter( 'efml_http_save_local', array( $this, 'do_not_save_local' ), 10, 2 );
-		add_filter( 'efml_save_temp_file', array( $this, 'do_not_save_as_temp_file' ), 10, 2 );
-		add_filter( 'efml_import_no_external_file', array( $this, 'prevent_local_save_during_import' ), 10, 2 );
-
-		// change handling of media files.
-		add_shortcode( 'eml_youtube', array( $this, 'render_video_shortcode' ) );
-		add_filter( 'render_block', array( $this, 'render_video_block' ), 10, 2 );
-		add_filter( 'media_send_to_editor', array( $this, 'get_video_shortcode' ), 10, 2 );
-		add_filter( 'wp_get_attachment_url', array( $this, 'clean_url' ) );
 
 		// misc.
 		add_action( 'show_user_profile', array( $this, 'add_user_settings' ) );
@@ -237,26 +240,26 @@ class Youtube extends Service_Base implements Service {
 	 *
 	 * @param array<int,array<string,mixed>> $results The result as array for file import.
 	 * @param string                         $url     The used URL.
+	 * @param Protocol_Base|null             $import_obj The import object.
 	 *
 	 * @return array<int,array<string,mixed>>
+	 * @throws JsonException Could throw exception.
 	 */
-	public function get_video_data( array $results, string $url ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return $results;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+	public function get_video_data( array $results, string $url, ?Protocol_Base $import_obj = null ): array {
+		// bail if the actual import is not for this service.
+		if ( ! $this->is_actual_service() ) {
 			return $results;
 		}
 
 		// bail if this is not a YouTube-URL.
 		if ( ! $this->is_youtube_video( $url ) ) {
 			return $results;
+		}
+
+		// return the videos of a YouTube channel during its synchronization.
+		// otherwise, the HTTP import would try to load the channel page as directory listing, which is not possible.
+		if ( $this->is_youtube_channel( $url ) && $import_obj instanceof Protocol_Base && 0 !== Import::get_instance()->get_term_id() ) {
+			return $this->import_videos_from_channel_by_import_obj( array(), $import_obj );
 		}
 
 		// bail if given URL is a YouTube channel (we do not import complete channels, just videos).

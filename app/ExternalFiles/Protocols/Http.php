@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use WP_Error;
 use WP_Filesystem_Base;
+use WP_Http;
 
 /**
  * Object to handle the HTTP-protocol.
@@ -363,6 +364,12 @@ class Http extends Protocol_Base {
 			 */
 			do_action( 'efml_http_directory_import_files', $this->get_url(), $matches[1] );
 
+			// get the base URL for relative links: a URL without file name is a directory, also without "/" at the end.
+			$base_url = $this->get_url();
+			if ( ! str_contains( wp_basename( (string) wp_parse_url( $base_url, PHP_URL_PATH ) ), '.' ) ) {
+				$base_url = trailingslashit( $base_url );
+			}
+
 			// loop through the matches.
 			foreach ( $matches[1] as $url ) {
 				// bail if URL is empty or just "/".
@@ -374,13 +381,10 @@ class Http extends Protocol_Base {
 					continue;
 				}
 
-				// concat the URL if $url to not start with http.
+				// get the absolute URL, if $url is relative to the directory or the host (with the port of the directory URL).
 				$file_url = $url;
 				if ( false === str_starts_with( $url, 'http' ) ) {
-					$file_url_parts = wp_parse_url( $this->get_url() . $url );
-					if ( is_array( $file_url_parts ) && isset( $file_url_parts['host'], $file_url_parts['scheme'], $file_url_parts['path'] ) ) {
-						$file_url = $file_url_parts['scheme'] . '://' . $file_url_parts['host'] . str_replace( '//', '/', $file_url_parts['path'] );
-					}
+					$file_url = WP_Http::make_absolute_url( $url, $base_url );
 				}
 
 				// check if given file is a local file, which exist in media library.
@@ -534,9 +538,12 @@ class Http extends Protocol_Base {
 			$results['filesize'] = $response_headers['content-length'];
 		}
 
-		// set title from content-disposition.
+		// set title from content-disposition, if it contains a file name (without any path).
 		if ( ! empty( $response_headers['content-disposition'] ) ) {
-			$results['title'] = $this->get_filename_from_disposition( (array) $response_headers['content-disposition'] );
+			$filename = $this->get_filename_from_disposition( (array) $response_headers['content-disposition'] );
+			if ( ! empty( $filename ) && ! empty( wp_basename( $filename ) ) ) {
+				$results['title'] = wp_basename( $filename );
+			}
 		}
 
 		// set content-type as mime-type in result-array.
@@ -851,8 +858,15 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
+		// bail if no attachment uses this URL.
 		$attachment_id = attachment_url_to_postid( $url );
-		return 0 !== $attachment_id;
+		if ( 0 === $attachment_id ) {
+			return false;
+		}
+
+		// external files of this plugin are no local files (also found via their URL),
+		// their duplicates are checked via check_for_duplicate(), which is disabled during synchronization.
+		return empty( get_post_meta( $attachment_id, EFML_POST_META_URL, true ) );
 	}
 
 	/**

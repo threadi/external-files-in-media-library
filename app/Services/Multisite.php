@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Multisite\Export;
@@ -91,7 +92,8 @@ class Multisite extends Service_Base implements Service {
 		parent::init();
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 
@@ -430,21 +432,16 @@ class Multisite extends Service_Base implements Service {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_multisite_files( array $results ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
+		// bail if the actual import is not for this service.
+		if ( ! $this->is_actual_service( 'method' ) ) {
 			return $results;
 		}
 
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
-			return $results;
-		}
-
-		// get the term ID.
+		// get the term ID from the request or, during a synchronization, from the import object.
 		$term_id = absint( filter_input( INPUT_POST, 'term', FILTER_SANITIZE_NUMBER_INT ) );
+		if ( 0 === $term_id ) {
+			$term_id = Import::get_instance()->get_term_id();
+		}
 
 		// bail if term ID is not given.
 		if ( 0 === $term_id ) {
@@ -583,20 +580,12 @@ class Multisite extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function change_service_name( File $external_file_obj ): void {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if this is not an import or synchronization for this service.
+		if ( ! $this->is_actual_service() ) {
 			return;
 		}
 
 		// set the service name.
-		$external_file_obj->set_service_name( $service );
+		$external_file_obj->set_service_name( $this->get_name() );
 	}
 }

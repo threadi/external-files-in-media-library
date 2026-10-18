@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "df27a9ea1e8c4d78a556c1862892f7fe",
+    "content-hash": "a8bc30d85c709c926d6bde5cab5e07ee",
     "packages": [
         {
             "name": "graham-campbell/guzzle-factory",
@@ -73,22 +73,22 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.15.5",
+            "version": "7.16.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "ee80339fd9177ba44c49cdb653ff02a4d1106b9a"
+                "reference": "ffb62ec787050ae4fa9449cdd6b80335db69bda2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/ee80339fd9177ba44c49cdb653ff02a4d1106b9a",
-                "reference": "ee80339fd9177ba44c49cdb653ff02a4d1106b9a",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/ffb62ec787050ae4fa9449cdd6b80335db69bda2",
+                "reference": "ffb62ec787050ae4fa9449cdd6b80335db69bda2",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "guzzlehttp/promises": "^2.5.3",
-                "guzzlehttp/psr7": "^2.13.1",
+                "guzzlehttp/promises": "^2.6",
+                "guzzlehttp/psr7": "^2.13.2",
                 "php": "^7.2.5 || ^8.0",
                 "psr/http-client": "^1.0",
                 "symfony/deprecation-contracts": "^2.5 || ^3.0",
@@ -181,7 +181,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.15.5"
+                "source": "https://github.com/guzzle/guzzle/tree/7.16.0"
             },
             "funding": [
                 {
@@ -197,20 +197,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-24T09:21:06+00:00"
+            "time": "2026-10-18T13:38:36+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.5.3",
+            "version": "2.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "cde49999552d185d64715fe9c1f77a2aadd2f9f1"
+                "reference": "3d88c829bd5f13d13847b39067dbf09a60af2154"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/cde49999552d185d64715fe9c1f77a2aadd2f9f1",
-                "reference": "cde49999552d185d64715fe9c1f77a2aadd2f9f1",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/3d88c829bd5f13d13847b39067dbf09a60af2154",
+                "reference": "3d88c829bd5f13d13847b39067dbf09a60af2154",
                 "shasum": ""
             },
             "require": {
@@ -265,7 +265,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.5.3"
+                "source": "https://github.com/guzzle/promises/tree/2.6.0"
             },
             "funding": [
                 {
@@ -281,20 +281,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-24T09:11:28+00:00"
+            "time": "2026-10-18T12:46:59+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.13.1",
+            "version": "2.13.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "95e7828100de18b4e269fb1703be530082d5166d"
+                "reference": "adee536f95101929f262b8c59e8a61472f347d58"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/95e7828100de18b4e269fb1703be530082d5166d",
-                "reference": "95e7828100de18b4e269fb1703be530082d5166d",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/adee536f95101929f262b8c59e8a61472f347d58",
+                "reference": "adee536f95101929f262b8c59e8a61472f347d58",
                 "shasum": ""
             },
             "require": {
@@ -384,7 +384,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.13.1"
+                "source": "https://github.com/guzzle/psr7/tree/2.13.2"
             },
             "funding": [
                 {
@@ -400,7 +400,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-24T09:13:11+00:00"
+            "time": "2026-10-17T23:49:46+00:00"
         },
         {
             "name": "psr/http-client",
@@ -885,16 +885,16 @@
         },
         {
             "name": "threadi/easy-dialog-for-wordpress",
-            "version": "2.0.4",
+            "version": "2.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-dialog-for-wordpress.git",
-                "reference": "27a7db4b4816d3e928bf93736081538ad5464cbf"
+                "reference": "e2f8ffddb8cbafc9977d4c23dccd4a154b79c595"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-dialog-for-wordpress/zipball/27a7db4b4816d3e928bf93736081538ad5464cbf",
-                "reference": "27a7db4b4816d3e928bf93736081538ad5464cbf",
+                "url": "https://api.github.com/repos/threadi/easy-dialog-for-wordpress/zipball/e2f8ffddb8cbafc9977d4c23dccd4a154b79c595",
+                "reference": "e2f8ffddb8cbafc9977d4c23dccd4a154b79c595",
                 "shasum": ""
             },
             "type": "library",
@@ -911,22 +911,22 @@
             "description": "Provides a simple react-driven dialog-modal for the WordPress-backend.",
             "support": {
                 "issues": "https://github.com/threadi/easy-dialog-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-dialog-for-wordpress/tree/2.0.4"
+                "source": "https://github.com/threadi/easy-dialog-for-wordpress/tree/2.0.5"
             },
-            "time": "2026-10-04T14:34:54+00:00"
+            "time": "2026-10-18T13:02:22+00:00"
         },
         {
             "name": "threadi/easy-directory-listing-for-wordpress",
-            "version": "4.2.0",
+            "version": "4.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-directory-listing-for-wordpress.git",
-                "reference": "96147e67f577affa072d874ddfd64f03c54409cf"
+                "reference": "a0ee43c9f409535867056a70ab5de00c8ff68706"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/96147e67f577affa072d874ddfd64f03c54409cf",
-                "reference": "96147e67f577affa072d874ddfd64f03c54409cf",
+                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/a0ee43c9f409535867056a70ab5de00c8ff68706",
+                "reference": "a0ee43c9f409535867056a70ab5de00c8ff68706",
                 "shasum": ""
             },
             "require": {
@@ -942,7 +942,9 @@
                 "phpstan/phpstan": "^2.2",
                 "pronamic/wp-documentor": "^1.4.0",
                 "szepeviktor/phpstan-wordpress": "^2.0",
-                "wp-coding-standards/wpcs": "^3.4.1"
+                "wp-coding-standards/wpcs": "^3.4.1",
+                "wp-phpunit/wp-phpunit": "^7.1",
+                "yoast/phpunit-polyfills": "^1.0"
             },
             "type": "library",
             "autoload": {
@@ -963,9 +965,9 @@
             "description": "Provides a react-driven directory listing for WordPress plugins and themes.",
             "support": {
                 "issues": "https://github.com/threadi/easy-directory-listing-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.2.0"
+                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.4.0"
             },
-            "time": "2026-10-03T19:20:47+00:00"
+            "time": "2026-10-18T19:32:58+00:00"
         },
         {
             "name": "threadi/easy-settings-for-wordpress",

@@ -314,10 +314,10 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		// set credentials, if given.
 		$fields = array(
 			'login'    => array(
-				'values' => get_option( 'eml_woocommerce_login' ),
+				'value' => (string) get_option( 'eml_woocommerce_login' ),
 			),
 			'password' => array(
-				'values' => get_option( 'eml_woocommerce_password' ),
+				'value' => (string) get_option( 'eml_woocommerce_password' ),
 			),
 		);
 		$import->set_fields( $fields );
@@ -466,8 +466,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return '';
 		}
 
-		// bail if string is empty.
-		if ( empty( $value ) ) {
+		// bail if string is empty (a value like "0" is a valid value).
+		if ( '' === $value ) {
 			return '';
 		}
 
@@ -488,8 +488,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return '';
 		}
 
-		// bail if string is empty.
-		if ( empty( $value ) ) {
+		// bail if string is empty (a value like "0" is a valid value).
+		if ( '' === $value ) {
 			return '';
 		}
 

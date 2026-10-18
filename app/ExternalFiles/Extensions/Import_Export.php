@@ -176,8 +176,8 @@ class Import_Export extends Extension_Base {
 		// get value from request.
 		$use_json_import = isset( $_POST['import_json'] ) ? absint( $_POST['import_json'] ) : -1;
 
-		// bail if not set from request.
-		if ( -1 === $use_json_import ) {
+		// bail if not enabled in request.
+		if ( 1 !== $use_json_import ) {
 			return $url_array;
 		}
 
@@ -217,8 +217,8 @@ class Import_Export extends Extension_Base {
 		// get value from request.
 		$use_json_import = isset( $_POST['import_json'] ) ? absint( $_POST['import_json'] ) : - 1;
 
-		// bail if not set from request.
-		if ( - 1 === $use_json_import ) {
+		// bail if not enabled in request.
+		if ( 1 !== $use_json_import ) {
 			return $fields;
 		}
 

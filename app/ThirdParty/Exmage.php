@@ -153,7 +153,7 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 				array(
 					'key'     => '_exmage_external_url',
-					'compare' => 'EXIST',
+					'compare' => 'EXISTS',
 				),
 			),
 			'posts_per_page' => -1,

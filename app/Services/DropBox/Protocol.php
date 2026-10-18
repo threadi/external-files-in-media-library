@@ -112,14 +112,18 @@ class Protocol extends Protocol_Base {
 
 		// if the URL is only "/", get all files from DropBox.
 		if ( '/' === $url ) {
-			$files_from_dropbox = $client->listFolder( '/', true );
-			if ( ! empty( $files_from_dropbox['entries'] ) ) {
-				$entries = $files_from_dropbox['entries'];
-			}
+			$entries = $this->get_entries_of_folder( $client, '/' );
 		} else {
-			// get the data for a single file.
+			// get the data for a single file or folder.
 			try {
-				$entries[] = $client->getMetadata( $url );
+				$metadata = $client->getMetadata( $url );
+
+				// get all files of a folder (also from its subfolders), otherwise use the single file.
+				if ( isset( $metadata['.tag'] ) && 'folder' === $metadata['.tag'] ) {
+					$entries = $this->get_entries_of_folder( $client, $url );
+				} else {
+					$entries[] = $metadata;
+				}
 			} catch ( ClientException | BadRequest $e ) {
 				// log this event.
 				Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $e ) . '</code>', $url, 'error' );
@@ -360,5 +364,32 @@ class Protocol extends Protocol_Base {
 
 		// return the results from the HTTP handler.
 		return $http_protocol_handler->get_url_info( $url );
+	}
+
+	/**
+	 * Return all entries of the given folder in DropBox, also from its subfolders.
+	 *
+	 * DropBox returns large folders in multiple parts, which are all loaded.
+	 *
+	 * @param Client $client The DropBox client.
+	 * @param string $path The path of the folder.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function get_entries_of_folder( Client $client, string $path ): array {
+		// get the first part.
+		$result  = $client->listFolder( $path, true );
+		$entries = ! empty( $result['entries'] ) ? $result['entries'] : array();
+
+		// get the following parts.
+		while ( ! empty( $result['has_more'] ) && ! empty( $result['cursor'] ) ) {
+			$result = $client->listFolderContinue( $result['cursor'] );
+			if ( ! empty( $result['entries'] ) ) {
+				$entries = array_merge( $entries, $result['entries'] );
+			}
+		}
+
+		// return the entries.
+		return $entries;
 	}
 }

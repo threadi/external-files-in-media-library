@@ -105,4 +105,28 @@ class Proxy extends externalFilesTests {
 		// no new log entry must exist.
 		$this->assertEquals( $log_count, $this->get_log_count() );
 	}
+
+	/**
+	 * Test if files in trash are not delivered by the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_run_with_trashed_file(): void {
+		// import an external file.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'pdf', 'http' ) ) );
+		$external_file_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( self::get_test_file( 'pdf', 'http' ) );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, $external_file_obj );
+
+		// move it to trash.
+		$this->assertInstanceOf( \WP_Post::class, wp_trash_post( $external_file_obj->get_id() ) );
+
+		// request it via proxy.
+		$proxy_actions = did_action( 'efml_proxy_before' );
+		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), get_the_title( $external_file_obj->get_id() ) );
+		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+
+		// the proxy must not try to load or cache the file.
+		$this->assertSame( $proxy_actions, did_action( 'efml_proxy_before' ) );
+		$this->assertFalse( $external_file_obj->is_cached() );
+	}
 }

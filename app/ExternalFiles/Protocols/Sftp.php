@@ -163,11 +163,16 @@ class Sftp extends Protocol_Base {
 
 			// loop through the matches.
 			foreach ( $file_list as $filename => $settings ) {
+				// bail if this entry is a directory.
+				if ( 'd' === $settings['type'] ) {
+					continue;
+				}
+
 				// get the file path on SFTP.
-				$file_path = $path . $filename;
+				$file_path = trailingslashit( $path ) . $filename;
 
 				// get URL.
-				$file_url = $this->get_url() . $filename;
+				$file_url = trailingslashit( $this->get_url() ) . $filename;
 
 				// check for duplicate.
 				if ( $this->check_for_duplicate( $file_url ) ) {
@@ -193,7 +198,7 @@ class Sftp extends Protocol_Base {
 				do_action( 'efml_sftp_directory_import_file_check', $file_url );
 
 				// get the file data.
-				$results = $this->get_url_info( $file_path );
+				$results = $this->get_url_info( $file_url );
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -227,7 +232,7 @@ class Sftp extends Protocol_Base {
 			$progress ? $progress->finish() : '';
 		} else {
 			// add the file to the list.
-			$results = $this->get_url_info( $path );
+			$results = $this->get_url_info( $this->get_url() );
 
 			// bail if results are empty.
 			if ( empty( $results ) ) {
@@ -261,8 +266,13 @@ class Sftp extends Protocol_Base {
 	 * @return array<string,mixed>
 	 */
 	public function get_url_info( string $url ): array {
-		// use file path as name for this in this protocol handler.
-		$file_path = $url;
+		// get the path of the file on the server, as the SFTP connection expects paths, not URLs.
+		$file_path = (string) wp_parse_url( $url, PHP_URL_PATH );
+
+		// bail if no path is given.
+		if ( empty( $file_path ) ) {
+			return array();
+		}
 
 		// initialize the file infos array.
 		$results = array(
@@ -271,7 +281,7 @@ class Sftp extends Protocol_Base {
 			'mime-type'     => '',
 			'tmp-file'      => '',
 			'local'         => true,
-			'url'           => $file_path,
+			'url'           => $url,
 			'last-modified' => '',
 		);
 
@@ -359,7 +369,7 @@ class Sftp extends Protocol_Base {
 		 * @param string $url     The requested external URL.
 		 * @param array $response_headers The response header.
 		 */
-		return apply_filters( 'efml_external_file_infos', $results, $file_path, $response_headers );
+		return apply_filters( 'efml_external_file_infos', $results, $url, $response_headers );
 	}
 
 	/**
@@ -388,7 +398,7 @@ class Sftp extends Protocol_Base {
 
 		// define ssh/sftp connection parameter.
 		$connection_arguments = array(
-			'port'     => $this->get_port_by_protocol( $parse_url['scheme'] ),
+			'port'     => $this->get_port_by_url( $parse_url ),
 			'hostname' => $parse_url['host'],
 			'username' => $fields['login']['value'],
 			'password' => $fields['password']['value'],

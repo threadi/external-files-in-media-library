@@ -35,4 +35,16 @@ class Dropbox extends externalFilesTests {
 		$this->assertNotEmpty( $directory );
 		$this->assertEquals( 'DropBox', $directory );
 	}
+
+	/**
+	 * Test if the content type check is only disabled for Dropbox URLs.
+	 *
+	 * @return void
+	 */
+	public function test_allow_wrong_content_type_only_for_dropbox(): void {
+		$obj = \ExternalFilesInMediaLibrary\Services\DropBox::get_instance();
+		$this->assertFalse( $obj->allow_wrong_content_type( true, 'https://uc123.dl.dropboxusercontent.com/example.pdf' ) );
+		$this->assertTrue( $obj->allow_wrong_content_type( true, 'https://example.com/example.pdf?dropboxusercontent.com' ) );
+		$this->assertTrue( $obj->allow_wrong_content_type( true, 'https://dropboxusercontent.com.example.com/example.pdf' ) );
+	}
 }

@@ -514,11 +514,29 @@ class File extends Protocol_Base {
 			return '';
 		}
 
+		// separate the path of a file in an archive (e.g. "/path/archive.zip/images/a.jpg"): only the archive
+		// is a file in the file system, which is checked. The rest is only a name in the archive.
+		$path_in_archive = '';
+		if ( preg_match( '/^(.+?\.(?:tar\.gz|zip|gz))(\/.*)$/i', $path, $matches ) ) {
+			$path            = $matches[1];
+			$path_in_archive = $matches[2];
+		}
+
+		// bail if the path in the archive contains a null byte.
+		if ( str_contains( $path_in_archive, "\0" ) ) {
+			return '';
+		}
+
 		// get the real path.
 		$real_path = realpath( $path );
 
 		// bail if no real path could be read.
 		if ( ! $real_path ) {
+			return '';
+		}
+
+		// bail if the archive is not a file (e.g. a directory with the name "something.zip").
+		if ( ! empty( $path_in_archive ) && ! is_file( $real_path ) ) {
 			return '';
 		}
 
@@ -549,6 +567,11 @@ class File extends Protocol_Base {
 		// bail if both paths does not match (e.g., for a path outside the web-directory).
 		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . DIRECTORY_SEPARATOR ) ) {
 			return '';
+		}
+
+		// add the path in the archive.
+		if ( ! empty( $path_in_archive ) ) {
+			return 'file://' . $real_path . $path_in_archive;
 		}
 
 		// if the original URL ends with a slash, add it to the real path.

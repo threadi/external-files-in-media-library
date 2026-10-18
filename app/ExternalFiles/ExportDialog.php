@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
@@ -141,8 +142,8 @@ class ExportDialog {
 		// get the term.
 		$term = get_term_by( 'term_id', $term_id, Taxonomy::get_instance()->get_name() );
 
-		// bail if no term could be found.
-		if ( ! $term instanceof WP_Term ) {
+		// bail if no term could be found or the actual user is not allowed to use this external source.
+		if ( ! $term instanceof WP_Term || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}
@@ -258,8 +259,8 @@ class ExportDialog {
 		// get term ID from request.
 		$term_id = absint( filter_input( INPUT_POST, 'term_id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if no term ID is given.
-		if ( 0 === $term_id ) {
+		// bail if no term ID is given or the actual user is not allowed to use this external source.
+		if ( 0 === $term_id || ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			$dialog['texts'][] = '<p>' . __( 'No target specified.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( array( 'detail' => $dialog ) );
 		}

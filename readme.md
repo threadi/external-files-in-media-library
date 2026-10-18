@@ -135,6 +135,34 @@ Hint: this check runs against the VIP-GO-platform, not our target for this plugi
 
 `composer test`
 
+### Code coverage
+
+`composer test-coverage`
+
+Needs the PHP extension pcov, e.g. on Debian: `apt install php-pcov`
+
+### Tests for multisite
+
+`composer test-multisite`
+
+Runs the tests for multisites in a multisite installation. They are skipped in `composer test`.
+
+### Tests with FTP, FTPS, SFTP and HTTP servers
+
+Some tests use real FTP, FTPS, SFTP and HTTP servers on 127.0.0.1. The HTTP server also simulates the WordPress REST API.
+Without them, these tests are skipped.
+
+1. Install the Python modules once, e.g. on Debian: `apt install python3-pyftpdlib python3-openssl python3-paramiko` (the HTTP server needs only Python itself)
+2. For the SFTP tests, the PHP extension ssh2 is necessary, e.g. on Debian: `apt install php-ssh2`
+3. `bin/test-servers.sh start`
+4. `composer test`
+5. `bin/test-servers.sh stop`
+
+The servers run as the actual user on the ports 2121, 2122, 2990, 2991, 2222, 8181 and 30000-30099, never as root.
+See bin/test-servers.sh to change them. `ant build` starts and stops the servers itself.
+Restart the servers after changes on their scripts in tests/Servers, otherwise the tests fail with a hint.
+Use `composer test -- -v` to see why tests were skipped.
+
 ## Playwright
 
 See: https://wordpress.github.io/wordpress-playground/guides/e2e-testing-with-playwright/

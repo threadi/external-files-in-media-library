@@ -114,6 +114,10 @@ class Export extends Export_Base {
 
 		// bail if target file does already exist.
 		if ( $ftp_connection->exists( $parse_url['path'] ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The file already exists on the FTP server and will not be overwritten. The file has not been exported.', 'external-files-in-media-library' ), $target, 'error' );
+
+			// do nothing more.
 			return false;
 		}
 
@@ -127,6 +131,16 @@ class Export extends Export_Base {
 
 		// put the content to FTP.
 		if ( ! $ftp_connection->put_contents( $parse_url['path'], $content ) ) {
+			// remove the incomplete file, as the server may have created it before the transfer failed.
+			// otherwise a new try would fail, as the target file exists.
+			// delete it directly, as WordPress checks the existence first, which needs a data connection.
+			if ( $ftp_connection->link instanceof \FTP\Connection ) {
+				@ftp_delete( $ftp_connection->link, $parse_url['path'] ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			}
+
+			// log this event.
+			Log::get_instance()->create( __( 'File could not be saved on the FTP server.', 'external-files-in-media-library' ), $target, 'error' );
+
 			return false;
 		}
 

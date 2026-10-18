@@ -159,6 +159,7 @@ class Roles {
 		$permissions_tab_tools = $permissions_tab->add_section( 'settings_section_tools', 20 );
 		$permissions_tab_tools->set_title( __( 'Permissions for tools', 'external-files-in-media-library' ) );
 		$permissions_tab_tools->set_setting( $settings_obj );
+		$permissions_tab_tools->set_callback( array( $this, 'head_of_tools_section' ) );
 
 		// add capability settings for main tools.
 		foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
@@ -512,5 +513,15 @@ class Roles {
 
 		// show the list of capability sets.
 		CapabilitySets::get_instance()->show_list();
+	}
+
+	/**
+	 * Show a hint, and the list of capability-sets we use.
+	 *
+	 * @return void
+	 */
+	public function head_of_tools_section(): void {
+		// show simple text hint.
+		echo '<p>' . esc_html__( 'Define, which roles should be able to use the tools.', 'external-files-in-media-library' ) . '</p>';
 	}
 }

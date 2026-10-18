@@ -20,21 +20,6 @@
         </condition>
     </fail>
 
-    <!-- set version number in plugin-file for the release -->
-    <target name="setVersionNumber">
-        <delete file="${build.dir}/${plugin.slug}-release.php"/>
-        <copy file="${src.dir}/${plugin.slug}.php" tofile="${src.dir}/${plugin.slug}-release.php"/>
-        <replace file="${src.dir}/${plugin.slug}-release.php">
-            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
-        </replace>
-
-        <delete file="${build.dir}/readme-release.txt"/>
-        <copy file="${src.dir}/readme.txt" tofile="${src.dir}/readme-release.txt"/>
-        <replace file="${src.dir}/readme-release.txt">
-            <replacefilter token="@@VersionNumber@@" value="${plugin.version}" />
-        </replace>
-    </target>
-
     <!-- install composer -->
     <target name="composer-install">
         <delete file="${log.dir}/composer-install.txt"/>
@@ -55,8 +40,9 @@
         <delete file="${log.dir}/npm-install1.txt"/>
         <delete file="${log.dir}/npm-install2.txt"/>
         <delete file="${log.dir}/npm-install3.txt"/>
+        <!-- use "ci" like the GitHub Action, so the versions from package-lock.json are used. -->
         <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-install1.txt">
-            <arg line="install"/>
+            <arg line="ci"/>
         </exec>
     </target>
 
@@ -66,11 +52,9 @@
         <delete file="${log.dir}/npm-build2.txt"/>
         <delete file="${log.dir}/npm-build3.txt"/>
         <delete file="${log.dir}/npm-build4.txt"/>
+        <!-- the complete build, like the GitHub Action: it also copies Driver.js for the intro to admin/driverjs. -->
         <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build1.txt">
-            <arg line="run build:replacer"/>
-        </exec>
-        <exec dir="${src.dir}" failonerror="true" executable="${npm.path}" output="${log.dir}/npm-build4.txt">
-            <arg line="run build:commands"/>
+            <arg line="run build"/>
         </exec>
     </target>
 
@@ -121,49 +105,75 @@
         <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/php-unit-tests-1.txt">
             <arg line="test-install-during-build"/>
         </exec>
-        <exec dir="${src.dir}" failonerror="true" executable="${composer.path}" output="${log.dir}/php-unit-tests-2.txt">
+        <!-- start the FTP, FTPS and SFTP servers for the tests. Without them (e.g. missing Python modules or as root) these tests are skipped. -->
+        <exec dir="${src.dir}" failonerror="false" executable="bash">
+            <arg line="bin/test-servers.sh start"/>
+        </exec>
+        <exec dir="${src.dir}" failonerror="false" executable="${composer.path}" output="${log.dir}/php-unit-tests-2.txt" resultproperty="php-unit-tests.result">
             <arg line="test"/>
         </exec>
+        <!-- stop the servers, also if tests failed. -->
+        <exec dir="${src.dir}" failonerror="false" executable="bash">
+            <arg line="bin/test-servers.sh stop"/>
+        </exec>
+        <fail message="PHP Unit Tests failed, see ${log.dir}/php-unit-tests-2.txt">
+            <condition>
+                <not>
+                    <equals arg1="${php-unit-tests.result}" arg2="0"/>
+                </not>
+            </condition>
+        </fail>
     </target>
 
     <!-- init project -->
     <target name="init" description="Initialize the project" depends="composer-install,autoloader-generation-dev,npm-build" />
 
-    <!-- create release-zip -->
-    <target name="build" description="Builds a new release" depends="init,generate-documentation,php-unit-tests,autoloader-generation,check-phpstan,check-php-compatibility,check-wcs,setVersionNumber">
+    <!-- create the release-zip with the same script as the GitHub Action "Build release zip" (used by "release-zip" and "build") -->
+    <target name="create-release-zip">
         <delete file="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
-        <zip destfile="${build.dir}/${plugin.slug}_${plugin.version}.zip">
-            <zipfileset dir="${src.dir}/admin" prefix="${plugin.slug}/admin" />
-            <zipfileset dir="${src.dir}/app" prefix="${plugin.slug}/app" />
-            <zipfileset dir="${src.dir}/blocks/build/" prefix="${plugin.slug}/blocks/build/" />
-            <zipfileset dir="${src.dir}/gfx" prefix="${plugin.slug}/gfx" />
-            <zipfileset dir="${src.dir}/inc" prefix="${plugin.slug}/inc" />
-            <zipfileset dir="${src.dir}/js" prefix="${plugin.slug}/js">
-                <exclude name="**/.gitkeep" />
-            </zipfileset>
-            <zipfileset dir="${src.dir}/templates" prefix="${plugin.slug}/templates" />
-            <zipfileset dir="${src.dir}/vendor" includes="autoload.php" fullpath="${plugin.slug}/vendor/autoload.php" />
-            <zipfileset dir="${src.dir}/vendor/composer" prefix="${plugin.slug}/vendor/composer" />
-            <zipfileset dir="${src.dir}/vendor/threadi/crypt-for-wordpress/src/" prefix="${plugin.slug}/vendor/threadi/crypt-for-wordpress/src/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-dialog-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-dialog-for-wordpress/build/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/build/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" prefix="${plugin.slug}/vendor/threadi/easy-directory-listing-for-wordpress/lib/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-settings-for-wordpress/assets/" prefix="${plugin.slug}/vendor/threadi/easy-settings-for-wordpress/assets/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-settings-for-wordpress/build/" prefix="${plugin.slug}/vendor/threadi/easy-settings-for-wordpress/build/" />
-            <zipfileset dir="${src.dir}/vendor/threadi/easy-settings-for-wordpress/src/" prefix="${plugin.slug}/vendor/threadi/easy-settings-for-wordpress/src/" />
-            <zipfileset dir="${src.dir}/vendor/psr" prefix="${plugin.slug}/vendor/psr" />
-            <zipfileset dir="${src.dir}/vendor/ralouphie" prefix="${plugin.slug}/vendor/ralouphie" />
-            <zipfileset dir="${src.dir}/vendor/symfony" prefix="${plugin.slug}/vendor/symfony" />
-            <zipfileset dir="${src.dir}/vendor/guzzlehttp" prefix="${plugin.slug}/vendor/guzzlehttp" />
-            <zipfileset dir="${src.dir}/vendor/spatie" prefix="${plugin.slug}/vendor/spatie" />
-            <zipfileset dir="${src.dir}/vendor/graham-campbell" prefix="${plugin.slug}/vendor/graham-campbell" />
-            <zipfileset dir="${src.dir}" includes="readme-release.txt" fullpath="${plugin.slug}/readme.txt" />
-            <zipfileset dir="${src.dir}" includes="uninstall.php,composer.json" prefix="${plugin.slug}" />
-            <zipfileset dir="${src.dir}" includes="${plugin.slug}-release.php" fullpath="${plugin.slug}/${plugin.slug}.php" />
-        </zip>
+
+        <!-- install the PHP packages without dev packages and generate the release autoloader -->
+        <exec dir="${src.dir}" failonerror="true" executable="bash">
+            <env key="RELEASE_SLUG" value="${plugin.slug}"/>
+            <env key="COMPOSER_BIN" value="${composer.path}"/>
+            <arg line="bin/build-release.sh prepare"/>
+        </exec>
+
+        <!-- collect the files of the release in dist/ and set the version number -->
+        <exec dir="${src.dir}" failonerror="true" executable="bash">
+            <env key="RELEASE_SLUG" value="${plugin.slug}"/>
+            <env key="COMPOSER_BIN" value="${composer.path}"/>
+            <arg value="bin/build-release.sh"/>
+            <arg value="collect"/>
+            <arg value="${plugin.version}"/>
+        </exec>
+
+        <!-- create the zip -->
+        <exec dir="${src.dir}" failonerror="true" executable="bash">
+            <env key="RELEASE_SLUG" value="${plugin.slug}"/>
+            <env key="COMPOSER_BIN" value="${composer.path}"/>
+            <arg value="bin/build-release.sh"/>
+            <arg value="zip"/>
+            <arg value="${build.dir}/${plugin.slug}_${plugin.version}.zip"/>
+        </exec>
+
+        <!-- get the dev packages back for development -->
+        <exec dir="${src.dir}" failonerror="true" executable="bash">
+            <env key="COMPOSER_BIN" value="${composer.path}"/>
+            <arg line="bin/build-release.sh restore"/>
+        </exec>
         <antcall target="autoloader-generation-dev" />
-        <delete file="${src.dir}/${plugin.slug}-release.php"/>
-        <delete file="${src.dir}/readme-release.txt"/>
+    </target>
+
+    <!-- create only the release-zip, without tests and checks -->
+    <target name="release-zip" description="Creates the release-zip without tests and checks" depends="init">
+        <antcall target="create-release-zip" />
+    </target>
+
+    <!-- create release-zip -->
+    <target name="build" description="Builds a new release" depends="init,generate-documentation,php-unit-tests,check-phpstan,check-php-compatibility,check-wcs">
+        <!-- the checks above need the dev packages, so the release-zip is created afterwards -->
+        <antcall target="create-release-zip" />
     </target>
 
     <target name="help">

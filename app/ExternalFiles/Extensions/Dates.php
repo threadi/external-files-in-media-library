@@ -36,6 +36,13 @@ class Dates extends Extension_Base {
 	protected string $name = 'dates';
 
 	/**
+	 * Marker whether we have set the request value for a synchronization.
+	 *
+	 * @var bool
+	 */
+	private bool $request_value_set = false;
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var Dates|null
@@ -88,6 +95,7 @@ class Dates extends Extension_Base {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_action( 'efml_before_sync', array( $this, 'add_action_before_sync' ), 10, 3 );
+		add_action( 'efml_after_sync', array( $this, 'remove_action_after_sync' ), 10, 0 );
 	}
 
 	/**
@@ -399,6 +407,27 @@ class Dates extends Extension_Base {
 		}
 
 		// set "use_dates" to 1.
-		$_POST['use_dates'] = 1;
+		$_POST['use_dates']      = 1;
+		$this->request_value_set = true;
+	}
+
+	/**
+	 * Remove the setting we have set for the synchronization after it has been run.
+	 *
+	 * Without this, the setting would also be used for the next external source synchronized in the same request.
+	 *
+	 * @return void
+	 */
+	public function remove_action_after_sync(): void {
+		// bail if we have not set the value.
+		if ( ! $this->request_value_set ) {
+			return;
+		}
+
+		// remove the value.
+		unset( $_POST['use_dates'] );
+
+		// reset the marker.
+		$this->request_value_set = false;
 	}
 }

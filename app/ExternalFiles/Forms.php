@@ -441,21 +441,9 @@ class Forms {
 
 			// if "term_data" could be loaded, use them.
 			if ( ! empty( $term_data ) ) {
-				// get the domain part of the directory.
-				$term_directory_url = wp_parse_url( $term_data['directory'] );
-
-				// complete the URL.
+				// complete the URLs with the directory of the external source.
 				foreach ( $url_array as $i => $url ) {
-					// get the path from given URL.
-					$parse_url = wp_parse_url( $url );
-
-					// only change the given URL if the URL part is a part and not a URL.
-					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
-						$url_array[ $i ] = $term_data['directory'] . $url;
-						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
-							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
-						}
-					}
+					$url_array[ $i ] = $this->get_url_with_source_directory( (string) $url, (string) $term_data['directory'] ); // @phpstan-ignore offsetAccess.nonOffsetAccessible
 				}
 
 				// get the credentials.
@@ -796,21 +784,9 @@ class Forms {
 
 			// if "term_data" could be loaded, use them.
 			if ( ! empty( $term_data ) ) {
-				// get the domain part of the directory.
-				$term_directory_url = wp_parse_url( $term_data['directory'] );
-
-				// complete the URL.
+				// complete the URLs with the directory of the external source.
 				foreach ( $url_array as $i => $url ) { // @phpstan-ignore foreach.nonIterable
-					// get the path from given URL.
-					$parse_url = wp_parse_url( $url );
-
-					// only change the given URL if the URL part is a part and not a URL.
-					if ( ( empty( $parse_url ) || empty( $parse_url['scheme'] ) ) && $term_data['directory'] !== $url ) {
-						$url_array[ $i ] = $term_data['directory'] . $url; // @phpstan-ignore offsetAccess.nonOffsetAccessible
-						if ( ! empty( $term_directory_url['scheme'] ) && ! empty( $term_directory_url['host'] ) ) {
-							$url_array[ $i ] = $term_directory_url['scheme'] . '://' . $term_directory_url['host'] . $url;
-						}
-					}
+					$url_array[ $i ] = $this->get_url_with_source_directory( (string) $url, (string) $term_data['directory'] ); // @phpstan-ignore offsetAccess.nonOffsetAccessible
 				}
 
 				// get the credentials.
@@ -1046,5 +1022,42 @@ class Forms {
 
 		// return resulting list of classes.
 		return $classes;
+	}
+
+	/**
+	 * Return the given URL completed with the directory of the used external source.
+	 *
+	 * Paths without protocol are completed with the directory of the external source. URLs, which already
+	 * start with this directory (e.g. "DropBox/folder/file.jpg" from the listing of "DropBox/folder"), are
+	 * returned unchanged, as they are complete.
+	 *
+	 * @param string $url The given URL or path.
+	 * @param string $directory The directory of the external source.
+	 *
+	 * @return string
+	 */
+	public function get_url_with_source_directory( string $url, string $directory ): string {
+		// get the parts of the given URL.
+		$parse_url = wp_parse_url( $url );
+
+		// bail if the URL has a protocol or is the directory itself.
+		if ( ( ! empty( $parse_url ) && ! empty( $parse_url['scheme'] ) ) || $directory === $url ) {
+			return $url;
+		}
+
+		// bail if the URL already starts with the directory.
+		$directory_with_slash = trailingslashit( untrailingslashit( $directory ) );
+		if ( '/' !== $directory_with_slash && str_starts_with( $url, $directory_with_slash ) ) {
+			return $url;
+		}
+
+		// use the protocol and host of the directory, if it has them, for a path.
+		$directory_url = wp_parse_url( $directory );
+		if ( ! empty( $directory_url['scheme'] ) && ! empty( $directory_url['host'] ) ) {
+			return $directory_url['scheme'] . '://' . $directory_url['host'] . ( ! empty( $directory_url['port'] ) ? ':' . $directory_url['port'] : '' ) . $url;
+		}
+
+		// otherwise add the directory before it.
+		return $directory . $url;
 	}
 }

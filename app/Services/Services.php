@@ -175,6 +175,7 @@ class Services {
 	 */
 	private function get_services(): array {
 		$list = array(
+			'ExternalFilesInMediaLibrary\Services\Csv',
 			'ExternalFilesInMediaLibrary\Services\DropBox',
 			'ExternalFilesInMediaLibrary\Services\Ftp',
 			'ExternalFilesInMediaLibrary\Services\Imgur',
@@ -183,6 +184,7 @@ class Services {
 			'ExternalFilesInMediaLibrary\Services\Rest',
 			'ExternalFilesInMediaLibrary\Services\Vimeo',
 			'ExternalFilesInMediaLibrary\Services\WebDav',
+			'ExternalFilesInMediaLibrary\Services\Xml',
 			'ExternalFilesInMediaLibrary\Services\Youtube',
 			'ExternalFilesInMediaLibrary\Services\Zip',
 		);

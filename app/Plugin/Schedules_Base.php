@@ -74,7 +74,7 @@ class Schedules_Base {
 		$instance = $this;
 
 		// show deprecated warning for the old hook name.
-		$interval = apply_filters_deprecated( 'eml_current_language', array( $this->interval, $instance ), '5.0.0', 'efml_schedule_interval' );
+		$interval = apply_filters_deprecated( 'eml_schedule_interval', array( $this->interval, $instance ), '5.0.0', 'efml_schedule_interval' );
 
 		/**
 		 * Filter the interval for a single schedule.

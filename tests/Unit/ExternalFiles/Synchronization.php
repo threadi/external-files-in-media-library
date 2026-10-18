@@ -91,4 +91,19 @@ class Synchronization extends externalFilesTests {
 		// not running after the synchronization.
 		$this->assertFalse( $sync_obj->is_running() );
 	}
+
+	/**
+	 * Test if the protection against the deletion of synchronized files is active again after deleting synchronized files.
+	 *
+	 * @return void
+	 */
+	public function test_prevent_deletion_is_active_after_deleting_synced_files(): void {
+		$obj      = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance();
+		$priority = has_filter( 'pre_delete_attachment', array( $obj, 'prevent_deletion' ) );
+
+		$term_id = self::factory()->term->create( array( 'taxonomy' => \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name() ) );
+		$obj->delete_synced_files( $term_id );
+
+		$this->assertSame( $priority, has_filter( 'pre_delete_attachment', array( $obj, 'prevent_deletion' ) ) );
+	}
 }

@@ -34,4 +34,25 @@ class Ftp extends externalFilesTests {
 		$this->assertIsString( $directory );
 		$this->assertEmpty( $directory );
 	}
+
+	/**
+	 * Test if values are encrypted and decrypted, also the value "0".
+	 *
+	 * @return void
+	 */
+	public function test_encrypt_and_decrypt_value(): void {
+		$obj = \ExternalFilesInMediaLibrary\Services\Ftp::get_instance();
+
+		foreach ( array( 'my-password', '0', 'äöü €' ) as $value ) {
+			$encrypted = $obj->encrypt_value( $value );
+			$this->assertNotEquals( $value, $encrypted );
+			$this->assertSame( $value, $obj->decrypt_value( $encrypted ) );
+		}
+
+		// empty values.
+		$this->assertSame( '', $obj->encrypt_value( '' ) );
+		$this->assertSame( '', $obj->encrypt_value( null ) );
+		$this->assertSame( '', $obj->decrypt_value( '' ) );
+		$this->assertSame( '', $obj->decrypt_value( null ) );
+	}
 }

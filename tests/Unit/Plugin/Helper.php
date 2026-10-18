@@ -211,4 +211,60 @@ class Helper extends externalFilesTests {
 		$this->assertStringNotContainsString( '/', $file_version );
 		$this->assertStringNotContainsString( '.php', $file_version );
 	}
+
+	/**
+	 * Return the test cases for the domain check.
+	 *
+	 * @return array<string,array<int,string|bool>>
+	 */
+	public function provide_url_on_domain(): array {
+		return array(
+			'domain'                => array( 'https://imgur.com/a.jpg', 'imgur.com', true ),
+			'subdomain'             => array( 'https://i.imgur.com/a.jpg', 'imgur.com', true ),
+			'upper case'            => array( 'https://I.IMGUR.COM/a.jpg', 'imgur.com', true ),
+			'domain in path'        => array( 'https://example.com/imgur.com/a.jpg', 'imgur.com', false ),
+			'domain in query'       => array( 'https://example.com/a.jpg?imgur.com', 'imgur.com', false ),
+			'domain as prefix'      => array( 'https://imgur.com.example.com/a.jpg', 'imgur.com', false ),
+			'domain as suffix part' => array( 'https://notimgur.com/a.jpg', 'imgur.com', false ),
+			'no URL'                => array( 'imgur.com', 'imgur.com', false ),
+			'empty'                 => array( '', 'imgur.com', false ),
+		);
+	}
+
+	/**
+	 * Test the check whether a URL is located on a given domain.
+	 *
+	 * @dataProvider provide_url_on_domain
+	 *
+	 * @param string $url The URL.
+	 * @param string $domain The domain.
+	 * @param bool   $expected The expected result.
+	 *
+	 * @return void
+	 */
+	public function test_is_url_on_domain( string $url, string $domain, bool $expected ): void {
+		$this->assertSame( $expected, \ExternalFilesInMediaLibrary\Plugin\Helper::is_url_on_domain( $url, $domain ) );
+	}
+
+	/**
+	 * Test the creation of a directory with missing parent directories.
+	 *
+	 * @return void
+	 */
+	public function test_create_directory(): void {
+		$base = trailingslashit( get_temp_dir() ) . 'efml-create-' . wp_generate_password( 8, false );
+		$path = $base . '/first/second/third';
+
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::create_directory( $path ) );
+		$this->assertDirectoryExists( $path );
+
+		// an existing directory results in true.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::create_directory( $path . '/' ) );
+
+		// an empty path results in false.
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::create_directory( '' ) );
+
+		\ExternalFilesInMediaLibrary\Plugin\Helper::delete_directory_recursively( $base );
+	}
+
 }

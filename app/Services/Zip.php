@@ -113,7 +113,8 @@ class Zip extends Service_Base implements Service {
 		add_action( 'init', array( $this, 'add_settings' ), 30 );
 
 		// bail if user has no capability for this service.
-		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 
@@ -126,6 +127,7 @@ class Zip extends Service_Base implements Service {
 		add_filter( 'efml_external_file_infos', array( $this, 'get_file' ), 10, 2 );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_files_from_zip_via_filter' ), 10, 2 );
 		add_filter( 'efml_filter_file_response', array( $this, 'get_files_from_zip_via_filter' ), 10, 2 );
+		add_filter( 'efml_mime_type_for_multiple_files', array( $this, 'allow_archive_as_multiple_files' ), 10, 3 );
 		add_filter( 'efml_add_dialog', array( $this, 'change_import_dialog' ), 10, 2 );
 		add_filter( 'efml_duplicate_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
 		add_filter( 'efml_locale_file_check', array( $this, 'prevent_duplicate_check_for_unzip' ) );
@@ -195,6 +197,19 @@ class Zip extends Service_Base implements Service {
 		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Max. files to load during import per iteration', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'This value specifies how many files should be loaded during a directory import. The higher the value, the greater the likelihood of timeouts during import.', 'external-files-in-media-library' ) );
+		$field->set_setting( $setting );
+		$field->set_readonly( $this->is_disabled() );
+		$setting->set_field( $field );
+
+		// add setting for the maximum size of a single file extracted from an archive.
+		$setting = $settings_obj->add_setting( 'eml_zip_max_file_size' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Number( $settings_obj );
+		$field->set_title( __( 'Max. size of a single file in an archive (in MB)', 'external-files-in-media-library' ) );
+		/* translators: %1$s will be replaced by the maximum upload size of WordPress. */
+		$field->set_description( sprintf( __( 'Files in a ZIP, .tar.gz or .gz archive, which are larger after extraction, will not be imported. This protects your website against archives, which would need more memory or disk space than available. If set to 0, the maximum upload size of WordPress is used (actually %1$s).', 'external-files-in-media-library' ), size_format( wp_max_upload_size() ) ) );
 		$field->set_setting( $setting );
 		$field->set_readonly( $this->is_disabled() );
 		$setting->set_field( $field );
@@ -308,16 +323,8 @@ class Zip extends Service_Base implements Service {
 	 * @return array<string,int|string>
 	 */
 	public function get_file( array $results, string $file_path ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return $results;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if the actual import is not for this service.
+		if ( ! $this->is_actual_service() ) {
 			return $results;
 		}
 
@@ -344,21 +351,60 @@ class Zip extends Service_Base implements Service {
 	 * @return array<int|string,array<string,mixed>|bool>
 	 */
 	public function get_files_from_zip_via_filter( array $results, string $file_path ): array {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
+		// bail if the actual import is not for this service.
+		if ( ! $this->is_actual_service() ) {
 			return $results;
 		}
 
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
-			return $results;
+		// the URL of the archive itself (e.g. of a synchronized external source) means all files in it.
+		if ( $this->is_archive_url( $file_path ) ) {
+			$file_path = trailingslashit( $file_path );
 		}
 
 		// return the list of files from this ZIP.
 		return $this->get_files_from_zip( $file_path );
+	}
+
+	/**
+	 * Mark archives as files with multiple files, if the actual import is for this service.
+	 *
+	 * Otherwise, the import via HTTP would not use our filter to extract the files of the archive,
+	 * e.g. during the synchronization of a ZIP file.
+	 *
+	 * @param bool   $return_value True if the mime type could contain multiple files.
+	 * @param string $mime_type The mime type.
+	 * @param string $url The used URL.
+	 *
+	 * @return bool
+	 */
+	public function allow_archive_as_multiple_files( bool $return_value, string $mime_type, string $url ): bool {
+		// bail if this is already marked.
+		if ( $return_value ) {
+			return true;
+		}
+
+		// bail if the actual import is not for this service.
+		if ( ! $this->is_actual_service() ) {
+			return false;
+		}
+
+		// return whether the URL is an archive or a file in an archive.
+		return $this->is_archive_url( $url ) || str_contains( (string) wp_parse_url( $url, PHP_URL_PATH ), '.zip/' );
+	}
+
+	/**
+	 * Return whether the given URL is the URL of a supported archive itself (not of a file in it).
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_archive_url( string $url ): bool {
+		// get the path of the URL.
+		$path = strtolower( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+
+		// return whether the path ends with an extension of a supported archive.
+		return str_ends_with( $path, '.zip' ) || str_ends_with( $path, '.tar.gz' ) || str_ends_with( $path, '.gz' );
 	}
 
 	/**
@@ -1008,8 +1054,8 @@ class Zip extends Service_Base implements Service {
 		// get the entry for "application/x-gzip".
 		$key = array_search( 'application/x-gzip', $mime_types, true );
 
-		// bail if no key could be found.
-		if ( ! $key ) {
+		// bail if no key could be found (the key might be 0).
+		if ( false === $key ) {
 			return $mime_types;
 		}
 
@@ -1080,20 +1126,12 @@ class Zip extends Service_Base implements Service {
 	 * @return void
 	 */
 	public function change_service_name( File $external_file_obj ): void {
-		// get service from request.
-		$service = filter_input( INPUT_POST, 'service', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
-
-		// bail if it is not set.
-		if ( is_null( $service ) ) {
-			return;
-		}
-
-		// bail if service is not ours.
-		if ( $this->get_name() !== $service ) {
+		// bail if this is not an import or synchronization for this service.
+		if ( ! $this->is_actual_service() ) {
 			return;
 		}
 
 		// set the service name.
-		$external_file_obj->set_service_name( $service );
+		$external_file_obj->set_service_name( $this->get_name() );
 	}
 }

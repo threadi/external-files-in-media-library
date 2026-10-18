@@ -15,9 +15,11 @@ use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_User;
 
@@ -446,8 +448,8 @@ class Service_Base extends Directory_Listing_Base {
 			return '';
 		}
 
-		// bail if string is empty.
-		if ( empty( $value ) ) {
+		// bail if string is empty (a value like "0" is a valid value).
+		if ( '' === $value ) {
 			return '';
 		}
 
@@ -468,8 +470,8 @@ class Service_Base extends Directory_Listing_Base {
 			return '';
 		}
 
-		// bail if string is empty.
-		if ( empty( $value ) ) {
+		// bail if string is empty (a value like "0" is a valid value).
+		if ( '' === $value ) {
 			return '';
 		}
 
@@ -576,5 +578,44 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_default_roles(): array {
 		return array( 'administrator', 'editor' );
+	}
+
+	/**
+	 * Return whether the hooks for importing files with this service should be used in this request.
+	 *
+	 * This is the case for users with the capability for this service and for scheduled synchronizations
+	 * via cron and WP CLI, which run without a user.
+	 *
+	 * @return bool
+	 */
+	protected function is_import_allowed(): bool {
+		return defined( 'EFML_SYNC_RUNNING' ) || wp_doing_cron() || Helper::is_cli() || current_user_can( 'efml_cap_' . $this->get_name() );
+	}
+
+	/**
+	 * Return whether the actual import or synchronization is for this service.
+	 *
+	 * The import dialog sends the service with the request. A synchronization (also via cron or WP CLI)
+	 * sets the external source on the import object instead, which has the service as type.
+	 *
+	 * @param string $field The name of the field in the request, which contains the service.
+	 *
+	 * @return bool
+	 */
+	protected function is_actual_service( string $field = 'service' ): bool {
+		// use the service from the request, if given.
+		$service = filter_input( INPUT_POST, $field, FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		if ( ! is_null( $service ) ) {
+			return $this->get_name() === $service;
+		}
+
+		// bail if no external source is used for the actual import.
+		$term_id = Import::get_instance()->get_term_id();
+		if ( 0 === $term_id ) {
+			return false;
+		}
+
+		// return whether the external source is from this service.
+		return $this->get_name() === get_term_meta( $term_id, 'type', true );
 	}
 }

@@ -255,6 +255,7 @@ class Local extends Service_Base implements Service {
 	 * @param string $directory The used directory.
 	 *
 	 * @return bool Return true to prevent.
+	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function hide_generic_directories( bool $result, string $path, string $directory ): bool {
 		// bail if this is not a directory.
@@ -269,8 +270,13 @@ class Local extends Service_Base implements Service {
 			'tmp',
 		);
 
-		// return whether this directory is in ignore list or not.
-		return in_array( basename( $directory ), $ignore_list, true );
+		// return true to hide this directory if it is in the ignore list.
+		if ( in_array( basename( $path ), $ignore_list, true ) ) {
+			return true;
+		}
+
+		// return the given result for all other directories.
+		return $result;
 	}
 
 	/**

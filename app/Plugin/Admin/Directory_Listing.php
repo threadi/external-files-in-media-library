@@ -725,6 +725,13 @@ class Directory_Listing {
 			wp_send_json( $result_dialog );
 		}
 
+		// bail if this configuration could not be saved as external source (e.g., an uploaded file).
+		$service_obj->set_fields( $fields );
+		if ( ! $service_obj->is_archive_allowed() ) {
+			$result_dialog['detail']['texts'][] = '<p>' . __( 'This configuration could not be saved as external source.', 'external-files-in-media-library' ) . '</p>';
+			wp_send_json( $result_dialog );
+		}
+
 		// add the archive.
 		$term_id = Taxonomy::get_instance()->add( $type, $url, $fields );
 
@@ -845,6 +852,11 @@ class Directory_Listing {
 	public function is_source_allowed_for_current_user( int $term_id ): bool {
 		// bail if no ID is given.
 		if ( $term_id <= 0 ) {
+			return false;
+		}
+
+		// bail if the given ID is not an external source of this plugin.
+		if ( ! get_term( $term_id, Taxonomy::get_instance()->get_name() ) instanceof WP_Term ) {
 			return false;
 		}
 
@@ -1204,7 +1216,7 @@ class Directory_Listing {
 	 */
 	public function head_of_permission_section(): void {
 		// show simple text hint.
-		echo '<p><strong>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following buttons for faster configuration:', 'external-files-in-media-library' ) . '</p>';
+		echo '<p>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</p>';
 	}
 
 	/**

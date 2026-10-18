@@ -298,8 +298,76 @@ class Ftp extends Service_Base implements Service {
 			$parent_dir = trailingslashit( $parse_url['path'] );
 		}
 
+		// WordPress does not return the answer of the server, but PHP reports it as warning: collect them.
+		$ftp_warnings     = array();
+		$previous_handler = null;
+		$previous_handler = set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
+			static function ( int $errno, string $errstr, string $errfile = '', int $errline = 0 ) use ( &$ftp_warnings, &$previous_handler ): bool {
+				// collect warnings of the FTP functions.
+				if ( str_starts_with( $errstr, 'ftp_' ) ) {
+					$ftp_warnings[] = $errstr;
+				}
+
+				// let the previous handler or PHP handle it as usual.
+				if ( is_callable( $previous_handler ) ) {
+					return (bool) call_user_func( $previous_handler, $errno, $errstr, $errfile, $errline );
+				}
+				return false;
+			}
+		);
+
 		// get list of directory.
-		$directory_list = $ftp_connection->dirlist( $parent_dir, true, true );
+		try {
+			$directory_list = $ftp_connection->dirlist( $parent_dir, true, true );
+		} finally {
+			restore_error_handler();
+		}
+
+		// bail if directory could not be read (an empty directory results in an empty array).
+		if ( false === $directory_list ) {
+			// get the warning for the change into the directory, if it failed.
+			$chdir_warnings = array_values(
+				array_filter(
+					$ftp_warnings,
+					static function ( string $warning ): bool {
+						return str_starts_with( $warning, 'ftp_chdir()' );
+					}
+				)
+			);
+
+			// get the reason: the first warning is the cause, the following are results of it.
+			$reason = ! empty( $chdir_warnings ) ? $chdir_warnings[0] : ( $ftp_warnings[0] ?? '' );
+
+			// get the message depending on the failed step.
+			if ( str_contains( $reason, 'failed to retrieve the existing SSL session' ) ) {
+				// PHP needs the TLS session of the control connection for the data connection, but the server did not provide it.
+				/* translators: %1$s will be replaced by the directory. */
+				$message = sprintf( __( 'The list of files in the directory %1$s could not be loaded. The FTP server does not allow the reuse of the TLS session of the FTPS connection for the data connection, which PHP requires for a secure transfer. Ask the operator of the FTP server to enable TLS session resumption.', 'external-files-in-media-library' ), '<em>' . esc_html( $parent_dir ) . '</em>' );
+			} elseif ( ! empty( $chdir_warnings ) ) {
+				/* translators: %1$s will be replaced by the directory. */
+				$message = sprintf( __( 'The directory %1$s could not be opened on the FTP server. Check whether the directory exists and the user has access to it.', 'external-files-in-media-library' ), '<em>' . esc_html( $parent_dir ) . '</em>' );
+			} else {
+				/* translators: %1$s will be replaced by the directory. */
+				$message = sprintf( __( 'The list of files in the directory %1$s could not be loaded. The FTP server or a firewall may block the data connection in passive mode, which is used to load the list of files.', 'external-files-in-media-library' ), '<em>' . esc_html( $parent_dir ) . '</em>' );
+			}
+
+			// add the reason.
+			if ( ! empty( $reason ) ) {
+				/* translators: %1$s will be replaced by the answer of the FTP server. */
+				$message .= ' ' . sprintf( __( 'Answer: %1$s', 'external-files-in-media-library' ), '<code>' . esc_html( $reason ) . '</code>' );
+			}
+
+			// create an error object.
+			$error = new WP_Error();
+			$error->add( 'efml_service_ftp', $message );
+			$this->add_error( $error );
+
+			// log this event.
+			Log::get_instance()->create( $message, $directory, 'error' );
+
+			// do nothing more.
+			return array();
+		}
 
 		// collect the content of this directory.
 		$listing = array(

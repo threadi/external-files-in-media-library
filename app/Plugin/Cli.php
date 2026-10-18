@@ -18,6 +18,8 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
+use ExternalFilesInMediaLibrary\Services\Csv;
+use ExternalFilesInMediaLibrary\Services\Xml;
 use WP_Query;
 use WP_Term_Query;
 
@@ -70,7 +72,7 @@ class Cli {
 				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['login'] ) ) : '',
 			),
 			'password' => array(
-				'value' => ! empty( $arguments['login'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '',
+				'value' => ! empty( $arguments['login'] ) && ! empty( $arguments['password'] ) ? sanitize_text_field( wp_unslash( $arguments['password'] ) ) : '',
 			),
 		);
 
@@ -429,6 +431,81 @@ class Cli {
 
 		// show ok message.
 		\WP_CLI::success( __( 'Error-URLs has been removed from the queue.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Delete the lists with URLs (CSV or XML), which have been used via the directory listing and are no longer in use.
+	 *
+	 * The last downloaded version of a URL, which is saved as external source, is always kept.
+	 *
+	 * [--service=<value>]
+	 * : Only cleanup the lists of this service (csv or xml).
+	 *
+	 * [--days=<value>]
+	 * : Delete lists, which have not been used for this amount of days (default: the value from the settings).
+	 *
+	 * [--force]
+	 * : Run the cleanup also if it is disabled in the settings.
+	 *
+	 * [--dry-run]
+	 * : Only show the files, which would be deleted.
+	 *
+	 * @param array<int,string>    $names The names.
+	 * @param array<string,string> $arguments List of parameter to use.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function cleanup_lists( array $names = array(), array $arguments = array() ): void {
+		// get the services.
+		$services = array(
+			Csv::get_instance()->get_name() => Csv::get_instance(),
+			Xml::get_instance()->get_name() => Xml::get_instance(),
+		);
+
+		// filter for a single service.
+		if ( ! empty( $arguments['service'] ) ) {
+			$service = strtolower( $arguments['service'] );
+
+			// bail if service is unknown.
+			if ( ! isset( $services[ $service ] ) ) {
+				/* translators: %1$s will be replaced by a list of names. */
+				\WP_CLI::error( sprintf( __( 'Unknown service. Please use one of: %1$s', 'external-files-in-media-library' ), implode( ', ', array_keys( $services ) ) ) );
+				return;
+			}
+			$services = array( $service => $services[ $service ] );
+		}
+
+		// get the other options.
+		$days    = isset( $arguments['days'] ) ? absint( $arguments['days'] ) : 0;
+		$force   = isset( $arguments['force'] );
+		$dry_run = isset( $arguments['dry-run'] );
+
+		// run the cleanup for each service.
+		$count = 0;
+		foreach ( $services as $service_obj ) {
+			// show hint if cleanup is disabled for this service.
+			if ( ! $force && ! $service_obj->is_cleanup_enabled() ) {
+				/* translators: %1$s will be replaced by the label of the format (e.g. CSV). */
+				\WP_CLI::log( sprintf( __( 'The cleanup for %1$s is disabled in the settings. Use --force to run it anyway.', 'external-files-in-media-library' ), $service_obj->get_label() ) );
+				continue;
+			}
+
+			// run the cleanup and show the files.
+			foreach ( $service_obj->cleanup( $days, $force, $dry_run ) as $attachment_id ) {
+				\WP_CLI::log( '#' . $attachment_id . ( $dry_run ? ' ' . get_the_title( $attachment_id ) : '' ) );
+				++$count;
+			}
+		}
+
+		// show the result.
+		if ( $dry_run ) {
+			/* translators: %1$d will be replaced by a number. */
+			\WP_CLI::success( sprintf( _n( '%1$d file would be deleted.', '%1$d files would be deleted.', $count, 'external-files-in-media-library' ), $count ) );
+			return;
+		}
+		/* translators: %1$d will be replaced by a number. */
+		\WP_CLI::success( sprintf( _n( '%1$d file has been deleted.', '%1$d files have been deleted.', $count, 'external-files-in-media-library' ), $count ) );
 	}
 
 	/**
