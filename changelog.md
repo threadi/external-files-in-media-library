@@ -19,6 +19,7 @@
 
 ### Changed
 
+- Use enormous speedup for the directory listing from any external or local source
 - Credentials of REST API external sources are only sent to the host of the external source
 - Special handling for Imgur and Dropbox is only used for URLs on their domains
 - Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source

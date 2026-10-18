@@ -61,7 +61,7 @@
         "wp-phpunit/wp-phpunit": "^6.3"
     },
     "require": {
-        "php": "^8.1",
+        "php": ">=8.2",
         "ext-zip": "*",
         "ext-fileinfo": "*",
         "ext-mysqli": "*",
@@ -73,7 +73,7 @@
         "threadi/easy-directory-listing-for-wordpress": "*",
         "threadi/easy-settings-for-wordpress": "*",
         "threadi/easy-transients-for-wordpress": "^1.4.9",
-        "spatie/dropbox-api": "^1.23"
+        "spatie/dropbox-api": "^1.25"
     },
     "repositories": [
         {
