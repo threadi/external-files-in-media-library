@@ -782,8 +782,8 @@ class Queue extends Extension_Base {
 		$queue = new \ExternalFilesInMediaLibrary\Plugin\Tables\Queue();
 		$queue->prepare_items();
 		?>
+		<h2><?php echo esc_html__( 'Queue', 'external-files-in-media-library' ); ?></h2>
 		<div class="wrap eml-queue-table">
-			<h2><?php echo esc_html__( 'Queue', 'external-files-in-media-library' ); ?></h2>
 			<?php
 			$queue->views();
 			$queue->display();

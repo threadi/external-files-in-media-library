@@ -898,8 +898,8 @@ class Settings {
 		$log = new Logs();
 		$log->prepare_items();
 		?>
+		<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
 		<div class="wrap eml-log-table">
-			<h2><?php echo esc_html__( 'Logs', 'external-files-in-media-library' ); ?></h2>
 			<form method="get">
 				<input type="hidden" name="page" value="eml_settings">
 				<input type="hidden" name="tab" value="eml_logs">

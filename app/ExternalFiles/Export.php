@@ -245,7 +245,7 @@ class Export extends Tools_Base {
 		$setting->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
-		$field->set_description( '<p>' . __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) . '</p>' );
+		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );

@@ -1209,7 +1209,7 @@ class Directory_Listing {
 	 */
 	public function head_of_permission_section(): void {
 		// show simple text hint.
-		echo '<p><strong>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Use one of the following buttons for faster configuration:', 'external-files-in-media-library' ) . '</p>';
+		echo '<p>' . esc_html__( 'Define, which roles should be able to change the external sources.', 'external-files-in-media-library' ) . '</p>';
 	}
 
 	/**

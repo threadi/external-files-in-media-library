@@ -5,10 +5,10 @@
 ### Added
 
 - Added more PHP Unit tests and Playwright tests
-- Added bin/build-release.sh, which is used by the GitHub Action, Ant and Task to create the same release zip
+- Added the file "bin/build-release.sh", which is used by the GitHub Action, Ant and Task to create the same release zip
 - Added error message if the list of files in an FTP directory could not be loaded
-- Added hook "efml_ftp_use_pasv_address" to use the address an FTP server returns for passive mode
-- Added hint for FTPS servers which do not allow the reuse of the TLS session for the data connection
+- Added a hook "efml_ftp_use_pasv_address" to use the address an FTP server returns for passive mode
+- Added a hint for FTPS servers, which do not allow the reuse of the TLS session for the data connection
 - Added PHP Unit tests with real FTP, FTPS, SFTP and HTTP servers and a simulated WordPress REST API (see bin/test-servers.sh)
 - Added PHP Unit tests for the export, the settings of synchronizations, the proxy, the security checks of all AJAX requests, archives and the hosting of external files
 - Added "composer test-coverage" to show the code coverage of the PHP Unit tests
@@ -16,7 +16,7 @@
 - Added log entry if an exported file is not saved on the FTP server, as a file with this name already exists there
 - Added PHP Unit tests for the synchronization of ZIP files, YouTube channels and websites in a multisite, the directory listing of archives, the export and the checks of schedules and proxy
 - Added "composer test-multisite" to run the PHP Unit tests for multisites
-- Added hook "efml_dropbox_client" to use another DropBox client (e.g. for tests)
+- Added a hook "efml_dropbox_client" to use another DropBox client (e.g. for tests)
 
 ### Changed
 
@@ -25,6 +25,8 @@
 - Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source
 - Files in archives are read in parts and only up to the maximum size, instead of loading them completely into memory
 - Archives only list and extract files with a type allowed in the settings, like all other external sources
+- Optimized sync and export settings regarding their dependence
+- Updated dependencies
 
 ### Fixed
 

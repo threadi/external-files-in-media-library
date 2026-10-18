@@ -174,6 +174,9 @@ class Synchronization extends Tools_Base {
 		$setting->set_type( 'array' );
 		$setting->set_default( SynchronizationDialog::get_instance()->get_default_extensions() );
 		$setting->set_show_in_rest( array( 'schema' => array( 'items' => array( 'type' => 'string' ) ) ) );
+		if ( method_exists( $setting, 'set_soft_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$setting->set_soft_reload_on_save( true );
+		}
 		$field = new MultiSelect( $settings_obj );
 		$field->set_title( __( 'Options for synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Select the options you want to have available in your configuration dialog for each synchronization. You will be able to enable or disable these settings on each external source.', 'external-files-in-media-library' ) );
@@ -183,14 +186,14 @@ class Synchronization extends Tools_Base {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting to enable automatic sync for every new external directory.
-		$setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
-		$setting->set_section( $sync_settings_section );
-		$setting->set_default( 0 );
+		$automatic_setting = $settings_obj->add_setting( 'eml_sync_set_automatic' );
+		$automatic_setting->set_section( $sync_settings_section );
+		$automatic_setting->set_default( 0 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Enable automatic synchronization', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'If enabled every new external source will automatically be synchronized.', 'external-files-in-media-library' ) );
 		$field->add_depend( $sync_settings_setting, 1 );
-		$setting->set_field( $field );
+		$automatic_setting->set_field( $field );
 
 		// create interval setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_interval' );
@@ -202,7 +205,7 @@ class Synchronization extends Tools_Base {
 		$field->set_description( __( 'Serves as a preset for new external sources. This setting can be changed on each external source.', 'external-files-in-media-library' ) );
 		$field->set_options( Intervals::get_instance()->get_intervals_for_settings() );
 		$field->set_sanitize_callback( array( $this, 'sanitize_interval_setting' ) );
-		$field->add_depend( $sync_settings_setting, 1 );
+		$field->add_depend( $automatic_setting, 1 );
 		$setting->set_field( $field );
 
 		// add setting for unused files after sync.

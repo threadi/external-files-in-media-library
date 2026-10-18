@@ -129,7 +129,7 @@ class Sync_By_Size extends Extension_Base {
 		// add a section.
 		$section = $export_tab->add_section( 'sync_by_file_size', 20 );
 		$section->set_title( __( 'Synchronization by file size', 'external-files-in-media-library' ) );
-		$section->set_callback( array( $this, 'show_info' ) );
+		$section->set_hidden( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_sync_min_size' );
@@ -140,7 +140,6 @@ class Sync_By_Size extends Extension_Base {
 		$field->set_title( __( 'Minimum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );
-		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 		$setting->set_field( $field );
 
 		// add setting.
@@ -152,7 +151,6 @@ class Sync_By_Size extends Extension_Base {
 		$field->set_title( __( 'Maximum file size', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
 		$field->set_min( 0 );
-		$field->set_readonly( ! in_array( $this->get_name(), (array) get_option( 'eml_sync_extensions' ), true ) );
 		$setting->set_field( $field );
 	}
 
@@ -169,8 +167,8 @@ class Sync_By_Size extends Extension_Base {
 		$min_size = absint( get_term_meta( $term_id, 'eml_sync_min_size', true ) );
 		$max_size = absint( get_term_meta( $term_id, 'eml_sync_max_size', true ) );
 
-		$form .= '<div><label for="min_size">' . __( 'Minimum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="min_size" id="min_size" value="' . $min_size . '">' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
-		$form .= '<div><label for="max_size">' . __( 'Maximum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="max_size" id="max_size" value="' . $max_size . '">' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
+		$form .= '<div><label for="min_size">' . __( 'Minimum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="min_size" id="min_size" value="' . $min_size . '"> ' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
+		$form .= '<div><label for="max_size">' . __( 'Maximum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="max_size" id="max_size" value="' . $max_size . '"> ' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
 
 		// return the resulting form.
 		return $form;
