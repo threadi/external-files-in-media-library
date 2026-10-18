@@ -16,10 +16,10 @@
 - Added log entry if an exported file is not saved on the FTP server, as a file with this name already exists there
 - Added PHP Unit tests for the synchronization of ZIP files, YouTube channels and websites in a multisite, the directory listing of archives, the export and the checks of schedules and proxy
 - Added "composer test-multisite" to run the PHP Unit tests for multisites
+- Added hook "efml_dropbox_client" to use another DropBox client (e.g. for tests)
 
 ### Changed
 
-- Use enormous speedup for the directory listing from any external or local source
 - Credentials of REST API external sources are only sent to the host of the external source
 - Special handling for Imgur and Dropbox is only used for URLs on their domains
 - Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source
@@ -76,6 +76,8 @@
 - Fixed check for files in .tar.gz archives
 - Fixed first external source with enabled export not being saved as main export source
 - Fixed import of files from local archives in the allowed directory for local files
+- Fixed synchronization and import of DropBox folders other than the root not importing any file
+- Fixed import of single files from the listing of a saved external source with URLs without protocol (e.g. DropBox) using a wrong URL
 - Fixed FTP connections failing if no timeout is set in the settings
 - Fixed proxy not caching any file if the directory wp-content/cache does not exist, although it logged success
 - Fixed change of the proxy path to a directory with not existing parent directories

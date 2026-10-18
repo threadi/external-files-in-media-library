@@ -1664,6 +1664,17 @@ class DropBox extends Service_Base implements Service {
 	 * @return Client|false
 	 */
 	public function get_client(): Client|false {
+		/**
+		 * Filter the DropBox client to use, e.g. for tests. Return a client to use it instead of the default one.
+		 *
+		 * @since 5.5.2 Available since 5.5.2.
+		 * @param Client|null $client The client.
+		 */
+		$client = apply_filters( 'efml_dropbox_client', null );
+		if ( $client instanceof Client ) {
+			return $client;
+		}
+
 		// get the access token data.
 		$data = $this->get_access_token();
 
