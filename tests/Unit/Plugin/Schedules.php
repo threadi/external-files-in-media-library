@@ -176,4 +176,24 @@ class Schedules extends externalFilesTests {
 		);
 		$this->assertEquals( 'efml_deprecated', $schedule->get_interval() );
 	}
+
+	/**
+	 * Test that every schedule of this plugin is recognized as own event after its installation,
+	 * so that it gets its action to run and is not re-installed with each request.
+	 *
+	 * @return void
+	 */
+	public function test_all_schedules_are_recognized(): void {
+		$schedules = \ExternalFilesInMediaLibrary\Plugin\Schedules::get_instance();
+		foreach ( $schedules->get_schedule_object_names() as $class_name ) {
+			$schedule = new $class_name();
+			$schedule->install();
+			$this->assertArrayHasKey( $schedule->get_name(), $schedules->get_events(), $class_name );
+		}
+
+		// the action to run the cleanup of used lists is set.
+		$schedules->init_schedules();
+		$this->assertNotFalse( has_action( 'eml_url_list_cleanup', array( $schedules, 'run_schedule' ) ) );
+		$schedules->delete_all();
+	}
 }

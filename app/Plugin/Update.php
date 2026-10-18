@@ -126,6 +126,9 @@ class Update {
 				$this->version551();
 			}
 
+			// install the schedules, which are new in this version (or have been missing).
+			Schedules::get_instance()->create_schedules();
+
 			// save new plugin-version in the DB.
 			update_option( 'efmlVersion', $installed_plugin_version );
 		}

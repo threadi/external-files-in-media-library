@@ -28,6 +28,7 @@ And even more:
 ✅ Check their availability (only for HTTP connections) to ensure that the external files are actually available.
 ✅ Configure, which users in your project are allowed to use the external files options.
 ✅ Extract ZIP files from any external source into your media library.
+✅ Import lists of URLs from CSV and XML files (e.g., sitemaps, feeds or exports), uploaded or from a URL.
 
 == Support for other plugins ==
 

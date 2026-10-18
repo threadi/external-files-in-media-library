@@ -17,6 +17,14 @@
 - Added PHP Unit tests for the synchronization of ZIP files, YouTube channels and websites in a multisite, the directory listing of archives, the export and the checks of schedules and proxy
 - Added "composer test-multisite" to run the PHP Unit tests for multisites
 - Added a hook "efml_dropbox_client" to use another DropBox client (e.g. for tests)
+- Added services to import URLs from CSV and XML files: upload a file or enter its URL (optionally with Auth Basic credentials), choose the URLs and import them
+- Added automatic detection of the fields with URLs and of alternative text, caption, description and date in CSV and XML files (incl. sitemaps, RSS and Atom feeds, product feeds and WordPress exports), changeable in the import dialog
+- Added option "Import URLs" for CSV and XML files in the media library (can be disabled in the settings of each service)
+- Added automatic deletion of CSV and XML files used via the directory listing after configurable days without usage (can be disabled in the settings of each service)
+- Added hint about the automatic deletion of these CSV and XML files in the media modal and as meta box on their edit page
+- Added WP CLI command "wp eml cleanup_lists" to delete used CSV and XML files manually
+- Added synchronization for CSV and XML files from URLs, which are downloaded again only if they have been changed
+- Added hooks "efml_url_list_check_interval", "efml_url_list_max_size", "efml_url_list_max_records" and "efml_url_list_role_names" for the import of URLs from lists
 
 ### Changed
 

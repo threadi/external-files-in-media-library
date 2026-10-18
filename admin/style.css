@@ -360,6 +360,14 @@ body.post-type-attachment .external_files {
 	content: "\f120";
 }
 
+.efml-csv > *:before {
+	content: "\f495";
+}
+
+.efml-xml > *:before {
+	content: "\f475";
+}
+
 .efml-dropbox > *:before {
 	background-image: url(../gfx/dropbox_icon.svg);
 	background-size: contain;
@@ -600,4 +608,34 @@ body.settings_page_eml_settings {
 
 .efml-transient img {
 	width: 24px;
+}
+
+.easy-dialog.efml .efml-url-list-mapping {
+	table {
+		margin: 0 0 1em;
+	}
+	th, td {
+		vertical-align: middle;
+	}
+	td code {
+		word-break: break-all;
+	}
+	select {
+		max-width: 100%;
+	}
+}
+
+.compat-field-efml_url_list_csv, .compat-field-efml_url_list_xml {
+	.dashicons {
+		vertical-align: middle;
+	}
+}
+
+/* hint about the automatic deletion of used lists with URLs */
+.efml-url-list-cleanup-hint {
+    margin-top: 0;
+}
+.efml-url-list-cleanup-hint .dashicons {
+    color: #996800;
+    vertical-align: text-bottom;
 }

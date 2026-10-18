@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+	<channel>
+		<title>Example feed</title>
+		<link>https://example.com/</link>
+		<item>
+			<title>Example PDF</title>
+			<description>The example PDF file</description>
+			<enclosure url="https://example.com/example.pdf" type="application/pdf"/>
+		</item>
+		<item>
+			<title>Second PDF</title>
+			<media:content url="https://files.example.com/second.pdf"/>
+		</item>
+	</channel>
+</rss>

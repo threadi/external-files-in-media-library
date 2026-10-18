@@ -75,6 +75,19 @@ Dadurch werden fehlerhafte URLs aus der Warteschlange entfernt.
 
 `wp eml cleanup_queue`
 
+## Listen mit URLs aufräumen
+
+Dadurch werden die CSV- und XML-Dateien gelöscht, die über den CSV- oder XML-Service hochgeladen oder heruntergeladen und seit der eingestellten Anzahl an Tagen nicht mehr verwendet wurden. Die zuletzt heruntergeladene Version einer als externe Quelle gespeicherten URL bleibt immer erhalten.
+
+`wp eml cleanup_lists`
+
+Optionale Parameter:
+
+* `--service=csv` oder `--service=xml`, um nur die Dateien eines Services aufzuräumen
+* `--days=3`, um Dateien zu löschen, die seit 3 Tagen nicht verwendet wurden (statt des Werts aus den Einstellungen)
+* `--force`, um das Aufräumen auch auszuführen, wenn es in den Einstellungen deaktiviert ist
+* `--dry-run`, um nur anzuzeigen, welche Dateien gelöscht würden
+
 ## Warteschlange löschen
 
 Dadurch werden alle Einträge in der Warteschlange gelöscht.
