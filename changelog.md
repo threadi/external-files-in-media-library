@@ -39,6 +39,9 @@
 
 ### Fixed
 
+- Fixed deprecation of finfo_close() and curl_close() with PHP 8.5
+- Fixed missing hint for FTPS servers without reuse of the TLS session with PHP 8.4 and newer
+- Fixed database errors during the installation of the queue table with MySQL 8 (no default value for TEXT columns)
 - Fixed settings of a synchronized external source (file types, dates) being used for other external sources synchronized in the same request, which could delete their files
 - Fixed minimum and maximum file size in the configuration of a synchronization not being saved
 - Fixed export action in media library being hidden if only a minimum or maximum file size for exports is set

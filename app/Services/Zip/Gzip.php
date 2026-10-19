@@ -185,8 +185,8 @@ class Gzip extends Zip_Base {
 		// get the content type of this file.
 		$mime_type = finfo_file( $file_info, $extracted_file );
 
-		// close the file info.
-		finfo_close( $file_info );
+		// free the file info (finfo_close() is deprecated since PHP 8.5, the object is freed automatically).
+		unset( $file_info );
 
 		// remove the temporary file, it was only used to detect the type.
 		$wp_filesystem->delete( $extracted_file );
@@ -313,8 +313,8 @@ class Gzip extends Zip_Base {
 		// get the content type of this file.
 		$mime_type = finfo_file( $file_info, $extracted_file );
 
-		// close the file info.
-		finfo_close( $file_info );
+		// free the file info (finfo_close() is deprecated since PHP 8.5, the object is freed automatically).
+		unset( $file_info );
 
 		// bail if mime type could not be detected or is not allowed.
 		if ( ! is_string( $mime_type ) || ! $this->is_mime_type_allowed( $mime_type ) ) {

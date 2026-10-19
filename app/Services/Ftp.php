@@ -335,11 +335,26 @@ class Ftp extends Service_Base implements Service {
 				)
 			);
 
+			// get the warning for the missing TLS session of the data connection, if it failed because of it.
+			// This must be checked first: since PHP 8.4 the answer of the aborted transfer is only read with the next
+			// command, so the following change of the directory fails with "Transfer aborted" as a result of it.
+			$tls_warnings = array_values(
+				array_filter(
+					$ftp_warnings,
+					static function ( string $warning ): bool {
+						return str_contains( $warning, 'failed to retrieve the existing SSL session' );
+					}
+				)
+			);
+
 			// get the reason: the first warning is the cause, the following are results of it.
 			$reason = ! empty( $chdir_warnings ) ? $chdir_warnings[0] : ( $ftp_warnings[0] ?? '' );
+			if ( ! empty( $tls_warnings ) ) {
+				$reason = $tls_warnings[0];
+			}
 
 			// get the message depending on the failed step.
-			if ( str_contains( $reason, 'failed to retrieve the existing SSL session' ) ) {
+			if ( ! empty( $tls_warnings ) ) {
 				// PHP needs the TLS session of the control connection for the data connection, but the server did not provide it.
 				/* translators: %1$s will be replaced by the directory. */
 				$message = sprintf( __( 'The list of files in the directory %1$s could not be loaded. The FTP server does not allow the reuse of the TLS session of the FTPS connection for the data connection, which PHP requires for a secure transfer. Ask the operator of the FTP server to enable TLS session resumption.', 'external-files-in-media-library' ), '<em>' . esc_html( $parent_dir ) . '</em>' );
