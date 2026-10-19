@@ -34,6 +34,7 @@
 - Files in archives are read in parts and only up to the maximum size, instead of loading them completely into memory
 - Archives only list and extract files with a type allowed in the settings, like all other external sources
 - Optimized sync and export settings regarding their dependence
+- Changed the second param on hook 'get_attachet_file' from int to mixed for better compatibility with some non-complying third-party-plugins
 - Updated dependencies
 
 ### Fixed

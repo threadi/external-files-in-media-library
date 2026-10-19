@@ -823,14 +823,21 @@ class Files {
 	/**
 	 * Prevent output as external file if availability is not given.
 	 *
+	 * Hint: second parameter is mixed because some plugins (like Kadence Blocks Pro) use not-integer values there.
+	 *
 	 * @source https://developer.wordpress.org/reference/hooks/get_attached_file/
 	 *
 	 * @param false|string $file The file.
-	 * @param int          $post_id The post-ID.
+	 * @param mixed        $post_id The post-ID.
 	 *
 	 * @return false|string
 	 */
-	public function get_attached_file( false|string $file, int $post_id ): false|string {
+	public function get_attached_file( false|string $file, mixed $post_id ): false|string {
+		// convert a wrong parameter to the required format.
+		if ( ! is_int( $post_id ) ) {
+			$post_id = absint( $post_id );
+		}
+
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
