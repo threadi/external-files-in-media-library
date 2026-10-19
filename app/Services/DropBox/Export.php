@@ -378,7 +378,7 @@ class Export extends Export_Base {
 	 */
 	private function dropbox_curl_request( string $url, array $headers, string $body = '' ): array|bool {
 		// create the request.
-		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_error, WordPress.WP.AlternativeFunctions.curl_curl_getinfo, WordPress.WP.AlternativeFunctions.curl_curl_close
+		// phpcs:disable WordPress.WP.AlternativeFunctions.curl_curl_init, WordPress.WP.AlternativeFunctions.curl_curl_setopt, WordPress.WP.AlternativeFunctions.curl_curl_exec, WordPress.WP.AlternativeFunctions.curl_curl_error, WordPress.WP.AlternativeFunctions.curl_curl_getinfo
 		$ch = curl_init( $url );
 		curl_setopt( $ch, CURLOPT_POST, true );
 		curl_setopt( $ch, CURLOPT_HTTPHEADER, $headers );
@@ -390,8 +390,8 @@ class Export extends Export_Base {
 		$err      = curl_error( $ch );
 		$status   = curl_getinfo( $ch, CURLINFO_HTTP_CODE );
 
-		// close the connection.
-		curl_close( $ch );
+		// free the connection (curl_close() is deprecated since PHP 8.5, the handle is freed automatically).
+		unset( $ch );
 		// phpcs:enable
 
 		// bail on error.

@@ -255,11 +255,11 @@ class Queue extends Extension_Base {
 		// table for the queue.
 		$sql = 'CREATE TABLE ' . $wpdb->prefix . "eml_queue (
 		    `id` mediumint(9) NOT NULL AUTO_INCREMENT,
-            `time` datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-            `url` text DEFAULT '' NOT NULL,
-            `fields` text DEFAULT '' NOT NULL,
-            `state` text DEFAULT '' NOT NULL,
-            `options` text DEFAULT '' NOT NULL,
+            `time` datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
+            `url` text NOT NULL,
+            `fields` text NOT NULL,
+            `state` text NOT NULL,
+            `options` text NOT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
