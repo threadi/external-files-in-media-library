@@ -164,6 +164,26 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return whether files with the given mime type should be hidden in the directory listing.
+	 *
+	 * This is the case if the setting to hide not supported file types is enabled and the mime type is
+	 * not allowed in the settings.
+	 *
+	 * @param string $mime_type The mime type.
+	 *
+	 * @return bool
+	 */
+	protected function is_mime_type_hidden( string $mime_type ): bool {
+		// bail if setting is disabled.
+		if ( 1 !== absint( get_option( 'eml_directory_listing_hide_not_supported_file_types' ) ) ) {
+			return false;
+		}
+
+		// return whether this file type is not allowed.
+		return ! in_array( $mime_type, Helper::get_allowed_mime_types(), true );
+	}
+
+	/**
 	 * Return list of possible modes this service can be run.
 	 *
 	 * @return array<string,string>
