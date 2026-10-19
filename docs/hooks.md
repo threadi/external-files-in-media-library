@@ -104,8 +104,8 @@ Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 184](Ext
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$url` |  |
-`$files` |  |
+`$url` |  | 
+`$files` |  | 
 
 Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 284](ExternalFiles/Import.php#L284-L287)
 
@@ -286,7 +286,7 @@ Source: [app/ExternalFiles/File_Types/Audio.php](ExternalFiles/File_Types/Audio.
 
 Argument | Type | Description
 -------- | ---- | -----------
-`array(&$query)` |  |
+`array(&$query)` |  | 
 
 **Changelog**
 
@@ -505,7 +505,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 922](Externa
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_id()` |  |
+`$this->get_id()` |  | 
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
 
 **Changelog**
@@ -524,7 +524,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 988](Externa
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_id()` |  |
+`$this->get_id()` |  | 
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
 
 **Changelog**
@@ -543,7 +543,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 1071](Extern
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_url()` |  |
+`$this->get_url()` |  | 
 
 **Changelog**
 
@@ -561,8 +561,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_url()` |  |
-`$matches[1]` |  |
+`$this->get_url()` |  | 
+`$matches[1]` |  | 
 
 **Changelog**
 
@@ -599,7 +599,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$file_url` | `string` | The URL to import.
-`$matches[1]` |  |
+`$matches[1]` |  | 
 
 **Changelog**
 
@@ -617,7 +617,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_url()` |  |
+`$this->get_url()` |  | 
 
 **Changelog**
 
@@ -635,7 +635,7 @@ Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->get_url()` |  |
+`$this->get_url()` |  | 
 `$file_list` | `array` | List of files.
 
 **Changelog**
@@ -839,7 +839,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$external_file_obj` |  |
+`$external_file_obj` |  | 
 
 Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 187](ExternalFiles/Proxy.php#L187-L190)
 
@@ -946,7 +946,7 @@ Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 644](Exter
 Argument | Type | Description
 -------- | ---- | -----------
 `$url` | `string` | The address.
-`array_keys($entries)` |  |
+`array_keys($entries)` |  | 
 
 **Changelog**
 
@@ -983,7 +983,7 @@ Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 2173
 Argument | Type | Description
 -------- | ---- | -----------
 `$file_url` | `string` | The URL of the file.
-`array_keys($entries)` |  |
+`array_keys($entries)` |  | 
 
 **Changelog**
 
@@ -1074,7 +1074,7 @@ Source: [app/Plugin/Statistics.php](Plugin/Statistics.php), [line 409](Plugin/St
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$directory` |  |
+`$directory` |  | 
 
 Source: [app/Plugin/Templates.php](Plugin/Templates.php), [line 81](Plugin/Templates.php#L81-L81)
 
@@ -1564,7 +1564,7 @@ Use "read" to provide only the abilities which do not change anything, or "all" 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`is_string($mode) ? $mode : 'read'` |  |
+`is_string($mode) ? $mode : 'read'` |  | 
 
 **Changelog**
 
@@ -1795,7 +1795,7 @@ Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 472](Ext
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$string_to_add` |  |
+`$string_to_add` |  | 
 
 Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 797](ExternalFiles/Import.php#L797-L797)
 
@@ -2049,8 +2049,8 @@ Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [l
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$result` |  |
-`$url` |  |
+`$result` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/ExportDialog.php](ExternalFiles/ExportDialog.php), [line 327](ExternalFiles/ExportDialog.php#L327-L327)
 
@@ -2378,8 +2378,8 @@ Source: [app/ExternalFiles/Forms.php](ExternalFiles/Forms.php), [line 842](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$instance` |  |
+`$true` |  | 
+`$instance` |  | 
 
 Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 134](ExternalFiles/File.php#L134-L134)
 
@@ -2391,7 +2391,7 @@ Source: [app/ExternalFiles/File.php](ExternalFiles/File.php), [line 134](Externa
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$this->availability` |  |
+`$this->availability` |  | 
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\File` | The file object.
 
 **Changelog**
@@ -2445,8 +2445,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 139](ExternalFiles/Protocols/Http.php#L139-L139)
 
@@ -2456,8 +2456,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 158](ExternalFiles/Protocols/Http.php#L158-L158)
 
@@ -2508,8 +2508,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$results` |  |
-`$this->get_url()` |  |
+`$results` |  | 
+`$this->get_url()` |  | 
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http` | The actual protocol object.
 
 **Changelog**
@@ -2528,7 +2528,7 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$matches` |  |
+`$matches` |  | 
 `$content` | `string` | The content to parse.
 `$url` | `string` | The used URL.
 
@@ -2585,8 +2585,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 672](ExternalFiles/Protocols/Http.php#L672-L672)
 
@@ -2615,8 +2615,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 728](ExternalFiles/Protocols/Http.php#L728-L728)
 
@@ -2702,8 +2702,8 @@ Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 896](ExternalFiles/Protocols/Http.php#L896-L896)
 
@@ -2754,7 +2754,7 @@ Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$files` |  |
+`$files` |  | 
 `$url` | `string` | The URL to import.
 `$instance` | `\ExternalFilesInMediaLibrary\ExternalFiles\Protocols\File` | The actual protocol object.
 
@@ -2792,8 +2792,8 @@ Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$file_path` |  |
+`$true` |  | 
+`$file_path` |  | 
 
 Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 279](ExternalFiles/Protocols/File.php#L279-L279)
 
@@ -2806,7 +2806,7 @@ Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array<string,mixed>` | List of detected file settings.
-`$file_path` |  |
+`$file_path` |  | 
 `$response_headers` | `array<string,mixed>` | The response header.
 
 **Changelog**
@@ -2823,8 +2823,8 @@ Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php)
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php), [line 422](ExternalFiles/Protocols/File.php#L422-L422)
 
@@ -2855,7 +2855,7 @@ Source: [app/ExternalFiles/Protocols/File.php](ExternalFiles/Protocols/File.php)
 Argument | Type | Description
 -------- | ---- | -----------
 `$return` | `bool` | The result of this check.
-`$this->get_url()` |  |
+`$this->get_url()` |  | 
 
 **Changelog**
 
@@ -2893,7 +2893,7 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 Argument | Type | Description
 -------- | ---- | -----------
 `$results` | `array` | List of detected file settings.
-`$file_path` |  |
+`$file_path` |  | 
 `$response_headers` | `array` | The response header.
 
 **Changelog**
@@ -2910,8 +2910,8 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$use_pasv_address` |  |
-`$url` |  |
+`$use_pasv_address` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 520](ExternalFiles/Protocols/Ftp.php#L520-L520)
 
@@ -2921,8 +2921,8 @@ Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), 
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 579](ExternalFiles/Protocols/Ftp.php#L579-L579)
 
@@ -3060,7 +3060,7 @@ Source: [app/ExternalFiles/Proxy.php](ExternalFiles/Proxy.php), [line 505](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$web_config` |  |
+`$web_config` |  | 
 
 **Changelog**
 
@@ -3259,9 +3259,9 @@ Source: [app/ExternalFiles/ImportDialog.php](ExternalFiles/ImportDialog.php), [l
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$false` |  |
-`$url` |  |
-`$attachment_id` |  |
+`$false` |  | 
+`$url` |  | 
+`$attachment_id` |  | 
 
 Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 207](ExternalFiles/Files.php#L207-L207)
 
@@ -3307,8 +3307,8 @@ Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 417](Exter
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$true` |  |
-`$url` |  |
+`$true` |  | 
+`$url` |  | 
 
 Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1381](ExternalFiles/Files.php#L1381-L1381)
 
@@ -3356,7 +3356,7 @@ Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1533](Services/D
 
 Argument | Type | Description
 -------- | ---- | -----------
-`null` |  |
+`null` |  | 
 
 **Changelog**
 
@@ -3409,8 +3409,8 @@ Source: [app/Services/Multisite.php](Services/Multisite.php), [line 335](Service
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$max_size` |  |
-`$instance` |  |
+`$max_size` |  | 
+`$instance` |  | 
 
 Source: [app/Services/Zip/Zip_Base.php](Services/Zip/Zip_Base.php), [line 293](Services/Zip/Zip_Base.php#L293-L293)
 
@@ -3442,7 +3442,7 @@ Source: [app/Services/Rest.php](Services/Rest.php), [line 564](Services/Rest.php
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$entry` |  |
+`$entry` |  | 
 `$url` | `string` | The requested external URL.
 `$response_headers` | `array<string,mixed>` | The response header.
 
@@ -3498,9 +3498,9 @@ Source: [app/Services/Rest.php](Services/Rest.php), [line 1137](Services/Rest.ph
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$results` |  |
-`$file_path` |  |
-`$file` |  |
+`$results` |  | 
+`$file_path` |  | 
+`$file` |  | 
 
 **Changelog**
 
@@ -3516,8 +3516,8 @@ Source: [app/Services/Rest.php](Services/Rest.php), [line 1234](Services/Rest.ph
 
 Argument | Type | Description
 -------- | ---- | -----------
-`60` |  |
-`$url` |  |
+`60` |  | 
+`$url` |  | 
 
 Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 1194](Services/Url_List_Base.php#L1194-L1194)
 
@@ -3527,8 +3527,8 @@ Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 1194
 
 Argument | Type | Description
 -------- | ---- | -----------
-`wp_max_upload_size()` |  |
-`$url` |  |
+`wp_max_upload_size()` |  | 
+`$url` |  | 
 
 Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 1346](Services/Url_List_Base.php#L1346-L1346)
 
@@ -3538,8 +3538,8 @@ Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 1346
 
 Argument | Type | Description
 -------- | ---- | -----------
-`100000` |  |
-`$attachment_id` |  |
+`100000` |  | 
+`$attachment_id` |  | 
 
 Source: [app/Services/Url_List_Base.php](Services/Url_List_Base.php), [line 1573](Services/Url_List_Base.php#L1573-L1573)
 
@@ -3676,8 +3676,8 @@ Source: [app/Services/Zip.php](Services/Zip.php), [line 922](Services/Zip.php#L9
 
 Argument | Type | Description
 -------- | ---- | -----------
-`$limit` |  |
-`$settings` |  |
+`$limit` |  | 
+`$settings` |  | 
 
 Source: [app/Services/Zip.php](Services/Zip.php), [line 1107](Services/Zip.php#L1107-L1107)
 
@@ -3700,7 +3700,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Ftp.php](Services/Ftp.php), [line 400](Services/Ftp.php#L400-L412)
+Source: [app/Services/Ftp.php](Services/Ftp.php), [line 415](Services/Ftp.php#L415-L427)
 
 ### `efml_service_ftp_user_settings`
 
@@ -3718,7 +3718,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Ftp.php](Services/Ftp.php), [line 781](Services/Ftp.php#L781-L787)
+Source: [app/Services/Ftp.php](Services/Ftp.php), [line 796](Services/Ftp.php#L796-L802)
 
 ### `efml_service_modes`
 
