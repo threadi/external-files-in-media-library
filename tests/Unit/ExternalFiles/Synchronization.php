@@ -106,4 +106,91 @@ class Synchronization extends externalFilesTests {
 
 		$this->assertSame( $priority, has_filter( 'pre_delete_attachment', array( $obj, 'prevent_deletion' ) ) );
 	}
+
+	/**
+	 * The hooks, which have been active during the import of the synchronization.
+	 *
+	 * @var array<string,mixed>
+	 */
+	private array $hooks_during_import = array();
+
+	/**
+	 * Save the hooks and credentials, which are active during the import of the synchronization.
+	 *
+	 * @return void
+	 */
+	public function check_hooks_during_import(): void {
+		$sync_obj                  = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance();
+		$this->hooks_during_import = array(
+			'duplicate_check' => has_filter( 'efml_duplicate_check', array( $sync_obj, 'disable_duplicate_check' ) ),
+			'mark_as_synced'  => has_action( 'efml_after_file_save', array( $sync_obj, 'mark_as_synced' ) ),
+			'sftp_file_check' => has_action( 'efml_sftp_directory_import_file_check', array( $sync_obj, 'update_url_count' ) ),
+			'fields'          => \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->get_fields(),
+		);
+	}
+
+	/**
+	 * Test if the credentials and hooks of a synchronization are only used during its import and are removed afterward,
+	 * so following imports in the same request are not changed by them.
+	 *
+	 * @return void
+	 */
+	public function test_credentials_and_hooks_are_removed_after_sync(): void {
+		$sync_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance();
+		$import   = \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance();
+
+		// create the external source with credentials.
+		$url     = self::get_test_file( 'pdf', 'http' );
+		$fields  = array(
+			'login'    => array( 'value' => 'user' ),
+			'password' => array( 'value' => 'secret' ),
+		);
+		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'http', $url, $fields );
+		$this->assertGreaterThan( 0, $term_id );
+		$term_data = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id );
+
+		// run the synchronization and check the state during the import.
+		add_action( 'efml_before_import', array( $this, 'check_hooks_during_import' ) );
+		$sync_obj->sync( $url, $term_data, $term_id );
+		remove_action( 'efml_before_import', array( $this, 'check_hooks_during_import' ) );
+
+		// the hooks and credentials have been used during the import.
+		$this->assertSame( 10, $this->hooks_during_import['duplicate_check'] );
+		$this->assertSame( 10, $this->hooks_during_import['mark_as_synced'] );
+		$this->assertSame( 10, $this->hooks_during_import['sftp_file_check'] );
+		$this->assertSame( $term_data['fields'] ?? array(), $this->hooks_during_import['fields'] );
+
+		// they are removed after the synchronization.
+		$this->assertFalse( has_filter( 'efml_duplicate_check', array( $sync_obj, 'disable_duplicate_check' ) ) );
+		$this->assertFalse( has_action( 'efml_after_file_save', array( $sync_obj, 'mark_as_synced' ) ) );
+		$this->assertFalse( has_filter( 'efml_file_import_attachment', array( $sync_obj, 'get_attachment_id' ) ) );
+		$this->assertSame( array(), $import->get_fields() );
+		$this->assertSame( 0, $import->get_term_id() );
+
+		// a following import of the same URL is detected as duplicate again.
+		$count = $this->get_media_file_count();
+		$this->assertGreaterThan( 0, $count );
+		$this->assertFalse( $import->add_url( $url ) );
+		$this->assertSame( $count, $this->get_media_file_count() );
+	}
+
+	/**
+	 * Test if credentials set before a synchronization are restored afterward.
+	 *
+	 * @return void
+	 */
+	public function test_previous_credentials_are_restored_after_sync(): void {
+		$import = \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance();
+		$fields = array( 'login' => array( 'value' => 'other' ) );
+		$import->set_fields( $fields );
+
+		// run the synchronization of a not readable source.
+		$url     = self::get_faulty_test_file( 'pdf', 'http' );
+		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'http', $url, array() );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id ), $term_id );
+
+		// the previous credentials are used again.
+		$this->assertSame( $fields, $import->get_fields() );
+		$import->set_fields( array() );
+	}
 }

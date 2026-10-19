@@ -562,6 +562,11 @@ class Http extends Protocol_Base {
 			}
 		}
 
+		// bail if this file must not be loaded during an import (e.g. as it is too large).
+		if ( Import::get_instance()->is_file_loading_prevented( $results ) ) {
+			return array();
+		}
+
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 

@@ -194,6 +194,17 @@ class Protocol extends Protocol_Base {
 			// get mime type.
 			$mime_type = wp_check_filetype( $results['title'] );
 
+			// set the file size.
+			$results['filesize'] = absint( $file_data['size'] );
+
+			// set the mime type.
+			$results['mime-type'] = $mime_type['type'];
+
+			// bail if this file must not be loaded during an import (e.g. as it is too large).
+			if ( Import::get_instance()->is_file_loading_prevented( $results ) ) {
+				continue;
+			}
+
 			// get WP Filesystem-handler.
 			$wp_filesystem = Helper::get_wp_filesystem();
 
@@ -232,12 +243,6 @@ class Protocol extends Protocol_Base {
 				// do nothing more.
 				return array();
 			}
-
-			// set the file size.
-			$results['filesize'] = absint( $file_data['size'] );
-
-			// set the mime type.
-			$results['mime-type'] = $mime_type['type'];
 
 			// add to the list.
 			$files[] = $results;

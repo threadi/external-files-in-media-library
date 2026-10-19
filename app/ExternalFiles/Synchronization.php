@@ -583,36 +583,10 @@ class Synchronization extends Tools_Base {
 			delete_post_meta( $post_id, 'eml_synced' );
 		}
 
-		// disable duplicate check during synchronisation.
-		add_filter( 'efml_duplicate_check', array( $this, 'disable_duplicate_check' ), 10, 2 );
-
-		// and get the post_id of the existing file to update it.
-		add_filter( 'efml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 );
-
-		// and mark each file as updated.
-		add_action( 'efml_after_file_save', array( $this, 'mark_as_synced' ) );
-
-		// add counter handling.
-		add_action( 'efml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_file_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_ftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_sftp_directory_import_file_check', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_dropbox_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efml_dropbox_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efmlgd_google_drive_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efmlgd_google_drive_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efmlawss3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efmlawss3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efmlwd_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 );
-		add_action( 'efmlwd_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 );
-		add_action( 'efml_before_file_list', array( $this, 'change_process_title' ) );
-
-		// update the sync title on each file.
-		add_action( 'efml_file_import_before_save', array( $this, 'update_sync_title' ) );
+		// add the hooks, which are only used during the synchronization (e.g. to disable the duplicate check).
+		foreach ( $this->get_sync_hooks() as $hook ) {
+			add_filter( $hook[0], $hook[1], $hook[2], $hook[3] );
+		}
 
 		/**
 		 * Allow to add additional tasks before sync is running.
@@ -627,6 +601,9 @@ class Synchronization extends Tools_Base {
 		// get the import object.
 		$import = Import::get_instance();
 
+		// save the actual credentials of the import object, to restore them after the synchronization.
+		$previous_fields = $import->get_fields();
+
 		// add the credentials.
 		$import->set_fields( isset( $term_data['fields'] ) ? $term_data['fields'] : array() );
 		$import->set_term_id( $term_id );
@@ -635,10 +612,19 @@ class Synchronization extends Tools_Base {
 		Log::get_instance()->create( __( 'Synchronization started.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
 		// and run the import of this directory.
-		$import_result = $import->add_url( $url );
+		try {
+			$import_result = $import->add_url( $url );
+		} finally {
+			// remove the credentials and the external source from the import object, so following imports in this
+			// request (e.g. further synchronizations via cron) do not use them.
+			$import->set_fields( $previous_fields );
+			$import->set_term_id( 0 );
 
-		// remove the external source from the import object, so following imports in this request are not assigned to it.
-		$import->set_term_id( 0 );
+			// remove the hooks of the synchronization, so following imports in this request are not changed by them.
+			foreach ( $this->get_sync_hooks() as $hook ) {
+				remove_filter( $hook[0], $hook[1], $hook[2] );
+			}
+		}
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
@@ -965,6 +951,48 @@ class Synchronization extends Tools_Base {
 				wp_kses_post( get_option( 'eml_delete_synced_files_title', '' ) ),
 				$dialog,
 			)
+		);
+	}
+
+	/**
+	 * Return the hooks, which are only used during the synchronization.
+	 *
+	 * Each entry contains the hook name, the callback, the priority and the count of accepted arguments.
+	 *
+	 * @return array<int,array{0: string, 1: callable, 2: int, 3: int}>
+	 */
+	private function get_sync_hooks(): array {
+		return array(
+			// disable duplicate check during synchronisation.
+			array( 'efml_duplicate_check', array( $this, 'disable_duplicate_check' ), 10, 2 ),
+
+			// and get the post_id of the existing file to update it.
+			array( 'efml_file_import_attachment', array( $this, 'get_attachment_id' ), 10, 2 ),
+
+			// and mark each file as updated.
+			array( 'efml_after_file_save', array( $this, 'mark_as_synced' ), 10, 1 ),
+
+			// add counter handling.
+			array( 'efml_file_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efml_file_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efml_ftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efml_ftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efml_http_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efml_http_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efml_sftp_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efml_sftp_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efml_dropbox_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efml_dropbox_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efmlgd_google_drive_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efmlgd_google_drive_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efmlawss3_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efmlawss3_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efmlwd_directory_import_files', array( $this, 'set_url_max_count' ), 10, 2 ),
+			array( 'efmlwd_directory_import_file_check', array( $this, 'update_url_count' ), 10, 0 ),
+			array( 'efml_before_file_list', array( $this, 'change_process_title' ), 10, 1 ),
+
+			// update the sync title on each file.
+			array( 'efml_file_import_before_save', array( $this, 'update_sync_title' ), 10, 1 ),
 		);
 	}
 

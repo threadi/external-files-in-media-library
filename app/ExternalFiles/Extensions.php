@@ -135,6 +135,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Email',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_File_Type',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_Size',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\File_Size_Limits',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Import_Export',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Jobs',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue',

@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
@@ -150,6 +151,16 @@ class Service_Base extends Directory_Listing_Base {
 			}
 			$setting->set_field( $field );
 		}
+
+		$instance = $this;
+		/**
+		 * Run additional tasks after the main settings of a service have been added, e.g. to add further settings.
+		 *
+		 * @since 5.6.0 Available since 5.6.0.
+		 * @param Section $section The main settings section of this service.
+		 * @param Service_Base $instance The service object.
+		 */
+		do_action( 'efml_service_main_settings', $section, $instance );
 	}
 
 	/**
