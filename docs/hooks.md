@@ -3310,7 +3310,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1374](ExternalFiles/Files.php#L1374-L1374)
+Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1381](ExternalFiles/Files.php#L1381-L1381)
 
 ### `efml_dropbox_access_token_url`
 
