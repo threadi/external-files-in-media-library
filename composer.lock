@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a8bc30d85c709c926d6bde5cab5e07ee",
+    "content-hash": "0b6f6ed8e5dd0436860b6b7e0a727cf9",
     "packages": [
         {
             "name": "graham-campbell/guzzle-factory",
@@ -917,16 +917,16 @@
         },
         {
             "name": "threadi/easy-directory-listing-for-wordpress",
-            "version": "4.4.0",
+            "version": "4.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-directory-listing-for-wordpress.git",
-                "reference": "a0ee43c9f409535867056a70ab5de00c8ff68706"
+                "reference": "2d330b0cd8f353855a5996ba6ff8a37e927e8724"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/a0ee43c9f409535867056a70ab5de00c8ff68706",
-                "reference": "a0ee43c9f409535867056a70ab5de00c8ff68706",
+                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/2d330b0cd8f353855a5996ba6ff8a37e927e8724",
+                "reference": "2d330b0cd8f353855a5996ba6ff8a37e927e8724",
                 "shasum": ""
             },
             "require": {
@@ -965,22 +965,22 @@
             "description": "Provides a react-driven directory listing for WordPress plugins and themes.",
             "support": {
                 "issues": "https://github.com/threadi/easy-directory-listing-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.4.0"
+                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.4.1"
             },
-            "time": "2026-10-18T19:32:58+00:00"
+            "time": "2026-10-19T20:48:48+00:00"
         },
         {
             "name": "threadi/easy-settings-for-wordpress",
-            "version": "3.8.0",
+            "version": "3.8.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-settings-for-wordpress.git",
-                "reference": "c59b0e58497043c062f60dc133e4e5264ac9b40e"
+                "reference": "b1822b22a2a41e6442d75a7d13272edd4a5f4d25"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-settings-for-wordpress/zipball/c59b0e58497043c062f60dc133e4e5264ac9b40e",
-                "reference": "c59b0e58497043c062f60dc133e4e5264ac9b40e",
+                "url": "https://api.github.com/repos/threadi/easy-settings-for-wordpress/zipball/b1822b22a2a41e6442d75a7d13272edd4a5f4d25",
+                "reference": "b1822b22a2a41e6442d75a7d13272edd4a5f4d25",
                 "shasum": ""
             },
             "require": {
@@ -1022,9 +1022,9 @@
             "description": "Provides a settings wrapper for WordPress plugins and themes.",
             "support": {
                 "issues": "https://github.com/threadi/easy-settings-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-settings-for-wordpress/tree/3.8.0"
+                "source": "https://github.com/threadi/easy-settings-for-wordpress/tree/3.8.2"
             },
-            "time": "2026-10-12T11:41:05+00:00"
+            "time": "2026-10-19T18:03:27+00:00"
         },
         {
             "name": "threadi/easy-transients-for-wordpress",

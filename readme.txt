@@ -38,7 +38,7 @@ Add external files on download lists of [Download Lists with Icons](https://word
 
 Sort your external files in a folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). Also supported: [NextGen Gallery](https://wordpress.org/plugins/nextgen-gallery/) and [Robo Gallery](https://wordpress.org/plugins/robo-gallery/). You can import and synchronize them in these plugins.
 
-And compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites.
+And compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites and [Document Embedder](https://wordpress.org/plugins/document-emberdder/) to show external hostet PDF files.
 
 And it is also compatible with multilingual plugins like Polylang to translate the media files.
 
@@ -185,39 +185,16 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Hide the button to save setting on log tab
-- Extended the logging of errors from Dropbox
-- Optimized the visibility of dependent export settings
-- Update dependencies
-- Import via the dialog or form failed for URLs containing special characters like umlauts (affected all sources).
-- Credentials of REST API external sources are only sent to the host of the external source
-- Special handling for Imgur and Dropbox is only used for URLs on their domains
-- Synchronization, export and their configuration dialogs check whether the user is allowed to use the external source
-- Added more PHP Unit tests and Playwright tests
-- Fixed settings of a synchronized external source (file types, dates) being used for other external sources synchronized in the same request, which could delete their files
-- Fixed minimum and maximum file size in the configuration of a synchronization not being saved
-- Fixed export action in media library being hidden if only a minimum or maximum file size for exports is set
-- Fixed revert of the last import continuing after the redirect
-- Fixed FTP import reading local files if the connection to the FTP server could not be established
-- Fixed check for unsafe URLs staying disabled after errors during loading from an external REST API
-- Fixed detection of the own website in REST API service for URLs without protocol or in other case
-- Fixed import of single files from .tar.gz archives and import of not allowed file types from them
-- Fixed handling of damaged ZIP and .tar.gz files
-- Fixed one file too many being loaded from ZIP files in the import dialog
-- Fixed .gz files not being removed from the allowed file types if they are disabled
-- Fixed closing of foreign output buffers while reading .gz files
-- Fixed missing credentials during import of WooCommerce product images
-- Fixed warning in WP CLI import with login but without password
-- Fixed wrong name of the deprecated hook "eml_schedule_interval"
-- Fixed query for files in Exmage migration
-- Fixed not existing intervals being saved for availability check and synchronization
-- Fixed hiding of generic directories (e.g. "vendor") in local directory listing
-- Fixed credentials with the value "0" not being saved
-- Fixed invalid dates resulting in 1970-01-01 as file date
-- Fixed JSON import being used if it is explicitly disabled
-- Fixed preview of the import in the dialog preventing following imports in the same request
-- Fixed files in trash being delivered by the proxy
-- Fixed title of files with content-disposition header without file name or with path in it
-- Fixed protection against deletion of synchronized files being disabled after deleting synchronized files
+= Unreleased =
+
+* Added: Optional minimum and maximum file size limits for external files (global, per service and per file type)
+* Added: Services to import URLs from CSV and XML files (sitemaps, RSS/Atom, product feeds, WordPress exports) with automatic field detection, synchronization and automatic cleanup of used lists
+* Added: Setting for the maximum size of single files extracted from ZIP, .tar.gz and .gz archives
+* Added: New hooks and extensive PHP Unit and Playwright tests
+* Changed: Security hardening - REST API credentials are only sent to the source's host, and synchronization and export check the user's permission for the external source
+* Changed: Archives are read in parts and only list and extract allowed file types
+* Fixed: Synchronization of WordPress REST API, ZIP, YouTube, DropBox and Multisite sources not importing files, and settings leaking between synchronizations in the same request
+* Fixed: Various FTP, SFTP, archive, proxy and YouTube issues
+* Fixed: Compatibility with PHP 8.4/8.5 and MySQL 8
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
