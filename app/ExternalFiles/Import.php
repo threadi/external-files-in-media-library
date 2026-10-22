@@ -58,6 +58,13 @@ class Import extends Directory_Listing_Base {
 	private int $term_id = 0;
 
 	/**
+	 * Marker whether the files of an import are actually loaded.
+	 *
+	 * @var bool
+	 */
+	private bool $loading_files = false;
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Import
@@ -224,7 +231,12 @@ class Import extends Directory_Listing_Base {
 		/**
 		 * Get information about files under the given URL.
 		 */
-		$files = $protocol_handler_obj->get_url_infos();
+		$this->loading_files = true;
+		try {
+			$files = $protocol_handler_obj->get_url_infos();
+		} finally {
+			$this->loading_files = false;
+		}
 
 		/**
 		 * Do nothing if check of URL resulted in empty file list.
@@ -315,6 +327,24 @@ class Import extends Directory_Listing_Base {
 
 				// add the error object to the list of errors.
 				Results::get_instance()->add( $error_obj );
+
+				// show progress.
+				$progress ? $progress->tick() : '';
+
+				// do nothing more.
+				continue;
+			}
+
+			// prevent the import of this file, if it does not match the requirements (e.g. its file size).
+			$error = $this->get_file_import_error( $file_data, $url );
+			if ( ! empty( $error ) ) {
+				// show the error.
+				$this->add_file_import_error( $error, (string) ( $file_data['url'] ?? $url ) );
+
+				// delete the temporary file of this file, as it will not be used.
+				if ( ! empty( $file_data['tmp-file'] ) && is_string( $file_data['tmp-file'] ) && file_exists( $file_data['tmp-file'] ) ) {
+					Helper::get_wp_filesystem()->delete( $file_data['tmp-file'] );
+				}
 
 				// show progress.
 				$progress ? $progress->tick() : '';
@@ -581,6 +611,97 @@ class Import extends Directory_Listing_Base {
 
 		// return whether any file has been saved: the synchronization deletes no files otherwise.
 		return $saved_files > 0;
+	}
+
+	/**
+	 * Return whether the files of an import are actually loaded.
+	 *
+	 * Protocols use this to check a file before they load its content.
+	 *
+	 * @return bool
+	 */
+	public function is_loading_files(): bool {
+		return $this->loading_files;
+	}
+
+	/**
+	 * Return the error why a single file can not be imported or an empty string, if it could be imported.
+	 *
+	 * @param array<string,mixed> $file_data The file data (at least "url", "filesize" and "mime-type").
+	 * @param string              $url The URL used for the import.
+	 *
+	 * @return string
+	 */
+	public function get_file_import_error( array $file_data, string $url ): string {
+		/**
+		 * Filter the error, which prevents the import of a single file.
+		 *
+		 * Return a text to prevent the import of this file. The text is shown as error to the user.
+		 * The filter is used before the content of the file is loaded (if the protocol supports it)
+		 * and before the file is saved in the media library.
+		 *
+		 * @since 5.6.0 Available since 5.6.0.
+		 * @param string $error The error text (empty to allow the import).
+		 * @param array<string,mixed> $file_data The file data.
+		 * @param string $url The URL used for the import.
+		 */
+		return (string) apply_filters( 'efml_file_import_error', '', $file_data, $url );
+	}
+
+	/**
+	 * Show an error for a single file, which has not been imported.
+	 *
+	 * @param string $error The error text.
+	 * @param string $url The URL of the file.
+	 *
+	 * @return void
+	 */
+	public function add_file_import_error( string $error, string $url ): void {
+		// create the error entry.
+		$error_obj = new Url_Result();
+		$error_obj->set_result_text( $error );
+		$error_obj->set_url( $url );
+		$error_obj->set_error( true );
+
+		// add the error object to the list of errors.
+		Results::get_instance()->add( $error_obj );
+
+		// log this event.
+		Log::get_instance()->create( $error, $url, 'error', 0, $this->get_identifier() );
+	}
+
+	/**
+	 * Return whether a single file must not be loaded during an import.
+	 *
+	 * Protocols use this before they load the content of a file, so files which will not be imported
+	 * (e.g. as they are too large) are not loaded at all. The reason is shown as error.
+	 *
+	 * @param array<string,mixed> $file_data The file data (at least "url", "filesize" and "mime-type").
+	 *
+	 * @return bool
+	 */
+	public function is_file_loading_prevented( array $file_data ): bool {
+		// bail if no import is running (e.g. during the change of the hosting of an existing file).
+		if ( ! $this->is_loading_files() ) {
+			return false;
+		}
+
+		// get the URL of this file.
+		$url = (string) ( $file_data['url'] ?? '' );
+
+		// get the error.
+		$error = $this->get_file_import_error( $file_data, $url );
+
+		// bail if the file could be imported.
+		if ( empty( $error ) ) {
+			return false;
+		}
+
+		// show the error.
+		$this->add_file_import_error( $error, $url );
+
+		// prevent the loading.
+		return true;
 	}
 
 	/**

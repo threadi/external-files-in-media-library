@@ -101,4 +101,42 @@ class Multisite extends externalFilesTests {
 		// the actual blog must not be changed.
 		$this->assertEquals( $blog_id, get_current_blog_id() );
 	}
+
+	/**
+	 * Test that files with a not supported type are hidden in the listing, if this is enabled in the settings.
+	 *
+	 * @return void
+	 */
+	public function test_listing_hides_not_supported_file_types(): void {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Runs only in a multisite (WP_MULTISITE=1).' );
+		}
+		$multisite_obj = \ExternalFilesInMediaLibrary\Services\Multisite::get_instance();
+		$blog_id       = get_current_blog_id();
+
+		// add an image and a text file.
+		self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg', 'file' => 'image.jpg' ) );
+		self::factory()->attachment->create( array( 'post_mime_type' => 'text/plain', 'file' => 'notes.txt' ) );
+
+		// request the listing as user with access.
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$multisite_obj->set_fields( array( 'website' => array( 'value' => $blog_id ) ) );
+
+		// with the default setting: the text file is hidden.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
+		$listing    = $multisite_obj->get_directory_listing( '' );
+		$mime_types = array_column( $listing['files'], 'mime-type' );
+		$this->assertContains( 'image/jpeg', $mime_types );
+		$this->assertNotContains( 'text/plain', $mime_types );
+
+		// without the setting: all files are listed.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 0 );
+		$listing    = $multisite_obj->get_directory_listing( '' );
+		$mime_types = array_column( $listing['files'], 'mime-type' );
+		$this->assertContains( 'text/plain', $mime_types );
+
+		// reset.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
+		$multisite_obj->set_fields( array() );
+	}
 }

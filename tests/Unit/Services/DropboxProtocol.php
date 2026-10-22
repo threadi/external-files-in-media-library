@@ -304,4 +304,57 @@ class DropboxProtocol extends externalFilesTests {
 		$this->assertSame( array(), $this->get_files( 'DropBox/Missing/File.jpg' ) );
 		$this->assertNotEmpty( \ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->get_logs( '/Missing/File.jpg', 'error' ) );
 	}
+
+	/**
+	 * Return the titles of all files in a DropBox listing.
+	 *
+	 * @param array<int|string,mixed> $listing The listing.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_listed_files( array $listing ): array {
+		$titles = array();
+		foreach ( $listing as $entry ) {
+			if ( ! is_array( $entry ) || empty( $entry['files'] ) ) {
+				continue;
+			}
+			foreach ( $entry['files'] as $file ) {
+				$titles[] = $file['title'];
+			}
+		}
+		sort( $titles );
+		return $titles;
+	}
+
+	/**
+	 * Test that files with a not supported type are hidden in the listing, if this is enabled in the settings.
+	 *
+	 * @return void
+	 */
+	public function test_listing_hides_not_supported_file_types(): void {
+		$this->client = new DropboxFakeClient(
+			array(
+				'/Photos/Red.jpg' => 'red',
+				'/Docs/notes.txt' => 'text',
+				'/readme.txt'     => 'text',
+			)
+		);
+
+		// do not load previews, as the simulated client has no thumbnails.
+		\easyDirectoryListingForWordPress\Init::get_instance()->set_preview_state( false );
+
+		// with the default setting: the text files are hidden, the folders are still listed.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
+		$listing = \ExternalFilesInMediaLibrary\Services\DropBox::get_instance()->get_directory_listing( 'DropBox' );
+		$this->assertSame( array( 'Red.jpg' ), $this->get_listed_files( $listing ) );
+		$this->assertArrayHasKey( 'DropBox/docs/', $listing );
+
+		// without the setting: all files are listed.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 0 );
+		$listing = \ExternalFilesInMediaLibrary\Services\DropBox::get_instance()->get_directory_listing( 'DropBox' );
+		$this->assertSame( array( 'Red.jpg', 'notes.txt', 'readme.txt' ), $this->get_listed_files( $listing ) );
+
+		// reset the setting.
+		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
+	}
 }

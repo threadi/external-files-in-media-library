@@ -382,6 +382,11 @@ class Ftp extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = absint( $ftp_connection->mtime( $parse_url['path'] ) );
 
+		// bail if this file must not be loaded during an import (e.g. as it is too large).
+		if ( Import::get_instance()->is_file_loading_prevented( $results ) ) {
+			return array();
+		}
+
 		// get the temp file.
 		$tmp_file = $this->get_temp_file( $file_path, $ftp_connection );
 

@@ -39,7 +39,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 365](ExternalFiles/Extensions/Queue.php#L365-L371)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 357](ExternalFiles/Extensions/Queue.php#L357-L363)
 
 ### `efml_queue_after_process`
 
@@ -57,7 +57,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 394](ExternalFiles/Extensions/Queue.php#L394-L400)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 386](ExternalFiles/Extensions/Queue.php#L386-L392)
 
 ### `efml_real_import_local`
 
@@ -94,7 +94,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 184](ExternalFiles/Import.php#L184-L192)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 191](ExternalFiles/Import.php#L191-L199)
 
 ### `efml_before_file_list`
 
@@ -107,7 +107,7 @@ Argument | Type | Description
 `$url` |  | 
 `$files` |  | 
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 284](ExternalFiles/Import.php#L284-L287)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 296](ExternalFiles/Import.php#L296-L299)
 
 ### `efml_before_file_save`
 
@@ -125,7 +125,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 329](ExternalFiles/Import.php#L329-L335)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 359](ExternalFiles/Import.php#L359-L365)
 
 ### `efml_file_import_before_save`
 
@@ -143,7 +143,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 390](ExternalFiles/Import.php#L390-L397)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 420](ExternalFiles/Import.php#L420-L427)
 
 ### `efml_after_file_save`
 
@@ -163,7 +163,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 490](ExternalFiles/Import.php#L490-L498)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 520](ExternalFiles/Import.php#L520-L528)
 
 ### `efml_after_file_save`
 
@@ -183,7 +183,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 550](ExternalFiles/Import.php#L550-L558)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 580](ExternalFiles/Import.php#L580-L588)
 
 ### `efml_after_import`
 
@@ -202,7 +202,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 572](ExternalFiles/Import.php#L572-L580)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 602](ExternalFiles/Import.php#L602-L610)
 
 ### `efml_sync_save_config`
 
@@ -861,7 +861,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 617](ExternalFiles/Synchronization.php#L617-L625)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 591](ExternalFiles/Synchronization.php#L591-L599)
 
 ### `efml_after_sync`
 
@@ -881,7 +881,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 704](ExternalFiles/Synchronization.php#L704-L712)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 690](ExternalFiles/Synchronization.php#L690-L698)
 
 ### `efml_before_deleting_synced_files`
 
@@ -899,7 +899,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1273](ExternalFiles/Synchronization.php#L1273-L1279)
+Source: [app/ExternalFiles/Synchronization.php](ExternalFiles/Synchronization.php), [line 1301](ExternalFiles/Synchronization.php#L1301-L1307)
 
 ### `efml_file_delete`
 
@@ -1029,6 +1029,25 @@ Version | Description
 `5.0.0` | Available since 5.0.0.
 
 Source: [app/Services/DropBox/Protocol.php](Services/DropBox/Protocol.php), [line 169](Services/DropBox/Protocol.php#L169-L176)
+
+### `efml_service_main_settings`
+
+*Run additional tasks after the main settings of a service have been added, e.g. to add further settings.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$section` | `\easySettingsForWordPress\Section` | The main settings section of this service.
+`$instance` | `\ExternalFilesInMediaLibrary\Services\Service_Base` | The service object.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/Services/Service_Base.php](Services/Service_Base.php), [line 156](Services/Service_Base.php#L156-L163)
 
 ## Filters
 
@@ -1574,6 +1593,45 @@ Version | Description
 
 Source: [app/ExternalFiles/Abilities.php](ExternalFiles/Abilities.php), [line 271](ExternalFiles/Abilities.php#L271-L279)
 
+### `efml_file_size_limits_services_without_size`
+
+*Filter the list of services, whose files do not have a file size. They do not get settings for the
+limits of the file size.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$list` | `array<int,string>` | List of service names.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/ExternalFiles/Extensions/File_Size_Limits.php](ExternalFiles/Extensions/File_Size_Limits.php), [line 315](ExternalFiles/Extensions/File_Size_Limits.php#L315-L322)
+
+### `efml_file_size_limits`
+
+*Filter the limits for the file size of a single file.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$limits` | `array{min: array{size: int, source: string}, max: array{size: int, source: string}}` | The limits (in bytes) with their source.
+`$mime_type` | `string` | The mime type of the file (empty if not known).
+`$service` | `string` | The name of the used service (empty if no service is used).
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/ExternalFiles/Extensions/File_Size_Limits.php](ExternalFiles/Extensions/File_Size_Limits.php), [line 462](ExternalFiles/Extensions/File_Size_Limits.php#L462-L470)
+
 ### `efml_import_options`
 
 *Filter the options used for import of this URL via queue.*
@@ -1591,7 +1649,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 298](ExternalFiles/Extensions/Queue.php#L298-L305)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 290](ExternalFiles/Extensions/Queue.php#L290-L297)
 
 ### `efml_queue_urls`
 
@@ -1609,7 +1667,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 354](ExternalFiles/Extensions/Queue.php#L354-L360)
+Source: [app/ExternalFiles/Extensions/Queue.php](ExternalFiles/Extensions/Queue.php), [line 346](ExternalFiles/Extensions/Queue.php#L346-L352)
 
 ### `efml_export_file_filename`
 
@@ -1646,7 +1704,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 159](ExternalFiles/Import.php#L159-L166)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 166](ExternalFiles/Import.php#L166-L173)
 
 ### `efml_prevent_import`
 
@@ -1666,7 +1724,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 169](ExternalFiles/Import.php#L169-L180)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 176](ExternalFiles/Import.php#L176-L187)
 
 ### `efml_file_import_user`
 
@@ -1685,7 +1743,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 271](ExternalFiles/Import.php#L271-L279)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 283](ExternalFiles/Import.php#L283-L291)
 
 ### `efml_prevent_file_import`
 
@@ -1705,7 +1763,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 300](ExternalFiles/Import.php#L300-L308)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 312](ExternalFiles/Import.php#L312-L320)
 
 ### `efml_file_import_title`
 
@@ -1725,7 +1783,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 344](ExternalFiles/Import.php#L344-L353)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 374](ExternalFiles/Import.php#L374-L383)
 
 ### `efml_file_import_file_url`
 
@@ -1744,7 +1802,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 355](ExternalFiles/Import.php#L355-L363)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 385](ExternalFiles/Import.php#L385-L393)
 
 ### `efml_file_import_attachment`
 
@@ -1764,7 +1822,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 376](ExternalFiles/Import.php#L376-L385)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 406](ExternalFiles/Import.php#L406-L415)
 
 ### `efml_import_no_external_file`
 
@@ -1787,7 +1845,31 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 472](ExternalFiles/Import.php#L472-L486)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 502](ExternalFiles/Import.php#L502-L516)
+
+### `efml_file_import_error`
+
+*Filter the error, which prevents the import of a single file.*
+
+Return a text to prevent the import of this file. The text is shown as error to the user.
+The filter is used before the content of the file is loaded (if the protocol supports it)
+and before the file is saved in the media library.
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`''` |  | 
+`$file_data` | `array<string,mixed>` | The file data.
+`$url` | `string` | The URL used for the import.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 636](ExternalFiles/Import.php#L636-L648)
 
 ### `efml_user_agent`
 
@@ -1797,7 +1879,7 @@ Argument | Type | Description
 -------- | ---- | -----------
 `$string_to_add` |  | 
 
-Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 797](ExternalFiles/Import.php#L797-L797)
+Source: [app/ExternalFiles/Import.php](ExternalFiles/Import.php), [line 918](ExternalFiles/Import.php#L918-L918)
 
 ### `efml_file_types`
 
@@ -2577,7 +2659,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 576](ExternalFiles/Protocols/Http.php#L576-L585)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 581](ExternalFiles/Protocols/Http.php#L581-L590)
 
 ### `efml_http_ssl`
 
@@ -2588,7 +2670,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 672](ExternalFiles/Protocols/Http.php#L672-L672)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 677](ExternalFiles/Protocols/Http.php#L677-L677)
 
 ### `efml_http_save_local`
 
@@ -2607,7 +2689,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 690](ExternalFiles/Protocols/Http.php#L690-L697)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 695](ExternalFiles/Protocols/Http.php#L695-L702)
 
 ### `efml_http_ssl`
 
@@ -2618,7 +2700,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 728](ExternalFiles/Protocols/Http.php#L728-L728)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 733](ExternalFiles/Protocols/Http.php#L733-L733)
 
 ### `efml_http_save_local`
 
@@ -2637,7 +2719,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 741](ExternalFiles/Protocols/Http.php#L741-L749)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 746](ExternalFiles/Protocols/Http.php#L746-L754)
 
 ### `efml_http_header_args`
 
@@ -2656,7 +2738,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 782](ExternalFiles/Protocols/Http.php#L782-L789)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 787](ExternalFiles/Protocols/Http.php#L787-L794)
 
 ### `efml_http_states`
 
@@ -2675,7 +2757,7 @@ Version | Description
 ------- | -----------
 `2.0.0` | Available since 2.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 818](ExternalFiles/Protocols/Http.php#L818-L825)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 823](ExternalFiles/Protocols/Http.php#L823-L830)
 
 ### `efml_locale_file_check`
 
@@ -2694,7 +2776,7 @@ Version | Description
 ------- | -----------
 `3.0.0` | Available since 3.0.0.
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 850](ExternalFiles/Protocols/Http.php#L850-L857)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 855](ExternalFiles/Protocols/Http.php#L855-L862)
 
 ### `efml_save_temp_file`
 
@@ -2705,7 +2787,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 896](ExternalFiles/Protocols/Http.php#L896-L896)
+Source: [app/ExternalFiles/Protocols/Http.php](ExternalFiles/Protocols/Http.php), [line 901](ExternalFiles/Protocols/Http.php#L901-L901)
 
 ### `efml_external_files_infos`
 
@@ -2744,7 +2826,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 363](ExternalFiles/Protocols/Sftp.php#L363-L372)
+Source: [app/ExternalFiles/Protocols/Sftp.php](ExternalFiles/Protocols/Sftp.php), [line 368](ExternalFiles/Protocols/Sftp.php#L368-L377)
 
 ### `efml_filter_file_response`
 
@@ -2902,7 +2984,7 @@ Version | Description
 ------- | -----------
 `1.1.0` | Available since 1.1.0
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 402](ExternalFiles/Protocols/Ftp.php#L402-L411)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 407](ExternalFiles/Protocols/Ftp.php#L407-L416)
 
 ### `efml_ftp_use_pasv_address`
 
@@ -2913,7 +2995,7 @@ Argument | Type | Description
 `$use_pasv_address` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 520](ExternalFiles/Protocols/Ftp.php#L520-L520)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 525](ExternalFiles/Protocols/Ftp.php#L525-L525)
 
 ### `efml_save_temp_file`
 
@@ -2924,7 +3006,7 @@ Argument | Type | Description
 `$true` |  | 
 `$url` |  | 
 
-Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 579](ExternalFiles/Protocols/Ftp.php#L579-L579)
+Source: [app/ExternalFiles/Protocols/Ftp.php](ExternalFiles/Protocols/Ftp.php), [line 584](ExternalFiles/Protocols/Ftp.php#L584-L584)
 
 ### `efml_result_objects`
 
@@ -2960,7 +3042,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 151](ExternalFiles/Extensions.php#L151-L157)
+Source: [app/ExternalFiles/Extensions.php](ExternalFiles/Extensions.php), [line 152](ExternalFiles/Extensions.php#L152-L158)
 
 ### `efml_proxy_slug`
 
@@ -3312,6 +3394,27 @@ Argument | Type | Description
 
 Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 1381](ExternalFiles/Files.php#L1381-L1381)
 
+### `efml_service_dropbox_hide_file`
+
+*Filter whether the given DropBox entry should be hidden.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$false` | `bool` | True if it should be hidden.
+`$dropbox_entry['path_lower']` |  | 
+`$directory` | `string` | The requested directory.
+`'folder' === $dropbox_entry['.tag']` |  | 
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 883](Services/DropBox.php#L883-L895)
+
 ### `efml_dropbox_access_token_url`
 
 *Filter the URL where Dropbox user will find their access token.*
@@ -3328,7 +3431,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1453](Services/DropBox.php#L1453-L1459)
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1497](Services/DropBox.php#L1497-L1503)
 
 ### `efml_dropbox_oauth_url`
 
@@ -3346,7 +3449,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1533](Services/DropBox.php#L1533-L1539)
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1577](Services/DropBox.php#L1577-L1583)
 
 ### `efml_dropbox_client`
 
@@ -3364,7 +3467,7 @@ Version | Description
 ------- | -----------
 `5.5.2` | Available since 5.5.2.
 
-Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1667](Services/DropBox.php#L1667-L1673)
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1711](Services/DropBox.php#L1711-L1717)
 
 ### `efml_dropbox_oauth_url_step_2`
 
@@ -3382,7 +3485,27 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1698](Services/DropBox.php#L1698-L1704)
+Source: [app/Services/DropBox.php](Services/DropBox.php), [line 1742](Services/DropBox.php#L1742-L1748)
+
+### `efml_service_multisite_hide_file`
+
+*Filter whether the given file of the other website should be hidden.*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$false` | `bool` | True if it should be hidden.
+`$post->post_mime_type` |  | 
+`$post` | `\WP_Post` | The attachment.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`5.6.0` | Available since 5.6.0.
+
+Source: [app/Services/Multisite.php](Services/Multisite.php), [line 198](Services/Multisite.php#L198-L209)
 
 ### `efml_multisite_blog_allowed`
 
@@ -3401,7 +3524,7 @@ Version | Description
 ------- | -----------
 `5.5.0` | Available since 5.5.0.
 
-Source: [app/Services/Multisite.php](Services/Multisite.php), [line 335](Services/Multisite.php#L335-L342)
+Source: [app/Services/Multisite.php](Services/Multisite.php), [line 366](Services/Multisite.php#L366-L373)
 
 ### `efml_zip_max_file_size`
 
@@ -3737,7 +3860,7 @@ Version | Description
 ------- | -----------
 `5.0.0` | Available since 5.0.0.
 
-Source: [app/Services/Service_Base.php](Services/Service_Base.php), [line 169](Services/Service_Base.php#L169-L176)
+Source: [app/Services/Service_Base.php](Services/Service_Base.php), [line 200](Services/Service_Base.php#L200-L207)
 
 ### `efml_third_party_support`
 

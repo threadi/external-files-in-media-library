@@ -91,6 +91,9 @@ class Multisite extends Service_Base implements Service {
 		// use parent initialization.
 		parent::init();
 
+		// hide files with a not allowed type in the directory listing, if enabled.
+		add_filter( 'efml_service_multisite_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
+
 		// bail if user has no capability for this service.
 		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
 		if ( ! $this->is_import_allowed() ) {
@@ -104,6 +107,18 @@ class Multisite extends Service_Base implements Service {
 		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_multisite_files' ) );
 		add_action( 'efml_after_file_save', array( $this, 'change_service_name' ) );
+	}
+
+	/**
+	 * Prevent the visibility of files with a not allowed mime type, if this is enabled in the settings.
+	 *
+	 * @param bool   $result The result - should be true to hide the file.
+	 * @param string $mime_type The mime type of the file.
+	 *
+	 * @return bool
+	 */
+	public function prevent_not_allowed_files( bool $result, string $mime_type ): bool {
+		return $result || $this->is_mime_type_hidden( $mime_type );
 	}
 
 	/**
@@ -179,6 +194,22 @@ class Multisite extends Service_Base implements Service {
 				continue;
 			}
 
+			$false = false;
+			/**
+			 * Filter whether the given file of the other website should be hidden.
+			 *
+			 * @since 5.6.0 Available since 5.6.0.
+			 *
+			 * @param bool $false True if it should be hidden.
+			 * @param string $mime_type The mime type of the file.
+			 * @param WP_Post $post The attachment.
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
+			 */
+			if ( apply_filters( 'efml_service_multisite_hide_file', $false, $post->post_mime_type, $post ) ) {
+				continue;
+			}
+
 			// get the metadata of this file.
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
@@ -198,7 +229,7 @@ class Multisite extends Service_Base implements Service {
 			$entry = array(
 				'title'         => basename( $url ),
 				'file'          => $url,
-				'filesize'      => absint( $meta_data['filesize'] ), // @phpstan-ignore offsetAccess.nonOffsetAccessible
+				'filesize'      => is_array( $meta_data ) ? absint( $meta_data['filesize'] ?? 0 ) : 0, // @phpstan-ignore nullCoalesce.offset (older uploads do not have this entry)
 				'mime-type'     => $post->post_mime_type,
 				'icon'          => '<span class="dashicons dashicons-media-default" data-type="' . esc_attr( $post->post_mime_type ) . '"></span>',
 				'last-modified' => $post->post_modified,
@@ -533,7 +564,7 @@ class Multisite extends Service_Base implements Service {
 				'local'         => false,
 				'url'           => $url,
 				'last-modified' => $post->post_modified,
-				'filesize'      => absint( $meta_data['filesize'] ), // @phpstan-ignore offsetAccess.nonOffsetAccessible
+				'filesize'      => is_array( $meta_data ) ? absint( $meta_data['filesize'] ?? 0 ) : 0, // @phpstan-ignore nullCoalesce.offset (older uploads do not have this entry)
 				'mime-type'     => $post->post_mime_type,
 				'tmp-file'      => $tmp_file,
 			);

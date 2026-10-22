@@ -4,6 +4,10 @@
 
 ### Added
 
+- Added optional limits for the minimum and maximum file size of external files: global, per service and per file type (a limit of the service or file type replaces the global one, if both apply the stricter one is used)
+- Added hint about these limits in the import dialog and error message for each file, which does not match them
+- Added marking of files in the directory listing of services, which do not match these limits
+- Added hooks "efml_file_import_error", "efml_file_size_limits", "efml_file_size_limits_services_without_size", "efml_service_main_settings", "efml_service_dropbox_hide_file" and "efml_service_multisite_hide_file"
 - Added more PHP Unit tests and Playwright tests
 - Added the file "bin/build-release.sh", which is used by the GitHub Action, Ant and Task to create the same release zip
 - Added error message if the list of files in an FTP directory could not be loaded
@@ -39,6 +43,10 @@
 
 ### Fixed
 
+- Fixed files with a not supported file type being visible in the directory listing of DropBox and Multisite, although hiding them is enabled in the settings
+- Fixed error in the directory listing and import of Multisite for files without metadata
+- Fixed credentials and hooks of a synchronization being used for following imports in the same request (e.g. further synchronizations via cron), which disabled their duplicate check and saved HTTP files locally
+- Fixed error during the synchronization of SFTP directories (wrong callback for the file counter)
 - Fixed deprecation of finfo_close() and curl_close() with PHP 8.5
 - Fixed missing hint for FTPS servers without reuse of the TLS session with PHP 8.4 and newer
 - Fixed database errors during the installation of the queue table with MySQL 8 (no default value for TEXT columns)

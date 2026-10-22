@@ -130,17 +130,14 @@ class Queue extends Extension_Base {
 			return;
 		}
 
-		// get the general tab.
-		$general_tab = $settings_page->get_tab( 'eml_general' );
-
-		// bail if section could not be loaded.
-		if ( ! $general_tab instanceof Tab ) {
-			return;
-		}
+		// add a tab for queue table.
+		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 60 );
+		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
+		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
 
 		// add section for queue settings.
-		$queue_section = $general_tab->add_section( 'settings_section_queue', 20 );
-		$queue_section->set_title( __( 'Queue', 'external-files-in-media-library' ) );
+		$queue_section = $queue_table_tab->add_section( 'settings_section_queue', 20 );
+		$queue_section->set_title( __( 'Settings', 'external-files-in-media-library' ) );
 
 		// create interval setting.
 		$queue_interval_setting = $settings_obj->add_setting( 'eml_queue_interval' );
@@ -164,11 +161,6 @@ class Queue extends Extension_Base {
 		$field->set_title( __( 'To process per queue cycle', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'Specify the amount of URLs to be processed per cycle.', 'external-files-in-media-library' ) );
 		$setting->set_field( $field );
-
-		// add a tab for queue table.
-		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 60 );
-		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
-		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
 	}
 
 	/**

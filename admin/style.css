@@ -440,7 +440,7 @@ body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is
 	background-position: center;
 }
 
-body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons-editor-help):not(.dashicons-admin-generic) {
+body.easy-dialog-for-wordpress.wp-core-ui .easy-dialog .dashicons:not(.dashicons-editor-help):not(.dashicons-admin-generic):not(.dashicons-info-outline) {
 	margin-left: .4em;
 }
 
@@ -516,6 +516,17 @@ body.taxonomy-edlfw_archive .subtitle, body.taxonomy-edlfw_archive .search-box {
 
 .efml-import-dialog .error, .efml-sync-config .error {
 	color: red;
+}
+
+.efml-import-dialog .efml-file-size-limits {
+	color: #50575e;
+}
+
+.efml-import-dialog .efml-file-size-limits .dashicons {
+	font-size: 18px;
+	height: 18px;
+	vertical-align: text-bottom;
+	width: 18px;
 }
 
 .efml-import-dialog .eml_service_list, .eml_add_external_files_wrapper .eml_service_list {

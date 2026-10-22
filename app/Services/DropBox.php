@@ -112,6 +112,9 @@ class DropBox extends Service_Base implements Service {
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 30 );
 
+		// hide files with a not allowed type in the directory listing, if enabled.
+		add_filter( 'efml_service_dropbox_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
+
 		// bail if user has no capability for this service.
 		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -876,6 +879,23 @@ class DropBox extends Service_Base implements Service {
 
 		// add the entries to the list.
 		foreach ( $entries['entries'] as $dropbox_entry ) {
+			$false = false;
+			/**
+			 * Filter whether the given DropBox entry should be hidden.
+			 *
+			 * @since 5.6.0 Available since 5.6.0.
+			 *
+			 * @param bool $false True if it should be hidden.
+			 * @param string $path The path of the entry in the DropBox.
+			 * @param string $directory The requested directory.
+			 * @param bool $is_dir True if this entry is a directory.
+			 *
+			 * @noinspection PhpConditionAlreadyCheckedInspection
+			 */
+			if ( apply_filters( 'efml_service_dropbox_hide_file', $false, $dropbox_entry['path_lower'], $directory, 'folder' === $dropbox_entry['.tag'] ) ) {
+				continue;
+			}
+
 			// collect the entry.
 			$entry = array(
 				'title' => $dropbox_entry['name'],
@@ -967,6 +987,30 @@ class DropBox extends Service_Base implements Service {
 
 		// return the resulting list.
 		return array_merge( array( 'completed' => true ), array( $directory => $listing ), $folders );
+	}
+
+	/**
+	 * Prevent the visibility of files with a not allowed mime type, if this is enabled in the settings.
+	 *
+	 * @param bool   $result The result - should be true to hide the entry.
+	 * @param string $path The path of the entry.
+	 * @param string $directory The requested directory.
+	 * @param bool   $is_dir True if this entry is a directory.
+	 *
+	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function prevent_not_allowed_files( bool $result, string $path, string $directory, bool $is_dir ): bool {
+		// bail if this is a directory.
+		if ( $is_dir ) {
+			return $result;
+		}
+
+		// get the content-type of this file.
+		$mime_type = wp_check_filetype( $path );
+
+		// return whether this file should be hidden.
+		return $result || $this->is_mime_type_hidden( (string) $mime_type['type'] );
 	}
 
 	/**

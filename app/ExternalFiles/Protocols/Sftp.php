@@ -314,6 +314,11 @@ class Sftp extends Protocol_Base {
 		// get the last modified date.
 		$results['last-modified'] = $ssh_connection->mtime( $file_path );
 
+		// bail if this file must not be loaded during an import (e.g. as it is too large).
+		if ( Import::get_instance()->is_file_loading_prevented( $results ) ) {
+			return array();
+		}
+
 		// get the contents of the file.
 		$file_content = $ssh_connection->get_contents( $file_path );
 

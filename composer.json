@@ -1,6 +1,6 @@
 {
     "name": "threadi/efml",
-    "version": "5.5.0",
+    "version": "5.6.0",
     "license": "GPL-2.0-or-later",
     "scripts": {
         "post-install-cmd": [
@@ -74,8 +74,8 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-directory-listing-for-wordpress": "^4.4.0",
-        "threadi/easy-settings-for-wordpress": "^3.7.0",
+        "threadi/easy-directory-listing-for-wordpress": "^4.4.1",
+        "threadi/easy-settings-for-wordpress": "^3.8.2",
         "threadi/easy-transients-for-wordpress": "^1.4.9",
         "spatie/dropbox-api": "^1.25"
     }
