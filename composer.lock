@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6da2ce0d1d7a89330eb6c95ed083368c",
+    "content-hash": "f589407fe798610c3992f488433218ef",
     "packages": [
         {
             "name": "graham-campbell/guzzle-factory",
@@ -917,16 +917,16 @@
         },
         {
             "name": "threadi/easy-directory-listing-for-wordpress",
-            "version": "4.4.1",
+            "version": "4.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-directory-listing-for-wordpress.git",
-                "reference": "2d330b0cd8f353855a5996ba6ff8a37e927e8724"
+                "reference": "3710c57a4d6fb72162836f82a3d4f75fb8042b54"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/2d330b0cd8f353855a5996ba6ff8a37e927e8724",
-                "reference": "2d330b0cd8f353855a5996ba6ff8a37e927e8724",
+                "url": "https://api.github.com/repos/threadi/easy-directory-listing-for-wordpress/zipball/3710c57a4d6fb72162836f82a3d4f75fb8042b54",
+                "reference": "3710c57a4d6fb72162836f82a3d4f75fb8042b54",
                 "shasum": ""
             },
             "require": {
@@ -965,9 +965,9 @@
             "description": "Provides a react-driven directory listing for WordPress plugins and themes.",
             "support": {
                 "issues": "https://github.com/threadi/easy-directory-listing-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.4.1"
+                "source": "https://github.com/threadi/easy-directory-listing-for-wordpress/tree/4.4.2"
             },
-            "time": "2026-10-19T20:48:48+00:00"
+            "time": "2026-10-24T12:47:27+00:00"
         },
         {
             "name": "threadi/easy-settings-for-wordpress",
@@ -2692,11 +2692,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.3.1",
+            "version": "2.3.2",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/6155239b488e95d26d1ebd95c6b4bb294d7f09db",
-                "reference": "6155239b488e95d26d1ebd95c6b4bb294d7f09db",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/18bc23a0682f08591529377d271b5c4dfe9ed1dd",
+                "reference": "18bc23a0682f08591529377d271b5c4dfe9ed1dd",
                 "shasum": ""
             },
             "require": {
@@ -2752,7 +2752,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-10-08T21:09:11+00:00"
+            "time": "2026-10-24T11:36:00+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
