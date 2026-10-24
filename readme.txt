@@ -2,7 +2,7 @@
 Contributors: threadi
 Tags: external files, media library, media, embed
 Requires at least: 6.2
-Tested up to: 7.1
+Tested up to: 7.2
 Requires PHP: 8.2
 Requires CP:  2.0
 License: GPL-2.0-or-later
@@ -185,16 +185,8 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-= Unreleased =
-
-* Added: Optional minimum and maximum file size limits for external files (global, per service and per file type)
-* Added: Services to import URLs from CSV and XML files (sitemaps, RSS/Atom, product feeds, WordPress exports) with automatic field detection, synchronization and automatic cleanup of used lists
-* Added: Setting for the maximum size of single files extracted from ZIP, .tar.gz and .gz archives
-* Added: New hooks and extensive PHP Unit and Playwright tests
-* Changed: Security hardening - REST API credentials are only sent to the source's host, and synchronization and export check the user's permission for the external source
-* Changed: Archives are read in parts and only list and extract allowed file types
-* Fixed: Synchronization of WordPress REST API, ZIP, YouTube, DropBox and Multisite sources not importing files, and settings leaking between synchronizations in the same request
-* Fixed: Various FTP, SFTP, archive, proxy and YouTube issues
-* Fixed: Compatibility with PHP 8.4/8.5 and MySQL 8
+- Updated settings library to be compatible with WordPress 7.2
+- Optimized the styling of the file table
+- Mark as compatible with WordPress 7.2
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
