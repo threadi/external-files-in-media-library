@@ -250,6 +250,11 @@ class Proxy {
 	 * @noinspection PhpUnused
 	 */
 	public static function do_refresh(): void {
+		// register our rewrite rule, as it is missing if the plugin has been activated in this request after "init".
+		if ( self::get_instance()->is_any_proxy_enabled() ) {
+			self::get_instance()->wp_init();
+		}
+
 		// flush the permalinks.
 		flush_rewrite_rules();
 
