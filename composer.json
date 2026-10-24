@@ -74,8 +74,8 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-directory-listing-for-wordpress": "^4.4.1",
-        "threadi/easy-settings-for-wordpress": "^3.8.2",
+        "threadi/easy-directory-listing-for-wordpress": "^4.4.2",
+        "threadi/easy-settings-for-wordpress": "^3.8.4",
         "threadi/easy-transients-for-wordpress": "^1.4.9",
         "spatie/dropbox-api": "^1.25"
     }

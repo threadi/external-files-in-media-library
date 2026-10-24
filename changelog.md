@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.6.1] - 24.10.2026
+
+### Changed
+
+- Updated settings library to be compatible with WordPress 7.2
+- Optimized the styling of the file table
+- Mark as compatible with WordPress 7.2
+
 ## [5.6.0] - 22.10.2026
 
 ### Added

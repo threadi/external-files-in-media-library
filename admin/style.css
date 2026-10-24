@@ -650,3 +650,7 @@ body.settings_page_eml_settings {
     color: #996800;
     vertical-align: text-bottom;
 }
+
+body.settings_page_eml_settings .nav-tab-help.components-button .components-tab-panel__tabs-item-label {
+	display: contents;
+}

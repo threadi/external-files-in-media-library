@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0b6f6ed8e5dd0436860b6b7e0a727cf9",
+    "content-hash": "6da2ce0d1d7a89330eb6c95ed083368c",
     "packages": [
         {
             "name": "graham-campbell/guzzle-factory",
@@ -971,16 +971,16 @@
         },
         {
             "name": "threadi/easy-settings-for-wordpress",
-            "version": "3.8.2",
+            "version": "3.8.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/threadi/easy-settings-for-wordpress.git",
-                "reference": "b1822b22a2a41e6442d75a7d13272edd4a5f4d25"
+                "reference": "57e98ca4453480acb7301980ae6593287260df08"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/threadi/easy-settings-for-wordpress/zipball/b1822b22a2a41e6442d75a7d13272edd4a5f4d25",
-                "reference": "b1822b22a2a41e6442d75a7d13272edd4a5f4d25",
+                "url": "https://api.github.com/repos/threadi/easy-settings-for-wordpress/zipball/57e98ca4453480acb7301980ae6593287260df08",
+                "reference": "57e98ca4453480acb7301980ae6593287260df08",
                 "shasum": ""
             },
             "require": {
@@ -1022,9 +1022,9 @@
             "description": "Provides a settings wrapper for WordPress plugins and themes.",
             "support": {
                 "issues": "https://github.com/threadi/easy-settings-for-wordpress/issues",
-                "source": "https://github.com/threadi/easy-settings-for-wordpress/tree/3.8.2"
+                "source": "https://github.com/threadi/easy-settings-for-wordpress/tree/3.8.4"
             },
-            "time": "2026-10-19T18:03:27+00:00"
+            "time": "2026-10-24T10:59:47+00:00"
         },
         {
             "name": "threadi/easy-transients-for-wordpress",
