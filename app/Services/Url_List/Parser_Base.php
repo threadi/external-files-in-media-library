@@ -8,6 +8,8 @@
 namespace ExternalFilesInMediaLibrary\Services\Url_List;
 
 // prevent direct access.
+use ExternalFilesInMediaLibrary\Plugin\Helper;
+
 defined( 'ABSPATH' ) || exit;
 
 /**
@@ -154,13 +156,7 @@ abstract class Parser_Base {
 	 * @return string
 	 */
 	protected function encode_url( string $url ): string {
-		return (string) preg_replace_callback(
-			'/[^\x21-\x7E]/',
-			function ( array $matches ): string {
-				return rawurlencode( $matches[0] );
-			},
-			$url
-		);
+		return Helper::encode_url( $url );
 	}
 
 	/**

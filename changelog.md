@@ -5,6 +5,7 @@
 ### Fixed
 
 - Fixed detection of URLs if proxy on every file type is disabled
+- Fixed URL encoding if
 
 ## [5.6.1] - 24.10.2026
 
