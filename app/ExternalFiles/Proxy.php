@@ -73,6 +73,7 @@ class Proxy {
 	public function init(): void {
 		// misc.
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
+		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 
 		// bail if no proxy is enabled.
 		if ( ! $this->is_any_proxy_enabled() ) {
@@ -95,7 +96,6 @@ class Proxy {
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
 
 		// misc.
-		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_cache_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
 	}
@@ -250,6 +250,11 @@ class Proxy {
 	 * @noinspection PhpUnused
 	 */
 	public static function do_refresh(): void {
+		// register our rewrite rule, as it is missing if the plugin has been activated in this request after "init".
+		if ( self::get_instance()->is_any_proxy_enabled() ) {
+			self::get_instance()->wp_init();
+		}
+
 		// flush the permalinks.
 		flush_rewrite_rules();
 

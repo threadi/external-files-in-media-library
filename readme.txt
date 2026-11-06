@@ -15,6 +15,8 @@ Add external files to your media library to use them in your website. They are i
 
 Add one or more files with their URLs under Media > "Add New Media File". You can use these external files anywhere the media library is used.
 
+[youtube https://www.youtube.com/watch?v=abBPWvp1Luk]
+
 == Feature ==
 
 Embed your files from _AWS S3_, _DropBox_, _Google Drive_, _Google Cloud Storage_, _FTP_, _your local hosting_, another website in your _multisite_, other _WordPress REST APIs_, _YouTube_ or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
@@ -185,8 +187,8 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Updated settings library to be compatible with WordPress 7.2
-- Optimized the styling of the file table
-- Mark as compatible with WordPress 7.2
+- Updated dependencies
+- Fixed detection of URLs if proxy on every file type is disabled
+- Fixed URL encoding if
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

@@ -1060,4 +1060,21 @@ class Helper {
 			array( 'http', 'https' )
 		);
 	}
+
+	/**
+	 * Return the URL with encoded chars, which are not allowed in URLs (e.g. umlauts or spaces).
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	public static function encode_url( string $url ): string {
+		return (string) preg_replace_callback(
+			'/[^\x21-\x7E]/',
+			static function ( array $matches ): string {
+				return rawurlencode( $matches[0] );
+			},
+			$url
+		);
+	}
 }

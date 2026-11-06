@@ -77,7 +77,7 @@ class Http extends Protocol_Base {
 		$url = apply_filters( 'efml_check_url_before', $url );
 
 		// given string is not a url.
-		if ( false === filter_var( $url, FILTER_VALIDATE_URL ) ) {
+		if ( false === filter_var( Helper::encode_url( $url ), FILTER_VALIDATE_URL ) ) {
 			// log event.
 			/* translators: %1$s will be replaced by the file-URL */
 			Log::get_instance()->create( sprintf( __( 'Given string %1$s is not a valid URL.', 'external-files-in-media-library' ), esc_html( $url ) ), esc_html( $url ), 'error', 0, Import::get_instance()->get_identifier() );

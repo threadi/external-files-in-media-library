@@ -47,9 +47,21 @@ class Files extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_get_attachment_url(): void {
+		// with disabled proxy for PDF the external URL must be returned.
+		update_option( 'eml_pdf_mode', 'external' );
+		update_option( 'eml_pdf_proxy', 0 );
+		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_url( self::get_test_file( 'pdf', 'http' ), $this->get_attachment_id() );
+		$this->assertIsString( $attachment_url );
+		$this->assertEquals( self::get_test_file( 'pdf', 'http' ), $attachment_url );
+
+		// with enabled proxy for PDF the proxied URL must be returned.
+		update_option( 'eml_pdf_proxy', 1 );
 		$attachment_url = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_attachment_url( self::get_test_file( 'pdf', 'http' ), $this->get_attachment_id() );
 		$this->assertIsString( $attachment_url );
 		$this->assertEquals( 'http://example.org/?emlproxy=' . basename( self::get_test_file( 'pdf', 'http' ) ), $attachment_url );
+
+		// reset the setting.
+		update_option( 'eml_pdf_proxy', 0 );
 	}
 
 	/**
