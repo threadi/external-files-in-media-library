@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.6.2] - 06.11.2026
+
+### Fixed
+
+- Fixed detection of URLs if proxy on every file type is disabled
+
 ## [5.6.1] - 24.10.2026
 
 ### Changed
