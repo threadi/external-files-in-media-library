@@ -52,10 +52,21 @@ class File extends externalFilesTests {
 		$this->assertIsString( $url );
 		$this->assertEquals( self::get_test_file( 'pdf', 'http' ), $url );
 
-		// get its proxied URL.
+		// get its URL with disabled proxy for PDF, which must be the external URL.
+		update_option( 'eml_pdf_mode', 'external' );
+		update_option( 'eml_pdf_proxy', 0 );
 		$url = $file_obj->get_url();
 		$this->assertIsString( $url );
-		$this->assertNotEquals( self::get_test_file( 'pdf', 'http' ), $url );
+		$this->assertEquals( self::get_test_file( 'pdf', 'http' ), $url );
+
+		// get its URL with enabled proxy for PDF, which must be the proxied URL.
+		update_option( 'eml_pdf_proxy', 1 );
+		$url = $file_obj->get_url();
+		$this->assertIsString( $url );
+		$this->assertEquals( 'http://example.org/?emlproxy=' . basename( self::get_test_file( 'pdf', 'http' ) ), $url );
+
+		// reset the setting.
+		update_option( 'eml_pdf_proxy', 0 );
 	}
 
 	/**

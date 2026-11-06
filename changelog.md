@@ -2,6 +2,10 @@
 
 ## [5.6.2] - 06.11.2026
 
+### Changed
+
+- Updated dependencies
+
 ### Fixed
 
 - Fixed detection of URLs if proxy on every file type is disabled

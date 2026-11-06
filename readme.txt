@@ -187,8 +187,8 @@ WordPress website.
 
 = @@VersionNumber@@ =
 
-- Updated settings library to be compatible with WordPress 7.2
-- Optimized the styling of the file table
-- Mark as compatible with WordPress 7.2
+- Updated dependencies
+- Fixed detection of URLs if proxy on every file type is disabled
+- Fixed URL encoding if
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)
