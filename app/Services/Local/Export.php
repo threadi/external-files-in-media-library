@@ -60,7 +60,7 @@ class Export extends Export_Base {
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
 		// remove protocol from the target.
-		$local_target = str_replace( 'file://', '', $target );
+		$local_target = Helper::get_local_path_from_url( $target );
 
 		// get the WP filesystem object.
 		$wp_filesystem = Helper::get_wp_filesystem();
@@ -142,7 +142,7 @@ class Export extends Export_Base {
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// remove protocol from the URL.
-		$local_file = str_replace( 'file://', '', $url );
+		$local_file = Helper::get_local_path_from_url( $url );
 
 		// bail if file does not exist or is not a file.
 		if ( ! $wp_filesystem->exists( $local_file ) || ! $wp_filesystem->is_file( $local_file ) ) {

@@ -385,8 +385,8 @@ class Zip extends Zip_Base {
 				continue;
 			}
 
-			// get parts of the path.
-			$parts = explode( DIRECTORY_SEPARATOR, $name );
+			// get parts of the path (ZIP archives always use "/" as separator, independent of the OS).
+			$parts = explode( '/', $name );
 
 			// if array contains more than 1 entry this file is in a directory.
 			if ( end( $parts ) ) {

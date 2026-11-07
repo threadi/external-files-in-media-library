@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Now also compatible with Windows-based hostings
+
 ## [5.6.2] - 06.11.2026
 
 ### Changed

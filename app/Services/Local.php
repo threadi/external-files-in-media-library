@@ -233,7 +233,7 @@ class Local extends Service_Base implements Service {
 		}
 
 		// remove the scheme.
-		$path = str_replace( 'file://', '', $path );
+		$path = Helper::get_local_path_from_url( $path );
 
 		// bail for directories.
 		if ( is_dir( $path ) ) {

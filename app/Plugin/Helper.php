@@ -972,10 +972,8 @@ class Helper {
 	 * @return bool
 	 */
 	public static function is_local_path_allowed( string $path ): bool {
-		// remove the protocol.
-		if ( str_starts_with( $path, 'file://' ) ) {
-			$path = substr( $path, 7 );
-		}
+		// remove the protocol (also handles Windows paths like "file:///C:/…").
+		$path = self::get_local_path_from_url( $path );
 
 		// bail on empty path.
 		if ( '' === $path ) {
@@ -1022,8 +1020,59 @@ class Helper {
 			return false;
 		}
 
+		// normalize both paths to forward slashes (on Windows realpath() returns backslashes).
+		$real_path = untrailingslashit( wp_normalize_path( $real_path ) );
+		$base_real = untrailingslashit( wp_normalize_path( $base_real ) );
+
 		// return whether the path is the base or is located in it.
-		return $real_path === $base_real || str_starts_with( $real_path, rtrim( $base_real, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR );
+		return $real_path === $base_real || str_starts_with( $real_path, $base_real . '/' );
+	}
+
+	/**
+	 * Return the local file system path from a "file://" URL.
+	 *
+	 * Supports Unix paths ("file:///var/www/file.jpg" → "/var/www/file.jpg") and
+	 * Windows paths ("file:///C:/inetpub/file.jpg" or "file://C:/inetpub/file.jpg" → "C:/inetpub/file.jpg").
+	 * Strings without "file://" are returned unchanged (except the Windows-specific leading slash).
+	 *
+	 * @param string $url The URL or path.
+	 *
+	 * @return string
+	 */
+	public static function get_local_path_from_url( string $url ): string {
+		// remove the protocol.
+		if ( str_starts_with( strtolower( $url ), 'file://localhost/' ) ) {
+			$url = substr( $url, 16 );
+		} elseif ( str_starts_with( strtolower( $url ), 'file://' ) ) {
+			$url = substr( $url, 7 );
+		}
+
+		// remove the leading slash before a Windows drive letter (e.g., "/C:/inetpub" → "C:/inetpub").
+		if ( preg_match( '#^/[a-zA-Z]:[/\\\\]#', $url ) ) {
+			$url = substr( $url, 1 );
+		}
+
+		// return the resulting path.
+		return $url;
+	}
+
+	/**
+	 * Return a "file://" URL for the given local file system path.
+	 *
+	 * The path is normalized to forward slashes, so the URL is identical on Unix
+	 * ("/var/www/file.jpg" → "file:///var/www/file.jpg") and works on Windows
+	 * ("C:\inetpub\file.jpg" → "file:///C:/inetpub/file.jpg").
+	 *
+	 * @param string $path The local path.
+	 *
+	 * @return string
+	 */
+	public static function get_file_url_from_path( string $path ): string {
+		// normalize the path.
+		$path = wp_normalize_path( $path );
+
+		// return the URL with three slashes in every case.
+		return 'file://' . ( str_starts_with( $path, '/' ) ? '' : '/' ) . $path;
 	}
 
 	/**

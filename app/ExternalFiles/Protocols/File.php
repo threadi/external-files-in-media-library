@@ -138,7 +138,7 @@ class File extends Protocol_Base {
 			// loop through the directory.
 			foreach ( $file_list as $file => $settings ) {
 				// get file path.
-				$file_path = $url . $file;
+				$file_path = trailingslashit( $url ) . $file;
 
 				// bail if this is not a file.
 				if ( 'd' === $settings['type'] ) {
@@ -423,16 +423,13 @@ class File extends Protocol_Base {
 			return false;
 		}
 
-		// remove protocol and domain from URL.
-		$url_info = wp_parse_url( $url );
+		// get the local file path from the URL (also supports Windows paths like "file:///C:/…").
+		$file_path = Helper::get_local_path_from_url( $url );
 
 		// bail if path could not be loaded.
-		if ( ! isset( $url_info['path'] ) ) {
+		if ( '' === $file_path ) {
 			return false;
 		}
-
-		// get the file path.
-		$file_path = $url_info['path'];
 
 		// bail if the file is not located in the allowed base directory for local files.
 		if ( ! Helper::is_local_path_allowed( $file_path ) ) {
@@ -504,13 +501,11 @@ class File extends Protocol_Base {
 	 * @return string
 	 */
 	private function sanitize_local_path( string $url ): string {
-		// get path without the protocol.
-		$path = str_starts_with( $url, 'file://' )
-			? wp_parse_url( $url, PHP_URL_PATH )
-			: $url;
+		// get path without the protocol (also supports Windows paths like "file:///C:/…") with forward slashes.
+		$path = wp_normalize_path( Helper::get_local_path_from_url( $url ) );
 
 		// bail if path could not be read.
-		if ( is_null( $path ) || false === $path ) {
+		if ( '' === $path ) {
 			return '';
 		}
 
@@ -564,23 +559,27 @@ class File extends Protocol_Base {
 			return '';
 		}
 
+		// normalize both paths to forward slashes (on Windows realpath() returns backslashes).
+		$real_path = untrailingslashit( wp_normalize_path( $real_path ) );
+		$base_real = untrailingslashit( wp_normalize_path( $base_real ) );
+
 		// bail if both paths does not match (e.g., for a path outside the web-directory).
-		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . DIRECTORY_SEPARATOR ) ) {
+		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . '/' ) ) {
 			return '';
 		}
 
 		// add the path in the archive.
 		if ( ! empty( $path_in_archive ) ) {
-			return 'file://' . $real_path . $path_in_archive;
+			return Helper::get_file_url_from_path( $real_path . $path_in_archive );
 		}
 
 		// if the original URL ends with a slash, add it to the real path.
-		if ( str_ends_with( $url, '/' ) ) {
-			$real_path .= DIRECTORY_SEPARATOR;
+		if ( str_ends_with( $url, '/' ) || str_ends_with( $url, '\\' ) ) {
+			$real_path .= '/';
 		}
 
 		// return the real path with protocol.
-		return 'file://' . $real_path;
+		return Helper::get_file_url_from_path( $real_path );
 	}
 
 	/**

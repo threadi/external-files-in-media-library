@@ -1668,7 +1668,8 @@ class Export extends Tools_Base {
 		$upload_dir = wp_upload_dir();
 
 		// build the relative path.
-		$dir = str_replace( trailingslashit( $upload_dir['basedir'] ), '', $dir ) . DIRECTORY_SEPARATOR;
+		// (normalized to "/" as WordPress saves "_wp_attached_file" always with forward slashes, also on Windows).
+		$dir = str_replace( trailingslashit( wp_normalize_path( $upload_dir['basedir'] ) ), '', wp_normalize_path( $dir ) ) . '/';
 
 		// prepare the marker to check for a unique filename.
 		$having_unique_filename = false;
