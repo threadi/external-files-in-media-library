@@ -278,6 +278,16 @@ class Tables {
 			// show no-icon if it is not an external file.
 			if ( ! $external_file_obj->is_valid() ) {
 				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) . '"></span>';
+
+				// show marker if this file is planned for export via queue.
+				if ( absint( get_post_meta( $attachment_id, 'efml_export_queued', true ) ) > 0 ) {
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file to the external source is planned in the queue.', 'external-files-in-media-library' ) . '"></span>';
+				}
+
+				// show marker if the export of this file via queue failed.
+				if ( absint( get_post_meta( $attachment_id, 'efml_export_failed', true ) ) > 0 ) {
+					echo '<span class="dashicons dashicons-warning" title="' . esc_attr__( 'The export of this file to the external source failed. Check the log and the queue for details.', 'external-files-in-media-library' ) . '"></span>';
+				}
 				return;
 			}
 

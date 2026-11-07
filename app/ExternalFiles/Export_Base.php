@@ -67,4 +67,28 @@ class Export_Base {
 	public function is_url_required(): bool {
 		return false;
 	}
+
+	/**
+	 * Return whether a file with the given target path already exists on the external source.
+	 *
+	 * Exported files are saved flat in the directory of the external source. This check is used to
+	 * get a unique file name before a new file is saved and exported, so it does not overwrite
+	 * an existing file there. Return false if the check is not possible for this service.
+	 *
+	 * @since 5.7.0 Available since 5.7.0.
+	 *
+	 * @param string              $target The target path of the file on the external source.
+	 * @param array<string,mixed> $credentials The credentials to use.
+	 *
+	 * @return bool
+	 */
+	public function file_exists_on_target( string $target, array $credentials ): bool {
+		if ( empty( $target ) ) {
+			return false;
+		}
+		if ( empty( $credentials ) ) {
+			return false;
+		}
+		return false;
+	}
 }

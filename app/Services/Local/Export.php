@@ -175,4 +175,25 @@ class Export extends Export_Base {
 	public function is_url_required(): bool {
 		return true;
 	}
+
+	/**
+	 * Return whether a file with the given target path already exists in the local target directory.
+	 *
+	 * @param string              $target The target path of the file on the external source.
+	 * @param array<string,mixed> $credentials The credentials to use (not used for local files).
+	 *
+	 * @return bool
+	 */
+	public function file_exists_on_target( string $target, array $credentials ): bool {
+		// remove protocol from the target.
+		$local_target = str_replace( 'file://', '', $target );
+
+		// bail if the target is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $local_target ) ) {
+			return false;
+		}
+
+		// return whether the file exists.
+		return Helper::get_wp_filesystem()->exists( $local_target );
+	}
 }

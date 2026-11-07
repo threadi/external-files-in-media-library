@@ -125,6 +125,9 @@ class Update {
 			if ( version_compare( $db_plugin_version, '5.5.1', '<' ) ) {
 				$this->version551();
 			}
+			if ( version_compare( $db_plugin_version, '5.7.0', '<' ) ) {
+				$this->version570();
+			}
 
 			// install the schedules, which are new in this version (or have been missing).
 			Schedules::get_instance()->create_schedules();
@@ -473,5 +476,15 @@ class Update {
 				array( 'id' => absint( $entry['id'] ) )
 			);
 		}
+	}
+
+	/**
+	 * To run on the update to version 5.7.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version570(): void {
+		// update the table structure of the queue for the export of files.
+		Queue::get_instance()->install();
 	}
 }

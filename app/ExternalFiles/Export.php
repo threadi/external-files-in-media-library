@@ -19,6 +19,7 @@ use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -202,6 +203,19 @@ class Export extends Tools_Base {
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Do not delete local files', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When enabled, exported files are no longer deleted from local hosting. Note that this means you will be storing the files twice: once in your hosting and once in the external source. Files delivered via the proxy still take up storage space on it. However, the proxy cache is emptied regularly so that only files that are actually needed to take up storage space.', 'external-files-in-media-library' ) );
+		$field->add_depend( $setting_export, 1 );
+		$field->set_setting( $setting );
+		$setting->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_export_in_background' );
+		$setting->set_section( $section );
+		$setting->set_type( 'integer' );
+		$setting->set_default( 0 );
+		$field = new Checkbox( $settings_obj );
+		$field->set_title( __( 'Export in background', 'external-files-in-media-library' ) );
+		/* translators: %1$s will be replaced by a URL. */
+		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. The queue exports them in the background in the interval configured there. Until then, they are used as local files. If an export fails, it will be tried again. After 3 failed attempts, the file stays a local file and is marked in the media library. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
@@ -735,6 +749,12 @@ class Export extends Tools_Base {
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
+		// add the file to the queue, if the export should run in background.
+		if ( $this->is_export_in_background_enabled() && Queue::get_instance()->add_export( $attachment_id ) ) {
+			// return the metadata unchanged, as the file stays local until it has been exported.
+			return $metadata;
+		}
+
 		// save the metadata now, so the cleanup during the export knows which local files exist.
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 
@@ -981,6 +1001,13 @@ class Export extends Tools_Base {
 
 			// mark as exported file.
 			update_post_meta( $external_file_obj->get_id(), 'eml_exported_file', time() );
+
+			// save the used filename, so it will not be used for other exported files.
+			update_post_meta( $external_file_obj->get_id(), 'efml_export_filename', basename( $file ) );
+
+			// remove the markers of the export via queue.
+			delete_post_meta( $external_file_obj->get_id(), 'efml_export_queued' );
+			delete_post_meta( $external_file_obj->get_id(), 'efml_export_failed' );
 
 			// get the metadata.
 			$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
@@ -1639,8 +1666,11 @@ class Export extends Tools_Base {
 	 * We check if the filename has been used for another file.
 	 * If so, we add a suffix to the filename as WordPress it does with local hostet files.
 	 *
-	 * Difference to @wp_unique_filename(): we check the DB-entry, not the filesystem, as this is the place where
-	 * exported and local files are managed.
+	 * Difference to @wp_unique_filename(): we check the DB-entries and the external sources, not the local
+	 * filesystem, as these are the places where exported and local files are managed.
+	 *
+	 * As exported files are saved flat in the directory of each external source, the filename must be unique
+	 * for all exported files, not only for the actual upload directory (e.g. "2026/11").
 	 *
 	 * Does not run if export is not enabled OR no external sources are configured for export.
 	 *
@@ -1671,46 +1701,253 @@ class Export extends Tools_Base {
 		// (normalized to "/" as WordPress saves "_wp_attached_file" always with forward slashes, also on Windows).
 		$dir = str_replace( trailingslashit( wp_normalize_path( $upload_dir['basedir'] ) ), '', wp_normalize_path( $dir ) ) . '/';
 
-		// prepare the marker to check for a unique filename.
-		$having_unique_filename = false;
+		// get the export targets to check the filename there.
+		$export_targets = $this->get_export_targets();
+
+		/**
+		 * Filter the maximum number of tries to find a unique filename for an exported file.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param int $max_tries The maximum number of tries.
+		 * @param string $filename The filename WordPress would use.
+		 */
+		$max_tries = absint( apply_filters( 'efml_export_unique_filename_max_tries', 100, $filename ) );
 
 		// loop until we found a unique filename.
-		$i = 0;
-		while ( ! $having_unique_filename ) {
+		for ( $i = 0; $i <= $max_tries; $i++ ) {
 			// generate a file name to check.
-			$filename_to_check = $filename;
-			if ( $i > 0 ) {
-				$filename_to_check = (string) str_replace( $ext, '-' . $i . $ext, $filename );
-			}
+			$filename_to_check = $this->get_filename_with_suffix( $filename, $ext, $i );
 
-			// search for any files in the database with this name.
-			$query   = array(
-				'post_type'   => 'attachment',
-				'post_status' => array( 'inherit', 'trash' ),
-				'meta_query'  => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-					'relation' => 'AND',
-					array(
-						'key'   => '_wp_attached_file',
-						'value' => $dir . $filename_to_check,
-					),
-				),
-			);
-			$results = new WP_Query( $query );
-
-			// bail on no results.
-			if ( 0 === $results->found_posts ) {
-				// mark that we have a unique filename.
-				$having_unique_filename = true;
-				$filename               = $filename_to_check;
+			// bail if this name or one of its variants is already in use.
+			if ( $this->is_filename_in_use( $filename_to_check, $ext, $dir, $export_targets ) ) {
 				continue;
 			}
 
-			// update counter.
-			++$i;
+			// return the unique filename.
+			return $filename_to_check;
 		}
 
-		// return the resulting filename.
+		// log this event.
+		/* translators: %1$d will be replaced by a number. */
+		Log::get_instance()->create( sprintf( __( 'No unique filename for the export could be found after %1$d tries. The filename will be used as it is.', 'external-files-in-media-library' ), $max_tries ), $filename, 'error' );
+
+		// return the given filename as fallback.
 		return $filename;
+	}
+
+	/**
+	 * Return whether the given filename or one of its variants is already used in the media library or on
+	 * one of the export targets.
+	 *
+	 * WordPress could save an image with another name than the uploaded one, e.g. "image-scaled.jpg" for
+	 * large images or "image-rotated.jpg" for rotated images. This name is used for the export. So these
+	 * variants are checked, too.
+	 *
+	 * @param string                         $filename The filename to check.
+	 * @param string                         $ext The extension of the file (incl. ".").
+	 * @param string                         $dir The relative upload directory (e.g. "2026/11/").
+	 * @param array<int,array<string,mixed>> $export_targets List of export targets.
+	 *
+	 * @return bool
+	 */
+	private function is_filename_in_use( string $filename, string $ext, string $dir, array $export_targets ): bool {
+		// get the base name without extension.
+		$base = ( '' !== $ext && str_ends_with( $filename, $ext ) ) ? substr( $filename, 0, -strlen( $ext ) ) : $filename;
+
+		// collect the names to check.
+		$names = array( $filename );
+
+		// add the variants WordPress uses for images.
+		$file_type = wp_check_filetype( $filename );
+		if ( is_string( $file_type['type'] ) && str_starts_with( $file_type['type'], 'image/' ) ) {
+			$names[] = $base . '-scaled' . $ext;
+			$names[] = $base . '-rotated' . $ext;
+		}
+
+		// check each name.
+		foreach ( $names as $name ) {
+			// bail if this name is used by another file in the media library.
+			if ( $this->is_filename_used_in_media_library( $name, $dir ) ) {
+				return true;
+			}
+
+			// bail if this name is already used on one of the external sources.
+			if ( $this->is_filename_used_on_export_targets( $name, $export_targets ) ) {
+				return true;
+			}
+		}
+
+		// return false as the name is not in use.
+		return false;
+	}
+
+	/**
+	 * Return the given filename with a numeric suffix before its extension.
+	 *
+	 * @param string $filename The filename.
+	 * @param string $ext The extension of the file (incl. ".").
+	 * @param int    $number The number to add (0 for no suffix).
+	 *
+	 * @return string
+	 */
+	private function get_filename_with_suffix( string $filename, string $ext, int $number ): string {
+		// bail if no suffix should be added.
+		if ( 0 === $number ) {
+			return $filename;
+		}
+
+		// add the suffix before the extension, if the filename ends with it.
+		if ( '' !== $ext && str_ends_with( $filename, $ext ) ) {
+			return substr( $filename, 0, -strlen( $ext ) ) . '-' . $number . $ext;
+		}
+
+		// otherwise add it to the end.
+		return $filename . '-' . $number;
+	}
+
+	/**
+	 * Return whether the given filename is already used by a file in the media library.
+	 *
+	 * Checks:
+	 * - local files in the given upload directory.
+	 * - exported files with this filename (saved since 5.7.0).
+	 * - exported files from before 5.7.0, which have the external URL with this filename as attached file.
+	 *
+	 * @param string $filename The filename to check.
+	 * @param string $dir The relative upload directory (e.g. "2026/11/").
+	 *
+	 * @return bool
+	 */
+	private function is_filename_used_in_media_library( string $filename, string $dir ): bool {
+		$query   = array(
+			'post_type'              => 'attachment',
+			'post_status'            => array( 'inherit', 'trash' ),
+			'fields'                 => 'ids',
+			'posts_per_page'         => 1,
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'meta_query'             => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
+				'relation' => 'OR',
+				array(
+					'key'   => '_wp_attached_file',
+					'value' => $dir . $filename,
+				),
+				array(
+					'key'   => 'efml_export_filename',
+					'value' => $filename,
+				),
+				array(
+					'relation' => 'AND',
+					array(
+						'key'     => 'eml_exported_file',
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => '_wp_attached_file',
+						'value'   => '/' . $filename,
+						'compare' => 'LIKE',
+					),
+				),
+			),
+		);
+		$results = new WP_Query( $query );
+
+		// return whether we found any file.
+		return ! empty( $results->posts );
+	}
+
+	/**
+	 * Return whether the given filename is already used on one of the given export targets.
+	 *
+	 * @param string                         $filename The filename to check.
+	 * @param array<int,array<string,mixed>> $export_targets List of export targets.
+	 *
+	 * @return bool
+	 */
+	private function is_filename_used_on_export_targets( string $filename, array $export_targets ): bool {
+		foreach ( $export_targets as $export_target ) {
+			// get the export object.
+			$export_obj = $export_target['export_obj'];
+
+			// bail if export object is not valid.
+			if ( ! $export_obj instanceof Export_Base ) {
+				continue;
+			}
+
+			// create the target path of this file.
+			$target = trailingslashit( (string) $export_target['path'] ) . $filename;
+
+			// check the target.
+			try {
+				if ( $export_obj->file_exists_on_target( $target, (array) $export_target['credentials'] ) ) {
+					// log this event.
+					Log::get_instance()->create( __( 'A file with this name already exists on the external source. Another name will be used for the export.', 'external-files-in-media-library' ), $target, 'info', 2 );
+
+					// return true as the filename is in use.
+					return true;
+				}
+			} catch ( \Throwable $e ) {
+				// log this event.
+				Log::get_instance()->create( __( 'Error during check for existing file on external source:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $target, 'error' );
+			}
+		}
+
+		// return false as the filename is not used on any external source.
+		return false;
+	}
+
+	/**
+	 * Return the list of export targets with their export object, path and credentials.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function get_export_targets(): array {
+		// collect the targets.
+		$targets = array();
+
+		// check each external source with enabled export.
+		foreach ( $this->get_export_terms() as $term_id ) {
+			$true = true;
+			/**
+			 * Filter whether the external source should be checked for existing files with the same name
+			 * before a new file is exported.
+			 *
+			 * @since 5.7.0 Available since 5.7.0.
+			 * @param bool $true True to check the external source.
+			 * @param int $term_id The ID of the external source.
+			 */
+			if ( ! apply_filters( 'efml_export_check_filename_on_target', $true, $term_id ) ) {
+				continue;
+			}
+
+			// get the listing object.
+			$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
+
+			// bail if no object could be found.
+			if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+				continue;
+			}
+
+			// get the export object.
+			$export_obj = $listing_obj->get_export_object();
+
+			// bail if this export object requires a URL, which is not set (as the export is not used then).
+			if ( $export_obj->is_url_required() && empty( get_term_meta( $term_id, 'efml_export_url', true ) ) ) {
+				continue;
+			}
+
+			// add this target to the list.
+			$targets[] = array(
+				'term_id'     => $term_id,
+				'export_obj'  => $export_obj,
+				'path'        => (string) get_term_meta( $term_id, 'path', true ),
+				'credentials' => Taxonomy::get_instance()->get_entry( $term_id ),
+			);
+		}
+
+		// return the resulting list.
+		return $targets;
 	}
 
 	/**
@@ -1962,6 +2199,12 @@ class Export extends Tools_Base {
 		// set marker for successfully export.
 		$successfully_exported = false;
 
+		// set marker for files added to the queue.
+		$added_to_queue = false;
+
+		// check whether the export should run in background.
+		$export_in_background = $this->is_export_in_background_enabled();
+
 		// check the files and change its state.
 		foreach ( $items as $attachment_id ) {
 			// get the ID as integer.
@@ -1977,6 +2220,12 @@ class Export extends Tools_Base {
 				continue;
 			}
 
+			// add the file to the queue, if the export should run in background.
+			if ( $export_in_background && Queue::get_instance()->add_export( $attachment_id ) ) {
+				$added_to_queue = true;
+				continue;
+			}
+
 			// export the file.
 			$result = $this->export_file( $attachment_id );
 
@@ -1989,7 +2238,11 @@ class Export extends Tools_Base {
 		// trigger hint depending on result.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( 'eml_files_export' );
-		if ( $successfully_exported ) {
+		if ( $added_to_queue && ! $successfully_exported ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$transient_obj->set_message( '<strong>' . __( 'The files have been added to the queue.', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'They will be exported in the background. You can see the progress in <a href="%1$s">the queue</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
+			$transient_obj->set_type( 'success' );
+		} elseif ( $successfully_exported ) {
 			$transient_obj->set_message( '<strong>' . __( 'The files have been exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'They are now stored in the external source and used from there.', 'external-files-in-media-library' ) );
 			$transient_obj->set_type( 'success' );
 		} else {
@@ -2005,6 +2258,34 @@ class Export extends Tools_Base {
 
 		// return the given value.
 		return $sendback;
+	}
+
+	/**
+	 * Return whether files should be exported in background via the queue.
+	 *
+	 * Requires the enabled setting and an active queue.
+	 *
+	 * @return bool
+	 */
+	public function is_export_in_background_enabled(): bool {
+		// bail if setting is disabled.
+		if ( 1 !== absint( get_option( 'eml_export_in_background' ) ) ) {
+			return false;
+		}
+
+		$true = true;
+		/**
+		 * Filter whether files should be exported in background via the queue.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool $true True to export in background.
+		 */
+		if ( ! apply_filters( 'efml_export_in_background', $true ) ) {
+			return false;
+		}
+
+		// return whether the queue is processed.
+		return Queue::get_instance()->is_processing_enabled();
 	}
 
 	/**

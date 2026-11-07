@@ -28,6 +28,7 @@ class Queue extends WP_List_Table {
 			'options' => __( 'Options', 'external-files-in-media-library' ),
 			'state'   => __( 'State', 'external-files-in-media-library' ),
 			'date'    => __( 'Date', 'external-files-in-media-library' ),
+			'type'    => __( 'Task', 'external-files-in-media-library' ),
 			'url'     => __( 'URL', 'external-files-in-media-library' ),
 		);
 	}
@@ -105,6 +106,7 @@ class Queue extends WP_List_Table {
 			'options' => $this->get_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
+			'type' => $this->get_type( $item ),
 			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . esc_url( $item[ $column_name ] ) . '</a>',
 			default => '',
 		};
@@ -303,6 +305,38 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
+	 * Return the task of a single entry (import or export).
+	 *
+	 * @param array<string,string> $item The item data.
+	 *
+	 * @return string
+	 */
+	private function get_type( array $item ): string {
+		// bail if this is not an export entry.
+		if ( empty( $item['type'] ) || 'export' !== $item['type'] ) {
+			return esc_html__( 'Import', 'external-files-in-media-library' );
+		}
+
+		// create the output for the export.
+		$output = esc_html__( 'Export', 'external-files-in-media-library' );
+
+		// add the number of failed attempts.
+		if ( ! empty( $item['attempts'] ) ) {
+			/* translators: %1$d will be replaced by a number. */
+			$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', absint( $item['attempts'] ), 'external-files-in-media-library' ), absint( $item['attempts'] ) ) );
+		}
+
+		// add link to the attachment.
+		$edit_link = get_edit_post_link( absint( $item['attachment_id'] ) );
+		if ( is_string( $edit_link ) ) {
+			$output .= '<br><a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Edit file', 'external-files-in-media-library' ) . '</a>';
+		}
+
+		// return the resulting output.
+		return $output;
+	}
+
+	/**
 	 * Return list of options for a single entry.
 	 *
 	 * @param array<string,string> $item The item data.
@@ -328,7 +362,7 @@ class Queue extends WP_List_Table {
 			'className' => 'efml',
 			'title'     => __( 'Delete queue entry', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . ( ! empty( $item['type'] ) && 'export' === $item['type'] ? __( 'The file will not be exported and stays a local file. You can export it any time again in the media library.', 'external-files-in-media-library' ) : __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

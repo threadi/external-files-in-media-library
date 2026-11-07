@@ -410,6 +410,9 @@ class Files {
 			'eml_exported_file',
 			'efml_export_sources',
 			'efml_former_export_sources',
+			'efml_export_filename',
+			'efml_export_queued',
+			'efml_export_failed',
 			'efml_multisite_attachment_id',
 			'efml_dropbox_path',
 		);

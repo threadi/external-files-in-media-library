@@ -15,7 +15,9 @@ use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
@@ -102,6 +104,9 @@ class Queue extends Extension_Base {
 		add_action( 'efml_cli_arguments', array( $this, 'check_cli_arguments' ) );
 		add_filter( 'efml_user_settings', array( $this, 'add_user_setting' ) );
 		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoint' ) );
+
+		// use WordPress hooks.
+		add_action( 'delete_attachment', array( $this, 'remove_export_entries_of_attachment' ) );
 	}
 
 	/**
@@ -252,6 +257,9 @@ class Queue extends Extension_Base {
             `fields` text NOT NULL,
             `state` text NOT NULL,
             `options` text NOT NULL,
+            `type` varchar(20) DEFAULT 'import' NOT NULL,
+            `attachment_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
+            `attempts` smallint(5) unsigned DEFAULT 0 NOT NULL,
             UNIQUE KEY id (id)
         ) $charset_collate;";
 
@@ -412,6 +420,12 @@ class Queue extends Extension_Base {
 			return;
 		}
 
+		// process an export entry.
+		if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
+			$this->process_export_entry( $url_data );
+			return;
+		}
+
 		// get the files object.
 		$import = Import::get_instance();
 
@@ -551,6 +565,9 @@ class Queue extends Extension_Base {
 
 		// truncate the content of the table.
 		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->prefix . 'eml_queue' ) );
+
+		// remove the markers for planned exports.
+		delete_post_meta_by_key( 'efml_export_queued' );
 	}
 
 	/**
@@ -628,21 +645,21 @@ class Queue extends Extension_Base {
 			// run query to unlimited list.
 			if ( $unlimited ) {
 				// get the entries from the queue table.
-				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state` FROM %i ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			}
 
 			// return limited URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM %i ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 
 		// run query to unlimited list.
 		if ( $unlimited ) {
 			// return all URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM %i WHERE `state` = %s ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue', $state ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i WHERE `state` = %s ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue', $state ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 
 		// get limited URLs for requested state.
-		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state` FROM %i WHERE `state` = %s ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i WHERE `state` = %s ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -654,7 +671,7 @@ class Queue extends Extension_Base {
 	 */
 	private function get_url( string $url ): array {
 		global $wpdb;
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields` FROM %i WHERE `url` = %s', array( $wpdb->prefix . 'eml_queue', $url ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields` FROM %i WHERE `url` = %s AND `type` = %s', array( $wpdb->prefix . 'eml_queue', $url, 'import' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -666,7 +683,7 @@ class Queue extends Extension_Base {
 	 */
 	private function get_url_by_id( int $id ): array {
 		global $wpdb;
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields`, `options` FROM %i WHERE `id` = %d', array( $wpdb->prefix . 'eml_queue', $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields`, `options`, `type`, `attachment_id`, `attempts` FROM %i WHERE `id` = %d', array( $wpdb->prefix . 'eml_queue', $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -682,7 +699,7 @@ class Queue extends Extension_Base {
 
 		// get the URL from queue for given ID.
 		$url      = '';
-		$url_data = $this->get_url( $url );
+		$url_data = $this->get_url_by_id( $id );
 		if ( ! empty( $url_data ) ) {
 			$url = $url_data['url'];
 		}
@@ -720,9 +737,14 @@ class Queue extends Extension_Base {
 
 		// get the URL from queue for given ID.
 		$url      = '';
-		$url_data = $this->get_url( $url );
+		$url_data = $this->get_url_by_id( $id );
 		if ( ! empty( $url_data ) ) {
 			$url = $url_data['url'];
+
+			// remove the marker for a planned export on the attachment.
+			if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
+				delete_post_meta( absint( $url_data['attachment_id'] ), 'efml_export_queued' );
+			}
 		}
 
 		// update the entry.
@@ -1007,6 +1029,233 @@ class Queue extends Extension_Base {
 
 		// return the settings.
 		return $settings;
+	}
+
+	/**
+	 * Return whether the queue is processed in the background (if its schedule is enabled).
+	 *
+	 * @return bool
+	 */
+	public function is_processing_enabled(): bool {
+		return 'eml_disable_check' !== get_option( 'eml_queue_interval' );
+	}
+
+	/**
+	 * Add an attachment to the queue for its export to the external sources.
+	 *
+	 * The file stays a local file in the media library until it has been exported.
+	 *
+	 * @since 5.7.0 Available since 5.7.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool True if the attachment is in the queue.
+	 */
+	public function add_export( int $attachment_id ): bool {
+		global $wpdb;
+
+		// bail if no ID is given.
+		if ( 0 === $attachment_id ) {
+			return false;
+		}
+
+		// get the local URL of this file for the display in the queue.
+		$url = (string) wp_get_attachment_url( $attachment_id );
+
+		// bail if this attachment is already in the queue for export.
+		if ( ! empty( $this->get_export_entry( $attachment_id ) ) ) {
+			Log::get_instance()->create( __( 'File is already in the queue for the export.', 'external-files-in-media-library' ), $url, 'info', 2 );
+			return true;
+		}
+
+		// add the entry.
+		$result = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'time'          => gmdate( 'Y-m-d H:i:s' ),
+				'url'           => $url,
+				'fields'        => '',
+				'state'         => 'new',
+				'options'       => '',
+				'type'          => 'export',
+				'attachment_id' => $attachment_id,
+				'attempts'      => 0,
+			),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, $url );
+
+		// bail on error.
+		if ( false === $result ) {
+			return false;
+		}
+
+		// mark the attachment as planned for export.
+		update_post_meta( $attachment_id, 'efml_export_queued', time() );
+		delete_post_meta( $attachment_id, 'efml_export_failed' );
+
+		// log this event.
+		Log::get_instance()->create( __( 'File has been added to the queue for the export.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+		// return true as the entry has been added.
+		return true;
+	}
+
+	/**
+	 * Return the open export entry for the given attachment.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array<string,string>
+	 */
+	private function get_export_entry( int $attachment_id ): array {
+		global $wpdb;
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `state`, `attempts` FROM %i WHERE `type` = %s AND `attachment_id` = %d AND `state` = %s', array( $wpdb->prefix . 'eml_queue', 'export', $attachment_id, 'new' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Process a single export entry of the queue.
+	 *
+	 * If the export fails, it is tried again during the next run of the queue. After the maximum number
+	 * of attempts, the entry gets the state "error" and the attachment is marked as not exported.
+	 *
+	 * @param array<string,string> $url_data The entry data.
+	 *
+	 * @return void
+	 */
+	private function process_export_entry( array $url_data ): void {
+		// get the entry ID.
+		$id = absint( $url_data['id'] );
+
+		// get the attachment ID.
+		$attachment_id = absint( $url_data['attachment_id'] );
+
+		// bail if the attachment does not exist anymore.
+		if ( 0 === $attachment_id || 'attachment' !== get_post_type( $attachment_id ) ) {
+			$this->remove_url( $id );
+			return;
+		}
+
+		// bail if the export is disabled in the meantime (the entry stays in the queue).
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			Log::get_instance()->create( __( 'Export of file from the queue has been skipped, as the export is disabled.', 'external-files-in-media-library' ), $url_data['url'], 'info', 2 );
+			return;
+		}
+
+		// bail if the file is already an external file (e.g., exported by a manual request).
+		if ( Files::get_instance()->get_file( $attachment_id )->is_valid() ) {
+			$this->remove_url( $id );
+			return;
+		}
+
+		// export the file.
+		try {
+			$result = Export::get_instance()->export_file( $attachment_id );
+		} catch ( \Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during the export of this file via queue:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url_data['url'], 'error' );
+
+			// mark as failed.
+			$result = false;
+		}
+
+		// remove the entry if the export was successfully.
+		if ( $result ) {
+			$this->remove_url( $id );
+			return;
+		}
+
+		// count this attempt.
+		$attempts = absint( $url_data['attempts'] ) + 1;
+		$this->set_attempts( $id, $attempts );
+
+		/**
+		 * Filter the maximum number of attempts to export a file via the queue.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param int $max_attempts The maximum number of attempts.
+		 * @param int $attachment_id The attachment ID.
+		 */
+		$max_attempts = absint( apply_filters( 'efml_export_queue_max_attempts', 3, $attachment_id ) );
+
+		// try again during the next run, if the maximum is not reached.
+		if ( $attempts < $max_attempts ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			Log::get_instance()->create( sprintf( __( 'Export of file via queue failed (attempt %1$d of %2$d). It will be tried again during the next run of the queue.', 'external-files-in-media-library' ), $attempts, $max_attempts ), $url_data['url'], 'error' );
+			return;
+		}
+
+		// mark the entry as failed.
+		$this->set_url_state( $id, 'error' );
+
+		// mark the attachment.
+		delete_post_meta( $attachment_id, 'efml_export_queued' );
+		update_post_meta( $attachment_id, 'efml_export_failed', time() );
+
+		// log this event.
+		/* translators: %1$d will be replaced by a number. */
+		Log::get_instance()->create( sprintf( __( 'Export of file via queue failed after %1$d attempts. The file stays a local file in the media library.', 'external-files-in-media-library' ), $attempts ), $url_data['url'], 'error' );
+	}
+
+	/**
+	 * Set the number of attempts for an entry.
+	 *
+	 * @param int $id The ID of the entry.
+	 * @param int $attempts The number of attempts.
+	 *
+	 * @return void
+	 */
+	private function set_attempts( int $id, int $attempts ): void {
+		global $wpdb;
+
+		// update the entry.
+		$result = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'attempts' => $attempts,
+			),
+			array(
+				'id' => $id,
+			),
+			array(
+				'%d',
+			),
+			array(
+				'%d',
+			)
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, '' );
+	}
+
+	/**
+	 * Remove all export entries of an attachment from the queue, e.g. if it is deleted.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function remove_export_entries_of_attachment( int $attachment_id ): void {
+		global $wpdb;
+
+		// delete the entries.
+		$result = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'type'          => 'export',
+				'attachment_id' => $attachment_id,
+			),
+			array(
+				'%s',
+				'%d',
+			)
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, '' );
 	}
 
 	/**

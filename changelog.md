@@ -6,6 +6,10 @@
 
 - Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
 - Added more hooks
+- Added option to export new files in the background via the queue, incl. retries of failed exports and markers in the media library
+- Added possibility for service plugins to define the values of their fields via constants (e.g. in wp-config.php)
+- Added check for existing files with the same name on the external sources before a file is exported
+- Added hooks "efml_export_check_filename_on_target", "efml_export_unique_filename_max_tries", "efml_export_in_background", "efml_export_queue_max_attempts", "efml_service_fields" and "efml_service_field_constant_name"
 
 ### Changed
 
@@ -14,6 +18,8 @@
 ### Fixed
 
 - Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)
+- Fixed exported files with the same name overwriting each other on the external source, as the filename was only checked in the actual upload directory
+- Fixed reading of queue entries if their state is changed or they are deleted
 
 ## [5.6.2] - 06.11.2026
 

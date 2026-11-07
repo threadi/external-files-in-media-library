@@ -225,4 +225,44 @@ class Export extends Export_Base {
 	public function is_url_required(): bool {
 		return true;
 	}
+
+	/**
+	 * Return whether a file with the given target path already exists on the FTP server.
+	 *
+	 * @param string              $target The target path of the file on the external source.
+	 * @param array<string,mixed> $credentials The credentials to use.
+	 *
+	 * @return bool
+	 */
+	public function file_exists_on_target( string $target, array $credentials ): bool {
+		// get the protocol handler for this URL.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $target );
+
+		// bail if the detected protocol handler is not FTP.
+		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+			return false;
+		}
+
+		// set the login.
+		$protocol_handler_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
+
+		// get the FTP-connection.
+		$ftp_connection = $protocol_handler_obj->get_connection( $target );
+
+		// bail if connection is not an FTP-object.
+		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+			return false;
+		}
+
+		// get the URL parts.
+		$parse_url = wp_parse_url( $target );
+
+		// bail if path could not be found.
+		if ( empty( $parse_url['path'] ) ) {
+			return false;
+		}
+
+		// return whether the file exists.
+		return $ftp_connection->exists( $parse_url['path'] );
+	}
 }

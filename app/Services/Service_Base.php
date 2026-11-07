@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
 use easySettingsForWordPress\Fields\Select;
+use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
@@ -55,6 +56,15 @@ class Service_Base extends Directory_Listing_Base {
 	 * @var WP_User|false
 	 */
 	private WP_User|false $user = false;
+
+	/**
+	 * Marker whether values of fields could be defined via constants (true) or not (false).
+	 *
+	 * Must only be enabled for services, which read all their credentials via @get_fields().
+	 *
+	 * @var bool
+	 */
+	protected bool $fields_via_constants = false;
 
 	/**
 	 * Set the configuration for the external source of this service plugin.
@@ -149,6 +159,20 @@ class Service_Base extends Directory_Listing_Base {
 			if ( method_exists( $setting, 'set_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				$setting->set_reload_on_save( true );
 			}
+			$setting->set_field( $field );
+		}
+
+		// show hint if settings of this service are defined via constants.
+		$constants = $this->get_defined_constants_for_fields();
+		if ( ! empty( $constants ) ) {
+			$setting = $settings_obj->add_setting( 'eml_' . $this->get_name() . '_constants_hint' );
+			$setting->set_section( $section );
+			$setting->set_show_in_rest( false );
+			$setting->prevent_export( true );
+			$field = new TextInfo( $settings_obj );
+			$field->set_title( __( 'Defined in wp-config.php', 'external-files-in-media-library' ) );
+			/* translators: %1$s will be replaced by a list of constant names. */
+			$field->set_description( sprintf( __( 'The following settings are defined as constants, e.g. in your wp-config.php. They are used for every connection to this service and replace the values entered here, in the user profiles or in your external sources: %1$s', 'external-files-in-media-library' ), '<code>' . implode( '</code>, <code>', array_map( 'esc_html', $constants ) ) . '</code>' ) );
 			$setting->set_field( $field );
 		}
 
@@ -508,6 +532,175 @@ class Service_Base extends Directory_Listing_Base {
 
 		// return encrypted string.
 		return Crypt::get_instance()->decrypt( $value );
+	}
+
+	/**
+	 * Return list of fields we need for this listing.
+	 *
+	 * Values of fields, which are defined as constants (e.g. in wp-config.php), replace the configured values.
+	 * The name of the constant is "EFML_" + the service name + "_" + the field name in uppercase,
+	 * e.g. "EFML_AWS_S3_ACCESS_KEY" for the field "access_key" of the service "aws-s3".
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_fields(): array {
+		// get the fields.
+		$fields = parent::get_fields();
+
+		// check each field for a constant, if this is supported by this service.
+		$fields_to_check = $this->is_fields_via_constants_enabled() ? $fields : array();
+		foreach ( $fields_to_check as $name => $field ) {
+			// bail if field is not an array.
+			if ( ! is_array( $field ) ) { // @phpstan-ignore function.alreadyNarrowedType
+				continue;
+			}
+
+			// get the constant name for this field.
+			$constant_name = $this->get_constant_name_for_field( (string) $name );
+
+			// bail if constant is not defined.
+			if ( ! defined( $constant_name ) ) {
+				continue;
+			}
+
+			// use the value of the constant.
+			$fields[ $name ]['value']    = constant( $constant_name );
+			$fields[ $name ]['readonly'] = true;
+			$fields[ $name ]['constant'] = $constant_name;
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the fields of a service incl. their values before they are used.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<string,array<string,mixed>> $fields List of fields.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_fields', $fields, $instance );
+	}
+
+	/**
+	 * Return the configuration for the directory listing in the backend.
+	 *
+	 * Values of credential fields, which are defined as constants, are never sent to the browser.
+	 * They are set again on the server via @get_fields() for each request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_config(): array {
+		// get the configuration.
+		$config = parent::get_config();
+
+		// bail if no fields are set.
+		if ( empty( $config['fields'] ) || ! is_array( $config['fields'] ) ) {
+			return $config;
+		}
+
+		// check each field.
+		foreach ( $config['fields'] as $name => $field ) {
+			// bail if field is not defined via constant.
+			if ( ! is_array( $field ) || empty( $field['constant'] ) ) {
+				continue;
+			}
+
+			// mark field as not editable and not required in the form.
+			$config['fields'][ $name ]['readonly']     = true;
+			$config['fields'][ $name ]['not_required'] = true;
+
+			// bail if this is not a credential field.
+			if ( empty( $field['credential'] ) && ( empty( $field['type'] ) || 'password' !== $field['type'] ) ) {
+				continue;
+			}
+
+			// remove the value and show a hint instead.
+			$config['fields'][ $name ]['value'] = '';
+			/* translators: %1$s will be replaced by the name of a constant. */
+			$config['fields'][ $name ]['placeholder'] = sprintf( __( 'Defined via %1$s', 'external-files-in-media-library' ), $field['constant'] );
+		}
+
+		// return the resulting configuration.
+		return $config;
+	}
+
+	/**
+	 * Return whether values of fields of this service could be defined via constants.
+	 *
+	 * @return bool
+	 */
+	public function is_fields_via_constants_enabled(): bool {
+		return $this->fields_via_constants;
+	}
+
+	/**
+	 * Return the name of the constant, which could be used to define the value of the given field.
+	 *
+	 * @param string $field_name The name of the field.
+	 *
+	 * @return string
+	 */
+	public function get_constant_name_for_field( string $field_name ): string {
+		// create the name.
+		$constant_name = 'EFML_' . strtoupper( (string) preg_replace( '/[^a-zA-Z0-9]+/', '_', $this->get_name() . '_' . $field_name ) );
+
+		$instance = $this;
+		/**
+		 * Filter the name of the constant for a field of a service.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param string $constant_name The name of the constant.
+		 * @param string $field_name The name of the field.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_field_constant_name', $constant_name, $field_name, $instance );
+	}
+
+	/**
+	 * Return the list of defined constants for fields of this service.
+	 *
+	 * Uses the prefix of the constant names, so the fields must not be loaded for this check.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_defined_constants_for_fields(): array {
+		// bail if this service does not support constants.
+		if ( ! $this->is_fields_via_constants_enabled() ) {
+			return array();
+		}
+
+		// get the prefix for constants of this service.
+		$prefix = $this->get_constant_name_for_field( '' );
+
+		// get the user-defined constants.
+		$constants = get_defined_constants( true );
+
+		// bail if no user-defined constants exist.
+		if ( empty( $constants['user'] ) ) {
+			return array();
+		}
+
+		// list of constants, which are used internally by this plugin and are not settings.
+		$internal_constants = array( 'EFML_LOCAL_UPDATED' );
+
+		// collect the constants of this service.
+		$list = array();
+		foreach ( array_keys( $constants['user'] ) as $constant_name ) {
+			// bail if constant does not belong to this service.
+			if ( ! str_starts_with( $constant_name, $prefix ) ) {
+				continue;
+			}
+
+			// bail if this is an internal constant.
+			if ( in_array( $constant_name, $internal_constants, true ) ) {
+				continue;
+			}
+
+			// add it to the list.
+			$list[] = $constant_name;
+		}
+
+		// return the resulting list.
+		return $list;
 	}
 
 	/**
