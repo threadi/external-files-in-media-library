@@ -106,6 +106,7 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	protected function get_install_dialog_description(): array {
 		return array(
 			'<p>' . __( 'It will enable you to use files from AWS S3-compatible platforms in your WordPress, export them there, and synchronize them.<br>This applies, for example, to AWS S3 itself or Cloudflare R2.', 'external-files-in-media-library' ) . '</p>',
+			'<p>' . __( 'Files in AWS S3 can also be delivered via Amazon CloudFront, so your bucket can stay private.', 'external-files-in-media-library' ) . '</p>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}

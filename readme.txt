@@ -74,7 +74,7 @@ Some of them require credentials, for http(s) it is optional.
 
 Support for additional platforms as external sources is enabled by additional service plugins. These are now:
 
-➕ [External files from AWS S3 in Media Library](https://github.com/threadi/external-files-from-aws-s3) (incl. support for AWS S3, Backplaze S3, Cloudflare R2 and DigitalOcean Spaces)
+➕ [External files from AWS S3 in Media Library](https://github.com/threadi/external-files-from-aws-s3) (incl. support for AWS S3, AWS Cloudfront, Backplaze S3, Cloudflare R2 and DigitalOcean Spaces)
 ➕ [External files from Google Cloud Storage in Media Library](https://github.com/threadi/external-files-from-google-cloud-storage)
 ➕ [External files from Google Drive in Media Library](https://github.com/threadi/external-files-from-google-drive)
 ➕ [External files from WebDav in Media Library](https://github.com/threadi/external-files-from-webdav) (incl. any WebDav-provider like NextCloud or Seafile)
