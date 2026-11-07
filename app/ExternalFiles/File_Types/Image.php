@@ -170,7 +170,19 @@ class Image extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) );
+		// get the global setting.
+		$enabled = 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) );
+
+		/**
+		 * Filter whether the proxy is used for an image.
+		 *
+		 * The external file object is given if the check is for a specific file, otherwise it is false.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool                                                 $enabled           True if the proxy is enabled.
+		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File|false $external_file_obj The external file object or false.
+		 */
+		return (bool) apply_filters( 'efml_image_proxy_enabled', $enabled, $this->get_file() );
 	}
 
 	/**

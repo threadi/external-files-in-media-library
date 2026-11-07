@@ -135,6 +135,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\Folderly',
 			'ExternalFilesInMediaLibrary\ThirdParty\Folders',
 			'ExternalFilesInMediaLibrary\ThirdParty\IFolders',
+			'ExternalFilesInMediaLibrary\ThirdParty\InstantImages',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaCloudSync',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaLibraryAssistant',

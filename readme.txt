@@ -44,6 +44,8 @@ And compatible with [Network Media Library](https://github.com/humanmade/network
 
 And it is also compatible with multilingual plugins like Polylang to translate the media files.
 
+Use images from Unsplash, Pexels and GIPHY, which you add with [Instant Images](https://wordpress.org/plugins/instant-images/), as external files – they are loaded directly from the platform instead of being saved in your hosting.
+
 The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
 
 == REST API ==

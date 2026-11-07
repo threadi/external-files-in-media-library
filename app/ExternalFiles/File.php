@@ -841,7 +841,7 @@ class File {
 
 		// prepare import of the temporary file via WP-own functions.
 		$file_array = array(
-			'name'     => $this->get_title(),
+			'name'     => $this->get_local_file_name(),
 			'type'     => $file_data[0]['mime-type'],
 			'tmp_name' => '',
 			'error'    => '0',
@@ -996,6 +996,53 @@ class File {
 
 		// return true if switch was successfully.
 		return true;
+	}
+
+	/**
+	 * Return the file name to use, if this file is saved locally.
+	 *
+	 * WordPress only accepts file names with an allowed extension. The title is used, if it is a valid file name
+	 * (like on any import). Otherwise, e.g. if the title has been changed or is a description from another plugin,
+	 * the name from the URL path (without query string) is used, if it has an allowed extension. As fallback the
+	 * title with the extension of the mime type of this file is used.
+	 *
+	 * @return string
+	 */
+	public function get_local_file_name(): string {
+		// get the title.
+		$title = $this->get_title();
+
+		// use the title, if it has an allowed extension.
+		$file_type = wp_check_filetype( $title );
+		if ( ! empty( $file_type['ext'] ) ) {
+			return $title;
+		}
+
+		// get the name from the URL path, without the query string.
+		$url_name = wp_basename( (string) wp_parse_url( $this->get_url( true ), PHP_URL_PATH ) );
+
+		// use the name from the URL path, if it has an allowed extension.
+		$file_type = wp_check_filetype( $url_name );
+		if ( ! empty( $file_type['ext'] ) ) {
+			$file_name = $url_name;
+		} else {
+			// use the title (or the name from the URL, if no title is set) with the extension of the mime type.
+			$file_name = sanitize_file_name( '' !== trim( $title ) ? $title : $url_name );
+			$extension = $this->get_file_extension();
+			if ( '' !== $extension && '' !== $file_name ) {
+				$file_name .= '.' . $extension;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the file name to use, if this file is saved locally.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param string $file_name The file name.
+		 * @param File   $instance  The external file object.
+		 */
+		return apply_filters( 'efml_local_file_name', $file_name, $instance );
 	}
 
 	/**

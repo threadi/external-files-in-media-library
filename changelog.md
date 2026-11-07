@@ -2,9 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
+- Added more hooks
+
 ### Changed
 
 - Now also compatible with Windows-based hostings
+
+### Fixed
+
+- Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)
 
 ## [5.6.2] - 06.11.2026
 
