@@ -538,8 +538,113 @@ class Services {
 	 */
 	public function show_settings_services_hint(): void {
 		echo '<h2>' . esc_html__( 'Settings for services', 'external-files-in-media-library' ) . '</h2>';
+
+		// use the same wrapper as the tables for logs and queue, so the spacing is the same.
+		echo '<div class="wrap eml-services-table">';
 		echo '<p>' . esc_html__( 'Services help you access external data sources for files.', 'external-files-in-media-library' );
 		echo '<br><strong>' . esc_html__( 'Select one of the services to access its settings.', 'external-files-in-media-library' ) . '</strong></p>';
+
+		// show the list of all services.
+		$this->show_services_overview();
+		echo '</div>';
+	}
+
+	/**
+	 * Return the services for the overview in the settings, sorted by their labels.
+	 *
+	 * @return array<int,Service_Base>
+	 */
+	public function get_services_for_overview(): array {
+		// collect the services.
+		$services = array();
+		foreach ( $this->get_services_as_objects() as $obj ) {
+			// bail if this is not a service with settings.
+			if ( ! $obj instanceof Service_Base ) {
+				continue;
+			}
+
+			// bail if this service has no title.
+			if ( '' === $obj->get_settings_title() ) {
+				continue;
+			}
+
+			// add it to the list.
+			$services[] = $obj;
+		}
+
+		// sort them by their labels.
+		usort(
+			$services,
+			static function ( Service_Base $a, Service_Base $b ): int {
+				return strnatcasecmp( $a->get_settings_title(), $b->get_settings_title() );
+			}
+		);
+
+		$instance = $this;
+		/**
+		 * Filter the list of services for the overview in the settings.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<int,Service_Base> $services List of services.
+		 * @param Services $instance The services object.
+		 */
+		return apply_filters( 'efml_services_overview', $services, $instance );
+	}
+
+	/**
+	 * Show the list of all services with their logos and links to their settings.
+	 *
+	 * The logos are set via CSS with the class "efml-" + name of the service, like in the directory listing.
+	 * Services could set their logo on this element or on its child element.
+	 *
+	 * @return void
+	 */
+	public function show_services_overview(): void {
+		// get the services.
+		$services = $this->get_services_for_overview();
+
+		// bail if no services are available.
+		if ( empty( $services ) ) {
+			return;
+		}
+
+		?>
+		<table class="widefat striped efml-services-overview">
+			<thead>
+				<tr>
+					<th scope="col" class="efml-services-overview-logo"><span class="screen-reader-text"><?php echo esc_html__( 'Logo', 'external-files-in-media-library' ); ?></span></th>
+					<th scope="col"><?php echo esc_html__( 'Service', 'external-files-in-media-library' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php
+				foreach ( $services as $obj ) {
+					// get the URL of the settings.
+					$url = $obj->get_settings_url();
+
+					?>
+					<tr>
+						<td class="efml-services-overview-logo"><span class="efml-service-logo efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>" aria-hidden="true"><span></span></span></td>
+						<td>
+							<?php
+							if ( '' !== $url ) {
+								?>
+								<a href="<?php echo esc_url( $url ); ?>"><strong><?php echo esc_html( $obj->get_settings_title() ); ?></strong></a>
+								<?php
+							} else {
+								?>
+								<strong><?php echo esc_html( $obj->get_settings_title() ); ?></strong>
+								<?php
+							}
+							?>
+						</td>
+					</tr>
+					<?php
+				}
+				?>
+			</tbody>
+		</table>
+		<?php
 	}
 
 	/**

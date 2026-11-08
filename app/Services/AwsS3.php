@@ -105,8 +105,14 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	 */
 	protected function get_install_dialog_description(): array {
 		return array(
-			'<p>' . __( 'It will enable you to use files from AWS S3-compatible platforms in your WordPress, export them there, and synchronize them.<br>This applies, for example, to AWS S3 itself or Cloudflare R2.', 'external-files-in-media-library' ) . '</p>',
-			'<p>' . __( 'Files in AWS S3 can also be delivered via Amazon CloudFront, so your bucket can stay private.', 'external-files-in-media-library' ) . '</p>',
+			'<p>' . __( 'It will enable you to use files from AWS S3 and other S3-compatible platforms in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
+			'<ul class="efml-dialog-list">'
+				. '<li>' . __( 'Supported platforms: AWS S3, Backblaze, Cloudflare R2, DigitalOcean Spaces, Hetzner Object Storage, IONOS Object Storage, OVHcloud Object Storage, Scaleway Object Storage and Wasabi.', 'external-files-in-media-library' ) . '</li>'
+				. '<li>' . __( 'Any other S3-compatible storage with its own endpoint, e.g. MinIO or Ceph.', 'external-files-in-media-library' ) . '</li>'
+				. '<li>' . __( 'Files in AWS S3 can also be delivered via Amazon CloudFront, so your bucket can stay private.', 'external-files-in-media-library' ) . '</li>'
+				. '<li>' . __( 'The credentials could be defined via constants in your wp-config.php.', 'external-files-in-media-library' ) . '</li>'
+				. '<li>' . __( 'A complete connection test and detailed log entries help you to set up the connection.', 'external-files-in-media-library' ) . '</li>'
+			. '</ul>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
 	}

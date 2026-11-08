@@ -654,3 +654,49 @@ body.settings_page_eml_settings {
 body.settings_page_eml_settings .nav-tab-help.components-button .components-tab-panel__tabs-item-label {
 	display: contents;
 }
+
+
+/* logos in the overview of the services in the settings */
+table.widefat.efml-services-overview td {
+	vertical-align: middle;
+}
+
+.efml-services-overview {
+	th.efml-services-overview-logo, td.efml-services-overview-logo {
+		text-align: center;
+		width: 110px;
+	}
+	.efml-service-logo {
+		align-items: center;
+		display: flex;
+		justify-content: center;
+		min-height: 32px;
+		&:before {
+			display: block;
+		}
+		& > * {
+			display: flex;
+		}
+		& > *:before {
+			display: block;
+			font-family: dashicons, sans-serif;
+			font-size: 32px;
+			height: 32px;
+			line-height: 1;
+			width: 32px;
+		}
+	}
+}
+
+/* list of the predefined configurations in the settings */
+.efml-configurations {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+/* lists in dialogs */
+.easy-dialog .efml-dialog-list {
+	list-style: disc;
+	margin-left: 1.5em;
+}

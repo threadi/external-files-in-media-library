@@ -191,8 +191,11 @@ jQuery(document).ready(function($) {
 
     /**
      * Copy strings in clipboard.
+     *
+     * The handler is delegated to the document, as the DataView of the settings adds its content
+     * (e.g. the table of the logs) after this script has been loaded.
      */
-    $(".settings_page_eml_settings .copy-text-attr").on("click", function( e ) {
+    $(document).on("click", ".settings_page_eml_settings .copy-text-attr", function( e ) {
       e.preventDefault();
       $(this).removeClass("copied");
       if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {

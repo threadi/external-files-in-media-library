@@ -625,6 +625,70 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return the tab with the settings of this service. Returns false, if this service has no settings.
+	 *
+	 * @return Tab|false
+	 */
+	private function get_settings_tab(): Tab|false {
+		// bail if this service has no own settings tab.
+		if ( empty( $this->get_settings_subtab_slug() ) ) {
+			return false;
+		}
+
+		// get the settings page.
+		$settings_page = Settings::get_instance()->get_settings_obj()->get_page( Settings::get_instance()->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// get the tab for services.
+		$services_tab = $settings_page->get_tab( $this->get_settings_tab_slug() );
+
+		// bail if tab does not exist.
+		if ( ! $services_tab instanceof Tab ) {
+			return false;
+		}
+
+		// return the tab of this service, if it exists.
+		return $services_tab->get_tab( $this->get_settings_subtab_slug() );
+	}
+
+	/**
+	 * Return the URL of the settings of this service. Returns an empty string, if this service has no settings.
+	 *
+	 * @return string
+	 */
+	public function get_settings_url(): string {
+		// bail if the tab of this service does not exist.
+		if ( ! $this->get_settings_tab() instanceof Tab ) {
+			return '';
+		}
+
+		// return the URL.
+		return Settings::get_instance()->get_url( $this->get_settings_tab_slug(), $this->get_settings_subtab_slug() );
+	}
+
+	/**
+	 * Return the title of this service in the settings: the title of its tab or its label.
+	 *
+	 * @return string
+	 */
+	public function get_settings_title(): string {
+		// get the tab.
+		$tab = $this->get_settings_tab();
+
+		// use the title of the tab, if set.
+		if ( $tab instanceof Tab && '' !== $tab->get_title() ) {
+			return $tab->get_title();
+		}
+
+		// return the label.
+		return $this->get_label();
+	}
+
+	/**
 	 * Return the user to use.
 	 *
 	 * @return WP_User|false

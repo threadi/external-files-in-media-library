@@ -17,13 +17,17 @@
 - Added documentation for the constants in docs/constants.md
 - Added check for existing files with the same name on the external sources before a file is exported
 - Added more hooks
+- Added overview of all services with their logos and links to their settings on the page "Services" in the settings
 
 ### Changed
 
 - Now also compatible with Windows-based hostings
+- The dialog to install or activate the extension for AWS S3 now lists all supported platforms and its new features
+- Optimized the spacing of the buttons for the predefined configurations in the settings
 
 ### Fixed
 
+- Fixed copying of log entries to the clipboard in the DataView of the settings
 - Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)
 - Fixed exported files with the same name overwriting each other on the external source, as the filename was only checked in the actual upload directory
 - Fixed export of large files via FTP and FTPS failing at the memory limit, as the file was loaded completely into memory
