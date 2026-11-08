@@ -95,9 +95,18 @@ class Export extends Export_Base {
 		}
 
 		// bail if the target is not located in the allowed base directory for local files.
-		if ( ! Helper::is_local_path_allowed( $local_target ) ) {
+		if ( ! $this->is_target_allowed( $local_target ) ) {
 			/* translators: %1$s will be replaced by a path. */
 			Log::get_instance()->create( sprintf( __( 'The target %1$s is not located in the allowed directory for local files.', 'external-files-in-media-library' ), '<em>' . esc_html( $local_target ) . '</em>' ), $target, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
+		// create the folder of the target, if it does not exist (e.g., for the folder structure of exports).
+		if ( ! $wp_filesystem->is_dir( dirname( $local_target ) ) && ! wp_mkdir_p( dirname( $local_target ) ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			Log::get_instance()->create( sprintf( __( 'The folder %1$s could not be created.', 'external-files-in-media-library' ), '<em>' . esc_html( dirname( $local_target ) ) . '</em>' ), $target, 'error' );
 
 			// do nothing more.
 			return false;
@@ -174,6 +183,41 @@ class Export extends Export_Base {
 	 */
 	public function is_url_required(): bool {
 		return true;
+	}
+
+	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the given target is located in the allowed base directory for local files.
+	 *
+	 * The folders of the target might not exist yet, so the nearest existing folder is checked. Targets with
+	 * relative folders like ".." are never allowed.
+	 *
+	 * @param string $local_target The local target path.
+	 *
+	 * @return bool
+	 */
+	private function is_target_allowed( string $local_target ): bool {
+		// bail if the target contains relative folders.
+		if ( in_array( '..', explode( '/', str_replace( '\\', '/', $local_target ) ), true ) ) {
+			return false;
+		}
+
+		// get the nearest existing folder of the target.
+		$folder = dirname( $local_target );
+		while ( ! is_dir( $folder ) && dirname( $folder ) !== $folder ) {
+			$folder = dirname( $folder );
+		}
+
+		// return whether this folder is allowed.
+		return Helper::is_local_path_allowed( trailingslashit( $folder ) . basename( $local_target ) );
 	}
 
 	/**

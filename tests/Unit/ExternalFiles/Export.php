@@ -242,4 +242,133 @@ class Export extends externalFilesTests {
 		$this->assertFileExists( (string) get_attached_file( $attachment_id, true ) );
 		$this->assertFileDoesNotExist( $this->export_directory . basename( (string) get_attached_file( $attachment_id, true ) ) );
 	}
+
+	/**
+	 * Enable the folders for exported files.
+	 *
+	 * @param string $structure The structure of the folders.
+	 *
+	 * @return void
+	 */
+	private function enable_folders( string $structure = '%year%/%monthnum%' ): void {
+		update_option( 'uploads_use_yearmonth_folders', 1 );
+		update_option( 'eml_export_folders', 1 );
+		update_option( 'eml_export_folder_structure', $structure );
+	}
+
+	/**
+	 * Test if no folder is used as long as the folders are disabled or WordPress does not use year- and month-based folders.
+	 *
+	 * @return void
+	 */
+	public function test_get_export_folder_requires_settings(): void {
+		$export_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance();
+
+		// disabled by default.
+		update_option( 'uploads_use_yearmonth_folders', 1 );
+		delete_option( 'eml_export_folders' );
+		$this->assertFalse( $export_obj->is_folder_structure_enabled() );
+		$this->assertEquals( '', $export_obj->get_export_folder( 0, time() ) );
+
+		// enabled, but WordPress does not use year- and month-based folders.
+		$this->enable_folders();
+		update_option( 'uploads_use_yearmonth_folders', 0 );
+		$this->assertFalse( $export_obj->is_folder_structure_enabled() );
+		$this->assertEquals( '', $export_obj->get_export_folder( 0, time() ) );
+
+		// both enabled.
+		update_option( 'uploads_use_yearmonth_folders', 1 );
+		$this->assertTrue( $export_obj->is_folder_structure_enabled() );
+		$this->assertEquals( wp_date( 'Y/m' ), $export_obj->get_export_folder( 0, time() ) );
+	}
+
+	/**
+	 * Test if the placeholders are replaced by the date of the upload and the time of the export.
+	 *
+	 * @return void
+	 */
+	public function test_get_export_folder_placeholders(): void {
+		$this->enable_folders( 'media/%year%/%monthnum%/%day%/%timestamp%' );
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		wp_update_post(
+			array(
+				'ID'            => $attachment_id,
+				'post_date'     => '2024-03-05 10:00:00',
+				'post_date_gmt' => '2024-03-05 10:00:00',
+			)
+		);
+		$this->assertEquals( 'media/2024/03/05/1234567890', \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->get_export_folder( $attachment_id, 1234567890 ) );
+	}
+
+	/**
+	 * Test if the structure is sanitized and folders from hooks could not leave the external source.
+	 *
+	 * @return void
+	 */
+	public function test_folder_structure_is_sanitized(): void {
+		$export_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance();
+		$this->assertEquals( '%year%/%monthnum%', $export_obj->sanitize_folder_structure( '/%year%//%monthnum%/' ) );
+		$this->assertEquals( 'abc/%day%', $export_obj->sanitize_folder_structure( 'a b<c>/../%day%' ) );
+		$this->assertEquals( '%year%/%monthnum%', $export_obj->sanitize_folder_structure( array() ) );
+
+		// a folder from a hook with relative parts.
+		$this->enable_folders();
+		$callback = static function (): string {
+			return '../../etc/./media';
+		};
+		add_filter( 'efml_export_folder', $callback );
+		$this->assertEquals( 'etc/media', $export_obj->get_export_folder( 0, time() ) );
+		remove_filter( 'efml_export_folder', $callback );
+	}
+
+	/**
+	 * Test if a file is exported to the folder and deleted there again.
+	 *
+	 * @return void
+	 */
+	public function test_export_and_delete_file_in_folder(): void {
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$filename      = basename( (string) get_attached_file( $attachment_id, true ) );
+
+		// enable the export with folders.
+		update_option( 'eml_export', 1 );
+		update_option( 'eml_export_do_not_delete_local_files', 1 );
+		update_term_meta( $this->term_id, 'efml_export_url', 'https://example.com/export/' );
+		$this->enable_folders( 'files/%timestamp%' );
+		$callback = static function (): string {
+			return 'files/fixed';
+		};
+		add_filter( 'efml_export_folder', $callback );
+
+		// export the file.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->export_file( $attachment_id ) );
+		$this->assertFileExists( $this->export_directory . 'files/fixed/' . $filename );
+		$this->assertFileDoesNotExist( $this->export_directory . $filename );
+		$this->assertEquals( array( $this->term_id => 'files/fixed' ), get_post_meta( $attachment_id, 'efml_export_folders', true ) );
+
+		// the deletion uses the saved folder, even if the structure has been changed in the meantime.
+		remove_filter( 'efml_export_folder', $callback );
+		update_option( 'eml_export_folders', 0 );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->delete_exported_file( $attachment_id );
+		$this->assertFileDoesNotExist( $this->export_directory . 'files/fixed/' . $filename );
+		$this->assertEmpty( get_post_meta( $attachment_id, 'efml_export_folders', true ) );
+	}
+
+	/**
+	 * Test if the export without folders is unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_export_file_without_folder(): void {
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$filename      = basename( (string) get_attached_file( $attachment_id, true ) );
+		update_option( 'eml_export', 1 );
+		update_option( 'eml_export_do_not_delete_local_files', 1 );
+		update_option( 'eml_export_folders', 0 );
+		update_term_meta( $this->term_id, 'efml_export_url', 'https://example.com/export/' );
+
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->export_file( $attachment_id ) );
+		$this->assertFileExists( $this->export_directory . $filename );
+		$this->assertEmpty( get_post_meta( $attachment_id, 'efml_export_folders', true ) );
+	}
 }

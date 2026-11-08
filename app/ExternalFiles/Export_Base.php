@@ -69,9 +69,26 @@ class Export_Base {
 	}
 
 	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * If true, the target of an exported file could contain folders below the directory of the external source
+	 * (e.g. "…/2026/11/file.jpg"), according to the folder structure in the export settings. The service must use
+	 * the complete target for the export, the deletion and the check for existing files, and create missing folders.
+	 * Services without support always get a target directly in the directory of the external source.
+	 *
+	 * @since 5.7.0 Available since 5.7.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
+		return false;
+	}
+
+	/**
 	 * Return whether a file with the given target path already exists on the external source.
 	 *
-	 * Exported files are saved flat in the directory of the external source. This check is used to
+	 * Exported files are saved in the directory of the external source (or in a folder below, if the service
+	 * supports folders and they are enabled). This check is used to
 	 * get a unique file name before a new file is saved and exported, so it does not overwrite
 	 * an existing file there. Return false if the check is not possible for this service.
 	 *

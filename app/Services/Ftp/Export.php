@@ -121,6 +121,16 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// create the folder of the target, if it does not exist (e.g., for the folder structure of exports).
+		if ( ! $this->create_folder( $ftp_connection, dirname( $parse_url['path'] ) ) ) {
+			// log this event.
+			/* translators: %1$s will be replaced by a path. */
+			Log::get_instance()->create( sprintf( __( 'The folder %1$s could not be created on the FTP server.', 'external-files-in-media-library' ), '<em>' . esc_html( dirname( $parse_url['path'] ) ) . '</em>' ), $target, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
 		// upload the file to FTP.
 		if ( ! $this->upload_file( $ftp_connection, $file_path, $parse_url['path'] ) ) {
 			// remove the incomplete file, as the server may have created it before the transfer failed.
@@ -138,6 +148,38 @@ class Export extends Export_Base {
 
 		// return the URL of this file.
 		return $target;
+	}
+
+	/**
+	 * Create the given folder incl. all missing parent folders on the FTP server.
+	 *
+	 * @param WP_Filesystem_FTPext $ftp_connection The FTP connection.
+	 * @param string               $folder The absolute path of the folder.
+	 *
+	 * @return bool
+	 */
+	private function create_folder( WP_Filesystem_FTPext $ftp_connection, string $folder ): bool {
+		// bail if the folder is the root or does already exist.
+		if ( in_array( $folder, array( '', '/', '.' ), true ) || $ftp_connection->is_dir( $folder ) ) {
+			return true;
+		}
+
+		// bail if the parent folder could not be created.
+		if ( ! $this->create_folder( $ftp_connection, dirname( $folder ) ) ) {
+			return false;
+		}
+
+		// create the folder.
+		return $ftp_connection->mkdir( $folder );
+	}
+
+	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
+		return true;
 	}
 
 	/**

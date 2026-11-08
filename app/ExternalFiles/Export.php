@@ -15,6 +15,7 @@ use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
 use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\MultiSelect;
+use easySettingsForWordPress\Fields\PermalinkSlug;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
@@ -219,6 +220,46 @@ class Export extends Tools_Base {
 		/* translators: %1$s will be replaced by a URL. */
 		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. The queue exports them in the background in the interval configured there. Until then, they are used as local files. If an export fails, it will be tried again. After 3 failed attempts, the file stays a local file and is marked in the media library. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
 		$field->add_depend( $setting_export, 1 );
+		$field->set_setting( $setting );
+		$setting->set_field( $field );
+
+		// get whether WordPress organizes the uploads in year- and month-based folders, which is required for the folders.
+		$yearmonth_folders = $this->is_yearmonth_folders_enabled();
+
+		// create the hint, if WordPress does not use year- and month-based folders.
+		$yearmonth_hint = '';
+		if ( ! $yearmonth_folders ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$yearmonth_hint = ' <strong>' . sprintf( __( 'This requires the setting "Organize my uploads into month- and year-based folders" in <a href="%1$s">the media settings of WordPress</a>.', 'external-files-in-media-library' ), esc_url( admin_url( 'options-media.php' ) ) ) . '</strong>';
+		}
+
+		// add setting.
+		$setting_folders = $settings_obj->add_setting( 'eml_export_folders' );
+		$setting_folders->set_section( $section );
+		$setting_folders->set_type( 'integer' );
+		$setting_folders->set_default( 0 );
+		$field = new Checkbox( $settings_obj );
+		$field->set_title( __( 'Use folders for exported files', 'external-files-in-media-library' ) );
+		$field->set_description( __( 'If enabled, exported files are saved in folders on the external sources according to the following structure. This applies to all external sources, whose service supports folders. Already exported files keep their location.', 'external-files-in-media-library' ) . $yearmonth_hint );
+		$field->add_depend( $setting_export, 1 );
+		$field->set_readonly( ! $yearmonth_folders );
+		$field->set_setting( $setting_folders );
+		$setting_folders->set_field( $field );
+
+		// add setting.
+		$setting = $settings_obj->add_setting( 'eml_export_folder_structure' );
+		$setting->set_section( $section );
+		$setting->set_type( 'string' );
+		$setting->set_default( '%year%/%monthnum%' );
+		$field = new PermalinkSlug( $settings_obj );
+		$field->set_title( __( 'Structure of the folders', 'external-files-in-media-library' ) );
+		$field->set_list_title( __( 'Available placeholders:', 'external-files-in-media-library' ) );
+		$field->set_options( $this->get_folder_structure_placeholders() );
+		$field->set_description( __( 'Year, month and day are the date of the upload of the file, like in the folders of WordPress. The timestamp is the time of the export, e.g. to bypass outdated caches of a CDN. Use "/" to separate folders.', 'external-files-in-media-library' ) . $yearmonth_hint );
+		$field->set_sanitize_callback( array( $this, 'sanitize_folder_structure' ) );
+		$field->add_depend( $setting_export, 1 );
+		$field->add_depend( $setting_folders, 1 );
+		$field->set_readonly( ! $yearmonth_folders );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
@@ -903,6 +944,9 @@ class Export extends Tools_Base {
 		// create result marker.
 		$successfully_exported = false;
 
+		// get the time of this export (the same for all external sources).
+		$export_time = time();
+
 		// export the file to each external source.
 		foreach ( $export_source_terms as $term_id ) {
 			// get the term name for logging.
@@ -975,8 +1019,11 @@ class Export extends Tools_Base {
 			// get the base URL for each file on this external source.
 			$term_url = get_term_meta( $term_id, 'path', true );
 
+			// get the folder for this file on this external source (empty, if not supported or not enabled).
+			$folder = $export_obj->supports_folders() ? $this->get_export_folder( $attachment_id, $export_time ) : '';
+
 			// create the export path of this file.
-			$export_path = trailingslashit( $term_url ) . basename( $file );
+			$export_path = trailingslashit( $term_url ) . ( '' !== $folder ? trailingslashit( $folder ) : '' ) . basename( $file );
 
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
@@ -1070,6 +1117,16 @@ class Export extends Tools_Base {
 			$export_sources[] = $term_id;
 			update_post_meta( $external_file_obj->get_id(), 'efml_export_sources', $export_sources );
 
+			// save the used folder on this external source, so the file could be deleted there later.
+			if ( '' !== $folder ) {
+				$folders = get_post_meta( $external_file_obj->get_id(), 'efml_export_folders', true );
+				if ( ! is_array( $folders ) ) {
+					$folders = array();
+				}
+				$folders[ $term_id ] = $folder;
+				update_post_meta( $external_file_obj->get_id(), 'efml_export_folders', $folders );
+			}
+
 			// log this event.
 			/* translators: %1$s will be replaced by the external source title. */
 			Log::get_instance()->create( sprintf( __( 'File has been exported to the external source %1$s', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $url, 'success' );
@@ -1148,8 +1205,11 @@ class Export extends Tools_Base {
 			// get the base URL for this term.
 			$term_url = get_term_meta( $term_id, 'path', true );
 
+			// get the folder, which has been used for this file on this external source.
+			$folder = $this->get_used_export_folder( $attachment_id, $term_id );
+
 			// create the external public URL of this file.
-			$url = trailingslashit( $term_url ) . basename( $file );
+			$url = trailingslashit( $term_url ) . ( '' !== $folder ? trailingslashit( $folder ) : '' ) . basename( $file );
 
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
@@ -1175,6 +1235,7 @@ class Export extends Tools_Base {
 		if ( $successfully_deleted ) {
 			$this->cleanup_exported_file( $attachment_id );
 			delete_post_meta( $attachment_id, 'efml_former_export_sources' );
+			delete_post_meta( $attachment_id, 'efml_export_folders' );
 		}
 	}
 
@@ -1945,6 +2006,157 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Return whether WordPress organizes the uploads in year- and month-based folders.
+	 *
+	 * @return bool
+	 */
+	private function is_yearmonth_folders_enabled(): bool {
+		return 1 === absint( get_option( 'uploads_use_yearmonth_folders' ) );
+	}
+
+	/**
+	 * Return whether folders should be used for exported files.
+	 *
+	 * This requires the setting and the year- and month-based folders of WordPress.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_enabled(): bool {
+		return 1 === absint( get_option( 'eml_export_folders' ) ) && $this->is_yearmonth_folders_enabled();
+	}
+
+	/**
+	 * Return the placeholders for the structure of the folders.
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_folder_structure_placeholders(): array {
+		$placeholders = array(
+			'year'      => __( 'Year', 'external-files-in-media-library' ),
+			'monthnum'  => __( 'Month', 'external-files-in-media-library' ),
+			'day'       => __( 'Day', 'external-files-in-media-library' ),
+			'timestamp' => __( 'Timestamp', 'external-files-in-media-library' ),
+		);
+
+		/**
+		 * Filter the placeholders for the structure of the folders for exported files.
+		 *
+		 * Each placeholder must be replaced via the hook "efml_export_folder".
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<string,string> $placeholders List of placeholders (without "%") with their labels.
+		 */
+		return apply_filters( 'efml_export_folder_placeholders', $placeholders );
+	}
+
+	/**
+	 * Sanitize the structure of the folders: only letters, numbers, "-", "_", "/" and placeholders are allowed.
+	 *
+	 * @param mixed $value The value to sanitize.
+	 *
+	 * @return string
+	 */
+	public function sanitize_folder_structure( mixed $value ): string {
+		// bail if value is not a string.
+		if ( ! is_string( $value ) ) {
+			return '%year%/%monthnum%';
+		}
+
+		// remove not allowed characters.
+		$value = (string) preg_replace( '/[^A-Za-z0-9_\-\/%]/', '', $value );
+
+		// remove empty folders and leading or trailing slashes.
+		return implode(
+			'/',
+			array_filter(
+				explode( '/', $value ),
+				static function ( string $folder ): bool {
+					return '' !== $folder;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Return the folder for an exported file according to the configured structure, without slashes at start and end.
+	 *
+	 * Returns an empty string if folders are not enabled.
+	 *
+	 * @param int $attachment_id The attachment ID (0 for a new file, which is uploaded now).
+	 * @param int $export_time   The time of the export.
+	 *
+	 * @return string
+	 */
+	public function get_export_folder( int $attachment_id, int $export_time ): string {
+		// bail if folders are not enabled.
+		if ( ! $this->is_folder_structure_enabled() ) {
+			return '';
+		}
+
+		// get the date of the upload of the file, like WordPress uses it for its folders.
+		$upload_time = $attachment_id > 0 ? get_post_time( 'U', true, $attachment_id ) : false;
+		if ( ! is_int( $upload_time ) ) {
+			$upload_time = time();
+		}
+
+		// get the date in the timezone of the website, like WordPress uses it for its folders.
+		$date = wp_date( 'Y/m/d', $upload_time );
+		if ( ! is_string( $date ) ) {
+			$date = gmdate( 'Y/m/d', $upload_time );
+		}
+		list( $year, $month, $day ) = explode( '/', $date );
+
+		// replace the placeholders.
+		$folder = str_replace(
+			array( '%year%', '%monthnum%', '%day%', '%timestamp%' ),
+			array( $year, $month, $day, (string) $export_time ),
+			$this->sanitize_folder_structure( get_option( 'eml_export_folder_structure', '%year%/%monthnum%' ) )
+		);
+
+		/**
+		 * Filter the folder for an exported file.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param string $folder The folder (e.g. "2026/11").
+		 * @param int $attachment_id The attachment ID (0 for a new file, which is uploaded now).
+		 * @param int $export_time The time of the export.
+		 */
+		$folder = (string) apply_filters( 'efml_export_folder', $folder, $attachment_id, $export_time );
+
+		// return the folder with safe names only.
+		$folders = array();
+		foreach ( explode( '/', $folder ) as $name ) {
+			$name = sanitize_file_name( $name );
+			if ( '' === $name || '.' === $name || '..' === $name ) {
+				continue;
+			}
+			$folders[] = $name;
+		}
+		return implode( '/', $folders );
+	}
+
+	/**
+	 * Return the folder, which has been used for the export of the given file to the given external source.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 * @param int $term_id       The ID of the external source.
+	 *
+	 * @return string
+	 */
+	private function get_used_export_folder( int $attachment_id, int $term_id ): string {
+		// get the folders.
+		$folders = get_post_meta( $attachment_id, 'efml_export_folders', true );
+
+		// bail if no folder has been saved for this external source.
+		if ( ! is_array( $folders ) || empty( $folders[ $term_id ] ) || ! is_string( $folders[ $term_id ] ) ) {
+			return '';
+		}
+
+		// return the folder.
+		return $folders[ $term_id ];
+	}
+
+	/**
 	 * Return the list of export targets with their export object, path and credentials.
 	 *
 	 * @return array<int,array<string,mixed>>
@@ -1984,11 +2196,18 @@ class Export extends Tools_Base {
 				continue;
 			}
 
+			// get the path, incl. the folder for a new file, if supported.
+			$path   = (string) get_term_meta( $term_id, 'path', true );
+			$folder = $export_obj->supports_folders() ? $this->get_export_folder( 0, time() ) : '';
+			if ( '' !== $folder ) {
+				$path = trailingslashit( $path ) . $folder;
+			}
+
 			// add this target to the list.
 			$targets[] = array(
 				'term_id'     => $term_id,
 				'export_obj'  => $export_obj,
-				'path'        => (string) get_term_meta( $term_id, 'path', true ),
+				'path'        => $path,
 				'credentials' => Taxonomy::get_instance()->get_entry( $term_id ),
 			);
 		}
@@ -2057,8 +2276,15 @@ class Export extends Tools_Base {
 		}
 		$external_url = get_term_meta( $term_id, 'efml_export_url', true );
 
+		// get the folder for this file, if the service of this external source supports folders.
+		$folder      = '';
+		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
+		if ( $listing_obj instanceof Service_Base && $listing_obj->get_export_object() instanceof Export_Base && $listing_obj->get_export_object()->supports_folders() ) {
+			$folder = $this->get_export_folder( $post->ID, time() );
+		}
+
 		// assume the export URL.
-		$external_url_of_file = $external_url . basename( $external_file_obj->get_attachment_url() );
+		$external_url_of_file = $external_url . ( '' !== $folder ? trailingslashit( $folder ) : '' ) . basename( $external_file_obj->get_attachment_url() );
 
 		// create URL to export this file.
 		$url = add_query_arg(

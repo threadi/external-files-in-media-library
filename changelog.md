@@ -23,6 +23,9 @@
 - Added WP CLI command "wp eml site" to show or set whether the website is the main website or a copy
 - Added hook "efml_is_website_copy" to change the detection of copies
 - Added overview of all services with their logos and links to their settings on the page "Services" in the settings
+- Added optional folder structure for exported files (e.g. year and month of the upload), applies to all external sources whose service supports folders (local, DropBox, FTP and the extensions)
+- The folder structure requires the setting of WordPress to organize uploads in month- and year-based folders and could be individualized via placeholders
+- Added hooks "efml_export_folder" and "efml_export_folder_placeholders" to change the folders of exported files
 
 ### Changed
 

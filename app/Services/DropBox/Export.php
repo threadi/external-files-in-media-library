@@ -366,6 +366,17 @@ class Export extends Export_Base {
 	}
 
 	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * DropBox creates missing folders automatically during the upload.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
+		return true;
+	}
+
+	/**
 	 * Send request to Dropbox API using curl.
 	 *
 	 * Hint: The usage of curl is not compatible with WCS, but we need to handle chunks here, that is impossible with "WP_Filesystem".
