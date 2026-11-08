@@ -17,6 +17,11 @@
 - Added documentation for the constants in docs/constants.md
 - Added check for existing files with the same name on the external sources before a file is exported
 - Added more hooks
+- Added protection of external sources on copies of the website (e.g. staging sites): files are not exported to or deleted on external sources, and scheduled synchronizations are paused, reading and delivering of files is not affected
+- Copies are detected by a changed address of the website or by a production website used as staging or development website, the actual website is saved as main website without any question
+- Added hint for copies in the backend with the options to use the website as main website or to confirm it as copy
+- Added WP CLI command "wp eml site" to show or set whether the website is the main website or a copy
+- Added hook "efml_is_website_copy" to change the detection of copies
 - Added overview of all services with their logos and links to their settings on the page "Services" in the settings
 
 ### Changed
@@ -27,6 +32,7 @@
 
 ### Fixed
 
+- Fixed database errors on multisites, if an attachment is deleted on a website, where this plugin has not been installed (e.g. during the export to another website)
 - Fixed copying of log entries to the clipboard in the DataView of the settings
 - Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)
 - Fixed exported files with the same name overwriting each other on the external source, as the filename was only checked in the actual upload directory

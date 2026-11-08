@@ -25,6 +25,7 @@ use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Intervals;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Site_Copy;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use JsonException;
 use mysqli_result;
@@ -1144,6 +1145,12 @@ class Queue extends Extension_Base {
 			return;
 		}
 
+		// bail if this website is a copy (e.g. a staging site), the entry stays in the queue until this is the main website.
+		if ( Site_Copy::get_instance()->is_copy() ) {
+			Log::get_instance()->create( __( 'Export of file from the queue has been skipped, as this website is a copy of another website.', 'external-files-in-media-library' ), $url_data['url'], 'info', 2 );
+			return;
+		}
+
 		// bail if the file is already an external file (e.g., exported by a manual request).
 		if ( Files::get_instance()->get_file( $attachment_id )->is_valid() ) {
 			$this->remove_url( $id );
@@ -1240,6 +1247,11 @@ class Queue extends Extension_Base {
 	 */
 	public function remove_export_entries_of_attachment( int $attachment_id ): void {
 		global $wpdb;
+
+		// bail if the table does not exist for the actual website (e.g. after switching to another website in a multisite).
+		if ( ! Helper::is_table_available( 'eml_queue' ) ) {
+			return;
+		}
 
 		// delete the entries.
 		$result = $wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching

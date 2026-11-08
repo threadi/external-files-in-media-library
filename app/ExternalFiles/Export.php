@@ -23,6 +23,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Site_Copy;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -816,6 +817,11 @@ class Export extends Tools_Base {
 	 * @return bool Return true if the file export was successfully, false it not.
 	 */
 	public function export_file( int $attachment_id ): bool {
+		// bail if this website is a copy (e.g. a staging site), as it must not write to the external sources.
+		if ( Site_Copy::get_instance()->is_blocked( __( 'Export of file has been skipped.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ) ) ) {
+			return false;
+		}
+
 		// get external file object for the given attachment ID.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -1105,6 +1111,11 @@ class Export extends Tools_Base {
 		// bail if this file has not been exported by us. Without this check any deleted external file
 		// would result in the deletion of a file with the same name on each external source.
 		if ( empty( $export_sources ) ) {
+			return;
+		}
+
+		// bail if this website is a copy (e.g. a staging site), as it must not delete files on the external sources.
+		if ( Site_Copy::get_instance()->is_blocked( __( 'Deletion of the exported file on the external source has been skipped.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ) ) ) {
 			return;
 		}
 
@@ -1415,6 +1426,12 @@ class Export extends Tools_Base {
 	 * @return void
 	 */
 	public function export_description(): void {
+		// show the hint, if this website is a copy.
+		$site_copy_hint = Site_Copy::get_instance()->get_settings_hint();
+		if ( '' !== $site_copy_hint ) {
+			echo '<div class="notice notice-warning inline"><p>' . wp_kses_post( $site_copy_hint ) . '</p></div>';
+		}
+
 		/* translators: %1$s will be replaced by a URL. */
 		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use these options <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
 	}

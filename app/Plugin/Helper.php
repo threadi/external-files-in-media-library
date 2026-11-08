@@ -651,6 +651,44 @@ class Helper {
 	}
 
 	/**
+	 * Return whether the given table of this plugin exists for the actual website.
+	 *
+	 * On multisites the tables exist only for websites, where this plugin has been activated. But the hooks of
+	 * this plugin also run after "switch_to_blog()" to other websites (e.g. during the export to them).
+	 * Only existing tables are cached, so a table created later in the same request is detected.
+	 *
+	 * @param string $table The name of the table without the prefix (e.g. "eml_logs").
+	 *
+	 * @return bool
+	 */
+	public static function is_table_available( string $table ): bool {
+		global $wpdb;
+
+		// the cache for existing tables.
+		static $available = array();
+
+		// get the full name of the table.
+		$table_name = $wpdb->prefix . $table;
+
+		// bail if the table is already known as existing.
+		if ( isset( $available[ $table_name ] ) ) {
+			return true;
+		}
+
+		// check the table.
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// bail if the table does not exist.
+		if ( $table_name !== $found ) {
+			return false;
+		}
+
+		// remember it and return true.
+		$available[ $table_name ] = true;
+		return true;
+	}
+
+	/**
 	 * Return a DB result list as array with unique datatype format.
 	 *
 	 * @param mixed $results The results from $wpdb->get_results().

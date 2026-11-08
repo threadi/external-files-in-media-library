@@ -99,3 +99,17 @@ This will delete every entry in the queue.
 This will export all not external files in media library to the for export enabled external sources.
 
 `wp eml export`
+
+## Main website or copy
+
+Shows whether this website is the main website or a copy of it (e.g. a staging site). On a copy, files are not exported to or deleted on external sources, and scheduled synchronizations are paused.
+
+`wp eml site status`
+
+Set this website as main website, e.g. after moving the live site to a new domain or in your deployment:
+
+`wp eml site main`
+
+Confirm this website as copy (the protection stays active, the hint in the backend is hidden):
+
+`wp eml site copy`

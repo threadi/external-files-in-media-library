@@ -96,6 +96,9 @@ class Init {
 		// initialize the command palette.
 		Commands::get_instance()->init();
 
+		// init the protection of external sources on copies of this website.
+		Site_Copy::get_instance()->init();
+
 		// initialize the network settings.
 		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();
 

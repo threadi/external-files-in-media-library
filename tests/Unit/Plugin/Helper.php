@@ -267,4 +267,52 @@ class Helper extends externalFilesTests {
 		\ExternalFilesInMediaLibrary\Plugin\Helper::delete_directory_recursively( $base );
 	}
 
+
+	/**
+	 * Test the check whether a table of this plugin exists.
+	 *
+	 * @return void
+	 */
+	public function test_is_table_available(): void {
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_queue' ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_not_existing' ) );
+	}
+
+	/**
+	 * Test that no database errors occur on another website of a multisite, where this plugin has not been installed.
+	 *
+	 * @return void
+	 */
+	public function test_no_database_errors_on_website_without_tables(): void {
+		global $wpdb;
+
+		// bail if this is not a multisite.
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Runs only in a multisite (WP_MULTISITE=1).' );
+		}
+
+		// create a website without the tables of this plugin and an attachment on it.
+		$blog_id = absint( self::factory()->blog->create() );
+		switch_to_blog( $blog_id );
+		$attachment_id = (int) self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_queue' ) );
+
+		// delete the attachment and write a log entry: no database errors.
+		$wpdb->last_error = '';
+		$suppress         = $wpdb->suppress_errors( false );
+		ob_start();
+		wp_delete_attachment( $attachment_id, true );
+		\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->create( 'test', '', 'info' );
+		$output = (string) ob_get_clean();
+		$wpdb->suppress_errors( $suppress );
+		$this->assertSame( '', $wpdb->last_error );
+		$this->assertStringNotContainsString( 'database error', $output );
+		$this->assertNull( get_post( $attachment_id ) );
+		restore_current_blog();
+
+		// the tables of the main website are still detected.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+	}
 }

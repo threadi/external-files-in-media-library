@@ -99,3 +99,17 @@ Dadurch werden alle Einträge in der Warteschlange gelöscht.
 Dadurch werden alle nicht externen Dateien in der Medienbibliothek in die für den Export aktivierten externen Quellen exportiert.
 
 `wp eml export`
+
+## Hauptseite oder Kopie
+
+Zeigt, ob diese Website die Hauptseite oder eine Kopie davon ist (z. B. eine Staging-Seite). Auf einer Kopie werden keine Dateien in externe Quellen exportiert oder dort gelöscht, und zeitgesteuerte Synchronisierungen pausieren.
+
+`wp eml site status`
+
+Diese Website als Hauptseite festlegen, z. B. nach dem Umzug der Live-Seite auf eine neue Domain oder im Deployment:
+
+`wp eml site main`
+
+Diese Website als Kopie bestätigen (der Schutz bleibt aktiv, der Hinweis im Backend wird ausgeblendet):
+
+`wp eml site copy`

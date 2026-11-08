@@ -874,4 +874,59 @@ class Cli {
 		/* translators: %1$s will be replaced by a number. */
 		\WP_CLI::success( sprintf( _n( '%1$d file have been exported.', '%1$d files have been exported.', $result_counter, 'external-files-in-media-library' ), $result_counter ) );
 	}
+
+	/**
+	 * Show or set whether this website is the main website or a copy (e.g. a staging site).
+	 *
+	 * On a copy, files are not exported to or deleted on external sources, and scheduled synchronizations are paused.
+	 *
+	 * <state>
+	 * : "main" to set this website as main website, "copy" to confirm it as copy, "status" to show the actual state.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Use this website as main website, e.g. after the go-live of a new domain.
+	 *     $ wp eml site main
+	 *
+	 * @param array<int,string> $states List of states (only the first one is used).
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function site( array $states = array() ): void {
+		// get the object.
+		$site_copy_obj = Site_Copy::get_instance();
+
+		// get the requested state.
+		$state = ! empty( $states[0] ) ? $states[0] : 'status';
+
+		// set this website as main website.
+		if ( 'main' === $state ) {
+			$site_copy_obj->set_as_main();
+			\WP_CLI::success( __( 'This website is now the main website.', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// confirm this website as copy.
+		if ( 'copy' === $state ) {
+			if ( ! $site_copy_obj->is_copy() ) {
+				\WP_CLI::error( __( 'This website is the main website. Change its address or its environment type to use it as copy.', 'external-files-in-media-library' ) );
+			}
+			$site_copy_obj->confirm_copy();
+			\WP_CLI::success( __( 'This website has been confirmed as copy.', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// bail on unknown state.
+		if ( 'status' !== $state ) {
+			\WP_CLI::error( __( 'Use "main", "copy" or "status".', 'external-files-in-media-library' ) );
+		}
+
+		// show the actual state.
+		if ( $site_copy_obj->is_copy() ) {
+			\WP_CLI::warning( __( 'This website is a copy of another website: files are not exported and not deleted on external sources, scheduled synchronizations are paused.', 'external-files-in-media-library' ) );
+			return;
+		}
+		\WP_CLI::success( __( 'This website is the main website.', 'external-files-in-media-library' ) );
+	}
 }
