@@ -39,6 +39,13 @@ class Rest extends Service_Base implements Service {
 	protected string $name = 'rest';
 
 	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = 'server';
+
+	/**
 	 * The public label.
 	 *
 	 * @var string
@@ -1380,13 +1387,16 @@ class Rest extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// get the fields incl. values from constants.
+		$fields = $this->get_fields();
+
 		// bail if no directory is set.
-		if ( empty( $this->fields['server']['value'] ) ) {
+		if ( empty( $fields['server']['value'] ) || ! is_string( $fields['server']['value'] ) ) {
 			return '';
 		}
 
 		// return the directory.
-		return $this->fields['server']['value'];
+		return $fields['server']['value'];
 	}
 
 	/**

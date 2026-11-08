@@ -223,6 +223,16 @@ class Import extends Directory_Listing_Base {
 		 */
 		$protocol_handler_obj->set_fields( $fields );
 
+		/**
+		 * Do nothing if the URL belongs to a service, whose credentials are defined via constants for another server.
+		 */
+		$blocking_service_obj = $protocol_handler_obj->get_service_blocking_by_constants();
+		if ( $blocking_service_obj ) {
+			/* translators: %1$s will be replaced by the service title (e.g. FTP). */
+			$log->create( sprintf( __( 'The URL could not be used, as the access data for %1$s are defined as constants for another server, e.g. in your wp-config.php.', 'external-files-in-media-library' ), $blocking_service_obj->get_label() ), $url, 'error', 0, $this->get_identifier() );
+			return false;
+		}
+
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
 		require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound

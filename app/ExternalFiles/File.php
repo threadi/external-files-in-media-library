@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use finfo;
 
 /**
@@ -729,8 +730,16 @@ class File {
 		// prepare the return value.
 		$has_credentials = false;
 
+		// get the fields incl. the values of constants for the service of this file.
+		$fields = Services::get_instance()->apply_constants_to_fields( $this->get_fields(), Services::get_instance()->get_service_names_for_constants( $this->get_service_name() ), $this->get_url( true ) );
+
 		// check for credential fields.
-		foreach ( $this->get_fields() as $field ) {
+		foreach ( $fields as $field ) {
+			// bail if field is not an array.
+			if ( ! is_array( $field ) ) {
+				continue;
+			}
+
 			// bail if this field has no credential marker set.
 			if ( ! isset( $field['credential'] ) ) {
 				continue;

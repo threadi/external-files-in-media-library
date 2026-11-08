@@ -18,9 +18,11 @@ use easyDirectoryListingForWordPress\Taxonomy;
 use easySettingsForWordPress\Page;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_REST_Request;
 use WP_REST_Server;
+use WP_Term;
 
 /**
  * Object to handle support for specific services.
@@ -81,6 +83,10 @@ class Services {
 		add_filter( 'efml_dialog_settings', array( $this, 'set_dialog_settings_for_services' ) );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_in_form' ), 10, 2 );
 		add_filter( 'efml_add_dialog', array( $this, 'add_service_hint_in_form' ), 30, 2 );
+
+		// mark external sources, which are not usable as the credentials of their service are defined via constants.
+		add_filter( 'manage_' . Taxonomy::get_instance()->get_name() . '_custom_column', array( $this, 'show_blocked_source_in_column' ), 20, 3 );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_actions_of_blocked_source' ), 100, 2 );
 
 		// add actions.
 		add_action( 'admin_action_efml_export_external_source', array( $this, 'export_external_source' ), 10, 0 );
@@ -290,6 +296,212 @@ class Services {
 
 		// return resulting object.
 		return $directory_listing_obj;
+	}
+
+	/**
+	 * Return whether the given external source could not be used, because the credentials of its service
+	 * are defined via constants for another server.
+	 *
+	 * The external source and its settings are kept, so it could be used again after removing the constants.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_source_blocked_by_constants( int $term_id ): bool {
+		// bail if no ID is given.
+		if ( $term_id <= 0 ) {
+			return false;
+		}
+
+		// get the service of this external source.
+		$service_obj = $this->get_service_by_name( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if this is not a service object.
+		if ( ! $service_obj instanceof Service_Base ) {
+			return false;
+		}
+
+		// get the fields of this source.
+		$entry  = Taxonomy::get_instance()->get_entry( $term_id );
+		$fields = isset( $entry['fields'] ) && is_array( $entry['fields'] ) ? $entry['fields'] : array();
+
+		// return whether the path or the fields of this source are blocked.
+		$result = $service_obj->is_target_blocked_by_constants( (string) get_term_meta( $term_id, 'path', true ), $fields );
+
+		/**
+		 * Filter whether an external source is not usable, because the credentials of its service
+		 * are defined via constants for another server.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool $result True if the source is not usable.
+		 * @param int $term_id The ID of the external source.
+		 */
+		return apply_filters( 'efml_source_blocked_by_constants', $result, $term_id );
+	}
+
+	/**
+	 * Return the hint for an external source, which is not usable because of constants.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return string
+	 */
+	public function get_blocked_source_hint( int $term_id ): string {
+		// get the service object.
+		$service_obj = $this->get_service_by_name( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// get its label.
+		$label = $service_obj instanceof Directory_Listing_Base ? $service_obj->get_label() : (string) get_term_meta( $term_id, 'type', true );
+
+		/* translators: %1$s will be replaced by the service title (e.g. FTP). */
+		return sprintf( __( 'Not usable, as long as the access data for %1$s are defined as constants for another server, e.g. in your wp-config.php.', 'external-files-in-media-library' ), $label );
+	}
+
+	/**
+	 * Log that the given external source could not be used because of constants.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	public function log_blocked_source( int $term_id ): void {
+		Log::get_instance()->create( $this->get_blocked_source_hint( $term_id ), (string) get_term_meta( $term_id, 'path', true ), 'error' );
+	}
+
+	/**
+	 * Show the hint in the column "connect" of the list of external sources, if the source is not usable.
+	 *
+	 * @param string $content     The content.
+	 * @param string $column_name The column name.
+	 * @param int    $term_id     The ID of the external source.
+	 *
+	 * @return string
+	 */
+	public function show_blocked_source_in_column( string $content, string $column_name, int $term_id ): string {
+		// bail if this is not the column to connect.
+		if ( 'connect' !== $column_name ) {
+			return $content;
+		}
+
+		// bail if the source is usable.
+		if ( ! $this->is_source_blocked_by_constants( $term_id ) ) {
+			return $content;
+		}
+
+		// return the hint.
+		return '<em>' . esc_html( $this->get_blocked_source_hint( $term_id ) ) . '</em>';
+	}
+
+	/**
+	 * Remove the actions to use an external source, if it is not usable. Only editing, renaming and deleting is kept.
+	 *
+	 * @param array<string,string> $actions List of actions.
+	 * @param WP_Term              $term    The external source.
+	 *
+	 * @return array<string,string>
+	 */
+	public function remove_actions_of_blocked_source( array $actions, WP_Term $term ): array {
+		// bail if the source is usable.
+		if ( ! $this->is_source_blocked_by_constants( $term->term_id ) ) {
+			return $actions;
+		}
+
+		// keep only the actions to edit, rename and delete the entry.
+		return array_intersect_key( $actions, array_flip( array( 'edit', 'delete', 'rename' ) ) );
+	}
+
+	/**
+	 * Return the names of the services, to which URLs of the given protocol belong.
+	 *
+	 * If the credentials of such a service are defined via constants, URLs of this protocol could only be used
+	 * on the server of these constants. Protocols, which are used by other services only in parts (like HTTP
+	 * by the REST API service), are not listed here.
+	 *
+	 * @param string $name The name of the protocol.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_service_names_for_blocking( string $name ): array {
+		// list of protocols, which belong to services with other names.
+		$mapping = array(
+			'sftp' => array( 'ftp' ),
+		);
+
+		// create the list.
+		$names = array( $name );
+		if ( isset( $mapping[ $name ] ) ) {
+			$names = array_merge( $names, $mapping[ $name ] );
+		}
+
+		/**
+		 * Filter the names of the services, to which URLs of a protocol belong. If the credentials of such a
+		 * service are defined via constants, URLs of this protocol could only be used on their server.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<int,string> $names List of service names.
+		 * @param string $name The name of the protocol.
+		 */
+		return apply_filters( 'efml_service_names_for_blocking', $names, $name );
+	}
+
+	/**
+	 * Return the names of the services, whose constants could be used for the given service or protocol name.
+	 *
+	 * Some protocols are used by services with other names, e.g. the HTTP protocol by the REST API service.
+	 *
+	 * @param string $name The name of the service or protocol.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_service_names_for_constants( string $name ): array {
+		// list of protocols, which are used by services with other names.
+		$mapping = array(
+			'sftp' => array( 'ftp' ),
+			'http' => array( 'rest' ),
+		);
+
+		// create the list.
+		$names = array( $name );
+		if ( isset( $mapping[ $name ] ) ) {
+			$names = array_merge( $names, $mapping[ $name ] );
+		}
+
+		/**
+		 * Filter the names of the services, whose constants could be used for a service or protocol.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<int,string> $names List of service names.
+		 * @param string $name The name of the service or protocol.
+		 */
+		return apply_filters( 'efml_service_names_for_constants', $names, $name );
+	}
+
+	/**
+	 * Replace the values of the given fields with the values of constants of the given services.
+	 *
+	 * @param array<string,mixed> $fields        List of fields.
+	 * @param array<int,string>   $service_names List of service names.
+	 * @param string              $url           The URL, which should be used with these fields.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function apply_constants_to_fields( array $fields, array $service_names, string $url ): array {
+		foreach ( array_unique( $service_names ) as $service_name ) {
+			// get the service object.
+			$service_obj = $this->get_service_by_name( $service_name );
+
+			// bail if this is not a service object.
+			if ( ! $service_obj instanceof Service_Base ) {
+				continue;
+			}
+
+			// apply its constants.
+			$fields = $service_obj->apply_constants_to_fields( $fields, $url );
+		}
+
+		// return the resulting fields.
+		return $fields;
 	}
 
 	/**

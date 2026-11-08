@@ -60,11 +60,63 @@ class Service_Base extends Directory_Listing_Base {
 	/**
 	 * Marker whether values of fields could be defined via constants (true) or not (false).
 	 *
-	 * Must only be enabled for services, which read all their credentials via @get_fields().
+	 * The constants are used for the fields of the service object and for the fields of each protocol,
+	 * which is using this service (see @Protocol_Base::get_fields()).
 	 *
 	 * @var bool
 	 */
-	protected bool $fields_via_constants = false;
+	protected bool $fields_via_constants = true;
+
+	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * If set, the values of the constants are only used for connections to the host defined
+	 * by the constant for this field.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = '';
+
+	/**
+	 * List of fields, which identify the target of this service besides the server (e.g. a bucket).
+	 *
+	 * If set, the values of the constants are only used for fields, whose values for these fields are empty or
+	 * equal to the values of the constants. Saved external sources with other values are not usable.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $constants_target_fields = array();
+
+	/**
+	 * Marker whether the values of the constants are values of the fields of this service (true) or not (false).
+	 *
+	 * Services, which use other credentials than their fields (e.g. API credentials for OAuth), set this to false.
+	 * The values of their constants are then never added to any fields.
+	 *
+	 * @var bool
+	 */
+	protected bool $constants_in_fields = true;
+
+	/**
+	 * Marker whether the fields have been set from outside (e.g. from a request or a saved external source).
+	 *
+	 * @var bool
+	 */
+	private bool $fields_set_externally = false;
+
+	/**
+	 * Marker whether constants should not be used for the fields (used to load the field definitions).
+	 *
+	 * @var bool
+	 */
+	private bool $constants_disabled = false;
+
+	/**
+	 * The definitions of the fields without values from constants (cache).
+	 *
+	 * @var array<string,array<string,mixed>>|null
+	 */
+	private ?array $field_definitions = null;
 
 	/**
 	 * Set the configuration for the external source of this service plugin.
@@ -90,6 +142,95 @@ class Service_Base extends Directory_Listing_Base {
 
 		// use our own hooks.
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing' ) );
+
+		// use the mode "global" if the credentials are defined via constants.
+		add_filter( 'option_eml_' . $this->get_name() . '_credentials_vault', array( $this, 'force_global_mode_via_constants' ) );
+		add_filter( 'pre_update_option_eml_' . $this->get_name() . '_credentials_vault', array( $this, 'prevent_mode_change_via_constants' ) );
+	}
+
+	/**
+	 * Return "global" as mode, if the credentials of this service are defined via constants.
+	 *
+	 * @param mixed $value The saved mode.
+	 *
+	 * @return mixed
+	 */
+	public function force_global_mode_via_constants( mixed $value ): mixed {
+		// bail if mode is not forced by constants.
+		if ( ! $this->is_mode_forced_by_constants() ) {
+			return $value;
+		}
+
+		// return the mode used with constants.
+		return $this->get_mode_for_constants();
+	}
+
+	/**
+	 * Return the mode, which is used if the credentials of this service are defined via constants.
+	 *
+	 * @return string
+	 */
+	protected function get_mode_for_constants(): string {
+		return 'global';
+	}
+
+	/**
+	 * Prevent saving of the mode, if it is forced by constants, so the saved mode is used again after removing them.
+	 *
+	 * @param mixed $value The new value.
+	 *
+	 * @return mixed
+	 */
+	public function prevent_mode_change_via_constants( mixed $value ): mixed {
+		// bail if mode is not forced by constants.
+		if ( ! $this->is_mode_forced_by_constants() ) {
+			return $value;
+		}
+
+		// return the saved mode without our filter.
+		return $this->get_saved_mode();
+	}
+
+	/**
+	 * Return whether the mode is forced to "global", as the credentials are defined via constants.
+	 *
+	 * @return bool
+	 */
+	public function is_mode_forced_by_constants(): bool {
+		// bail if constants are not used at the moment (e.g., while the field definitions are loaded).
+		if ( $this->constants_disabled ) {
+			return false;
+		}
+
+		// return whether all required values are defined via constants.
+		return ! empty( $this->get_constant_values() );
+	}
+
+	/**
+	 * Return the mode saved in the database, without the mode forced by constants.
+	 *
+	 * @return string
+	 */
+	private function get_saved_mode(): string {
+		// get the option name.
+		$option_name = 'eml_' . $this->get_name() . '_credentials_vault';
+
+		// remove our filter for the mode temporarily, if it is set.
+		$has_filter = false !== has_filter( 'option_' . $option_name, array( $this, 'force_global_mode_via_constants' ) );
+		if ( $has_filter ) {
+			remove_filter( 'option_' . $option_name, array( $this, 'force_global_mode_via_constants' ) );
+		}
+
+		// get the saved mode.
+		$mode = get_option( $option_name, 'manually' );
+
+		// add our filter again.
+		if ( $has_filter ) {
+			add_filter( 'option_' . $option_name, array( $this, 'force_global_mode_via_constants' ) );
+		}
+
+		// return the saved mode.
+		return is_string( $mode ) ? $mode : 'manually';
 	}
 
 	/**
@@ -156,6 +297,13 @@ class Service_Base extends Directory_Listing_Base {
 			/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
 			$field->set_description( sprintf( __( 'This setting determines where %1$s access data is stored. Depending on this setting, the access data must be entered each time a connection is made, or it can be stored for each user or all users in this project. This only affects the import of files. This does not affect files in the media library.', 'external-files-in-media-library' ), $this->get_label() ) );
 			$field->set_options( $this->get_modes() );
+
+			// fix the mode to "global", if the credentials are defined via constants.
+			if ( $this->is_mode_forced_by_constants() ) {
+				$field->set_readonly( true );
+				/* translators: %1$s will be replaced by the service title (e.g. DropBox). */
+				$field->set_description( sprintf( __( 'The access data for %1$s are defined as constants, e.g. in your wp-config.php. Therefore, they are used for the whole website and this setting could not be changed.', 'external-files-in-media-library' ), $this->get_label() ) );
+			}
 			if ( method_exists( $setting, 'set_reload_on_save' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				$setting->set_reload_on_save( true );
 			}
@@ -171,8 +319,20 @@ class Service_Base extends Directory_Listing_Base {
 			$setting->prevent_export( true );
 			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Defined in wp-config.php', 'external-files-in-media-library' ) );
-			/* translators: %1$s will be replaced by a list of constant names. */
-			$field->set_description( sprintf( __( 'The following settings are defined as constants, e.g. in your wp-config.php. They are used for every connection to this service and replace the values entered here, in the user profiles or in your external sources: %1$s', 'external-files-in-media-library' ), '<code>' . implode( '</code>, <code>', array_map( 'esc_html', $constants ) ) . '</code>' ) );
+			$missing_constants = $this->get_missing_constants_for_fields();
+			if ( empty( $missing_constants ) ) {
+				/* translators: %1$s will be replaced by a list of constant names. */
+				$description = sprintf( __( 'The following settings are defined as constants, e.g. in your wp-config.php. They are used for every connection to this service and replace the values entered here, in the user profiles or in your external sources: %1$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ) );
+
+				// add hint for the host binding, if used.
+				if ( ! empty( $this->constants_host_field ) ) {
+					$description .= ' ' . __( 'The values are only used for connections to the server defined by the constants.', 'external-files-in-media-library' );
+				}
+			} else {
+				/* translators: %1$s will be replaced by a list of constant names, %2$s by a list of constant names. */
+				$description = '<strong>' . sprintf( __( 'The constants %1$s are defined, e.g. in your wp-config.php, but they are not used, because the constants for all required settings must be defined. The following constants are missing: %2$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ), $this->get_constant_list_for_output( $missing_constants ) ) . '</strong>';
+			}
+			$field->set_description( $description );
 			$setting->set_field( $field );
 		}
 
@@ -257,7 +417,13 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return string
 	 */
 	protected function get_mode(): string {
-		return get_option( 'eml_' . $this->get_name() . '_credentials_vault' );
+		// use the mode for constants, if the credentials are defined via constants.
+		if ( $this->is_mode_forced_by_constants() ) {
+			return $this->get_mode_for_constants();
+		}
+
+		// return the saved mode.
+		return $this->get_saved_mode();
 	}
 
 	/**
@@ -309,6 +475,18 @@ class Service_Base extends Directory_Listing_Base {
 		<table class="form-table" role="presentation">
 			<?php
 			foreach ( $settings as $name => $setting ) {
+				// show only a hint, if the value of this setting is defined via constant.
+				$constant_hint = $this->get_constant_hint_for_field( $this->get_field_name_of_user_setting( (string) $name ) );
+				if ( '' !== $constant_hint ) {
+					?>
+					<tr>
+						<th scope="row"><?php echo esc_html( $setting['label'] ); ?></th>
+						<td><p><?php echo wp_kses_post( $constant_hint ); ?></p></td>
+					</tr>
+					<?php
+					continue;
+				}
+
 				// get actual value.
 				$value = Crypt::get_instance()->decrypt( get_user_meta( $user_id, 'efml_' . $name, true ) );
 
@@ -398,6 +576,11 @@ class Service_Base extends Directory_Listing_Base {
 
 		// loop through the settings and save them.
 		foreach ( $this->get_user_settings() as $name => $setting ) {
+			// bail if the value of this setting is defined via constant.
+			if ( ! is_null( $this->get_constant_value( $this->get_field_name_of_user_setting( (string) $name ) ) ) ) {
+				continue;
+			}
+
 			// get the settings full name.
 			$full_name = 'efml_' . $name;
 
@@ -539,7 +722,9 @@ class Service_Base extends Directory_Listing_Base {
 	 *
 	 * Values of fields, which are defined as constants (e.g. in wp-config.php), replace the configured values.
 	 * The name of the constant is "EFML_" + the service name + "_" + the field name in uppercase,
-	 * e.g. "EFML_AWS_S3_ACCESS_KEY" for the field "access_key" of the service "aws-s3".
+	 * e.g. "EFML_FTP_PASSWORD" for the field "password" of the service "ftp".
+	 *
+	 * The constants are only used if the constants for all required fields are defined.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
@@ -547,27 +732,14 @@ class Service_Base extends Directory_Listing_Base {
 		// get the fields.
 		$fields = parent::get_fields();
 
-		// check each field for a constant, if this is supported by this service.
-		$fields_to_check = $this->is_fields_via_constants_enabled() ? $fields : array();
-		foreach ( $fields_to_check as $name => $field ) {
-			// bail if field is not an array.
-			if ( ! is_array( $field ) ) { // @phpstan-ignore function.alreadyNarrowedType
-				continue;
-			}
-
-			// get the constant name for this field.
-			$constant_name = $this->get_constant_name_for_field( (string) $name );
-
-			// bail if constant is not defined.
-			if ( ! defined( $constant_name ) ) {
-				continue;
-			}
-
-			// use the value of the constant.
-			$fields[ $name ]['value']    = constant( $constant_name );
-			$fields[ $name ]['readonly'] = true;
-			$fields[ $name ]['constant'] = $constant_name;
+		// bail if constants should not be used (e.g., while the field definitions are loaded).
+		if ( $this->constants_disabled ) {
+			return $fields;
 		}
+
+		// replace the values with the values of constants, if they are defined. The values of the target fields
+		// are only checked, if the fields have been set from outside (e.g. by a saved external source).
+		$fields = $this->apply_constants_to_fields( $fields, '', false, $this->fields_set_externally );
 
 		$instance = $this;
 		/**
@@ -578,6 +750,18 @@ class Service_Base extends Directory_Listing_Base {
 		 * @param Service_Base $instance The service object.
 		 */
 		return apply_filters( 'efml_service_fields', $fields, $instance );
+	}
+
+	/**
+	 * Set the fields.
+	 *
+	 * @param array<string,array<string,mixed>> $fields List of fields.
+	 *
+	 * @return void
+	 */
+	public function set_fields( array $fields ): void {
+		parent::set_fields( $fields );
+		$this->fields_set_externally = ! empty( $fields );
 	}
 
 	/**
@@ -607,6 +791,11 @@ class Service_Base extends Directory_Listing_Base {
 			// mark field as not editable and not required in the form.
 			$config['fields'][ $name ]['readonly']     = true;
 			$config['fields'][ $name ]['not_required'] = true;
+
+			// bail if this is the field with the server, which is visible to show which server is used.
+			if ( $name === $this->constants_host_field && ( empty( $field['type'] ) || 'password' !== $field['type'] ) ) {
+				continue;
+			}
 
 			// bail if this is not a credential field.
 			if ( empty( $field['credential'] ) && ( empty( $field['type'] ) || 'password' !== $field['type'] ) ) {
@@ -656,42 +845,423 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Return the list of defined constants for fields of this service.
+	 * Return the definitions of the fields, which values could be defined via constants.
 	 *
-	 * Uses the prefix of the constant names, so the fields must not be loaded for this check.
+	 * The definitions are loaded without any values from constants. Services, which do not use
+	 * fields for their credentials (e.g. via OAuth), could override this to define their own list.
 	 *
-	 * @return array<int,string>
+	 * @return array<string,array<string,mixed>>
 	 */
-	public function get_defined_constants_for_fields(): array {
+	public function get_constant_field_definitions(): array {
 		// bail if this service does not support constants.
 		if ( ! $this->is_fields_via_constants_enabled() ) {
 			return array();
 		}
 
-		// get the prefix for constants of this service.
-		$prefix = $this->get_constant_name_for_field( '' );
-
-		// get the user-defined constants.
-		$constants = get_defined_constants( true );
-
-		// bail if no user-defined constants exist.
-		if ( empty( $constants['user'] ) ) {
-			return array();
+		// return the cached definitions, if set.
+		if ( is_array( $this->field_definitions ) ) {
+			return $this->field_definitions;
 		}
 
-		// list of constants, which are used internally by this plugin and are not settings.
-		$internal_constants = array( 'EFML_LOCAL_UPDATED' );
+		// load the definitions of the fields without the actual values of this object
+		// (services are singletons, so the actual fields are saved and restored afterward).
+		$actual_fields            = $this->fields;
+		$this->fields             = array();
+		$this->constants_disabled = true;
+		try {
+			$fields = $this->get_fields();
+		} finally {
+			$this->fields             = $actual_fields;
+			$this->constants_disabled = false;
+		}
 
-		// collect the constants of this service.
-		$list = array();
-		foreach ( array_keys( $constants['user'] ) as $constant_name ) {
-			// bail if constant does not belong to this service.
-			if ( ! str_starts_with( $constant_name, $prefix ) ) {
+		// collect the definitions.
+		$definitions = array();
+		foreach ( $fields as $name => $field ) {
+			// bail if field is not an array.
+			if ( ! is_array( $field ) ) { // @phpstan-ignore function.alreadyNarrowedType
 				continue;
 			}
 
-			// bail if this is an internal constant.
-			if ( in_array( $constant_name, $internal_constants, true ) ) {
+			// bail if field could not be set via constant (e.g., a hidden field or a file upload).
+			if ( isset( $field['type'] ) && in_array( $field['type'], array( 'hidden', 'file' ), true ) ) {
+				continue;
+			}
+
+			// add the field without any value.
+			unset( $field['value'], $field['readonly'] );
+			$definitions[ (string) $name ] = $field;
+		}
+
+		// save them in the cache.
+		$this->field_definitions = $definitions;
+
+		// return the resulting list.
+		return $definitions;
+	}
+
+	/**
+	 * Return the list of required fields, which must all be defined via constants to use any constant.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_required_fields_for_constants(): array {
+		// collect the required fields.
+		$required_fields = array();
+		foreach ( $this->get_constant_field_definitions() as $name => $field ) {
+			// bail if field is not required.
+			if ( ! empty( $field['not_required'] ) ) {
+				continue;
+			}
+
+			// add it to the list.
+			$required_fields[] = $name;
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the list of fields of a service, which must all be defined via constants,
+		 * before any constant of this service is used.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param array<int,string> $required_fields List of field names.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_required_fields_for_constants', $required_fields, $instance );
+	}
+
+	/**
+	 * Return the values of all fields, which are defined via constants.
+	 *
+	 * Returns an empty list if the constant for any required field is missing.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_constant_values(): array {
+		// bail if constants are not used at the moment (e.g., while the field definitions are loaded).
+		if ( $this->constants_disabled ) {
+			return array();
+		}
+
+		// get the definitions.
+		$definitions = $this->get_constant_field_definitions();
+
+		// bail if no definitions are given.
+		if ( empty( $definitions ) ) {
+			return array();
+		}
+
+		// bail if any required field is not defined via constant.
+		if ( ! empty( $this->get_missing_constants_for_fields( false ) ) ) {
+			return array();
+		}
+
+		// collect the values.
+		$values = array();
+		foreach ( array_keys( $definitions ) as $name ) {
+			// get the constant name for this field.
+			$constant_name = $this->get_constant_name_for_field( $name );
+
+			// bail if constant is not defined.
+			if ( ! defined( $constant_name ) ) {
+				continue;
+			}
+
+			// add the value.
+			$values[ $name ] = constant( $constant_name );
+		}
+
+		// return the resulting list.
+		return $values;
+	}
+
+	/**
+	 * Return the value of a single field, if it is defined via constant and all required constants are defined.
+	 *
+	 * @param string $field_name The name of the field.
+	 *
+	 * @return string|null
+	 */
+	public function get_constant_value( string $field_name ): ?string {
+		// get the values.
+		$values = $this->get_constant_values();
+
+		// bail if field is not set.
+		if ( ! isset( $values[ $field_name ] ) || ! is_scalar( $values[ $field_name ] ) ) {
+			return null;
+		}
+
+		// return the value.
+		return (string) $values[ $field_name ];
+	}
+
+	/**
+	 * Replace the values of the given fields with the values of the constants of this service.
+	 *
+	 * If a URL is given and this service defines a host field, the constants are only used if the URL
+	 * is using the host of this field. Otherwise, values from constants are removed from the fields,
+	 * so they are never sent to other servers.
+	 *
+	 * If this service defines target fields (e.g. a bucket), the constants are only used if the given fields
+	 * do not contain other values for them.
+	 *
+	 * @param array<string,mixed> $fields              List of fields.
+	 * @param string              $url                 The URL, which should be used with these fields (optional).
+	 * @param bool                $add_missing         Whether fields, which are not in the list, should be added.
+	 * @param bool                $check_target_fields Whether the values of the target fields should be checked.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function apply_constants_to_fields( array $fields, string $url = '', bool $add_missing = true, bool $check_target_fields = true ): array {
+		// bail if the constants of this service are not values of its fields.
+		if ( ! $this->constants_in_fields ) {
+			return $fields;
+		}
+
+		// get the values of the constants.
+		$values = $this->get_constant_values();
+
+		// bail if no values are defined.
+		if ( empty( $values ) ) {
+			return $fields;
+		}
+
+		// bail if the URL is not using the host of the constants.
+		if ( ! $this->is_url_matching_constants( $url ) ) {
+			return $this->remove_constant_values_from_fields( $fields );
+		}
+
+		// bail if the fields are for another target (e.g. another bucket).
+		if ( $check_target_fields && ! $this->is_fields_matching_constants( $fields ) ) {
+			return $this->remove_constant_values_from_fields( $fields );
+		}
+
+		// get the definitions.
+		$definitions = $this->get_constant_field_definitions();
+
+		// set the values.
+		foreach ( $values as $name => $value ) {
+			// add the field, if it is missing.
+			if ( ! isset( $fields[ $name ] ) || ! is_array( $fields[ $name ] ) ) {
+				// bail if missing fields should not be added.
+				if ( ! $add_missing ) {
+					continue;
+				}
+
+				// add the definition of this field.
+				$fields[ $name ] = isset( $definitions[ $name ] ) ? $definitions[ $name ] : array( 'name' => $name );
+			}
+
+			// use the value of the constant.
+			$fields[ $name ]['value']    = $value;
+			$fields[ $name ]['readonly'] = true;
+			$fields[ $name ]['constant'] = $this->get_constant_name_for_field( $name );
+		}
+
+		// return the resulting fields.
+		return $fields;
+	}
+
+	/**
+	 * Return whether the given URL is using the host, which is defined via constant for this service.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	public function is_url_matching_constants( string $url ): bool {
+		// bail if no URL is given.
+		if ( '' === $url ) {
+			return true;
+		}
+
+		// bail if this service does not use a host field.
+		if ( empty( $this->constants_host_field ) ) {
+			return true;
+		}
+
+		// get the value of the host field.
+		$server = $this->get_constant_value( $this->constants_host_field );
+
+		// bail if no server is defined via constant (should not happen as it is a required field).
+		if ( is_null( $server ) ) {
+			return true;
+		}
+
+		// compare the hosts.
+		$server_host = $this->get_host_from_url( $server );
+		$result      = '' !== $server_host && $server_host === $this->get_host_from_url( $url );
+
+		$instance = $this;
+		/**
+		 * Filter whether the given URL is using the server defined via constants for this service.
+		 * Only if true is returned, the values of the constants are used for this URL.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool $result True if the URL is matching.
+		 * @param string $url The URL.
+		 * @param string $server The server defined via constant.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_url_matching_constants', $result, $url, $server, $instance );
+	}
+
+	/**
+	 * Return whether the given URL could not be used, because the credentials of this service are defined
+	 * via constants for another server.
+	 *
+	 * Used for saved external sources: sources on other servers are not usable as long as the constants are defined.
+	 *
+	 * @param string $url The URL to check.
+	 *
+	 * @return bool
+	 */
+	public function is_url_blocked_by_constants( string $url ): bool {
+		return $this->is_target_blocked_by_constants( $url, array() );
+	}
+
+	/**
+	 * Return whether the given URL and fields could not be used, because the credentials of this service are
+	 * defined via constants for another target (another server or e.g. another bucket).
+	 *
+	 * @param string              $url    The URL to check.
+	 * @param array<string,mixed> $fields The fields to check (e.g. of a saved external source).
+	 *
+	 * @return bool
+	 */
+	public function is_target_blocked_by_constants( string $url, array $fields ): bool {
+		// bail if this service does not use a host field or target fields.
+		if ( empty( $this->constants_host_field ) && empty( $this->constants_target_fields ) ) {
+			return false;
+		}
+
+		// bail if not all required values are defined via constants.
+		if ( empty( $this->get_constant_values() ) ) {
+			return false;
+		}
+
+		// return true if the URL is not using the server of the constants.
+		if ( ! empty( $this->constants_host_field ) && '' !== $url && ! $this->is_url_matching_constants( $url ) ) {
+			return true;
+		}
+
+		// return whether the fields are for another target.
+		return ! $this->is_fields_matching_constants( $fields );
+	}
+
+	/**
+	 * Return whether the values of the target fields (e.g. a bucket) in the given fields are empty or equal to
+	 * the values defined via constants.
+	 *
+	 * @param array<string,mixed> $fields List of fields.
+	 *
+	 * @return bool
+	 */
+	public function is_fields_matching_constants( array $fields ): bool {
+		// check each target field.
+		$result = true;
+		foreach ( $this->constants_target_fields as $field_name ) {
+			// get the value of the constant.
+			$constant_value = $this->get_constant_value( $field_name );
+
+			// bail if this field is not defined via constant.
+			if ( is_null( $constant_value ) ) {
+				continue;
+			}
+
+			// bail if the field is not set or is set via constant.
+			if ( ! isset( $fields[ $field_name ] ) || ! is_array( $fields[ $field_name ] ) || ! empty( $fields[ $field_name ]['constant'] ) ) {
+				continue;
+			}
+
+			// get the value.
+			$value = isset( $fields[ $field_name ]['value'] ) && is_scalar( $fields[ $field_name ]['value'] ) ? trim( (string) $fields[ $field_name ]['value'] ) : '';
+
+			// bail if no value is set.
+			if ( '' === $value ) {
+				continue;
+			}
+
+			// compare the values.
+			if ( strtolower( $value ) !== strtolower( trim( $constant_value ) ) ) {
+				$result = false;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter whether the given fields are for the target (e.g. a bucket) defined via constants.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool $result True if the fields are matching.
+		 * @param array<string,mixed> $fields List of fields.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_fields_matching_constants', $result, $fields, $instance );
+	}
+
+	/**
+	 * Return the host of the given URL in lowercase.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	private function get_host_from_url( string $url ): string {
+		// add a scheme, if it is missing, so the host could be detected.
+		if ( ! str_contains( $url, '://' ) ) {
+			$url = 'http://' . $url;
+		}
+
+		// get the host.
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+
+		// bail if no host could be detected.
+		if ( ! is_string( $host ) ) {
+			return '';
+		}
+
+		// return the host.
+		return strtolower( $host );
+	}
+
+	/**
+	 * Remove all values, which are set via constants, from the given fields.
+	 *
+	 * @param array<string,mixed> $fields List of fields.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function remove_constant_values_from_fields( array $fields ): array {
+		foreach ( $fields as $name => $field ) {
+			// bail if field is not set via constant.
+			if ( ! is_array( $field ) || empty( $field['constant'] ) ) {
+				continue;
+			}
+
+			// remove the value.
+			$fields[ $name ]['value'] = '';
+			unset( $fields[ $name ]['constant'], $fields[ $name ]['readonly'] );
+		}
+
+		// return the resulting fields.
+		return $fields;
+	}
+
+	/**
+	 * Return the list of defined constants for fields of this service.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_defined_constants_for_fields(): array {
+		// collect the defined constants of this service.
+		$list = array();
+		foreach ( array_keys( $this->get_constant_field_definitions() ) as $name ) {
+			// get the constant name.
+			$constant_name = $this->get_constant_name_for_field( $name );
+
+			// bail if constant is not defined.
+			if ( ! defined( $constant_name ) ) {
 				continue;
 			}
 
@@ -701,6 +1271,135 @@ class Service_Base extends Directory_Listing_Base {
 
 		// return the resulting list.
 		return $list;
+	}
+
+	/**
+	 * Return the list of constants for required fields, which are not defined.
+	 *
+	 * @param bool $only_if_any_defined True to return an empty list, if no constant of this service is defined.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_missing_constants_for_fields( bool $only_if_any_defined = true ): array {
+		// bail if no constant is defined and this is requested.
+		if ( $only_if_any_defined && empty( $this->get_defined_constants_for_fields() ) ) {
+			return array();
+		}
+
+		// collect the missing constants.
+		$list = array();
+		foreach ( $this->get_required_fields_for_constants() as $name ) {
+			// get the constant name.
+			$constant_name = $this->get_constant_name_for_field( $name );
+
+			// bail if constant is defined.
+			if ( defined( $constant_name ) ) {
+				continue;
+			}
+
+			// add it to the list.
+			$list[] = $constant_name;
+		}
+
+		// return the resulting list.
+		return $list;
+	}
+
+	/**
+	 * Return the name of the field for the given name of a user setting (e.g. "login" for "ftp_login").
+	 *
+	 * @param string $setting_name The name of the user setting.
+	 *
+	 * @return string
+	 */
+	private function get_field_name_of_user_setting( string $setting_name ): string {
+		// get the prefix of the user settings of this service.
+		$prefix = $this->get_name() . '_';
+
+		// bail if the name does not start with the prefix.
+		if ( ! str_starts_with( $setting_name, $prefix ) ) {
+			return $setting_name;
+		}
+
+		// return the name without the prefix.
+		return substr( $setting_name, strlen( $prefix ) );
+	}
+
+	/**
+	 * Return the hint for a field, whose value is defined via constant. Returns an empty string, if it is not.
+	 *
+	 * Only the value of the field with the server is shown, other values are never shown.
+	 *
+	 * @param string $field_name The name of the field.
+	 *
+	 * @return string
+	 */
+	protected function get_constant_hint_for_field( string $field_name ): string {
+		// get the value of the constant.
+		$value = $this->get_constant_value( $field_name );
+
+		// bail if the value is not defined via constant.
+		if ( is_null( $value ) ) {
+			return '';
+		}
+
+		// get the name of the constant.
+		$constant_name = $this->get_constant_name_for_field( $field_name );
+
+		// show the value for the server.
+		if ( $field_name === $this->constants_host_field ) {
+			/* translators: %1$s will be replaced by a value, %2$s by the name of a constant. */
+			return sprintf( __( '%1$s (defined via %2$s)', 'external-files-in-media-library' ), '<code>' . esc_html( $value ) . '</code>', '<code>' . esc_html( $constant_name ) . '</code>' );
+		}
+
+		/* translators: %1$s will be replaced by the name of a constant. */
+		return sprintf( __( 'Defined via %1$s', 'external-files-in-media-library' ), '<code>' . esc_html( $constant_name ) . '</code>' );
+	}
+
+	/**
+	 * Add a non-editable hint as setting, if the value of the given field is defined via constant.
+	 *
+	 * Services use this for their global settings, so the values saved in the database are not changed.
+	 *
+	 * @param Section $section    The section for the setting.
+	 * @param string  $field_name The name of the field.
+	 * @param string  $title      The title of the setting.
+	 *
+	 * @return bool True if the value is defined via constant and the hint has been added.
+	 */
+	protected function add_constant_hint_setting( Section $section, string $field_name, string $title ): bool {
+		// get the hint.
+		$hint = $this->get_constant_hint_for_field( $field_name );
+
+		// bail if the value is not defined via constant.
+		if ( '' === $hint ) {
+			return false;
+		}
+
+		// add the hint as setting.
+		$settings_obj = Settings::get_instance()->get_settings_obj();
+		$setting      = $settings_obj->add_setting( 'eml_' . $this->get_name() . '_' . $field_name . '_constant_hint' );
+		$setting->set_section( $section );
+		$setting->set_show_in_rest( false );
+		$setting->prevent_export( true );
+		$field = new TextInfo( $settings_obj );
+		$field->set_title( $title );
+		$field->set_description( $hint );
+		$setting->set_field( $field );
+
+		// return true as the hint has been added.
+		return true;
+	}
+
+	/**
+	 * Return a list of constant names for output.
+	 *
+	 * @param array<int,string> $constants List of constant names.
+	 *
+	 * @return string
+	 */
+	private function get_constant_list_for_output( array $constants ): string {
+		return '<code>' . implode( '</code>, <code>', array_map( 'esc_html', $constants ) ) . '</code>';
 	}
 
 	/**

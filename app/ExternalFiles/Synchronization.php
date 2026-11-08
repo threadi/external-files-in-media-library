@@ -578,6 +578,12 @@ class Synchronization extends Tools_Base {
 			return;
 		}
 
+		// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			Services::get_instance()->log_blocked_source( $term_id );
+			return;
+		}
+
 		// remove the update marker on all existing synced files of this external source.
 		foreach ( $this->get_files_of_source( $term_id ) as $post_id ) {
 			delete_post_meta( $post_id, 'eml_synced' );
@@ -744,6 +750,12 @@ class Synchronization extends Tools_Base {
 
 		// bail if the actual user is not allowed to use this external source.
 		if ( ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
+			wp_send_json_error();
+		}
+
+		// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			Services::get_instance()->log_blocked_source( $term_id );
 			wp_send_json_error();
 		}
 

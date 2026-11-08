@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use ZipArchive;
 
 /**
@@ -208,6 +209,11 @@ class Zip extends Zip_Base {
 		$fields = array();
 		if ( is_string( $fields_json ) ) {
 			$fields = json_decode( $fields_json, true );
+		}
+
+		// add the values of constants for the ZIP service (the password is only used locally to open the file).
+		if ( is_array( $fields ) ) {
+			$fields = Services::get_instance()->apply_constants_to_fields( $fields, Services::get_instance()->get_service_names_for_constants( 'zip' ), '' );
 		}
 
 		// if password is set, set if on the zip object.

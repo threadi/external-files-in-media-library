@@ -25,6 +25,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
 use WP_Term;
@@ -709,6 +710,37 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Return the external sources with enabled export, which could be used at the moment.
+	 *
+	 * External sources are not usable, if the credentials of their service are defined via constants
+	 * for another server. Nothing is written to or deleted on them then.
+	 *
+	 * @param bool $log True to log each external source, which is not usable.
+	 *
+	 * @return array<int,int>
+	 */
+	public function get_usable_export_terms( bool $log = false ): array {
+		// collect the usable terms.
+		$list = array();
+		foreach ( $this->get_export_terms() as $term_id ) {
+			// bail if this external source is not usable.
+			if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+				// log this event, if requested.
+				if ( $log ) {
+					Services::get_instance()->log_blocked_source( $term_id );
+				}
+				continue;
+			}
+
+			// add it to the list.
+			$list[] = $term_id;
+		}
+
+		// return the resulting list.
+		return $list;
+	}
+
+	/**
 	 * Export a fresh uploaded and saved media library attachment on external hostings and configure the file data
 	 * to use them as external files.
 	 *
@@ -845,7 +877,7 @@ class Export extends Tools_Base {
 		Log::get_instance()->create( __( 'Check, which service could be used to export the given file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 
 		// get the term IDs of all export sources.
-		$export_source_terms_list = $this->get_export_terms();
+		$export_source_terms_list = $this->get_usable_export_terms( true );
 
 		// move the main export source on last place in an array to assign the resulting file to this external source.
 		$export_source_terms        = array();
@@ -857,8 +889,8 @@ class Export extends Tools_Base {
 			}
 			$export_source_terms[] = $term_id;
 		}
-		// add the main export source.
-		if ( $main_export_source_term_id > 0 ) {
+		// add the main export source, if it is usable.
+		if ( $main_export_source_term_id > 0 && in_array( $main_export_source_term_id, $export_source_terms_list, true ) ) {
 			$export_source_terms[] = $main_export_source_term_id;
 		}
 
@@ -1088,7 +1120,7 @@ class Export extends Tools_Base {
 		$successfully_deleted = true;
 
 		// check each term.
-		foreach ( $this->get_export_terms() as $term_id ) {
+		foreach ( $this->get_usable_export_terms( true ) as $term_id ) {
 			// bail if this file has not been exported to this external source.
 			if ( ! in_array( absint( $term_id ), $export_sources, true ) ) {
 				continue;
@@ -1907,7 +1939,7 @@ class Export extends Tools_Base {
 		$targets = array();
 
 		// check each external source with enabled export.
-		foreach ( $this->get_export_terms() as $term_id ) {
+		foreach ( $this->get_usable_export_terms() as $term_id ) {
 			$true = true;
 			/**
 			 * Filter whether the external source should be checked for existing files with the same name
@@ -2466,7 +2498,7 @@ class Export extends Tools_Base {
 		}
 
 		// get list of external sources.
-		$external_sources = $this->get_export_terms();
+		$external_sources = $this->get_usable_export_terms();
 
 		// return result depending on terms for export.
 		return ! empty( $external_sources );

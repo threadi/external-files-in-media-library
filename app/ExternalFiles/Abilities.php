@@ -828,6 +828,7 @@ class Abilities {
 												'label'    => array( 'type' => 'string' ),
 												'type'     => array( 'type' => 'string' ),
 												'required' => array( 'type' => 'boolean' ),
+												'defined_via_constant' => array( 'type' => 'boolean' ),
 											),
 										),
 									),
@@ -1454,6 +1455,7 @@ class Abilities {
 				'sync_interval'      => array( 'type' => 'string' ),
 				'export_enabled'     => array( 'type' => 'boolean' ),
 				'main_export_source' => array( 'type' => 'boolean' ),
+				'usable'             => array( 'type' => 'boolean' ),
 			),
 		);
 	}
@@ -2286,6 +2288,12 @@ class Abilities {
 				return $this->get_error( 'efml_missing_directory', __( 'No directory given for this external source.', 'external-files-in-media-library' ), 400 );
 			}
 
+			// bail if the credentials of this service are defined via constants for another target.
+			if ( $service_obj instanceof Service_Base && $service_obj->is_target_blocked_by_constants( $directory, $fields ) ) {
+				/* translators: %1$s will be replaced by the service title (e.g. FTP). */
+				return $this->get_error( 'efml_source_blocked_by_constants', sprintf( __( 'The URL could not be used, as the access data for %1$s are defined as constants for another server, e.g. in your wp-config.php.', 'external-files-in-media-library' ), $service_obj->get_label() ), 409 );
+			}
+
 			// bail if the connection with these settings is not possible.
 			if ( ! $service_obj->do_login( $directory ) ) {
 				return $this->get_error( 'efml_login_failed', $this->get_error_text( $this->get_errors_since( $last_log_id ), $this->get_service_error_text( $service_obj, __( 'The connection to the external source failed. Check the directory and the credentials.', 'external-files-in-media-library' ), $error_offset ) ), 400 );
@@ -2852,7 +2860,7 @@ class Abilities {
 		}
 
 		// bail if no external source is enabled for the export.
-		if ( empty( Export::get_instance()->get_export_terms() ) ) {
+		if ( empty( Export::get_instance()->get_usable_export_terms() ) ) {
 			return $this->get_error( 'efml_no_export_source', __( 'No external source is enabled for the export.', 'external-files-in-media-library' ), 400 );
 		}
 
@@ -3783,10 +3791,11 @@ class Abilities {
 		foreach ( $service_fields as $name => $field ) {
 			// add the field without its value.
 			$fields[] = array(
-				'name'     => (string) $name,
-				'label'    => wp_strip_all_tags( $this->get_scalar_as_string( $field['label'] ?? '' ) ),
-				'type'     => $this->get_scalar_as_string( $field['type'] ?? 'text' ),
-				'required' => empty( $field['not_required'] ),
+				'name'                 => (string) $name,
+				'label'                => wp_strip_all_tags( $this->get_scalar_as_string( $field['label'] ?? '' ) ),
+				'type'                 => $this->get_scalar_as_string( $field['type'] ?? 'text' ),
+				'required'             => empty( $field['not_required'] ) && empty( $field['constant'] ),
+				'defined_via_constant' => ! empty( $field['constant'] ),
 			);
 		}
 
@@ -3879,6 +3888,11 @@ class Abilities {
 			return $this->get_error( 'efml_not_allowed', __( 'Access not allowed!', 'external-files-in-media-library' ) . ' ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ), 403 );
 		}
 
+		// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term->term_id ) ) {
+			return $this->get_error( 'efml_source_blocked_by_constants', Services::get_instance()->get_blocked_source_hint( $term->term_id ), 409 );
+		}
+
 		// return the term.
 		return $term;
 	}
@@ -3923,6 +3937,7 @@ class Abilities {
 			'sync_interval'      => (string) get_term_meta( $term->term_id, 'interval', true ),
 			'export_enabled'     => ! empty( get_term_meta( $term->term_id, 'efml_export', true ) ),
 			'main_export_source' => absint( get_option( 'eml_export_main_source' ) ) === $term->term_id,
+			'usable'             => ! Services::get_instance()->is_source_blocked_by_constants( $term->term_id ),
 		);
 	}
 

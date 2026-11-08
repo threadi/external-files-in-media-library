@@ -42,6 +42,13 @@ class Ftp extends Service_Base implements Service {
 	protected string $name = 'ftp';
 
 	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = 'server';
+
+	/**
 	 * The public label.
 	 *
 	 * @var string
@@ -169,45 +176,54 @@ class Ftp extends Service_Base implements Service {
 
 		// add setting for the button to connect.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_server' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the server is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'server', __( 'Server', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_server' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_login' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the login is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'login', __( 'Login', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_login' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_password' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password( $settings_obj );
-			$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the password is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'password', __( 'Password', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_password' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$field = new Password( $settings_obj );
+				$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 		}
 
 		if ( $this->is_mode( 'user' ) ) {
@@ -553,9 +569,10 @@ class Ftp extends Service_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// check if all fields are set.
-		$counter = 0;
-		$fields  = 0;
-		foreach ( $this->fields as $field ) {
+		$counter       = 0;
+		$fields        = 0;
+		$fields_values = $this->get_fields();
+		foreach ( $fields_values as $field ) {
 			++$fields;
 			if ( ! empty( $field['value'] ) ) {
 				++$counter;
@@ -576,7 +593,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// override the directory.
-		$server = $this->fields['server']['value'];
+		$server = (string) $fields_values['server']['value'];
 
 		// prepend the directory with ftp:// if that is not given.
 		if ( 0 !== stripos( $server, 'ftp://' ) && 0 !== stripos( $server, 'ftps://' ) ) {
@@ -730,13 +747,16 @@ class Ftp extends Service_Base implements Service {
 			return $this->directory;
 		}
 
+		// get the fields incl. values from constants.
+		$fields = $this->get_fields();
+
 		// bail if no directory is set.
-		if ( empty( $this->fields['server']['value'] ) ) {
+		if ( empty( $fields['server']['value'] ) || ! is_string( $fields['server']['value'] ) ) {
 			return '';
 		}
 
 		// return the directory.
-		return $this->fields['server']['value'];
+		return $fields['server']['value'];
 	}
 
 	/**

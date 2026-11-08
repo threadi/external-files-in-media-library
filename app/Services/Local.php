@@ -33,6 +33,15 @@ class Local extends Service_Base implements Service {
 	protected string $name = 'local';
 
 	/**
+	 * Marker whether values of fields could be defined via constants (true) or not (false).
+	 *
+	 * Disabled as this service does not use any credentials.
+	 *
+	 * @var bool
+	 */
+	protected bool $fields_via_constants = false;
+
+	/**
 	 * Slug of settings tab.
 	 *
 	 * @var string

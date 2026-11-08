@@ -48,6 +48,15 @@ class DropBox extends Service_Base implements Service {
 	protected string $name = 'dropbox';
 
 	/**
+	 * Marker whether the values of the constants are values of the fields of this service.
+	 *
+	 * Disabled, as only the API credentials of the app could be defined via constants, which are no fields.
+	 *
+	 * @var bool
+	 */
+	protected bool $constants_in_fields = false;
+
+	/**
 	 * The public label.
 	 *
 	 * @var string
@@ -393,11 +402,14 @@ class DropBox extends Service_Base implements Service {
 			wp_send_json_error( array( 'detail' => $this->get_not_allowed_dialog() ) );
 		}
 
+		// check whether the API credentials are defined via constants.
+		$api_via_constants = $this->is_api_defined_via_constants();
+
 		// get the API key.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_key = $api_via_constants ? $this->get_api_key() : filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get the API secret.
-		$api_secret = filter_input( INPUT_POST, 'api_secret', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_secret = $api_via_constants ? $this->get_api_secret() : filter_input( INPUT_POST, 'api_secret', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if any value is missing.
 		if ( empty( $api_key ) || empty( $api_secret ) ) {
@@ -422,9 +434,11 @@ class DropBox extends Service_Base implements Service {
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
-		// save the values.
-		$this->set_api_key( $api_key );
-		$this->set_api_secret( $api_secret );
+		// save the values, if they are not defined via constants.
+		if ( ! $api_via_constants ) {
+			$this->set_api_key( $api_key );
+			$this->set_api_secret( $api_secret );
+		}
 
 		// create a random state for this request and save it for the actual user.
 		// It is checked on return from DropBox to prevent that a foreign authorization is saved here.
@@ -529,6 +543,12 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_api_key( int $user_id = 0 ): string {
+		// use the value of the constant, if set.
+		$constant_value = $this->get_constant_value( 'api_key' );
+		if ( ! is_null( $constant_value ) ) {
+			return $constant_value;
+		}
+
 		// get the global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'efml_dropbox_api_key', '' );
@@ -604,6 +624,12 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_api_secret( int $user_id = 0 ): string {
+		// use the value of the constant, if set.
+		$constant_value = $this->get_constant_value( 'api_secret' );
+		if ( ! is_null( $constant_value ) ) {
+			return $constant_value;
+		}
+
 		// get the global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'efml_dropbox_api_secret', '' );
@@ -1221,6 +1247,30 @@ class DropBox extends Service_Base implements Service {
 	 * @return array<string,mixed>
 	 */
 	private function get_connect_dialog(): array {
+		// show only a hint, if the API credentials are defined via constants.
+		if ( $this->is_api_defined_via_constants() ) {
+			return array(
+				'className' => 'efml efml-dropbox-dialog',
+				'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
+				'texts'     => array(
+					'<p><strong>' . __( 'The API credentials for your DropBox app are defined as constants, e.g. in your wp-config.php.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p>' . __( 'Click on the button below to authorize the access to your DropBox.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'buttons'   => array(
+					array(
+						'action'  => 'efml_dropbox_connect();',
+						'variant' => 'primary',
+						'text'    => __( 'Connect now', 'external-files-in-media-library' ),
+					),
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'secondary',
+						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+					),
+				),
+			);
+		}
+
 		return array(
 			'className' => 'efml efml-dropbox-dialog',
 			'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
@@ -1813,5 +1863,45 @@ class DropBox extends Service_Base implements Service {
 	 */
 	protected function has_credentials(): bool {
 		return true;
+	}
+
+	/**
+	 * Return the definitions of the values, which could be defined via constants.
+	 *
+	 * DropBox is using OAuth, so only the API credentials of the app could be defined via constants.
+	 * The tokens are saved in the database, as they will be refreshed regularly.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_constant_field_definitions(): array {
+		// bail if this service does not support constants.
+		if ( ! $this->is_fields_via_constants_enabled() ) {
+			return array();
+		}
+
+		// return the definitions.
+		return array(
+			'api_key'    => array(
+				'name'       => 'api_key',
+				'type'       => 'text',
+				'label'      => __( 'App key', 'external-files-in-media-library' ),
+				'credential' => true,
+			),
+			'api_secret' => array(
+				'name'       => 'api_secret',
+				'type'       => 'password',
+				'label'      => __( 'App secret', 'external-files-in-media-library' ),
+				'credential' => true,
+			),
+		);
+	}
+
+	/**
+	 * Return whether the API credentials are defined via constants.
+	 *
+	 * @return bool
+	 */
+	private function is_api_defined_via_constants(): bool {
+		return ! empty( $this->get_constant_values() );
 	}
 }

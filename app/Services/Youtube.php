@@ -199,27 +199,33 @@ class Youtube extends Service_Base implements Service {
 
 		// add setting.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_youtube_channel_id' );
-			$setting->set_section( $section );
-			$setting->set_autoload( false );
-			$setting->set_type( 'string' );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
-			$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
-			$setting->set_field( $field );
+			// show hint if the value is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'channel_id', __( 'Channel ID', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'eml_youtube_channel_id' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->set_type( 'string' );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
+				$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
+				$setting->set_field( $field );
+			}
 
-			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
-			$setting->set_section( $section );
-			$setting->set_autoload( false );
-			$setting->set_type( 'string' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password( $settings_obj );
-			$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
-			$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
-			$setting->set_field( $field );
+			// show hint if the value is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'api_key', __( 'API Key', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->set_type( 'string' );
+				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$field = new Password( $settings_obj );
+				$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
+				$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
+				$setting->set_field( $field );
+			}
 		}
 
 		// show hint for user settings.

@@ -32,6 +32,15 @@ class Multisite extends Service_Base implements Service {
 	protected string $name = 'multisite';
 
 	/**
+	 * Marker whether values of fields could be defined via constants (true) or not (false).
+	 *
+	 * Disabled as this service does not use any credentials.
+	 *
+	 * @var bool
+	 */
+	protected bool $fields_via_constants = false;
+
+	/**
 	 * The public label.
 	 *
 	 * @var string

@@ -44,6 +44,14 @@ use WP_Query;
  * Object as base for services, which import URLs from lists.
  */
 abstract class Url_List_Base extends Service_Base implements Service {
+
+	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = 'list_url';
+
 	/**
 	 * Name of the post meta with the source URL of a downloaded list.
 	 */

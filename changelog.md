@@ -5,11 +5,18 @@
 ### Added
 
 - Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
-- Added more hooks
 - Added option to export new files in the background via the queue, incl. retries of failed exports and markers in the media library
-- Added possibility for service plugins to define the values of their fields via constants (e.g. in wp-config.php)
+- Added possibility to define the credentials of all services via constants (e.g. in wp-config.php): FTP, FTPS, SFTP, REST API, ZIP, CSV, XML, YouTube and the app credentials of Dropbox
+- Constants of a service are only used if the constants for all its required fields are defined
+- Credentials from constants are only used for connections to the server defined via constant
+- Settings and user profiles show hints instead of input fields for values defined via constants
+- The location of the credentials is fixed to "One for this website" if the credentials of a service are defined via constants
+- Saved external sources on other servers than the one defined via constants are not usable as long as the constants are defined (no opening, import, synchronization or export), files imported before are still delivered
+- URLs on other servers of a service with credentials via constants could also not be imported manually
+- Services from extensions could define further fields for the target of the constants (e.g. a bucket) and their own mode for constants
+- Added documentation for the constants in docs/constants.md
 - Added check for existing files with the same name on the external sources before a file is exported
-- Added hooks "efml_export_check_filename_on_target", "efml_export_unique_filename_max_tries", "efml_export_in_background", "efml_export_queue_max_attempts", "efml_service_fields" and "efml_service_field_constant_name"
+- Added more hooks
 
 ### Changed
 

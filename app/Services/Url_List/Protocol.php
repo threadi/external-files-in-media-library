@@ -70,6 +70,35 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
+	 * Return the names of the services, whose constants should be used for the fields of this protocol.
+	 *
+	 * This is the service of the list type set in the fields.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_constants(): array {
+		// get the fields without constants.
+		$fields = $this->get_fields_without_constants();
+
+		// bail if no list type is set in fields.
+		if ( empty( $fields['list_type']['value'] ) || ! is_string( $fields['list_type']['value'] ) ) {
+			return array();
+		}
+
+		// return the list type as service name.
+		return Services::get_instance()->get_service_names_for_constants( $fields['list_type']['value'] );
+	}
+
+	/**
+	 * Return the names of the services, to which the URL of this protocol belongs: the service of the list type.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_blocking(): array {
+		return $this->get_service_names_for_constants();
+	}
+
+	/**
 	 * Check if URL is compatible with this protocol: it must be an address of the list from the fields.
 	 *
 	 * @return bool

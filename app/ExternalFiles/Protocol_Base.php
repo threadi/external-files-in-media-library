@@ -11,6 +11,8 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Filesystem_Base;
 use WP_Query;
 
@@ -220,10 +222,79 @@ class Protocol_Base {
 	/**
 	 * Return the fields.
 	 *
+	 * Values of fields, which are defined via constants for the service using this protocol, replace
+	 * the given values, if the URL of this object is matching the server of these constants.
+	 *
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_fields(): array {
+		return $this->get_fields_for_url( $this->get_url() );
+	}
+
+	/**
+	 * Return the fields to use for a connection to the given URL.
+	 *
+	 * Values from constants are only used if the URL is matching the server of these constants.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	protected function get_fields_for_url( string $url ): array {
+		return Services::get_instance()->apply_constants_to_fields( $this->get_fields_without_constants(), $this->get_service_names_for_constants(), $url ); // @phpstan-ignore return.type
+	}
+
+	/**
+	 * Return the fields as they are set, without values from constants.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	protected function get_fields_without_constants(): array {
 		return $this->fields;
+	}
+
+	/**
+	 * Return the names of the services, whose constants should be used for the fields of this protocol.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_constants(): array {
+		return Services::get_instance()->get_service_names_for_constants( $this->get_name() );
+	}
+
+	/**
+	 * Return the names of the services, to which the URL of this protocol belongs.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_blocking(): array {
+		return Services::get_instance()->get_service_names_for_blocking( $this->get_name() );
+	}
+
+	/**
+	 * Return the service, which prevents the usage of the URL of this object, as its credentials are defined
+	 * via constants for another server. Returns false if the URL could be used.
+	 *
+	 * @return Service_Base|false
+	 */
+	public function get_service_blocking_by_constants(): Service_Base|false {
+		foreach ( array_unique( $this->get_service_names_for_blocking() ) as $service_name ) {
+			// get the service object.
+			$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+
+			// bail if this is not a service object.
+			if ( ! $service_obj instanceof Service_Base ) {
+				continue;
+			}
+
+			// return the service, if it blocks the URL.
+			if ( $service_obj->is_target_blocked_by_constants( $this->get_url(), $this->get_fields_without_constants() ) ) {
+				return $service_obj;
+			}
+		}
+
+		// return false as the URL could be used.
+		return false;
 	}
 
 	/**

@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Screen;
 
 /**
@@ -435,6 +436,16 @@ class Forms {
 			unset( $_POST['term'] );
 		}
 
+		// do not use the external source if it is not usable, as the credentials of its service are defined via constants for another server.
+		if ( $term_id > 0 && Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			// log this event.
+			Services::get_instance()->log_blocked_source( $term_id );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
 		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
@@ -772,6 +783,16 @@ class Forms {
 		if ( $term_id > 0 && ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term_id ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'The requested external source has been saved by another user and has not been used for this import.', 'external-files-in-media-library' ), '', 'error' );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
+		// do not use the external source if it is not usable, as the credentials of its service are defined via constants for another server.
+		if ( $term_id > 0 && Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			// log this event.
+			Services::get_instance()->log_blocked_source( $term_id );
 
 			// do not use this term, also not in the following steps of the import, which read it from the request.
 			$term_id = 0;

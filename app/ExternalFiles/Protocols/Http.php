@@ -203,7 +203,7 @@ class Http extends Protocol_Base {
 		}
 
 		// get the header-data of this url.
-		$response = wp_safe_remote_head( $url, $this->get_header_args() );
+		$response = wp_safe_remote_head( $url, $this->get_header_args( $url ) );
 
 		$instance = $this;
 		/**
@@ -757,9 +757,11 @@ class Http extends Protocol_Base {
 	/**
 	 * Create http header for each request.
 	 *
+	 * @param string $url The URL for the request (optional, the URL of this object is used if not set).
+	 *
 	 * @return array<string,mixed>
 	 */
-	public function get_header_args(): array {
+	public function get_header_args( string $url = '' ): array {
 		// define basic header.
 		$args = array(
 			'timeout'     => get_option( 'eml_timeout' ),
@@ -767,11 +769,11 @@ class Http extends Protocol_Base {
 			'redirection' => 0,
 		);
 
-		// add credentials if set.
-		if ( $this->has_fields_with_credentials() ) {
-			// get the fields.
-			$fields = $this->get_fields();
+		// get the fields for this URL.
+		$fields = $this->get_fields_for_url( '' !== $url ? $url : $this->get_url() );
 
+		// add credentials if set.
+		if ( ! empty( $fields['login']['value'] ) && ! empty( $fields['password']['value'] ) ) {
 			// set the header with the credentials for AuthBasic.
 			$args['headers'] = array(
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode -- Base64 is the encoding required for HTTP Basic authentication (RFC 7617).
@@ -800,11 +802,12 @@ class Http extends Protocol_Base {
 	 * Custom solution for https://core.trac.wordpress.org/ticket/40153
 	 *
 	 * @param array<string,array<string,mixed>> $parsed_args The header arguments.
+	 * @param string                            $url         The requested URL.
 	 *
 	 * @return array<string,array<string,mixed>>
 	 */
-	public function set_download_url_header( array $parsed_args ): array {
-		return array_merge( $parsed_args, $this->get_header_args() );
+	public function set_download_url_header( array $parsed_args, string $url = '' ): array {
+		return array_merge( $parsed_args, $this->get_header_args( $url ) );
 	}
 
 	/**
@@ -907,7 +910,7 @@ class Http extends Protocol_Base {
 		}
 
 		// download file as temporary file.
-		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
+		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ), 10, 2 );
 		$tmp_file = download_url( $url );
 		remove_filter( 'http_request_args', array( $this, 'set_download_url_header' ) );
 

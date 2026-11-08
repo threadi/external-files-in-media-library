@@ -466,8 +466,8 @@ class Ftp extends Protocol_Base {
 			return false;
 		}
 
-		// get the fields.
-		$fields = $this->get_fields();
+		// get the fields for this URL.
+		$fields = $this->get_fields_for_url( $url );
 
 		// bail if fields are missing.
 		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {

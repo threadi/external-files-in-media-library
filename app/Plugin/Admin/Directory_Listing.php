@@ -371,6 +371,13 @@ class Directory_Listing {
 					return;
 				}
 
+				// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+				if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+					Services::get_instance()->log_blocked_source( $term_id );
+					$this->show_error( '<p><strong>' . esc_html( Services::get_instance()->get_blocked_source_hint( $term_id ) ) . '</strong></p>' );
+					return;
+				}
+
 				// set term in the config.
 				$config['term'] = $term_id;
 
