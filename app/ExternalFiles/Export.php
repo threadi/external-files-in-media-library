@@ -1718,11 +1718,12 @@ class Export extends Tools_Base {
 			return $filename;
 		}
 
-		// get the external sources with enabled export option.
-		$external_sources = $this->get_external_sources_as_name_list();
+		// get the export targets to check the filename there.
+		// (not the list of external sources for the backend, as uploads also happen via REST API, WP-CLI or cron).
+		$export_targets = $this->get_export_targets();
 
-		// bail if no export is enabled.
-		if ( empty( $external_sources ) ) {
+		// bail if no export target is usable.
+		if ( empty( $export_targets ) ) {
 			return $filename;
 		}
 
@@ -1732,9 +1733,6 @@ class Export extends Tools_Base {
 		// build the relative path.
 		// (normalized to "/" as WordPress saves "_wp_attached_file" always with forward slashes, also on Windows).
 		$dir = str_replace( trailingslashit( wp_normalize_path( $upload_dir['basedir'] ) ), '', wp_normalize_path( $dir ) ) . '/';
-
-		// get the export targets to check the filename there.
-		$export_targets = $this->get_export_targets();
 
 		/**
 		 * Filter the maximum number of tries to find a unique filename for an exported file.

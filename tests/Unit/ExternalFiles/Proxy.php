@@ -129,4 +129,60 @@ class Proxy extends externalFilesTests {
 		$this->assertSame( $proxy_actions, did_action( 'efml_proxy_before' ) );
 		$this->assertFalse( $external_file_obj->is_cached() );
 	}
+	/**
+	 * Test that changing a proxy setting plans the refresh of the rewrite rules.
+	 *
+	 * @return void
+	 */
+	public function test_proxy_setting_change_plans_refresh_of_rewrite_rules(): void {
+		$transient = \ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' );
+		$transient->delete();
+		$this->assertFalse( $transient->is_set() );
+
+		// another option does not plan it.
+		update_option( 'eml_log_mode', 1 );
+		$this->assertFalse( $transient->is_set() );
+
+		// the proxy setting of a file type plans it.
+		update_option( 'eml_images_proxy', 0 === absint( get_option( 'eml_images_proxy' ) ) ? 1 : 0 );
+		$this->assertTrue( $transient->is_set() );
+
+		// also the mode of a file type.
+		$transient->delete();
+		update_option( 'eml_pdf_mode', 'local' === get_option( 'eml_pdf_mode' ) ? 'external' : 'local' );
+		$this->assertTrue( $transient->is_set() );
+		$transient->delete();
+	}
+
+	/**
+	 * Test that the proxy is registered (rewrite rule, query var and delivery) also if all proxy settings are disabled.
+	 *
+	 * Files which could not be loaded by the browser (e.g. via FTP) are always delivered via the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_proxy_is_registered_without_enabled_proxy(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		foreach ( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance()->get_file_types_as_objects() as $file_type_obj ) {
+			update_option( 'eml_' . strtolower( $file_type_obj->get_name() ) . '_proxy', 0 );
+		}
+		$this->assertFalse( $proxy->is_any_proxy_enabled() );
+
+		// initialize the proxy like in a request with these settings.
+		remove_action( 'init', array( $proxy, 'wp_init' ) );
+		remove_filter( 'query_vars', array( $proxy, 'set_query_vars' ) );
+		remove_filter( 'template_include', array( $proxy, 'run' ) );
+		$proxy->init();
+		$this->assertSame( 10, has_action( 'init', array( $proxy, 'wp_init' ) ) );
+		$this->assertSame( 10, has_filter( 'query_vars', array( $proxy, 'set_query_vars' ) ) );
+		$this->assertSame( 10, has_filter( 'template_include', array( $proxy, 'run' ) ) );
+
+		// the rewrite rule is created during the refresh.
+		$this->set_permalink_structure( '/%postname%/' );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Proxy::do_refresh();
+		$rules = get_option( 'rewrite_rules' );
+		$this->assertIsArray( $rules );
+		$this->assertArrayHasKey( $proxy->get_slug() . '/([a-zA-Z0-9-_.]+)?$', $rules );
+		$this->set_permalink_structure( '' );
+	}
 }

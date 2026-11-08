@@ -625,6 +625,27 @@ class Ftp extends Protocol_Base {
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
+		// download the file directly into the tmp file, if a native FTP connection is available.
+		// this does not load the complete file into memory (like get_contents() does it).
+		if ( $ftp_filesystem instanceof WP_Filesystem_FTPext && $ftp_filesystem->link instanceof \FTP\Connection ) {
+			// delete the tmp file.
+			$wp_filesystem->delete( $tmp_file_name );
+
+			// bail if the file could not be downloaded or is empty.
+			if ( ! @ftp_get( $ftp_filesystem->link, $tmp_file, $file_path, FTP_BINARY ) || 0 === wp_filesize( $tmp_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
+
 		// get content of the file.
 		$content = $ftp_filesystem->get_contents( $file_path );
 

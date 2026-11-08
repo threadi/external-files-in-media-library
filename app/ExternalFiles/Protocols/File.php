@@ -457,6 +457,27 @@ class File extends Protocol_Base {
 		// set the file as tmp-file for import with appropriate file extension.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
 
+		// copy the file directly, if the local filesystem is used directly.
+		// this does not load the complete file into memory (like get_contents() does it).
+		if ( 'direct' === $wp_filesystem->method ) {
+			// delete the tmp file.
+			$wp_filesystem->delete( $tmp_file_name );
+
+			// bail if the file could not be copied or is empty.
+			if ( ! $wp_filesystem->copy( $file_path, $tmp_file, true ) || 0 === wp_filesize( $tmp_file ) ) {
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
+
 		// get content of the file.
 		$content = $wp_filesystem->get_contents( $file_path );
 

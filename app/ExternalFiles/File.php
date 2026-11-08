@@ -396,6 +396,37 @@ class File {
 	}
 
 	/**
+	 * Return whether this file must be delivered via the proxy, independent of the proxy setting of its file type.
+	 *
+	 * This is the case for files, which are not saved locally and whose URL could not be loaded by a browser,
+	 * e.g. files exported via FTP (with an "ftp://" URL) or to a local directory (with a "file://" URL).
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_required(): bool {
+		// bail if file is locally saved, as WordPress delivers it then.
+		if ( $this->is_locally_saved() ) {
+			return false;
+		}
+
+		// get the URL of this file.
+		$url = $this->get_url( true );
+
+		// the proxy is required, if the URL is not an HTTP-URL.
+		$required = '' !== $url && ! in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true );
+
+		/**
+		 * Filter whether the given file must be delivered via the proxy, independent of the proxy setting
+		 * of its file type.
+		 *
+		 * @since 5.7.0 Available since 5.7.0.
+		 * @param bool $required True if the proxy is required.
+		 * @param File $external_file_obj The external file object.
+		 */
+		return (bool) apply_filters( 'efml_file_proxy_required', $required, $this );
+	}
+
+	/**
 	 * Set if this file is locally saved.
 	 *
 	 * @param bool $locally_saved Whether the file is locally saved (true) or not (false).
@@ -524,13 +555,13 @@ class File {
 			return;
 		}
 
-		// get the content of this file.
-		$body = $wp_filesystem->get_contents( $tmp_file );
-
-		// bail if no contents returned.
-		if ( ! $body ) {
+		// bail if the file is empty.
+		if ( 0 === wp_filesize( $tmp_file ) ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'File is empty! Found during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -540,11 +571,15 @@ class File {
 		}
 
 		// check mime-type of the binary-data and compare it with header-data.
+		// (directly on the file, so it is not loaded completely into memory).
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
-		$binary_mime_type = $binary_data_info->buffer( $body );
+		$binary_mime_type = $binary_data_info->file( $tmp_file );
 		if ( $binary_mime_type !== $mime_type ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -553,15 +588,21 @@ class File {
 			return;
 		}
 
-		// delete the temporary file.
-		$protocol_handler_obj->cleanup_temp_file( $tmp_file );
-
 		// set path including md5-filename and extension.
 		$path = $this->get_cache_file();
 
-		// save the given content to the path.
+		// move the temporary file to the path (or copy it, if it could not be moved).
+		// this does not load the complete file into memory.
 		try {
-			$saved = $wp_filesystem->put_contents( $path, $body );
+			$saved = $wp_filesystem->move( $tmp_file, $path, true ) || $wp_filesystem->copy( $tmp_file, $path, true );
+
+			// set the permissions like put_contents() does it, as the temporary file could have others.
+			if ( $saved ) {
+				$wp_filesystem->chmod( $path );
+			}
+
+			// delete the temporary file, if it still exists.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -574,6 +615,9 @@ class File {
 
 			// add log entry.
 			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );

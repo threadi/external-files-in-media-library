@@ -199,7 +199,22 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return false;
+		return $this->is_proxy_required_for_file();
+	}
+
+	/**
+	 * Return whether the file of this object must be delivered via the proxy, independent of the proxy setting.
+	 *
+	 * File types should use this in their is_proxy_enabled().
+	 *
+	 * @return bool
+	 */
+	protected function is_proxy_required_for_file(): bool {
+		// get the file object.
+		$external_file_obj = $this->get_file();
+
+		// return whether the proxy is required for this file.
+		return $external_file_obj instanceof File && $external_file_obj->is_proxy_required();
 	}
 
 	/**
@@ -394,6 +409,28 @@ class File_Types_Base {
 		header( 'Content-Length: ' . ( $end - $start + 1 ) );
 		$this->read_file_part( $cached_file, $start, $end );
 		exit;
+	}
+
+	/**
+	 * Output the complete given file in chunks.
+	 *
+	 * The headers must be sent before.
+	 *
+	 * @param string $file The absolute path to the file.
+	 *
+	 * @return void
+	 */
+	protected function output_file( string $file ): void {
+		// get the size of the file.
+		$filesize = absint( wp_filesize( $file ) );
+
+		// bail if the file is empty.
+		if ( 0 === $filesize ) {
+			return;
+		}
+
+		// output the file.
+		$this->read_file_part( $file, 0, $filesize - 1 );
 	}
 
 	/**

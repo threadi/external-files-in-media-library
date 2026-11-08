@@ -138,7 +138,7 @@ class File_Types {
 			$field = new Checkbox( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
-			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) . ' ' . __( 'Files which could not be loaded by browsers via their URL (e.g. files on an FTP server) are always delivered via the proxy, regardless of this setting.', 'external-files-in-media-library' ) );
 			$field->add_depend( $mode_setting, 'external' );
 			$setting->set_field( $field );
 			$setting->set_help( '<p>' . $field->get_description() . '</p>' );

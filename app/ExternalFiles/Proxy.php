@@ -75,13 +75,15 @@ class Proxy {
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 
-		// bail if no proxy is enabled.
-		if ( ! $this->is_any_proxy_enabled() ) {
-			return;
-		}
+		// refresh the rewrite rules if a proxy setting has been changed.
+		add_action( 'added_option', array( $this, 'refresh_on_proxy_setting_change' ), 10, 1 );
+		add_action( 'updated_option', array( $this, 'refresh_on_proxy_setting_change' ), 10, 1 );
 
 		/**
 		 * Main init on each request.
+		 *
+		 * The proxy is always registered, as files, which could not be loaded by the browser (e.g. via FTP),
+		 * are delivered via the proxy independent of the proxy settings (see File::is_proxy_required()).
 		 */
 		add_action( 'init', array( $this, 'wp_init' ), 10, 0 );
 
@@ -94,6 +96,11 @@ class Proxy {
 		 * Run proxy to show called file.
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
+
+		// bail if no proxy is enabled.
+		if ( ! $this->is_any_proxy_enabled() ) {
+			return;
+		}
 
 		// misc.
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_cache_state_in_info_dialog' ), 10, 2 );
@@ -251,15 +258,51 @@ class Proxy {
 	 */
 	public static function do_refresh(): void {
 		// register our rewrite rule, as it is missing if the plugin has been activated in this request after "init".
-		if ( self::get_instance()->is_any_proxy_enabled() ) {
-			self::get_instance()->wp_init();
-		}
+		self::get_instance()->wp_init();
 
 		// flush the permalinks.
 		flush_rewrite_rules();
 
 		// delete marker.
 		Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->delete();
+	}
+
+	/**
+	 * Refresh the rewrite rules on the next request, if one of the proxy settings has been changed.
+	 *
+	 * Otherwise, the rewrite rule of the proxy could be missing if the rules have been flushed while it was
+	 * not registered, which results in 404 for all proxied files until the permalinks are saved again.
+	 *
+	 * @param string $option The name of the changed option.
+	 *
+	 * @return void
+	 */
+	public function refresh_on_proxy_setting_change( string $option ): void {
+		// bail if this could not be one of our proxy settings.
+		if ( ! str_starts_with( $option, 'eml_' ) ) {
+			return;
+		}
+
+		// collect the proxy settings of all file types (e.g. "eml_images_proxy" and "eml_images_mode").
+		$proxy_settings = array();
+		foreach ( File_Types::get_instance()->get_file_types_as_objects() as $file_type_obj ) {
+			$name             = strtolower( $file_type_obj->get_name() );
+			$proxy_settings[] = 'eml_' . $name . '_proxy';
+			$proxy_settings[] = 'eml_' . $name . '_mode';
+		}
+
+		// bail if this is not one of our proxy settings.
+		if ( ! in_array( $option, $proxy_settings, true ) ) {
+			return;
+		}
+
+		// bail if the refresh is already planned.
+		if ( Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->is_set() ) {
+			return;
+		}
+
+		// plan the refresh.
+		$this->set_refresh();
 	}
 
 	/**

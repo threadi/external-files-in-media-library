@@ -121,16 +121,8 @@ class Export extends Export_Base {
 			return false;
 		}
 
-		// get the file content.
-		$content = $wp_filesystem_local->get_contents( $file_path );
-
-		// bail if no content could be loaded.
-		if ( ! is_string( $content ) ) {
-			return false;
-		}
-
-		// put the content to FTP.
-		if ( ! $ftp_connection->put_contents( $parse_url['path'], $content ) ) {
+		// upload the file to FTP.
+		if ( ! $this->upload_file( $ftp_connection, $file_path, $parse_url['path'] ) ) {
 			// remove the incomplete file, as the server may have created it before the transfer failed.
 			// otherwise a new try would fail, as the target file exists.
 			// delete it directly, as WordPress checks the existence first, which needs a data connection.
@@ -146,6 +138,46 @@ class Export extends Export_Base {
 
 		// return the URL of this file.
 		return $target;
+	}
+
+	/**
+	 * Upload a local file to the given path on the FTP server.
+	 *
+	 * The file is transferred directly from its path via ftp_put(), so it is not loaded completely
+	 * into memory (like with put_contents() of WordPress, which also creates a temporary copy).
+	 * Without a native FTP connection the file is transferred via put_contents() as before.
+	 *
+	 * @param WP_Filesystem_FTPext $ftp_connection The FTP connection.
+	 * @param string               $file_path The local path of the file.
+	 * @param string               $target_path The path on the FTP server.
+	 *
+	 * @return bool
+	 */
+	private function upload_file( WP_Filesystem_FTPext $ftp_connection, string $file_path, string $target_path ): bool {
+		// use the native FTP connection, if available.
+		if ( $ftp_connection->link instanceof \FTP\Connection ) {
+			// bail if the transfer failed.
+			if ( ! @ftp_put( $ftp_connection->link, $target_path, $file_path, FTP_BINARY ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				return false;
+			}
+
+			// set the permissions like put_contents() of WordPress does it.
+			$ftp_connection->chmod( $target_path );
+
+			// return true as the file has been uploaded.
+			return true;
+		}
+
+		// get the file content.
+		$content = Helper::get_wp_filesystem()->get_contents( $file_path );
+
+		// bail if no content could be loaded.
+		if ( ! is_string( $content ) ) {
+			return false;
+		}
+
+		// put the content to FTP.
+		return $ftp_connection->put_contents( $target_path, $content );
 	}
 
 	/**

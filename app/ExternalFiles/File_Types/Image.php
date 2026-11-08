@@ -65,12 +65,10 @@ class Image extends File_Types_Base {
 		// get the cached file.
 		$cached_file = $external_file_obj->get_cache_file( $this->get_dimensions() );
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
 		// send optimized headers for proxy.
 		$this->send_proxy_headers( $cached_file );
-		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput
+		// output the file in chunks, so it is not loaded completely into memory.
+		$this->output_file( $cached_file );
 		exit;
 	}
 
@@ -170,8 +168,8 @@ class Image extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		// get the global setting.
-		$enabled = 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) );
+		// get the global setting (the proxy is always used for files, which require it).
+		$enabled = $this->is_proxy_required_for_file() || ( 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) ) );
 
 		/**
 		 * Filter whether the proxy is used for an image.

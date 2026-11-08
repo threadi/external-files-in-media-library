@@ -197,4 +197,21 @@ class Proxy extends externalFilesTests {
 		$this->assertSame( 'my-template.php', @\ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), '' );
 	}
+	/**
+	 * Test that an external image from an HTTP-URL uses its own URL if the proxy for images is disabled.
+	 *
+	 * Only files, which could not be loaded by the browser (e.g. via FTP), are always delivered via the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_http_image_uses_its_url_without_proxy_setting(): void {
+		$external_file_obj = $this->import( 'example-red.jpg' );
+		update_option( 'eml_images_proxy', 0 );
+
+		$this->assertFalse( $external_file_obj->is_proxy_required() );
+		$this->assertFalse( $external_file_obj->get_file_type_obj()->is_proxy_enabled() );
+		$this->assertSame( $external_file_obj->get_url( true ), wp_get_attachment_url( $external_file_obj->get_id() ) );
+
+		update_option( 'eml_images_proxy', 1 );
+	}
 }

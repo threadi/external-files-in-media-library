@@ -79,6 +79,9 @@ class FtpExport extends externalFilesTests {
 		update_option( 'eml_export_local_files', 0 );
 		update_option( 'eml_export_do_not_delete_local_files', 0 );
 		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
+		delete_option( 'eml_allowed_mime_types' );
+		delete_option( 'eml_images_proxy' );
+		delete_option( 'eml_images_mode' );
 		parent::tear_down();
 	}
 
@@ -173,9 +176,35 @@ class FtpExport extends externalFilesTests {
 	}
 
 	/**
+	 * Test that an upload with the name of an existing file on the server gets another name and is exported.
+	 *
+	 * The check runs for all uploads, not only in the backend (e.g. also for uploads via the REST API in
+	 * the block editor).
+	 *
+	 * @return void
+	 */
+	public function test_upload_with_name_of_file_on_server_is_renamed(): void {
+		$this->create_export_source();
+		$this->assertFalse( is_admin() );
+		$name     = 'existing-' . strtolower( wp_generate_password( 8, false, false ) );
+		$filename = $name . '.png';
+		file_put_contents( $this->get_server_path( $filename ), 'existing file' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$attachment_id = $this->upload( 'example-blue.png', $filename );
+
+		// the upload got another name and has been exported.
+		$this->assertSame( $name . '-1.png', basename( (string) get_attached_file( $attachment_id, true ) ) );
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		$this->assertFileEquals( trailingslashit( TESTS_PLUGIN_DIR ) . 'tests/Data/ftp/example-blue.png', $this->get_server_path( $name . '-1.png' ) );
+
+		// the file on the server is unchanged.
+		$this->assertStringEqualsFile( $this->get_server_path( $filename ), 'existing file' );
+	}
+
+	/**
 	 * Test that an upload with the name of an existing file on the server does not overwrite it.
 	 *
-	 * The upload is not exported then and stays a local file.
+	 * The upload is not exported then and stays a local file. This could happen if the file is created on
+	 * the server after the check of the filename, so this test disables this check.
 	 *
 	 * A unique file name is used, as WordPress would rename the upload if a file with this name
 	 * exists in the uploads directory (e.g. from previous test runs).
@@ -184,6 +213,7 @@ class FtpExport extends externalFilesTests {
 	 */
 	public function test_existing_file_on_server_is_not_overwritten(): void {
 		$this->create_export_source();
+		remove_filter( 'wp_unique_filename', array( Export::get_instance(), 'check_for_exported_filenames' ) );
 		$filename = 'existing-' . wp_generate_password( 8, false, false ) . '.png';
 		file_put_contents( $this->get_server_path( $filename ), 'existing file' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 		$attachment_id = $this->upload( 'example-blue.png', $filename );
@@ -267,6 +297,168 @@ class FtpExport extends externalFilesTests {
 		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
 		$this->assertEmpty( get_post_meta( $attachment_id, 'eml_exported_file', true ) );
 		$this->assertFileExists( (string) get_attached_file( $attachment_id ) );
+	}
+
+	/**
+	 * Test that an exported image is delivered via the proxy, even if the proxy for images is disabled.
+	 *
+	 * Browsers could not load its FTP-URL.
+	 *
+	 * @return void
+	 */
+	public function test_exported_image_uses_proxy_without_proxy_setting(): void {
+		update_option( 'eml_images_mode', 'external' );
+		update_option( 'eml_images_proxy', 0 );
+		$this->create_export_source();
+		$attachment_id     = $this->upload( 'subdirectory/example-grey.jpg' );
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+		$this->assertTrue( $external_file_obj->is_valid() );
+		$this->assertTrue( $external_file_obj->is_proxy_required() );
+		$this->assertTrue( $external_file_obj->get_file_type_obj()->is_proxy_enabled() );
+
+		// the URLs are proxy URLs, not FTP-URLs.
+		$slug = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug();
+		$url  = (string) wp_get_attachment_url( $attachment_id );
+		$this->assertStringContainsString( $slug, $url );
+		$this->assertStringNotContainsString( 'ftp://', $url );
+		$image = @wp_get_attachment_image_src( $attachment_id, 'thumbnail' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertIsArray( $image );
+		$this->assertStringContainsString( $slug, $image[0] );
+
+		// the proxy loads the file via FTP into its cache.
+		$external_file_obj->delete_cache();
+		@$external_file_obj->add_to_proxy(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertTrue( $external_file_obj->is_cached() );
+		$this->assertFileEquals( trailingslashit( TESTS_PLUGIN_DIR ) . 'tests/Data/ftp/subdirectory/example-grey.jpg', $external_file_obj->get_cache_file() );
+		$external_file_obj->delete_cache();
+	}
+
+	/**
+	 * Test the export of a large file via FTP: it is transferred completely without loading it into memory.
+	 *
+	 * @return void
+	 */
+	public function test_large_file_is_exported_via_ftp(): void {
+		$this->check_export_of_large_file( 'ftp' );
+	}
+
+	/**
+	 * Test the export of a large file via FTPS: it is transferred completely without loading it into memory.
+	 *
+	 * @return void
+	 */
+	public function test_large_file_is_exported_via_ftps(): void {
+		$this->check_export_of_large_file( 'ftps' );
+	}
+
+	/**
+	 * Export a generated large video file to the given server and check the result.
+	 *
+	 * @param string $server_name The name of the test server.
+	 *
+	 * @return void
+	 */
+	private function check_export_of_large_file( string $server_name ): void {
+		$this->create_export_source( $server_name );
+
+		// allow videos.
+		update_option( 'eml_allowed_mime_types', array( 'application/pdf', 'image/jpeg', 'image/png', 'video/mp4' ) );
+
+		// generate a video file with 30 MB (a unique name, as WordPress would rename it otherwise).
+		$size = 30 * MB_IN_BYTES;
+		$tmp  = trailingslashit( get_temp_dir() ) . 'large-' . strtolower( wp_generate_password( 8, false, false ) ) . '.mp4';
+		$file = fopen( $tmp, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
+		$this->assertIsResource( $file );
+		// start with the header of an MP4 file, so its content matches its mime type.
+		$header = "\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom";
+		fwrite( $file, $header ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		fwrite( $file, random_bytes( MB_IN_BYTES - strlen( $header ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		for ( $i = 1; $i < 30; $i++ ) {
+			fwrite( $file, random_bytes( MB_IN_BYTES ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+		}
+		fclose( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
+		$hash = md5_file( $tmp );
+
+		// upload it without export.
+		$attachment_id = @self::factory()->attachment->create_upload_object( $tmp ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertIsInt( $attachment_id );
+		$filename = basename( (string) get_attached_file( $attachment_id, true ) );
+
+		// export it and measure the memory used for it.
+		memory_reset_peak_usage();
+		$memory_before = memory_get_usage();
+		$this->assertTrue( @Export::get_instance()->export_file( $attachment_id ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$memory_used = memory_get_peak_usage() - $memory_before;
+
+		// the file is complete on the server.
+		$this->assertFileExists( $this->get_server_path( $filename ) );
+		$this->assertSame( $size, filesize( $this->get_server_path( $filename ) ) );
+		$this->assertSame( $hash, md5_file( $this->get_server_path( $filename ) ) );
+
+		// the file has not been loaded into memory.
+		$this->assertLessThan( $size / 3, $memory_used );
+
+		// the attachment is an external file now.
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+		$this->assertTrue( $external_file_obj->is_valid() );
+
+		// the proxy loads it via FTP into its cache without loading it into memory.
+		$external_file_obj->delete_cache();
+		memory_reset_peak_usage();
+		$memory_before = memory_get_usage();
+		@$external_file_obj->add_to_proxy(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$memory_used = memory_get_peak_usage() - $memory_before;
+		$this->assertTrue( $external_file_obj->is_cached() );
+		$this->assertSame( $hash, md5_file( $external_file_obj->get_cache_file() ) );
+		$this->assertLessThan( $size / 3, $memory_used );
+		$external_file_obj->delete_cache();
+	}
+
+	/**
+	 * Test that a file, which could not be downloaded from the FTP server, is not cached and leaves no temporary file.
+	 *
+	 * @return void
+	 */
+	public function test_proxy_with_missing_file_on_server(): void {
+		$this->create_export_source();
+		$attachment_id     = $this->upload( 'subdirectory/example-grey.jpg' );
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+		$this->assertTrue( $external_file_obj->is_valid() );
+		$external_file_obj->delete_cache();
+
+		// remove the file on the server.
+		unlink( $this->get_server_path( basename( $external_file_obj->get_url( true ) ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+
+		$temp_files = glob( trailingslashit( get_temp_dir() ) . '*.jpg' );
+		@$external_file_obj->add_to_proxy(); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertFalse( $external_file_obj->is_cached() );
+		$this->assertFileDoesNotExist( $external_file_obj->get_cache_file() );
+		$this->assertSame( $temp_files, glob( trailingslashit( get_temp_dir() ) . '*.jpg' ) );
+	}
+
+	/**
+	 * Test that a failed transfer to a not writable directory keeps the file local and leaves no file on the server.
+	 *
+	 * @return void
+	 */
+	public function test_failed_transfer_to_not_writable_directory(): void {
+		$this->create_export_source();
+		list( $attachment_id, $path ) = $this->upload_local( 'subdirectory/example-grey.jpg' );
+		$filename                     = basename( $path );
+
+		// the server could not write into the directory (it runs as another user than root).
+		$directory = $this->server['root'] . $this->directory;
+		chmod( $directory, 0555 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+		try {
+			$this->assertFalse( @Export::get_instance()->export_file( $attachment_id ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		} finally {
+			chmod( $directory, 0755 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_chmod
+		}
+
+		$this->assertFileDoesNotExist( $this->get_server_path( $filename ) );
+		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		$this->assertEmpty( get_post_meta( $attachment_id, 'eml_exported_file', true ) );
+		$this->assertFileExists( $path );
 	}
 
 	/**

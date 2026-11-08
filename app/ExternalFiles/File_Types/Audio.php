@@ -86,7 +86,7 @@ class Audio extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 'external' === get_option( 'eml_audio_mode' ) && 1 === absint( get_option( 'eml_audio_proxy' ) );
+		return $this->is_proxy_required_for_file() || ( 'external' === get_option( 'eml_audio_mode' ) && 1 === absint( get_option( 'eml_audio_proxy' ) ) );
 	}
 
 	/**

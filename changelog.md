@@ -26,6 +26,11 @@
 
 - Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)
 - Fixed exported files with the same name overwriting each other on the external source, as the filename was only checked in the actual upload directory
+- Fixed export of large files via FTP and FTPS failing at the memory limit, as the file was loaded completely into memory
+- Fixed caching and delivery of large files via the proxy failing at the memory limit, as the file was loaded completely into memory (FTP, FTPS and local files, delivery of images, PDF, ZIP and other files)
+- Fixed files which could not be loaded by browsers (e.g. exported via FTP) being embedded with their FTP-URL if the proxy for their file type is disabled, they are now always delivered via the proxy
+- Fixed proxy URLs resulting in 404 after enabling a proxy, if the rewrite rules have been flushed while all proxies were disabled
+- Fixed missing check for existing files with the same name on the external sources for uploads outside the backend (e.g. via REST API in the block editor, WP-CLI or cron)
 - Fixed reading of queue entries if their state is changed or they are deleted
 
 ## [5.6.2] - 06.11.2026
