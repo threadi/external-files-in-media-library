@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transien
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -183,6 +184,9 @@ class Uninstall {
 
 		// run the uninstallation tasks for each file handling extension.
 		Extensions::get_instance()->uninstall();
+
+		// remove the import runs.
+		Import_Runs::get_instance()->uninstall();
 
 		// run the uninstallation tasks for each service.
 		Services::get_instance()->uninstall();

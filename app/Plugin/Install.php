@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
@@ -80,6 +81,9 @@ class Install {
 
 		// initialize the extensions.
 		Extensions::get_instance()->install();
+
+		// initialize the database-table for import runs.
+		Import_Runs::get_instance()->install();
 
 		// enable the settings.
 		Settings::get_instance()->get_settings_obj()->activation();

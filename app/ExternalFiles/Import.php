@@ -65,6 +65,13 @@ class Import extends Directory_Listing_Base {
 	private bool $loading_files = false;
 
 	/**
+	 * The URL, which is actually imported via add_url() (e.g. a directory).
+	 *
+	 * @var string
+	 */
+	private string $current_url = '';
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Import
@@ -206,6 +213,9 @@ class Import extends Directory_Listing_Base {
 		 */
 		$this->set_import_start_time();
 
+		// remember the URL for the check of the runtime.
+		$this->current_url = $url;
+
 		/**
 		 * Get the handler for this URL depending on its protocol.
 		 */
@@ -237,6 +247,20 @@ class Import extends Directory_Listing_Base {
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
 		require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound
 		require_once ABSPATH . 'wp-admin/includes/media.php'; // @phpstan-ignore requireOnce.fileNotFound
+
+		/**
+		 * Import directories with file list support via import run: the files are listed first and imported
+		 * one by one, in the background for large directories.
+		 */
+		$import_runs = Import_Runs::get_instance();
+		$result      = $import_runs->is_run_possible( $protocol_handler_obj ) ? $import_runs->start( $url, $protocol_handler_obj, $fields ) : null;
+		if ( ! is_null( $result ) ) {
+			/** This action is documented in app/ExternalFiles/Import.php */
+			do_action( 'efml_after_import', $url, $fields );
+
+			// return the result of the run.
+			return $result;
+		}
 
 		/**
 		 * Get information about files under the given URL.
@@ -771,8 +795,18 @@ class Import extends Directory_Listing_Base {
 
 		// cancel process if runtime is nearly reached.
 		if ( $runtime >= $max_execution_time ) {
+			// add the actual URL (e.g. the directory) to the queue: on its processing, the files imported until now
+			// are skipped as they are already in the media library.
+			if ( ! empty( $this->current_url ) && ! Extensions\Queue::get_instance()->add( $this->current_url, $this->get_fields() ) ) {
+				// log the event.
+				Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files, which have not been imported, could not be saved in the queue. Please start the import again.', 'external-files-in-media-library' ), $this->current_url, 'error', 0, $this->get_identifier() );
+
+				// kill process.
+				exit;
+			}
+
 			// log the event.
-			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported have been saved in the queue and will now be imported automatically in the background.', 'external-files-in-media-library' ), '', 'info', 2, $this->get_identifier() );
+			Log::get_instance()->create( __( 'Import process was terminated because it took too long and would have reached the maximum execution time in hosting. The files to be imported have been saved in the queue and will now be imported automatically in the background.', 'external-files-in-media-library' ), $this->current_url, 'info', 2, $this->get_identifier() );
 
 			// kill process.
 			exit;

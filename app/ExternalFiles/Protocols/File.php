@@ -242,6 +242,84 @@ class File extends Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could list the files of a directory page by page.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		// get the local path.
+		$path = $this->sanitize_local_path( $this->get_url() );
+
+		// return whether it is a directory.
+		return '' !== $path && Helper::get_wp_filesystem()->is_dir( $path );
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object.
+	 *
+	 * Like the import of a directory, only the files directly in the directory are used, not the subdirectories.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 */
+	public function get_file_list( string $cursor ): array|false {
+		// get the complete list of the directory, loaded once per request.
+		$files = $this->get_cached_file_list(
+			function () {
+				// get the local path.
+				$path = $this->sanitize_local_path( $this->get_url() );
+
+				// get the list of the directory.
+				$file_list = '' !== $path ? Helper::get_wp_filesystem()->dirlist( $path ) : false;
+
+				// bail if list could not be loaded.
+				if ( ! is_array( $file_list ) ) {
+					Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+					return false;
+				}
+
+				// collect the files.
+				$files = array();
+				foreach ( $file_list as $file => $settings ) {
+					// bail if this is a directory.
+					if ( 'd' === $settings['type'] ) {
+						continue;
+					}
+
+					// add the file.
+					$files[] = array(
+						'url'           => trailingslashit( $path ) . $file,
+						'filesize'      => absint( $settings['size'] ),
+						'last-modified' => absint( $settings['lastmodunix'] ),
+					);
+				}
+
+				// return the list.
+				return $files;
+			},
+			'' === $cursor
+		);
+
+		// bail on errors.
+		if ( false === $files ) {
+			return false;
+		}
+
+		// return the requested page.
+		return $this->get_file_list_page( $files, $cursor );
+	}
+
+	/**
 	 * Return infos about single given URL.
 	 *
 	 * @param string $url The file path.

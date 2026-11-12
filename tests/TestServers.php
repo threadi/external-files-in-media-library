@@ -259,6 +259,17 @@ class TestServers {
 	}
 
 	/**
+	 * Add the given directory to the directories, which are deleted after the test.
+	 *
+	 * @param string $path The directory.
+	 *
+	 * @return void
+	 */
+	public static function add_directory_for_cleanup( string $path ): void {
+		self::$directories[] = $path;
+	}
+
+	/**
 	 * Delete the directories, which have been created with create_directory().
 	 *
 	 * Called after each test, so the directories of the servers do not grow with every run.

@@ -73,6 +73,32 @@ class FtpsWithoutSessionReuse extends Ftp {
 	}
 
 	/**
+	 * Test the file list of a directory: the list could not be loaded, as the server does not allow the reuse of
+	 * the TLS session.
+	 *
+	 * @return void
+	 */
+	public function test_file_list_with_many_files(): void {
+		$server    = $this->get_server();
+		$directory = $this->create_directory_with_many_files( $server, 3 );
+		$protocol  = \ExternalFilesInMediaLibrary\ExternalFiles\Protocols::get_instance()->get_protocol_object_for_url( TestServers::get_url( $server, $directory ), TestServers::get_fields( $server ) );
+		$this->assertNotFalse( $protocol );
+		$protocol->set_fields( TestServers::get_fields( $server ) );
+		$this->assertFalse( @$protocol->get_file_list( '' ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+
+	/**
+	 * Test the import of a directory with many files: nothing is imported.
+	 *
+	 * @return void
+	 */
+	public function test_import_of_directory_with_many_files(): void {
+		$server    = $this->get_server();
+		$directory = $this->create_directory_with_many_files( $server, 3 );
+		$this->assertFalse( $this->import( TestServers::get_url( $server, $directory ) ) );
+	}
+
+	/**
 	 * Test the import of a directory: it fails, as the files can not be listed.
 	 *
 	 * @return void

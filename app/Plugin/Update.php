@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
@@ -484,7 +485,10 @@ class Update {
 	 * @return void
 	 */
 	private function version570(): void {
-		// update the table structure of the queue for the export of files.
+		// update the table structure of the queue for the export of files and the import runs.
 		Queue::get_instance()->install();
+
+		// install the table for the import runs.
+		Import_Runs::get_instance()->install();
 	}
 }

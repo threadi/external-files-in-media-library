@@ -85,6 +85,9 @@ class Files {
 		// initialize the synchronization.
 		Synchronization::get_instance()->init();
 
+		// initialize the import runs for directories with many files.
+		Import_Runs::get_instance()->init();
+
 		// initialize the export support.
 		Export::get_instance()->init();
 

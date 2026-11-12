@@ -82,7 +82,7 @@ class Email extends Extension_Base {
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_option_on_sync_config' ), 10, 2 );
 		add_action( 'efml_sync_save_config', array( $this, 'save_sync_settings' ) );
 		add_filter( 'efml_sync_validate_config', array( $this, 'validate_sync_config' ), 10, 3 );
-		add_action( 'efml_after_sync', array( $this, 'send_mail_after_sync' ), 10, 3 );
+		add_action( 'efml_sync_completed', array( $this, 'send_mail_after_sync' ), 10, 3 );
 	}
 
 	/**

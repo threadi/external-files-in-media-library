@@ -126,7 +126,7 @@ class DropBox extends Service_Base implements Service {
 		add_filter( 'efml_service_dropbox_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 
 		// bail if user has no capability for this service.
-		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 

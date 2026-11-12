@@ -110,13 +110,8 @@ class Protocol extends Protocol_Base {
 		// prepare the entries array.
 		$entries = array();
 
-		// remove our marker from the URL.
-		$url = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $this->get_url() );
-
-		// set URL for "/" is it is empty (which would not be load anything).
-		if ( empty( $url ) ) {
-			$url = '/';
-		}
+		// get the path in DropBox.
+		$url = $this->get_dropbox_path();
 
 		// if the URL is only "/", get all files from DropBox.
 		if ( '/' === $url ) {
@@ -256,6 +251,128 @@ class Protocol extends Protocol_Base {
 
 		// return the resulting array as list of files.
 		return $files;
+	}
+
+	/**
+	 * Return the path in DropBox of the URL of this object.
+	 *
+	 * @return string
+	 */
+	private function get_dropbox_path(): string {
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// remove our marker from the URL.
+		$path = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $this->get_url() );
+
+		// use "/" if it is empty (which would not be load anything).
+		return empty( $path ) ? '/' : $path;
+	}
+
+	/**
+	 * Return the DropBox client for the fields of this object.
+	 *
+	 * @return Client|false
+	 */
+	private function get_client(): Client|false {
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// set the fields.
+		$dropbox_obj->set_fields( $this->get_fields() );
+
+		// get the client with the given token.
+		$client = $dropbox_obj->get_client();
+
+		// return the client, if it could be loaded.
+		return $client instanceof Client ? $client : false;
+	}
+
+	/**
+	 * Return whether this protocol could list the files of a directory page by page.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the URL of this object is a folder in DropBox.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		// the root is always a folder.
+		$path = $this->get_dropbox_path();
+		if ( '/' === $path ) {
+			return true;
+		}
+
+		// get the client.
+		$client = $this->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client ) {
+			return false;
+		}
+
+		// get the metadata and return whether it is a folder.
+		try {
+			$metadata = $client->getMetadata( $path );
+			return isset( $metadata['.tag'] ) && 'folder' === $metadata['.tag'];
+		} catch ( ClientException | BadRequest $e ) {
+			// the error is logged by the import of the URL.
+			return false;
+		}
+	}
+
+	/**
+	 * Return one page of the files in the folder of the URL of this object, also from its subfolders.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 */
+	public function get_file_list( string $cursor ): array|false {
+		// get the client.
+		$client = $this->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client ) {
+			return false;
+		}
+
+		// get the page from DropBox.
+		try {
+			$result = '' === $cursor ? $client->listFolder( $this->get_dropbox_path(), true ) : $client->listFolderContinue( $cursor );
+		} catch ( ClientException | BadRequest $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+			return false;
+		}
+
+		// collect the files.
+		$files = array();
+		foreach ( ! empty( $result['entries'] ) ? $result['entries'] : array() as $file_data ) {
+			// bail if this is not a file.
+			if ( empty( $file_data['.tag'] ) || 'file' !== $file_data['.tag'] ) {
+				continue;
+			}
+
+			// add the file.
+			$files[] = array(
+				'url'           => DropBox::get_instance()->get_name() . $file_data['path_display'],
+				'filesize'      => absint( $file_data['size'] ),
+				'last-modified' => absint( strtotime( $file_data['client_modified'] ) ),
+			);
+		}
+
+		// return the page with the cursor for the next page.
+		return array(
+			'files'  => $files,
+			'cursor' => ! empty( $result['has_more'] ) && ! empty( $result['cursor'] ) ? (string) $result['cursor'] : '',
+		);
 	}
 
 	/**

@@ -50,6 +50,13 @@ class Protocol_Base {
 	private array $fields = array();
 
 	/**
+	 * Cache for the complete list of files of a directory during this request.
+	 *
+	 * @var array<string,array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>>
+	 */
+	private static array $file_list_cache = array();
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 *
 	 * @param string $url The URL to use.
@@ -208,6 +215,137 @@ class Protocol_Base {
 	 */
 	public function get_url_infos(): array {
 		return array();
+	}
+
+	/**
+	 * Return whether this protocol could list the files of a directory page by page, without loading them.
+	 *
+	 * Protocols with this support import directories via import runs: the files are listed first and then
+	 * imported one by one, in the background for large directories.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory, whose files could be listed via get_file_list().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		return false;
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object, without loading the files.
+	 *
+	 * The list contains the same files, which the import of the directory via get_url_infos() would import.
+	 * Each entry contains the URL to import the single file and optional its size and its modification time
+	 * (as timestamp). If the import saves the file with another URL in the media library (e.g. with its public
+	 * URL), this URL is given as "media-url", so files, which are already in the media library, are detected.
+	 *
+	 * The cursor is empty for the first page. The result contains the cursor for the next page, which is empty
+	 * if this was the last page. On errors the method returns false and logs the error.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function get_file_list( string $cursor ): array|false { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		return array(
+			'files'  => array(),
+			'cursor' => '',
+		);
+	}
+
+	/**
+	 * Return the maximum count of files per page of get_file_list().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return int
+	 */
+	protected function get_file_list_page_size(): int {
+		$instance = $this;
+
+		/**
+		 * Filter the maximum count of files, which are listed per request to the external source during an import run.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $page_size The page size.
+		 * @param Protocol_Base $instance The protocol object.
+		 */
+		return max( 1, absint( apply_filters( 'efml_file_list_page_size', 500, $instance ) ) );
+	}
+
+	/**
+	 * Return the complete list of files of the directory of this object for get_file_list(), loaded only once per
+	 * request (e.g. for protocols, which could only load the complete list of a directory with one request).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param callable $loader Callback, which loads the list of files (or returns false on errors).
+	 * @param bool     $reload True to load the list again (e.g. for the first page).
+	 *
+	 * @return array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>|false
+	 */
+	protected function get_cached_file_list( callable $loader, bool $reload = false ): array|false {
+		// get the key for this directory.
+		$key = static::class . '|' . $this->get_url();
+
+		// load the list, if it is not cached or the first page is requested (e.g. by a new run).
+		if ( $reload || ! isset( self::$file_list_cache[ $key ] ) ) {
+			$files = $loader();
+
+			// bail on errors.
+			if ( ! is_array( $files ) ) {
+				return false;
+			}
+
+			// cache only one list to limit the used memory.
+			self::$file_list_cache = array( $key => $files );
+		}
+
+		// return the list.
+		return self::$file_list_cache[ $key ];
+	}
+
+	/**
+	 * Return the given list of files as page for get_file_list(), starting at the position in the given cursor.
+	 *
+	 * Helper for protocols, which load the complete list of a directory with one request (e.g. local, FTP).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}> $files  The complete list of files.
+	 * @param string                                                                                 $cursor The cursor with the position.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}
+	 */
+	protected function get_file_list_page( array $files, string $cursor ): array {
+		// get the position.
+		$offset = absint( $cursor );
+
+		// get the page.
+		$page = array_slice( array_values( $files ), $offset, $this->get_file_list_page_size() );
+
+		// get the position of the next page.
+		$next = $offset + count( $page );
+
+		// return the page with the cursor for the next page, if there are more files.
+		return array(
+			'files'  => $page,
+			'cursor' => $next < count( $files ) ? (string) $next : '',
+		);
 	}
 
 	/**

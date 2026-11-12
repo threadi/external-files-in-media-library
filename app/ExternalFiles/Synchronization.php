@@ -50,6 +50,13 @@ class Synchronization extends Tools_Base {
 	private static ?Synchronization $instance = null;
 
 	/**
+	 * The ID of the external source, which is actually synchronized by the call of sync().
+	 *
+	 * @var int
+	 */
+	private int $running_term_id = 0;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -590,9 +597,7 @@ class Synchronization extends Tools_Base {
 		}
 
 		// add the hooks, which are only used during the synchronization (e.g. to disable the duplicate check).
-		foreach ( $this->get_sync_hooks() as $hook ) {
-			add_filter( $hook[0], $hook[1], $hook[2], $hook[3] );
-		}
+		$this->add_sync_hooks();
 
 		/**
 		 * Allow to add additional tasks before sync is running.
@@ -617,84 +622,134 @@ class Synchronization extends Tools_Base {
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization started.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
+		// mark the external source as actually synchronized (e.g. for the import runs).
+		$this->running_term_id = $term_id;
+
 		// and run the import of this directory.
+		$import_runs = Import_Runs::get_instance();
 		try {
 			$import_result = $import->add_url( $url );
+			$run_id        = $import_runs->get_started_run_id();
 		} finally {
+			$this->running_term_id = 0;
+
 			// remove the credentials and the external source from the import object, so following imports in this
 			// request (e.g. further synchronizations via cron) do not use them.
 			$import->set_fields( $previous_fields );
 			$import->set_term_id( 0 );
 
 			// remove the hooks of the synchronization, so following imports in this request are not changed by them.
-			foreach ( $this->get_sync_hooks() as $hook ) {
-				remove_filter( $hook[0], $hook[1], $hook[2] );
-			}
+			$this->remove_sync_hooks();
 		}
+
+		// handle a synchronization via import run: the files are imported one by one, maybe in the background.
+		$run = $run_id > 0 ? $import_runs->get_run( $run_id ) : array();
+		if ( ! empty( $run ) ) {
+			// end this part of the synchronization, if the run is continued in the background.
+			if ( ! $import_runs->is_finished( $run ) ) {
+				Log::get_instance()->create( __( 'Synchronization continues in the background.', 'external-files-in-media-library' ), $url, 'info', 1 );
+
+				/** This action is documented in app/ExternalFiles/Synchronization.php */
+				do_action( 'efml_after_sync', $url, $term_data, $term_id );
+				return;
+			}
+
+			// complete the synchronization.
+			$this->complete( $url, $term_id, $import_runs->is_listing_complete( $run ), $term_data );
+			return;
+		}
+
+		// complete the synchronization.
+		$this->complete( $url, $term_id, $import_result, $term_data );
+	}
+
+	/**
+	 * Return the ID of the external source, which is actually synchronized by the call of sync().
+	 *
+	 * @return int
+	 */
+	public function get_running_term_id(): int {
+		return $this->running_term_id;
+	}
+
+	/**
+	 * Start a part of a synchronization, which is continued in the background via import run.
+	 *
+	 * The hooks of the synchronization and of its extensions are set like on the start of the synchronization.
+	 *
+	 * @param string $url The URL of the external source.
+	 * @param int    $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	public function start_part( string $url, int $term_id ): void {
+		// add the hooks, which are only used during the synchronization.
+		$this->add_sync_hooks();
+
+		/** This action is documented in app/ExternalFiles/Synchronization.php */
+		do_action( 'efml_before_sync', $url, $this->get_term_data( $term_id ), $term_id );
+	}
+
+	/**
+	 * End a part of a synchronization, which has been continued in the background via import run.
+	 *
+	 * If the synchronization has been completed during this part, its hooks are already removed.
+	 *
+	 * @param string $url The URL of the external source.
+	 * @param int    $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	public function end_part( string $url, int $term_id ): void {
+		// bail if the synchronization is not running anymore (as it has been completed).
+		if ( ! $this->is_running() ) {
+			return;
+		}
+
+		// remove the hooks of the synchronization.
+		$this->remove_sync_hooks();
+
+		/** This action is documented in app/ExternalFiles/Synchronization.php */
+		do_action( 'efml_after_sync', $url, $this->get_term_data( $term_id ), $term_id );
+	}
+
+	/**
+	 * Complete the synchronization: delete files, which are not existing anymore, and run the final tasks.
+	 *
+	 * @param string                    $url The URL of the external source.
+	 * @param int                       $term_id The ID of the external source.
+	 * @param bool                      $is_complete Whether the files of the external source could be read completely.
+	 * @param array<string,mixed>|false $term_data The term data (loaded if not given).
+	 *
+	 * @return void
+	 */
+	public function complete( string $url, int $term_id, bool $is_complete, array|false $term_data = false ): void {
+		// get the term data.
+		if ( false === $term_data ) {
+			$term_data = $this->get_term_data( $term_id );
+		}
+
+		// remove the hooks of the synchronization, if it has been continued in the background.
+		$this->remove_sync_hooks();
 
 		// log this event.
 		Log::get_instance()->create( __( 'Synchronization ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
 
-		// do not delete any files if the external source could not be read or did not return any file,
+		// do not delete any files if the external source could not be read completely or did not return any file,
 		// as we could not know then, which files are really not existing anymore.
-		if ( ! $import_result && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
+		if ( ! $is_complete && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
 			Log::get_instance()->create( __( 'Synchronization cleanup has been skipped as no files could be read from the external source.', 'external-files-in-media-library' ), $url, 'error' );
 		}
 
 		// delete unused files, if enabled and the external source could be read.
-		if ( $import_result && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
-			// get again all files from given external source, which does not have the update marker.
-			// use the term ID, as the name of the term is not always the used URL (e.g. for YouTube channels).
-			$query  = array(
-				'post_type'      => 'attachment',
-				'post_status'    => array( 'inherit', 'trash' ),
-				'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-					'relation' => 'AND',
-					array(
-						'key'     => EFML_POST_META_URL,
-						'compare' => 'EXISTS',
-					),
-					array(
-						'key'     => 'eml_synced',
-						'compare' => 'NOT EXISTS',
-					),
-					array(
-						'key'     => 'eml_exported_file',
-						'compare' => 'NOT EXISTS',
-					),
-				),
-				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
-					array(
-						'taxonomy' => Taxonomy::get_instance()->get_name(),
-						'field'    => 'term_id',
-						'terms'    => $term_id,
-					),
-				),
-				'posts_per_page' => - 1,
-				'fields'         => 'ids',
-			);
-			$result = new WP_Query( $query );
-
-			// delete this files.
-			foreach ( $result->get_posts() as $post_id ) {
-				// get the external file object of this attachment.
-				$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
-
-				// bail if object could not be loaded.
-				if ( ! $external_file_obj->is_valid() ) {
-					continue;
-				}
-
-				// delete this file.
-				$external_file_obj->delete();
-			}
-
-			// log this event.
-			Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+		if ( $is_complete && 1 === absint( get_option( 'eml_sync_delete_unused_files_after_sync' ) ) ) {
+			$this->delete_unused_files( $url, $term_id );
 		}
 
 		/**
 		 * Allow to add additional tasks after sync has been running.
+		 *
+		 * If the synchronization is continued in the background, this hook runs after each part of it.
 		 *
 		 * @since 5.0.0 Available since 5.0.0.
 		 * @param string $url The used URL.
@@ -702,6 +757,108 @@ class Synchronization extends Tools_Base {
 		 * @param int $term_id The used term ID.
 		 */
 		do_action( 'efml_after_sync', $url, $term_data, $term_id );
+
+		/**
+		 * Run tasks after the synchronization has been completed, also if it was continued in the background.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $url The used URL.
+		 * @param array<string,string> $term_data The term data.
+		 * @param int $term_id The used term ID.
+		 */
+		do_action( 'efml_sync_completed', $url, $term_data, $term_id );
+	}
+
+	/**
+	 * Return the data of the given external source.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_term_data( int $term_id ): array {
+		return Taxonomy::get_instance()->get_entry( $term_id );
+	}
+
+	/**
+	 * Delete the files of the given external source, which have not been synchronized.
+	 *
+	 * @param string $url The URL of the external source.
+	 * @param int    $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	private function delete_unused_files( string $url, int $term_id ): void {
+		// get again all files from given external source, which does not have the update marker.
+		// use the term ID, as the name of the term is not always the used URL (e.g. for YouTube channels).
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => array( 'inherit', 'trash' ),
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
+				'relation' => 'AND',
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+				array(
+					'key'     => 'eml_synced',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'eml_exported_file',
+					'compare' => 'NOT EXISTS',
+				),
+			),
+			'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Filter for term.
+				array(
+					'taxonomy' => Taxonomy::get_instance()->get_name(),
+					'field'    => 'term_id',
+					'terms'    => $term_id,
+				),
+			),
+			'posts_per_page' => - 1,
+			'fields'         => 'ids',
+		);
+		$result = new WP_Query( $query );
+
+		// delete this files.
+		foreach ( $result->get_posts() as $post_id ) {
+			// get the external file object of this attachment.
+			$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
+
+			// bail if object could not be loaded.
+			if ( ! $external_file_obj->is_valid() ) {
+				continue;
+			}
+
+			// delete this file.
+			$external_file_obj->delete();
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'Synchronization cleanup ended.', 'external-files-in-media-library' ), $url, 'info', 1 );
+	}
+
+	/**
+	 * Add the hooks, which are only used during the synchronization.
+	 *
+	 * @return void
+	 */
+	private function add_sync_hooks(): void {
+		foreach ( $this->get_sync_hooks() as $hook ) {
+			add_filter( $hook[0], $hook[1], $hook[2], $hook[3] );
+		}
+	}
+
+	/**
+	 * Remove the hooks, which are only used during the synchronization.
+	 *
+	 * @return void
+	 */
+	private function remove_sync_hooks(): void {
+		foreach ( $this->get_sync_hooks() as $hook ) {
+			remove_filter( $hook[0], $hook[1], $hook[2] );
+		}
 	}
 
 	/**

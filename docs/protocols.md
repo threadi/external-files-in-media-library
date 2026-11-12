@@ -19,3 +19,5 @@ It is also possible to import files from external sources:
 * [YouTube](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/youtube.md)
 * [WordPress REST API](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/rest.md)
 * ZIP
+
+Directories with many files are imported file by file, also in the background: [Import of directories with many files](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/directories.md)

@@ -20,6 +20,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
@@ -261,14 +262,35 @@ class Queue extends Extension_Base {
             `type` varchar(20) DEFAULT 'import' NOT NULL,
             `attachment_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
             `attempts` smallint(5) unsigned DEFAULT 0 NOT NULL,
-            UNIQUE KEY id (id)
+            `url_hash` char(32) DEFAULT '' NOT NULL,
+            `run_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
+            UNIQUE KEY id (id),
+            KEY url_hash (url_hash),
+            KEY run_id (run_id)
         ) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // @phpstan-ignore requireOnce.fileNotFound
 		dbDelta( $sql );
 
+		// add the hash of the URL to existing entries.
+		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `url_hash` = MD5(`url`) WHERE `url_hash` = %s', array( $wpdb->prefix . 'eml_queue', '' ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
 		// also run initialization.
 		$this->init();
+	}
+
+	/**
+	 * Add a URL to the queue, e.g. the rest of an import, which has been terminated.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string                            $url The URL to add.
+	 * @param array<string,array<string,mixed>> $fields List of fields.
+	 *
+	 * @return bool
+	 */
+	public function add( string $url, array $fields ): bool {
+		return $this->add_url( $url, $fields );
 	}
 
 	/**
@@ -315,11 +337,12 @@ class Queue extends Extension_Base {
 		$result = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prefix . 'eml_queue',
 			array(
-				'time'    => gmdate( 'Y-m-d H:i:s' ),
-				'url'     => $url,
-				'fields'  => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) : '',
-				'state'   => 'new',
-				'options' => $options_json,
+				'time'     => gmdate( 'Y-m-d H:i:s' ),
+				'url'      => $url,
+				'url_hash' => md5( $url ),
+				'fields'   => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) : '',
+				'state'    => 'new',
+				'options'  => $options_json,
 			)
 		);
 
@@ -338,8 +361,8 @@ class Queue extends Extension_Base {
 	 * @return void
 	 */
 	public function process_queue(): void {
-		// get the queue.
-		$urls_to_import = $this->get_urls();
+		// get the queue, without the entries of import runs (they are processed by the runs).
+		$urls_to_import = $this->get_urls( 'new', false, false );
 
 		// show progress.
 		/* translators: %1$d will be replaced by a number. */
@@ -403,6 +426,9 @@ class Queue extends Extension_Base {
 		// log event.
 		/* translators: %1$d will be replaced by a number. */
 		Log::get_instance()->create( sprintf( _n( 'The processing of the import of %1$d URL from the queue is complete.', 'The processing of the import of %1$d URLs from the queue is complete.', count( $urls_to_import ), 'external-files-in-media-library' ), count( $urls_to_import ) ), '', 'info', 2 );
+
+		// process the import runs too, e.g. if WP Cron did not run their own event.
+		Import_Runs::get_instance()->process();
 	}
 
 	/**
@@ -424,6 +450,12 @@ class Queue extends Extension_Base {
 		// process an export entry.
 		if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
 			$this->process_export_entry( $url_data );
+			return;
+		}
+
+		// process an entry of an import run with the settings of the run.
+		if ( absint( $url_data['run_id'] ) > 0 ) {
+			Import_Runs::get_instance()->process_entry_by_id( $id );
 			return;
 		}
 
@@ -567,6 +599,9 @@ class Queue extends Extension_Base {
 		// truncate the content of the table.
 		$wpdb->query( sprintf( 'TRUNCATE TABLE %s', $wpdb->prefix . 'eml_queue' ) );
 
+		// cancel the import runs, as their entries are deleted.
+		Import_Runs::get_instance()->cancel_all();
+
 		// remove the markers for planned exports.
 		delete_post_meta_by_key( 'efml_export_queued' );
 	}
@@ -636,31 +671,73 @@ class Queue extends Extension_Base {
 	 *
 	 * @param string $state The requested state (new or error).
 	 * @param bool   $unlimited Whether to call unlimited list (true) or not (false).
+	 * @param bool   $with_runs Whether to return the entries of import runs (true) or not (false).
 	 *
 	 * @return array<int,array<string>>
 	 */
-	public function get_urls( string $state = 'new', bool $unlimited = false ): array {
+	public function get_urls( string $state = 'new', bool $unlimited = false, bool $with_runs = true ): array {
 		global $wpdb;
 
-		if ( empty( $state ) ) {
-			// run query to unlimited list.
-			if ( $unlimited ) {
-				// get the entries from the queue table.
-				return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			}
-
-			// return limited URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// collect the conditions.
+		$where = array( '1 = 1' );
+		$args  = array( $wpdb->prefix . 'eml_queue' );
+		if ( ! empty( $state ) ) {
+			$where[] = '`state` = %s';
+			$args[]  = $state;
+		}
+		if ( ! $with_runs ) {
+			$where[] = '`run_id` = 0';
 		}
 
-		// run query to unlimited list.
-		if ( $unlimited ) {
-			// return all URLs for requested state.
-			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i WHERE `state` = %s ORDER BY `time` DESC', array( $wpdb->prefix . 'eml_queue', $state ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// add the limit.
+		$limit = '';
+		if ( ! $unlimited ) {
+			$limit  = ' LIMIT %d';
+			$args[] = absint( get_option( 'eml_queue_limit' ) );
 		}
 
-		// get limited URLs for requested state.
-		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` as `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts` FROM %i WHERE `state` = %s ORDER BY `time` DESC LIMIT %d', array( $wpdb->prefix . 'eml_queue', $state, absint( get_option( 'eml_queue_limit' ) ) ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// return the entries.
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i WHERE ' . implode( ' AND ', $where ) . ' ORDER BY `time` DESC, `id` DESC' . $limit, $args ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+	}
+
+	/**
+	 * Return one page of the entries in the queue, e.g. for the queue table.
+	 *
+	 * @param string $state  The requested state (empty for all).
+	 * @param int    $offset The offset.
+	 * @param int    $limit  The count of entries.
+	 *
+	 * @return array<int,array<string>>
+	 */
+	public function get_urls_page( string $state, int $offset, int $limit ): array {
+		global $wpdb;
+
+		// return the page with the requested state.
+		if ( ! empty( $state ) ) {
+			return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i WHERE `state` = %s ORDER BY `time` DESC, `id` DESC LIMIT %d, %d', array( $wpdb->prefix . 'eml_queue', $state, $offset, $limit ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
+		// return the page of all entries.
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i ORDER BY `time` DESC, `id` DESC LIMIT %d, %d', array( $wpdb->prefix . 'eml_queue', $offset, $limit ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Return the count of entries in the queue.
+	 *
+	 * @param string $state The requested state (empty for all).
+	 *
+	 * @return int
+	 */
+	public function count_urls( string $state = '' ): int {
+		global $wpdb;
+
+		// return the count of entries with the requested state.
+		if ( ! empty( $state ) ) {
+			return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE `state` = %s', array( $wpdb->prefix . 'eml_queue', $state ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+
+		// return the count of all entries.
+		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', array( $wpdb->prefix . 'eml_queue' ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -672,7 +749,7 @@ class Queue extends Extension_Base {
 	 */
 	private function get_url( string $url ): array {
 		global $wpdb;
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields` FROM %i WHERE `url` = %s AND `type` = %s', array( $wpdb->prefix . 'eml_queue', $url, 'import' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields` FROM %i WHERE `url_hash` = %s AND `url` = %s AND `type` = %s AND `run_id` = 0', array( $wpdb->prefix . 'eml_queue', md5( $url ), $url, 'import' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -684,7 +761,7 @@ class Queue extends Extension_Base {
 	 */
 	private function get_url_by_id( int $id ): array {
 		global $wpdb;
-		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields`, `options`, `type`, `attachment_id`, `attempts` FROM %i WHERE `id` = %d', array( $wpdb->prefix . 'eml_queue', $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `id`, `url`, `fields`, `options`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i WHERE `id` = %d', array( $wpdb->prefix . 'eml_queue', $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	}
 
 	/**
@@ -1277,7 +1354,7 @@ class Queue extends Extension_Base {
 	 */
 	public function clear_error_entries(): void {
 		// get the error entries.
-		foreach ( $this->get_urls( 'error' ) as $url_data ) {
+		foreach ( $this->get_urls( 'error', true ) as $url_data ) {
 			// delete them.
 			$this->remove_url( absint( $url_data['id'] ) );
 		}

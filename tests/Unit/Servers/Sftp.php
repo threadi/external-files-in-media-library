@@ -13,12 +13,15 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\ManyFilesTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
  * Object to test the SFTP support with a real SFTP server.
  */
 class Sftp extends externalFilesTests {
+	use ManyFilesTrait;
+
 	/**
 	 * Return the data of the test server or skip the test.
 	 *

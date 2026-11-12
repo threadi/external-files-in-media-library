@@ -39,12 +39,24 @@
 - The directory listing of YouTube links to YouTube, the info box of YouTube videos also
 - Added connection test ("Run connection test") in the directory listing of all services, which could be used to export files (local directories, DropBox, FTP, FTPS and the extensions for AWS S3-compatible platforms, Google Cloud Storage, Google Drive and WebDAV): connect and list the directory, upload a test file, check its public availability and delete it again, each step is logged
 - Added hook "efml_connection_test_file_name" to change the name of the test file
+- Directories with many files are imported file by file (local directories, DropBox, FTP, FTPS, SFTP and the extensions for AWS S3-compatible platforms, Google Cloud Storage, Google Drive and WebDAV): their files are listed page by page without loading them and added to the queue, files which are already in the media library are skipped
+- In the import dialog directories with more than 500 files are imported in the background after the first 20 files, with a hint in the dialog; the import in the background uses WP Cron and is independent of the settings of the queue
+- The admin bar shows the progress of imports in the background, a click on it opens the queue
+- Synchronizations use the same way and are continued in the background if necessary, files are only deleted after the complete list of the external source has been loaded
+- Added hooks "efml_background_import_threshold", "efml_background_import_direct_count", "efml_import_run_time_limit", "efml_file_list_page_size", "efml_import_run_files", "efml_import_run_finished", "efml_import_job_id" and "efml_sync_completed"
+- Added documentation for the import of directories with many files in docs/import/directories.md
 
 ### Changed
 
 - Now also compatible with Windows-based hostings
 - The dialog to install or activate the extension for AWS S3 now lists all supported platforms and its new features
 - Optimized the spacing of the buttons for the predefined configurations in the settings
+- All files of a directory, which are imported file by file, belong to one job
+- The hook "efml_after_sync" runs after each part of a synchronization, which is continued in the background, the new hook "efml_sync_completed" only once at its end
+- The email after a synchronization is sent only once at the end of the synchronization
+- The hooks for the import of directories of the single protocols (e.g. "efml_ftp_directory_import_files") are not used for directories, which are imported file by file
+- Connections to FTP, FTPS and SFTP servers are reused during a request
+- The queue table loads only the entries of the actual page
 
 ### Fixed
 
@@ -66,6 +78,9 @@
 - Fixed remaining empty temporary files after loading files from DropBox into the cache of the proxy
 - Fixed high memory usage during the import of large files via SFTP and via FTP without native FTP connection (e.g. FTP sockets), they are now saved directly into a local file
 
+- Fixed imports, which were terminated shortly before the max execution time: the rest of the import is now really added to the queue, before only the log said so
+- Fixed deletion of error entries in the queue, which deleted only as many entries as set for one cycle of the queue
+- Fixed import from DropBox in scheduled tasks without logged-in user (e.g. via the queue or WP Cron)
 ## [5.6.2] - 06.11.2026
 
 ### Changed

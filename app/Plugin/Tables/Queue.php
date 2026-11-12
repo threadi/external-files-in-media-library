@@ -34,16 +34,12 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
-	 * Get the table data
+	 * Return the state to filter the entries (empty for all).
 	 *
-	 * @return array<int,array<string>>
+	 * @return string
 	 */
-	private function table_data(): array {
-		// get state filter.
-		$state = 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
-
-		// get logs.
-		return \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( $state, true );
+	private function get_state_filter(): string {
+		return 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
 	}
 
 	/**
@@ -56,11 +52,12 @@ class Queue extends WP_List_Table {
 		$hidden   = $this->get_hidden_columns();
 		$sortable = $this->get_sortable_columns();
 
-		$data = $this->table_data();
+		// get the queue object.
+		$queue = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance();
 
 		$per_page     = 50;
 		$current_page = $this->get_pagenum();
-		$total_items  = count( $data );
+		$total_items  = $queue->count_urls( $this->get_state_filter() );
 
 		$this->set_pagination_args(
 			array(
@@ -69,7 +66,8 @@ class Queue extends WP_List_Table {
 			)
 		);
 
-		$data = array_slice( $data, ( ( $current_page - 1 ) * $per_page ), $per_page );
+		// get only the entries of the actual page, as the queue could contain many entries of import runs.
+		$data = $queue->get_urls_page( $this->get_state_filter(), ( $current_page - 1 ) * $per_page, $per_page );
 
 		$this->_column_headers = array( $columns, $hidden, $sortable );
 		$this->items           = $data;
@@ -205,7 +203,7 @@ class Queue extends WP_List_Table {
 			<?php
 
 			// get all error entries.
-			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( 'error' );
+			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->count_urls( 'error' );
 
 			// define clear error URL.
 			$clear_errors_url = add_query_arg(
@@ -245,7 +243,7 @@ class Queue extends WP_List_Table {
 			}
 
 			?>
-			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $errors ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === $errors ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
 			<?php
 		}
 	}
@@ -312,6 +310,11 @@ class Queue extends WP_List_Table {
 	 * @return string
 	 */
 	private function get_type( array $item ): string {
+		// show the import run of the entry.
+		if ( ! empty( $item['run_id'] ) ) {
+			return esc_html__( 'Import', 'external-files-in-media-library' ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+		}
+
 		// bail if this is not an export entry.
 		if ( empty( $item['type'] ) || 'export' !== $item['type'] ) {
 			return esc_html__( 'Import', 'external-files-in-media-library' );
