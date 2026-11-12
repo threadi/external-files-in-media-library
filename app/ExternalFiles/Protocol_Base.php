@@ -446,6 +446,37 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Return a signed URL for the given URL of a private file, which is valid in the given time range.
+	 *
+	 * Used by the proxy to redirect to private files, which are not delivered from the cache, and for downloads
+	 * of WooCommerce products. The URL must be valid from the start to the expiration time. Services, which can
+	 * sign URLs without a request to their API, should create the same URL for the same time range, so browsers and
+	 * caches can reuse it. Return an empty string if this is not possible, then the file is delivered from the cache.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url     The URL of the file (as saved on the external file).
+	 * @param int    $start   The start of the validity as timestamp.
+	 * @param int    $expires The end of the validity as timestamp.
+	 *
+	 * @return string
+	 */
+	public function get_signed_url( string $url, int $start, int $expires ): string {
+		// bail if url is empty.
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		// bail if time range is not valid.
+		if ( $expires <= $start ) {
+			return '';
+		}
+
+		// return empty string as this protocol could not sign URLs.
+		return '';
+	}
+
+	/**
 	 * Cleanup temporary files.
 	 *
 	 * @param string $file The path to the file.

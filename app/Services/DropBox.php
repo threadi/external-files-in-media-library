@@ -1059,6 +1059,17 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the URL of the web interface of DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_platform_url(): string {
+		return 'https://www.dropbox.com';
+	}
+
+	/**
 	 * Return global actions.
 	 *
 	 * @return array<int,array<string,string>>
@@ -1068,7 +1079,7 @@ class DropBox extends Service_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'location.href="https://www.dropbox.com";',
+					'action' => 'location.href="' . esc_url( $this->get_platform_url() ) . '";',
 					'label'  => __( 'Go to DropBox', 'external-files-in-media-library' ),
 				),
 				array(

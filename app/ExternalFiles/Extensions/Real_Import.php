@@ -457,6 +457,9 @@ class Real_Import extends Extension_Base {
 		// remove the locally saved marker.
 		$external_file_obj->remove_local_saved();
 
+		// remove the private marker.
+		$external_file_obj->remove_private();
+
 		// remove the credentials.
 		$external_file_obj->remove_fields();
 

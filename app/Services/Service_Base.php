@@ -401,6 +401,20 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return the URL of the web interface of the platform of this service (e.g. the website of DropBox).
+	 *
+	 * Used for the link in the directory listing and in the info box of external files of this service. Return an
+	 * empty string if the service has no such platform.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_platform_url(): string {
+		return '';
+	}
+
+	/**
 	 * Return whether a specific service is used.
 	 *
 	 * @param string $mode The name of the service.
@@ -809,7 +823,7 @@ class Service_Base extends Directory_Listing_Base {
 		/**
 		 * Filter the fields of a service incl. their values before they are used.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<string,array<string,mixed>> $fields List of fields.
 		 * @param Service_Base $instance The service object.
 		 */
@@ -900,7 +914,7 @@ class Service_Base extends Directory_Listing_Base {
 		/**
 		 * Filter the name of the constant for a field of a service.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param string $constant_name The name of the constant.
 		 * @param string $field_name The name of the field.
 		 * @param Service_Base $instance The service object.
@@ -987,7 +1001,7 @@ class Service_Base extends Directory_Listing_Base {
 		 * Filter the list of fields of a service, which must all be defined via constants,
 		 * before any constant of this service is used.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<int,string> $required_fields List of field names.
 		 * @param Service_Base $instance The service object.
 		 */
@@ -1161,7 +1175,7 @@ class Service_Base extends Directory_Listing_Base {
 		 * Filter whether the given URL is using the server defined via constants for this service.
 		 * Only if true is returned, the values of the constants are used for this URL.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $result True if the URL is matching.
 		 * @param string $url The URL.
 		 * @param string $server The server defined via constant.
@@ -1256,7 +1270,7 @@ class Service_Base extends Directory_Listing_Base {
 		/**
 		 * Filter whether the given fields are for the target (e.g. a bucket) defined via constants.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $result True if the fields are matching.
 		 * @param array<string,mixed> $fields List of fields.
 		 * @param Service_Base $instance The service object.

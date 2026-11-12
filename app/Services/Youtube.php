@@ -647,6 +647,17 @@ class Youtube extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the URL of the web interface of YouTube.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_platform_url(): string {
+		return 'https://www.youtube.com/';
+	}
+
+	/**
 	 * Return global actions.
 	 *
 	 * @return array<int,array<string,string>>
@@ -655,6 +666,10 @@ class Youtube extends Service_Base implements Service {
 		return array_merge(
 			parent::get_global_actions(),
 			array(
+				array(
+					'action' => 'location.href="' . esc_url( $this->get_platform_url() ) . '";',
+					'label'  => __( 'Go to YouTube', 'external-files-in-media-library' ),
+				),
 				array(
 					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_channel_url() . '" + url, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),

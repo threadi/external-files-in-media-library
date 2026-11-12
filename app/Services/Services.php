@@ -333,7 +333,7 @@ class Services {
 		 * Filter whether an external source is not usable, because the credentials of its service
 		 * are defined via constants for another server.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $result True if the source is not usable.
 		 * @param int $term_id The ID of the external source.
 		 */
@@ -438,7 +438,7 @@ class Services {
 		 * Filter the names of the services, to which URLs of a protocol belong. If the credentials of such a
 		 * service are defined via constants, URLs of this protocol could only be used on their server.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<int,string> $names List of service names.
 		 * @param string $name The name of the protocol.
 		 */
@@ -470,7 +470,7 @@ class Services {
 		/**
 		 * Filter the names of the services, whose constants could be used for a service or protocol.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<int,string> $names List of service names.
 		 * @param string $name The name of the service or protocol.
 		 */
@@ -584,7 +584,7 @@ class Services {
 		/**
 		 * Filter the list of services for the overview in the settings.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<int,Service_Base> $services List of services.
 		 * @param Services $instance The services object.
 		 */

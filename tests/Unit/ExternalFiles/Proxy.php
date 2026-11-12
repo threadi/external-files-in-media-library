@@ -185,4 +185,84 @@ class Proxy extends externalFilesTests {
 		$this->assertArrayHasKey( $proxy->get_slug() . '/([a-zA-Z0-9-_.]+)?$', $rules );
 		$this->set_permalink_structure( '' );
 	}
+
+	/**
+	 * Test that proxy URLs are not redirected to their variant with trailing slash.
+	 *
+	 * @return void
+	 */
+	public function test_canonical_redirect_is_prevented_for_proxy_urls(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$this->assertSame( PHP_INT_MAX, has_filter( 'redirect_canonical', array( $proxy, 'prevent_canonical_redirect' ) ) );
+
+		// other requests are not changed.
+		$this->assertSame( 'https://example.com/page/', $proxy->prevent_canonical_redirect( 'https://example.com/page/' ) );
+		$this->assertFalse( $proxy->prevent_canonical_redirect( false ) );
+
+		// requests for the proxy are not redirected.
+		set_query_var( $proxy->get_slug(), 'example.pdf' );
+		$this->assertFalse( $proxy->prevent_canonical_redirect( 'https://example.com/emlproxy/example.pdf/' ) );
+		$this->assertFalse( apply_filters( 'redirect_canonical', 'https://example.com/emlproxy/example.pdf/', 'https://example.com/emlproxy/example.pdf' ) );
+	}
+
+	/**
+	 * Test that HEAD requests for proxy URLs reach the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_head_requests_reach_the_proxy(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+
+		// other requests are ended by WordPress as before.
+		$this->assertTrue( apply_filters( 'exit_on_http_head', true ) );
+
+		// requests for the proxy are not ended.
+		set_query_var( $proxy->get_slug(), 'example.pdf' );
+		$this->assertFalse( apply_filters( 'exit_on_http_head', true ) );
+	}
+
+	/**
+	 * Test that the proxy outputs no content on HEAD requests.
+	 *
+	 * @return void
+	 */
+	public function test_head_request_outputs_no_content(): void {
+		// create a file to output.
+		$file = wp_tempnam( 'efml-head' );
+		file_put_contents( $file, 'content of the file' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		// get an object to output files.
+		$file_type_obj = new class( false ) extends \ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File {
+			/**
+			 * Output the given file.
+			 *
+			 * @param string $file The file.
+			 *
+			 * @return void
+			 */
+			public function output( string $file ): void {
+				$this->output_file( $file );
+			}
+		};
+
+		// simulate a HEAD request.
+		$method                       = $_SERVER['REQUEST_METHOD'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$_SERVER['REQUEST_METHOD']    = 'HEAD';
+		$level                        = ob_get_level();
+		ob_start();
+		$file_type_obj->output( $file );
+		$output = ob_get_clean();
+
+		// restore the environment.
+		if ( is_null( $method ) ) {
+			unset( $_SERVER['REQUEST_METHOD'] );
+		} else {
+			$_SERVER['REQUEST_METHOD'] = $method;
+		}
+		wp_delete_file( $file );
+
+		// no content and no change of the output buffers.
+		$this->assertSame( '', $output );
+		$this->assertSame( $level, ob_get_level() );
+	}
 }

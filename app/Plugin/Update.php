@@ -125,7 +125,7 @@ class Update {
 			if ( version_compare( $db_plugin_version, '5.5.1', '<' ) ) {
 				$this->version551();
 			}
-			if ( version_compare( $db_plugin_version, '5.7.0', '<' ) ) {
+			if ( version_compare( $db_plugin_version, '6.0.0', '<' ) ) {
 				$this->version570();
 			}
 
@@ -479,7 +479,7 @@ class Update {
 	}
 
 	/**
-	 * To run on the update to version 5.7.0 or newer.
+	 * To run on the update to version 6.0.0 or newer.
 	 *
 	 * @return void
 	 */

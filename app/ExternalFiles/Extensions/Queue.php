@@ -1046,7 +1046,7 @@ class Queue extends Extension_Base {
 	 *
 	 * The file stays a local file in the media library until it has been exported.
 	 *
-	 * @since 5.7.0 Available since 5.7.0.
+	 * @since 6.0.0 Available since 6.0.0.
 	 *
 	 * @param int $attachment_id The attachment ID.
 	 *
@@ -1181,7 +1181,7 @@ class Queue extends Extension_Base {
 		/**
 		 * Filter the maximum number of attempts to export a file via the queue.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param int $max_attempts The maximum number of attempts.
 		 * @param int $attachment_id The attachment ID.
 		 */

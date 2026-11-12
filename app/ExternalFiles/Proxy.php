@@ -97,6 +97,16 @@ class Proxy {
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
 
+		/**
+		 * Prevent the redirect of proxy URLs to their variant with trailing slash.
+		 */
+		add_filter( 'redirect_canonical', array( $this, 'prevent_canonical_redirect' ), PHP_INT_MAX, 1 );
+
+		/**
+		 * Answer HEAD requests for proxy URLs with the headers of the file.
+		 */
+		add_filter( 'exit_on_http_head', array( $this, 'allow_head_requests' ), 10, 1 );
+
 		// bail if no proxy is enabled.
 		if ( ! $this->is_any_proxy_enabled() ) {
 			return;
@@ -140,7 +150,7 @@ class Proxy {
 	 */
 	public function run( string $template ): string {
 		// bail if this is not our proxy-slug.
-		if ( empty( get_query_var( $this->get_slug() ) ) ) {
+		if ( ! $this->is_proxy_request() ) {
 			return $template;
 		}
 
@@ -191,6 +201,31 @@ class Proxy {
 			return $template;
 		}
 
+		$true = true;
+		/**
+		 * Filter whether the proxy may deliver the given file.
+		 *
+		 * E.g. used to prevent the direct delivery of protected downloads of WooCommerce products.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $true True if the file could be delivered.
+		 * @param File $external_file_obj The external file object.
+		 */
+		if ( ! apply_filters( 'efml_proxy_allow_delivery', $true, $external_file_obj ) ) {
+			// log this event only in debug mode, as this request can be sent by anyone.
+			/* translators: %1$s will be replaced by the detected filename. */
+			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as its delivery is not allowed.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
+
+			// fallback to 404.
+			return $template;
+		}
+
+		// redirect to a signed URL, if this is a private file, which should not be delivered from the cache.
+		$redirect_url = Private_Files::get_instance()->get_redirect_url( $external_file_obj, $dimensions );
+		if ( '' !== $redirect_url ) {
+			Private_Files::get_instance()->redirect( $redirect_url );
+		}
+
 		/**
 		 * Run additional tasks before proxy tries to load a cached external file.
 		 */
@@ -236,6 +271,57 @@ class Proxy {
 
 		// fallback to 404.
 		return $template;
+	}
+
+	/**
+	 * Return whether the actual request is a request for the proxy.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_request(): bool {
+		return ! empty( get_query_var( $this->get_slug() ) );
+	}
+
+	/**
+	 * Prevent the canonical redirect for proxy URLs.
+	 *
+	 * Without this, WordPress redirects each proxy URL with 301 to its variant with trailing slash
+	 * (e.g. "/emlproxy/example.pdf/"), if the permalinks end with a slash. This costs one more request
+	 * per file and results in URLs with unusual endings.
+	 *
+	 * @param mixed $redirect_url The URL WordPress would redirect to, false if no redirect is planned.
+	 *
+	 * @return mixed
+	 */
+	public function prevent_canonical_redirect( mixed $redirect_url ): mixed {
+		// bail if this is not a request for the proxy.
+		if ( ! $this->is_proxy_request() ) {
+			return $redirect_url;
+		}
+
+		// prevent the redirect.
+		return false;
+	}
+
+	/**
+	 * Allow HEAD requests for proxy URLs.
+	 *
+	 * WordPress ends HEAD requests before "template_include" is used. Then the proxy could not run and the
+	 * response would be an empty HTML document without the headers of the file. This affects e.g. link checkers
+	 * and CDNs. The proxy only sends the headers on HEAD requests, not the content of the file.
+	 *
+	 * @param mixed $do_exit Whether WordPress should end the HEAD request.
+	 *
+	 * @return mixed
+	 */
+	public function allow_head_requests( mixed $do_exit ): mixed {
+		// bail if this is not a request for the proxy.
+		if ( ! $this->is_proxy_request() ) {
+			return $do_exit;
+		}
+
+		// let the proxy handle this request.
+		return false;
 	}
 
 	/**

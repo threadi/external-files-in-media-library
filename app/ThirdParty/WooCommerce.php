@@ -11,8 +11,11 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 defined( 'ABSPATH' ) || exit;
 
 use easySettingsForWordPress\Page;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Private_Files;
+use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
@@ -30,6 +33,13 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	 * @var ?WooCommerce
 	 */
 	private static ?WooCommerce $instance = null;
+
+	/**
+	 * List of paths to cached files, which are used for downloads during this request.
+	 *
+	 * @var array<int,string>
+	 */
+	private array $cached_download_paths = array();
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -90,6 +100,15 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		add_filter( 'woocommerce_product_import_process_item_data', array( $this, 'import_product_gallery_images' ) );
 		add_action( 'woocommerce_product_import_inserted_product_object', array( $this, 'add_product_image' ), 10, 2 );
 		add_action( 'woocommerce_product_import_inserted_product_object', array( $this, 'add_product_gallery_images' ), 10, 2 );
+
+		// add hooks for downloadable products.
+		add_action( 'woocommerce_after_product_object_save', array( $this, 'mark_download_files' ) );
+		add_action( 'woocommerce_after_product_variation_object_save', array( $this, 'mark_download_files' ) );
+		add_action( 'before_delete_post', array( $this, 'remove_download_markers' ) );
+		add_filter( 'woocommerce_download_product_filepath', array( $this, 'get_download_file_path' ) );
+		add_filter( 'woocommerce_file_download_method', array( $this, 'use_force_method_for_cached_files' ), 10, 3 );
+		add_filter( 'efml_proxy_allow_delivery', array( $this, 'prevent_proxy_for_protected_downloads' ), 10, 2 );
+		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_download_info_in_dialog' ), 10, 2 );
 	}
 
 	/**
@@ -124,7 +143,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$woocommerce_settings_setting->set_field(
 			array(
 				'title'       => __( 'Enable support for WooCommerce', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled any external hosted images during CSV-import will be handled as external files by this plugin.', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled any external hosted images during CSV-import will be handled as external files by this plugin. External files from your media library, which you use as files of downloadable products, will be delivered by WooCommerce after its checks. If they are saved privately on their external source, they can only be downloaded this way.', 'external-files-in-media-library' ),
 				'type'        => 'Checkbox',
 			)
 		);
@@ -495,5 +514,345 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 
 		// return encrypted string.
 		return Crypt::get_instance()->decrypt( $value );
+	}
+
+	/**
+	 * Return the external file for a given path of a downloadable file.
+	 *
+	 * The path could be the URL of the external file or the URL of the file via our proxy, which is used, if the
+	 * file has been chosen from the media library.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $file_path The path of the downloadable file.
+	 *
+	 * @return File|false
+	 */
+	public function get_external_file_by_download_path( string $file_path ): File|false {
+		// bail if path is empty.
+		if ( empty( $file_path ) ) {
+			return false;
+		}
+
+		// check the path as URL of an external file.
+		$external_file_obj = Files::get_instance()->get_file_by_url( $file_path );
+		if ( $external_file_obj instanceof File ) {
+			return $external_file_obj;
+		}
+
+		// get the proxy slug.
+		$slug = Proxy::get_instance()->get_slug();
+
+		// check the path as URL of our proxy (for pretty and simple permalinks).
+		foreach ( array( trailingslashit( get_home_url() ) . $slug . '/', trailingslashit( get_home_url() ) . '?' . $slug . '=' ) as $proxy_url ) {
+			// bail if path does not start with this proxy URL.
+			if ( ! str_starts_with( $file_path, $proxy_url ) ) {
+				continue;
+			}
+
+			// get the title of the file.
+			$title = rawurldecode( (string) substr( $file_path, strlen( $proxy_url ) ) );
+
+			// get the external file by its title.
+			$external_file_obj = Files::get_instance()->get_file_by_title( $title );
+			if ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) {
+				return $external_file_obj;
+			}
+		}
+
+		// return false if no external file could be found.
+		return false;
+	}
+
+	/**
+	 * Mark the external files, which are used as downloadable files of the given product.
+	 *
+	 * The marker is used to prevent the delivery of private files via our proxy, so they could only be downloaded
+	 * via WooCommerce.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param mixed $product The product object.
+	 *
+	 * @return void
+	 */
+	public function mark_download_files( mixed $product ): void {
+		// bail if this is not a product.
+		if ( ! $product instanceof WC_Product ) {
+			return;
+		}
+
+		// get the product ID.
+		$product_id = $product->get_id();
+
+		// bail if product has no ID.
+		if ( 0 === $product_id ) {
+			return;
+		}
+
+		// remove the markers of this product from all files.
+		delete_metadata( 'post', 0, 'efml_woocommerce_product', (string) $product_id, true );
+
+		// bail if product is not downloadable.
+		if ( ! $product->is_downloadable() ) {
+			return;
+		}
+
+		// check each downloadable file.
+		foreach ( $product->get_downloads() as $download ) {
+			// get the external file for this download.
+			$external_file_obj = $this->get_external_file_by_download_path( (string) $download->get_file() );
+
+			// bail if this is not an external file.
+			if ( ! $external_file_obj instanceof File ) {
+				continue;
+			}
+
+			// add the marker.
+			add_post_meta( $external_file_obj->get_id(), 'efml_woocommerce_product', $product_id );
+		}
+	}
+
+	/**
+	 * Remove the markers of a product, which will be deleted.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $post_id The ID of the post.
+	 *
+	 * @return void
+	 */
+	public function remove_download_markers( int $post_id ): void {
+		// bail if this is not a product.
+		if ( ! in_array( get_post_type( $post_id ), array( 'product', 'product_variation' ), true ) ) {
+			return;
+		}
+
+		// remove the markers of this product from all files.
+		delete_metadata( 'post', 0, 'efml_woocommerce_product', (string) $post_id, true );
+	}
+
+	/**
+	 * Return the path for the download of an external file, after WooCommerce has checked the order.
+	 *
+	 * - Files, which are saved privately or could not be loaded by a browser, are delivered via a signed URL with
+	 *   short validity, if their service supports it, otherwise from the cache of our proxy.
+	 * - Other external files are delivered from their external URL.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param mixed $file_path The path of the downloadable file.
+	 *
+	 * @return mixed
+	 */
+	public function get_download_file_path( mixed $file_path ): mixed {
+		// bail if path is not a string.
+		if ( ! is_string( $file_path ) ) {
+			return $file_path;
+		}
+
+		// get the external file.
+		$external_file_obj = $this->get_external_file_by_download_path( $file_path );
+
+		// bail if this is not an external file.
+		if ( ! $external_file_obj instanceof File ) {
+			return $file_path;
+		}
+
+		// use the local URL, if the file is saved locally.
+		if ( $external_file_obj->is_locally_saved() ) {
+			return (string) wp_get_attachment_url( $external_file_obj->get_id() );
+		}
+
+		// use the external URL, if the file does not require the proxy.
+		if ( ! $external_file_obj->is_proxy_required() ) {
+			return $external_file_obj->get_url( true );
+		}
+
+		// get the actual time.
+		$now = time();
+
+		/**
+		 * Filter the validity of signed URLs for downloads of WooCommerce products in seconds.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $lifetime The validity in seconds.
+		 * @param File $external_file_obj The external file object.
+		 */
+		$lifetime = absint( apply_filters( 'efml_woocommerce_download_lifetime', 5 * MINUTE_IN_SECONDS, $external_file_obj ) );
+
+		// use a signed URL, if the service of the file supports it.
+		$signed_url = Private_Files::get_instance()->get_signed_url( $external_file_obj, $now, $now + max( MINUTE_IN_SECONDS, $lifetime ) );
+		if ( '' !== $signed_url ) {
+			// log this event.
+			Log::get_instance()->create( __( 'WooCommerce delivers this file via a signed URL.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+			// return the signed URL.
+			return $signed_url;
+		}
+
+		// otherwise use the cache of our proxy.
+		if ( ! $external_file_obj->is_cached() ) {
+			$external_file_obj->add_to_proxy();
+		}
+
+		// get the path of the cached file.
+		$cache_file = $external_file_obj->get_cache_file();
+
+		// bail if cached file does not exist.
+		if ( ! file_exists( $cache_file ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'File for the download in WooCommerce could not be loaded in the cache.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error' );
+
+			// return the original path.
+			return $file_path;
+		}
+
+		// use a path relative to the WordPress directory, so WooCommerce handles it as local file.
+		if ( str_starts_with( $cache_file, ABSPATH ) ) {
+			$cache_file = substr( $cache_file, strlen( ABSPATH ) );
+		}
+
+		// remember this path to use the matching download method.
+		$this->cached_download_paths[] = $cache_file;
+
+		// log this event.
+		Log::get_instance()->create( __( 'WooCommerce delivers this file from the cache.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+
+		// return the path to the cached file.
+		return $cache_file;
+	}
+
+	/**
+	 * Use the method "force downloads" for cached files, as they could not be delivered via a redirect.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param mixed $method     The download method.
+	 * @param mixed $product_id The product ID.
+	 * @param mixed $file_path  The path of the file.
+	 *
+	 * @return mixed
+	 */
+	public function use_force_method_for_cached_files( mixed $method, mixed $product_id, mixed $file_path ): mixed {
+		// bail if this is not a redirect or not one of our cached files.
+		if ( 'redirect' !== $method || ! in_array( $file_path, $this->cached_download_paths, true ) ) {
+			return $method;
+		}
+
+		// return the force method.
+		return 'force';
+	}
+
+	/**
+	 * Prevent the delivery of protected downloads via our proxy.
+	 *
+	 * Files, which are saved privately (or could not be loaded by a browser) and used as files of downloadable
+	 * products, could only be downloaded via WooCommerce. Users, who are allowed to edit the file, could still use the
+	 * proxy.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param bool $allowed           Whether the delivery is allowed.
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return bool
+	 */
+	public function prevent_proxy_for_protected_downloads( bool $allowed, File $external_file_obj ): bool {
+		// bail if delivery is already prevented.
+		if ( ! $allowed ) {
+			return false;
+		}
+
+		// bail if this is not a protected download.
+		if ( ! $this->is_protected_download( $external_file_obj ) ) {
+			return true;
+		}
+
+		// return whether the actual user is allowed to edit this file.
+		return current_user_can( 'edit_post', $external_file_obj->get_id() );
+	}
+
+	/**
+	 * Return whether the given file is a protected download.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return bool
+	 */
+	public function is_protected_download( File $external_file_obj ): bool {
+		return $external_file_obj->is_proxy_required() && ! empty( $this->get_products_of_file( $external_file_obj ) );
+	}
+
+	/**
+	 * Return the IDs of the products, which use the given file as downloadable file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return array<int,int>
+	 */
+	public function get_products_of_file( File $external_file_obj ): array {
+		// get the markers.
+		$product_ids = get_post_meta( $external_file_obj->get_id(), 'efml_woocommerce_product', false );
+
+		// bail if no markers are set.
+		if ( ! is_array( $product_ids ) ) {
+			return array();
+		}
+
+		// return the unique list of IDs.
+		return array_values( array_unique( array_filter( array_map( 'absint', $product_ids ) ) ) );
+	}
+
+	/**
+	 * Show the info about the usage as downloadable file in the info dialog of an external file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param array<string,mixed> $dialog            The dialog.
+	 * @param File                $external_file_obj The external file object.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function show_download_info_in_dialog( array $dialog, File $external_file_obj ): array {
+		// get the products of this file.
+		$product_ids = $this->get_products_of_file( $external_file_obj );
+
+		// bail if file is not used by any product.
+		if ( empty( $product_ids ) ) {
+			return $dialog;
+		}
+
+		// create the list of links to the products.
+		$links = array();
+		foreach ( $product_ids as $product_id ) {
+			// get the product (or its parent for variations) for the link.
+			$parent_id = wp_get_post_parent_id( $product_id );
+			$link      = get_edit_post_link( $parent_id > 0 ? $parent_id : $product_id );
+
+			// bail if no link could be created.
+			if ( ! is_string( $link ) ) {
+				continue;
+			}
+
+			// add the link.
+			$links[] = '<a href="' . esc_url( $link ) . '">' . esc_html( get_the_title( $product_id ) ) . '</a>';
+		}
+
+		// create the text depending on the protection.
+		$text = __( 'The file is delivered only via WooCommerce.', 'external-files-in-media-library' );
+		if ( ! $external_file_obj->is_proxy_required() ) {
+			$text = __( 'The file is delivered via WooCommerce, but its external URL is public available.', 'external-files-in-media-library' );
+		}
+
+		// add the info.
+		$dialog['texts'][] = '<p><strong>' . __( 'Product download', 'external-files-in-media-library' ) . ':</strong> ' . $text . ( ! empty( $links ) ? ' ' . implode( ', ', $links ) : '' ) . '</p>';
+
+		// return the resulting dialog.
+		return $dialog;
 	}
 }

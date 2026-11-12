@@ -239,7 +239,7 @@ class Site_Copy {
 		 * On a copy, files are not exported to or deleted on external sources, and scheduled
 		 * synchronizations are paused.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $is_copy True if the website is a copy.
 		 * @param array<string,string> $fingerprint The saved fingerprint of the main website.
 		 */

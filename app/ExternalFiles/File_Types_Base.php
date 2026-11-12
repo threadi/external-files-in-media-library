@@ -50,6 +50,13 @@ class File_Types_Base {
 	private string $mime_type = '';
 
 	/**
+	 * Marker to ignore the requirement of the proxy for the actual file during the check of the proxy settings.
+	 *
+	 * @var bool
+	 */
+	private bool $ignore_proxy_requirement = false;
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @param File|false $external_file_obj The external file as object or false.
@@ -210,11 +217,38 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	protected function is_proxy_required_for_file(): bool {
+		// bail if the requirement should be ignored (during the check of the settings only).
+		if ( $this->ignore_proxy_requirement ) {
+			return false;
+		}
+
 		// get the file object.
 		$external_file_obj = $this->get_file();
 
 		// return whether the proxy is required for this file.
 		return $external_file_obj instanceof File && $external_file_obj->is_proxy_required();
+	}
+
+	/**
+	 * Return whether the proxy is enabled for this file type via its settings, independent of the requirement of
+	 * the proxy for the actual file (e.g. as it is saved privately).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_enabled_by_settings(): bool {
+		// ignore the requirement of the proxy for the actual file.
+		$this->ignore_proxy_requirement = true;
+
+		// get the result from the settings of this file type.
+		$enabled = $this->is_proxy_enabled();
+
+		// reset the marker.
+		$this->ignore_proxy_requirement = false;
+
+		// return the result.
+		return $enabled;
 	}
 
 	/**
@@ -443,6 +477,11 @@ class File_Types_Base {
 	 * @return void
 	 */
 	private function read_file_part( string $file, int $start, int $end ): void {
+		// bail if this is a HEAD request, which only gets the headers.
+		if ( $this->is_head_request() ) {
+			return;
+		}
+
 		// remove any output buffering to not hold the file in memory.
 		while ( ob_get_level() > 0 ) {
 			ob_end_clean();
@@ -475,5 +514,14 @@ class File_Types_Base {
 		}
 
 		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
+
+	/**
+	 * Return whether the actual request is a HEAD request.
+	 *
+	 * @return bool
+	 */
+	protected function is_head_request(): bool {
+		return isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) );
 	}
 }

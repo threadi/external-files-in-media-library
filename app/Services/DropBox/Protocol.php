@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services\DropBox;
 defined( 'ABSPATH' ) || exit;
 
 use Error;
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
@@ -29,6 +30,13 @@ use WP_Filesystem_Base;
  * Object to handle different protocols.
  */
 class Protocol extends Protocol_Base {
+	/**
+	 * The lifetime of temporary links of DropBox in seconds (4 hours).
+	 *
+	 * @var int
+	 */
+	private const TEMPORARY_LINK_LIFETIME = 14400;
+
 	/**
 	 * The internal protocol name.
 	 *
@@ -214,18 +222,16 @@ class Protocol extends Protocol_Base {
 			// set the file as tmp-file for import.
 			$results['tmp-file'] = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
-			// get the file from DropBox.
-			$content = stream_get_contents( $client->download( $file_data['path_lower'] ) );
-
-			// bail if content could not be loaded.
-			if ( ! is_string( $content ) ) { // @phpstan-ignore function.alreadyNarrowedType
-				return array();
-			}
-
-			// and save this content als tmp-file.
+			// save the file from DropBox directly as tmp-file, so it is not loaded completely into memory.
 			try {
-				$wp_filesystem->put_contents( $results['tmp-file'], $content );
 				$wp_filesystem->delete( $tmp_file_name );
+				if ( ! $this->save_stream( $client->download( $file_data['path_lower'] ), $results['tmp-file'] ) ) {
+					// clean up the tmp file.
+					$wp_filesystem->delete( $results['tmp-file'] );
+
+					// do nothing more.
+					return array();
+				}
 			} catch ( Error $e ) {
 				// create the error entry.
 				$error_obj = new Url_Result();
@@ -334,7 +340,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// get the file from DropBox.
-		$content = stream_get_contents( $client->download( $url ) );
+		$stream = $client->download( $url );
 
 		// get the tmp file name.
 		$tmp_file_name = wp_tempnam();
@@ -345,11 +351,138 @@ class Protocol extends Protocol_Base {
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
 
-		// save the data.
-		$filesystem->put_contents( $tmp_file, $content );
+		// remove the file of "wp_tempnam()", if it is not used.
+		if ( $tmp_file !== $tmp_file_name ) {
+			$filesystem->delete( $tmp_file_name );
+		}
+
+		// save the data directly into the tmp file, so it is not loaded completely into memory.
+		if ( ! $this->save_stream( $stream, $tmp_file ) ) {
+			// clean up the tmp file.
+			$filesystem->delete( $tmp_file );
+
+			// return false as we got no file.
+			return false;
+		}
 
 		// return the name and path of the tmp file.
 		return $tmp_file;
+	}
+
+	/**
+	 * Save the given stream (e.g. a download from DropBox) in the given file.
+	 *
+	 * The stream is copied in parts, so it is not loaded completely into memory.
+	 *
+	 * @param mixed  $stream The stream.
+	 * @param string $file   The absolute path to the file.
+	 *
+	 * @return bool True if the stream has been saved.
+	 */
+	private function save_stream( mixed $stream, string $file ): bool {
+		// bail if the stream is not usable.
+		if ( ! is_resource( $stream ) ) {
+			return false;
+		}
+
+		// open the file.
+		$handle = fopen( $file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		// bail if the file could not be opened.
+		if ( false === $handle ) {
+			fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			return false;
+		}
+
+		// copy the stream into the file.
+		$copied = stream_copy_to_stream( $stream, $handle );
+
+		// close both.
+		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		// return whether the stream has been copied.
+		return false !== $copied;
+	}
+
+	/**
+	 * Return a temporary link of DropBox for a private file.
+	 *
+	 * DropBox creates temporary links via its API, which are valid for 4 hours. To prevent a request for each
+	 * delivery, the link is cached as long as it is valid for the requested time range.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url     The URL of the file (as saved on the external file).
+	 * @param int    $start   The start of the validity as timestamp.
+	 * @param int    $expires The end of the validity as timestamp.
+	 *
+	 * @return string
+	 */
+	public function get_signed_url( string $url, int $start, int $expires ): string {
+		// bail if URL is empty or a public URL (e.g. of files exported before).
+		if ( empty( $url ) || str_starts_with( $url, 'http://' ) || str_starts_with( $url, 'https://' ) ) {
+			return '';
+		}
+
+		// get the actual time.
+		$now = time();
+
+		// bail if the requested validity is longer than the validity of temporary links of DropBox.
+		if ( $expires <= $start || $expires - $now > self::TEMPORARY_LINK_LIFETIME - MINUTE_IN_SECONDS ) {
+			return '';
+		}
+
+		// get the cached link.
+		$transient_name = 'efml_dropbox_link_' . md5( $url . (string) wp_json_encode( $this->get_fields() ) );
+		$cached         = get_transient( $transient_name );
+
+		// use the cached link, if it is valid long enough.
+		if ( is_array( $cached ) && ! empty( $cached['link'] ) && absint( $cached['valid_until'] ) >= $expires ) {
+			return (string) $cached['link'];
+		}
+
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// set the fields.
+		$dropbox_obj->set_fields( $this->get_fields() );
+
+		// get the client with the given token.
+		$client = $dropbox_obj->get_client();
+
+		// bail if client could not be loaded.
+		if ( ! $client instanceof Client ) {
+			return '';
+		}
+
+		// cleanup the URL to get the path.
+		$path = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $url );
+
+		// get the temporary link.
+		try {
+			$link = $client->getTemporaryLink( $path );
+		} catch ( Exception $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error occurred during request for a temporary DropBox link:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url, 'error' );
+
+			// return empty string to use the cache instead.
+			return '';
+		}
+
+		// cache the link (with a safety margin).
+		$valid_until = $now + self::TEMPORARY_LINK_LIFETIME - MINUTE_IN_SECONDS;
+		set_transient(
+			$transient_name,
+			array(
+				'link'        => $link,
+				'valid_until' => $valid_until,
+			),
+			$valid_until - $now
+		);
+
+		// return the link.
+		return $link;
 	}
 
 	/**

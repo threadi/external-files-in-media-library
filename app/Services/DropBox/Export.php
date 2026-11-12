@@ -232,6 +232,11 @@ class Export extends Export_Base {
 		// save the Dropbox path for this file.
 		update_post_meta( $attachment_id, 'efml_dropbox_path', $result['path_lower'] );
 
+		// return the internal DropBox URL without a shared link, if the file should be saved privately.
+		if ( ! empty( $credentials['private'] ) ) {
+			return $dropbox_obj->get_name() . ( ! empty( $result['path_display'] ) ? $result['path_display'] : $dropbox_target );
+		}
+
 		// get the shared files to get the public URL of the uploaded file.
 		$client = $dropbox_obj->get_client();
 
@@ -425,5 +430,19 @@ class Export extends Export_Base {
 
 		// return the resulting response as array.
 		return json_decode( $response, true );
+	}
+
+	/**
+	 * Return whether this service could save exported files privately.
+	 *
+	 * Private files get no shared link in DropBox. They are delivered via the proxy, from its cache or via a
+	 * redirect to a temporary link of DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_private_files(): bool {
+		return true;
 	}
 }

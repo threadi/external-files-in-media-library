@@ -412,6 +412,8 @@ class Files {
 			'efml_former_export_sources',
 			'efml_export_filename',
 			'efml_export_folders',
+			'efml_private_file',
+			'efml_woocommerce_product',
 			'efml_export_queued',
 			'efml_export_failed',
 			'efml_multisite_attachment_id',
@@ -567,6 +569,30 @@ class Files {
 				<?php
 			} else {
 				echo '<code>' . esc_html( $url ) . '</code>';
+			}
+
+			// get the service of this file.
+			$service_obj  = Services::get_instance()->get_service_by_name( $external_file_obj->get_service_name() );
+			$platform_url = $service_obj instanceof Service_Base ? $service_obj->get_platform_url() : '';
+
+			$instance = $this;
+			/**
+			 * Filter the URL of the platform, where the file is saved (e.g. the website of DropBox).
+			 *
+			 * @since 6.0.0 Available since 6.0.0.
+			 * @param string $platform_url The URL (empty, if not available).
+			 * @param File $external_file_obj The external file object.
+			 * @param Files $instance The files object.
+			 */
+			$platform_url = (string) apply_filters( 'efml_file_platform_url', $platform_url, $external_file_obj, $instance );
+
+			// show the link to the platform, if available.
+			if ( '' !== $platform_url ) {
+				/* translators: %1$s will be replaced by the name of the platform (e.g. DropBox). */
+				$platform_title = sprintf( __( 'Go to %1$s', 'external-files-in-media-library' ), $service_obj instanceof Service_Base ? $service_obj->get_label() : $protocol_handler->get_title() );
+				?>
+				<br><a href="<?php echo esc_url( $platform_url ); ?>" target="_blank"><span class="dashicons dashicons-external"></span> <?php echo esc_html( $platform_title ); ?></a>
+				<?php
 			}
 			?>
 		</p>

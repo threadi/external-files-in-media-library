@@ -306,6 +306,9 @@ class Export extends Tools_Base {
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
+
+		// add the setting for private files.
+		Private_Files::get_instance()->add_settings( $settings_obj, $section, $setting_export );
 	}
 
 	/**
@@ -1028,6 +1031,12 @@ class Export extends Tools_Base {
 			// get credentials.
 			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
 
+			// get whether the file should be saved privately on this external source.
+			$private_file = $this->is_private_export( $term_id, $export_obj );
+
+			// tell the export object, whether the file should be saved privately.
+			$credentials['private'] = $private_file;
+
 			// log this event.
 			/* translators: %1$s will be replaced by the service title. */
 			Log::get_instance()->create( sprintf( __( 'Exporting file to external source %1$s.', 'external-files-in-media-library' ), '<em>' . $term_name . '</em>' ), $export_path, 'info', 2 );
@@ -1074,6 +1083,9 @@ class Export extends Tools_Base {
 
 			// mark if this file is an external file locally saved.
 			$external_file_obj->set_is_local_saved( false );
+
+			// mark if this file is saved privately on the external source.
+			$external_file_obj->set_private( $private_file );
 
 			// save the credentials on the object, if set.
 			$external_file_obj->set_fields( $fields );
@@ -1236,6 +1248,7 @@ class Export extends Tools_Base {
 			$this->cleanup_exported_file( $attachment_id );
 			delete_post_meta( $attachment_id, 'efml_former_export_sources' );
 			delete_post_meta( $attachment_id, 'efml_export_folders' );
+			delete_post_meta( $attachment_id, 'efml_private_file' );
 		}
 	}
 
@@ -1621,8 +1634,11 @@ class Export extends Tools_Base {
 				continue;
 			}
 
-			// add it to the list.
-			$list[] = '<em>' . $term->name . '</em>';
+			// get the folder, which has been used for this file on this external source.
+			$folder = $this->get_used_export_folder( $external_file_obj->get_id(), absint( $term_id ) );
+
+			// add it to the list (with the used folder, if one has been used).
+			$list[] = '<em>' . esc_html( '' !== $folder ? trailingslashit( $term->name ) . $folder : $term->name ) . '</em>';
 		}
 
 		?>
@@ -1815,7 +1831,7 @@ class Export extends Tools_Base {
 		/**
 		 * Filter the maximum number of tries to find a unique filename for an exported file.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param int $max_tries The maximum number of tries.
 		 * @param string $filename The filename WordPress would use.
 		 */
@@ -1918,8 +1934,8 @@ class Export extends Tools_Base {
 	 *
 	 * Checks:
 	 * - local files in the given upload directory.
-	 * - exported files with this filename (saved since 5.7.0).
-	 * - exported files from before 5.7.0, which have the external URL with this filename as attached file.
+	 * - exported files with this filename (saved since 6.0.0).
+	 * - exported files from before 6.0.0, which have the external URL with this filename as attached file.
 	 *
 	 * @param string $filename The filename to check.
 	 * @param string $dir The relative upload directory (e.g. "2026/11/").
@@ -2026,6 +2042,37 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Return whether files should be saved privately on the given external source.
+	 *
+	 * This requires the support of the service and the enabled option in the export settings of the external source.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int         $term_id    The term ID of the external source.
+	 * @param Export_Base $export_obj The export object of its service.
+	 *
+	 * @return bool
+	 */
+	public function is_private_export( int $term_id, Export_Base $export_obj ): bool {
+		// bail if the service does not support private files.
+		if ( ! $export_obj->supports_private_files() ) {
+			return false;
+		}
+
+		// get the setting of the external source.
+		$private = 1 === absint( get_term_meta( $term_id, 'efml_export_private', true ) );
+
+		/**
+		 * Filter whether files should be saved privately on the given external source.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $private True if files should be saved privately.
+		 * @param int $term_id The term ID of the external source.
+		 */
+		return (bool) apply_filters( 'efml_export_private', $private, $term_id );
+	}
+
+	/**
 	 * Return the placeholders for the structure of the folders.
 	 *
 	 * @return array<string,string>
@@ -2043,7 +2090,7 @@ class Export extends Tools_Base {
 		 *
 		 * Each placeholder must be replaced via the hook "efml_export_folder".
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<string,string> $placeholders List of placeholders (without "%") with their labels.
 		 */
 		return apply_filters( 'efml_export_folder_placeholders', $placeholders );
@@ -2116,7 +2163,7 @@ class Export extends Tools_Base {
 		/**
 		 * Filter the folder for an exported file.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param string $folder The folder (e.g. "2026/11").
 		 * @param int $attachment_id The attachment ID (0 for a new file, which is uploaded now).
 		 * @param int $export_time The time of the export.
@@ -2172,7 +2219,7 @@ class Export extends Tools_Base {
 			 * Filter whether the external source should be checked for existing files with the same name
 			 * before a new file is exported.
 			 *
-			 * @since 5.7.0 Available since 5.7.0.
+			 * @since 6.0.0 Available since 6.0.0.
 			 * @param bool $true True to check the external source.
 			 * @param int $term_id The ID of the external source.
 			 */
@@ -2550,7 +2597,7 @@ class Export extends Tools_Base {
 		/**
 		 * Filter whether files should be exported in background via the queue.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $true True to export in background.
 		 */
 		if ( ! apply_filters( 'efml_export_in_background', $true ) ) {

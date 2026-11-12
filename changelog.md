@@ -26,6 +26,17 @@
 - Added optional folder structure for exported files (e.g. year and month of the upload), applies to all external sources whose service supports folders (local, DropBox, FTP and the extensions)
 - The folder structure requires the setting of WordPress to organize uploads in month- and year-based folders and could be individualized via placeholders
 - Added hooks "efml_export_folder" and "efml_export_folder_placeholders" to change the folders of exported files
+- Added option "Save files privately" in the export settings of external sources, whose service supports it (DropBox and the extensions for S3, Google Cloud Storage, Google Drive and WebDAV): the files do not have to be public available on the external source
+- Private files are always delivered via the URL of your website: from the cache of the proxy if the proxy is enabled for their file type, otherwise via a redirect to a link with limited validity (e.g. a pre-signed URL)
+- Added setting for the validity of these links in the export settings, the links stay the same for this time, so browsers and caches could reuse them
+- Added temporary links of DropBox for private files
+- External files from the media library, which are used as files of downloadable products in WooCommerce, are delivered after the checks of WooCommerce: private files via a link with short validity or from the cache, public files from their external URL
+- Private files used as files of downloadable products could only be downloaded via WooCommerce, the proxy does not deliver them to visitors anymore
+- The info dialog of external files shows whether a file is private and in which products it is used as download
+- Added hooks "efml_export_private", "efml_private_files_lifetime", "efml_private_file_signed_url", "efml_proxy_allow_delivery" and "efml_woocommerce_download_lifetime"
+- The info box of external files links the platform where the file is saved, if it is known (e.g. DropBox and the extensions for S3, Google Cloud Storage and Google Drive)
+- Added hook "efml_file_platform_url" to change this link
+- The directory listing of YouTube links to YouTube, the info box of YouTube videos also
 
 ### Changed
 
@@ -45,6 +56,12 @@
 - Fixed proxy URLs resulting in 404 after enabling a proxy, if the rewrite rules have been flushed while all proxies were disabled
 - Fixed missing check for existing files with the same name on the external sources for uploads outside the backend (e.g. via REST API in the block editor, WP-CLI or cron)
 - Fixed reading of queue entries if their state is changed or they are deleted
+- Fixed download of external files in WooCommerce if they have been chosen from the media library with their proxy URL, which WooCommerce tried to load as local file
+- Fixed missing folder of exported files in the info "Exported to" of the file, if the folder structure for exports is used
+- Fixed redirect of proxy URLs to their variant with trailing slash, if the permalinks end with a slash
+- Fixed HEAD requests for proxy URLs (e.g. from link checkers or CDNs) being answered with an empty HTML document instead of the headers of the file
+- Fixed high memory usage during the import of large files from DropBox and their loading into the cache of the proxy, they are now saved directly into a local file
+- Fixed remaining empty temporary files after loading files from DropBox into the cache of the proxy
 
 ## [5.6.2] - 06.11.2026
 

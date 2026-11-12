@@ -399,7 +399,8 @@ class File {
 	 * Return whether this file must be delivered via the proxy, independent of the proxy setting of its file type.
 	 *
 	 * This is the case for files, which are not saved locally and whose URL could not be loaded by a browser,
-	 * e.g. files exported via FTP (with an "ftp://" URL) or to a local directory (with a "file://" URL).
+	 * e.g. files exported via FTP (with an "ftp://" URL) or to a local directory (with a "file://" URL), and for
+	 * files, which are saved privately on their external source.
 	 *
 	 * @return bool
 	 */
@@ -412,18 +413,62 @@ class File {
 		// get the URL of this file.
 		$url = $this->get_url( true );
 
-		// the proxy is required, if the URL is not an HTTP-URL.
-		$required = '' !== $url && ! in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true );
+		// the proxy is required, if the URL is not an HTTP-URL or the file is saved privately on its external source.
+		$required = '' !== $url && ( $this->is_private() || ! in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true ) );
 
 		/**
 		 * Filter whether the given file must be delivered via the proxy, independent of the proxy setting
 		 * of its file type.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool $required True if the proxy is required.
 		 * @param File $external_file_obj The external file object.
 		 */
 		return (bool) apply_filters( 'efml_file_proxy_required', $required, $this );
+	}
+
+	/**
+	 * Return whether this file is saved privately on its external source.
+	 *
+	 * Private files are not public available on their external source. They are always delivered via the proxy.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_private(): bool {
+		return 1 === absint( get_post_meta( $this->get_id(), 'efml_private_file', true ) );
+	}
+
+	/**
+	 * Set whether this file is saved privately on its external source.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param bool $private_file Whether the file is private (true) or not (false).
+	 *
+	 * @return void
+	 */
+	public function set_private( bool $private_file ): void {
+		// remove the marker, if the file is not private.
+		if ( ! $private_file ) {
+			$this->remove_private();
+			return;
+		}
+
+		// set in the database.
+		update_post_meta( $this->get_id(), 'efml_private_file', 1 );
+	}
+
+	/**
+	 * Remove the marker for a private file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return void
+	 */
+	public function remove_private(): void {
+		delete_post_meta( $this->get_id(), 'efml_private_file' );
 	}
 
 	/**
@@ -1091,7 +1136,7 @@ class File {
 		/**
 		 * Filter the file name to use, if this file is saved locally.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param string $file_name The file name.
 		 * @param File   $instance  The external file object.
 		 */

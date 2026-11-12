@@ -357,4 +357,45 @@ class DropboxProtocol extends externalFilesTests {
 		// reset the setting.
 		update_option( 'eml_directory_listing_hide_not_supported_file_types', 1 );
 	}
+
+	/**
+	 * Test the temporary file of a file in DropBox (e.g. for the cache of the proxy): it contains the file and no
+	 * further temporary files remain.
+	 *
+	 * @return void
+	 */
+	public function test_get_temp_file(): void {
+		$files_before = glob( trailingslashit( get_temp_dir() ) . '*' );
+
+		$tmp_file = ( new Protocol( 'dropbox/photos/red.jpg' ) )->get_temp_file( 'dropbox/photos/red.jpg', \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem() );
+
+		$this->assertIsString( $tmp_file );
+		$this->assertStringEndsWith( '.jpg', $tmp_file );
+		$this->assertSame( 'red', file_get_contents( $tmp_file ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		// only the returned file is new in the temporary directory.
+		$this->assertSame( array( $tmp_file ), array_values( array_diff( (array) glob( trailingslashit( get_temp_dir() ) . '*' ), (array) $files_before ) ) );
+		wp_delete_file( $tmp_file );
+	}
+
+	/**
+	 * Test that the import saves the files as temporary files without further temporary files.
+	 *
+	 * @return void
+	 */
+	public function test_import_leaves_no_further_temporary_files(): void {
+		$files_before = glob( trailingslashit( get_temp_dir() ) . '*' );
+
+		$tmp_files = array();
+		foreach ( @( new Protocol( 'DropBox/Photos' ) )->get_url_infos() as $file ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			$tmp_files[] = $file['tmp-file'];
+		}
+		sort( $tmp_files );
+
+		$new_files = array_values( array_diff( (array) glob( trailingslashit( get_temp_dir() ) . '*' ), (array) $files_before ) );
+		sort( $new_files );
+		$this->assertCount( 2, $tmp_files );
+		$this->assertSame( $tmp_files, $new_files );
+		array_map( 'wp_delete_file', $tmp_files );
+	}
 }

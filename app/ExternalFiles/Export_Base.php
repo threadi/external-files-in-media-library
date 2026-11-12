@@ -76,11 +76,28 @@ class Export_Base {
 	 * the complete target for the export, the deletion and the check for existing files, and create missing folders.
 	 * Services without support always get a target directly in the directory of the external source.
 	 *
-	 * @since 5.7.0 Available since 5.7.0.
+	 * @since 6.0.0 Available since 6.0.0.
 	 *
 	 * @return bool
 	 */
 	public function supports_folders(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether this service could save exported files privately.
+	 *
+	 * If true, the export dialog of the external source offers the option to save files privately. Then the
+	 * credentials given to export_file() contain "private" => true and the service must not require, that the
+	 * exported file is public available. The returned URL is only used to identify the file on the external source.
+	 * Private files are always delivered via the proxy of this plugin, either from its cache or via a redirect to a
+	 * signed URL (see Protocol_Base::get_signed_url()).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_private_files(): bool {
 		return false;
 	}
 
@@ -92,7 +109,7 @@ class Export_Base {
 	 * get a unique file name before a new file is saved and exported, so it does not overwrite
 	 * an existing file there. Return false if the check is not possible for this service.
 	 *
-	 * @since 5.7.0 Available since 5.7.0.
+	 * @since 6.0.0 Available since 6.0.0.
 	 *
 	 * @param string              $target The target path of the file on the external source.
 	 * @param array<string,mixed> $credentials The credentials to use.

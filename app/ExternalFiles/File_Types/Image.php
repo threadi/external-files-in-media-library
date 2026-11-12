@@ -176,7 +176,7 @@ class Image extends File_Types_Base {
 		 *
 		 * The external file object is given if the check is for a specific file, otherwise it is false.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param bool                                                 $enabled           True if the proxy is enabled.
 		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File|false $external_file_obj The external file object or false.
 		 */

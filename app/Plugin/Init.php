@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Private_Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -80,6 +81,7 @@ class Init {
 
 		// initialize proxy.
 		Proxy::get_instance()->init();
+		Private_Files::get_instance()->init();
 
 		// initialize schedules.
 		Schedules::get_instance()->init();

@@ -186,6 +186,12 @@ class ExportDialog {
 			$form .= '<div><label for="url">' . __( 'URL:', 'external-files-in-media-library' ) . '</label><input type="url" placeholder="https://example.com" name="url" id="url" value="' . esc_url( $url ) . '">' . __( 'This must be the URL where files uploaded to this external source are available.', 'external-files-in-media-library' ) . '</div>';
 		}
 
+		// -> the option to save files privately, if supported by the service.
+		if ( $listing_obj->get_export_object()->supports_private_files() ) {
+			$private = absint( get_term_meta( $term_id, 'efml_export_private', true ) );
+			$form   .= '<div><label for="private">' . __( 'Save files privately:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="private" id="private" value="1"' . ( $private > 0 ? ' checked="checked"' : '' ) . '> ' . __( 'Files are not public available on this external source. Your website delivers them via its own URL, either from its cache, if the proxy is enabled for the file type, or via a redirect to a link with limited validity. Applies to newly exported files.', 'external-files-in-media-library' ) . '</div>';
+		}
+
 		// -> the term ID.
 		$form .= '<input type="hidden" name="term_id" value="' . $term_id . '">';
 
@@ -335,6 +341,16 @@ class ExportDialog {
 
 			// save URL.
 			update_term_meta( $term_id, 'efml_export_url', $url );
+		}
+
+		// save the option to save files privately, if supported by the service.
+		if ( $listing_obj->get_export_object()->supports_private_files() ) {
+			$private = absint( filter_input( INPUT_POST, 'private', FILTER_SANITIZE_NUMBER_INT ) );
+			if ( 1 === $private ) {
+				update_term_meta( $term_id, 'efml_export_private', 1 );
+			} else {
+				delete_term_meta( $term_id, 'efml_export_private' );
+			}
 		}
 
 		// get the state.

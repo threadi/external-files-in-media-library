@@ -293,7 +293,7 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 		 *
 		 * Only add platforms which allow the permanent usage of their image URLs.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<string,string> $list List of platforms (slug => label).
 		 */
 		return apply_filters( 'efml_instant_images_possible_providers', $list );
@@ -310,7 +310,7 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 		/**
 		 * Filter the list of platforms of Instant Images, whose images must not be delivered via proxy.
 		 *
-		 * @since 5.7.0 Available since 5.7.0.
+		 * @since 6.0.0 Available since 6.0.0.
 		 * @param array<int,string> $list List of platform slugs.
 		 */
 		return apply_filters( 'efml_instant_images_providers_without_proxy', $list );
