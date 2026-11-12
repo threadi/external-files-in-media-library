@@ -646,6 +646,25 @@ class Ftp extends Protocol_Base {
 			return $tmp_file;
 		}
 
+		// download the file directly into the tmp file via other remote connections (e.g. FTP sockets), if possible.
+		$wp_filesystem->delete( $tmp_file_name );
+		$downloaded = Helper::download_from_remote_filesystem( $ftp_filesystem, $file_path, $tmp_file );
+		if ( ! is_null( $downloaded ) ) {
+			// bail if the file could not be downloaded or is empty.
+			if ( ! $downloaded || 0 === wp_filesize( $tmp_file ) ) {
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
+
 		// get content of the file.
 		$content = $ftp_filesystem->get_contents( $file_path );
 

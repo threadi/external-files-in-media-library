@@ -62,6 +62,7 @@
 - Fixed HEAD requests for proxy URLs (e.g. from link checkers or CDNs) being answered with an empty HTML document instead of the headers of the file
 - Fixed high memory usage during the import of large files from DropBox and their loading into the cache of the proxy, they are now saved directly into a local file
 - Fixed remaining empty temporary files after loading files from DropBox into the cache of the proxy
+- Fixed high memory usage during the import of large files via SFTP and via FTP without native FTP connection (e.g. FTP sockets), they are now saved directly into a local file
 
 ## [5.6.2] - 06.11.2026
 

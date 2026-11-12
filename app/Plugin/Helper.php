@@ -593,6 +593,60 @@ class Helper {
 	}
 
 	/**
+	 * Download the given file from the given remote filesystem (FTP, FTPS or SFTP) into the given local file.
+	 *
+	 * The file is transferred in parts, so it is not loaded completely into memory (like with
+	 * get_contents() of WordPress).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param WP_Filesystem_Base $filesystem The remote filesystem.
+	 * @param string             $remote_file The path of the file on the remote filesystem.
+	 * @param string             $local_file The absolute path of the local file.
+	 *
+	 * @return bool|null True if the file has been downloaded, false if the download failed, null if the filesystem
+	 *                   does not support this (then the caller should use get_contents()).
+	 */
+	public static function download_from_remote_filesystem( WP_Filesystem_Base $filesystem, string $remote_file, string $local_file ): ?bool {
+		$result = null;
+
+		// use the native FTP connection.
+		if ( $filesystem instanceof \WP_Filesystem_FTPext && $filesystem->link instanceof \FTP\Connection ) {
+			$result = @ftp_get( $filesystem->link, $local_file, $remote_file, FTP_BINARY ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+
+		// use the SFTP stream of the SSH2 connection.
+		if ( $filesystem instanceof \WP_Filesystem_SSH2 ) {
+			$result = @copy( $filesystem->sftp_path( $remote_file ), $local_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions
+		}
+
+		// use the FTP sockets connection.
+		if ( $filesystem instanceof \WP_Filesystem_ftpsockets ) {
+			$handle = fopen( $local_file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			if ( false === $handle ) {
+				return false;
+			}
+			mbstring_binary_safe_encoding();
+			$result = (bool) $filesystem->ftp->fget( $handle, $remote_file );
+			reset_mbstring_encoding();
+			fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+
+		// bail if the filesystem is not supported.
+		if ( is_null( $result ) ) {
+			return null;
+		}
+
+		// remove the incomplete file, if the download failed.
+		if ( ! $result && file_exists( $local_file ) ) {
+			wp_delete_file( $local_file );
+		}
+
+		// return the result.
+		return $result;
+	}
+
+	/**
 	 * Return the WP Filesystem object.
 	 *
 	 * @param string $type The type to force.

@@ -319,29 +319,51 @@ class Sftp extends Protocol_Base {
 			return array();
 		}
 
-		// get the contents of the file.
-		$file_content = $ssh_connection->get_contents( $file_path );
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// bail if file content could not be read.
-		if ( ! $file_content ) {
+		// set the file as tmp-file for import with appropriate file extension.
+		$tmp_file_name       = wp_tempnam();
+		$results['tmp-file'] = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+		// remove the file of "wp_tempnam()", if it is not used.
+		if ( $results['tmp-file'] !== $tmp_file_name ) {
+			$wp_filesystem->delete( $tmp_file_name );
+		}
+
+		// download the file directly into the tmp file, so it is not loaded completely into memory.
+		$downloaded = Helper::download_from_remote_filesystem( $ssh_connection, $file_path, $results['tmp-file'] );
+
+		// bail if the file could not be downloaded or is empty.
+		if ( false === $downloaded || ( true === $downloaded && 0 === wp_filesize( $results['tmp-file'] ) ) ) {
+			// remove the incomplete tmp file.
+			if ( $wp_filesystem->exists( $results['tmp-file'] ) ) {
+				$wp_filesystem->delete( $results['tmp-file'] );
+			}
+
 			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return array();
 		}
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// set the file as tmp-file for import.
-		$results['tmp-file'] = wp_tempnam();
-
-		// set the file as tmp-file for import with appropriate file extension.
-		$results['tmp-file'] = str_replace( '.tmp', '', $results['tmp-file'] . '.' . $mime_type['ext'] );
-
-		// and save the file there.
+		// load the file via its content, if the connection could not download it directly.
 		try {
-			$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+			if ( is_null( $downloaded ) ) {
+				// get the contents of the file.
+				$file_content = $ssh_connection->get_contents( $file_path );
+
+				// bail if file content could not be read.
+				if ( ! $file_content ) {
+					Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+
+					// return empty array as we got not the file.
+					return array();
+				}
+
+				// and save the file there.
+				$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+			}
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
