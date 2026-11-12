@@ -18,6 +18,7 @@ use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
 use Error;
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
@@ -1914,5 +1915,140 @@ class DropBox extends Service_Base implements Service {
 	 */
 	private function is_api_defined_via_constants(): bool {
 		return ! empty( $this->get_constant_values() );
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the client for the connection test.
+	 *
+	 * @return Client
+	 * @throws Exception If no client could be loaded (e.g. without access token).
+	 */
+	private function get_connection_test_client(): Client {
+		// get the client.
+		$client = $this->get_client();
+
+		// bail if no client could be loaded.
+		if ( ! $client instanceof Client ) {
+			throw new Exception( esc_html__( 'Your website is not connected with DropBox. Connect it in the settings first.', 'external-files-in-media-library' ) );
+		}
+
+		// return the client.
+		return $client;
+	}
+
+	/**
+	 * Return the path of the directory for the connection test in DropBox.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_path(): string {
+		// get the directory and remove the mark of this service like the export does it (e.g. "DropBox/Photos/" results in "/Photos/").
+		$directory = (string) preg_replace( '#^DropBox#i', '', $this->get_connection_test_directory() );
+
+		// return the path with leading and trailing slash.
+		return '/' . trim( $directory, '/' ) . ( '' !== trim( $directory, '/' ) ? '/' : '' );
+	}
+
+	/**
+	 * List the directory in DropBox for the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_list(): string {
+		// get the client.
+		$client = $this->get_connection_test_client();
+
+		// list the directory.
+		try {
+			$client->listFolder( '/' === $this->get_connection_test_path() ? '' : $this->get_connection_test_path() );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The directory could not be read in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The directory could not be read in DropBox. Check the log for details.', 'external-files-in-media-library' ) );
+		}
+
+		// return the message.
+		return __( 'The directory could be read.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Upload the test file to DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		// get the client.
+		$client = $this->get_connection_test_client();
+
+		// upload the file.
+		try {
+			$client->upload( $this->get_connection_test_path() . $file_name, (string) Helper::get_wp_filesystem()->get_contents( $local_file ) );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The test file could not be uploaded to DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The test file could not be uploaded to DropBox. Check the permissions of the app in DropBox and the log for details.', 'external-files-in-media-library' ) );
+		}
+
+		// return the path of the file like the export does it.
+		return 'DropBox' . $this->get_connection_test_path() . $file_name;
+	}
+
+	/**
+	 * Check whether a public link could be created for the test file, like the export does it for public files.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL of the uploaded file.
+	 *
+	 * @return bool|null
+	 */
+	protected function test_connection_public( string $url ): ?bool {
+		try {
+			$shared_file_data = $this->get_connection_test_client()->createSharedLinkWithSettings( (string) preg_replace( '#^DropBox#i', '', $url ) );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'No public link could be created for the test file in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			return false;
+		}
+
+		// return whether a link has been created.
+		return ! empty( $shared_file_data['url'] );
+	}
+
+	/**
+	 * Delete the test file in DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		try {
+			$this->get_connection_test_client()->delete( $this->get_connection_test_path() . $file_name );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The test file could not be deleted in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The test file could not be deleted in DropBox.', 'external-files-in-media-library' ) );
+		}
 	}
 }

@@ -101,6 +101,9 @@ class Init {
 		// init the protection of external sources on copies of this website.
 		Site_Copy::get_instance()->init();
 
+		// initialize the connection test of services.
+		Connection_Test::get_instance()->init();
+
 		// initialize the network settings.
 		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();
 

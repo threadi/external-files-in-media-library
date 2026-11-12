@@ -37,6 +37,8 @@
 - The info box of external files links the platform where the file is saved, if it is known (e.g. DropBox and the extensions for S3, Google Cloud Storage and Google Drive)
 - Added hook "efml_file_platform_url" to change this link
 - The directory listing of YouTube links to YouTube, the info box of YouTube videos also
+- Added connection test ("Run connection test") in the directory listing of all services, which could be used to export files (local directories, DropBox, FTP, FTPS and the extensions for AWS S3-compatible platforms, Google Cloud Storage, Google Drive and WebDAV): connect and list the directory, upload a test file, check its public availability and delete it again, each step is logged
+- Added hook "efml_connection_test_file_name" to change the name of the test file
 
 ### Changed
 

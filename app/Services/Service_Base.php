@@ -22,13 +22,23 @@ use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use Exception;
+use Throwable;
 use WP_User;
 
 /**
  * Object to handle support for this platform.
  */
 class Service_Base extends Directory_Listing_Base {
+	/**
+	 * The directory, in which the connection test saves its test file.
+	 *
+	 * @var string
+	 */
+	private string $connection_test_directory = '';
+
 	/**
 	 * Slug of settings tab.
 	 *
@@ -412,6 +422,353 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_platform_url(): string {
 		return '';
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * Services, which could be used to export files, should support it.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return false;
+	}
+
+	/**
+	 * Run the complete connection test with the actual fields.
+	 *
+	 * Services return the list of their steps (see get_connection_test_steps()) after running them.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<int,array<string,mixed>> List of steps with "title", "success", "skipped" and "message".
+	 */
+	public function run_connection_test(): array {
+		// get the URL for the log entries.
+		$log_url = $this->get_directory();
+
+		// log the start.
+		$this->log_connection_test_start( $log_url );
+
+		// get the steps.
+		$steps = $this->get_connection_test_steps();
+
+		// step 1: connect and list the directory.
+		$steps['list']['skipped'] = false;
+		try {
+			$steps['list']['message'] = $this->test_connection_list();
+			$steps['list']['success'] = true;
+		} catch ( Throwable $e ) {
+			$steps['list']['message'] = $e->getMessage();
+			return $this->finish_connection_test( $steps, $log_url );
+		}
+
+		// step 2: upload a test file.
+		$file_name                  = $this->get_connection_test_file_name();
+		$local_file                 = $this->create_connection_test_file( $file_name );
+		$steps['upload']['skipped'] = false;
+		try {
+			$url                        = $this->test_connection_upload( $local_file, $file_name );
+			$steps['upload']['success'] = true;
+			/* translators: %1$s will be replaced by a file name. */
+			$steps['upload']['message'] = sprintf( __( 'The test file %1$s has been uploaded.', 'external-files-in-media-library' ), $url );
+		} catch ( Throwable $e ) {
+			$this->delete_connection_test_file( $local_file );
+			$steps['upload']['message'] = $e->getMessage();
+			return $this->finish_connection_test( $steps, $log_url );
+		}
+
+		// remove the local test file.
+		$this->delete_connection_test_file( $local_file );
+
+		// step 3: check the public availability.
+		try {
+			$public = $this->test_connection_public( $url );
+		} catch ( Throwable $e ) {
+			$public = false;
+		}
+		if ( is_null( $public ) ) {
+			$steps['public']['message'] = __( 'Not necessary, as files of this service are delivered via your website.', 'external-files-in-media-library' );
+		} else {
+			$steps['public']['skipped'] = false;
+			$steps['public']['success'] = $public;
+			/* translators: %1$s will be replaced by a URL. */
+			$steps['public']['message'] = $public ? sprintf( __( 'The test file is public available under %1$s.', 'external-files-in-media-library' ), $url ) : __( 'The test file is not public available. Files could be imported and exported with the option "Save files privately", but not exported as public files.', 'external-files-in-media-library' );
+		}
+
+		// step 4: delete the test file.
+		$steps['delete']['skipped'] = false;
+		try {
+			$this->test_connection_delete( $url, $file_name );
+			$steps['delete']['success'] = true;
+			$steps['delete']['message'] = __( 'The test file has been deleted.', 'external-files-in-media-library' );
+		} catch ( Throwable $e ) {
+			/* translators: %1$s will be replaced by a file name. */
+			$steps['delete']['message'] = $e->getMessage() . ' ' . sprintf( __( 'Please delete the test file %1$s manually.', 'external-files-in-media-library' ), $file_name );
+		}
+
+		// return the result.
+		return $this->finish_connection_test( $steps, $log_url );
+	}
+
+	// phpcs:disable Squiz.Commenting.FunctionComment.InvalidNoReturn
+	/**
+	 * Connect and list the directory for the connection test.
+	 *
+	 * Services, which support the connection test, must override this.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string The message for this step.
+	 * @throws Exception If the step failed (its message is shown).
+	 */
+	protected function test_connection_list(): string {
+		throw new Exception( esc_html__( 'This service does not support the connection test.', 'external-files-in-media-library' ) );
+	}
+	// phpcs:enable Squiz.Commenting.FunctionComment.InvalidNoReturn
+
+	// phpcs:disable Squiz.Commenting.FunctionComment.InvalidNoReturn
+	/**
+	 * Upload the given local test file for the connection test and return its URL.
+	 *
+	 * Services, which support the connection test, must override this.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string The URL (or path) of the uploaded file.
+	 * @throws Exception If the step failed (its message is shown).
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		throw new Exception( esc_html__( 'This service does not support the connection test.', 'external-files-in-media-library' ) );
+	}
+	// phpcs:enable Squiz.Commenting.FunctionComment.InvalidNoReturn
+
+	/**
+	 * Return whether the uploaded test file is public available.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL of the uploaded file.
+	 *
+	 * @return bool|null Null, if the check is not necessary for this service (e.g. as its files are always delivered via the proxy).
+	 */
+	protected function test_connection_public( string $url ): ?bool {
+		return null;
+	}
+
+	/**
+	 * Delete the uploaded test file of the connection test.
+	 *
+	 * Services, which support the connection test, must override this.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the step failed (its message is shown).
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		throw new Exception( esc_html__( 'This service does not support the connection test.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Set the directory, in which the connection test should save its test file (e.g. the opened directory).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $directory The directory (as used in the directory listing of this service).
+	 *
+	 * @return void
+	 */
+	public function set_connection_test_directory( string $directory ): void {
+		$this->connection_test_directory = $directory;
+	}
+
+	/**
+	 * Return the directory, in which the connection test should save its test file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string Empty string, if no directory is set (then the main directory of the connection is used).
+	 */
+	protected function get_connection_test_directory(): string {
+		return $this->connection_test_directory;
+	}
+
+	/**
+	 * Return the default steps of a connection test, all marked as skipped.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	protected function get_connection_test_steps(): array {
+		return array(
+			'list'   => array(
+				'title'   => __( 'Connect and list the directory', 'external-files-in-media-library' ),
+				'success' => false,
+				'skipped' => true,
+				'message' => '',
+			),
+			'upload' => array(
+				'title'   => __( 'Upload a test file', 'external-files-in-media-library' ),
+				'success' => false,
+				'skipped' => true,
+				'message' => '',
+			),
+			'public' => array(
+				'title'   => __( 'Check the public availability of the test file', 'external-files-in-media-library' ),
+				'success' => false,
+				'skipped' => true,
+				'message' => '',
+			),
+			'delete' => array(
+				'title'   => __( 'Delete the test file', 'external-files-in-media-library' ),
+				'success' => false,
+				'skipped' => true,
+				'message' => '',
+			),
+		);
+	}
+
+	/**
+	 * Return the name for a new test file of the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	protected function get_connection_test_file_name(): string {
+		// create the name.
+		$file_name = 'efml-connection-test-' . wp_generate_password( 12, false ) . '.txt';
+
+		$instance = $this;
+		/**
+		 * Filter the name of the test file of the connection test.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $file_name The file name.
+		 * @param Service_Base $instance The service object.
+		 */
+		return (string) apply_filters( 'efml_connection_test_file_name', $file_name, $instance );
+	}
+
+	/**
+	 * Return the content of the test file of the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	protected function get_connection_test_file_content(): string {
+		return __( 'This is a test file of the plugin "External Files in Media Library". It could be deleted.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Create a local test file for the connection test and return its path.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $file_name The name of the file.
+	 *
+	 * @return string
+	 */
+	protected function create_connection_test_file( string $file_name ): string {
+		// create the file in a new temporary directory, so it has the given name.
+		$directory = trailingslashit( get_temp_dir() ) . 'efml-connection-test-' . wp_generate_password( 8, false ) . '/';
+		wp_mkdir_p( $directory );
+		$file = $directory . $file_name;
+
+		// save the content.
+		Helper::get_wp_filesystem()->put_contents( $file, $this->get_connection_test_file_content() );
+
+		// return the path.
+		return $file;
+	}
+
+	/**
+	 * Delete the local test file of the connection test with its temporary directory.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $file The path of the file.
+	 *
+	 * @return void
+	 */
+	protected function delete_connection_test_file( string $file ): void {
+		$wp_filesystem = Helper::get_wp_filesystem();
+		$wp_filesystem->delete( $file );
+		$wp_filesystem->rmdir( dirname( $file ) );
+	}
+
+	/**
+	 * Log the start of the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $log_url The URL for the log entries.
+	 *
+	 * @return void
+	 */
+	protected function log_connection_test_start( string $log_url ): void {
+		/* translators: %1$s will be replaced by the name of the service. */
+		Log::get_instance()->create( sprintf( __( 'Starting the connection test for %1$s.', 'external-files-in-media-library' ), '<em>' . esc_html( $this->get_label() ) . '</em>' ), $log_url, 'info' );
+	}
+
+	/**
+	 * Log the results of the connection test and return the steps as list.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param array<string,array<string,mixed>> $steps   The steps.
+	 * @param string                            $log_url The URL for the log entries.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	protected function finish_connection_test( array $steps, string $log_url ): array {
+		foreach ( $steps as $step ) {
+			// bail if step has been skipped.
+			if ( $step['skipped'] ) {
+				continue;
+			}
+
+			// log the result.
+			Log::get_instance()->create( esc_html( $step['title'] ) . ': ' . esc_html( $step['message'] ), $log_url, $step['success'] ? 'success' : 'error' );
+		}
+
+		// return the steps as list.
+		return array_values( $steps );
+	}
+
+	/**
+	 * Return global actions.
+	 *
+	 * Adds the complete connection test, if the service supports it.
+	 *
+	 * @return array<int,array<string,string>>
+	 */
+	protected function get_global_actions(): array {
+		// get the actions of the directory listing.
+		$actions = parent::get_global_actions();
+
+		// add the connection test, if supported.
+		if ( $this->supports_connection_test() ) {
+			$actions[] = array(
+				'action' => 'efml_connection_test( "' . $this->get_name() . '", config.fields, config.term, actualDirectoryPath );',
+				'label'  => __( 'Run connection test', 'external-files-in-media-library' ),
+			);
+		}
+
+		// return the resulting list.
+		return $actions;
 	}
 
 	/**

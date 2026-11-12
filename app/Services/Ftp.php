@@ -18,6 +18,7 @@ use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -918,5 +919,156 @@ class Ftp extends Service_Base implements Service {
 	 */
 	public function get_export_object(): Export_Base|false {
 		return Export::get_instance();
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the URL of the directory for the connection test.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_url(): string {
+		// use the actual directory, if it is an FTP-URL.
+		$url = $this->get_connection_test_directory();
+
+		// otherwise use the server from the fields.
+		if ( 0 !== stripos( $url, 'ftp://' ) && 0 !== stripos( $url, 'ftps://' ) && 0 !== stripos( $url, 'sftp://' ) ) {
+			$fields = $this->get_fields();
+			$url    = ! empty( $fields['server']['value'] ) && is_string( $fields['server']['value'] ) ? $fields['server']['value'] : '';
+
+			// prepend the URL with ftp:// if that is not given.
+			if ( '' !== $url && 0 !== stripos( $url, 'ftp://' ) && 0 !== stripos( $url, 'ftps://' ) && 0 !== stripos( $url, 'sftp://' ) ) {
+				$url = 'ftp://' . $url;
+			}
+		}
+
+		// return the URL with trailing slash.
+		return trailingslashit( $url );
+	}
+
+	/**
+	 * Return the FTP connection for the connection test.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return WP_Filesystem_FTPext
+	 * @throws Exception If the connection failed.
+	 */
+	private function get_connection_test_connection( string $url ): WP_Filesystem_FTPext {
+		// get the protocol handler for this URL.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+		// bail if handler is not FTP (e.g. for SFTP, which could not be used for exports).
+		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+			throw new Exception( esc_html__( 'Only FTP and FTPS connections could be tested, as only they could be used to export files.', 'external-files-in-media-library' ) );
+		}
+
+		// set the login.
+		$protocol_handler_obj->set_fields( $this->get_fields() );
+
+		// get the FTP-connection.
+		$ftp_connection = $protocol_handler_obj->get_connection( $url );
+
+		// bail if connection failed.
+		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+			throw new Exception( esc_html__( 'The connection to the FTP server failed. Check the server and the credentials.', 'external-files-in-media-library' ) );
+		}
+
+		// return the connection.
+		return $ftp_connection;
+	}
+
+	/**
+	 * Return the path of the given URL.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_path( string $url ): string {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		return '' !== $path ? $path : '/';
+	}
+
+	/**
+	 * Connect to the FTP server and list the directory for the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_list(): string {
+		// get the URL.
+		$url = $this->get_connection_test_url();
+
+		// bail if no server is set.
+		if ( '/' === $url ) {
+			throw new Exception( esc_html__( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
+		}
+
+		// get the connection.
+		$ftp_connection = $this->get_connection_test_connection( $url );
+
+		// bail if the directory could not be read.
+		if ( false === @$ftp_connection->dirlist( $this->get_connection_test_path( $url ) ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The directory %1$s could not be read on the FTP server.', 'external-files-in-media-library' ), $this->get_connection_test_path( $url ) ) ) );
+		}
+
+		// return the message.
+		return __( 'The directory could be read.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Upload the test file to the FTP server.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		// get the URL and the connection.
+		$url            = $this->get_connection_test_url();
+		$ftp_connection = $this->get_connection_test_connection( $url );
+
+		// upload the file.
+		if ( ! @$ftp_connection->put_contents( $this->get_connection_test_path( $url ) . $file_name, (string) Helper::get_wp_filesystem()->get_contents( $local_file ) ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			throw new Exception( esc_html__( 'The test file could not be saved on the FTP server. Check the permissions of the directory.', 'external-files-in-media-library' ) );
+		}
+
+		// return the URL of the file.
+		return $url . $file_name;
+	}
+
+	/**
+	 * Delete the test file from the FTP server.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		if ( ! Export::get_instance()->delete_exported_file( $url, array( 'fields' => $this->get_fields() ), 0 ) ) {
+			throw new Exception( esc_html__( 'The test file could not be deleted.', 'external-files-in-media-library' ) );
+		}
 	}
 }

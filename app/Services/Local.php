@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use Exception;
 use easyDirectoryListingForWordPress\Init;
 use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Page;
@@ -224,7 +225,120 @@ class Local extends Service_Base implements Service {
 				'action' => 'efml_save_as_directory( "local", actualDirectoryPath, "", "", "" );',
 				'label'  => __( 'Save this directory as your external source', 'external-files-in-media-library' ),
 			),
+			array(
+				'action' => 'efml_connection_test( "local", {}, config.term, actualDirectoryPath );',
+				'label'  => __( 'Run connection test', 'external-files-in-media-library' ),
+			),
 		);
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the directory of the connection test as local path.
+	 *
+	 * @return string
+	 * @throws Exception If no directory is set.
+	 */
+	private function get_connection_test_path(): string {
+		// get the directory.
+		$directory = Helper::get_local_path_from_url( $this->get_connection_test_directory() );
+
+		// bail if no directory is set.
+		if ( '' === $directory ) {
+			throw new Exception( esc_html__( 'Open the directory to test first.', 'external-files-in-media-library' ) );
+		}
+
+		// return the directory.
+		return trailingslashit( $directory );
+	}
+
+	/**
+	 * Check the directory for the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 * @throws Exception If the directory could not be used.
+	 */
+	protected function test_connection_list(): string {
+		// get the directory.
+		$directory = $this->get_connection_test_path();
+
+		// bail if the directory is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $directory ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The directory %1$s is not located in the allowed directory for local files.', 'external-files-in-media-library' ), $directory ) ) );
+		}
+
+		// get the WP filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// bail if the directory does not exist.
+		if ( ! $wp_filesystem->is_dir( $directory ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The directory %1$s does not exist.', 'external-files-in-media-library' ), $directory ) ) );
+		}
+
+		// bail if the directory is not writable.
+		if ( ! $wp_filesystem->is_writable( $directory ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The directory %1$s is not writable for WordPress. Check its permissions.', 'external-files-in-media-library' ), $directory ) ) );
+		}
+
+		// return the message.
+		return __( 'The directory could be read.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Copy the test file into the directory.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string
+	 * @throws Exception If the file could not be copied.
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		// get the target.
+		$target = $this->get_connection_test_path() . $file_name;
+
+		// copy the file.
+		if ( ! Helper::get_wp_filesystem()->copy( $local_file, $target ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The test file could not be saved as %1$s.', 'external-files-in-media-library' ), $target ) ) );
+		}
+
+		// return the URL like the export does it.
+		return 'file://' . $target;
+	}
+
+	/**
+	 * Delete the test file from the directory.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the file could not be deleted.
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		if ( ! Export::get_instance()->delete_exported_file( $url, array(), 0 ) ) {
+			throw new Exception( esc_html__( 'The test file could not be deleted.', 'external-files-in-media-library' ) );
+		}
 	}
 
 	/**
