@@ -29,6 +29,13 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	protected string $label = 'AWS S3-compatible';
 
 	/**
+	 * The features of the service plugin, which are shown on the tiles before it is installed.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $plugin_features = array( 'sync', 'export', 'private', 'constants' );
+
+	/**
 	 * Set the configuration for the external source of this service plugin.
 	 *
 	 * @var array<string,string>
@@ -115,5 +122,14 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 			. '</ul>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return 'AWS, Amazon, S3, CloudFront, Cloudflare R2, Backblaze, DigitalOcean Spaces, Hetzner, IONOS, OVHcloud, Scaleway, Wasabi, MinIO, object storage, bucket, CDN, cloud';
 	}
 }

@@ -123,4 +123,13 @@ class Csv extends Url_List_Base {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'CSV, list, URL list, spreadsheet', 'search terms for the CSV service, separated by commas', 'external-files-in-media-library' );
+	}
 }

@@ -20,7 +20,7 @@ FTP, SFTP und lokale Verzeichnisse sind ohnehin nicht über eine Browser-URL err
 
 In der Mediathek und im Beitragsinhalt steht immer die feste URL der Website, z. B. `https://example.com/emlproxy/datei.pdf`. Suchmaschinen und Besucher sehen nur diese URL.
 
-* **Proxy für den Dateityp aktiviert** (Einstellungen → Dateitypen): Die Website lädt die Datei einmal in ihren Cache und liefert sie selbst aus. Für Suchmaschinen ist das der sicherste Weg.
+* **Proxy für den Dateityp aktiviert** (Einstellungen → Auslieferung): Die Website lädt die Datei einmal in ihren Cache und liefert sie selbst aus. Für Suchmaschinen ist das der sicherste Weg.
 * **Proxy für den Dateityp deaktiviert:** Die Website leitet auf einen Link mit begrenzter Gültigkeit weiter. Die Datei kommt direkt vom Anbieter, die Website überträgt sie nicht selbst. Kann der Dienst keine solchen Links erzeugen, wird der Cache genutzt.
 * Bestimmte Bildgrößen (z. B. `-150x150`) kommen immer aus dem Cache.
 

@@ -29,6 +29,13 @@ class GoogleCloudStorage extends Service_Plugin_Base implements Service {
 	protected string $label = 'Google Cloud Storage';
 
 	/**
+	 * The features of the service plugin, which are shown on the tiles before it is installed.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $plugin_features = array( 'sync', 'export', 'private', 'constants' );
+
+	/**
 	 * Set the configuration for the external source of this service plugin.
 	 *
 	 * @var array<string,string>
@@ -99,5 +106,14 @@ class GoogleCloudStorage extends Service_Plugin_Base implements Service {
 			'<p>' . __( 'It will enable you to use files from Google Cloud Storage in your WordPress, export them there, and synchronize them.', 'external-files-in-media-library' ) . '</p>',
 			'<p>' . __( 'You can deactivate and uninstall the plugin at any time. However, this will remove the associated files from your media library.', 'external-files-in-media-library' ) . '</p>',
 		);
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return 'Google, Google Cloud, GCS, bucket, cloud';
 	}
 }

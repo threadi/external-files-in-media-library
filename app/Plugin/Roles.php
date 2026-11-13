@@ -84,8 +84,8 @@ class Roles {
 			return;
 		}
 
-		// get the permission tab.
-		$permissions_tab = $settings_page->get_tab( 'eml_permissions' );
+		// get the permission tab (a sub-tab of the advanced tab).
+		$permissions_tab = Settings::get_instance()->get_tab( 'eml_permissions' );
 
 		// bail if tab could not be found.
 		if ( ! $permissions_tab instanceof Tab ) {

@@ -2051,4 +2051,13 @@ class DropBox extends Service_Base implements Service {
 			throw new Exception( esc_html__( 'The test file could not be deleted in DropBox.', 'external-files-in-media-library' ) );
 		}
 	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'Dropbox, cloud', 'search terms for the Dropbox service, separated by commas', 'external-files-in-media-library' );
+	}
 }

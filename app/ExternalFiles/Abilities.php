@@ -829,6 +829,16 @@ class Abilities {
 												'type'     => array( 'type' => 'string' ),
 												'required' => array( 'type' => 'boolean' ),
 												'defined_via_constant' => array( 'type' => 'boolean' ),
+												'options'  => array(
+													'type' => 'array',
+													'items' => array(
+														'type'       => 'object',
+														'properties' => array(
+															'value' => array( 'type' => 'string' ),
+															'label' => array( 'type' => 'string' ),
+														),
+													),
+												),
 											),
 										),
 									),
@@ -2267,6 +2277,12 @@ class Abilities {
 				return $this->get_error( 'efml_invalid_field', sprintf( __( 'The value of the field %1$s must be a string.', 'external-files-in-media-library' ), sanitize_key( (string) $key ) ), 400 );
 			}
 
+			// bail if the value is not one of the connections defined via constants.
+			if ( Service_Base::CONNECTION_FIELD === $key && isset( $fields[ $key ]['options'] ) && is_array( $fields[ $key ]['options'] ) && ! in_array( (string) $value, array_map( fn( $option ) => is_array( $option ) ? $this->get_scalar_as_string( $option['value'] ?? '' ) : '', $fields[ $key ]['options'] ), true ) ) {
+				/* translators: %1$s will be replaced by a field name. */
+				return $this->get_error( 'efml_invalid_field', sprintf( __( 'The value of the field %1$s is not one of its options.', 'external-files-in-media-library' ), $key ), 400 );
+			}
+
 			// set the value.
 			$fields[ $key ]['value'] = (string) $value;
 		}
@@ -2299,8 +2315,8 @@ class Abilities {
 				return $this->get_error( 'efml_login_failed', $this->get_error_text( $this->get_errors_since( $last_log_id ), $this->get_service_error_text( $service_obj, __( 'The connection to the external source failed. Check the directory and the credentials.', 'external-files-in-media-library' ), $error_offset ) ), 400 );
 			}
 
-			// save the external source.
-			$term_id = Taxonomy::get_instance()->add( $service_obj->get_name(), $directory, $fields );
+			// save the external source without the values of constants, which are set again on each usage.
+			$term_id = Taxonomy::get_instance()->add( $service_obj->get_name(), $directory, $service_obj instanceof Service_Base ? $service_obj->remove_constant_values_from_fields( $fields ) : $fields );
 		} catch ( Throwable $e ) {
 			return $this->get_error( 'efml_source_not_saved', wp_strip_all_tags( $e->getMessage() ), 500 );
 		} finally {
@@ -3790,13 +3806,33 @@ class Abilities {
 		$fields = array();
 		foreach ( $service_fields as $name => $field ) {
 			// add the field without its value.
-			$fields[] = array(
+			$entry = array(
 				'name'                 => (string) $name,
 				'label'                => wp_strip_all_tags( $this->get_scalar_as_string( $field['label'] ?? '' ) ),
 				'type'                 => $this->get_scalar_as_string( $field['type'] ?? 'text' ),
 				'required'             => empty( $field['not_required'] ) && empty( $field['constant'] ),
 				'defined_via_constant' => ! empty( $field['constant'] ),
 			);
+
+			// add the connections defined via constants as options.
+			if ( Service_Base::CONNECTION_FIELD === $name && isset( $field['options'] ) && is_array( $field['options'] ) ) {
+				$entry['options'] = array();
+				foreach ( $field['options'] as $option ) {
+					// bail if the option is not an array.
+					if ( ! is_array( $option ) ) {
+						continue;
+					}
+
+					// add the option.
+					$entry['options'][] = array(
+						'value' => $this->get_scalar_as_string( $option['value'] ?? '' ),
+						'label' => wp_strip_all_tags( $this->get_scalar_as_string( $option['label'] ?? '' ) ),
+					);
+				}
+			}
+
+			// add the field.
+			$fields[] = $entry;
 		}
 
 		// return the fields.

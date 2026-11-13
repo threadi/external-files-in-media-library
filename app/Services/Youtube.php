@@ -1226,4 +1226,13 @@ class Youtube extends Service_Base implements Service {
 		// replace the base URL.
 		return str_replace( $uploads['baseurl'] . '/', '', $url );
 	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'YouTube, video, channel', 'search terms for the YouTube service, separated by commas', 'external-files-in-media-library' );
+	}
 }

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Screen;
 
 /**
@@ -55,6 +56,92 @@ class Help_System {
 	 */
 	public function init(): void {
 		add_action( 'current_screen', array( $this, 'add_help' ) );
+		add_filter( 'efml_help_tabs', array( $this, 'add_overview' ), 5 );
+	}
+
+	/**
+	 * Add the help tab with the overview of what is possible with this plugin.
+	 *
+	 * @param array<int,array<string,string>> $help_list List of help tabs.
+	 *
+	 * @return array<int,array<string,string>>
+	 */
+	public function add_overview( array $help_list ): array {
+		// get the settings object.
+		$settings = Settings::get_instance();
+
+		// collect the goals with their links to the settings and the documentation.
+		$goals = array(
+			array(
+				'title'    => __( 'Use external files', 'external-files-in-media-library' ),
+				'text'     => __( 'Add files from URLs or from one of the services (e.g. FTP, Dropbox, AWS S3) to your media library. They are used like local files, but stay on their external source.', 'external-files-in-media-library' ),
+				'url'      => Directory_Listing::get_instance()->get_view_directory_url( false ),
+				'link'     => __( 'Add external files', 'external-files-in-media-library' ),
+				'docs_url' => Helper::get_documentation_url( 'quickstart' ),
+			),
+			array(
+				'title'    => __( 'Synchronize directories', 'external-files-in-media-library' ),
+				'text'     => __( 'Save a directory as external source and let new, changed and deleted files be synchronized with your media library automatically.', 'external-files-in-media-library' ),
+				'url'      => $settings->get_url( 'synchronization' ),
+				'link'     => __( 'Settings for synchronization', 'external-files-in-media-library' ),
+				'docs_url' => Helper::get_documentation_url( 'import/directories' ),
+			),
+			array(
+				'title'    => __( 'Offload your media', 'external-files-in-media-library' ),
+				'text'     => __( 'Export new uploads and existing files to an external source (e.g. AWS S3, FTP or WebDAV) to save storage space on your hosting. The files are then used as external files.', 'external-files-in-media-library' ),
+				'url'      => $settings->get_url( 'eml_export' ),
+				'link'     => __( 'Settings for export', 'external-files-in-media-library' ),
+				'docs_url' => Helper::get_documentation_url( 'features' ),
+			),
+			array(
+				'title'    => __( 'Deliver files privately', 'external-files-in-media-library' ),
+				'text'     => __( 'Save exported files in private storages and deliver them via the proxy or via temporary links, e.g. for WooCommerce downloads.', 'external-files-in-media-library' ),
+				'url'      => $settings->get_url( 'eml_proxy' ),
+				'link'     => __( 'Settings for the proxy', 'external-files-in-media-library' ),
+				'docs_url' => Helper::get_documentation_url( 'private-files' ),
+			),
+			array(
+				'title'    => __( 'Keep access data out of the database', 'external-files-in-media-library' ),
+				'text'     => __( 'Define the access data of the services as constants in your wp-config.php, also for several connections per service.', 'external-files-in-media-library' ),
+				'url'      => $settings->get_url( 'services' ),
+				'link'     => __( 'Settings for services', 'external-files-in-media-library' ),
+				'docs_url' => Helper::get_documentation_url( 'constants' ),
+			),
+			array(
+				'title'    => __( 'Protect copies of your website', 'external-files-in-media-library' ),
+				'text'     => __( 'On copies of your website (e.g. staging), files are not exported to or deleted on external sources and scheduled synchronizations are paused. This works automatically.', 'external-files-in-media-library' ),
+				'url'      => '',
+				'link'     => '',
+				'docs_url' => Helper::get_documentation_url( 'cli' ),
+			),
+		);
+
+		// create the content.
+		$content  = '<h1>' . esc_html__( 'What is possible?', 'external-files-in-media-library' ) . '</h1>';
+		$content .= '<p>' . esc_html__( 'This plugin offers more than adding single URLs. Choose your goal:', 'external-files-in-media-library' ) . '</p>';
+		foreach ( $goals as $goal ) {
+			$content .= '<h3>' . esc_html( $goal['title'] ) . '</h3><p>' . esc_html( $goal['text'] );
+			if ( '' !== $goal['url'] ) {
+				$content .= ' <a href="' . esc_url( $goal['url'] ) . '">' . esc_html( $goal['link'] ) . '</a> &middot;';
+			}
+			$content .= ' <a href="' . esc_url( $goal['docs_url'] ) . '" target="_blank">' . esc_html__( 'Documentation', 'external-files-in-media-library' ) . Helper::get_a11n_window_hint() . '</a></p>';
+		}
+
+		// add the hint for the command palette.
+		$content .= '<p><strong>' . esc_html__( 'Tip:', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Press Ctrl + K (Cmd + K on macOS) to search for services, your external sources and the settings of this plugin, e.g. "FTP" or "Export". This is available in WordPress 6.9 and newer.', 'external-files-in-media-library' ) . '</p>';
+
+		// add the help tab as first tab.
+		array_unshift(
+			$help_list,
+			array(
+				'id'      => 'efml-overview',
+				'title'   => __( 'What is possible?', 'external-files-in-media-library' ),
+				'content' => $content,
+			)
+		);
+
+		// return the list of help tabs.
+		return $help_list;
 	}
 
 	/**

@@ -14,6 +14,9 @@
 - Saved external sources on other servers than the one defined via constants are not usable as long as the constants are defined (no opening, import, synchronization or export), files imported before are still delivered
 - URLs on other servers of a service with credentials via constants could also not be imported manually
 - Services from extensions could define further fields for the target of the constants (e.g. a bucket) and their own mode for constants
+- Added possibility to define several connections per service via constants, e.g. two FTP servers (list of names in EFML_FTP_CONNECTIONS and constants like EFML_FTP_SHOP_SERVER)
+- If several connections are defined, the form for a new external source shows a field to choose the connection, it is saved with the source and its files
+- Without a chosen connection, the connection matching the server or bucket is used
 - Added documentation for the constants in docs/constants.md
 - Added check for existing files with the same name on the external sources before a file is exported
 - Added more hooks
@@ -45,6 +48,14 @@
 - Synchronizations use the same way and are continued in the background if necessary, files are only deleted after the complete list of the external source has been loaded
 - Added hooks "efml_background_import_threshold", "efml_background_import_direct_count", "efml_import_run_time_limit", "efml_file_list_page_size", "efml_import_run_files", "efml_import_run_finished", "efml_import_job_id" and "efml_sync_completed"
 - Added documentation for the import of directories with many files in docs/import/directories.md
+- Added icons for the features of each service on the tiles to choose a service (synchronization, export, private files, access data via constants), with a filter by feature and a legend
+- The icons use the SVG icons of WordPress 7.2 and newer, older versions show the matching Dashicons
+- Service plugins, which are not installed, are marked as extension on the tiles
+- Added help tab "What is possible?" with an overview of the features, links to their settings and documentations
+- Added documentation of the features in docs/features.md
+- Added search for settings, pages and documentations of this plugin in the command palette of WordPress (Ctrl + K)
+- Services are found in the command palette also by other terms, e.g. "Nextcloud" for WebDAV or "Hetzner" for the AWS S3 extension, incl. services of extensions and of not installed extensions
+- Added hooks "efml_service_features", "efml_service_feature_definitions", "efml_service_search_keywords", "efml_command_palette_pages" and "efml_settings_moved_tabs"
 
 ### Changed
 
@@ -57,6 +68,9 @@
 - The hooks for the import of directories of the single protocols (e.g. "efml_ftp_directory_import_files") are not used for directories, which are imported file by file
 - Connections to FTP, FTPS and SFTP servers are reused during a request
 - The queue table loads only the entries of the actual page
+- Settings are grouped by topics: "Delivery" (file types and proxy), "Status" (logs, queue and statistics), "Integrations" (WooCommerce, Polylang and Instant Images) and the permissions in "Advanced"
+- Links to the previous addresses of moved settings tabs are forwarded to their new addresses
+- The search for services and external sources in the command palette is case-insensitive and matches all words of the search
 
 ### Fixed
 
@@ -77,6 +91,7 @@
 - Fixed high memory usage during the import of large files from DropBox and their loading into the cache of the proxy, they are now saved directly into a local file
 - Fixed remaining empty temporary files after loading files from DropBox into the cache of the proxy
 - Fixed high memory usage during the import of large files via SFTP and via FTP without native FTP connection (e.g. FTP sockets), they are now saved directly into a local file
+- The command palette showed all external sources incl. those of other users and did not filter them by the search
 
 - Fixed imports, which were terminated shortly before the max execution time: the rest of the import is now really added to the queue, before only the log said so
 - Fixed deletion of error entries in the queue, which deleted only as many entries as set for one cycle of the queue

@@ -268,7 +268,7 @@ body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
 		align-content: space-between;
 		justify-content: space-between;
 		li {
-			border: 4px dashed #c3c4c7;
+			border: 4px dashed var(--wp-admin-theme-color, #2271b1);
 			display: flex;
 			flex-direction: column;
 			align-content: center;
@@ -278,27 +278,107 @@ body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
 			font-size: 24px;
 			line-height: 1;
 			gap: 1em;
-			padding: 1.2em 1em;
+			padding: 1em;
 			text-align: center;
 			min-width: 200px;
 			&:hover {
 				background-color: rgba(255,255,255,.9);
 			}
-			a:not(.button):before, span:not(.button):before {
+			> a:not(.button):before, > span:not(.button):before {
 				display: block;
 				font-family: dashicons, sans-serif;
 				font-size: 52px;
 				margin: 0 auto 10px;
 			}
-			a:not(.connect) {
+			> a:not(.connect) {
 				box-shadow: none;
 				line-height: 1.4;
 				text-decoration: none;
 			}
-			span:nth-of-type(2) {
+			> span:nth-of-type(2) {
 				display: inline-block;
 				font-size: 13px;
 			}
+		}
+		li[hidden] {
+			display: none;
+		}
+		li[data-efml-features] {
+			position: relative;
+		}
+		li .efml-service-features, li .efml-service-badge {
+			&:before {
+				content: none !important;
+				display: none !important;
+			}
+		}
+		li .efml-service-features {
+			color: #646970;
+			display: flex;
+			gap: 6px;
+			justify-content: center;
+			min-height: 20px;
+		}
+		li.efml-is-extension, li.efml-hint {
+			border-color: #c3c4c7;
+		}
+		li .efml-service-badge {
+			align-items: center;
+			background-color: #f0f0f1;
+			border: 1px solid #c3c4c7;
+			border-radius: 2px;
+			color: #50575e;
+			display: flex;
+			font-size: 11px;
+			gap: 3px;
+			line-height: 1.6;
+			padding: 0 6px;
+			position: absolute;
+			right: 6px;
+			top: 6px;
+			.efml-icon {
+				height: 14px;
+				width: 14px;
+				&.dashicons {
+					font-size: 14px;
+				}
+			}
+		}
+	}
+	.efml-services-filter {
+		color: #50575e;
+		float: right;
+		font-size: 13px;
+		margin-top: 9px;
+		select {
+			font-size: 13px;
+			min-height: 28px;
+			vertical-align: middle;
+		}
+	}
+	ul.efml-services-legend {
+		color: #50575e;
+		display: flex;
+		flex-wrap: wrap;
+		font-size: 13px;
+		gap: 4px 18px;
+		margin-top: 1.5em;
+		li {
+			align-items: center;
+			display: flex;
+			gap: 4px;
+			margin: 0;
+		}
+	}
+	.efml-icon {
+		display: inline-flex;
+		height: 18px;
+		width: 18px;
+		&.dashicons {
+			font-size: 18px;
+		}
+		svg {
+			fill: currentColor;
 		}
 	}
 }
@@ -418,7 +498,7 @@ body.media_page_efml_local_directories ul#efml-directory-listing-services li a.c
 }
 
 body.media_page_efml_local_directories #easy-directory-listing-for-wordpress {
-	border: 4px dashed #c3c4c7;
+	border: 4px dashed var(--wp-admin-theme-color, #2271b1);
 }
 
 body.media_page_efml_local_directories #easy-directory-listing-for-wordpress .is-loading {

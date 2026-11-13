@@ -87,6 +87,9 @@ class Settings {
 		// set actions.
 		add_action( 'admin_action_eml_disable_gprd_hint', array( $this, 'disable_gprd_hint_by_request' ) );
 		add_action( 'admin_action_efml_reset', array( $this, 'reset_plugin_by_request' ) );
+
+		// forward requests for tabs, which have been moved into other tabs.
+		add_action( 'admin_init', array( $this, 'forward_moved_tabs' ) );
 	}
 
 	/**
@@ -122,6 +125,13 @@ class Settings {
 			'page' => $this->get_menu_slug(),
 		);
 
+		// use the parent tab, if the requested tab is a sub-tab of another tab (e.g. the logs in "Status").
+		$moved_tabs = $this->get_moved_tabs();
+		if ( empty( $sub_tab ) && isset( $moved_tabs[ $tab ] ) ) {
+			$sub_tab = $tab;
+			$tab     = $moved_tabs[ $tab ];
+		}
+
 		// add a tab, if set.
 		if ( ! empty( $tab ) ) {
 			$array['tab'] = $tab;
@@ -142,6 +152,226 @@ class Settings {
 		return add_query_arg(
 			$array,
 			get_admin_url() . $this->get_php_page()
+		);
+	}
+
+	/**
+	 * Return the tabs, which are sub-tabs of other tabs since 6.0.0, with the names of their parent tabs.
+	 *
+	 * URLs for these tabs are created with their parent tab (see @get_url()) and requests with their old URLs
+	 * are forwarded (see @forward_moved_tabs()).
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_moved_tabs(): array {
+		$list = array(
+			'eml_proxy'       => 'eml_file_types',
+			'eml_permissions' => 'eml_advanced',
+			'eml_logs'        => 'eml_status',
+			'eml_queue_table' => 'eml_status',
+			'eml_statistics'  => 'eml_status',
+			'polylang'        => 'eml_integrations',
+			'woocommerce'     => 'eml_integrations',
+			'instant_images'  => 'eml_integrations',
+		);
+
+		/**
+		 * Filter the list of tabs, which are sub-tabs of other tabs, with the names of their parent tabs.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,string> $list List of tab names (key) with the names of their parent tabs (value).
+		 */
+		return apply_filters( 'efml_settings_moved_tabs', $list );
+	}
+
+	/**
+	 * Return the definitions of the tabs, which group other tabs (e.g. "Status" for logs, queue and statistics).
+	 *
+	 * @return array<string,array{title: string, position: int}>
+	 */
+	private function get_group_tabs(): array {
+		return array(
+			'eml_file_types'   => array(
+				'title'    => __( 'Delivery', 'external-files-in-media-library' ),
+				'position' => 30,
+			),
+			'eml_advanced'     => array(
+				'title'    => __( 'Advanced', 'external-files-in-media-library' ),
+				'position' => 90,
+			),
+			'eml_status'       => array(
+				'title'    => __( 'Status', 'external-files-in-media-library' ),
+				'position' => 100,
+			),
+			'eml_integrations' => array(
+				'title'    => __( 'Integrations', 'external-files-in-media-library' ),
+				'position' => 120,
+			),
+		);
+	}
+
+	/**
+	 * Return the tab, which groups other tabs. It is added, if it does not exist yet.
+	 *
+	 * @param string $name The name of the tab (e.g. "eml_status").
+	 *
+	 * @return Tab|false
+	 */
+	public function get_group_tab( string $name ): Tab|false {
+		// get the settings page.
+		$settings_page = $this->get_settings_obj()->get_page( $this->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// return the tab, if it exists.
+		$tab = $settings_page->get_tab( $name );
+		if ( $tab instanceof Tab ) {
+			return $tab;
+		}
+
+		// get the definitions.
+		$groups = $this->get_group_tabs();
+
+		// bail if this is not a group tab.
+		if ( ! isset( $groups[ $name ] ) ) {
+			return false;
+		}
+
+		// add the tab.
+		$tab = $settings_page->add_tab( $name, $groups[ $name ]['position'] );
+		$tab->set_title( $groups[ $name ]['title'] );
+
+		// return the tab.
+		return $tab;
+	}
+
+	/**
+	 * Add a sub-tab to a tab, which groups other tabs, and use the sub-tab with the lowest position as default.
+	 *
+	 * The group tab is added, if it does not exist yet.
+	 *
+	 * @param string $group    The name of the group tab (e.g. "eml_status").
+	 * @param string $name     The name of the sub-tab.
+	 * @param int    $position The position of the sub-tab.
+	 *
+	 * @return Tab|false
+	 */
+	public function add_sub_tab( string $group, string $name, int $position ): Tab|false {
+		// get the group tab.
+		$group_tab = $this->get_group_tab( $group );
+
+		// bail if the group tab could not be loaded.
+		if ( ! $group_tab instanceof Tab ) {
+			return false;
+		}
+
+		// add the sub-tab.
+		$tab = $group_tab->add_tab( $name, $position );
+
+		// use the sub-tab with the lowest position as default (a group could change this afterward).
+		$sub_tabs = $group_tab->get_tabs();
+		$first    = reset( $sub_tabs );
+		if ( $first instanceof Tab ) {
+			$group_tab->set_default_tab( $first );
+		}
+
+		// return the sub-tab.
+		return $tab;
+	}
+
+	/**
+	 * Return a tab of the settings page by its name, also if it is a sub-tab of another tab.
+	 *
+	 * @param string $name The name of the tab.
+	 *
+	 * @return Tab|false
+	 */
+	public function get_tab( string $name ): Tab|false {
+		// get the settings page.
+		$settings_page = $this->get_settings_obj()->get_page( $this->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// search in the tabs and their sub-tabs.
+		foreach ( $settings_page->get_tabs() as $tab ) {
+			// return the tab, if the name matches.
+			if ( $tab->get_name() === $name ) {
+				return $tab;
+			}
+
+			// search in its sub-tabs.
+			$sub_tab = $tab->get_tab( $name );
+			if ( $sub_tab instanceof Tab ) {
+				return $sub_tab;
+			}
+		}
+
+		// return false, as the tab could not be found.
+		return false;
+	}
+
+	/**
+	 * Forward requests for tabs, which are sub-tabs of other tabs since 6.0.0, to their new URLs.
+	 *
+	 * This keeps bookmarks and links in older hints or documentations working.
+	 *
+	 * @return void
+	 */
+	public function forward_moved_tabs(): void {
+		// bail if this is not our settings page.
+		if ( $this->get_menu_slug() !== filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
+			return;
+		}
+
+		// bail if a sub-tab is requested.
+		if ( ! is_null( filter_input( INPUT_GET, 'subtab', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) ) {
+			return;
+		}
+
+		// get the requested tab.
+		$tab = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get the moved tabs.
+		$moved_tabs = $this->get_moved_tabs();
+
+		// bail if the requested tab has not been moved.
+		if ( ! is_string( $tab ) || ! isset( $moved_tabs[ $tab ] ) ) {
+			return;
+		}
+
+		// forward to the new URL with all other parameters of the request.
+		wp_safe_redirect( $this->get_forward_url_for_moved_tab( $tab ) );
+		exit;
+	}
+
+	/**
+	 * Return the URL of the actual request for a tab, which has been moved into the given parent tab.
+	 *
+	 * @param string $tab The name of the moved tab.
+	 *
+	 * @return string
+	 */
+	public function get_forward_url_for_moved_tab( string $tab ): string {
+		// get the moved tabs.
+		$moved_tabs = $this->get_moved_tabs();
+
+		// bail if the tab has not been moved.
+		if ( ! isset( $moved_tabs[ $tab ] ) ) {
+			return $this->get_url( $tab );
+		}
+
+		// return the URL of the request with the parent tab and the sub-tab.
+		return add_query_arg(
+			array(
+				'tab'    => $moved_tabs[ $tab ],
+				'subtab' => $tab,
+			)
 		);
 	}
 
@@ -221,17 +451,18 @@ class Settings {
 		$general_tab->set_name( 'eml_general' );
 		$general_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 
-		// the proxy tab.
-		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 40 );
+		// the proxy tab as sub-tab of the tab for the delivery of files.
+		$proxy_tab = $this->add_sub_tab( 'eml_file_types', 'eml_proxy', 900 );
+		if ( ! $proxy_tab instanceof Tab ) {
+			return;
+		}
 		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
 
-		// the permissions tab.
-		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 80 );
-		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
-
 		// the advanced tab.
-		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 90 );
-		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
+		$advanced_tab = $this->get_group_tab( 'eml_advanced' );
+		if ( ! $advanced_tab instanceof Tab ) {
+			return;
+		}
 
 		// the sub-tab for the file handling in advanced tab.
 		$advanced_files_tab = $advanced_tab->add_tab( 'eml_advanced_files', 10 );
@@ -250,8 +481,15 @@ class Settings {
 		$advanced_misc_tab = $advanced_tab->add_tab( 'eml_advanced_misc', 40 );
 		$advanced_misc_tab->set_title( __( 'Miscellaneous', 'external-files-in-media-library' ) );
 
-		// the logs tab.
-		$logs_tab = $settings_page->add_tab( 'eml_logs', 100 );
+		// the permissions tab as sub-tab of the advanced tab.
+		$permissions_tab = $advanced_tab->add_tab( 'eml_permissions', 50 );
+		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
+
+		// the logs tab as sub-tab of the status tab.
+		$logs_tab = $this->add_sub_tab( 'eml_status', 'eml_logs', 10 );
+		if ( ! $logs_tab instanceof Tab ) {
+			return;
+		}
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 		$logs_tab->set_hide_save( true );
@@ -902,7 +1140,8 @@ class Settings {
 		<div class="wrap eml-log-table">
 			<form method="get">
 				<input type="hidden" name="page" value="eml_settings">
-				<input type="hidden" name="tab" value="eml_logs">
+				<input type="hidden" name="tab" value="eml_status">
+				<input type="hidden" name="subtab" value="eml_logs">
 				<?php
 				$log->search_box( __( 'Search for URL', 'external-files-in-media-library' ), 'link' );
 				$log->views();

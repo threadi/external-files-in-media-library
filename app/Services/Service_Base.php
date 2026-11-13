@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\Services;
 defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Directory_Listing_Base;
+use easyDirectoryListingForWordPress\Directory_Listings;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
@@ -32,6 +33,20 @@ use WP_User;
  * Object to handle support for this platform.
  */
 class Service_Base extends Directory_Listing_Base {
+	/**
+	 * Name of the field to choose the connection, if several connections are defined via constants.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 */
+	public const CONNECTION_FIELD = 'efml_connection';
+
+	/**
+	 * Name of the connection, which is defined via constants without a connection name (e.g. "EFML_FTP_SERVER").
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 */
+	public const DEFAULT_CONNECTION = 'default';
+
 	/**
 	 * The directory, in which the connection test saves its test file.
 	 *
@@ -129,6 +144,13 @@ class Service_Base extends Directory_Listing_Base {
 	private ?array $field_definitions = null;
 
 	/**
+	 * The parsed names of the connections defined via constants (cache).
+	 *
+	 * @var array<string,array{valid: array<string,string>, invalid: array<int,string>}>
+	 */
+	private array $connection_names = array();
+
+	/**
 	 * Set the configuration for the external source of this service plugin.
 	 *
 	 * @var array<string,string>
@@ -212,8 +234,8 @@ class Service_Base extends Directory_Listing_Base {
 			return false;
 		}
 
-		// return whether all required values are defined via constants.
-		return ! empty( $this->get_constant_values() );
+		// return whether all required values of any connection are defined via constants.
+		return ! empty( $this->get_connections() );
 	}
 
 	/**
@@ -321,27 +343,14 @@ class Service_Base extends Directory_Listing_Base {
 		}
 
 		// show hint if settings of this service are defined via constants.
-		$constants = $this->get_defined_constants_for_fields();
-		if ( ! empty( $constants ) ) {
+		$description = $this->get_constants_settings_hint();
+		if ( '' !== $description ) {
 			$setting = $settings_obj->add_setting( 'eml_' . $this->get_name() . '_constants_hint' );
 			$setting->set_section( $section );
 			$setting->set_show_in_rest( false );
 			$setting->prevent_export( true );
 			$field = new TextInfo( $settings_obj );
 			$field->set_title( __( 'Defined in wp-config.php', 'external-files-in-media-library' ) );
-			$missing_constants = $this->get_missing_constants_for_fields();
-			if ( empty( $missing_constants ) ) {
-				/* translators: %1$s will be replaced by a list of constant names. */
-				$description = sprintf( __( 'The following settings are defined as constants, e.g. in your wp-config.php. They are used for every connection to this service and replace the values entered here, in the user profiles or in your external sources: %1$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ) );
-
-				// add hint for the host binding, if used.
-				if ( ! empty( $this->constants_host_field ) ) {
-					$description .= ' ' . __( 'The values are only used for connections to the server defined by the constants.', 'external-files-in-media-library' );
-				}
-			} else {
-				/* translators: %1$s will be replaced by a list of constant names, %2$s by a list of constant names. */
-				$description = '<strong>' . sprintf( __( 'The constants %1$s are defined, e.g. in your wp-config.php, but they are not used, because the constants for all required settings must be defined. The following constants are missing: %2$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ), $this->get_constant_list_for_output( $missing_constants ) ) . '</strong>';
-			}
 			$field->set_description( $description );
 			$setting->set_field( $field );
 		}
@@ -948,7 +957,7 @@ class Service_Base extends Directory_Listing_Base {
 		// loop through the settings and save them.
 		foreach ( $this->get_user_settings() as $name => $setting ) {
 			// bail if the value of this setting is defined via constant.
-			if ( ! is_null( $this->get_constant_value( $this->get_field_name_of_user_setting( (string) $name ) ) ) ) {
+			if ( $this->is_field_defined_via_constants( $this->get_field_name_of_user_setting( (string) $name ) ) ) {
 				continue;
 			}
 
@@ -1172,9 +1181,12 @@ class Service_Base extends Directory_Listing_Base {
 			return $fields;
 		}
 
+		// add the field to choose the connection, if several connections are defined via constants.
+		$fields = $this->add_connection_field( $fields );
+
 		// replace the values with the values of constants, if they are defined. The values of the target fields
 		// are only checked, if the fields have been set from outside (e.g. by a saved external source).
-		$fields = $this->apply_constants_to_fields( $fields, '', false, $this->fields_set_externally );
+		$fields = $this->apply_constants_to_fields( $fields, $this->directory, false, $this->fields_set_externally );
 
 		$instance = $this;
 		/**
@@ -1200,6 +1212,199 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Add the field to choose the connection to the given fields, if several connections are defined via constants.
+	 *
+	 * The field is removed, if not several connections are defined.
+	 *
+	 * @param array<string,array<string,mixed>> $fields List of fields.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function add_connection_field( array $fields ): array {
+		// get the connections.
+		$connections = $this->get_connections();
+
+		// get the chosen connection.
+		$chosen = $this->get_chosen_connection( $fields );
+
+		// remove the field, it is added again with the actual options.
+		unset( $fields[ self::CONNECTION_FIELD ] );
+
+		// bail if not several connections are defined.
+		if ( count( $connections ) < 2 ) {
+			return $fields;
+		}
+
+		// use the connection matching the fields or the first connection, if the chosen one does not exist.
+		if ( ! isset( $connections[ $chosen ] ) ) {
+			$chosen = $this->get_connection_for_fields( $fields, $this->directory, $this->fields_set_externally ) ?? (string) array_key_first( $connections );
+		}
+
+		// collect the options.
+		$options = array();
+		foreach ( array_keys( $connections ) as $connection ) {
+			$options[] = array(
+				'value' => (string) $connection,
+				'label' => $this->get_connection_label( (string) $connection ),
+			);
+		}
+
+		// add the field as first field.
+		return array(
+			self::CONNECTION_FIELD => array(
+				'name'        => self::CONNECTION_FIELD,
+				'type'        => 'select',
+				'label'       => __( 'Connection', 'external-files-in-media-library' ),
+				'description' => __( 'The access data are defined as constants for several connections, e.g. in your wp-config.php. Choose the connection to use.', 'external-files-in-media-library' ),
+				'options'     => $options,
+				'value'       => $chosen,
+			),
+		) + $fields;
+	}
+
+	/**
+	 * Return the label of the given connection: its name and, if set, its server or target (e.g. a bucket).
+	 *
+	 * @param string $connection The name of the connection.
+	 *
+	 * @return string
+	 */
+	public function get_connection_label( string $connection ): string {
+		// get the name.
+		$label = __( 'Default', 'external-files-in-media-library' );
+		if ( self::DEFAULT_CONNECTION !== $connection ) {
+			$names = $this->get_connection_names();
+			$label = isset( $names[ $connection ] ) ? $names[ $connection ] : $connection;
+		}
+
+		// get the values of this connection.
+		$values = $this->get_constant_values( $connection );
+
+		// get the server and the targets (e.g. a bucket) as details.
+		$details = array();
+		if ( ! empty( $this->constants_host_field ) && isset( $values[ $this->constants_host_field ] ) && is_scalar( $values[ $this->constants_host_field ] ) ) {
+			$details[] = $this->get_host_from_url( (string) $values[ $this->constants_host_field ] );
+		}
+		foreach ( $this->constants_target_fields as $field_name ) {
+			// bail if the field is not set.
+			if ( ! isset( $values[ $field_name ] ) || ! is_scalar( $values[ $field_name ] ) || '' === (string) $values[ $field_name ] ) {
+				continue;
+			}
+
+			// add its value.
+			$details[] = (string) $values[ $field_name ];
+		}
+
+		// get the details as text.
+		$detail = implode( ', ', array_filter( $details ) );
+
+		// bail if no detail is set.
+		if ( '' === $detail ) {
+			return $label;
+		}
+
+		/* translators: %1$s will be replaced by the name of a connection, %2$s by its server or e.g. its bucket and region. */
+		return sprintf( __( '%1$s (%2$s)', 'external-files-in-media-library' ), $label, $detail );
+	}
+
+	/**
+	 * Return the hint for the settings of this service, which shows the settings defined via constants.
+	 *
+	 * Returns an empty string, if no constant of this service is defined.
+	 *
+	 * @return string
+	 */
+	private function get_constants_settings_hint(): string {
+		// get the constants of the default connection.
+		$constants = $this->get_defined_constants_for_fields();
+
+		// get the named connections.
+		$connections_constant = $this->get_connections_constant_name();
+		$names                = $this->get_connection_names();
+		$invalid_names        = $this->get_invalid_connection_names();
+
+		// show only the default connection, if no named connections are listed.
+		if ( empty( $names ) && empty( $invalid_names ) ) {
+			// bail if no constant is defined.
+			if ( empty( $constants ) ) {
+				return '';
+			}
+
+			// get the missing constants.
+			$missing_constants = $this->get_missing_constants_for_fields();
+
+			// show hint for missing constants.
+			if ( ! empty( $missing_constants ) ) {
+				/* translators: %1$s will be replaced by a list of constant names, %2$s by a list of constant names. */
+				return '<strong>' . sprintf( __( 'The constants %1$s are defined, e.g. in your wp-config.php, but they are not used, because the constants for all required settings must be defined. The following constants are missing: %2$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ), $this->get_constant_list_for_output( $missing_constants ) ) . '</strong>';
+			}
+
+			/* translators: %1$s will be replaced by a list of constant names. */
+			$description = sprintf( __( 'The following settings are defined as constants, e.g. in your wp-config.php. They are used for every connection to this service and replace the values entered here, in the user profiles or in your external sources: %1$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $constants ) );
+
+			// add hint for the host binding, if used.
+			if ( ! empty( $this->constants_host_field ) ) {
+				$description .= ' ' . __( 'The values are only used for connections to the server defined by the constants.', 'external-files-in-media-library' );
+			}
+
+			// return the hint.
+			return $description;
+		}
+
+		// collect the connections with defined constants.
+		$list = array();
+		foreach ( array_merge( array( self::DEFAULT_CONNECTION ), array_keys( $names ) ) as $connection ) {
+			// get the defined constants of this connection.
+			$connection_constants = $this->get_defined_constants_for_fields( (string) $connection );
+
+			// get its missing constants.
+			$missing_constants = $this->get_missing_constants_for_fields( false, (string) $connection );
+
+			// bail if the default connection is not used.
+			if ( self::DEFAULT_CONNECTION === $connection && empty( $connection_constants ) ) {
+				continue;
+			}
+
+			// show the missing constants.
+			if ( ! empty( $missing_constants ) ) {
+				/* translators: %1$s will be replaced by a list of constant names. */
+				$list[] = '<li><strong>' . esc_html( $this->get_connection_label( (string) $connection ) ) . ':</strong> <strong>' . sprintf( __( 'Not used, because the following constants are missing: %1$s', 'external-files-in-media-library' ), $this->get_constant_list_for_output( $missing_constants ) ) . '</strong></li>';
+				continue;
+			}
+
+			// show the defined constants.
+			$list[] = '<li><strong>' . esc_html( $this->get_connection_label( (string) $connection ) ) . ':</strong> ' . $this->get_constant_list_for_output( $connection_constants ) . '</li>';
+		}
+
+		/* translators: %1$s will be replaced by the name of a constant. */
+		$description = sprintf( __( 'The access data are defined as constants for the connections listed in %1$s, e.g. in your wp-config.php. They replace the values entered here, in the user profiles or in your external sources.', 'external-files-in-media-library' ), '<code>' . esc_html( $connections_constant ) . '</code>' );
+
+		// add the list.
+		if ( ! empty( $list ) ) {
+			$description .= '<ul>' . implode( '', $list ) . '</ul>';
+		}
+
+		// add hint for the host binding, if used.
+		if ( ! empty( $this->constants_host_field ) ) {
+			$description .= ' ' . __( 'The values of each connection are only used for connections to its server.', 'external-files-in-media-library' );
+		}
+
+		// add hint for the choice of the connection, if several connections are usable.
+		if ( count( $this->get_connections() ) > 1 ) {
+			$description .= ' ' . __( 'When you add an external source, choose the connection to use.', 'external-files-in-media-library' );
+		}
+
+		// add hint for invalid names.
+		if ( ! empty( $invalid_names ) ) {
+			/* translators: %1$s will be replaced by the name of a constant, %2$s by a list of names. */
+			$description .= '<p><strong>' . sprintf( __( 'The following names in %1$s could not be used as connection names: %2$s. Use only letters, numbers, hyphens and underscores. The name "default", duplicates and names, which result in the names of other constants, are not possible.', 'external-files-in-media-library' ), '<code>' . esc_html( $connections_constant ) . '</code>', '<em>' . implode( '</em>, <em>', array_map( 'esc_html', $invalid_names ) ) . '</em>' ) . '</strong></p>';
+		}
+
+		// return the hint.
+		return $description;
+	}
+
+	/**
 	 * Return the configuration for the directory listing in the backend.
 	 *
 	 * Values of credential fields, which are defined as constants, are never sent to the browser.
@@ -1216,10 +1421,28 @@ class Service_Base extends Directory_Listing_Base {
 			return $config;
 		}
 
+		// get whether several connections are defined via constants.
+		$several_connections = count( $this->get_connections() ) > 1;
+
 		// check each field.
 		foreach ( $config['fields'] as $name => $field ) {
+			// bail if field is not an array or is the field to choose the connection.
+			if ( ! is_array( $field ) || self::CONNECTION_FIELD === $name ) {
+				continue;
+			}
+
+			// hide the values of all fields defined via constants, if several connections are defined, as the
+			// values depend on the chosen connection.
+			if ( $several_connections && $this->is_field_defined_via_constants( (string) $name ) ) {
+				$config['fields'][ $name ]['readonly']     = true;
+				$config['fields'][ $name ]['not_required'] = true;
+				$config['fields'][ $name ]['value']        = '';
+				$config['fields'][ $name ]['placeholder']  = __( 'Defined via the chosen connection', 'external-files-in-media-library' );
+				continue;
+			}
+
 			// bail if field is not defined via constant.
-			if ( ! is_array( $field ) || empty( $field['constant'] ) ) {
+			if ( empty( $field['constant'] ) ) {
 				continue;
 			}
 
@@ -1259,13 +1482,24 @@ class Service_Base extends Directory_Listing_Base {
 	/**
 	 * Return the name of the constant, which could be used to define the value of the given field.
 	 *
+	 * The constants of the default connection are named "EFML_" + the service name + "_" + the field name,
+	 * e.g. "EFML_FTP_PASSWORD". The constants of a named connection contain the name of the connection
+	 * after the service name, e.g. "EFML_FTP_SHOP_PASSWORD" for the connection "shop".
+	 *
 	 * @param string $field_name The name of the field.
+	 * @param string $connection The name of the connection (optional, the default connection is used if not set).
 	 *
 	 * @return string
 	 */
-	public function get_constant_name_for_field( string $field_name ): string {
+	public function get_constant_name_for_field( string $field_name, string $connection = self::DEFAULT_CONNECTION ): string {
+		// get the name parts.
+		$parts = array( $this->get_name(), $field_name );
+		if ( self::DEFAULT_CONNECTION !== $connection ) {
+			$parts = array( $this->get_name(), $connection, $field_name );
+		}
+
 		// create the name.
-		$constant_name = 'EFML_' . strtoupper( (string) preg_replace( '/[^a-zA-Z0-9]+/', '_', $this->get_name() . '_' . $field_name ) );
+		$constant_name = 'EFML_' . $this->get_normalized_constant_part( implode( '_', $parts ) );
 
 		$instance = $this;
 		/**
@@ -1275,8 +1509,213 @@ class Service_Base extends Directory_Listing_Base {
 		 * @param string $constant_name The name of the constant.
 		 * @param string $field_name The name of the field.
 		 * @param Service_Base $instance The service object.
+		 * @param string $connection The name of the connection ("default" for the constants without connection name).
 		 */
-		return apply_filters( 'efml_service_field_constant_name', $constant_name, $field_name, $instance );
+		return apply_filters( 'efml_service_field_constant_name', $constant_name, $field_name, $instance, $connection );
+	}
+
+	/**
+	 * Return the name of the constant, which contains the comma-separated list of named connections of this service,
+	 * e.g. "EFML_FTP_CONNECTIONS".
+	 *
+	 * @return string
+	 */
+	public function get_connections_constant_name(): string {
+		// create the name.
+		$constant_name = 'EFML_' . $this->get_normalized_constant_part( $this->get_name() ) . '_CONNECTIONS';
+
+		$instance = $this;
+		/**
+		 * Filter the name of the constant, which contains the list of named connections of a service.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $constant_name The name of the constant.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_connections_constant_name', $constant_name, $instance );
+	}
+
+	/**
+	 * Return the given text in the form used in constant names: uppercase, other characters than letters and
+	 * numbers replaced by an underscore.
+	 *
+	 * @param string $text The text.
+	 *
+	 * @return string
+	 */
+	private function get_normalized_constant_part( string $text ): string {
+		return strtoupper( (string) preg_replace( '/[^a-zA-Z0-9]+/', '_', $text ) );
+	}
+
+	/**
+	 * Return whether this service supports several connections defined via constants.
+	 *
+	 * Services, whose constants are not values of their fields (e.g. API credentials for OAuth), only use
+	 * the default connection.
+	 *
+	 * @return bool
+	 */
+	public function supports_constant_connections(): bool {
+		return $this->constants_in_fields && $this->is_fields_via_constants_enabled();
+	}
+
+	/**
+	 * Return the names of the named connections of this service, which are listed in the constant for them.
+	 *
+	 * The key is the name used internally and in the constant names (in lowercase), the value the name as written
+	 * in the constant. Names, which could not be used, are returned by @get_invalid_connection_names().
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_connection_names(): array {
+		return $this->get_parsed_connection_names()['valid'];
+	}
+
+	/**
+	 * Return the names of the connections, which are listed in the constant, but could not be used.
+	 *
+	 * This is the case for names with other characters than letters, numbers, hyphens and underscores, for duplicates,
+	 * for the reserved name "default" and for names, whose constant names would be equal to the names of other
+	 * constants (e.g. a connection "cloudfront" and a field "domain" for a service with the field "cloudfront_domain").
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_invalid_connection_names(): array {
+		return $this->get_parsed_connection_names()['invalid'];
+	}
+
+	/**
+	 * Return the valid and invalid names of the connections, which are listed in the constant for them.
+	 *
+	 * @return array{valid: array<string,string>, invalid: array<int,string>}
+	 */
+	private function get_parsed_connection_names(): array {
+		// set the return value.
+		$result = array(
+			'valid'   => array(),
+			'invalid' => array(),
+		);
+
+		// bail if this service does not support named connections.
+		if ( ! $this->supports_constant_connections() ) {
+			return $result;
+		}
+
+		// get the name of the constant.
+		$constant_name = $this->get_connections_constant_name();
+
+		// bail if the constant is not defined.
+		if ( ! defined( $constant_name ) ) {
+			return $result;
+		}
+
+		// get its value.
+		$value = constant( $constant_name );
+
+		// bail if the value is not a string.
+		if ( ! is_string( $value ) ) {
+			return $result;
+		}
+
+		// return the result from the cache, if it is set.
+		$cache_key = $constant_name . '|' . $value;
+		if ( isset( $this->connection_names[ $cache_key ] ) ) {
+			return $this->connection_names[ $cache_key ];
+		}
+
+		// get the field names.
+		$field_names = array_map( 'strval', array_keys( $this->get_constant_field_definitions() ) );
+
+		// collect the names of the constants of the default connection and of other services, whose constants
+		// could be equal to the constants of a named connection of this service.
+		$used_constant_names = array();
+		foreach ( $field_names as $field_name ) {
+			$used_constant_names[ $this->get_normalized_constant_part( $this->get_name() . '_' . $field_name ) ] = true;
+		}
+		foreach ( $this->get_constant_names_of_similar_services() as $name ) {
+			$used_constant_names[ $name ] = true;
+		}
+
+		// check each name.
+		foreach ( explode( ',', $value ) as $name ) {
+			// remove spaces.
+			$name = trim( $name );
+
+			// bail if the name is empty.
+			if ( '' === $name ) {
+				continue;
+			}
+
+			// get the key.
+			$key = strtolower( $name );
+
+			// check the characters, the reserved name and duplicates.
+			$is_valid = 1 === preg_match( '/^[a-z0-9][a-z0-9_-]*$/', $key ) && self::DEFAULT_CONNECTION !== $key && ! isset( $result['valid'][ $key ] );
+
+			// get the names of the constants of this connection and check whether they are already used.
+			$constant_names = array();
+			foreach ( $field_names as $field_name ) {
+				$constant_names[] = $this->get_normalized_constant_part( $this->get_name() . '_' . $key . '_' . $field_name );
+			}
+			if ( $is_valid && ! empty( array_intersect_key( array_flip( $constant_names ), $used_constant_names ) ) ) {
+				$is_valid = false;
+			}
+
+			// add invalid names to the list.
+			if ( ! $is_valid ) {
+				$result['invalid'][] = $name;
+				continue;
+			}
+
+			// add the name to the list.
+			$result['valid'][ $key ] = $name;
+
+			// mark its constant names as used.
+			foreach ( $constant_names as $constant_name_of_connection ) {
+				$used_constant_names[ $constant_name_of_connection ] = true;
+			}
+		}
+
+		// save the result in the cache.
+		$this->connection_names[ $cache_key ] = $result;
+
+		// return the result.
+		return $result;
+	}
+
+	/**
+	 * Return the normalized names (without prefix "EFML_") of the constants of the default connections of other
+	 * services, whose names start with the name of this service (e.g. "s3-compatible" for a service "s3").
+	 *
+	 * Their constants could otherwise be equal to the constants of a named connection of this service.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_constant_names_of_similar_services(): array {
+		// get the normalized name of this service.
+		$prefix = $this->get_normalized_constant_part( $this->get_name() ) . '_';
+
+		// check each service.
+		$list = array();
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service_obj ) {
+			// bail if this is not a service object or this service.
+			if ( ! $service_obj instanceof Service_Base || $service_obj->get_name() === $this->get_name() ) {
+				continue;
+			}
+
+			// bail if the name of the service does not start with the name of this service.
+			if ( ! str_starts_with( $this->get_normalized_constant_part( $service_obj->get_name() ) . '_', $prefix ) ) {
+				continue;
+			}
+
+			// add the names of its constants.
+			foreach ( array_keys( $service_obj->get_constant_field_definitions() ) as $field_name ) {
+				$list[] = $this->get_normalized_constant_part( $service_obj->get_name() . '_' . $field_name );
+			}
+		}
+
+		// return the resulting list.
+		return $list;
 	}
 
 	/**
@@ -1323,6 +1762,11 @@ class Service_Base extends Directory_Listing_Base {
 				continue;
 			}
 
+			// bail if this is the field to choose the connection.
+			if ( self::CONNECTION_FIELD === $name ) {
+				continue;
+			}
+
 			// add the field without any value.
 			unset( $field['value'], $field['readonly'] );
 			$definitions[ (string) $name ] = $field;
@@ -1366,18 +1810,48 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Return the values of all fields, which are defined via constants.
+	 * Return all connections of this service, whose constants for all required fields are defined.
 	 *
-	 * Returns an empty list if the constant for any required field is missing.
+	 * The key is the name of the connection ("default" for the constants without connection name), the value
+	 * the list of values of the fields defined via constants. The default connection is always the first entry.
 	 *
-	 * @return array<string,mixed>
+	 * @return array<string,array<string,mixed>>
 	 */
-	public function get_constant_values(): array {
+	public function get_connections(): array {
 		// bail if constants are not used at the moment (e.g., while the field definitions are loaded).
 		if ( $this->constants_disabled ) {
 			return array();
 		}
 
+		// collect the connections.
+		$connections = array();
+		foreach ( array_merge( array( self::DEFAULT_CONNECTION ), array_keys( $this->get_connection_names() ) ) as $connection ) {
+			// get the values of this connection.
+			$values = $this->get_constant_values_of_connection( (string) $connection );
+
+			// bail if not all required values are defined.
+			if ( empty( $values ) ) {
+				continue;
+			}
+
+			// add the connection.
+			$connections[ (string) $connection ] = $values;
+		}
+
+		// return the resulting list.
+		return $connections;
+	}
+
+	/**
+	 * Return the values of all fields of the given connection, which are defined via constants.
+	 *
+	 * Returns an empty list if the constant for any required field of this connection is missing.
+	 *
+	 * @param string $connection The name of the connection.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_constant_values_of_connection( string $connection ): array {
 		// get the definitions.
 		$definitions = $this->get_constant_field_definitions();
 
@@ -1387,7 +1861,7 @@ class Service_Base extends Directory_Listing_Base {
 		}
 
 		// bail if any required field is not defined via constant.
-		if ( ! empty( $this->get_missing_constants_for_fields( false ) ) ) {
+		if ( ! empty( $this->get_missing_constants_for_fields( false, $connection ) ) ) {
 			return array();
 		}
 
@@ -1395,7 +1869,7 @@ class Service_Base extends Directory_Listing_Base {
 		$values = array();
 		foreach ( array_keys( $definitions ) as $name ) {
 			// get the constant name for this field.
-			$constant_name = $this->get_constant_name_for_field( $name );
+			$constant_name = $this->get_constant_name_for_field( $name, $connection );
 
 			// bail if constant is not defined.
 			if ( ! defined( $constant_name ) ) {
@@ -1411,15 +1885,51 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return the values of all fields, which are defined via constants for the given connection.
+	 *
+	 * Without a connection, the connection for the actual fields of this object is used (see @get_actual_connection()).
+	 * Returns an empty list if the constant for any required field of the connection is missing.
+	 *
+	 * @param string|null $connection The name of the connection (optional).
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_constant_values( ?string $connection = null ): array {
+		// bail if constants are not used at the moment (e.g., while the field definitions are loaded).
+		if ( $this->constants_disabled ) {
+			return array();
+		}
+
+		// get the connection for the actual fields, if none is given.
+		if ( is_null( $connection ) ) {
+			$connection = $this->get_actual_connection();
+		}
+
+		// bail if no connection could be used.
+		if ( is_null( $connection ) ) {
+			return array();
+		}
+
+		// get the connections.
+		$connections = $this->get_connections();
+
+		// return the values of the connection, if it exists.
+		return isset( $connections[ $connection ] ) ? $connections[ $connection ] : array();
+	}
+
+	/**
 	 * Return the value of a single field, if it is defined via constant and all required constants are defined.
 	 *
-	 * @param string $field_name The name of the field.
+	 * Without a connection, the connection for the actual fields of this object is used.
+	 *
+	 * @param string      $field_name The name of the field.
+	 * @param string|null $connection The name of the connection (optional).
 	 *
 	 * @return string|null
 	 */
-	public function get_constant_value( string $field_name ): ?string {
+	public function get_constant_value( string $field_name, ?string $connection = null ): ?string {
 		// get the values.
-		$values = $this->get_constant_values();
+		$values = $this->get_constant_values( $connection );
 
 		// bail if field is not set.
 		if ( ! isset( $values[ $field_name ] ) || ! is_scalar( $values[ $field_name ] ) ) {
@@ -1431,14 +1941,136 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return whether the value of the given field is defined via constant in any connection of this service.
+	 *
+	 * @param string $field_name The name of the field.
+	 *
+	 * @return bool
+	 */
+	public function is_field_defined_via_constants( string $field_name ): bool {
+		return ! empty( $this->get_connections_with_field( $field_name ) );
+	}
+
+	/**
+	 * Return the connections, which define the given field via constant, with their values for this field.
+	 *
+	 * @param string $field_name The name of the field.
+	 *
+	 * @return array<string,string>
+	 */
+	private function get_connections_with_field( string $field_name ): array {
+		$list = array();
+		foreach ( $this->get_connections() as $connection => $values ) {
+			// bail if field is not set.
+			if ( ! isset( $values[ $field_name ] ) || ! is_scalar( $values[ $field_name ] ) ) {
+				continue;
+			}
+
+			// add the connection.
+			$list[ $connection ] = (string) $values[ $field_name ];
+		}
+
+		// return the resulting list.
+		return $list;
+	}
+
+	/**
+	 * Return the name of the connection, which is used for the actual fields and directory of this object.
+	 *
+	 * Returns null if constants are not used for these fields.
+	 *
+	 * @return string|null
+	 */
+	protected function get_actual_connection(): ?string {
+		return $this->get_connection_for_fields( $this->fields, $this->directory, $this->fields_set_externally );
+	}
+
+	/**
+	 * Return the name of the connection, whose constants should be used for the given fields and URL.
+	 *
+	 * The connection chosen in the fields is used, if it exists. Otherwise, the first connection, whose server
+	 * and target (e.g. a bucket) are matching the URL and the fields, is used, beginning with the default connection.
+	 * Returns null if no connection could be used. Then no constant is used for these fields.
+	 *
+	 * @param array<string,mixed> $fields              List of fields.
+	 * @param string              $url                 The URL, which should be used with these fields (optional).
+	 * @param bool                $check_target_fields Whether the values of the target fields should be checked.
+	 *
+	 * @return string|null
+	 */
+	public function get_connection_for_fields( array $fields, string $url = '', bool $check_target_fields = true ): ?string {
+		// get the connections.
+		$connections = $this->get_connections();
+
+		// bail if no connection is defined.
+		if ( empty( $connections ) ) {
+			return null;
+		}
+
+		// use the chosen connection, if it exists, otherwise check all connections.
+		$candidates = array_keys( $connections );
+		$chosen     = $this->get_chosen_connection( $fields );
+		if ( isset( $connections[ $chosen ] ) ) {
+			$candidates = array( $chosen );
+		}
+
+		// check the candidates.
+		$result = null;
+		foreach ( $candidates as $connection ) {
+			// bail if the URL is not using the server of this connection.
+			if ( ! $this->is_url_matching_constants( $url, (string) $connection ) ) {
+				continue;
+			}
+
+			// bail if the fields are for another target (e.g. another bucket).
+			if ( $check_target_fields && ! $this->is_fields_matching_connection( $fields, (string) $connection ) ) {
+				continue;
+			}
+
+			// use this connection.
+			$result = (string) $connection;
+			break;
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the connection, whose constants should be used for the given fields and URL.
+		 * Return null to use no constants.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string|null $result The name of the connection or null.
+		 * @param array<string,mixed> $fields List of fields.
+		 * @param string $url The URL.
+		 * @param Service_Base $instance The service object.
+		 */
+		$result = apply_filters( 'efml_service_constants_connection', $result, $fields, $url, $instance );
+
+		// return the connection, if it exists.
+		return is_string( $result ) && isset( $connections[ $result ] ) ? $result : null;
+	}
+
+	/**
+	 * Return the name of the connection, which is chosen in the given fields. Returns an empty string if none is chosen.
+	 *
+	 * @param array<string,mixed> $fields List of fields.
+	 *
+	 * @return string
+	 */
+	private function get_chosen_connection( array $fields ): string {
+		// bail if the field is not set.
+		if ( ! isset( $fields[ self::CONNECTION_FIELD ] ) || ! is_array( $fields[ self::CONNECTION_FIELD ] ) || ! isset( $fields[ self::CONNECTION_FIELD ]['value'] ) || ! is_string( $fields[ self::CONNECTION_FIELD ]['value'] ) ) {
+			return '';
+		}
+
+		// return the name.
+		return strtolower( trim( $fields[ self::CONNECTION_FIELD ]['value'] ) );
+	}
+
+	/**
 	 * Replace the values of the given fields with the values of the constants of this service.
 	 *
-	 * If a URL is given and this service defines a host field, the constants are only used if the URL
-	 * is using the host of this field. Otherwise, values from constants are removed from the fields,
-	 * so they are never sent to other servers.
-	 *
-	 * If this service defines target fields (e.g. a bucket), the constants are only used if the given fields
-	 * do not contain other values for them.
+	 * The constants of the connection for these fields are used (see @get_connection_for_fields()). If no connection
+	 * could be used, values from constants are removed from the fields, so they are never sent to other servers.
 	 *
 	 * @param array<string,mixed> $fields              List of fields.
 	 * @param string              $url                 The URL, which should be used with these fields (optional).
@@ -1453,29 +2085,30 @@ class Service_Base extends Directory_Listing_Base {
 			return $fields;
 		}
 
-		// get the values of the constants.
-		$values = $this->get_constant_values();
+		// get the connections.
+		$connections = $this->get_connections();
 
 		// bail if no values are defined.
-		if ( empty( $values ) ) {
+		if ( empty( $connections ) ) {
 			return $fields;
 		}
 
-		// bail if the URL is not using the host of the constants.
-		if ( ! $this->is_url_matching_constants( $url ) ) {
-			return $this->remove_constant_values_from_fields( $fields );
-		}
+		// get the connection for these fields.
+		$connection = $this->get_connection_for_fields( $fields, $url, $check_target_fields );
 
-		// bail if the fields are for another target (e.g. another bucket).
-		if ( $check_target_fields && ! $this->is_fields_matching_constants( $fields ) ) {
-			return $this->remove_constant_values_from_fields( $fields );
+		// remove values of other connections, which might be set (e.g. after choosing another connection).
+		$fields = $this->remove_constant_values_from_fields( $fields );
+
+		// bail if no connection could be used.
+		if ( is_null( $connection ) ) {
+			return $fields;
 		}
 
 		// get the definitions.
 		$definitions = $this->get_constant_field_definitions();
 
 		// set the values.
-		foreach ( $values as $name => $value ) {
+		foreach ( $connections[ $connection ] as $name => $value ) {
 			// add the field, if it is missing.
 			if ( ! isset( $fields[ $name ] ) || ! is_array( $fields[ $name ] ) ) {
 				// bail if missing fields should not be added.
@@ -1490,7 +2123,7 @@ class Service_Base extends Directory_Listing_Base {
 			// use the value of the constant.
 			$fields[ $name ]['value']    = $value;
 			$fields[ $name ]['readonly'] = true;
-			$fields[ $name ]['constant'] = $this->get_constant_name_for_field( $name );
+			$fields[ $name ]['constant'] = $this->get_constant_name_for_field( $name, $connection );
 		}
 
 		// return the resulting fields.
@@ -1498,13 +2131,16 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Return whether the given URL is using the host, which is defined via constant for this service.
+	 * Return whether the given URL is using the host, which is defined via constant for the given connection.
 	 *
-	 * @param string $url The URL to check.
+	 * Without a connection, the connection for the actual fields of this object is used.
+	 *
+	 * @param string      $url        The URL to check.
+	 * @param string|null $connection The name of the connection (optional).
 	 *
 	 * @return bool
 	 */
-	public function is_url_matching_constants( string $url ): bool {
+	public function is_url_matching_constants( string $url, ?string $connection = null ): bool {
 		// bail if no URL is given.
 		if ( '' === $url ) {
 			return true;
@@ -1516,7 +2152,7 @@ class Service_Base extends Directory_Listing_Base {
 		}
 
 		// get the value of the host field.
-		$server = $this->get_constant_value( $this->constants_host_field );
+		$server = $this->get_constant_value( $this->constants_host_field, $connection );
 
 		// bail if no server is defined via constant (should not happen as it is a required field).
 		if ( is_null( $server ) ) {
@@ -1543,7 +2179,7 @@ class Service_Base extends Directory_Listing_Base {
 
 	/**
 	 * Return whether the given URL could not be used, because the credentials of this service are defined
-	 * via constants for another server.
+	 * via constants for other servers.
 	 *
 	 * Used for saved external sources: sources on other servers are not usable as long as the constants are defined.
 	 *
@@ -1557,7 +2193,9 @@ class Service_Base extends Directory_Listing_Base {
 
 	/**
 	 * Return whether the given URL and fields could not be used, because the credentials of this service are
-	 * defined via constants for another target (another server or e.g. another bucket).
+	 * defined via constants for other targets (other servers or e.g. other buckets).
+	 *
+	 * The URL and fields are usable, if they are matching any connection (or the connection chosen in the fields).
 	 *
 	 * @param string              $url    The URL to check.
 	 * @param array<string,mixed> $fields The fields to check (e.g. of a saved external source).
@@ -1570,34 +2208,48 @@ class Service_Base extends Directory_Listing_Base {
 			return false;
 		}
 
-		// bail if not all required values are defined via constants.
-		if ( empty( $this->get_constant_values() ) ) {
+		// bail if no connection is defined via constants.
+		if ( empty( $this->get_connections() ) ) {
 			return false;
 		}
 
-		// return true if the URL is not using the server of the constants.
-		if ( ! empty( $this->constants_host_field ) && '' !== $url && ! $this->is_url_matching_constants( $url ) ) {
-			return true;
-		}
-
-		// return whether the fields are for another target.
-		return ! $this->is_fields_matching_constants( $fields );
+		// return true if no connection could be used for this URL and fields.
+		return is_null( $this->get_connection_for_fields( $fields, $url ) );
 	}
 
 	/**
 	 * Return whether the values of the target fields (e.g. a bucket) in the given fields are empty or equal to
-	 * the values defined via constants.
+	 * the values of any connection defined via constants (or the connection chosen in the fields).
 	 *
 	 * @param array<string,mixed> $fields List of fields.
 	 *
 	 * @return bool
 	 */
 	public function is_fields_matching_constants( array $fields ): bool {
+		// bail if no connection is defined via constants.
+		if ( empty( $this->get_connections() ) ) {
+			return true;
+		}
+
+		// return whether a connection could be used for these fields.
+		return ! is_null( $this->get_connection_for_fields( $fields ) );
+	}
+
+	/**
+	 * Return whether the values of the target fields (e.g. a bucket) in the given fields are empty or equal to
+	 * the values defined via constants for the given connection.
+	 *
+	 * @param array<string,mixed> $fields     List of fields.
+	 * @param string              $connection The name of the connection.
+	 *
+	 * @return bool
+	 */
+	public function is_fields_matching_connection( array $fields, string $connection ): bool {
 		// check each target field.
 		$result = true;
 		foreach ( $this->constants_target_fields as $field_name ) {
 			// get the value of the constant.
-			$constant_value = $this->get_constant_value( $field_name );
+			$constant_value = $this->get_constant_value( $field_name, $connection );
 
 			// bail if this field is not defined via constant.
 			if ( is_null( $constant_value ) ) {
@@ -1631,8 +2283,9 @@ class Service_Base extends Directory_Listing_Base {
 		 * @param bool $result True if the fields are matching.
 		 * @param array<string,mixed> $fields List of fields.
 		 * @param Service_Base $instance The service object.
+		 * @param string $connection The name of the connection ("default" for the constants without connection name).
 		 */
-		return apply_filters( 'efml_service_fields_matching_constants', $result, $fields, $instance );
+		return apply_filters( 'efml_service_fields_matching_constants', $result, $fields, $instance, $connection );
 	}
 
 	/**
@@ -1667,7 +2320,7 @@ class Service_Base extends Directory_Listing_Base {
 	 *
 	 * @return array<string,mixed>
 	 */
-	private function remove_constant_values_from_fields( array $fields ): array {
+	public function remove_constant_values_from_fields( array $fields ): array {
 		foreach ( $fields as $name => $field ) {
 			// bail if field is not set via constant.
 			if ( ! is_array( $field ) || empty( $field['constant'] ) ) {
@@ -1684,16 +2337,18 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Return the list of defined constants for fields of this service.
+	 * Return the list of defined constants for fields of this service for the given connection.
+	 *
+	 * @param string $connection The name of the connection (optional, the default connection is used if not set).
 	 *
 	 * @return array<int,string>
 	 */
-	public function get_defined_constants_for_fields(): array {
+	public function get_defined_constants_for_fields( string $connection = self::DEFAULT_CONNECTION ): array {
 		// collect the defined constants of this service.
 		$list = array();
 		foreach ( array_keys( $this->get_constant_field_definitions() ) as $name ) {
 			// get the constant name.
-			$constant_name = $this->get_constant_name_for_field( $name );
+			$constant_name = $this->get_constant_name_for_field( $name, $connection );
 
 			// bail if constant is not defined.
 			if ( ! defined( $constant_name ) ) {
@@ -1709,15 +2364,16 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
-	 * Return the list of constants for required fields, which are not defined.
+	 * Return the list of constants for required fields of the given connection, which are not defined.
 	 *
-	 * @param bool $only_if_any_defined True to return an empty list, if no constant of this service is defined.
+	 * @param bool   $only_if_any_defined True to return an empty list, if no constant of this connection is defined.
+	 * @param string $connection          The name of the connection (optional, the default connection is used if not set).
 	 *
 	 * @return array<int,string>
 	 */
-	public function get_missing_constants_for_fields( bool $only_if_any_defined = true ): array {
+	public function get_missing_constants_for_fields( bool $only_if_any_defined = true, string $connection = self::DEFAULT_CONNECTION ): array {
 		// bail if no constant is defined and this is requested.
-		if ( $only_if_any_defined && empty( $this->get_defined_constants_for_fields() ) ) {
+		if ( $only_if_any_defined && empty( $this->get_defined_constants_for_fields( $connection ) ) ) {
 			return array();
 		}
 
@@ -1725,7 +2381,7 @@ class Service_Base extends Directory_Listing_Base {
 		$list = array();
 		foreach ( $this->get_required_fields_for_constants() as $name ) {
 			// get the constant name.
-			$constant_name = $this->get_constant_name_for_field( $name );
+			$constant_name = $this->get_constant_name_for_field( $name, $connection );
 
 			// bail if constant is defined.
 			if ( defined( $constant_name ) ) {
@@ -1770,16 +2426,32 @@ class Service_Base extends Directory_Listing_Base {
 	 * @return string
 	 */
 	protected function get_constant_hint_for_field( string $field_name ): string {
-		// get the value of the constant.
-		$value = $this->get_constant_value( $field_name );
+		// get the connections, which define this field.
+		$connections = $this->get_connections_with_field( $field_name );
 
 		// bail if the value is not defined via constant.
-		if ( is_null( $value ) ) {
+		if ( empty( $connections ) ) {
 			return '';
 		}
 
+		// show the connections, if the field is defined for several connections.
+		if ( count( $connections ) > 1 ) {
+			// get the labels of the connections.
+			$labels = array();
+			foreach ( array_keys( $connections ) as $connection ) {
+				$labels[] = '<em>' . esc_html( $this->get_connection_label( $connection ) ) . '</em>';
+			}
+
+			/* translators: %1$s will be replaced by a list of connection names. */
+			return sprintf( __( 'Defined via constants for the connections %1$s', 'external-files-in-media-library' ), implode( ', ', $labels ) );
+		}
+
+		// get the connection and the value.
+		$connection = (string) array_key_first( $connections );
+		$value      = $connections[ $connection ];
+
 		// get the name of the constant.
-		$constant_name = $this->get_constant_name_for_field( $field_name );
+		$constant_name = $this->get_constant_name_for_field( $field_name, $connection );
 
 		// show the value for the server.
 		if ( $field_name === $this->constants_host_field ) {
@@ -1873,6 +2545,77 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_export_object(): Export_Base|bool {
 		return false;
+	}
+
+	/**
+	 * Return the search terms of this service, e.g. for the command palette of WordPress.
+	 *
+	 * Contains its name, its label and further terms (see @get_keywords()).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_search_keywords(): array {
+		// collect the terms.
+		$keywords = array( str_replace( array( '-', '_' ), ' ', $this->get_name() ), wp_strip_all_tags( $this->get_label() ) );
+		foreach ( explode( ',', $this->get_keywords() ) as $keyword ) {
+			$keyword = trim( $keyword );
+			if ( '' !== $keyword ) {
+				$keywords[] = $keyword;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the search terms of a service, e.g. for the command palette of WordPress.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<int,string> $keywords List of search terms.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_search_keywords', array_values( array_unique( $keywords ) ), $instance );
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas (e.g. other names of the service).
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return '';
+	}
+
+	/**
+	 * Return the features of this service, which are shown e.g. on the tiles to choose a service.
+	 *
+	 * Possible features are "sync", "export", "private" (private files) and "constants" (access data via constants).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,bool>
+	 */
+	public function get_features(): array {
+		// get the export object.
+		$export_obj = $this->get_export_object();
+
+		// collect the features.
+		$features = array(
+			'sync'      => ! $this->is_sync_disabled(),
+			'export'    => $export_obj instanceof Export_Base,
+			'private'   => $export_obj instanceof Export_Base && $export_obj->supports_private_files(),
+			'constants' => $this->is_fields_via_constants_enabled() && ! empty( $this->get_constant_field_definitions() ),
+		);
+
+		$instance = $this;
+		/**
+		 * Filter the features of a service, which are shown e.g. on the tiles to choose a service.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,bool> $features List of features.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_features', $features, $instance );
 	}
 
 	/**

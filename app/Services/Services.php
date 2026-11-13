@@ -550,6 +550,130 @@ class Services {
 	}
 
 	/**
+	 * Return the definitions of the features of services, which are shown e.g. on the tiles to choose a service.
+	 *
+	 * Each feature has a label, the name of its SVG icon (WordPress 7.2 and newer) and a Dashicon as fallback.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,array{label: string, icon: string, dashicon: string}>
+	 */
+	public function get_feature_definitions(): array {
+		$list = array(
+			'sync'      => array(
+				'label'    => __( 'Synchronization', 'external-files-in-media-library' ),
+				'icon'     => 'core-admin/update',
+				'dashicon' => 'dashicons-update',
+			),
+			'export'    => array(
+				'label'    => __( 'Export', 'external-files-in-media-library' ),
+				'icon'     => 'core-admin/upload',
+				'dashicon' => 'dashicons-upload',
+			),
+			'private'   => array(
+				'label'    => __( 'Private files', 'external-files-in-media-library' ),
+				'icon'     => 'core-admin/shield',
+				'dashicon' => 'dashicons-shield',
+			),
+			'constants' => array(
+				'label'    => __( 'Access data via constants', 'external-files-in-media-library' ),
+				'icon'     => 'core-admin/key',
+				'dashicon' => 'dashicons-admin-network',
+			),
+		);
+
+		/**
+		 * Filter the definitions of the features of services.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,array{label: string, icon: string, dashicon: string}> $list List of features.
+		 */
+		return apply_filters( 'efml_service_feature_definitions', $list );
+	}
+
+	/**
+	 * Return the HTML code with the icons for the features of the given service.
+	 *
+	 * @param Directory_Listing_Base $obj The service object.
+	 *
+	 * @return string
+	 */
+	public function get_feature_icons( Directory_Listing_Base $obj ): string {
+		// get the service object.
+		$service_obj = $this->get_service_for_listing( $obj );
+
+		// bail if this is not a service object.
+		if ( ! $service_obj instanceof Service_Base ) {
+			return '';
+		}
+
+		// get the features of this service.
+		$features = $service_obj->get_features();
+
+		// collect the icons.
+		$icons = '';
+		foreach ( $this->get_feature_definitions() as $name => $definition ) {
+			// bail if the service does not support this feature.
+			if ( empty( $features[ $name ] ) ) {
+				continue;
+			}
+
+			// add the icon.
+			$icons .= Helper::get_icon( $definition['icon'], $definition['dashicon'], $definition['label'], 18 );
+		}
+
+		// return the resulting icons.
+		return $icons;
+	}
+
+	/**
+	 * Return the names of the features of the given service, which it supports.
+	 *
+	 * @param Directory_Listing_Base $obj The service object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_supported_features( Directory_Listing_Base $obj ): array {
+		// get the service object.
+		$service_obj = $this->get_service_for_listing( $obj );
+
+		// bail if this is not a service object.
+		if ( ! $service_obj instanceof Service_Base ) {
+			return array();
+		}
+
+		// return the names of the supported features.
+		return array_keys( array_filter( $service_obj->get_features() ) );
+	}
+
+	/**
+	 * Return the service object for the given directory listing object.
+	 *
+	 * Some services extend directory listing objects of other libraries (e.g. "Local"), their features and
+	 * search terms are defined by the service object with the same name.
+	 *
+	 * @param Directory_Listing_Base $obj The directory listing object.
+	 *
+	 * @return Service_Base|false
+	 */
+	private function get_service_for_listing( Directory_Listing_Base $obj ): Service_Base|false {
+		// return the object, if it is a service object.
+		if ( $obj instanceof Service_Base ) {
+			return $obj;
+		}
+
+		// search for a service object with the same name.
+		foreach ( $this->get_services_as_objects() as $service_obj ) {
+			if ( $service_obj instanceof Service_Base && $service_obj->get_name() === $obj->get_name() ) {
+				return $service_obj;
+			}
+		}
+
+		// return false, as no service object could be found.
+		return false;
+	}
+
+	/**
 	 * Return the services for the overview in the settings, sorted by their labels.
 	 *
 	 * @return array<int,Service_Base>
@@ -894,18 +1018,21 @@ class Services {
 	}
 
 	/**
-	 * Return list of available services via AJAX.
+	 * Return the services matching the search of the request, e.g. for the command palette.
+	 *
+	 * The search is compared with the name, the label and the search terms of each service. Service plugins,
+	 * which are not installed, are included with the URL of the page to choose a service, where they could be installed.
 	 *
 	 * @param WP_REST_Request $data The REST API request data.
 	 *
-	 * @return array<int,array<string,int|string>>
+	 * @return array<int,array<string,int|string|bool>>
 	 */
 	public function get_services_via_rest( WP_REST_Request $data ): array {
-		// get the params.
-		$params = $data->get_params();
+		// get the search.
+		$search = $data->get_param( 'search' );
 
 		// bail if search is empty.
-		if ( empty( $params['search'] ) ) {
+		if ( ! is_string( $search ) || '' === trim( $search ) ) {
 			return array();
 		}
 
@@ -913,37 +1040,41 @@ class Services {
 		$list = array();
 
 		// add each service to the list.
-		foreach ( $this->get_services_as_objects() as $service ) {
-			// bail if disabled.
-			if ( method_exists( $service, 'is_disabled' ) && $service->is_disabled() ) {
-				continue;
-			}
-
-			// bail if methods are missing.
-			if ( ! method_exists( $service, 'get_label' ) || ! method_exists( $service, 'get_name' ) ) {
-				continue;
-			}
-
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $service ) {
 			// bail if name or label are empty.
 			if ( empty( $service->get_name() ) || empty( $service->get_label() ) ) {
 				continue;
 			}
 
 			// bail if user is not allowed to use this service.
-			if ( ! current_user_can( 'efml_cap_' . $service->get_name() ) ) {
+			if ( ! current_user_can( $service->get_permission_name() ) ) {
 				continue;
 			}
 
-			// bail if search does not contain name or label.
-			if ( ! str_contains( $service->get_name(), $params['search'] ) && ! str_contains( $service->get_label(), $params['search'] ) ) {
+			// get the search terms of this service.
+			$service_obj = $this->get_service_for_listing( $service );
+			$keywords    = $service_obj instanceof Service_Base ? $service_obj->get_search_keywords() : array( $service->get_name(), $service->get_label() );
+
+			// bail if search does not match.
+			if ( ! Helper::is_search_matching( $search, $keywords ) ) {
 				continue;
+			}
+
+			// get the URL.
+			$is_extension = $service instanceof Service_Plugin_Base;
+			$url          = $service->get_view_url();
+			if ( empty( $url ) || $is_extension ) {
+				$url = Directory_Listing::get_instance()->get_view_directory_url( $is_extension ? false : $service );
 			}
 
 			// add the service to the list.
 			$list[] = array(
-				'id'    => count( $list ) + 1,
-				'label' => $service->get_label(),
-				'value' => $service->get_name(),
+				'id'        => count( $list ) + 1,
+				/* translators: %1$s will be replaced by the name of a service (e.g. "FTP"). */
+				'label'     => $is_extension ? sprintf( __( '%1$s (available as extension)', 'external-files-in-media-library' ), wp_strip_all_tags( $service->get_label() ) ) : wp_strip_all_tags( $service->get_label() ),
+				'value'     => $service->get_name(),
+				'url'       => $url,
+				'extension' => $is_extension,
 			);
 		}
 
@@ -952,18 +1083,21 @@ class Services {
 	}
 
 	/**
-	 * Return list of available sources via AJAX.
+	 * Return the external sources matching the search of the request, e.g. for the command palette.
+	 *
+	 * Only external sources, which the actual user is allowed to use, are returned
+	 * (see Directory_Listing::is_source_allowed_for_current_user()).
 	 *
 	 * @param WP_REST_Request $data The REST API request data.
 	 *
 	 * @return array<int,array<string,int|string>>
 	 */
 	public function get_sources_via_rest( WP_REST_Request $data ): array {
-		// get the params.
-		$params = $data->get_params();
+		// get the search.
+		$search = $data->get_param( 'search' );
 
 		// bail if search is empty.
-		if ( empty( $params['search'] ) ) {
+		if ( ! is_string( $search ) || '' === trim( $search ) ) {
 			return array();
 		}
 
@@ -985,11 +1119,33 @@ class Services {
 
 		// add each term to the list.
 		foreach ( $terms as $term ) {
+			// bail if the actual user is not allowed to use this external source or if it is not usable.
+			if ( ! Directory_Listing::get_instance()->is_source_allowed_for_current_user( $term->term_id ) || $this->is_source_blocked_by_constants( $term->term_id ) ) {
+				continue;
+			}
+
+			// get the service of this source.
+			$type        = (string) get_term_meta( $term->term_id, 'type', true );
+			$service_obj = $this->get_service_by_name( $type );
+
+			// bail if the service is unknown or the actual user is not allowed to use it.
+			if ( ! $service_obj instanceof Directory_Listing_Base || ! current_user_can( $service_obj->get_permission_name() ) ) {
+				continue;
+			}
+
+			// bail if search does not match the name of the source or of its service.
+			if ( ! Helper::is_search_matching( $search, array( $term->name, $type, $service_obj->get_label() ) ) ) {
+				continue;
+			}
+
+			// add the source to the list.
 			$list[] = array(
 				'id'     => count( $list ) + 1,
-				'label'  => $term->name,
+				/* translators: %1$s will be replaced by the name of an external source, %2$s by the name of a service (e.g. "FTP"). */
+				'label'  => sprintf( __( '%1$s (external source via %2$s)', 'external-files-in-media-library' ), $term->name, wp_strip_all_tags( $service_obj->get_label() ) ),
 				'value'  => $term->term_id,
-				'method' => get_term_meta( $term->term_id, 'type', true ),
+				'method' => $type,
+				'url'    => add_query_arg( array( 'term' => $term->term_id ), Directory_Listing::get_instance()->get_view_directory_url( $service_obj ) ),
 			);
 		}
 

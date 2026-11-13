@@ -1433,4 +1433,13 @@ class Rest extends Service_Base implements Service {
 		// set the service name.
 		$external_file_obj->set_service_name( $this->get_name() );
 	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'WordPress, REST API, website', 'search terms for the REST API service, separated by commas', 'external-files-in-media-library' );
+	}
 }

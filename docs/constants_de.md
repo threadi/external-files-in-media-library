@@ -26,6 +26,33 @@ Beispiel: das Feld `password` des Dienstes `ftp` wird über `EFML_FTP_PASSWORD` 
 * **Bereits importierte Dateien** dieser Quellen werden weiterhin mit ihren eigenen Zugangsdaten ausgeliefert.
 * **Manuelle Angaben:** Auch über „URL hinzufügen“ lassen sich keine URLs anderer Server dieses Dienstes importieren, selbst mit eigenen Zugangsdaten (z. B. `ftp://` oder `sftp://` bei gesetzten FTP-Konstanten). Normale `http(s)://`-URLs sind davon nicht betroffen, auch nicht durch die Konstanten der REST-API.
 
+## Mehrere Verbindungen
+
+Bei allen Diensten mit Zugangsdaten in ihren Feldern (alle außer Dropbox und der Erweiterung für Google Drive) kannst du mehrere Verbindungen festlegen, z. B. zwei FTP-Server oder zwei Buckets.
+
+1. Liste die Namen der Verbindungen kommagetrennt in `EFML_` + Name des Dienstes + `_CONNECTIONS` auf.
+2. Lege die Konstanten jeder Verbindung fest: `EFML_` + Name des Dienstes + `_` + Name der Verbindung + `_` + Name des Feldes.
+
+```php
+define( 'EFML_FTP_CONNECTIONS', 'shop,archiv' );
+
+define( 'EFML_FTP_SHOP_SERVER', 'ftps://shop.example.com' );
+define( 'EFML_FTP_SHOP_LOGIN', 'shop-login' );
+define( 'EFML_FTP_SHOP_PASSWORD', 'shop-passwort' );
+
+define( 'EFML_FTP_ARCHIV_SERVER', 'sftp://archiv.example.com' );
+define( 'EFML_FTP_ARCHIV_LOGIN', 'archiv-login' );
+define( 'EFML_FTP_ARCHIV_PASSWORD', 'archiv-passwort' );
+```
+
+* **Namen:** Buchstaben, Ziffern, Bindestriche und Unterstriche, die Groß- und Kleinschreibung spielt keine Rolle. In den Namen der Konstanten werden Bindestriche zu Unterstrichen (`mein-shop` → `EFML_FTP_MEIN_SHOP_SERVER`). Der Name `default` ist reserviert. Namen, die zu den Namen anderer Konstanten führen würden, lassen sich nicht nutzen. Die Einstellungsseite des Dienstes zeigt, welche Namen nicht nutzbar sind.
+* **Standardverbindung:** Die Konstanten ohne Namen einer Verbindung (z. B. `EFML_FTP_SERVER`) funktionieren weiterhin. Sie erscheinen als Verbindung „Standard“ und lassen sich mit benannten Verbindungen kombinieren.
+* **Alle Pflichtfelder je Verbindung:** Jede Verbindung braucht Konstanten für alle Pflichtfelder. Unvollständige Verbindungen werden nicht genutzt, die Einstellungsseite zeigt, welche Konstanten fehlen.
+* **Verbindung auswählen:** Ist mehr als eine Verbindung vollständig, zeigt das Formular für eine neue externe Quelle das Feld „Verbindung“. Die Werte der Verbindungen erscheinen im Formular nicht. Die gewählte Verbindung wird mit der externen Quelle und mit den daraus importierten Dateien gespeichert. Die Abilities nutzen dafür das Feld `efml_connection`.
+* **Ohne gewählte Verbindung** (z. B. bei vorher gespeicherten externen Quellen, manuellen Importen über „URL hinzufügen“ oder vorher importierten Dateien) gilt die erste Verbindung, deren Server (bzw. Bucket usw.) passt, beginnend mit der Standardverbindung.
+* **Nur für den eigenen Server:** Jede Verbindung gilt nur für ihren eigenen Server bzw. Bucket. Externe Quellen und URLs, die zu keiner Verbindung passen, sind wie oben beschrieben gesperrt. Eine externe Quelle mit gewählter Verbindung ist auch dann gesperrt, wenn ihr Server nicht zu dieser Verbindung passt.
+* **Nur eine vollständige Verbindung:** Sie gilt wie die Konstanten ohne Namen einer Verbindung, eine Auswahl erscheint nicht.
+
 ## Konstanten der Dienste
 
 ### FTP, FTPS und SFTP
@@ -91,13 +118,15 @@ Ohne Konstanten sind die Dienste Lokal und Multisite, weil sie keine Zugangsdate
 
 ## Hooks für Entwickler
 
-* `efml_service_field_constant_name`: Namen einer Konstante ändern.
+* `efml_service_field_constant_name`: Namen einer Konstante ändern. Der Name der Verbindung ist der vierte Parameter (`default` bei den Konstanten ohne Namen einer Verbindung).
+* `efml_service_connections_constant_name`: Namen der Konstante mit der Liste der Verbindungen ändern.
+* `efml_service_constants_connection`: Entscheiden, welche Verbindung für bestimmte Felder und eine URL gilt (`null` zurückgeben, um keine Konstanten zu nutzen).
 * `efml_service_required_fields_for_constants`: Liste der Felder ändern, die alle als Konstante gesetzt sein müssen.
 * `efml_service_url_matching_constants`: Entscheiden, ob eine URL zum Server der Konstanten passt.
 * `efml_service_names_for_constants`: Festlegen, welche Dienste ihre Konstanten für ein Protokoll bereitstellen (z. B. `sftp` → `ftp`, `http` → `rest`).
 * `efml_service_fields`: Felder eines Dienstes samt Werten ändern.
 * `efml_service_names_for_blocking`: Festlegen, zu welchen Diensten die URLs eines Protokolls gehören und damit bei gesetzten Konstanten auf deren Server beschränkt sind (z. B. `sftp` → `ftp`).
-* `efml_service_fields_matching_constants`: Entscheiden, ob Felder zum Ziel der Konstanten passen (z. B. derselbe Bucket).
+* `efml_service_fields_matching_constants`: Entscheiden, ob Felder zum Ziel der Konstanten einer Verbindung passen (z. B. derselbe Bucket). Der Name der Verbindung ist der vierte Parameter.
 * `efml_source_blocked_by_constants`: Entscheiden, ob eine gespeicherte externe Quelle wegen der Konstanten gesperrt ist.
 
 Für einen eigenen Dienst ohne Zugangsdaten `protected bool $fields_via_constants = false;` setzen.
@@ -105,7 +134,8 @@ Für einen eigenen Dienst ohne Zugangsdaten `protected bool $fields_via_constant
 Weitere Möglichkeiten für Dienste aus Erweiterungen:
 
 * `protected array $constants_target_fields = array( 'bucket' );`: Felder, die das Ziel neben dem Server bestimmen. Gespeicherte Quellen und manuelle Angaben mit anderen Werten sind gesperrt, die Konstanten werden für sie nie genutzt.
-* `protected bool $constants_in_fields = false;`: Die Konstanten sind keine Werte der Felder (z. B. API-Zugangsdaten für OAuth), dazu `get_constant_field_definitions()` überschreiben.
+* `protected bool $constants_in_fields = false;`: Die Konstanten sind keine Werte der Felder (z. B. API-Zugangsdaten für OAuth), dazu `get_constant_field_definitions()` überschreiben. Solche Dienste unterstützen nur die Konstanten ohne Namen einer Verbindung (siehe `supports_constant_connections()`).
+* `is_fields_matching_connection()`: Überschreiben, um die Zielfelder einer Verbindung anders zu vergleichen (z. B. URLs in normalisierter Form).
 * `get_mode_for_constants()`: Speicherort, der bei gesetzten Konstanten gilt (Standard `global`).
 * `get_required_fields_for_constants()`: Liste der Pflichtfelder ändern.
 * `add_constant_hint_setting()`: Hinweis statt einer Einstellung anzeigen, wenn der Wert per Konstante gesetzt ist. Hat der Dienst ein Feld mit der URL des Servers, `protected string $constants_host_field = '<feldname>';` setzen, damit die Zugangsdaten nur für diesen Server genutzt werden.

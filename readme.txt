@@ -23,6 +23,8 @@ Embed your files from _AWS S3_, _DropBox_, _Google Drive_, _Google Cloud Storage
 
 Automatically synchronize external directories containing files with your media library at intervals you specify.
 
+Offload your media: export new uploads and existing files to AWS S3, S3-compatible storages, Google Cloud Storage, FTP, Dropbox, WebDAV or other external sources to save storage space on your hosting. The files are then used as external files.
+
 And even more:
 
 ✅ Add the files with their external dates. This allows you to get the date, helpful for SEO, for example.
@@ -31,6 +33,14 @@ And even more:
 ✅ Configure, which users in your project are allowed to use the external files options.
 ✅ Extract ZIP files from any external source into your media library.
 ✅ Import lists of URLs from CSV and XML files (e.g., sitemaps, feeds or exports), uploaded or from a URL.
+✅ Import and synchronize large directories with thousands of files in the background.
+✅ Save exported files in private storages and deliver them via the proxy or via temporary links, also for WooCommerce downloads.
+✅ Sort exported files into folders by year and month.
+✅ Keep access data out of your database: define them as constants in your wp-config.php, also for several connections per service.
+✅ Work safely with copies of your website: on staging websites, nothing is exported to or deleted on your external sources.
+✅ Find everything quickly: the tiles of the services show their features, and the command palette of WordPress (Ctrl + K) finds services, external sources and settings.
+
+See [what is possible](https://github.com/threadi/external-files-in-media-library/blob/master/docs/features.md) for an overview of all features.
 
 == Support for other plugins ==
 
@@ -76,7 +86,7 @@ Some of them require credentials, for http(s) it is optional.
 
 Support for additional platforms as external sources is enabled by additional service plugins. These are now:
 
-➕ [External files from AWS S3 in Media Library](https://github.com/threadi/external-files-from-aws-s3) (incl. support for AWS S3, AWS Cloudfront, Backplaze S3, Cloudflare R2 and DigitalOcean Spaces)
+➕ [External files from AWS S3 in Media Library](https://github.com/threadi/external-files-from-aws-s3) (incl. support for AWS S3, Amazon CloudFront, Backblaze B2, Cloudflare R2, DigitalOcean Spaces, Hetzner Object Storage, IONOS, OVHcloud, Scaleway, Wasabi and any other S3-compatible storage like MinIO)
 ➕ [External files from Google Cloud Storage in Media Library](https://github.com/threadi/external-files-from-google-cloud-storage)
 ➕ [External files from Google Drive in Media Library](https://github.com/threadi/external-files-from-google-drive)
 ➕ [External files from WebDav in Media Library](https://github.com/threadi/external-files-from-webdav) (incl. any WebDav-provider like NextCloud or Seafile)
@@ -100,6 +110,10 @@ Find more [here](https://plugins.thomaszwirner.de/en/external-files-in-the-media
 This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
 
 == Upgrade Notice ==
+
+= 6.0.0 =
+
+Major update with export of files to external sources (offloading), private files, credentials via constants, protection of staging websites and a new structure of the settings. Please be sure to create a backup before updating.
 
 = 5.0.0 =
 

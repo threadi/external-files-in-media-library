@@ -1071,4 +1071,13 @@ class Ftp extends Service_Base implements Service {
 			throw new Exception( esc_html__( 'The test file could not be deleted.', 'external-files-in-media-library' ) );
 		}
 	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'FTP, FTPS, SFTP, SSH, server, hosting', 'search terms for the FTP service, separated by commas', 'external-files-in-media-library' );
+	}
 }

@@ -499,4 +499,13 @@ class Local extends Service_Base implements Service {
 	public function get_export_object(): Export_Base|false {
 		return Export::get_instance();
 	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'local, server, hosting, uploads, folder, directory', 'search terms for the local service, separated by commas', 'external-files-in-media-library' );
+	}
 }

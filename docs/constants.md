@@ -26,6 +26,33 @@ Example: the field `password` of the service `ftp` is defined via `EFML_FTP_PASS
 * **Files imported before** from these sources are still delivered with their own credentials.
 * **Manual entries:** URLs on other servers of this service could also not be imported via "Add URL", even with own credentials (e.g. `ftp://` or `sftp://` if the FTP constants are defined). Normal `http(s)://` URLs are not affected, also not by the constants of the REST API.
 
+## Several connections
+
+For all services with credentials in their fields (all except Dropbox and the Google Drive extension), you can define several connections, e.g. two FTP servers or two buckets.
+
+1. List the names of the connections, separated by commas, in `EFML_` + name of the service + `_CONNECTIONS`.
+2. Define the constants of each connection: `EFML_` + name of the service + `_` + name of the connection + `_` + name of the field.
+
+```php
+define( 'EFML_FTP_CONNECTIONS', 'shop,archive' );
+
+define( 'EFML_FTP_SHOP_SERVER', 'ftps://shop.example.com' );
+define( 'EFML_FTP_SHOP_LOGIN', 'shop-login' );
+define( 'EFML_FTP_SHOP_PASSWORD', 'shop-password' );
+
+define( 'EFML_FTP_ARCHIVE_SERVER', 'sftp://archive.example.com' );
+define( 'EFML_FTP_ARCHIVE_LOGIN', 'archive-login' );
+define( 'EFML_FTP_ARCHIVE_PASSWORD', 'archive-password' );
+```
+
+* **Names:** Letters, numbers, hyphens and underscores, the case does not matter. In the names of the constants, hyphens become underscores (`my-shop` → `EFML_FTP_MY_SHOP_SERVER`). The name `default` is reserved. Names, which would result in the names of other constants, could not be used. The settings page of the service shows names, which could not be used.
+* **Default connection:** The constants without the name of a connection (e.g. `EFML_FTP_SERVER`) still work. They are shown as connection "Default" and could be combined with named connections.
+* **All required fields per connection:** Each connection needs constants for all required fields. Incomplete connections are not used, the settings page shows which constants are missing.
+* **Choose the connection:** If more than one connection is complete, the form for a new external source shows the field "Connection". The values of the connections are not shown in the form. The chosen connection is saved with the external source and with the files imported from it. The abilities use the field `efml_connection` for this.
+* **Without a chosen connection** (e.g. external sources saved before, manual imports via "Add URL" or files imported before), the first connection, whose server (or bucket etc.) matches, is used, starting with the default connection.
+* **Only for its own server:** Each connection is only used for its own server or bucket. External sources and URLs, which match no connection, are blocked as described above. An external source with a chosen connection is also blocked, if its server does not match this connection.
+* **Only one complete connection:** It is used like the constants without connection name, no choice is shown.
+
 ## Constants of the services
 
 ### FTP, FTPS and SFTP
@@ -91,13 +118,15 @@ The services Local and Multisite do not support constants, as they do not use cr
 
 ## Hooks for developers
 
-* `efml_service_field_constant_name`: change the name of a constant.
+* `efml_service_field_constant_name`: change the name of a constant. The name of the connection is given as fourth parameter (`default` for the constants without connection name).
+* `efml_service_connections_constant_name`: change the name of the constant with the list of connections.
+* `efml_service_constants_connection`: decide which connection is used for given fields and a URL (return `null` to use no constants).
 * `efml_service_required_fields_for_constants`: change the list of fields, which must all be defined as constants.
 * `efml_service_url_matching_constants`: decide whether a URL matches the server of the constants.
 * `efml_service_names_for_constants`: define which services provide their constants for a protocol (e.g. `sftp` → `ftp`, `http` → `rest`).
 * `efml_service_fields`: change the fields of a service incl. their values.
 * `efml_service_names_for_blocking`: define to which services the URLs of a protocol belong, so they are limited to the server of their constants (e.g. `sftp` → `ftp`).
-* `efml_service_fields_matching_constants`: decide whether fields match the target of the constants (e.g. the same bucket).
+* `efml_service_fields_matching_constants`: decide whether fields match the target of the constants of a connection (e.g. the same bucket). The name of the connection is given as fourth parameter.
 * `efml_source_blocked_by_constants`: decide whether a saved external source is blocked because of the constants.
 
 For your own service without credentials, set `protected bool $fields_via_constants = false;`.
@@ -105,7 +134,8 @@ For your own service without credentials, set `protected bool $fields_via_consta
 Further options for services from extensions:
 
 * `protected array $constants_target_fields = array( 'bucket' );`: fields, which define the target besides the server. Saved sources and manual entries with other values are blocked, the constants are never used for them.
-* `protected bool $constants_in_fields = false;`: the constants are no values of the fields (e.g. API credentials for OAuth), override `get_constant_field_definitions()` for them.
+* `protected bool $constants_in_fields = false;`: the constants are no values of the fields (e.g. API credentials for OAuth), override `get_constant_field_definitions()` for them. Such services only support the constants without connection name (see `supports_constant_connections()`).
+* `is_fields_matching_connection()`: override it to compare the target fields of a connection in another way (e.g. URLs in their normalized form).
 * `get_mode_for_constants()`: location of the credentials used if the constants are defined (default `global`).
 * `get_required_fields_for_constants()`: change the list of required fields.
 * `add_constant_hint_setting()`: show a hint instead of a setting, if the value is defined via constant. If the service has a field with the URL of the server, set `protected string $constants_host_field = '<field name>';`, so the credentials are only used for this server.

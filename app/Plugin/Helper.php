@@ -1218,4 +1218,146 @@ class Helper {
 			$url
 		);
 	}
+
+	/**
+	 * Return the HTML code for an icon of the WordPress admin.
+	 *
+	 * Uses the SVG icon of WordPress (e.g. "core-admin/update", available since WordPress 7.2), if it is registered.
+	 * Otherwise, the given Dashicon is used (e.g. in older WordPress versions).
+	 *
+	 * @param string $icon_name The name of the SVG icon (e.g. "core-admin/update").
+	 * @param string $dashicon  The class of the Dashicon as fallback (e.g. "dashicons-update").
+	 * @param string $label     The accessible label (optional, the icon is hidden for screen readers without it).
+	 * @param int    $size      The size in pixel.
+	 *
+	 * @return string
+	 */
+	public static function get_icon( string $icon_name, string $dashicon, string $label = '', int $size = 20 ): string {
+		// use the SVG icon, if it is registered.
+		if ( function_exists( 'wp_get_icon' ) && class_exists( 'WP_Icons_Registry' ) && \WP_Icons_Registry::get_instance()->is_registered( $icon_name ) ) {
+			$svg = wp_get_icon(
+				$icon_name,
+				array(
+					'size'  => $size,
+					'label' => $label,
+				)
+			);
+			if ( '' !== $svg ) {
+				return '<span class="efml-icon svg-icon"' . ( '' !== $label ? ' title="' . esc_attr( $label ) . '"' : '' ) . '>' . $svg . '</span>';
+			}
+		}
+
+		// use the Dashicon otherwise.
+		if ( '' !== $label ) {
+			return '<span class="efml-icon dashicons ' . esc_attr( $dashicon ) . '" role="img" aria-label="' . esc_attr( $label ) . '" title="' . esc_attr( $label ) . '"></span>';
+		}
+		return '<span class="efml-icon dashicons ' . esc_attr( $dashicon ) . '" aria-hidden="true"></span>';
+	}
+
+	/**
+	 * Return the allowed HTML for the output of icons via wp_kses() (see @get_icon()).
+	 *
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function get_allowed_html_for_icons(): array {
+		// the attributes for accessibility.
+		$a11y = array(
+			'role'        => true,
+			'aria-label'  => true,
+			'aria-hidden' => true,
+			'focusable'   => true,
+			'class'       => true,
+		);
+
+		// return the list.
+		return array(
+			'span'     => array_merge( $a11y, array( 'title' => true ) ),
+			'svg'      => array_merge(
+				$a11y,
+				array(
+					'xmlns'   => true,
+					'viewbox' => true,
+					'width'   => true,
+					'height'  => true,
+					'fill'    => true,
+				)
+			),
+			'g'        => array( 'fill' => true ),
+			'path'     => array(
+				'd'         => true,
+				'fill'      => true,
+				'fill-rule' => true,
+				'clip-rule' => true,
+			),
+			'circle'   => array(
+				'cx'   => true,
+				'cy'   => true,
+				'r'    => true,
+				'fill' => true,
+			),
+			'rect'     => array(
+				'x'      => true,
+				'y'      => true,
+				'width'  => true,
+				'height' => true,
+				'rx'     => true,
+				'fill'   => true,
+			),
+			'polygon'  => array(
+				'points' => true,
+				'fill'   => true,
+			),
+			'title'    => array(),
+			'polyline' => array(
+				'points' => true,
+				'fill'   => true,
+			),
+		);
+	}
+
+	/**
+	 * Return whether all words of the given search are contained in the given texts (case-insensitive).
+	 *
+	 * @param string            $search The search.
+	 * @param array<int,string> $texts  List of texts (e.g. a label and search terms).
+	 *
+	 * @return bool
+	 */
+	public static function is_search_matching( string $search, array $texts ): bool {
+		// get the words of the search.
+		$words = preg_split( '/\s+/', trim( $search ), -1, PREG_SPLIT_NO_EMPTY );
+
+		// bail if no word is given.
+		if ( empty( $words ) ) {
+			return false;
+		}
+
+		// get the texts as one text.
+		$haystack = implode( ' ', $texts );
+
+		// check each word.
+		foreach ( $words as $word ) {
+			if ( false === mb_stripos( $haystack, $word ) ) {
+				return false;
+			}
+		}
+
+		// return true as all words are contained.
+		return true;
+	}
+
+	/**
+	 * Return the URL of a documentation of this plugin in the language of the actual user (German or English).
+	 *
+	 * @param string $name The name of the documentation file without extension (e.g. "constants" or "import/directories").
+	 *
+	 * @return string
+	 */
+	public static function get_documentation_url( string $name ): string {
+		// get the suffix for the language of the user.
+		$suffix = str_starts_with( get_user_locale(), 'de' ) ? '_de' : '';
+
+		// return the URL.
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/' . $name . $suffix . '.md';
+	}
 }

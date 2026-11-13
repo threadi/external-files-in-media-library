@@ -14,6 +14,7 @@ use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\Number;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 
@@ -87,9 +88,13 @@ class File_Types {
 			return;
 		}
 
-		// add file types tab.
-		$file_types_tab = $settings_page->add_tab( 'eml_file_types', 30 );
-		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
+		// get the tab for the delivery of files, which contains the settings for each file type and the proxy.
+		$file_types_tab = Settings::get_instance()->get_group_tab( 'eml_file_types' );
+
+		// bail if tab could not be loaded.
+		if ( ! $file_types_tab instanceof Tab ) {
+			return;
+		}
 
 		// add settings for each supported file type.
 		foreach ( $this->get_file_types_as_objects() as $index => $file_type_obj ) {

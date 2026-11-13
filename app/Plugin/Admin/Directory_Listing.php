@@ -155,8 +155,8 @@ class Directory_Listing {
 			return;
 		}
 
-		// get the permission tab.
-		$permissions_tab = $settings_page->get_tab( 'eml_permissions' );
+		// get the permission tab (a sub-tab of the advanced tab).
+		$permissions_tab = Settings::get_instance()->get_tab( 'eml_permissions' );
 
 		// bail if tab could not be found.
 		if ( ! $permissions_tab instanceof Tab ) {
@@ -287,6 +287,20 @@ class Directory_Listing {
 			?>
 			<div class="wrap">
 				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
+				<label class="efml-services-filter">
+					<?php echo esc_html__( 'Feature:', 'external-files-in-media-library' ); ?>
+					<select id="efml-directory-listing-services-filter">
+						<option value=""><?php echo esc_html__( 'All', 'external-files-in-media-library' ); ?></option>
+						<?php
+						foreach ( Services::get_instance()->get_feature_definitions() as $name => $definition ) {
+							?>
+							<option value="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $definition['label'] ); ?></option>
+							<?php
+						}
+						?>
+					</select>
+				</label>
+				<hr class="wp-header-end">
 				<ul id="efml-directory-listing-services">
 					<?php
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
@@ -295,11 +309,26 @@ class Directory_Listing {
 							continue;
 						}
 
+						// get the features of this service and their icons.
+						$features      = implode( ' ', Services::get_instance()->get_supported_features( $obj ) );
+						$feature_icons = Services::get_instance()->get_feature_icons( $obj );
+
 						// show disabled listing object.
 						if ( $obj->is_disabled() ) {
 							// show enabled listing object.
 							?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?><?php echo $obj instanceof Service_Plugin_Base ? ' efml-is-extension' : ''; ?>" data-efml-features="<?php echo esc_attr( $features ); ?>">
+								<?php
+								// show a marker for service plugins, which are not installed or not active.
+								if ( $obj instanceof Service_Plugin_Base ) {
+									?>
+									<div class="efml-service-badge"><?php echo wp_kses( Helper::get_icon( 'core-admin/plugins', 'dashicons-admin-plugins', '', 14 ), Helper::get_allowed_html_for_icons() ); ?> <?php echo esc_html__( 'Extension', 'external-files-in-media-library' ); ?></div>
+									<?php
+								}
+								?>
+								<span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?>
+								<div class="efml-service-features"><?php echo wp_kses( $feature_icons, Helper::get_allowed_html_for_icons() ); ?></div>
+							</li>
 							<?php
 							continue;
 						}
@@ -312,12 +341,14 @@ class Directory_Listing {
 
 						// show enabled listing object.
 						?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>" data-efml-features="<?php echo esc_attr( $features ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a>
+								<div class="efml-service-features"><?php echo wp_kses( $feature_icons, Helper::get_allowed_html_for_icons() ); ?></div>
+							</li>
 							<?php
 					}
 
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory" data-efml-features=""><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
@@ -329,6 +360,15 @@ class Directory_Listing {
 						}
 						?>
 					</li>
+				</ul>
+				<ul class="efml-services-legend">
+					<?php
+					foreach ( Services::get_instance()->get_feature_definitions() as $definition ) {
+						?>
+						<li><?php echo wp_kses( Helper::get_icon( $definition['icon'], $definition['dashicon'], '', 18 ), Helper::get_allowed_html_for_icons() ); ?> <?php echo esc_html( $definition['label'] ); ?></li>
+						<?php
+					}
+					?>
 				</ul>
 			</div>
 			<?php

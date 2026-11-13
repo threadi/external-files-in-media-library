@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Ftp;
 use ExternalFilesInMediaLibrary\Services\Services;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
@@ -70,6 +71,7 @@ class FtpConstants extends externalFilesTests {
 		++self::$counter;
 		$this->prefix = 'EFMLFTPTEST' . self::$counter . '_';
 		add_filter( 'efml_service_field_constant_name', array( $this, 'set_constant_name' ) );
+		add_filter( 'efml_service_connections_constant_name', array( $this, 'set_constant_name' ) );
 
 		// get the server.
 		$this->server    = TestServers::get( 'ftp', $this );
@@ -87,6 +89,7 @@ class FtpConstants extends externalFilesTests {
 	 */
 	public function tear_down(): void {
 		remove_filter( 'efml_service_field_constant_name', array( $this, 'set_constant_name' ) );
+		remove_filter( 'efml_service_connections_constant_name', array( $this, 'set_constant_name' ) );
 		remove_action( 'delete_attachment', array( Export::get_instance(), 'delete_exported_file' ) );
 		update_option( 'eml_export', 0 );
 		Ftp::get_instance()->set_fields( array() );
@@ -373,5 +376,104 @@ class FtpConstants extends externalFilesTests {
 		$ftp->set_fields( $this->get_empty_fields() );
 		$this->assertTrue( $ftp->do_login( TestServers::get_url( $this->server, $this->directory ) ) );
 		$this->assertNotEmpty( $ftp->get_directory_listing( TestServers::get_url( $this->server, $this->directory ) ) );
+	}
+
+	/**
+	 * Define a default connection for another server and the connection "shop" for the test server.
+	 *
+	 * @return void
+	 */
+	private function define_named_connection(): void {
+		define( $this->prefix . 'EFML_FTP_SERVER', 'ftp://other.example.com' );
+		define( $this->prefix . 'EFML_FTP_LOGIN', 'other-login' );
+		define( $this->prefix . 'EFML_FTP_PASSWORD', 'other-password' );
+		define( $this->prefix . 'EFML_FTP_CONNECTIONS', 'shop' );
+		define( $this->prefix . 'EFML_FTP_SHOP_SERVER', TestServers::get_url( $this->server ) );
+		define( $this->prefix . 'EFML_FTP_SHOP_LOGIN', $this->server['login'] );
+		define( $this->prefix . 'EFML_FTP_SHOP_PASSWORD', $this->server['password'] );
+	}
+
+	/**
+	 * Return the fields of an external source without credentials with the chosen connection.
+	 *
+	 * @param string $connection The name of the connection.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function get_empty_fields_for_connection( string $connection ): array {
+		return array( Service_Base::CONNECTION_FIELD => array( 'value' => $connection ) ) + $this->get_empty_fields();
+	}
+
+	/**
+	 * Test the login, import, export and deletion with a named connection, while the default connection is
+	 * defined for another server.
+	 *
+	 * @return void
+	 */
+	public function test_named_connection(): void {
+		$this->define_named_connection();
+
+		// the login with the chosen connection.
+		$ftp = Ftp::get_instance();
+		$ftp->set_fields( $this->get_empty_fields_for_connection( 'shop' ) );
+		$this->assertTrue( $ftp->do_login( TestServers::get_url( $this->server, $this->directory ) ) );
+
+		// the import of a file with the chosen connection.
+		$url    = TestServers::get_url( $this->server, $this->directory . 'example-red.jpg' );
+		$import = Import::get_instance();
+		$import->set_fields( $this->get_empty_fields_for_connection( 'shop' ) );
+		$this->assertTrue( @$import->add_url( $url ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$file = Files::get_instance()->get_file_by_url( $url );
+		$this->assertInstanceOf( File::class, $file );
+
+		// the file knows its connection, but not the credentials.
+		$fields = $file->get_fields();
+		$this->assertEquals( 'shop', $fields[ Service_Base::CONNECTION_FIELD ]['value'] );
+		$this->assertStringNotContainsString( $this->server['password'], (string) wp_json_encode( $fields ) );
+		$this->assertTrue( $file->has_credentials() );
+
+		// the export to a source with the chosen connection and the deletion there.
+		$term_id = Taxonomy::get_instance()->add( 'ftp', TestServers::get_url( $this->server, $this->directory ), $this->get_empty_fields_for_connection( 'shop' ) );
+		$this->assertFalse( Services::get_instance()->is_source_blocked_by_constants( $term_id ) );
+		update_term_meta( $term_id, 'efml_export_url', 'https://cdn.example.com/files/' );
+		Export::get_instance()->set_state_for_term( $term_id, 1 );
+		$attachment_id = $this->upload( 'subdirectory/example-grey.jpg' );
+		$filename      = basename( (string) get_attached_file( $attachment_id, true ) );
+		$this->assertFileExists( $this->server['root'] . $this->directory . $filename );
+		@wp_delete_attachment( $attachment_id, true ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertFileDoesNotExist( $this->server['root'] . $this->directory . $filename );
+	}
+
+	/**
+	 * Test that the connection is detected by the server, if none is chosen (e.g. for a manual import).
+	 *
+	 * @return void
+	 */
+	public function test_named_connection_detected_by_server(): void {
+		$this->define_named_connection();
+
+		$url    = TestServers::get_url( $this->server, $this->directory . 'example-red.jpg' );
+		$import = Import::get_instance();
+		$import->set_fields( $this->get_empty_fields() );
+		$this->assertTrue( @$import->add_url( $url ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url ) );
+	}
+
+	/**
+	 * Test that the default connection could not be used for the test server.
+	 *
+	 * @return void
+	 */
+	public function test_wrong_connection_is_not_used(): void {
+		$this->define_named_connection();
+
+		// the login with the default connection fails, as it is defined for another server.
+		$ftp = Ftp::get_instance();
+		$ftp->set_fields( $this->get_empty_fields_for_connection( 'default' ) );
+		$this->assertFalse( @$ftp->do_login( TestServers::get_url( $this->server, $this->directory ) ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		// a source with the default connection on the test server is blocked.
+		$term_id = Taxonomy::get_instance()->add( 'ftp', TestServers::get_url( $this->server, $this->directory ), $this->get_empty_fields_for_connection( 'default' ) );
+		$this->assertTrue( Services::get_instance()->is_source_blocked_by_constants( $term_id ) );
 	}
 }

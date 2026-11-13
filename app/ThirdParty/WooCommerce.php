@@ -128,8 +128,13 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// add settings tab for WooCommerce.
-		$woocommerce_settings_tab = $settings_page->add_tab( 'woocommerce', 120 );
+		// add settings tab for WooCommerce as sub-tab of the integrations tab.
+		$woocommerce_settings_tab = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->add_sub_tab( 'eml_integrations', 'woocommerce', 20 );
+
+		// bail if tab could not be added.
+		if ( ! $woocommerce_settings_tab instanceof \easySettingsForWordPress\Tab ) {
+			return;
+		}
 		$woocommerce_settings_tab->set_title( __( 'WooCommerce', 'external-files-in-media-library' ) );
 
 		// add a section for WooCommerce settings.

@@ -19,6 +19,29 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
  */
 class Service_Plugin_Base extends Service_Base {
 	/**
+	 * The features of the service plugin, which are shown on the tiles before it is installed.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $plugin_features = array();
+
+	/**
+	 * Return the features of the service plugin, which are shown on the tiles before it is installed.
+	 *
+	 * @return array<string,bool>
+	 */
+	public function get_features(): array {
+		// collect the features.
+		$features = array();
+		foreach ( array( 'sync', 'export', 'private', 'constants' ) as $feature ) {
+			$features[ $feature ] = in_array( $feature, $this->plugin_features, true );
+		}
+
+		$instance = $this;
+		/** This filter is documented in app/Services/Service_Base.php */
+		return apply_filters( 'efml_service_features', $features, $instance );
+	}
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void

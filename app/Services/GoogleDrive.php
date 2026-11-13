@@ -33,6 +33,13 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	protected string $label = 'Google Drive';
 
 	/**
+	 * The features of the service plugin, which are shown on the tiles before it is installed.
+	 *
+	 * @var array<int,string>
+	 */
+	protected array $plugin_features = array( 'sync', 'export', 'private', 'constants' );
+
+	/**
 	 * Set the configuration for the external source of this service plugin.
 	 *
 	 * @var array<string,string>
@@ -188,5 +195,14 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	 */
 	public function uninstall(): void {
 		delete_option( 'eml_google_drive_access_tokens' );
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return 'Google, Google Drive, cloud';
 	}
 }

@@ -86,8 +86,13 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// add settings tab for Polylang.
-		$woocommerce_settings_tab = $settings_page->add_tab( 'polylang', 120 );
+		// add settings tab for Polylang as sub-tab of the integrations tab.
+		$woocommerce_settings_tab = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->add_sub_tab( 'eml_integrations', 'polylang', 10 );
+
+		// bail if tab could not be added.
+		if ( ! $woocommerce_settings_tab instanceof \easySettingsForWordPress\Tab ) {
+			return;
+		}
 		$woocommerce_settings_tab->set_title( __( 'Polylang', 'external-files-in-media-library' ) );
 
 		// add a section for Polylang settings.

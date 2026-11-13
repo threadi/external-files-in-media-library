@@ -15,6 +15,17 @@ jQuery(document).ready(function($) {
     });
 
     /**
+     * Filter the services by their features.
+     */
+    $('#efml-directory-listing-services-filter').on('change', function() {
+      let feature = $(this).val();
+      $('#efml-directory-listing-services > li[data-efml-features]').each(function() {
+        let features = String( $(this).attr('data-efml-features') ).split(' ');
+        this.hidden = '' !== feature && ! features.includes( feature );
+      });
+    });
+
+    /**
      * Add file action.
      */
     $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {

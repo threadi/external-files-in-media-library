@@ -255,8 +255,13 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// add settings tab for Instant Images.
-		$tab = $settings_page->add_tab( 'instant_images', 125 );
+		// add settings tab for Instant Images as sub-tab of the integrations tab.
+		$tab = Settings::get_instance()->add_sub_tab( 'eml_integrations', 'instant_images', 30 );
+
+		// bail if tab could not be added.
+		if ( ! $tab instanceof \easySettingsForWordPress\Tab ) {
+			return;
+		}
 		$tab->set_title( __( 'Instant Images', 'external-files-in-media-library' ) );
 
 		// add a section for the settings.

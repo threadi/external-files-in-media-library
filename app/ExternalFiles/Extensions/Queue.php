@@ -137,8 +137,13 @@ class Queue extends Extension_Base {
 			return;
 		}
 
-		// add a tab for queue table.
-		$queue_table_tab = $settings_page->add_tab( 'eml_queue_table', 60 );
+		// add a tab for queue table as sub-tab of the status tab.
+		$queue_table_tab = \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->add_sub_tab( 'eml_status', 'eml_queue_table', 20 );
+
+		// bail if tab could not be added.
+		if ( ! $queue_table_tab instanceof \easySettingsForWordPress\Tab ) {
+			return;
+		}
 		$queue_table_tab->set_title( __( 'Queue', 'external-files-in-media-library' ) );
 		$queue_table_tab->set_callback( array( $this, 'show_queue' ) );
 

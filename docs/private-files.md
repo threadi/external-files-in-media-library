@@ -20,7 +20,7 @@ FTP, SFTP and local directories could not be reached via a URL in the browser an
 
 The media library and the content always use the fixed URL of your website, e.g. `https://example.com/emlproxy/file.pdf`. Search engines and visitors only see this URL.
 
-* **Proxy enabled for the file type** (settings → file types): your website loads the file once into its cache and delivers it itself. This is the safest way for search engines.
+* **Proxy enabled for the file type** (settings → delivery): your website loads the file once into its cache and delivers it itself. This is the safest way for search engines.
 * **Proxy disabled for the file type:** your website redirects to a link with limited validity. The file is loaded directly from the provider, your website does not transfer it. If the service could not create such links, the cache is used.
 * Specific sizes of images (e.g. `-150x150`) are always delivered from the cache.
 
