@@ -169,7 +169,7 @@ class Service_Plugin_Base extends Service_Base {
 					$this->get_source_info(),
 				),
 				$this->get_install_dialog_description(),
-				array( '<p>' . self::get_extension_reason() . '</p>' )
+				array( self::get_extension_reason() )
 			),
 			'buttons'   => array(
 				array(
@@ -235,13 +235,16 @@ class Service_Plugin_Base extends Service_Base {
 	}
 
 	/**
-	 * Return the explanation, why some services are provided by extensions.
+	 * Return the explanation, why some services are provided by extensions, as expandable HTML.
 	 *
 	 * @return string
 	 */
 	public static function get_extension_reason(): string {
 		/* translators: %1$s will be replaced by a URL, %2$s by a hint for a new window. */
-		return sprintf( __( '<strong>Why an extension?</strong> Some providers offer their libraries only under licenses, which are not compatible with the GPL of WordPress. Such libraries may not be part of a plugin in the WordPress plugin directory, so their services are provided by free extensions. <a href="%1$s" target="_blank">Learn more%2$s</a>', 'external-files-in-media-library' ), esc_url( Helper::get_documentation_url( 'extensions' ) ), Helper::get_a11n_window_hint() );
+		$text = sprintf( __( 'Some providers offer their libraries only under licenses, which are not compatible with the GPL of WordPress. Such libraries may not be part of a plugin in the WordPress plugin directory, so their services are provided by free extensions. <a href="%1$s" target="_blank">Learn more%2$s</a>', 'external-files-in-media-library' ), esc_url( Helper::get_documentation_url( 'extensions' ) ), Helper::get_a11n_window_hint() );
+
+		// return it in the same style as the help for the setup of services.
+		return '<details class="efml-setup-guide efml-extension-reason"><summary><span class="dashicons dashicons-editor-help"></span> ' . esc_html__( 'Why an extension?', 'external-files-in-media-library' ) . '</summary><div class="efml-setup-guide-content"><p>' . $text . '</p></div></details>';
 	}
 
 	/**

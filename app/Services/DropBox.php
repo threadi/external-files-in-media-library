@@ -1408,6 +1408,28 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You do not need to enter access data for Dropbox: connect it via the button, sign in to Dropbox and allow the access. The connection is saved and renewed automatically.', 'external-files-in-media-library' ),
+			'hints' => array(
+				__( 'Use the Dropbox account, whose files you would like to use. To change the account, disconnect it in the settings and connect it again.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
+				sprintf( __( 'To use your own Dropbox app instead, create it in the Dropbox App Console and define its app key and app secret as constants, see <a href="%1$s" target="_blank">the documentation</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_documentation_url( 'constants' ) ) ),
+			),
+			'links' => array(
+				array(
+					'label' => __( 'Dropbox App Console', 'external-files-in-media-library' ),
+					'url'   => 'https://www.dropbox.com/developers/apps',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string

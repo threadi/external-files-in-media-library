@@ -1057,6 +1057,40 @@ class Youtube extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You need the ID of the YouTube channel and an API key for the YouTube Data API. Both are free.', 'external-files-in-media-library' ),
+			'steps' => array(
+				__( 'Sign in to the Google Cloud console with your Google account and create a project.', 'external-files-in-media-library' ),
+				__( 'Enable the "YouTube Data API v3" in the API library of the project.', 'external-files-in-media-library' ),
+				__( 'Create an API key under "APIs & Services" → "Credentials" and restrict it to the YouTube Data API v3.', 'external-files-in-media-library' ),
+				__( 'You find the ID of your channel on YouTube under Settings → Advanced settings. It usually starts with <code>UC</code>.', 'external-files-in-media-library' ),
+			),
+			'hints' => array(
+				__( 'The API has a daily quota. Large channels are imported in several requests.', 'external-files-in-media-library' ),
+			),
+			'links' => array(
+				array(
+					'label' => __( 'Google Cloud console', 'external-files-in-media-library' ),
+					'url'   => 'https://console.cloud.google.com/apis/credentials',
+				),
+				array(
+					'label' => __( 'YouTube Data API', 'external-files-in-media-library' ),
+					'url'   => 'https://developers.google.com/youtube/v3/getting-started',
+				),
+				array(
+					'label' => __( 'Find your channel ID', 'external-files-in-media-library' ),
+					'url'   => 'https://support.google.com/youtube/answer/3250431',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string

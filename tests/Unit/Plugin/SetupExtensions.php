@@ -294,6 +294,7 @@ class SetupExtensions extends externalFilesTests {
 		$this->assertContains( 'efml-test-service', $this->get_card_values( $steps[2][ Setup::FIELD_SERVICE ] ) );
 		$this->assertContains( 'cloudflare-r2', $this->get_card_values( $steps[2][ Setup::FIELD_SERVICE ] ) );
 		$this->assertStringContainsString( 'Why an extension?', $steps[2]['help']['text'] );
+		$this->assertStringStartsWith( '<details class="efml-setup-guide efml-extension-reason">', $steps[2]['help']['text'] );
 
 		// choose it: the steps to install the extension follow.
 		$this->set_value( Setup::FIELD_SERVICE, 'efml-test-service' );

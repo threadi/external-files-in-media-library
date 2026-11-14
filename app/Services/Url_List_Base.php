@@ -922,6 +922,21 @@ abstract class Url_List_Base extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'Access data are only needed, if the URL of the file is protected by a login of the web server (HTTP Basic Auth). You get them from the provider of the file, e.g. the administrator of the website. Otherwise leave the fields empty.', 'external-files-in-media-library' ),
+			'hints' => array(
+				__( 'If the browser asks for a login when you open the URL, this is such a protection.', 'external-files-in-media-library' ),
+				__( 'A login form on a website (e.g. the login of WordPress) is not supported.', 'external-files-in-media-library' ),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string

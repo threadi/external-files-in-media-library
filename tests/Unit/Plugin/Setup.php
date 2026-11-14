@@ -220,6 +220,10 @@ class Setup extends externalFilesTests {
 		$this->assertEquals( 'PasswordControl', $steps[2][ \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_PREFIX . 'ftp__password' ]['type'] );
 		$this->assertTrue( $steps[2][ \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_PREFIX . 'ftp__password' ]['required'] );
 
+		// with the help, where to find the access data.
+		$this->assertStringContainsString( 'efml-setup-guide', $steps[2]['guide']['text'] );
+		$this->assertStringContainsString( 'ftps://', $steps[2]['guide']['text'] );
+
 		// a goal without a fixed service shows the services, which support its features.
 		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_GOAL, 'offload' );
 		$steps    = $this->get_steps();

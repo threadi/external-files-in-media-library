@@ -4,6 +4,9 @@
 
 ### Added
 
+- Added help "Where do I find these details?" to the forms of the services and to the quickstart: where to get the access data, which permissions they need and typical pitfalls, with links to the instructions of the providers
+- Added the help for FTP, FTPS and SFTP, Dropbox, YouTube, CSV and XML lists and ZIP files
+- Added methods "get_setup_guide()" and "get_setup_guide_html()" for services and hook "efml_service_setup_guide"
 - Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
 - Added option to export new files in the background via the queue, incl. retries of failed exports and markers in the media library
 - Added possibility to define the credentials of all services via constants (e.g. in wp-config.php): FTP, FTPS, SFTP, REST API, ZIP, CSV, XML, YouTube and the app credentials of Dropbox

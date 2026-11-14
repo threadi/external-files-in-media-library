@@ -862,3 +862,48 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 		}
 	}
 }
+
+/* help for the setup of a service in its form and in the quickstart */
+.efml-setup-guide {
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 2px;
+	margin: 1em 0;
+	text-align: left;
+	> summary {
+		cursor: pointer;
+		font-weight: 600;
+		padding: 8px 12px;
+		.dashicons {
+			color: #2271b1;
+			vertical-align: text-bottom;
+		}
+	}
+	.efml-setup-guide-content {
+		border-top: 1px solid #dcdcde;
+		padding: 4px 12px 8px;
+		ol, ul {
+			margin: 0 0 1em 1.5em;
+		}
+		ul {
+			list-style: disc;
+		}
+		li {
+			margin-bottom: .4em;
+		}
+	}
+	.efml-setup-guide-code {
+		margin: 0 0 1em;
+		textarea {
+			box-sizing: border-box;
+			display: block;
+			font-family: Consolas, Monaco, monospace;
+			font-size: 12px;
+			margin-bottom: 6px;
+			width: 100%;
+		}
+		.efml-setup-guide-copy.copied:after {
+			content: " \2713";
+		}
+	}
+}

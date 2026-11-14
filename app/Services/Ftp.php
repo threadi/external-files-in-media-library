@@ -881,6 +881,27 @@ class Ftp extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You get the access data for FTP, FTPS or SFTP from your hosting provider. Usually you find them in the customer area or control panel of your hosting (e.g. Plesk, cPanel or ISPConfig) under FTP accounts or SSH access.', 'external-files-in-media-library' ),
+			'steps' => array(
+				__( 'If possible, create an own FTP account for this website and restrict it to the directory with your files.', 'external-files-in-media-library' ),
+				__( 'Enter the server with protocol, e.g. <code>ftps://ftp.example.com</code> for an encrypted connection, <code>sftp://example.com</code> for SFTP or <code>ftp://ftp.example.com</code>. You can add a directory and a port, e.g. <code>ftps://ftp.example.com:2121/files/</code>.', 'external-files-in-media-library' ),
+				__( 'Enter login and password of the FTP account. For SFTP, these are usually the access data of the SSH user.', 'external-files-in-media-library' ),
+			),
+			'hints' => array(
+				__( 'If you do not know the access data or the name of the server, ask your hosting provider.', 'external-files-in-media-library' ),
+				__( 'Prefer FTPS or SFTP: plain FTP transfers the password unencrypted.', 'external-files-in-media-library' ),
+				__( 'Some servers only allow connections from certain IP addresses. Then the IP address of the server of your website must be allowed.', 'external-files-in-media-library' ),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string

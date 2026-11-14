@@ -1500,6 +1500,12 @@ class Service_Base extends Directory_Listing_Base {
 			return $config;
 		}
 
+		// add the help for the setup to the description of the form.
+		$guide = $this->get_setup_guide_html();
+		if ( '' !== $guide ) {
+			$config['form_description'] = trim( ( isset( $config['form_description'] ) && is_string( $config['form_description'] ) ? $config['form_description'] : '' ) . ' ' . $guide );
+		}
+
 		// get whether several connections are defined via constants.
 		$several_connections = count( $this->get_connections() ) > 1;
 
@@ -1547,6 +1553,131 @@ class Service_Base extends Directory_Listing_Base {
 
 		// return the resulting configuration.
 		return $config;
+	}
+
+	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * It explains where to find the access data, which permissions they need and typical pitfalls. It is shown in
+	 * the quickstart and in the form of the service. All keys are optional:
+	 * - intro: a short introduction (HTML with links, code, strong and em).
+	 * - steps: the steps to get the access data.
+	 * - hints: typical pitfalls.
+	 * - code: a text to copy, e.g. a policy for the permissions, with its label and an optional hint.
+	 * - links: links to the instructions of the provider, each with label and URL.
+	 *
+	 * Override it in services, which need access data.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array();
+	}
+
+	/**
+	 * Return the help for the setup of this service as HTML, which could be expanded.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_setup_guide_html(): string {
+		// get the help.
+		$guide = $this->get_setup_guide();
+
+		$instance = $this;
+		/**
+		 * Filter the help for the setup of a service, which explains where to find the access data.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,mixed> $guide The help with the keys intro, steps, hints, code and links.
+		 * @param Service_Base $instance The service object.
+		 */
+		$guide = apply_filters( 'efml_service_setup_guide', $guide, $instance );
+
+		// bail if there is no help.
+		if ( empty( $guide ) || ! is_array( $guide ) ) {
+			return '';
+		}
+
+		// the allowed HTML in the texts.
+		$allowed = array(
+			'a'      => array(
+				'href'   => true,
+				'target' => true,
+			),
+			'code'   => array(),
+			'strong' => array(),
+			'em'     => array(),
+		);
+
+		// collect the content.
+		$html = '';
+
+		// add the introduction.
+		if ( ! empty( $guide['intro'] ) && is_string( $guide['intro'] ) ) {
+			$html .= '<p>' . wp_kses( $guide['intro'], $allowed ) . '</p>';
+		}
+
+		// add the steps.
+		if ( ! empty( $guide['steps'] ) && is_array( $guide['steps'] ) ) {
+			$html .= '<ol>';
+			foreach ( $guide['steps'] as $step ) {
+				$html .= '<li>' . wp_kses( (string) $step, $allowed ) . '</li>';
+			}
+			$html .= '</ol>';
+		}
+
+		// add the text to copy.
+		if ( ! empty( $guide['code']['content'] ) && is_string( $guide['code']['content'] ) ) {
+			$label = isset( $guide['code']['label'] ) && is_string( $guide['code']['label'] ) ? $guide['code']['label'] : '';
+			$html .= '<div class="efml-setup-guide-code">';
+			if ( '' !== $label ) {
+				$html .= '<p><strong>' . esc_html( $label ) . '</strong></p>';
+			}
+			$html .= '<textarea readonly="readonly" rows="' . absint( min( 20, substr_count( $guide['code']['content'], "\n" ) + 1 ) ) . '">' . esc_textarea( $guide['code']['content'] ) . '</textarea>';
+			$html .= '<button type="button" class="button button-secondary efml-setup-guide-copy" data-copied-label="' . esc_attr__( 'Copied', 'external-files-in-media-library' ) . '">' . esc_html__( 'Copy', 'external-files-in-media-library' ) . '</button>';
+			if ( ! empty( $guide['code']['hint'] ) && is_string( $guide['code']['hint'] ) ) {
+				$html .= '<p>' . wp_kses( $guide['code']['hint'], $allowed ) . '</p>';
+			}
+			$html .= '</div>';
+		}
+
+		// add the pitfalls.
+		if ( ! empty( $guide['hints'] ) && is_array( $guide['hints'] ) ) {
+			$html .= '<p><strong>' . esc_html__( 'Good to know:', 'external-files-in-media-library' ) . '</strong></p><ul>';
+			foreach ( $guide['hints'] as $hint ) {
+				$html .= '<li>' . wp_kses( (string) $hint, $allowed ) . '</li>';
+			}
+			$html .= '</ul>';
+		}
+
+		// add the links.
+		if ( ! empty( $guide['links'] ) && is_array( $guide['links'] ) ) {
+			$links = array();
+			foreach ( $guide['links'] as $link ) {
+				// bail if the link is not complete.
+				if ( ! is_array( $link ) || empty( $link['url'] ) || empty( $link['label'] ) ) {
+					continue;
+				}
+
+				// add the link.
+				$links[] = '<a href="' . esc_url( (string) $link['url'] ) . '" target="_blank">' . esc_html( (string) $link['label'] ) . Helper::get_a11n_window_hint() . '</a>';
+			}
+			if ( ! empty( $links ) ) {
+				$html .= '<p>' . esc_html__( 'Instructions of the provider:', 'external-files-in-media-library' ) . ' ' . implode( ' &middot; ', $links ) . '</p>';
+			}
+		}
+
+		// bail if no content has been created.
+		if ( '' === $html ) {
+			return '';
+		}
+
+		// return the expandable help.
+		return '<details class="efml-setup-guide"><summary><span class="dashicons dashicons-editor-help"></span> ' . esc_html__( 'Where do I find these details?', 'external-files-in-media-library' ) . '</summary><div class="efml-setup-guide-content">' . $html . '</div></details>';
 	}
 
 	/**

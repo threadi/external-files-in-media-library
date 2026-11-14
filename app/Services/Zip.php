@@ -811,6 +811,20 @@ class Zip extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'Login and password are only needed, if the URL of the ZIP file is protected by a login of the web server (HTTP Basic Auth). You get them from the provider of the file. Otherwise leave the fields empty.', 'external-files-in-media-library' ),
+			'hints' => array(
+				__( 'The password for the ZIP file is only needed for encrypted archives. It is the password, which has been set when the archive was created.', 'external-files-in-media-library' ),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string

@@ -215,6 +215,20 @@ jQuery(document).ready(function($) {
     });
 
     /**
+     * Copy the text of the help for the setup of a service.
+     *
+     * The handler is delegated to the document, as the forms of the services and the quickstart add the help
+     * after this script has been loaded.
+     */
+    $(document).on("click", ".efml-setup-guide-copy", function( e ) {
+      e.preventDefault();
+      $(this).removeClass("copied");
+      if( efml_copy_to_clipboard( $(this).siblings( 'textarea' ).val() ) ) {
+        $(this).addClass("copied");
+      }
+    });
+
+    /**
      * Prevent editing of our own archive terms.
      */
     $('body.taxonomy-edlfw_archive #edittag input').each( function() {

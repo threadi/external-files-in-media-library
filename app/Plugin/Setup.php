@@ -1040,7 +1040,7 @@ class Setup {
 
 		// explain the extensions instead, if some of them could be installed here.
 		if ( ! empty( $installable ) ) {
-			$fields['help']['text'] = '<p><span class="dashicons dashicons-admin-plugins"></span> ' . Service_Plugin_Base::get_extension_reason() . '</p>';
+			$fields['help']['text'] = Service_Plugin_Base::get_extension_reason();
 		}
 
 		// return the fields.
@@ -1259,7 +1259,7 @@ class Setup {
 			$text .= $plugin_obj->get_source_info();
 		}
 		$text .= implode( '', $plugin_obj->get_install_description() );
-		$text .= '<p><span class="dashicons dashicons-info"></span> ' . Service_Plugin_Base::get_extension_reason() . '</p>';
+		$text .= Service_Plugin_Base::get_extension_reason();
 
 		// add the description.
 		$fields['install'] = array(
@@ -1519,6 +1519,15 @@ class Setup {
 
 		// get the service object.
 		$service_obj = Services::get_instance()->get_service_for_listing( $listing_obj );
+
+		// add the help, where to find the access data.
+		$guide = $service_obj instanceof Service_Base ? $service_obj->get_setup_guide_html() : '';
+		if ( '' !== $guide ) {
+			$fields['guide'] = array(
+				'type' => 'Text',
+				'text' => $guide,
+			);
+		}
 
 		// show the button to connect the service, if it is not connected.
 		$connect_dialog = $service_obj instanceof Service_Base ? $service_obj->get_setup_connect_dialog() : array();
