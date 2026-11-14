@@ -25,6 +25,7 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use Exception;
 use Throwable;
 use WP_User;
@@ -431,6 +432,50 @@ class Service_Base extends Directory_Listing_Base {
 	 */
 	public function get_platform_url(): string {
 		return '';
+	}
+
+	/**
+	 * Return the dialog to connect this service, if it must be connected before it could be used in the setup.
+	 *
+	 * Services, which are connected via OAuth (e.g. DropBox), return the configuration of their dialog to connect,
+	 * as long as they are not connected. Their access data are not entered in fields. After the connection they
+	 * should return to the URL of @get_oauth_return_url().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_setup_connect_dialog(): array {
+		return array();
+	}
+
+	/**
+	 * Return the URL to return to after this service has been connected via OAuth.
+	 *
+	 * This is the setup, if the connection has been started there, otherwise the URL of the configuration.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_oauth_return_url(): string {
+		// get the URL of the setup, if the connection has been started there.
+		$url = Setup::get_instance()->get_oauth_return_url( $this->get_name() );
+
+		// use the URL of the configuration otherwise.
+		if ( '' === $url ) {
+			$url = $this->get_config_url();
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the URL to return to after a service has been connected via OAuth.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string       $url      The URL.
+		 * @param Service_Base $instance The service object.
+		 */
+		return apply_filters( 'efml_service_oauth_return_url', $url, $instance );
 	}
 
 	/**

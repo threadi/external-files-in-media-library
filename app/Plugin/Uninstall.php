@@ -191,6 +191,9 @@ class Uninstall {
 		// run the uninstallation tasks for each service.
 		Services::get_instance()->uninstall();
 
+		// remove the data of the setup.
+		Setup::get_instance()->uninstall();
+
 		// cleanup own cache.
 		Proxy::get_instance()->delete_cache_directory();
 

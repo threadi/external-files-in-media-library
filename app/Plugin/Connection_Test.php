@@ -219,6 +219,26 @@ class Connection_Test {
 		$steps = $service->run_connection_test();
 
 		// show the results.
+		$result = $this->get_steps_list( $steps );
+
+		// set the title and the texts.
+		$dialog['detail']['title']   = $result['success'] ? __( 'Connection test successful', 'external-files-in-media-library' ) : __( 'Connection test failed', 'external-files-in-media-library' );
+		$dialog['detail']['texts'][] = $result['html'];
+		/* translators: %1$s will be replaced by a URL. */
+		$dialog['detail']['texts'][] = '<p>' . sprintf( __( 'All steps are logged with their details in the <a href="%1$s">log</a>. Use them if you contact the support or the provider of your storage.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_logs' ) ) ) . '</p>';
+
+		// return the dialog.
+		wp_send_json( $dialog );
+	}
+
+	/**
+	 * Return the steps of a connection test as HTML list and whether all steps have been successful.
+	 *
+	 * @param array<int,array<string,mixed>> $steps The steps with "title", "success", "skipped" and "message".
+	 *
+	 * @return array{html: string, success: bool}
+	 */
+	public function get_steps_list( array $steps ): array {
 		$all_successful = true;
 		$list           = '';
 		foreach ( $steps as $step ) {
@@ -246,13 +266,10 @@ class Connection_Test {
 				. '</div></li>';
 		}
 
-		// set the title and the texts.
-		$dialog['detail']['title']   = $all_successful ? __( 'Connection test successful', 'external-files-in-media-library' ) : __( 'Connection test failed', 'external-files-in-media-library' );
-		$dialog['detail']['texts'][] = '<ul class="efml-connection-test-steps">' . $list . '</ul>';
-		/* translators: %1$s will be replaced by a URL. */
-		$dialog['detail']['texts'][] = '<p>' . sprintf( __( 'All steps are logged with their details in the <a href="%1$s">log</a>. Use them if you contact the support or the provider of your storage.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_logs' ) ) ) . '</p>';
-
-		// return the dialog.
-		wp_send_json( $dialog );
+		// return the list and the result.
+		return array(
+			'html'    => '<ul class="efml-connection-test-steps">' . $list . '</ul>',
+			'success' => $all_successful,
+		);
 	}
 }

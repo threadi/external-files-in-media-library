@@ -2,6 +2,8 @@
 
 External Files in Media Library kann mehr, als einzelne URLs in deine Mediathek aufzunehmen. Diese Seite zeigt die Funktionen nach Zielen geordnet und führt dich zu den Einstellungen und zur ausführlichen Dokumentation.
 
+**Du weißt nicht, wo du anfangen sollst?** Der Schnellstart führt dich Schritt für Schritt durch die häufigsten Aufgaben und richtet alles für dich ein: Medien → „Externe Dateien hinzufügen“ → Kachel „Schnellstart“. Siehe [Schnellstart](setup_de.md).
+
 ## Ich möchte …
 
 ### … Dateien von anderen Orten in meiner Mediathek nutzen
@@ -54,6 +56,7 @@ Auf Kopien deiner Website (z. B. einer Staging-Website) werden keine Dateien zu 
 
 ## Schnell finden
 
+* **Schnellstart:** Medien → „Externe Dateien hinzufügen“ → Kachel „Schnellstart“ führt dich durch die häufigsten Aufgaben, siehe [Schnellstart](setup_de.md).
 * **Dienst wählen:** Medien → „Externe Dateien hinzufügen“ zeigt alle Dienste als Kacheln. Icons zeigen, welche Funktionen ein Dienst bietet (Synchronisierung, Export, private Dateien, Zugangsdaten per Konstante). Mit dem Filter „Funktion“ über den Kacheln zeigst du nur Dienste mit einer bestimmten Funktion. Dienste aus Erweiterungen, die nicht installiert sind, sind als „Erweiterung“ markiert und lassen sich dort installieren.
 * **Befehlspalette:** Drücke auf jeder Seite des Backends `Strg + K` (`Cmd + K` unter macOS) und gib z. B. „FTP“, „S3“, „Export“ oder den Namen einer deiner externen Quellen ein. Dienste werden auch unter anderen Namen gefunden, z. B. „Nextcloud“ für WebDAV oder „Hetzner“ für die S3-Erweiterung. Die Befehlspalette gibt es seit WordPress 6.9 auf allen Seiten des Backends.
 * **Hilfe:** Der Reiter „Hilfe“ oben rechts auf den Seiten dieses Plugins beginnt mit „Was ist möglich?“.

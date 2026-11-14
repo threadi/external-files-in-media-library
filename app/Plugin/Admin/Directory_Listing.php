@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use ExternalFilesInMediaLibrary\Services\AwsS3;
 use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
@@ -279,6 +280,12 @@ class Directory_Listing {
 	 * @return void
 	 */
 	public function render_view_directory_page(): void {
+		// show the setup, if it is requested.
+		if ( Setup::get_instance()->is_setup_page() ) {
+			Setup::get_instance()->display();
+			return;
+		}
+
 		// get method from request.
 		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -303,11 +310,22 @@ class Directory_Listing {
 				<hr class="wp-header-end">
 				<ul id="efml-directory-listing-services">
 					<?php
+					// marker whether the tile for the setup has been shown (or should not be shown) and whether a tile has been shown.
+					$setup_shown = ! Setup::get_instance()->is_allowed();
+					$tile_shown  = false;
+
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 						// hide listing object if user has no capability for it.
 						if ( ! current_user_can( $obj->get_permission_name() ) ) {
 							continue;
 						}
+
+						// show the tile for the setup as second tile.
+						if ( ! $setup_shown && $tile_shown ) {
+							$this->show_setup_tile();
+							$setup_shown = true;
+						}
+						$tile_shown = true;
 
 						// get the features of this service and their icons.
 						$features      = implode( ' ', Services::get_instance()->get_supported_features( $obj ) );
@@ -347,6 +365,10 @@ class Directory_Listing {
 							<?php
 					}
 
+					// show the tile for the setup, if it has not been shown yet.
+					if ( ! $setup_shown ) {
+						$this->show_setup_tile();
+					}
 					?>
 					<li class="efml-directory" data-efml-features=""><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
 					<li class="efml-hint">
@@ -478,6 +500,17 @@ class Directory_Listing {
 	 */
 	private function get_nonce_name(): string {
 		return $this->nonce_name;
+	}
+
+	/**
+	 * Show the tile for the setup ("Quickstart").
+	 *
+	 * @return void
+	 */
+	private function show_setup_tile(): void {
+		?>
+		<li class="efml-setup-tile" data-efml-features=""><a href="<?php echo esc_url( Setup::get_instance()->get_url() ); ?>"><?php echo esc_html__( 'Quickstart', 'external-files-in-media-library' ); ?></a></li>
+		<?php
 	}
 
 	/**

@@ -656,7 +656,7 @@ class Services {
 	 *
 	 * @return Service_Base|false
 	 */
-	private function get_service_for_listing( Directory_Listing_Base $obj ): Service_Base|false {
+	public function get_service_for_listing( Directory_Listing_Base $obj ): Service_Base|false {
 		// return the object, if it is a service object.
 		if ( $obj instanceof Service_Base ) {
 			return $obj;

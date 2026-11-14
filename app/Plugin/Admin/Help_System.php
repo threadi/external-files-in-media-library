@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use WP_Screen;
 
 /**
@@ -119,6 +120,12 @@ class Help_System {
 		// create the content.
 		$content  = '<h1>' . esc_html__( 'What is possible?', 'external-files-in-media-library' ) . '</h1>';
 		$content .= '<p>' . esc_html__( 'This plugin offers more than adding single URLs. Choose your goal:', 'external-files-in-media-library' ) . '</p>';
+
+		// add the hint for the setup.
+		if ( Setup::get_instance()->is_allowed() ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$content .= '<p><strong>' . esc_html__( 'Not sure where to start?', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'The <a href="%1$s">quickstart</a> guides you step by step through the most common tasks.', 'external-files-in-media-library' ), esc_url( Setup::get_instance()->get_url() ) ) . '</p>';
+		}
 		foreach ( $goals as $goal ) {
 			$content .= '<h3>' . esc_html( $goal['title'] ) . '</h3><p>' . esc_html( $goal['text'] );
 			if ( '' !== $goal['url'] ) {

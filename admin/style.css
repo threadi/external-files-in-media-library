@@ -130,27 +130,40 @@ body.settings_page_eml_settings, body.media_page_efml_local_directories, body.ta
 }
 
 .efml .easy-dialog-for-wordpress-text .efml-import-result-list {
-	margin-bottom: 2em;
+	list-style: none;
+	margin: 0 0 2em;
+	padding: 0;
 }
 
 .efml .easy-dialog-for-wordpress-text .efml-import-result-list li {
-	text-indent: -10px;
-	padding-left: 18px;
+	border-bottom: 1px solid #f0f0f1;
+	list-style: none;
+	margin: 0;
+	padding: 10px 0 10px 36px;
+	position: relative;
 }
 
+.efml .easy-dialog-for-wordpress-text .efml-import-result-list li:last-child {
+	border-bottom: 0;
+}
+
+/* the same icons as in the results of the connection test and the quickstart */
 .efml .easy-dialog-for-wordpress-text .efml-import-result-list li:before {
-	color: red;
-	content: "\f158";
-	display: inline-block;
+	color: #d63638;
+	content: "\f153";
 	font-family: dashicons, sans-serif;
-	margin-right: 0.3em;
-	font-size: 16px;
-	vertical-align: middle;
+	font-size: 24px;
+	height: 24px;
+	left: 0;
+	line-height: 1;
+	position: absolute;
+	top: 8px;
+	width: 24px;
 }
 
 .efml .easy-dialog-for-wordpress-text .efml-import-result-list li.success:before {
-	content: "\f147";
-	color: green;
+	color: #00a32a;
+	content: "\f12a";
 }
 
 .efml details summary::-webkit-details-marker, .efml details summary::marker {
@@ -779,4 +792,73 @@ table.widefat.efml-services-overview td {
 .easy-dialog .efml-dialog-list {
 	list-style: disc;
 	margin-left: 1.5em;
+}
+
+/* tile for the quickstart */
+ul#efml-directory-listing-services li.efml-setup-tile > a:before {
+	content: "\f311";
+}
+
+/* setup */
+.efml-setup {
+	.efml-setup-service-icon {
+		align-items: center;
+		display: inline-flex;
+		justify-content: center;
+		min-height: 32px;
+		&:before {
+			display: block;
+		}
+	}
+	/* with the ID, as the logos have larger sizes on this page for the tiles */
+	#easy-setup-for-wordpress .efml-setup-service-icon > *:before {
+		background-position: center;
+		background-size: contain;
+		display: block;
+		font-family: dashicons, sans-serif;
+		font-size: 32px;
+		height: 32px;
+		line-height: 1;
+		width: 32px;
+	}
+	.easy-setup-for-wordpress-card__icon .efml-icon {
+		display: block;
+		height: 32px;
+		width: 32px;
+		&.dashicons {
+			font-size: 32px;
+		}
+	}
+	.efml-setup-chosen {
+		align-items: center;
+		display: flex;
+		font-size: 16px;
+		font-weight: 600;
+		gap: .6em;
+		margin-bottom: 1em;
+		.efml-icon.dashicons {
+			font-size: 32px;
+			height: 32px;
+			width: 32px;
+		}
+	}
+	.efml-setup-check-success .dashicons, .efml-setup-result-success > .dashicons {
+		color: #00a32a;
+	}
+	.efml-setup-check-failed .dashicons, .efml-setup-result-failed > .dashicons {
+		color: #d63638;
+	}
+	.efml-setup-result {
+		list-style: none;
+		margin: 0 0 1em;
+		padding: 0;
+		> li {
+			align-items: flex-start;
+			border-bottom: 1px solid #f0f0f1;
+			display: flex;
+			gap: 12px;
+			margin: 0;
+			padding: 8px 0;
+		}
+	}
 }

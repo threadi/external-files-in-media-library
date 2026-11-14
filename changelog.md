@@ -56,6 +56,13 @@
 - Added search for settings, pages and documentations of this plugin in the command palette of WordPress (Ctrl + K)
 - Services are found in the command palette also by other terms, e.g. "Nextcloud" for WebDAV or "Hetzner" for the AWS S3 extension, incl. services of extensions and of not installed extensions
 - Added hooks "efml_service_features", "efml_service_feature_definitions", "efml_service_search_keywords", "efml_command_palette_pages" and "efml_settings_moved_tabs"
+- Added quickstart as second tile on the page to choose a service: it guides step by step through the most common tasks (offload the media library, protected downloads, embed and synchronize external files, import local files, synchronize files from FTP)
+- The quickstart shows the services, which support the chosen task, asks for their access data, checks the connection and configures the external source and the needed settings
+- Access data entered in the quickstart are saved encrypted for the time of the quickstart only, passwords are never sent back to the browser
+- DropBox could be connected within the quickstart, afterwards the quickstart continues
+- Added hooks "efml_setup_config", "efml_setup_goals", "efml_setup_option_definitions", "efml_setup_option_available", "efml_setup_apply_option", "efml_setup_run_action", "efml_setup_process_completed_text" and "efml_service_oauth_return_url"
+- Added documentation of the quickstart in docs/setup.md
+- The results in the dialog after an import use the same icons as the connection test and the quickstart
 
 ### Changed
 

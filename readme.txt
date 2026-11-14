@@ -38,6 +38,7 @@ And even more:
 ✅ Sort exported files into folders by year and month.
 ✅ Keep access data out of your database: define them as constants in your wp-config.php, also for several connections per service.
 ✅ Work safely with copies of your website: on staging websites, nothing is exported to or deleted on your external sources.
+✅ Get started step by step: the quickstart configures the most common tasks for you, from offloading your media library to synchronizing files from FTP.
 ✅ Find everything quickly: the tiles of the services show their features, and the command palette of WordPress (Ctrl + K) finds services, external sources and settings.
 
 See [what is possible](https://github.com/threadi/external-files-in-media-library/blob/master/docs/features.md) for an overview of all features.
@@ -113,11 +114,7 @@ This plugin is compatible with [ClassicPress](https://www.classicpress.net/).
 
 = 6.0.0 =
 
-Major update with export of files to external sources (offloading), private files, credentials via constants, protection of staging websites and a new structure of the settings. Please be sure to create a backup before updating.
-
-= 5.0.0 =
-
-Major update for the plugin. Please be sure to create a backup before updating.
+Major update with enhanced export of files to external sources (offloading), private files, credentials via constants, protection of staging websites, a quickstart for the most common tasks and a new structure of the settings. Please be sure to create a backup before updating.
 
 == Repository, documentation and reliability ==
 

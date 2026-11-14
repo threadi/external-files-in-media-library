@@ -104,6 +104,9 @@ class Init {
 		// initialize the connection test of services.
 		Connection_Test::get_instance()->init();
 
+		// initialize the setup.
+		Setup::get_instance()->init();
+
 		// initialize the network settings.
 		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();
 

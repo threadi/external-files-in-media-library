@@ -2,6 +2,8 @@
 
 External Files in Media Library does more than adding single URLs to your media library. This page shows the features by goal and leads you to the settings and the detailed documentation.
 
+**Not sure where to start?** The quickstart guides you step by step through the most common tasks and configures everything for you: Media → "Add External Files" → tile "Quickstart". See [quickstart](setup.md).
+
 ## I want to …
 
 ### … use files from other locations in my media library
@@ -54,6 +56,7 @@ On copies of your website (e.g. a staging website), files are not exported to or
 
 ## Find things quickly
 
+* **Quickstart:** Media → "Add External Files" → tile "Quickstart" guides you through the most common tasks, see [quickstart](setup.md).
 * **Choose a service:** Media → "Add external files" shows all services as tiles. Icons show which features each service offers (synchronization, export, private files, access data via constants). Use the filter "Feature" above the tiles to show only services with a specific feature. Services from extensions, which are not installed, are marked as "Extension" and could be installed there.
 * **Command palette:** Press `Ctrl + K` (`Cmd + K` on macOS) on any page of the backend and enter e.g. "FTP", "S3", "Export" or the name of one of your external sources. Services are also found by other names, e.g. "Nextcloud" for WebDAV or "Hetzner" for the S3 extension. The command palette is available on all pages of the backend since WordPress 6.9.
 * **Help:** The tab "Help" at the top right of the pages of this plugin starts with "What is possible?".

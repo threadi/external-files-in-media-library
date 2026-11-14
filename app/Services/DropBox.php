@@ -28,6 +28,7 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use ExternalFilesInMediaLibrary\Services\DropBox\Export;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
@@ -355,6 +356,9 @@ class DropBox extends Service_Base implements Service {
 			$use_it = true;
 		}
 		if ( 'profile.php' === $pagenow ) {
+			$use_it = true;
+		}
+		if ( Setup::get_instance()->is_setup_page() ) {
 			$use_it = true;
 		}
 
@@ -1254,6 +1258,38 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the dialog to connect DropBox, if it must be connected before it could be used in the setup.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_setup_connect_dialog(): array {
+		// bail if OAuth is not possible on this website.
+		if ( ! is_ssl() ) {
+			return array();
+		}
+
+		// bail if DropBox is not connected via OAuth.
+		if ( $this->is_mode( 'manually' ) ) {
+			return array();
+		}
+
+		// bail if DropBox is already connected.
+		if ( ! empty( $this->get_access_token() ) ) {
+			return array();
+		}
+
+		// bail if the connection for the whole website must not be changed by the actual user.
+		if ( $this->is_mode( 'global' ) && ! current_user_can( 'manage_options' ) ) {
+			return array();
+		}
+
+		// return the dialog to connect.
+		return $this->get_connect_dialog();
+	}
+
+	/**
 	 * Return the connect dialog.
 	 *
 	 * @return array<string,mixed>
@@ -1738,7 +1774,7 @@ class DropBox extends Service_Base implements Service {
 		$this->set_access_token( $data );
 
 		// forward user.
-		wp_safe_redirect( $this->get_config_url() );
+		wp_safe_redirect( $this->get_oauth_return_url() );
 		exit;
 	}
 
