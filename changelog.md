@@ -91,6 +91,8 @@
 - Added hook "efml_export_run_page_size" to change the number of local files, which are listed at once for their export
 - Added search in the settings: a field at the top right filters the settings of the actual tab, the tabs show the number of their matches and a list shows the matches in other tabs and pages of the plugin (requires easy-settings-for-wordpress 3.10.0)
 - The command palette also finds single settings, incl. other terms (e.g. "offload" for the export), and opens them highlighted
+- Added hint in the backend, if new files are not exported, because the service of an external source for exports is not available (e.g. its extension is not active), incl. the name of the extension
+- Added methods "get_export_source_problem()", "is_export_source_usable()", "get_main_export_source()" and "get_export_sources_problem()" for exports and hook "efml_export_source_usable"
 
 ### Changed
 
@@ -107,9 +109,14 @@
 - Settings are grouped by topics: "Delivery" (file types and proxy), "Status" (logs, queue and statistics), "Integrations" (WooCommerce, Polylang and Instant Images) and the permissions in "Advanced"
 - Links to the previous addresses of moved settings tabs are forwarded to their new addresses
 - The search for services and external sources in the command palette is case-insensitive and matches all words of the search
+- Files are not exported, as long as the primary external source for exports could not be used (e.g. because the extension of its service is not active), also not to the other external sources; they stay local files and could be exported later via "Export now"
+- External sources for exports are kept in the settings while their service is not available and marked as not usable at the moment
 
 ### Fixed
 
+- Fixed option "Export file" and the bulk action for the export in the media library being shown, although the service of the external source for exports is not available (e.g. its extension has been deactivated)
+- Fixed export dialog in the media library naming the last external source with enabled export instead of the primary external source
+- Fixed export of existing files, WP CLI and the abilities using external sources for exports, whose service is not available
 - Fixed: errors during the request of the DropBox account infos (e.g. if DropBox is not reachable) interrupted the request, e.g. of the settings or the quickstart
 - Fixed database errors on multisites, if an attachment is deleted on a website, where this plugin has not been installed (e.g. during the export to another website)
 - Fixed copying of log entries to the clipboard in the DataView of the settings

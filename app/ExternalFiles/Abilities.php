@@ -2875,9 +2875,10 @@ class Abilities {
 			return $this->get_error( 'efml_export_disabled', __( 'Export for local files is not enabled!', 'external-files-in-media-library' ), 400 );
 		}
 
-		// bail if no external source is enabled for the export.
-		if ( empty( Export::get_instance()->get_usable_export_terms() ) ) {
-			return $this->get_error( 'efml_no_export_source', __( 'No external source is enabled for the export.', 'external-files-in-media-library' ), 400 );
+		// bail if the external sources could not be used for the export (e.g. none is enabled or the main external source is not usable).
+		$problem = Export::get_instance()->get_export_sources_problem();
+		if ( '' !== $problem ) {
+			return $this->get_error( 'efml_no_export_source', wp_strip_all_tags( $problem ), 400 );
 		}
 
 		// get the attachment ID.

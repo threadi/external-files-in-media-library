@@ -37,6 +37,13 @@ class Services {
 	private static ?Services $instance = null;
 
 	/**
+	 * Marker whether the services have been initialized in this request.
+	 *
+	 * @var bool
+	 */
+	private bool $initialized = false;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -139,6 +146,59 @@ class Services {
 				$obj->add_settings();
 			}
 		}
+
+		// mark the services as initialized.
+		$this->initialized = true;
+	}
+
+	/**
+	 * Return whether the services have been initialized in this request.
+	 *
+	 * Before that, no service is known. Checks for the availability of a service must not
+	 * run before, otherwise every service would be missing.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_initialized(): bool {
+		return $this->initialized;
+	}
+
+	/**
+	 * Return the hint, that the service with the given name is not available.
+	 *
+	 * Names the extension, which provides the service, if it is known.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $name The name of the service (the type of the external source).
+	 *
+	 * @return string
+	 */
+	public function get_missing_service_hint( string $name ): string {
+		// search the extension, which provides this service.
+		foreach ( Directory_Listing::get_instance()->get_service_plugins() as $plugin_obj ) {
+			// get the services of this extension.
+			$services = $plugin_obj->get_provided_services();
+
+			// bail if this extension does not provide the service.
+			if ( ! isset( $services[ $name ] ) ) {
+				continue;
+			}
+
+			// get the label of the extension.
+			$plugin_label = $plugin_obj->get_plugin_label();
+			if ( '' === $plugin_label ) {
+				$plugin_label = $plugin_obj->get_label();
+			}
+
+			/* translators: %1$s will be replaced by the service title (e.g. Cloudflare R2), %2$s by the name of the extension. */
+			return sprintf( __( 'The service %1$s is not available, because the extension %2$s is not active.', 'external-files-in-media-library' ), $services[ $name ], $plugin_label );
+		}
+
+		/* translators: %1$s will be replaced by the name of the service. */
+		return sprintf( __( 'The service %1$s is not available. Maybe the plugin, which provides it, is not active.', 'external-files-in-media-library' ), $name );
 	}
 
 	/**

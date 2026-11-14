@@ -60,6 +60,15 @@ class Export extends Tools_Base {
 	private static ?Export $instance = null;
 
 	/**
+	 * The usable external sources for the export action in the media library, collected once per request.
+	 *
+	 * Empty if files could not be exported at the moment.
+	 *
+	 * @var array<string,string>|null
+	 */
+	private ?array $row_action_sources = null;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() { }
@@ -96,6 +105,7 @@ class Export extends Tools_Base {
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
+		add_action( 'admin_init', array( $this, 'add_hint_for_unusable_sources' ) );
 
 		// bail if not enabled.
 		if ( ! $this->is_enabled() ) {
@@ -265,8 +275,8 @@ class Export extends Tools_Base {
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
-		// collect the external sources.
-		$external_sources = $this->get_external_sources_as_name_list();
+		// collect the external sources (also not usable ones, so the setting is not changed, while e.g. an extension is not active).
+		$external_sources = $this->get_external_sources_as_name_list( false );
 
 		// create URL.
 		$url = add_query_arg(
@@ -712,6 +722,9 @@ class Export extends Tools_Base {
 		// get the main export source setting.
 		$main_export_source_term_id = absint( get_option( 'eml_export_main_source' ) );
 
+		// forget the external sources collected for the media library.
+		$this->row_action_sources = null;
+
 		// save the enabled state.
 		if ( 1 === $enabled ) {
 			add_term_meta( $term_id, 'efml_export', time() );
@@ -777,7 +790,8 @@ class Export extends Tools_Base {
 	 * Return the external sources with enabled export, which could be used at the moment.
 	 *
 	 * External sources are not usable, if the credentials of their service are defined via constants
-	 * for another server. Nothing is written to or deleted on them then.
+	 * for another server or if their service is not available (e.g. its extension is not active).
+	 * Nothing is written to or deleted on them then.
 	 *
 	 * @param bool $log True to log each external source, which is not usable.
 	 *
@@ -788,10 +802,10 @@ class Export extends Tools_Base {
 		$list = array();
 		foreach ( $this->get_export_terms() as $term_id ) {
 			// bail if this external source is not usable.
-			if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			if ( ! $this->is_export_source_usable( $term_id ) ) {
 				// log this event, if requested.
 				if ( $log ) {
-					Services::get_instance()->log_blocked_source( $term_id );
+					$this->log_unusable_source( $term_id );
 				}
 				continue;
 			}
@@ -802,6 +816,226 @@ class Export extends Tools_Base {
 
 		// return the resulting list.
 		return $list;
+	}
+
+	/**
+	 * Return the reason, why the given external source could not be used for exports at the moment.
+	 *
+	 * Returns an empty string, if it could be used. The stored settings are not changed, so the external
+	 * source is usable again as soon as the reason is gone (e.g. the extension of its service is active again).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return string
+	 */
+	public function get_export_source_problem( int $term_id ): string {
+		// bail if export is not enabled for this external source.
+		if ( empty( get_term_meta( $term_id, 'efml_export', true ) ) ) {
+			return __( 'The export is not enabled for this external source.', 'external-files-in-media-library' );
+		}
+
+		// bail if the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			return Services::get_instance()->get_blocked_source_hint( $term_id );
+		}
+
+		// bail if the services are not initialized yet, as no service is known before (the behavior before 6.0.0 applies then).
+		if ( ! Services::get_instance()->is_initialized() ) {
+			return '';
+		}
+
+		// get the type of this external source.
+		$type = (string) get_term_meta( $term_id, 'type', true );
+
+		// get the service object.
+		$listing_obj = $this->get_service_object_by_type( $type );
+
+		// bail if the service is not available or does not support exports.
+		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
+			return Services::get_instance()->get_missing_service_hint( $type );
+		}
+
+		// all fine.
+		return '';
+	}
+
+	/**
+	 * Return whether the given external source could be used for exports at the moment.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_export_source_usable( int $term_id ): bool {
+		// get the result.
+		$result = '' === $this->get_export_source_problem( $term_id );
+
+		/**
+		 * Filter whether an external source could be used for exports at the moment.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $result True if it could be used.
+		 * @param int $term_id The ID of the external source.
+		 */
+		return apply_filters( 'efml_export_source_usable', $result, $term_id );
+	}
+
+	/**
+	 * Log that the given external source could not be used for exports.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	private function log_unusable_source( int $term_id ): void {
+		// use the existing message for sources blocked by constants.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			Services::get_instance()->log_blocked_source( $term_id );
+			return;
+		}
+
+		// log the reason.
+		Log::get_instance()->create( $this->get_unusable_source_text( $term_id ), (string) get_term_meta( $term_id, 'path', true ), 'error' );
+	}
+
+	/**
+	 * Return the text, that the given external source could not be used for exports, with its reason.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return string
+	 */
+	private function get_unusable_source_text( int $term_id ): string {
+		// get the name of the external source.
+		$name = get_term_field( 'name', $term_id, Taxonomy::get_instance()->get_name() );
+		if ( ! is_string( $name ) ) {
+			$name = (string) $term_id;
+		}
+
+		// get the reason.
+		$problem = $this->get_export_source_problem( $term_id );
+		if ( '' === $problem ) {
+			$problem = __( 'It is not usable at the moment.', 'external-files-in-media-library' );
+		}
+
+		/* translators: %1$s will be replaced by the name of the external source, %2$s by the reason. */
+		return sprintf( __( 'The external source %1$s could not be used for the export: %2$s', 'external-files-in-media-library' ), '<em>' . esc_html( $name ) . '</em>', $problem );
+	}
+
+	/**
+	 * Return the ID of the main external source for exports.
+	 *
+	 * Returns 0 if none is set or if the export has been disabled for it.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return int
+	 */
+	public function get_main_export_source(): int {
+		// get the setting.
+		$term_id = absint( get_option( 'eml_export_main_source' ) );
+
+		// bail if none is set or its export is not enabled.
+		if ( 0 === $term_id || ! in_array( $term_id, $this->get_export_terms(), true ) ) {
+			return 0;
+		}
+
+		// return the ID.
+		return $term_id;
+	}
+
+	/**
+	 * Return the reason, why files could not be exported at the moment because of the external sources.
+	 *
+	 * Files are not exported, if no external source with enabled export is usable or if the main
+	 * external source for exports is not usable. In the latter case the files are not exported to the
+	 * other external sources, as they would otherwise be assigned to one of them unexpectedly.
+	 *
+	 * Returns an empty string, if files could be exported.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_export_sources_problem(): string {
+		// get the external sources with enabled export.
+		$export_terms = $this->get_export_terms();
+
+		// bail if no external source is enabled for the export.
+		if ( empty( $export_terms ) ) {
+			return __( 'No external source is enabled for the export.', 'external-files-in-media-library' );
+		}
+
+		// bail if the main external source is set, but not usable.
+		$main_term_id = $this->get_main_export_source();
+		if ( $main_term_id > 0 && ! $this->is_export_source_usable( $main_term_id ) ) {
+			return $this->get_unusable_source_text( $main_term_id );
+		}
+
+		// bail if one external source is usable.
+		if ( ! empty( $this->get_usable_export_terms() ) ) {
+			return '';
+		}
+
+		// collect the reasons of all external sources.
+		$reasons = array();
+		foreach ( $export_terms as $term_id ) {
+			$reasons[] = $this->get_unusable_source_text( $term_id );
+		}
+
+		// return the reasons.
+		return implode( ' ', $reasons );
+	}
+
+	/**
+	 * Show a hint in the backend, if files could not be exported because of their external sources.
+	 *
+	 * Uploaded files stay local files during this time. They could be exported later via the settings.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return void
+	 */
+	public function add_hint_for_unusable_sources(): void {
+		// bail if user has no permission to change it.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		// get the reason, if the export is enabled and at least one external source is enabled for the export.
+		$problem = '';
+		if ( $this->is_enabled() && ! empty( $this->get_export_terms() ) ) {
+			$problem = $this->get_export_sources_problem();
+		}
+
+		// remove the hint, if files could be exported.
+		if ( '' === $problem ) {
+			$transient_obj = Transients::get_instance()->get_transient_by_name( 'efml_export_sources_problem' );
+			if ( $transient_obj->is_set() ) {
+				$transient_obj->delete();
+			}
+			return;
+		}
+
+		// create the message.
+		$message  = '<strong>' . __( 'New files in your media library are not exported at the moment.', 'external-files-in-media-library' ) . '</strong> ' . $problem . '<br><br>';
+		$message .= __( 'They stay local files. As soon as the reason is gone, you can export them with "Export now" in the export settings.', 'external-files-in-media-library' ) . ' ';
+		/* translators: %1$s will be replaced by a URL. */
+		$message .= sprintf( __( 'Check <a href="%1$s">your plugins</a>', 'external-files-in-media-library' ), esc_url( admin_url( 'plugins.php' ) ) ) . ' ';
+		/* translators: %1$s will be replaced by a URL. */
+		$message .= sprintf( __( 'or <a href="%1$s">the export settings</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_export' ) ) );
+
+		// add the hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_export_sources_problem' );
+		$transient_obj->set_message( $message );
+		$transient_obj->set_type( 'error' );
+		$transient_obj->set_prioritized( true );
+		$transient_obj->save();
 	}
 
 	/**
@@ -844,6 +1078,14 @@ class Export extends Tools_Base {
 
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
+
+		// bail if files could not be exported at the moment, the file stays local then.
+		$problem = $this->get_export_sources_problem();
+		if ( '' !== $problem ) {
+			/* translators: %1$s will be replaced by the reason. */
+			Log::get_instance()->create( sprintf( __( 'The file has not been exported and stays local: %1$s', 'external-files-in-media-library' ), $problem ), (string) wp_get_attachment_url( $attachment_id ), 'error' );
+			return $metadata;
+		}
 
 		// add the file to the queue, if the export should run in background.
 		if ( $this->is_export_in_background_enabled() && Queue::get_instance()->add_export( $attachment_id ) ) {
@@ -931,6 +1173,14 @@ class Export extends Tools_Base {
 			Log::get_instance()->create( __( 'Path for given file to export could not be found.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'error', 0 );
 
 			// do nothing more.
+			return false;
+		}
+
+		// bail if files could not be exported because of the external sources (e.g. the main external source is not usable).
+		$problem = $this->get_export_sources_problem();
+		if ( '' !== $problem ) {
+			/* translators: %1$s will be replaced by the reason. */
+			Log::get_instance()->create( sprintf( __( 'The file has not been exported and stays local: %1$s', 'external-files-in-media-library' ), $problem ), $external_file_obj->get_url( true ), 'error' );
 			return false;
 		}
 
@@ -1546,6 +1796,14 @@ class Export extends Tools_Base {
 			echo '<div class="notice notice-warning inline"><p>' . wp_kses_post( $site_copy_hint ) . '</p></div>';
 		}
 
+		// show the hint, if files could not be exported at the moment, although external sources are enabled for it.
+		if ( $this->is_enabled() && ! empty( $this->get_export_terms() ) ) {
+			$problem = $this->get_export_sources_problem();
+			if ( '' !== $problem ) {
+				echo '<div class="notice notice-error inline"><p><strong>' . esc_html__( 'New files in your media library are not exported at the moment.', 'external-files-in-media-library' ) . '</strong> ' . wp_kses_post( $problem ) . '</p></div>';
+			}
+		}
+
 		/* translators: %1$s will be replaced by a URL. */
 		echo '<p><strong>' . esc_html__( 'Automatically upload local files uploaded to your media library to an external source.', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( ' The files are then handled as external files according to the settings and take up less local storage space.', 'external-files-in-media-library' ) . ' ' . wp_kses_post( sprintf( __( 'Choose the target for these files from <a href="%1$s">in your external sources</a>.', 'external-files-in-media-library' ), Directory_Listing::get_instance()->get_listing_url() ) ) . ' ' . wp_kses_post( sprintf( __( 'Set permissions to use these options <a href="%1$s">here</a>.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_permissions' ) ) ) . '</p>';
 	}
@@ -1727,6 +1985,15 @@ class Export extends Tools_Base {
 			return;
 		}
 
+		// show the reason, if files could not be exported at the moment, although external sources are enabled for it.
+		if ( 1 === absint( get_option( 'eml_export' ) ) && ! empty( $this->get_export_terms() ) ) {
+			$problem = $this->get_export_sources_problem();
+			if ( '' !== $problem ) {
+				echo '<div class="efml_export-hint"><p><strong>' . esc_html__( 'New files in your media library are not exported at the moment.', 'external-files-in-media-library' ) . '</strong> ' . wp_kses_post( $problem ) . '</p></div>';
+				return;
+			}
+		}
+
 		// show simple messages if user has not the capability for settings.
 		if ( ! current_user_can( 'manage_options' ) ) {
 			// show info if export is enabled.
@@ -1771,9 +2038,14 @@ class Export extends Tools_Base {
 	/**
 	 * Return a list of names of the external sources with enabled export option.
 	 *
+	 * The main external source for exports is always the last entry.
+	 *
+	 * @param bool $only_usable True to return only external sources, which could be used at the moment, false to
+	 *                          return all and mark the not usable ones (e.g. for the settings, which must not lose them).
+	 *
 	 * @return array<string,string>
 	 */
-	private function get_external_sources_as_name_list(): array {
+	private function get_external_sources_as_name_list( bool $only_usable = true ): array {
 		// bail if this is not in the backend.
 		if ( ! is_admin() ) {
 			return array();
@@ -1807,8 +2079,31 @@ class Export extends Tools_Base {
 				continue;
 			}
 
+			// get the name.
+			$name = $term->name;
+
+			// check whether this external source could be used at the moment.
+			if ( ! $this->is_export_source_usable( $term->term_id ) ) {
+				// bail if only usable external sources are requested.
+				if ( $only_usable ) {
+					continue;
+				}
+
+				// mark it.
+				/* translators: %1$s will be replaced by the name of an external source. */
+				$name = sprintf( __( '%1$s (not usable at the moment)', 'external-files-in-media-library' ), $name );
+			}
+
 			// add this source.
-			$external_sources[ (string) $term->term_id ] = $term->name;
+			$external_sources[ (string) $term->term_id ] = $name;
+		}
+
+		// move the main external source to the end of the list.
+		$main_term_id = (string) absint( get_option( 'eml_export_main_source' ) );
+		if ( isset( $external_sources[ $main_term_id ] ) ) {
+			$main_name = $external_sources[ $main_term_id ];
+			unset( $external_sources[ $main_term_id ] );
+			$external_sources[ $main_term_id ] = $main_name;
 		}
 
 		// return the resulting list.
@@ -2350,8 +2645,11 @@ class Export extends Tools_Base {
 			return $actions;
 		}
 
-		// collect the external sources.
-		$external_sources = $this->get_external_sources_as_name_list();
+		// get the usable external sources (once per request, as this runs for each row).
+		if ( is_null( $this->row_action_sources ) ) {
+			$this->row_action_sources = '' === $this->get_export_sources_problem() ? $this->get_external_sources_as_name_list() : array();
+		}
+		$external_sources = $this->row_action_sources;
 
 		// bail if no external source is enabled for export.
 		if ( empty( $external_sources ) ) {
@@ -2508,11 +2806,8 @@ class Export extends Tools_Base {
 			return $actions;
 		}
 
-		// collect the external sources.
-		$external_sources = $this->get_external_sources_as_name_list();
-
-		// bail if no external source is enabled for export.
-		if ( empty( $external_sources ) ) {
+		// bail if files could not be exported at the moment (e.g. the service of the main external source is not available).
+		if ( '' !== $this->get_export_sources_problem() ) {
 			return $actions;
 		}
 
@@ -2785,9 +3080,10 @@ class Export extends Tools_Base {
 			return __( 'The export of files from the media library is not enabled in the plugin settings.', 'external-files-in-media-library' );
 		}
 
-		// bail if no external source could be used for the export.
-		if ( empty( $this->get_usable_export_terms() ) ) {
-			return __( 'No external source is enabled for the export.', 'external-files-in-media-library' );
+		// bail if the external sources could not be used for the export.
+		$problem = $this->get_export_sources_problem();
+		if ( '' !== $problem ) {
+			return $problem;
 		}
 
 		// bail if this website is a copy.
