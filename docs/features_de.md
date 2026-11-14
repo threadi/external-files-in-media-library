@@ -24,6 +24,8 @@ Speichere ein Verzeichnis als externe Quelle und lass neue, geänderte und gelö
 
 Exportiere neue Uploads und vorhandene Dateien zu einer externen Quelle, z. B. zu AWS S3 und S3-kompatiblen Speichern (Hetzner, IONOS, Wasabi …), Google Cloud Storage, FTP, Dropbox oder WebDAV. Danach werden sie als externe Dateien genutzt und belegen keinen Platz mehr auf deinem Hosting. Auf Wunsch werden die Dateien nach Jahr und Monat in Ordner sortiert.
 
+Dateien, die schon in deiner Mediathek liegen, exportierst du mit einem Klick: Einstellungen → „Export“ → „Vorhandene Dateien exportieren“. Sie werden nacheinander im Hintergrund exportiert, den Fortschritt siehst du in der Admin-Leiste. Ein Klick darauf öffnet die Warteschlange, dort siehst du jede Datei und kannst Dateien, die nicht exportiert werden konnten, erneut exportieren. Der Schnellstart bietet das ebenfalls als Option an.
+
 * Im Backend: Einstellungen → „Export“, danach den Export für eine externe Quelle aktivieren
 * Dokumentation: [Verzeichnisse](import/directories_de.md) für die externen Quellen, die Dokumentationen der Erweiterungen für ihre Dienste
 
@@ -65,7 +67,8 @@ Auf Kopien deiner Website (z. B. einer Staging-Website) werden keine Dateien zu 
 
 * **Schnellstart:** Medien → „Externe Dateien hinzufügen“ → Kachel „Schnellstart“ führt dich durch die häufigsten Aufgaben, siehe [Schnellstart](setup_de.md).
 * **Dienst wählen:** Medien → „Externe Dateien hinzufügen“ zeigt alle Dienste als Kacheln. Icons zeigen, welche Funktionen ein Dienst bietet (Synchronisierung, Export, private Dateien, Zugangsdaten per Konstante). Mit dem Filter „Funktion“ über den Kacheln zeigst du nur Dienste mit einer bestimmten Funktion. Dienste aus Erweiterungen, die nicht installiert sind, sind als „Erweiterung“ markiert und lassen sich dort installieren. Warum manche Dienste eine Erweiterung brauchen, steht unter [Erweiterungen](extensions_de.md).
-* **Befehlspalette:** Drücke auf jeder Seite des Backends `Strg + K` (`Cmd + K` unter macOS) und gib z. B. „FTP“, „S3“, „Export“ oder den Namen einer deiner externen Quellen ein. Dienste werden auch unter anderen Namen gefunden, z. B. „Nextcloud“ für WebDAV oder „Hetzner“ für die S3-Erweiterung. Die Befehlspalette gibt es seit WordPress 6.9 auf allen Seiten des Backends.
+* **Befehlspalette:** Drücke auf jeder Seite des Backends `Strg + K` (`Cmd + K` unter macOS) und gib z. B. „FTP“, „S3“, „Export“ oder den Namen einer deiner externen Quellen ein. Dienste werden auch unter anderen Namen gefunden, z. B. „Nextcloud“ für WebDAV oder „Hetzner“ für die S3-Erweiterung. Die Befehlspalette gibt es seit WordPress 6.9 auf allen Seiten des Backends. Sie findet auch einzelne Einstellungen, z. B. „Offload“ oder „Timeout“, und öffnet sie hervorgehoben.
+* **Suche in den Einstellungen:** Das Feld oben rechts in den Einstellungen filtert beim Tippen die Einstellungen des aktuellen Reiters. Die Reiter zeigen die Zahl ihrer Treffer, eine Liste unter den Einstellungen die Treffer in anderen Reitern und Seiten des Plugins. Einstellungen, die erst sichtbar sind, wenn eine andere Einstellung aktiviert ist, stehen mit einem Link auf diese Einstellung in der Liste.
 * **Hilfe:** Der Reiter „Hilfe“ oben rechts auf den Seiten dieses Plugins beginnt mit „Was ist möglich?“.
 
 ## Aufbau der Einstellungen

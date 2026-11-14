@@ -96,7 +96,7 @@ This will delete every entry in the queue.
 
 ## Export media files
 
-This will export all not external files in media library to the for export enabled external sources.
+This will export all local files in the media library, which are not exported yet and whose mime type is allowed in the plugin settings, to the external sources with enabled export. It is the same export as via the button "Export existing files" in the export settings, but all files are exported directly. Files, which could not be exported, stay local files, are marked in the media library and are listed as errors in the queue.
 
 `wp eml export`
 

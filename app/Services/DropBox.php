@@ -829,7 +829,8 @@ class DropBox extends Service_Base implements Service {
 		$account_infos = array();
 		try {
 			$account_infos = $client->getAccountInfo();
-		} catch ( ClientException $e ) {
+		} catch ( \Exception $e ) {
+			// also network errors (e.g. DropBox is not reachable) must not break the request.
 			Log::get_instance()->create( __( 'Error during request of DropBox account infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 		}
 
@@ -1287,6 +1288,17 @@ class DropBox extends Service_Base implements Service {
 
 		// return the dialog to connect.
 		return $this->get_connect_dialog();
+	}
+
+	/**
+	 * Return whether DropBox is already connected with this website via OAuth.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_connected_via_oauth(): bool {
+		return ! $this->is_mode( 'manually' ) && ! empty( $this->get_access_token() );
 	}
 
 	/**

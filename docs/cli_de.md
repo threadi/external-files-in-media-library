@@ -96,7 +96,7 @@ Dadurch werden alle Einträge in der Warteschlange gelöscht.
 
 ## Mediendateien exportieren
 
-Dadurch werden alle nicht externen Dateien in der Medienbibliothek in die für den Export aktivierten externen Quellen exportiert.
+Dadurch werden alle lokalen Dateien der Mediathek, die noch nicht exportiert sind und deren Dateityp in den Plugin-Einstellungen erlaubt ist, in die externen Quellen mit aktiviertem Export exportiert. Das ist derselbe Export wie über den Button „Vorhandene Dateien exportieren“ in den Export-Einstellungen, nur werden alle Dateien direkt exportiert. Dateien, die nicht exportiert werden konnten, bleiben lokal, sind in der Mediathek markiert und stehen als Fehler in der Warteschlange.
 
 `wp eml export`
 

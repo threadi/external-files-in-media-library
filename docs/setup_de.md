@@ -9,7 +9,7 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 1. **Ziel wählen:** Was möchtest du tun? Die Ziele sind unten beschrieben.
 2. **Dienst wählen:** Es erscheinen nur die Dienste, die das gewählte Ziel unterstützen, z. B. für das Auslagern nur Dienste mit Export. Bei manchen Zielen steht der Dienst fest, dann entfällt dieser Schritt. Dienste aus Erweiterungen, die noch nicht installiert sind (z. B. AWS S3 oder Cloudflare R2), erscheinen mit dem Hinweis auf die Erweiterung, sofern du Plugins installieren darfst.
 3. **Erweiterung installieren (falls nötig):** Braucht der gewählte Dienst eine Erweiterung, erklärt der Schnellstart, welche und warum (siehe [Erweiterungen](extensions_de.md)). Bestätigst du die Installation, lädt er die neueste Version von GitHub, installiert und aktiviert sie und zeigt das Ergebnis. Schlägt das fehl, siehst du den Grund und kannst es erneut versuchen.
-4. **Zugangsdaten eingeben:** Der Schnellstart zeigt die Felder des Dienstes. Die aufklappbare Hilfe „Wo finde ich diese Angaben?“ erklärt, wo du die Zugangsdaten bekommst, welche Berechtigungen sie brauchen und worauf du achten musst, bei AWS S3 mit fertiger IAM-Richtlinie zum Kopieren. Dieselbe Hilfe steht im Formular des Dienstes. Werte, die bereits als Konstante (z. B. in der `wp-config.php`) oder in den Einstellungen hinterlegt sind, fragt er nicht noch einmal ab. Dropbox verbindest du über den Button „Dropbox verbinden“, danach kehrst du zum Schnellstart zurück.
+4. **Zugangsdaten eingeben:** Der Schnellstart zeigt die Felder des Dienstes. Die aufklappbare Hilfe „Wo finde ich diese Angaben?“ erklärt, wo du die Zugangsdaten bekommst, welche Berechtigungen sie brauchen und worauf du achten musst, bei AWS S3 mit fertiger IAM-Richtlinie zum Kopieren. Dieselbe Hilfe steht im Formular des Dienstes. Werte, die bereits als Konstante (z. B. in der `wp-config.php`) oder in den Einstellungen hinterlegt sind, fragt er nicht noch einmal ab. Dropbox und Google Drive verbindest du über den Button „Dropbox verbinden“ bzw. „Google Drive verbinden“, danach kehrst du zum Schnellstart zurück. Google Drive braucht dafür seine Erweiterung ab Version 1.4.0.
 5. **Verbindung prüfen und Optionen wählen:** Der Schnellstart prüft die Verbindung mit deinen Angaben. Klappt das nicht, siehst du den Grund und gehst zurück, um die Angaben zu korrigieren. Klappt es, wählst du die Optionen des Ziels. Sie sind passend vorbelegt.
 6. **Einrichten:** Der Schnellstart legt die externe Quelle an, setzt die Einstellungen und zeigt dir das Ergebnis jedes Schritts.
 
@@ -17,7 +17,7 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 
 | Ziel | Dienst | Was der Schnellstart einrichtet |
 |---|---|---|
-| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Dateien privat speichern“, Verbindungstest |
+| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Dateien privat speichern“ und der Export der Dateien, die schon in deiner Mediathek liegen, Verbindungstest |
 | Geschützte Downloads | alle Dienste mit privaten Dateien | wie beim Auslagern, „Dateien privat speichern“ ist vorgewählt, auf Wunsch die Downloads von WooCommerce |
 | Externe Dateien einbinden und synchron halten | alle Dienste mit Synchronisierung | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
 | Lokale Dateien importieren | Lokales Verzeichnis deines Hostings | Import des Verzeichnisses, auf Wunsch als echte Dateien in die Mediathek kopiert |
@@ -26,7 +26,7 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 
 Große Verzeichnisse werden wie gewohnt im Hintergrund importiert bzw. synchronisiert, den Fortschritt siehst du in der Admin-Leiste.
 
-Beim Auslagern exportiert der Schnellstart nur neue Dateien. Dateien, die bereits in deiner Mediathek liegen, exportierst du in der Listenansicht der Mediathek mit der Massenaktion „Zu externer Quelle exportieren“. Der Schnellstart verlinkt am Ende dorthin.
+Beim Auslagern und bei geschützten Downloads bietet der Schnellstart an, auch die Dateien zu exportieren, die schon in deiner Mediathek liegen. Die Option ist standardmäßig aus und nennt die Anzahl dieser Dateien. Wählst du sie, werden die Dateien am Ende des Schnellstarts nacheinander im Hintergrund exportiert, den Fortschritt siehst du in der Admin-Leiste. Sonst werden nur neue Dateien exportiert: Die vorhandenen Dateien kannst du später über Einstellungen → „Export“ → „Vorhandene Dateien exportieren“ exportieren oder in der Listenansicht der Mediathek mit der Massenaktion „Zu externer Quelle exportieren“.
 
 ## Zugangsdaten
 

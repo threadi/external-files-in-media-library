@@ -24,6 +24,8 @@ Save a directory as external source and let new, changed and deleted files be sy
 
 Export new uploads and existing files to an external source, e.g. AWS S3 and S3-compatible storages (Hetzner, IONOS, Wasabi …), Google Cloud Storage, FTP, Dropbox or WebDAV. Afterward, they are used as external files and take up no space on your hosting. Optionally, the files could be sorted into folders by year and month.
 
+Files, which are already in your media library, are exported with one click: settings → "Export" → "Export existing files". They are exported one by one in the background, the admin bar shows the progress. A click on it opens the queue, where you could see each file and export files again, which could not be exported. The quickstart offers this as option, too.
+
 * In the backend: settings → "Export", then enable the export for an external source
 * Documentation: [Directories](import/directories.md) for the external sources, the documentations of the extensions for their services
 
@@ -65,7 +67,8 @@ On copies of your website (e.g. a staging website), files are not exported to or
 
 * **Quickstart:** Media → "Add External Files" → tile "Quickstart" guides you through the most common tasks, see [quickstart](setup.md).
 * **Choose a service:** Media → "Add external files" shows all services as tiles. Icons show which features each service offers (synchronization, export, private files, access data via constants). Use the filter "Feature" above the tiles to show only services with a specific feature. Services from extensions, which are not installed, are marked as "Extension" and could be installed there. Why some services need an extension is explained in [extensions](extensions.md).
-* **Command palette:** Press `Ctrl + K` (`Cmd + K` on macOS) on any page of the backend and enter e.g. "FTP", "S3", "Export" or the name of one of your external sources. Services are also found by other names, e.g. "Nextcloud" for WebDAV or "Hetzner" for the S3 extension. The command palette is available on all pages of the backend since WordPress 6.9.
+* **Command palette:** Press `Ctrl + K` (`Cmd + K` on macOS) on any page of the backend and enter e.g. "FTP", "S3", "Export" or the name of one of your external sources. Services are also found by other names, e.g. "Nextcloud" for WebDAV or "Hetzner" for the S3 extension. The command palette is available on all pages of the backend since WordPress 6.9. It also finds single settings, e.g. "offload" or "timeout", and opens them highlighted.
+* **Search in the settings:** The field at the top right of the settings filters the settings of the actual tab while typing. The tabs show the number of their matches, a list below the settings shows the matches in other tabs and pages of this plugin. Settings, which are only shown if another setting is enabled, are listed with a link to this setting.
 * **Help:** The tab "Help" at the top right of the pages of this plugin starts with "What is possible?".
 
 ## Structure of the settings

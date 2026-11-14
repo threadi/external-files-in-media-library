@@ -61,6 +61,9 @@ class Commands {
 
 		// add the endpoint to search for settings, pages and documentations.
 		add_action( 'rest_api_init', array( $this, 'register_endpoints' ) );
+
+		// add search terms and pages to the search in the settings.
+		add_filter( 'efml_settings_search_index', array( $this, 'add_to_settings_search_index' ) );
 	}
 
 	/**
@@ -100,6 +103,19 @@ class Commands {
 
 		// collect the matching entries.
 		$list = array();
+
+		// add the matching single settings.
+		foreach ( $this->get_matching_settings( $search ) as $setting ) {
+			$list[] = array(
+				'id'       => count( $list ) + 1,
+				'label'    => $setting['label'],
+				'value'    => $setting['name'],
+				'url'      => $setting['url'],
+				'external' => false,
+			);
+		}
+
+		// add the pages.
 		foreach ( $this->get_pages() as $page ) {
 			// bail if the search does not match.
 			if ( ! Helper::is_search_matching( $search, array_merge( array( $page['label'] ), $page['keywords'] ) ) ) {
@@ -118,6 +134,113 @@ class Commands {
 
 		// return the resulting list.
 		return $list;
+	}
+
+	/**
+	 * Return the single settings matching the given search (requires easy-settings-for-wordpress 3.10.0).
+	 *
+	 * @param string $search The search.
+	 *
+	 * @return array<int,array{name: string, label: string, url: string}>
+	 */
+	private function get_matching_settings( string $search ): array {
+		// get the settings object.
+		$settings_obj = Settings::get_instance()->get_settings_obj();
+
+		// bail if the user is not allowed to use the settings or the search is not available.
+		if ( ! current_user_can( $settings_obj->get_capability() ) || ! method_exists( $settings_obj, 'get_search' ) || ! $settings_obj->is_search_enabled() ) { // @phpstan-ignore function.alreadyNarrowedType
+			return array();
+		}
+
+		// get the search object.
+		$search_obj = $settings_obj->get_search();
+
+		// collect the settings.
+		$list = array();
+		foreach ( $search_obj->get_results( $search, 8, array( 'setting' ) ) as $entry ) {
+			$list[] = array(
+				'name'  => 'setting-' . $entry['name'],
+				/* translators: %1$s will be replaced by the title of a setting, %2$s by the titles of its tab and section. */
+				'label' => sprintf( __( 'External files setting: %1$s (%2$s)', 'external-files-in-media-library' ), $entry['title'], implode( ' › ', (array) $entry['path'] ) ),
+				'url'   => $search_obj->get_result_url( $entry, $search ),
+			);
+		}
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Add the search terms of the tabs and settings and the pages of this plugin to the search in the settings.
+	 *
+	 * @param array<int,array<string,mixed>> $entries List of entries.
+	 *
+	 * @return array<int,array<string,mixed>>
+	 */
+	public function add_to_settings_search_index( array $entries ): array {
+		// get the search terms.
+		$tab_keywords     = $this->get_settings_keywords();
+		$setting_keywords = $this->get_setting_keywords();
+
+		// add the search terms to the tabs and settings.
+		foreach ( $entries as $index => $entry ) {
+			// get the name.
+			$name = isset( $entry['name'] ) && is_string( $entry['name'] ) ? $entry['name'] : '';
+
+			// get the search terms for it.
+			$keywords = 'tab' === ( $entry['type'] ?? '' ) ? ( $tab_keywords[ $name ] ?? '' ) : ( $setting_keywords[ $name ] ?? '' );
+
+			// bail if none are set.
+			if ( '' === $keywords ) {
+				continue;
+			}
+
+			// add them.
+			$entries[ $index ]['keywords'] = trim( ( isset( $entry['keywords'] ) && is_string( $entry['keywords'] ) ? $entry['keywords'] . ', ' : '' ) . $keywords, ', ' );
+		}
+
+		// add the pages of this plugin outside the settings (e.g. to add external files and the documentations).
+		foreach ( $this->get_pages() as $page ) {
+			// bail for the tabs of the settings, they are already in the index.
+			if ( str_starts_with( $page['name'], 'settings-' ) ) {
+				continue;
+			}
+
+			// add the page.
+			$entries[] = array(
+				'type'     => 'page',
+				'name'     => $page['name'],
+				'title'    => $page['label'],
+				'keywords' => implode( ', ', $page['keywords'] ),
+				'url'      => $page['url'],
+				'external' => $page['external'],
+			);
+		}
+
+		// return the resulting list.
+		return $entries;
+	}
+
+	/**
+	 * Return the search terms for single settings.
+	 *
+	 * @return array<string,string>
+	 */
+	private function get_setting_keywords(): array {
+		return array(
+			'eml_export'                 => _x( 'offload, offloading, cloud, upload, storage', 'search terms for the setting to enable the export, separated by commas', 'external-files-in-media-library' ),
+			'eml_export_main_source'     => _x( 'S3, bucket, target, storage, CDN', 'search terms for the setting of the main export, separated by commas', 'external-files-in-media-library' ),
+			'eml_export_local_files_now' => _x( 'existing files, bulk, all files, media library', 'search terms for the button to export existing files, separated by commas', 'external-files-in-media-library' ),
+			'eml_export_in_background'   => _x( 'queue, cron, background', 'search terms for the export in background, separated by commas', 'external-files-in-media-library' ),
+			'eml_export_folders'         => _x( 'year, month, directory, structure', 'search terms for the folders of exported files, separated by commas', 'external-files-in-media-library' ),
+			'eml_private_files_lifetime' => _x( 'signed URL, private, validity, expiry', 'search terms for the validity of links to private files, separated by commas', 'external-files-in-media-library' ),
+			'eml_proxy_clear'            => _x( 'cache, reset, delete', 'search terms for the button to reset the proxy cache, separated by commas', 'external-files-in-media-library' ),
+			'eml_sync_interval'          => _x( 'schedule, cron, automatic', 'search terms for the interval of the synchronization, separated by commas', 'external-files-in-media-library' ),
+			'eml_allowed_mime_types'     => _x( 'file types, MIME, formats, extensions', 'search terms for the allowed file types, separated by commas', 'external-files-in-media-library' ),
+			'eml_log_mode'               => _x( 'debug, logging, errors', 'search terms for the log mode, separated by commas', 'external-files-in-media-library' ),
+			'eml_timeout'                => _x( 'timeout, seconds, slow, request', 'search terms for the timeout, separated by commas', 'external-files-in-media-library' ),
+			'eml_setting_view'           => _x( 'DataView, view, classic, layout', 'search terms for the view of the settings, separated by commas', 'external-files-in-media-library' ),
+		);
 	}
 
 	/**

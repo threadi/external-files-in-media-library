@@ -62,7 +62,8 @@
 - Added quickstart as second tile on the page to choose a service: it guides step by step through the most common tasks (offload the media library, protected downloads, embed and synchronize external files, import local files, synchronize files from FTP)
 - The quickstart shows the services, which support the chosen task, asks for their access data, checks the connection and configures the external source and the needed settings
 - Access data entered in the quickstart are saved encrypted for the time of the quickstart only, passwords are never sent back to the browser
-- DropBox could be connected within the quickstart, afterwards the quickstart continues
+- DropBox and Google Drive (requires its extension 1.4.0) could be connected within the quickstart, afterwards the quickstart continues
+- The quickstart explains, if a service needs no further details, e.g. a DropBox, which is already connected
 - Added hooks "efml_setup_config", "efml_setup_goals", "efml_setup_option_definitions", "efml_setup_option_available", "efml_setup_apply_option", "efml_setup_run_action", "efml_setup_process_completed_text" and "efml_service_oauth_return_url"
 - Added documentation of the quickstart in docs/setup.md
 - The results in the dialog after an import use the same icons as the connection test and the quickstart
@@ -82,9 +83,18 @@
 - Added the reason, why some services are provided by extensions, to the help, the installation dialog and the documentation in docs/extensions.md
 - Added hook "efml_service_plugin_provided_services" for the services, which a not installed extension provides
 - Fixed: the access data for the import of WooCommerce product images were also used for following imports in the same request
+- Added button "Export now" in the export settings to export all local files in the media library, which are not exported yet, without choosing them
+- The files are listed page by page and exported one by one in the background via WP Cron, independent of the settings of the queue; the progress is shown in the admin bar together with imports, a click on it opens the queue
+- Files, which could not be exported, stay local files, are marked in the media library and stay as errors in the queue, where they could be exported again; a hint shows the result and links to the log and to the queue
+- The export of the existing files is paused on copies of the website and cancelled with a hint, if the export is disabled in the meantime
+- The quickstart offers to export the files, which are already in the media library, too, when offloading the media library or setting up protected downloads
+- Added hook "efml_export_run_page_size" to change the number of local files, which are listed at once for their export
+- Added search in the settings: a field at the top right filters the settings of the actual tab, the tabs show the number of their matches and a list shows the matches in other tabs and pages of the plugin (requires easy-settings-for-wordpress 3.10.0)
+- The command palette also finds single settings, incl. other terms (e.g. "offload" for the export), and opens them highlighted
 
 ### Changed
 
+- The WP CLI command "wp eml export" uses the same export as the button in the settings: only files with an allowed mime type are exported, files waiting in the queue are skipped and failed files are marked and listed in the queue
 - Now also compatible with Windows-based hostings
 - The dialog to install or activate the extension for AWS S3 now lists all supported platforms and its new features
 - Optimized the spacing of the buttons for the predefined configurations in the settings
@@ -100,6 +110,7 @@
 
 ### Fixed
 
+- Fixed: errors during the request of the DropBox account infos (e.g. if DropBox is not reachable) interrupted the request, e.g. of the settings or the quickstart
 - Fixed database errors on multisites, if an attachment is deleted on a website, where this plugin has not been installed (e.g. during the export to another website)
 - Fixed copying of log entries to the clipboard in the DataView of the settings
 - Fixed import of external files as local files if their title is not a file name with extension (e.g. after changing the title)

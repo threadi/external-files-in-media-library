@@ -274,8 +274,11 @@ class SetupExtensions extends externalFilesTests {
 		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\AwsS3::class, Setup::get_instance()->get_service_plugin_for( 'wasabi' ) );
 		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\GoogleCloudStorage::class, Setup::get_instance()->get_service_plugin_for( 'google-cloud-storage' ) );
 
-		// Google Drive could not be set up in the quickstart yet.
-		$this->assertNull( Setup::get_instance()->get_service_plugin_for( 'google-drive' ) );
+		// Google Drive could be set up in the quickstart (it is connected there via its dialog).
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\GoogleDrive::class, Setup::get_instance()->get_service_plugin_for( 'google-drive' ) );
+
+		// plugins, which could not be set up in the quickstart, provide no services.
+		$this->assertNull( Setup::get_instance()->get_service_plugin_for( 'hello-dolly' ) );
 
 		// unknown services.
 		$this->assertNull( Setup::get_instance()->get_service_plugin_for( 'unknown' ) );

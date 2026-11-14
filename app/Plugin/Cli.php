@@ -17,10 +17,10 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Csv;
 use ExternalFilesInMediaLibrary\Services\Xml;
-use WP_Query;
 use WP_Term_Query;
 
 /**
@@ -813,66 +813,36 @@ class Cli {
 	}
 
 	/**
-	 * Export files from media library to an external source.
+	 * Export the local files in the media library to the external sources with enabled export.
+	 *
+	 * Exports all local files, which are not exported yet and whose mime type is allowed in the plugin settings.
+	 * This is the same export as via the button "Export now" in the export settings or via the quickstart, but all
+	 * files are exported directly.
 	 *
 	 * @return void
 	 */
 	public function export(): void {
-		// bail if export is not enabled.
-		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
-			// show hint.
-			\WP_CLI::error( __( 'Export is not enabled!', 'external-files-in-media-library' ) );
+		// export the files.
+		$result = Import_Runs::get_instance()->start_export();
+
+		// bail if the export could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
 
 			// do nothing more.
 			return;
 		}
 
-		// bail if option is disabled.
-		if ( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
-			// show hint.
-			\WP_CLI::error( __( 'Export for local files is not enabled!', 'external-files-in-media-library' ) );
+		// show a warning, if files could not be exported.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
 
 			// do nothing more.
 			return;
-		}
-
-		// get all not external files in media library.
-		$query = array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'compare' => 'NOT EXISTS',
-				),
-			),
-		);
-		$files = new WP_Query( $query );
-
-		// bail if no files could be found.
-		if ( 0 === $files->found_posts ) {
-			// show hint.
-			\WP_CLI::error( __( 'No files to export could be found!', 'external-files-in-media-library' ) );
-
-			// do nothing more.
-			return;
-		}
-
-		// collect the results.
-		$result_counter = 0;
-
-		// export each file.
-		foreach ( $files->posts as $attachment_id ) {
-			if ( Export::get_instance()->export_file( absint( $attachment_id ) ) ) {
-				++$result_counter;
-			}
 		}
 
 		// show ok message.
-		/* translators: %1$s will be replaced by a number. */
-		\WP_CLI::success( sprintf( _n( '%1$d file have been exported.', '%1$d files have been exported.', $result_counter, 'external-files-in-media-library' ), $result_counter ) );
+		\WP_CLI::success( $result['message'] );
 	}
 
 	/**

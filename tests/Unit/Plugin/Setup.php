@@ -410,6 +410,88 @@ class Setup extends externalFilesTests {
 	}
 
 	/**
+	 * Test the hint for a service, which is already connected via OAuth and needs no further details.
+	 *
+	 * @return void
+	 */
+	public function test_access_step_of_connected_service(): void {
+		// DropBox is connected for the website (OAuth requires SSL).
+		$_SERVER['HTTPS'] = 'on';
+		update_option( 'eml_dropbox_credentials_vault', 'global' );
+		update_option( 'efml_dropbox_access_tokens', \easyDirectoryListingForWordPress\Crypt::get_instance()->encrypt( (string) wp_json_encode( array( 'access_token' => 'test-token', 'expires' => time() + HOUR_IN_SECONDS ) ) ) );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Services\DropBox::get_instance()->is_connected_via_oauth() );
+
+		// choose it.
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_GOAL, 'offload' );
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SERVICE, 'dropbox' );
+		$steps = $this->get_steps();
+
+		// the step explains, that nothing must be entered, directly below the headline and before the help.
+		$this->assertEquals( array( 'chosen', 'help', 'guide' ), array_keys( $steps[3] ) );
+		$this->assertStringContainsString( 'already connected', $steps[3]['help']['text'] );
+		$this->assertStringContainsString( 'efml-setup-check-success', $steps[3]['help']['text'] );
+
+		// without connection the button to connect is shown instead.
+		update_option( 'efml_dropbox_access_tokens', '' );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Services\DropBox::get_instance()->is_connected_via_oauth() );
+		$steps = $this->get_steps();
+		$this->assertArrayHasKey( 'connect', $steps[3] );
+		$this->assertStringNotContainsString( 'already connected', (string) wp_json_encode( $steps[3] ) );
+
+		unset( $_SERVER['HTTPS'] );
+	}
+
+	/**
+	 * Test the process for the offloading incl. the export of the files, which are already in the media library.
+	 *
+	 * @return void
+	 */
+	public function test_process_offload_with_existing_files(): void {
+		// the URL of the exported files is reachable.
+		add_filter( 'pre_http_request', array( $this, 'answer_http_request' ), 5 );
+		update_option( 'eml_export', 0 );
+		update_option( 'eml_export_main_source', 0 );
+		update_option( 'eml_export_local_files', 1 );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->clear();
+
+		// add a local file.
+		self::factory()->attachment->create_upload_object( TESTS_PLUGIN_DIR . '/tests/Data/example.pdf' );
+		$count = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->count_local_files_for_export();
+		$this->assertGreaterThan( 0, $count );
+
+		// choose the goal and the service.
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_GOAL, 'offload' );
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SERVICE, 'local' );
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_PATH, $this->directory );
+
+		// the option to export the existing files is offered with their number and disabled by default.
+		$steps  = $this->get_steps();
+		$option = \ExternalFilesInMediaLibrary\Plugin\Setup::OPTION_PREFIX . 'export_existing';
+		$this->assertArrayHasKey( $option, $steps[4] );
+		$this->assertStringContainsString( (string) $count, (string) $steps[4][ $option ]['label'] );
+		$this->assertEquals( 0, absint( $steps[4][ $option ]['default'] ?? 0 ) );
+
+		// choose the options.
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::OPTION_PREFIX . 'export', 1 );
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::OPTION_PREFIX . 'export_main', 1 );
+		$this->set_value( $option, 1 );
+		$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_EXPORT_URL, trailingslashit( wp_upload_dir()['baseurl'] ) . basename( $this->directory ) . '/' );
+
+		// run the process.
+		\ExternalFilesInMediaLibrary\Plugin\Setup::get_instance()->run_process( \ExternalFilesInMediaLibrary\Plugin\Setup::NAME );
+
+		// the export of the existing files has been started in the background.
+		$this->assertNotEmpty( \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_active_export_run() );
+		$texts = implode( ' ', array_column( \ExternalFilesInMediaLibrary\Plugin\Setup::get_instance()->get_process_messages(), 'text' ) );
+		$this->assertStringContainsString( 'exported in the background', $texts );
+		$this->assertStringNotContainsString( 'mode=list', $texts );
+
+		// cleanup.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->clear();
+		wp_clear_scheduled_hook( \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::CRON_HOOK );
+	}
+
+	/**
 	 * Test the check of URLs for exported files.
 	 *
 	 * @return void

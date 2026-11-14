@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Init;
 use easyDirectoryListingForWordPress\Taxonomy;
+use easySettingsForWordPress\Fields\Button;
 use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\MultiSelect;
 use easySettingsForWordPress\Fields\PermalinkSlug;
@@ -119,6 +120,7 @@ class Export extends Tools_Base {
 		// add admin actions.
 		add_action( 'admin_action_efml_delete_exported_files', array( $this, 'delete_exported_file_via_request' ) );
 		add_action( 'admin_action_efml_export_file', array( $this, 'export_file_via_request' ) );
+		add_action( 'admin_action_efml_export_local_files', array( $this, 'export_local_files_via_request' ) );
 
 		// use AJAX.
 		add_action( 'wp_ajax_efml_change_export_state', array( $this, 'export_state_change_via_ajax' ) );
@@ -297,15 +299,32 @@ class Export extends Tools_Base {
 		$setting->set_field( $field );
 
 		// add setting.
-		$setting = $settings_obj->add_setting( 'eml_export_local_files' );
-		$setting->set_section( $section );
-		$setting->set_default( 1 );
+		$setting_local_files = $settings_obj->add_setting( 'eml_export_local_files' );
+		$setting_local_files->set_section( $section );
+		$setting_local_files->set_default( 1 );
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export files from media library', 'external-files-in-media-library' ) );
 		$field->set_description( __( 'When this option is enabled, you can export files that are not yet stored externally from the media library to external services.', 'external-files-in-media-library' ) );
 		$field->add_depend( $setting_export, 1 );
-		$field->set_setting( $setting );
-		$setting->set_field( $field );
+		$field->set_setting( $setting_local_files );
+		$setting_local_files->set_field( $field );
+
+		// add the button to export all local files, if an external source is enabled for the export.
+		if ( ! empty( $external_sources ) ) {
+			$setting = $settings_obj->add_setting( 'eml_export_local_files_now' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->prevent_export( true );
+			$field = new Button( $settings_obj );
+			$field->set_title( __( 'Export existing files', 'external-files-in-media-library' ) );
+			$field->set_button_title( __( 'Export now', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Export all local files in your media library, which are not exported yet. They are exported one by one in the background, independent of the settings of the queue. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ) );
+			$field->add_class( 'easy-dialog-for-wordpress' );
+			$field->add_data( 'dialog', Helper::get_json( $this->get_export_local_files_dialog( $this->get_main_source_name( $external_sources ) ) ) );
+			$field->add_depend( $setting_export, 1 );
+			$field->add_depend( $setting_local_files, 1 );
+			$setting->set_field( $field );
+		}
 
 		// add the setting for private files.
 		Private_Files::get_instance()->add_settings( $settings_obj, $section, $setting_export );
@@ -2632,6 +2651,245 @@ class Export extends Tools_Base {
 
 		// return whether the queue is processed.
 		return Queue::get_instance()->is_processing_enabled();
+	}
+
+	/**
+	 * Return the name of the main external source for exports from the given list of external sources.
+	 *
+	 * Returns the last one of the list, if no main external source is chosen.
+	 *
+	 * @param array<string,string> $external_sources List of external sources with enabled export.
+	 *
+	 * @return string
+	 */
+	private function get_main_source_name( array $external_sources ): string {
+		// get the ID of the main external source.
+		$main_source_id = absint( get_option( 'eml_export_main_source' ) );
+
+		// return its name, if it is in the list.
+		foreach ( $external_sources as $term_id => $name ) {
+			if ( absint( $term_id ) === $main_source_id ) {
+				return $name;
+			}
+		}
+
+		// return the last one otherwise.
+		return (string) end( $external_sources );
+	}
+
+	/**
+	 * Return the dialog to export all local files in the media library.
+	 *
+	 * @param string $main_source The name of the main external source for exports.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_export_local_files_dialog( string $main_source ): array {
+		// create the URL to start the export.
+		$url = add_query_arg(
+			array(
+				'action' => 'efml_export_local_files',
+				'nonce'  => wp_create_nonce( 'efml-export-local-files' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// collect the texts.
+		$texts = array(
+			'<p><strong>' . __( 'Do you really want to export all local files in your media library?', 'external-files-in-media-library' ) . '</strong></p>',
+			/* translators: %1$s will be replaced by the name of an external source. */
+			'<p>' . sprintf( __( 'All local files, which are not exported yet, will be exported to %1$s and to the other external sources with enabled export. Afterward they are used as external files.', 'external-files-in-media-library' ), '<em>' . esc_html( $main_source ) . '</em>' ) . '</p>',
+		);
+
+		// add the hint about the local files.
+		if ( 1 === absint( get_option( 'eml_export_do_not_delete_local_files' ) ) ) {
+			$texts[] = '<p>' . __( 'Their local files are kept, as you have chosen this in the settings.', 'external-files-in-media-library' ) . '</p>';
+		} else {
+			$texts[] = '<p>' . __( 'Their local files are deleted in your hosting after the export.', 'external-files-in-media-library' ) . '</p>';
+		}
+
+		// add the hint about the progress.
+		$texts[] = '<p>' . __( 'The files are exported one by one in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ) . '</p>';
+
+		// return the dialog.
+		return array(
+			'className' => 'efml',
+			'title'     => __( 'Export existing files', 'external-files-in-media-library' ),
+			'texts'     => $texts,
+			'buttons'   => array(
+				array(
+					'action'  => 'location.href="' . $url . '";',
+					'variant' => 'primary',
+					'text'    => __( 'Yes, export them', 'external-files-in-media-library' ),
+				),
+				array(
+					'action'  => 'closeDialog();',
+					'variant' => 'secondary',
+					'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+				),
+			),
+		);
+	}
+
+	/**
+	 * Start the export of all local files in the media library by request.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function export_local_files_via_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-export-local-files', 'nonce' );
+
+		// get referer.
+		$referer = (string) wp_get_referer();
+
+		// bail if cap is missing.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// start the export.
+		$result = Import_Runs::get_instance()->start_export();
+
+		// show the result.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_export_local_files' );
+		$transient_obj->set_type( $result['success'] ? 'success' : 'error' );
+		$transient_obj->set_message( '<strong>' . esc_html( $result['message'] ) . '</strong>' );
+		$transient_obj->save();
+
+		// forward user.
+		wp_safe_redirect( $referer );
+		exit;
+	}
+
+	/**
+	 * Return the reason, why the local files of the media library could not be exported at the moment.
+	 *
+	 * Returns an empty string, if they could be exported.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_export_run_problem(): string {
+		// bail if export is disabled.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
+			return __( 'The export is not enabled in the plugin settings.', 'external-files-in-media-library' );
+		}
+
+		// bail if the export of local files is disabled.
+		if ( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
+			return __( 'The export of files from the media library is not enabled in the plugin settings.', 'external-files-in-media-library' );
+		}
+
+		// bail if no external source could be used for the export.
+		if ( empty( $this->get_usable_export_terms() ) ) {
+			return __( 'No external source is enabled for the export.', 'external-files-in-media-library' );
+		}
+
+		// bail if this website is a copy.
+		if ( Site_Copy::get_instance()->is_copy() ) {
+			return __( 'This website is a copy of another website (e.g. a staging site). Files are not exported to external sources from copies.', 'external-files-in-media-library' );
+		}
+
+		// all fine.
+		return '';
+	}
+
+	/**
+	 * Return the IDs of local files in the media library, which could be exported, ordered by their ID.
+	 *
+	 * Returns files with a mime type allowed in the plugin settings, which are not external files and which
+	 * are not waiting for their export in the queue.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $after_id Return only files with a higher ID.
+	 * @param int $limit    The maximum number of files.
+	 *
+	 * @return array<int,int>
+	 */
+	public function get_local_files_for_export( int $after_id, int $limit ): array {
+		global $wpdb;
+
+		// get the conditions.
+		$query = $this->get_local_files_query();
+
+		// bail if no mime type is allowed.
+		if ( empty( $query ) ) {
+			return array();
+		}
+
+		// get the IDs.
+		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT p.`ID` FROM %i p WHERE ' . $query['where'] . ' AND p.`ID` > %d ORDER BY p.`ID` ASC LIMIT %d', array_merge( array( $wpdb->posts ), $query['args'], array( $after_id, max( 1, $limit ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+
+		// return them as integers.
+		return array_map( 'absint', $ids );
+	}
+
+	/**
+	 * Return the number of local files in the media library, which could be exported.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return int
+	 */
+	public function count_local_files_for_export(): int {
+		global $wpdb;
+
+		// get the conditions.
+		$query = $this->get_local_files_query();
+
+		// bail if no mime type is allowed.
+		if ( empty( $query ) ) {
+			return 0;
+		}
+
+		// return the number.
+		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i p WHERE ' . $query['where'], array_merge( array( $wpdb->posts ), $query['args'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+	}
+
+	/**
+	 * Return the conditions to get the local files in the media library, which could be exported.
+	 *
+	 * Returns an empty array, if no mime type is allowed.
+	 *
+	 * @return array{where: string, args: array<int,int|string>}|array{}
+	 */
+	private function get_local_files_query(): array {
+		global $wpdb;
+
+		// get the allowed mime types.
+		$mime_types = Helper::get_allowed_mime_types();
+
+		// bail if no mime type is allowed.
+		if ( empty( $mime_types ) ) {
+			return array();
+		}
+
+		// collect the conditions.
+		$where = array(
+			'p.`post_type` = %s',
+			'p.`post_status` NOT IN (%s, %s)',
+			'p.`post_mime_type` IN (' . implode( ', ', array_fill( 0, count( $mime_types ), '%s' ) ) . ')',
+			'NOT EXISTS (SELECT 1 FROM %i m WHERE m.`post_id` = p.`ID` AND m.`meta_key` IN (%s, %s))',
+		);
+		$args  = array_merge( array( 'attachment', 'trash', 'auto-draft' ), array_values( $mime_types ), array( $wpdb->postmeta, EFML_POST_META_URL, 'eml_exported_file' ) );
+
+		// exclude files waiting for their export in the queue, if the queue exists.
+		if ( Helper::is_table_available( 'eml_queue' ) ) {
+			$where[] = 'NOT EXISTS (SELECT 1 FROM %i q WHERE q.`attachment_id` = p.`ID` AND q.`type` = %s AND q.`state` IN (%s, %s))';
+			$args    = array_merge( $args, array( $wpdb->prefix . 'eml_queue', 'export', 'new', 'processing' ) );
+		}
+
+		// return the conditions.
+		return array(
+			'where' => implode( ' AND ', $where ),
+			'args'  => $args,
+		);
 	}
 
 	/**

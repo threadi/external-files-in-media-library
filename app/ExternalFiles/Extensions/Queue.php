@@ -452,15 +452,15 @@ class Queue extends Extension_Base {
 			return;
 		}
 
-		// process an export entry.
-		if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
-			$this->process_export_entry( $url_data );
+		// process an entry of an import run (incl. the export of local files) with the settings of the run.
+		if ( absint( $url_data['run_id'] ) > 0 ) {
+			Import_Runs::get_instance()->process_entry_by_id( $id );
 			return;
 		}
 
-		// process an entry of an import run with the settings of the run.
-		if ( absint( $url_data['run_id'] ) > 0 ) {
-			Import_Runs::get_instance()->process_entry_by_id( $id );
+		// process an export entry.
+		if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
+			$this->process_export_entry( $url_data );
 			return;
 		}
 

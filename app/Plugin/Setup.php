@@ -22,6 +22,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Migrations;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
@@ -160,6 +161,13 @@ class Setup {
 	private ?array $migration_sources = null;
 
 	/**
+	 * Cache for the number of local files in the media library, which could be exported.
+	 *
+	 * @var int|null
+	 */
+	private ?int $local_files_count = null;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -225,8 +233,9 @@ class Setup {
 			return;
 		}
 
-		// load the files of other offload plugins again.
+		// load the files of other offload plugins and the number of local files again.
 		$this->migration_sources = null;
+		$this->local_files_count = null;
 
 		// get the setup object.
 		$setup_obj = \easySetupForWordPress\Setup::get_instance();
@@ -445,12 +454,13 @@ class Setup {
 				'icon'        => Helper::get_icon( 'core-admin/upload', 'dashicons-upload', '', 32 ),
 				'features'    => array( 'export' ),
 				'service'     => '',
-				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private' ),
+				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'export_existing' ),
 				'defaults'    => array(
-					'export'         => 1,
-					'export_main'    => 1,
-					'export_folders' => 1,
-					'export_private' => 0,
+					'export'          => 1,
+					'export_main'     => 1,
+					'export_folders'  => 1,
+					'export_private'  => 0,
+					'export_existing' => 0,
 				),
 				'action'      => 'export',
 			),
@@ -460,13 +470,14 @@ class Setup {
 				'icon'        => Helper::get_icon( 'core-admin/shield', 'dashicons-shield', '', 32 ),
 				'features'    => array( 'export', 'private' ),
 				'service'     => '',
-				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'woocommerce' ),
+				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'woocommerce', 'export_existing' ),
 				'defaults'    => array(
-					'export'         => 1,
-					'export_main'    => 1,
-					'export_folders' => 1,
-					'export_private' => 1,
-					'woocommerce'    => 1,
+					'export'          => 1,
+					'export_main'     => 1,
+					'export_folders'  => 1,
+					'export_private'  => 1,
+					'woocommerce'     => 1,
+					'export_existing' => 0,
 				),
 				'action'      => 'export',
 			),
@@ -588,42 +599,48 @@ class Setup {
 
 		// define the options.
 		$options = array(
-			'export'         => array(
+			'export'          => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Export new files in the media library to this external source', 'external-files-in-media-library' ),
 				'help'  => __( 'This enables the export in the plugin settings.', 'external-files-in-media-library' ),
 			),
-			'export_main'    => array(
+			'export_main'     => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Use this external source as the main export', 'external-files-in-media-library' ),
 				'help'  => __( 'New files in the media library are assigned to it.', 'external-files-in-media-library' ),
 			),
-			'export_folders' => array(
+			'export_folders'  => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Save exported files in folders by year and month', 'external-files-in-media-library' ),
 				'help'  => __( 'Like WordPress does it in your uploads directory.', 'external-files-in-media-library' ),
 			),
-			'export_private' => array(
+			'export_private'  => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Save files privately', 'external-files-in-media-library' ),
 				'help'  => __( 'Files are not public available on this external source. Your website delivers them via its own URL.', 'external-files-in-media-library' ),
 			),
-			'woocommerce'    => array(
+			'export_existing' => array(
+				'type'  => 'CheckboxControl',
+				/* translators: %1$d will be replaced by a number. */
+				'label' => sprintf( _n( 'Export the %1$d file, which is already in your media library, too', 'Export the %1$d files, which are already in your media library, too', $this->get_local_files_count(), 'external-files-in-media-library' ), $this->get_local_files_count() ),
+				'help'  => __( 'They are exported in the background at the end of this quickstart. The admin bar shows the progress. Otherwise only new files are exported.', 'external-files-in-media-library' ),
+			),
+			'woocommerce'     => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Use external files as downloads of WooCommerce products', 'external-files-in-media-library' ),
 				'help'  => __( 'Private files are delivered via links with limited validity.', 'external-files-in-media-library' ),
 			),
-			'sync'           => array(
+			'sync'            => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Synchronize this external source automatically', 'external-files-in-media-library' ),
 				'help'  => __( 'New files are added to your media library, deleted files are removed from it. The first synchronization starts at the end of this quickstart.', 'external-files-in-media-library' ),
 			),
-			'sync_interval'  => array(
+			'sync_interval'   => array(
 				'type'    => 'SelectControl',
 				'label'   => __( 'Interval of the synchronization', 'external-files-in-media-library' ),
 				'options' => $intervals,
 			),
-			'real_import'    => array(
+			'real_import'     => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Copy the files into your media library', 'external-files-in-media-library' ),
 				'help'  => __( 'Otherwise the files stay in their directory and are only linked in your media library.', 'external-files-in-media-library' ),
@@ -658,6 +675,7 @@ class Setup {
 			'export', 'export_main' => $export_obj instanceof Export_Base && current_user_can( 'efml_cap_tools_export' ),
 			'export_folders' => $export_obj instanceof Export_Base && $export_obj->supports_folders() && 1 === absint( get_option( 'uploads_use_yearmonth_folders' ) ),
 			'export_private' => $export_obj instanceof Export_Base && $export_obj->supports_private_files(),
+			'export_existing' => $export_obj instanceof Export_Base && current_user_can( 'efml_cap_tools_export' ) && 1 === absint( get_option( 'eml_export_local_files' ) ) && $this->get_local_files_count() > 0,
 			'woocommerce' => function_exists( 'WC' ),
 			'sync', 'sync_interval' => $service_obj instanceof Service_Base && ! $service_obj->is_sync_disabled() && current_user_can( 'efml_cap_tools_sync' ),
 			'real_import' => current_user_can( 'efml_cap_tools_real_import' ),
@@ -673,6 +691,21 @@ class Setup {
 		 * @param Service_Base|null $service_obj The service object.
 		 */
 		return apply_filters( 'efml_setup_option_available', $available, $option, $service_obj );
+	}
+
+	/**
+	 * Return the number of local files in the media library, which could be exported.
+	 *
+	 * @return int
+	 */
+	private function get_local_files_count(): int {
+		// count them, if not done in this request yet.
+		if ( is_null( $this->local_files_count ) ) {
+			$this->local_files_count = Export::get_instance()->count_local_files_for_export();
+		}
+
+		// return the number.
+		return $this->local_files_count;
 	}
 
 	/**
@@ -1666,12 +1699,30 @@ class Setup {
 			);
 		}
 
-		// show a hint if nothing must be entered.
-		if ( 1 === count( $fields ) ) {
-			$fields['help'] = array(
-				'type' => 'Text',
+		// show a hint below the headline, if nothing must be entered (the help is no field to enter something).
+		if ( empty( array_diff( array_keys( $fields ), array( 'chosen', 'guide' ) ) ) ) {
+			// get the name of the service.
+			$label = esc_html( wp_strip_all_tags( $listing_obj->get_label() ) );
+
+			// create the hint.
+			if ( $service_obj instanceof Service_Base && $service_obj->is_connected_via_oauth() ) {
 				/* translators: %1$s will be replaced by the name of a service. */
-				'text' => '<p>' . sprintf( esc_html__( '%1$s needs no further details. Continue to check the connection.', 'external-files-in-media-library' ), esc_html( wp_strip_all_tags( $listing_obj->get_label() ) ) ) . '</p>',
+				$text = '<div class="efml-setup-check efml-setup-check-success"><p><span class="dashicons dashicons-yes-alt"></span> <strong>' . sprintf( esc_html__( '%1$s is already connected with your website.', 'external-files-in-media-library' ), $label ) . '</strong></p><p>' . esc_html__( 'No further details are needed. Continue to check the connection.', 'external-files-in-media-library' ) . '</p></div>';
+			} else {
+				/* translators: %1$s will be replaced by the name of a service. */
+				$text = '<p>' . sprintf( esc_html__( '%1$s needs no further details. Continue to check the connection.', 'external-files-in-media-library' ), $label ) . '</p>';
+			}
+
+			// add it directly after the headline.
+			$fields = array_merge(
+				array(
+					'chosen' => $fields['chosen'],
+					'help'   => array(
+						'type' => 'Text',
+						'text' => $text,
+					),
+				),
+				$fields
 			);
 		}
 
@@ -2554,6 +2605,13 @@ class Setup {
 		// run the action.
 		switch ( $action ) {
 			case 'export':
+				// export the files, which are already in the media library, if this has been chosen.
+				if ( in_array( 'export_existing', (array) $goal['options'], true ) && 1 === absint( $this->get_value( self::OPTION_PREFIX . 'export_existing' ) ) ) {
+					$result = Import_Runs::get_instance()->start_export();
+					$this->add_process_message( $result['message'], $result['success'] );
+					break;
+				}
+
 				// point to the bulk action for the files, which are already in the media library.
 				/* translators: %1$s will be replaced by a URL. */
 				$this->add_process_message( sprintf( __( 'Files, which are already in your media library, stay where they are. To export them, choose them <a href="%1$s">in the list view of your media library</a> and use the bulk action "Export to external source".', 'external-files-in-media-library' ), esc_url( add_query_arg( array( 'mode' => 'list' ), admin_url( 'upload.php' ) ) ) ), true );

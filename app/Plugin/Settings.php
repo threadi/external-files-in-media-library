@@ -426,10 +426,33 @@ class Settings {
 				'file_choose_file'                   => __( 'Choose file', 'external-files-in-media-library' ),
 				'file_choose_image'                  => __( 'Upload or choose image', 'external-files-in-media-library' ),
 				'drag_n_drop'                        => __( 'Hold to drag & drop', 'external-files-in-media-library' ),
+				'search_placeholder'                 => __( 'Search settings', 'external-files-in-media-library' ),
+				'search_label'                       => __( 'Search settings', 'external-files-in-media-library' ),
+				'search_no_results'                  => __( 'No setting found.', 'external-files-in-media-library' ),
+				'search_no_results_tab'              => __( 'No matches in this tab.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'search_other_results'               => __( 'Matches in other tabs (%1$d)', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'search_results'                     => __( 'Search results (%1$d)', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_depends'                     => __( 'Only visible if "%1$s" is set accordingly.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_depends_enabled'             => __( 'Only visible if "%1$s" is enabled.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_go_to'                       => __( 'Go to "%1$s"', 'external-files-in-media-library' ),
+				'search_open_tab'                    => __( 'Open tab', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_command_label'               => __( 'External files settings: %1$s', 'external-files-in-media-library' ),
 			)
 		);
 		if ( method_exists( $this->settings_obj, 'set_view' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_view( get_option( 'eml_setting_view', 'classic' ) );
+		}
+
+		// enable the search in the settings (requires easy-settings-for-wordpress 3.10.0). The command palette of this
+		// plugin finds the settings via its own command loader (see Commands), so the one of the library is not used.
+		if ( method_exists( $this->settings_obj, 'set_search' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$this->settings_obj->set_search( true );
 		}
 		if ( method_exists( $this->settings_obj, 'set_update_version' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_update_version( EFML_PLUGIN_VERSION );

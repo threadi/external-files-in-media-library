@@ -9,7 +9,7 @@ You find it under Media → "Add External Files" as second tile "Quickstart", in
 1. **Choose a goal:** What would you like to do? The goals are described below.
 2. **Choose a service:** Only the services, which support the chosen goal, are shown, e.g. only services with export for offloading. Some goals define the service, then this step is skipped. Services from extensions, which are not installed yet (e.g. AWS S3 or Cloudflare R2), are shown with a hint about the extension, if you are allowed to install plugins.
 3. **Install the extension (if needed):** If the chosen service needs an extension, the quickstart explains which one and why (see [extensions](extensions.md)). If you confirm the installation, it loads the newest release from GitHub, installs and activates it and shows the result. If this fails, you see the reason and could try it again.
-4. **Enter the access data:** The quickstart shows the fields of the service. The expandable help "Where do I find these details?" explains where you get the access data, which permissions they need and what to watch out for, for AWS S3 with a ready-made IAM policy to copy. The same help is shown in the form of the service. Values, which are already defined as constant (e.g. in your `wp-config.php`) or saved in the settings, are not asked again. Connect Dropbox via the button "Connect Dropbox", afterwards you return to the quickstart.
+4. **Enter the access data:** The quickstart shows the fields of the service. The expandable help "Where do I find these details?" explains where you get the access data, which permissions they need and what to watch out for, for AWS S3 with a ready-made IAM policy to copy. The same help is shown in the form of the service. Values, which are already defined as constant (e.g. in your `wp-config.php`) or saved in the settings, are not asked again. Connect Dropbox or Google Drive via the button "Connect Dropbox" or "Connect Google Drive", afterwards you return to the quickstart. Google Drive requires its extension in version 1.4.0 or newer for this.
 5. **Check the connection and choose the options:** The quickstart checks the connection with your details. If it fails, you see the reason and go back to correct your details. If it works, you choose the options of the goal. They are preselected.
 6. **Configure:** The quickstart creates the external source, sets the settings and shows the result of each step.
 
@@ -17,7 +17,7 @@ You find it under Media → "Add External Files" as second tile "Quickstart", in
 
 | Goal | Service | What the quickstart configures |
 |---|---|---|
-| Offload your media library | all services with export | enable the export, the external source as main export, folders by year and month, optionally "Save files privately", connection test |
+| Offload your media library | all services with export | enable the export, the external source as main export, folders by year and month, optionally "Save files privately" and the export of the files already in your media library, connection test |
 | Protected downloads | all services with private files | like offloading, "Save files privately" is preselected, optionally the downloads of WooCommerce |
 | Embed and synchronize external files | all services with synchronization | enable the synchronization, interval, first synchronization |
 | Import local files | local directory of your hosting | import of the directory, optionally copied as real files into your media library |
@@ -26,7 +26,7 @@ You find it under Media → "Add External Files" as second tile "Quickstart", in
 
 Large directories are imported or synchronized in the background as usual, the progress is shown in the admin bar.
 
-For offloading, the quickstart exports new files only. Export files, which are already in your media library, in the list view of your media library with the bulk action "Export to external source". The quickstart links there at its end.
+For offloading and protected downloads, the quickstart offers the option to export the files, which are already in your media library, too. It is disabled by default and shows the number of these files. If you choose it, the files are exported one by one in the background at the end of the quickstart, the admin bar shows the progress. Otherwise only new files are exported: you could export the existing files later via settings → "Export" → "Export existing files" or in the list view of your media library with the bulk action "Export to external source".
 
 ## Access data
 

@@ -451,6 +451,19 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return whether this service is already connected with this website via OAuth (e.g. DropBox).
+	 *
+	 * The quickstart uses this to explain, why no access data must be entered.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_connected_via_oauth(): bool {
+		return false;
+	}
+
+	/**
 	 * Return the URL to return to after this service has been connected via OAuth.
 	 *
 	 * This is the setup, if the connection has been started there, otherwise the URL of the configuration.

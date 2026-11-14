@@ -13,9 +13,12 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Site_Copy;
 use JsonException;
 use WP_Admin_Bar;
 
@@ -34,6 +37,9 @@ use WP_Admin_Bar;
  *
  * Synchronizations use the same way. Files, which are not existing anymore, are only deleted after the
  * complete list of files has been loaded.
+ *
+ * The export of the local files in the media library also uses runs (type "export"): the local files are listed
+ * page by page and exported one by one to the external sources in the background (see start_export()).
  */
 class Import_Runs {
 	/**
@@ -370,6 +376,128 @@ class Import_Runs {
 	}
 
 	/**
+	 * Start the export of the local files in the media library to the external sources.
+	 *
+	 * The files are listed page by page and added as entries of the run to the queue. They are exported one by
+	 * one in the background via WP Cron, independent of the settings of the queue. Via WP CLI all files are
+	 * exported directly.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array{success: bool, message: string, run_id: int}
+	 */
+	public function start_export(): array {
+		// get the export object.
+		$export_obj = Export::get_instance();
+
+		// bail if the files could not be exported at the moment.
+		$problem = $export_obj->get_export_run_problem();
+		if ( '' !== $problem ) {
+			return array(
+				'success' => false,
+				'message' => $problem,
+				'run_id'  => 0,
+			);
+		}
+
+		// make sure the database structure exists.
+		$this->maybe_install();
+
+		// bail if an export is already running.
+		$run = $this->get_active_export_run();
+		if ( ! empty( $run ) ) {
+			return array(
+				'success' => true,
+				'message' => __( 'The files in your media library are already being exported in the background.', 'external-files-in-media-library' ),
+				'run_id'  => absint( $run['id'] ),
+			);
+		}
+
+		// get the number of files to export.
+		$count = $export_obj->count_local_files_for_export();
+
+		// bail if no file could be exported.
+		if ( 0 === $count ) {
+			return array(
+				'success' => false,
+				'message' => __( 'Your media library contains no local files, which could be exported. Files with a mime type not allowed in the plugin settings are not exported.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// create the run.
+		$run = $this->create( $this->get_export_url(), 'export', array(), absint( get_option( 'eml_export_main_source' ) ) );
+
+		// bail if the run could not be created.
+		if ( empty( $run ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'The export could not be started. Check the log for details.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// get the ID of the run.
+		$run_id = absint( $run['id'] );
+
+		// export all files directly via WP CLI.
+		if ( Helper::is_cli() ) {
+			$this->work( $run_id, $this->get_deadline() );
+
+			// get the result.
+			$run = $this->get_run( $run_id );
+
+			// return the result.
+			return array(
+				'success' => 0 === absint( $run['errors'] ?? 0 ),
+				/* translators: %1$d and %2$d will be replaced by numbers. */
+				'message' => sprintf( __( '%1$d files have been exported, %2$d files could not be exported.', 'external-files-in-media-library' ), absint( $run['processed'] ?? 0 ), absint( $run['errors'] ?? 0 ) ),
+				'run_id'  => $run_id,
+			);
+		}
+
+		// list the first files directly, so the progress shows them already.
+		$this->list_next_page( $run );
+
+		// process the files in the background.
+		$this->schedule();
+
+		// return the result.
+		return array(
+			'success' => true,
+			/* translators: %1$d will be replaced by a number. */
+			'message' => sprintf( _n( '%1$d file will be exported in the background. The admin bar shows the progress, a click on it opens the queue.', '%1$d files will be exported in the background. The admin bar shows the progress, a click on it opens the queue.', $count, 'external-files-in-media-library' ), $count ),
+			'run_id'  => $run_id,
+		);
+	}
+
+	/**
+	 * Return the unfinished export of the local files.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_active_export_run(): array {
+		// bail if the table does not exist.
+		if ( ! Helper::is_table_available( 'efml_import_runs' ) ) {
+			return array();
+		}
+
+		// return the run.
+		return $this->get_active_run_by_url( $this->get_export_url(), 'export' );
+	}
+
+	/**
+	 * Return the URL, which is used for the runs to export the local files.
+	 *
+	 * @return string
+	 */
+	private function get_export_url(): string {
+		return trailingslashit( home_url() );
+	}
+
+	/**
 	 * Return the data of the given run.
 	 *
 	 * @param int $run_id The ID of the run.
@@ -432,7 +560,7 @@ class Import_Runs {
 	 * Create a new run.
 	 *
 	 * @param string                            $url     The URL of the directory.
-	 * @param string                            $type    The type (import or sync).
+	 * @param string                            $type    The type (import, sync or export).
 	 * @param array<string,array<string,mixed>> $fields  The fields for the connection.
 	 * @param int                               $term_id The ID of the external source.
 	 *
@@ -441,17 +569,21 @@ class Import_Runs {
 	private function create( string $url, string $type, array $fields, int $term_id ): array {
 		global $wpdb;
 
-		/**
-		 * Filter the options used for the import of this URL. Same as for the queue.
-		 *
-		 * @since 5.0.0 Available since 5.0.0.
-		 * @param array $options List of options.
-		 * @param string $url The used URL.
-		 */
-		$options = apply_filters( 'efml_import_options', array(), $url );
+		// the options of an import are not used for exports.
+		$options_json = '';
+		if ( 'export' !== $type ) {
+			/**
+			 * Filter the options used for the import of this URL. Same as for the queue.
+			 *
+			 * @since 5.0.0 Available since 5.0.0.
+			 * @param array $options List of options.
+			 * @param string $url The used URL.
+			 */
+			$options = apply_filters( 'efml_import_options', array(), $url );
 
-		// convert the options to JSON.
-		$options_json = wp_json_encode( $options );
+			// convert the options to JSON.
+			$options_json = wp_json_encode( $options );
+		}
 
 		// add the run.
 		$result = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -483,7 +615,11 @@ class Import_Runs {
 		$run_id = absint( $wpdb->insert_id );
 
 		// log this event.
-		Log::get_instance()->create( __( 'The files of this directory will be listed and imported one by one.', 'external-files-in-media-library' ), $url, 'info', 2 );
+		if ( 'export' === $type ) {
+			Log::get_instance()->create( __( 'The export of the local files in the media library has been started. They will be listed and exported one by one.', 'external-files-in-media-library' ), '', 'info' );
+		} else {
+			Log::get_instance()->create( __( 'The files of this directory will be listed and imported one by one.', 'external-files-in-media-library' ), $url, 'info', 2 );
+		}
 
 		// return the run.
 		return $this->get_run( $run_id );
@@ -597,6 +733,11 @@ class Import_Runs {
 
 		// bail if run could not be loaded or is finished.
 		if ( empty( $run ) || $this->is_finished( $run ) ) {
+			return;
+		}
+
+		// bail if the files of an export could not be exported at the moment.
+		if ( 'export' === $run['type'] && ! $this->is_export_possible( $run ) ) {
 			return;
 		}
 
@@ -763,6 +904,12 @@ class Import_Runs {
 	private function list_next_page( array $run ): void {
 		global $wpdb;
 
+		// list the local files for an export.
+		if ( 'export' === $run['type'] ) {
+			$this->list_next_export_page( $run );
+			return;
+		}
+
 		// get the ID.
 		$run_id = absint( $run['id'] );
 
@@ -833,6 +980,144 @@ class Import_Runs {
 
 		// update the progress for the dialogs.
 		$this->update_progress( $this->get_run( $run_id ) );
+	}
+
+	/**
+	 * List the next page of local files for the given export run and add them to the queue.
+	 *
+	 * The cursor is the ID of the last listed attachment.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function list_next_export_page( array $run ): void {
+		global $wpdb;
+
+		// get the ID.
+		$run_id = absint( $run['id'] );
+
+		/**
+		 * Filter the number of local files, which are listed at once for their export.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $limit The number of files.
+		 */
+		$limit = max( 1, absint( apply_filters( 'efml_export_run_page_size', 500 ) ) );
+
+		// get the next files.
+		$attachment_ids = Export::get_instance()->get_local_files_for_export( absint( $run['cursor'] ), $limit );
+
+		// add them to the queue.
+		$inserted = $this->add_export_entries( $run_id, $attachment_ids );
+
+		// get the new cursor.
+		$cursor = empty( $attachment_ids ) ? (string) $run['cursor'] : (string) end( $attachment_ids );
+
+		// update the run: the listing is complete, if fewer files than requested have been found.
+		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `cursor` = %s, `state` = %s, `total` = `total` + %d WHERE `id` = %d', array( $this->get_table_name(), $cursor, count( $attachment_ids ) < $limit ? 'processing' : 'listing', $inserted, $run_id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Add the given attachments as export entries of the given run to the queue and return the count of new entries.
+	 *
+	 * The attachments get the same marker as files, which are added to the queue for their export.
+	 *
+	 * @param int            $run_id         The ID of the run.
+	 * @param array<int,int> $attachment_ids List of attachment IDs.
+	 *
+	 * @return int
+	 */
+	private function add_export_entries( int $run_id, array $attachment_ids ): int {
+		global $wpdb;
+
+		// bail if list is empty.
+		if ( empty( $attachment_ids ) ) {
+			return 0;
+		}
+
+		// insert them in blocks.
+		$time = gmdate( 'Y-m-d H:i:s' );
+		foreach ( array_chunk( $attachment_ids, 100 ) as $chunk ) {
+			$values = array();
+			$args   = array( $this->get_queue_table_name() );
+			foreach ( $chunk as $attachment_id ) {
+				// get the local URL of this file for the display in the queue.
+				$url = (string) wp_get_attachment_url( $attachment_id );
+
+				// add the entry.
+				$values[] = '(%s, %s, %s, %s, %s, %s, %s, %d, %d, %d)';
+				array_push( $args, $time, $url, md5( $url ), '', 'new', '', 'export', $attachment_id, 0, $run_id );
+
+				// mark the attachment as planned for export.
+				update_post_meta( $attachment_id, 'efml_export_queued', time() );
+				delete_post_meta( $attachment_id, 'efml_export_failed' );
+			}
+			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (`time`, `url`, `url_hash`, `fields`, `state`, `options`, `type`, `attachment_id`, `attempts`, `run_id`) VALUES ' . implode( ', ', $values ), $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		}
+
+		// return the count of new entries.
+		return count( $attachment_ids );
+	}
+
+	/**
+	 * Return whether the files of the given export run could be exported at the moment.
+	 *
+	 * On copies of the website (e.g. staging sites) the run is paused without any change. If the export is not
+	 * possible anymore for another reason (e.g. it has been disabled), the run is cancelled with a hint.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return bool
+	 */
+	private function is_export_possible( array $run ): bool {
+		// pause on copies of the website: the export is continued, if this website is confirmed as main website.
+		if ( $this->is_paused( $run ) ) {
+			return false;
+		}
+
+		// get the reason, if the files could not be exported.
+		$problem = Export::get_instance()->get_export_run_problem();
+
+		// bail if the files could be exported.
+		if ( '' === $problem ) {
+			return true;
+		}
+
+		// cancel the run.
+		$this->cancel( $run );
+
+		// create the message.
+		/* translators: %1$s will be replaced by the reason. */
+		$message = sprintf( __( 'The export of the local files in the media library has been cancelled: %1$s', 'external-files-in-media-library' ), $problem );
+
+		// log this event.
+		Log::get_instance()->create( $message, '', 'error' );
+
+		// show it as hint.
+		if ( ! Helper::is_cli() ) {
+			$transient_obj = Transients::get_instance()->add();
+			$transient_obj->set_type( 'error' );
+			$transient_obj->set_name( 'efml_export_run_finished' );
+			$transient_obj->set_message( '<strong>' . esc_html( $message ) . '</strong> ' . __( 'The files, which have not been exported yet, stay local files. You can start the export again in the export settings.', 'external-files-in-media-library' ) );
+			$transient_obj->save();
+		}
+
+		// return false as the files could not be exported.
+		return false;
+	}
+
+	/**
+	 * Return whether the given run is paused.
+	 *
+	 * Exports are paused on copies of the website (e.g. staging sites), as they must not write to external sources.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return bool
+	 */
+	private function is_paused( array $run ): bool {
+		return 'export' === $run['type'] && Site_Copy::get_instance()->is_copy();
 	}
 
 	/**
@@ -1024,6 +1309,12 @@ class Import_Runs {
 	private function process_entry( int $id, array $run ): void {
 		global $wpdb;
 
+		// export the local file of an export run.
+		if ( 'export' === $run['type'] ) {
+			$this->process_export_entry( $id, $run );
+			return;
+		}
+
 		// get the URL.
 		$url = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT `url` FROM %i WHERE `id` = %d', array( $this->get_queue_table_name(), $id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -1074,6 +1365,57 @@ class Import_Runs {
 
 		// update the progress for the dialogs.
 		$this->update_progress( $this->get_run( absint( $run['id'] ) ) );
+	}
+
+	/**
+	 * Export the local file of the given entry of the given export run.
+	 *
+	 * Files, which do not exist anymore or which are already external files, are removed from the run. Files,
+	 * which could not be exported, stay local files: they are marked in the media library and their entry stays
+	 * in the queue, where it could be processed again.
+	 *
+	 * @param int                 $id  The ID of the entry.
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function process_export_entry( int $id, array $run ): void {
+		global $wpdb;
+
+		// get the attachment ID and the local URL.
+		$entry         = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `url`, `attachment_id` FROM %i WHERE `id` = %d', array( $this->get_queue_table_name(), $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$attachment_id = absint( $entry['attachment_id'] ?? 0 );
+		$url           = (string) ( $entry['url'] ?? '' );
+
+		// remove the entry from the run, if the file does not exist anymore or is already an external file.
+		if ( 0 === $attachment_id || 'attachment' !== get_post_type( $attachment_id ) || Files::get_instance()->get_file( $attachment_id )->is_valid() ) {
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `total` = `total` - 1 WHERE `id` = %d AND `total` > 0', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			delete_post_meta( $attachment_id, 'efml_export_queued' );
+			return;
+		}
+
+		// export the file.
+		$success = false;
+		try {
+			$success = Export::get_instance()->export_file( $attachment_id );
+		} catch ( \Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during the export of this file:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url, 'error' );
+		}
+
+		// update the entry, the counter of the run and the markers of the file.
+		if ( $success ) {
+			// remove all export entries of this file, also from former exports.
+			Queue::get_instance()->remove_export_entries_of_attachment( $attachment_id );
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `processed` = `processed` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		} else {
+			$wpdb->update( $this->get_queue_table_name(), array( 'state' => 'error' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `errors` = `errors` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			delete_post_meta( $attachment_id, 'efml_export_queued' );
+			update_post_meta( $attachment_id, 'efml_export_failed', time() );
+		}
 	}
 
 	/**
@@ -1182,16 +1524,22 @@ class Import_Runs {
 			return;
 		}
 
-		// detect whether entries have been deleted in the queue: the run is cancelled then.
-		$state = absint( $run['processed'] ) + absint( $run['errors'] ) < absint( $run['total'] ) ? 'cancelled' : 'done';
+		// detect whether entries have been deleted in the queue: the run is cancelled then (not for exports, whose
+		// entries are also removed, if their files are deleted, and whose other files are exported nevertheless).
+		$state = 'export' !== $run['type'] && absint( $run['processed'] ) + absint( $run['errors'] ) < absint( $run['total'] ) ? 'cancelled' : 'done';
 
 		// set the new state.
 		$this->update( $run_id, array( 'state' => $state ) );
 		$run['state'] = $state;
 
-		// log this event.
-		/* translators: %1$d, %2$d and %3$d will be replaced by numbers. */
-		Log::get_instance()->create( sprintf( __( 'Import of the directory has been finished: %1$d files imported, %2$d errors, %3$d files skipped.', 'external-files-in-media-library' ), absint( $run['processed'] ), absint( $run['errors'] ), absint( $run['skipped'] ) ), (string) $run['url'], 'cancelled' === $state || absint( $run['errors'] ) > 0 ? 'error' : 'success', 1, Import::get_instance()->get_identifier() );
+		// log the result of an export and show it as hint.
+		if ( 'export' === $run['type'] ) {
+			$this->finish_export( $run );
+		} else {
+			// log this event.
+			/* translators: %1$d, %2$d and %3$d will be replaced by numbers. */
+			Log::get_instance()->create( sprintf( __( 'Import of the directory has been finished: %1$d files imported, %2$d errors, %3$d files skipped.', 'external-files-in-media-library' ), absint( $run['processed'] ), absint( $run['errors'] ), absint( $run['skipped'] ) ), (string) $run['url'], 'cancelled' === $state || absint( $run['errors'] ) > 0 ? 'error' : 'success', 1, Import::get_instance()->get_identifier() );
+		}
 
 		// complete the synchronization, if it is not done by the call of the synchronization itself.
 		if ( 'sync' === $run['type'] && ! $this->in_sync_call ) {
@@ -1208,6 +1556,45 @@ class Import_Runs {
 	}
 
 	/**
+	 * Log the result of the given finished export run and show it as hint.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function finish_export( array $run ): void {
+		// get the counts.
+		$exported = absint( $run['processed'] );
+		$errors   = absint( $run['errors'] );
+
+		// create the message.
+		/* translators: %1$d and %2$d will be replaced by numbers. */
+		$message = sprintf( __( 'The export of the local files in the media library has been finished: %1$d files exported, %2$d files not exported.', 'external-files-in-media-library' ), $exported, $errors );
+
+		// log this event.
+		Log::get_instance()->create( $message, '', $errors > 0 ? 'error' : 'success' );
+
+		// bail if this is WP CLI, which shows the result itself.
+		if ( Helper::is_cli() ) {
+			return;
+		}
+
+		// add the details, if files could not be exported.
+		$details = '';
+		if ( $errors > 0 ) {
+			/* translators: %1$s and %2$s will be replaced by URLs. */
+			$details = ' ' . sprintf( __( 'The files, which have not been exported, stay local files and are marked in your media library. The reasons are listed in the <a href="%1$s">log</a>. In the <a href="%2$s">queue</a> you can export them again, e.g. after you solved the problem.', 'external-files-in-media-library' ), esc_url( Helper::get_log_url() ), esc_url( add_query_arg( array( 'errors' => 1 ), Settings::get_instance()->get_url( 'eml_queue_table' ) ) ) );
+		}
+
+		// add the hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_type( $errors > 0 ? 'error' : 'success' );
+		$transient_obj->set_name( 'efml_export_run_finished' );
+		$transient_obj->set_message( '<strong>' . esc_html( $message ) . '</strong>' . $details );
+		$transient_obj->save();
+	}
+
+	/**
 	 * Cancel the given run: its entries are removed from the queue.
 	 *
 	 * @param array<string,mixed> $run The run.
@@ -1216,6 +1603,13 @@ class Import_Runs {
 	 */
 	private function cancel( array $run ): void {
 		global $wpdb;
+
+		// remove the markers of the files, which are planned for export by this run.
+		if ( 'export' === $run['type'] ) {
+			foreach ( $wpdb->get_col( $wpdb->prepare( 'SELECT `attachment_id` FROM %i WHERE `run_id` = %d AND `state` IN (%s, %s)', array( $this->get_queue_table_name(), absint( $run['id'] ), 'new', 'processing' ) ) ) as $attachment_id ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				delete_post_meta( absint( $attachment_id ), 'efml_export_queued' );
+			}
+		}
 
 		// remove the entries.
 		$wpdb->delete( $this->get_queue_table_name(), array( 'run_id' => absint( $run['id'] ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1276,8 +1670,8 @@ class Import_Runs {
 				break;
 			}
 
-			// do not process runs, which are actually imported in the dialog.
-			if ( $this->is_in_dialog( $run ) ) {
+			// do not process runs, which are actually imported in the dialog or which are paused.
+			if ( $this->is_in_dialog( $run ) || $this->is_paused( $run ) ) {
 				continue;
 			}
 
@@ -1288,18 +1682,38 @@ class Import_Runs {
 		// remove the finished runs, which have no entries in the queue anymore.
 		$this->remove_finished_runs();
 
-		// plan the next processing, if unfinished runs exist (later, if they are only imported in the dialog).
+		// plan the next processing, if unfinished runs exist (later, if they are only imported in the dialog or paused).
 		$delay = 0;
 		$runs  = $this->get_active_runs();
-		foreach ( $runs as $run ) {
-			$delay = $this->is_in_dialog( $run ) ? self::DIALOG_TIMEOUT : 0;
-			if ( 0 === $delay ) {
-				break;
-			}
+		foreach ( $runs as $index => $run ) {
+			$run_delay = $this->get_delay( $run );
+			$delay     = 0 === $index ? $run_delay : min( $delay, $run_delay );
 		}
 		if ( ! empty( $runs ) ) {
 			$this->schedule( $delay );
 		}
+	}
+
+	/**
+	 * Return the delay in seconds, after which the given unfinished run should be processed again.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return int
+	 */
+	private function get_delay( array $run ): int {
+		// check runs in the dialog again, after the dialog could have been closed.
+		if ( $this->is_in_dialog( $run ) ) {
+			return self::DIALOG_TIMEOUT;
+		}
+
+		// check paused runs again hourly.
+		if ( $this->is_paused( $run ) ) {
+			return HOUR_IN_SECONDS;
+		}
+
+		// process the run now.
+		return 0;
 	}
 
 	/**
@@ -1433,20 +1847,25 @@ class Import_Runs {
 	/**
 	 * Return the progress of all unfinished runs.
 	 *
-	 * @return array{runs: int, total: int, done: int, listing: int}
+	 * The values "exports", "export_total" and "export_done" contain the part of the exports of local files.
+	 *
+	 * @return array{runs: int, total: int, done: int, listing: int, exports: int, export_total: int, export_done: int}
 	 */
 	public function get_progress(): array {
 		global $wpdb;
 
 		// get the sums.
-		$result = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS `runs`, SUM(`total`) AS `total`, SUM(`processed` + `errors`) AS `done`, SUM(`state` = %s) AS `listing` FROM %i WHERE `state` IN (%s, %s)', array( 'listing', $this->get_table_name(), 'listing', 'processing' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS `runs`, SUM(`total`) AS `total`, SUM(`processed` + `errors`) AS `done`, SUM(`state` = %s) AS `listing`, SUM(`type` = %s) AS `exports`, SUM(IF(`type` = %s, `total`, 0)) AS `export_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `export_done` FROM %i WHERE `state` IN (%s, %s)', array( 'listing', 'export', 'export', 'export', $this->get_table_name(), 'listing', 'processing' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// return the values.
 		return array(
-			'runs'    => absint( $result['runs'] ?? 0 ),
-			'total'   => absint( $result['total'] ?? 0 ),
-			'done'    => absint( $result['done'] ?? 0 ),
-			'listing' => absint( $result['listing'] ?? 0 ),
+			'runs'         => absint( $result['runs'] ?? 0 ),
+			'total'        => absint( $result['total'] ?? 0 ),
+			'done'         => absint( $result['done'] ?? 0 ),
+			'listing'      => absint( $result['listing'] ?? 0 ),
+			'exports'      => absint( $result['exports'] ?? 0 ),
+			'export_total' => absint( $result['export_total'] ?? 0 ),
+			'export_done'  => absint( $result['export_done'] ?? 0 ),
 		);
 	}
 
@@ -1489,9 +1908,17 @@ class Import_Runs {
 		// calculate the percentage.
 		$percentage = $progress['total'] > 0 ? (int) floor( $progress['done'] / $progress['total'] * 100 ) : 0;
 
-		// create the title-attribute.
-		/* translators: %1$d and %2$d will be replaced by numbers. */
-		$title = sprintf( __( '%1$d of %2$d external files imported', 'external-files-in-media-library' ), $progress['done'], $progress['total'] );
+		// create the title-attribute for the imports and the exports.
+		$titles = array();
+		if ( $progress['runs'] > $progress['exports'] ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$titles[] = sprintf( __( '%1$d of %2$d external files imported', 'external-files-in-media-library' ), $progress['done'] - $progress['export_done'], $progress['total'] - $progress['export_total'] );
+		}
+		if ( $progress['exports'] > 0 ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$titles[] = sprintf( __( '%1$d of %2$d local files exported', 'external-files-in-media-library' ), $progress['export_done'], $progress['export_total'] );
+		}
+		$title = implode( ', ', $titles );
 		if ( $progress['listing'] > 0 ) {
 			$title .= ' ' . __( '(more files are being listed)', 'external-files-in-media-library' );
 		}
@@ -1558,6 +1985,15 @@ class Import_Runs {
 		}
 
 		// return the description.
+		if ( 'export' === $run['type'] ) {
+			// return a general description, if the main external source is not known.
+			if ( (string) $run['url'] === $source ) {
+				return esc_html__( 'Export of the local files', 'external-files-in-media-library' );
+			}
+
+			/* translators: %1$s will be replaced by the name of the external source. */
+			return sprintf( __( 'Export of the local files to %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $source ) ) );
+		}
 		if ( 'sync' === $run['type'] ) {
 			/* translators: %1$s will be replaced by the name of the external source. */
 			return sprintf( __( 'Synchronization of %1$s', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $source ) ) );

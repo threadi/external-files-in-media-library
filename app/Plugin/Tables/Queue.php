@@ -310,18 +310,26 @@ class Queue extends WP_List_Table {
 	 * @return string
 	 */
 	private function get_type( array $item ): string {
+		// get whether this is an export entry.
+		$is_export = ! empty( $item['type'] ) && 'export' === $item['type'];
+
 		// show the import run of the entry.
-		if ( ! empty( $item['run_id'] ) ) {
+		if ( ! empty( $item['run_id'] ) && ! $is_export ) {
 			return esc_html__( 'Import', 'external-files-in-media-library' ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
 		}
 
 		// bail if this is not an export entry.
-		if ( empty( $item['type'] ) || 'export' !== $item['type'] ) {
+		if ( ! $is_export ) {
 			return esc_html__( 'Import', 'external-files-in-media-library' );
 		}
 
 		// create the output for the export.
 		$output = esc_html__( 'Export', 'external-files-in-media-library' );
+
+		// add the export run of the entry.
+		if ( ! empty( $item['run_id'] ) ) {
+			$output .= '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+		}
 
 		// add the number of failed attempts.
 		if ( ! empty( $item['attempts'] ) ) {
