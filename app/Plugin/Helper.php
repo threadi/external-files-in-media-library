@@ -711,11 +711,13 @@ class Helper {
 	 * this plugin also run after "switch_to_blog()" to other websites (e.g. during the export to them).
 	 * Only existing tables are cached, so a table created later in the same request is detected.
 	 *
-	 * @param string $table The name of the table without the prefix (e.g. "eml_logs").
+	 * @param string $table     The name of the table without the prefix (e.g. "eml_logs").
+	 * @param bool   $use_cache False to check the table also if it is known as existing (e.g. for tables of other
+	 *                          plugins, which could be removed at any time).
 	 *
 	 * @return bool
 	 */
-	public static function is_table_available( string $table ): bool {
+	public static function is_table_available( string $table, bool $use_cache = true ): bool {
 		global $wpdb;
 
 		// the cache for existing tables.
@@ -725,7 +727,7 @@ class Helper {
 		$table_name = $wpdb->prefix . $table;
 
 		// bail if the table is already known as existing.
-		if ( isset( $available[ $table_name ] ) ) {
+		if ( $use_cache && isset( $available[ $table_name ] ) ) {
 			return true;
 		}
 

@@ -63,6 +63,22 @@
 - Added hooks "efml_setup_config", "efml_setup_goals", "efml_setup_option_definitions", "efml_setup_option_available", "efml_setup_apply_option", "efml_setup_run_action", "efml_setup_process_completed_text" and "efml_service_oauth_return_url"
 - Added documentation of the quickstart in docs/setup.md
 - The results in the dialog after an import use the same icons as the connection test and the quickstart
+- Added migration from other offload plugins (WP Offload Media, Advanced Media Offloader, Stowaway, Offload Media – Cloud Storage) as goal of the quickstart: their offloaded files are used as external files without uploading them again
+- The bucket, the region and the access data are taken over from the settings of the other plugin, also from its constants
+- The other plugin is deactivated at the start of the migration after confirmation, its data and the local copies of the files are kept
+- Files are migrated in the background with progress in the admin bar, a hint shows the result and links to the log if files could not be taken over or the migration has been cancelled
+- The quickstart shows a hint if a supported offload plugin is active, but has not offloaded any files yet
+- Local URLs of migrated files and their thumbnails in contents are replaced by their actual URLs during the output, the contents are not changed
+- Added WP CLI command "wp eml migration" to show the state, to continue and to revert the migration
+- Added hooks "efml_migrations", "efml_migration_batch_size" and "efml_migration_url_hooks"
+- Services could support the migration via the new methods "get_offloaded_object_meta_key()" and "get_url_of_offloaded_object()"
+- Added documentation of the migration in docs/migration.md
+- Text areas with access data of services (e.g. the authentication JSON of Google Cloud Storage) could be entered in the quickstart
+- The quickstart offers services of extensions, which are not installed yet, and installs and activates the needed extension after confirmation, also for the migration from other offload plugins
+- Failed installations of extensions show their reason and are logged
+- Added the reason, why some services are provided by extensions, to the help, the installation dialog and the documentation in docs/extensions.md
+- Added hook "efml_service_plugin_provided_services" for the services, which a not installed extension provides
+- Fixed: the access data for the import of WooCommerce product images were also used for following imports in the same request
 
 ### Changed
 

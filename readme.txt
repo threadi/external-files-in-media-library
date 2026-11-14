@@ -39,6 +39,7 @@ And even more:
 ✅ Keep access data out of your database: define them as constants in your wp-config.php, also for several connections per service.
 ✅ Work safely with copies of your website: on staging websites, nothing is exported to or deleted on your external sources.
 ✅ Get started step by step: the quickstart configures the most common tasks for you, from offloading your media library to synchronizing files from FTP.
+✅ Switch from WP Offload Media, Advanced Media Offloader, Stowaway or Offload Media – Cloud Storage without uploading your files again.
 ✅ Find everything quickly: the tiles of the services show their features, and the command palette of WordPress (Ctrl + K) finds services, external sources and settings.
 
 See [what is possible](https://github.com/threadi/external-files-in-media-library/blob/master/docs/features.md) for an overview of all features.
@@ -145,6 +146,8 @@ Two reasons for this:
 a) Some of the external sources use libraries whose licenses are not permitted in the WordPress repository. For example, the aws/aws-sdk-php library for AWS uses the Apache License. This is not compatible with GPL.
 
 b) With all these libraries, the plugin would be too large to publish in the WordPress repository.
+
+The extensions are free and could be installed with one click in the list of services or in the quickstart. More about them in [the documentation](https://github.com/threadi/external-files-in-media-library/blob/master/docs/extensions.md).
 
 = Can I prevent other WordPress-users from adding external files? =
 

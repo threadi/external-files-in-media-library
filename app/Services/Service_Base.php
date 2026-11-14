@@ -28,6 +28,7 @@ use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Plugin\Setup;
 use Exception;
 use Throwable;
+use WP_Error;
 use WP_User;
 
 /**
@@ -476,6 +477,39 @@ class Service_Base extends Directory_Listing_Base {
 		 * @param Service_Base $instance The service object.
 		 */
 		return apply_filters( 'efml_service_oauth_return_url', $url, $instance );
+	}
+
+	/**
+	 * Return the name of the post meta, in which this service saves the name of an object on the external source.
+	 *
+	 * Services, which could use objects saved by other plugins (e.g. by other offload plugins), return the name of
+	 * the post meta, in which they also save the name of exported files (e.g. "efml_s3_key").
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_offloaded_object_meta_key(): string {
+		return '';
+	}
+
+	/**
+	 * Return the URL of an object, which has been saved on this service by another plugin (e.g. by another offload
+	 * plugin), to use it as external file.
+	 *
+	 * The fields of the external source must be set before (see @set_fields()). Returns an error, if the object does
+	 * not exist or could not be used.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $key        The name of the object (e.g. the key in a bucket).
+	 * @param bool   $is_private Whether the object is not public available.
+	 *
+	 * @return string|WP_Error
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function get_url_of_offloaded_object( string $key, bool $is_private ): string|WP_Error {
+		return new WP_Error( 'efml_not_supported', __( 'This service does not support objects of other plugins.', 'external-files-in-media-library' ) );
 	}
 
 	/**

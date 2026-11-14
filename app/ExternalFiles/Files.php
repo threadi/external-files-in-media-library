@@ -88,6 +88,9 @@ class Files {
 		// initialize the import runs for directories with many files.
 		Import_Runs::get_instance()->init();
 
+		// initialize the migrations from other offload plugins.
+		Migrations::get_instance()->init();
+
 		// initialize the export support.
 		Export::get_instance()->init();
 
@@ -397,6 +400,18 @@ class Files {
 			return $is_protected;
 		}
 
+		// return whether the given key is one of our own meta keys.
+		return in_array( $meta_key, $this->get_meta_keys(), true );
+	}
+
+	/**
+	 * Return the post meta keys of this plugin, which are saved on attachments.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_meta_keys(): array {
 		// define the list of our own meta keys.
 		$meta_keys = array(
 			EFML_POST_META_URL,
@@ -421,6 +436,8 @@ class Files {
 			'efml_export_failed',
 			'efml_multisite_attachment_id',
 			'efml_dropbox_path',
+			'efml_migration',
+			'efml_migrated_file',
 		);
 
 		/**
@@ -431,8 +448,8 @@ class Files {
 		 */
 		$meta_keys = apply_filters( 'efml_protected_meta_keys', $meta_keys );
 
-		// return whether the given key is one of them.
-		return in_array( $meta_key, $meta_keys, true );
+		// return the list.
+		return $meta_keys;
 	}
 
 	/**

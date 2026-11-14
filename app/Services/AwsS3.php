@@ -125,6 +125,26 @@ class AwsS3 extends Service_Plugin_Base implements Service {
 	}
 
 	/**
+	 * Return the services, which the plugin provides, with their labels.
+	 *
+	 * @return array<string,string>
+	 */
+	protected function get_services_of_plugin(): array {
+		return array(
+			'aws-s3'                  => 'AWS S3',
+			'cloudflare-r2'           => 'Cloudflare R2',
+			'backblaze-s3'            => 'Backblaze B2',
+			'digital-ocean-spaces'    => 'DigitalOcean Spaces',
+			'hetzner-object-storage'  => 'Hetzner Object Storage',
+			'ionos-object-storage'    => 'IONOS Object Storage',
+			'ovhcloud-object-storage' => 'OVHcloud Object Storage',
+			'scaleway-object-storage' => 'Scaleway Object Storage',
+			'wasabi'                  => 'Wasabi',
+			's3-compatible'           => __( 'S3-compatible storage', 'external-files-in-media-library' ),
+		);
+	}
+
+	/**
 	 * Return further search terms of this service, separated by commas.
 	 *
 	 * @return string

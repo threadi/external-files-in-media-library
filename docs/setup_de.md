@@ -7,10 +7,11 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 ## Ablauf
 
 1. **Ziel wählen:** Was möchtest du tun? Die Ziele sind unten beschrieben.
-2. **Dienst wählen:** Es erscheinen nur die Dienste, die das gewählte Ziel unterstützen, z. B. für das Auslagern nur Dienste mit Export. Bei manchen Zielen steht der Dienst fest, dann entfällt dieser Schritt.
-3. **Zugangsdaten eingeben:** Der Schnellstart zeigt die Felder des Dienstes. Werte, die bereits als Konstante (z. B. in der `wp-config.php`) oder in den Einstellungen hinterlegt sind, fragt er nicht noch einmal ab. Dropbox verbindest du über den Button „Dropbox verbinden“, danach kehrst du zum Schnellstart zurück.
-4. **Verbindung prüfen und Optionen wählen:** Der Schnellstart prüft die Verbindung mit deinen Angaben. Klappt das nicht, siehst du den Grund und gehst zurück, um die Angaben zu korrigieren. Klappt es, wählst du die Optionen des Ziels. Sie sind passend vorbelegt.
-5. **Einrichten:** Der Schnellstart legt die externe Quelle an, setzt die Einstellungen und zeigt dir das Ergebnis jedes Schritts.
+2. **Dienst wählen:** Es erscheinen nur die Dienste, die das gewählte Ziel unterstützen, z. B. für das Auslagern nur Dienste mit Export. Bei manchen Zielen steht der Dienst fest, dann entfällt dieser Schritt. Dienste aus Erweiterungen, die noch nicht installiert sind (z. B. AWS S3 oder Cloudflare R2), erscheinen mit dem Hinweis auf die Erweiterung, sofern du Plugins installieren darfst.
+3. **Erweiterung installieren (falls nötig):** Braucht der gewählte Dienst eine Erweiterung, erklärt der Schnellstart, welche und warum (siehe [Erweiterungen](extensions_de.md)). Bestätigst du die Installation, lädt er die neueste Version von GitHub, installiert und aktiviert sie und zeigt das Ergebnis. Schlägt das fehl, siehst du den Grund und kannst es erneut versuchen.
+4. **Zugangsdaten eingeben:** Der Schnellstart zeigt die Felder des Dienstes. Werte, die bereits als Konstante (z. B. in der `wp-config.php`) oder in den Einstellungen hinterlegt sind, fragt er nicht noch einmal ab. Dropbox verbindest du über den Button „Dropbox verbinden“, danach kehrst du zum Schnellstart zurück.
+5. **Verbindung prüfen und Optionen wählen:** Der Schnellstart prüft die Verbindung mit deinen Angaben. Klappt das nicht, siehst du den Grund und gehst zurück, um die Angaben zu korrigieren. Klappt es, wählst du die Optionen des Ziels. Sie sind passend vorbelegt.
+6. **Einrichten:** Der Schnellstart legt die externe Quelle an, setzt die Einstellungen und zeigt dir das Ergebnis jedes Schritts.
 
 ## Ziele
 
@@ -21,6 +22,7 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 | Externe Dateien einbinden und synchron halten | alle Dienste mit Synchronisierung | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
 | Lokale Dateien importieren | Lokales Verzeichnis deines Hostings | Import des Verzeichnisses, auf Wunsch als echte Dateien in die Mediathek kopiert |
 | Daten von FTP synchronisieren | FTP, FTPS und SFTP | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
+| Von einem anderen Offload-Plugin umsteigen | der Dienst des gefundenen Buckets | Dateien des anderen Plugins ohne erneuten Upload übernehmen, siehe [Umzug](migration_de.md). Erscheint nur, wenn solche Dateien gefunden werden. |
 
 Große Verzeichnisse werden wie gewohnt im Hintergrund importiert bzw. synchronisiert, den Fortschritt siehst du in der Admin-Leiste.
 

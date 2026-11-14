@@ -1191,6 +1191,18 @@ class Directory_Listing {
 			return array();
 		}
 
+		// return the list.
+		return $this->get_service_plugins();
+	}
+
+	/**
+	 * Return the list of possible service plugins, also if their hints are disabled.
+	 *
+	 * Array index should be the slug of the real plugin.
+	 *
+	 * @return array<string,Service_Plugin_Base>
+	 */
+	public function get_service_plugins(): array {
 		// create the list.
 		$list = array(
 			'external-files-from-aws-s3'               => AwsS3::get_instance(),

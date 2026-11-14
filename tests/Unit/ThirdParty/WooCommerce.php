@@ -65,6 +65,11 @@ class WooCommerce extends externalFilesTests {
 		// the credentials must be used.
 		$this->assertEquals( 'my-login', $this->used_fields['login']['value'] );
 		$this->assertEquals( 'my-password', $this->used_fields['password']['value'] );
+
+		// but not for other imports afterwards.
+		$this->used_fields = array();
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( 'https://example.com/other.jpg' );
+		$this->assertEmpty( $this->used_fields );
 	}
 
 	/**

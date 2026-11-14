@@ -40,6 +40,15 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	protected array $plugin_features = array( 'sync', 'export', 'private', 'constants' );
 
 	/**
+	 * Whether the services of this plugin could be set up in the quickstart after installing the plugin.
+	 *
+	 * Not yet, as the extension could not be connected within the quickstart.
+	 *
+	 * @var bool
+	 */
+	protected bool $setup_support = false;
+
+	/**
 	 * Set the configuration for the external source of this service plugin.
 	 *
 	 * @var array<string,string>

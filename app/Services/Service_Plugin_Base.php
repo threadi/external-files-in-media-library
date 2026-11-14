@@ -26,6 +26,13 @@ class Service_Plugin_Base extends Service_Base {
 	protected array $plugin_features = array();
 
 	/**
+	 * Whether the services of this plugin could be set up in the quickstart after installing the plugin.
+	 *
+	 * @var bool
+	 */
+	protected bool $setup_support = true;
+
+	/**
 	 * Return the features of the service plugin, which are shown on the tiles before it is installed.
 	 *
 	 * @return array<string,bool>
@@ -161,7 +168,8 @@ class Service_Plugin_Base extends Service_Base {
 					'<p><strong>' . __( 'Are you sure you want to install and activate this WordPress plugin?', 'external-files-in-media-library' ) . '</strong></p>',
 					$this->get_source_info(),
 				),
-				$this->get_install_dialog_description()
+				$this->get_install_dialog_description(),
+				array( '<p>' . self::get_extension_reason() . '</p>' )
 			),
 			'buttons'   => array(
 				array(
@@ -196,6 +204,64 @@ class Service_Plugin_Base extends Service_Base {
 	 */
 	public function is_disabled(): bool {
 		return true;
+	}
+
+	/**
+	 * Return the services, which the plugin provides, with their labels.
+	 *
+	 * The names are the names of the services after the plugin has been installed. They are used e.g. by the
+	 * quickstart to offer the installation of the plugin for a specific service.
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_provided_services(): array {
+		// return nothing, if the services could not be set up in the quickstart.
+		if ( ! $this->setup_support ) {
+			return array();
+		}
+
+		// get the services.
+		$services = $this->get_services_of_plugin();
+
+		$instance = $this;
+		/**
+		 * Filter the services, which a not installed plugin provides.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,string> $services List of service names with their labels.
+		 * @param Service_Plugin_Base $instance The object of the plugin.
+		 */
+		return apply_filters( 'efml_service_plugin_provided_services', $services, $instance );
+	}
+
+	/**
+	 * Return the explanation, why some services are provided by extensions.
+	 *
+	 * @return string
+	 */
+	public static function get_extension_reason(): string {
+		/* translators: %1$s will be replaced by a URL, %2$s by a hint for a new window. */
+		return sprintf( __( '<strong>Why an extension?</strong> Some providers offer their libraries only under licenses, which are not compatible with the GPL of WordPress. Such libraries may not be part of a plugin in the WordPress plugin directory, so their services are provided by free extensions. <a href="%1$s" target="_blank">Learn more%2$s</a>', 'external-files-in-media-library' ), esc_url( Helper::get_documentation_url( 'extensions' ) ), Helper::get_a11n_window_hint() );
+	}
+
+	/**
+	 * Return the services, which the plugin provides, with their labels.
+	 *
+	 * Override this in plugins with more than one service.
+	 *
+	 * @return array<string,string>
+	 */
+	protected function get_services_of_plugin(): array {
+		return array( $this->get_name() => wp_strip_all_tags( $this->get_label() ) );
+	}
+
+	/**
+	 * Return the description of the plugin for its installation.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_install_description(): array {
+		return $this->get_install_dialog_description();
 	}
 
 	/**
@@ -239,7 +305,7 @@ class Service_Plugin_Base extends Service_Base {
 	 *
 	 * @return string
 	 */
-	private function get_source_info(): string {
+	public function get_source_info(): string {
 		// get the source config.
 		$source_config = $this->get_source_config();
 

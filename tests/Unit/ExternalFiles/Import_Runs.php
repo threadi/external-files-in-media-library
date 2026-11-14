@@ -207,14 +207,24 @@ class Import_Runs extends externalFilesTests {
 	public function test_import_with_missing_table(): void {
 		global $wpdb;
 		$urls = $this->add_files( 3 );
-		$wpdb->query( 'DROP TABLE ' . $wpdb->prefix . 'efml_import_runs' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+
+		// move the table away: the test framework would change "DROP TABLE" to "DROP TEMPORARY TABLE", which
+		// does not remove the real table.
+		$table = $wpdb->prefix . 'efml_import_runs';
+		$wpdb->query( 'RENAME TABLE ' . $table . ' TO ' . $table . '_backup' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 		delete_option( 'efml_import_runs_db_version' );
 
-		$this->assertTrue( Import::get_instance()->add_url( 'file://' . $this->directory ) );
+		try {
+			$this->assertTrue( Import::get_instance()->add_url( 'file://' . $this->directory ) );
 
-		$this->assert_imported( $urls );
-		$this->assertCount( 1, $this->get_runs() );
-		$this->assertSame( '1', get_option( 'efml_import_runs_db_version' ) );
+			$this->assert_imported( $urls );
+			$this->assertCount( 1, $this->get_runs() );
+			$this->assertSame( '1', get_option( 'efml_import_runs_db_version' ) );
+		} finally {
+			// remove the table, which has been created by the test (as temporary table), and restore the original.
+			$wpdb->query( 'DROP TABLE IF EXISTS ' . $table ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->query( 'RENAME TABLE ' . $table . '_backup TO ' . $table ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
 	}
 
 	/**

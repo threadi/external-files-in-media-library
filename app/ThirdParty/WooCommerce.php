@@ -346,8 +346,14 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		);
 		$import->set_fields( $fields );
 
-		// add the image and bail if it was not successfully.
-		if ( ! $import->add_url( (string) $data['raw_image_id'] ) ) {
+		// add the image.
+		$result = $import->add_url( (string) $data['raw_image_id'] );
+
+		// remove the credentials, so they are not used for other imports in this request.
+		$import->set_fields( array() );
+
+		// bail if the image could not be added.
+		if ( ! $result ) {
 			return $data;
 		}
 

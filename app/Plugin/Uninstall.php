@@ -188,6 +188,9 @@ class Uninstall {
 		// remove the import runs.
 		Import_Runs::get_instance()->uninstall();
 
+		// remove the data of the migrations.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Migrations::get_instance()->uninstall();
+
 		// run the uninstallation tasks for each service.
 		Services::get_instance()->uninstall();
 

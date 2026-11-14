@@ -22,9 +22,12 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Migrations;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
+use ExternalFilesInMediaLibrary\Plugin\Admin\Plugins;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use Throwable;
 use WP_Error;
@@ -50,9 +53,26 @@ class Setup {
 	public const FIELD_SERVICE = 'efml_setup_service';
 
 	/**
+	 * The name of the field with the chosen files of another offload plugin.
+	 */
+	public const FIELD_MIGRATION_SOURCE = 'efml_setup_migration_source';
+
+	/**
+	 * The name of the field to confirm the deactivation of another offload plugin.
+	 */
+	public const FIELD_MIGRATION_DEACTIVATE = 'efml_setup_migration_deactivate';
+
+	/**
 	 * The name of the field with the local path.
 	 */
 	public const FIELD_PATH = 'efml_setup_path';
+
+	/**
+	 * Name of the field to confirm the installation of an extension.
+	 *
+	 * @var string
+	 */
+	public const FIELD_INSTALL = 'efml_setup_install';
 
 	/**
 	 * The name of the field with the URL of exported files.
@@ -90,6 +110,18 @@ class Setup {
 	private const CHECK_META = 'efml_setup_check';
 
 	/**
+	 * The name of the user meta with the values, which have been taken over from another offload plugin.
+	 */
+	private const PREFILLED_META = 'efml_setup_prefilled';
+
+	/**
+	 * Name of the user meta for the result of the installation of an extension.
+	 *
+	 * @var string
+	 */
+	private const INSTALL_META = 'efml_setup_install';
+
+	/**
 	 * The name of the user meta with the URL to forward to after the setup has been completed.
 	 */
 	private const FORWARD_META = 'efml_setup_forward';
@@ -119,6 +151,13 @@ class Setup {
 	 * @var array<int,array{text: string, success: bool}>
 	 */
 	private array $process_messages = array();
+
+	/**
+	 * The files of other offload plugins (cached for this request).
+	 *
+	 * @var array<string,array<string,mixed>>|null
+	 */
+	private ?array $migration_sources = null;
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -185,6 +224,9 @@ class Setup {
 		if ( ! $this->is_setup_request() ) {
 			return;
 		}
+
+		// load the files of other offload plugins again.
+		$this->migration_sources = null;
 
 		// get the setup object.
 		$setup_obj = \easySetupForWordPress\Setup::get_instance();
@@ -300,7 +342,7 @@ class Setup {
 		// collect the configuration.
 		$config = array(
 			'name'                  => self::NAME,
-			'title'                 => __( 'Quickstart', 'external-files-in-media-library' ),
+			'title'                 => __( 'Quickstart: Set up external files for your media library', 'external-files-in-media-library' ),
 			'steps'                 => $this->get_setup(),
 			'update_fields'         => true,
 			'user_values'           => true,
@@ -350,9 +392,17 @@ class Setup {
 		$steps   = array();
 		$steps[] = $this->get_goal_step();
 
-		// add the step to choose a service, if the goal does not define it.
-		if ( is_null( $goal ) || '' === $goal['service'] ) {
+		// add the step to choose the files of another offload plugin or a service, if the goal does not define it.
+		if ( ! is_null( $goal ) && 'migrate' === $goal['action'] ) {
+			$steps[] = $this->get_migration_source_step();
+		} elseif ( is_null( $goal ) || '' === $goal['service'] ) {
 			$steps[] = $this->get_service_step();
+		}
+
+		// add the steps to install the extension of the chosen service, if it is needed.
+		if ( $this->has_install_steps() ) {
+			$steps[] = $this->get_install_step();
+			$steps[] = $this->get_install_result_step();
 		}
 
 		// add the steps for the access data and the options.
@@ -460,6 +510,26 @@ class Setup {
 			),
 		);
 
+		// add the goal to switch from another offload plugin, if its files have been found.
+		$migration_labels = array_unique( array_column( $this->get_migration_sources(), 'label' ) );
+		if ( ! empty( $migration_labels ) ) {
+			$goals['migrate'] = array(
+				'label'       => __( 'Switch from another offload plugin', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the names of plugins. */
+				'description' => sprintf( __( 'Use the files, which %1$s has offloaded, as external files – without uploading them again.', 'external-files-in-media-library' ), implode( ', ', $migration_labels ) ),
+				'icon'        => Helper::get_icon( 'core-admin/migrate', 'dashicons-migrate', '', 32 ),
+				'features'    => array(),
+				'service'     => '',
+				'options'     => array( 'export', 'export_main', 'export_folders' ),
+				'defaults'    => array(
+					'export'         => 1,
+					'export_main'    => 1,
+					'export_folders' => 1,
+				),
+				'action'      => 'migrate',
+			);
+		}
+
 		/**
 		 * Filter the goals of the setup.
 		 *
@@ -474,8 +544,8 @@ class Setup {
 		// complete the goals with default values.
 		$list = array();
 		foreach ( $goals as $name => $goal ) {
-			// bail if goal is not an array or has no label.
-			if ( ! is_array( $goal ) || empty( $goal['label'] ) ) {
+			// bail if the goal has no label.
+			if ( empty( $goal['label'] ) ) {
 				continue;
 			}
 
@@ -640,20 +710,249 @@ class Setup {
 			);
 		}
 
-		// return the fields.
-		return array(
+		// collect the fields.
+		$fields = array(
 			self::FIELD_GOAL => array(
 				'type'     => 'CardControl',
 				'label'    => __( 'What would you like to do?', 'external-files-in-media-library' ),
 				'options'  => $options,
 				'required' => true,
 			),
-			'help'           => array(
-				'type' => 'Text',
-				/* translators: %1$s will be replaced by a URL. */
-				'text' => '<p><span class="dashicons dashicons-controls-skipforward"></span> ' . sprintf( __( '<strong>Something else in mind?</strong> Choose a service <a href="%1$s">from the list</a>. You can change everything the quickstart configures at any time.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ) ) . '</p>',
-			),
 		);
+
+		// explain why the goal to switch from another offload plugin is missing, if such a plugin is active.
+		$labels = $this->get_migration_plugins_without_files();
+		if ( ! empty( $labels ) ) {
+			$fields['migration_hint'] = array(
+				'type' => 'Text',
+				/* translators: %1$s will be replaced by the names of plugins, %2$s by a URL. */
+				'text' => '<p><span class="dashicons dashicons-info"></span> ' . sprintf( _n( '<strong>%1$s is active, but has not offloaded any files of the media library yet.</strong> As soon as it has, you can switch from it here without uploading the files again. If you are sure it has offloaded files, check the <a href="%2$s">log</a>.', '<strong>%1$s are active, but have not offloaded any files of the media library yet.</strong> As soon as they have, you can switch from them here without uploading the files again. If you are sure they have offloaded files, check the <a href="%2$s">log</a>.', count( $labels ), 'external-files-in-media-library' ), esc_html( implode( ', ', $labels ) ), esc_url( Helper::get_log_url() ) ) . '</p>',
+			);
+		}
+
+		// return the fields.
+		return array_merge(
+			$fields,
+			array(
+				'help' => array(
+					'type' => 'Text',
+					/* translators: %1$s will be replaced by a URL. */
+					'text' => '<p><span class="dashicons dashicons-controls-skipforward"></span> ' . sprintf( __( '<strong>Something else in mind?</strong> Choose a service <a href="%1$s">from the list</a>. You can change everything the quickstart configures at any time.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ) ) . '</p>',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Return the names of the active offload plugins, of which no offloaded files have been found.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_migration_plugins_without_files(): array {
+		// bail if this is not a request of the setup.
+		if ( ! $this->is_setup_request() ) {
+			return array();
+		}
+
+		// get the plugins, of which files have been found.
+		$found = array_column( $this->get_migration_sources(), 'migration' );
+
+		// collect the active plugins without files.
+		$labels = array();
+		foreach ( Migrations::get_instance()->get_migrations() as $migration ) {
+			// bail if files of this plugin have been found or the plugin is not active.
+			if ( in_array( $migration->get_name(), $found, true ) || '' === $migration->get_active_plugin_file() ) {
+				continue;
+			}
+
+			// add it.
+			$labels[] = $migration->get_label();
+		}
+
+		// return the list.
+		return $labels;
+	}
+
+	/**
+	 * Return the files of other offload plugins, which have been found on this website.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function get_migration_sources(): array {
+		// bail if this is not a request of the setup, as the check needs some database queries.
+		if ( ! $this->is_setup_request() ) {
+			return array();
+		}
+
+		// load them once per request.
+		if ( is_null( $this->migration_sources ) ) {
+			$this->migration_sources = Migrations::get_instance()->get_sources();
+		}
+
+		// return them.
+		return $this->migration_sources;
+	}
+
+	/**
+	 * Return the chosen files of another offload plugin.
+	 *
+	 * @return array<string,mixed>|null
+	 */
+	public function get_chosen_migration_source(): ?array {
+		$sources = $this->get_migration_sources();
+		return $sources[ $this->get_value( self::FIELD_MIGRATION_SOURCE ) ] ?? null;
+	}
+
+	/**
+	 * Return the service with the given name, if it could be used by the actual user in the setup.
+	 *
+	 * @param string $name The name of the service.
+	 *
+	 * @return Directory_Listing_Base|false
+	 */
+	private function get_usable_service( string $name ): Directory_Listing_Base|false {
+		// bail if no name is given.
+		if ( '' === $name ) {
+			return false;
+		}
+
+		// search the service.
+		foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $listing_obj ) {
+			// bail if this is not the service.
+			if ( $name !== $listing_obj->get_name() ) {
+				continue;
+			}
+
+			// return it, if it could be used.
+			return current_user_can( $listing_obj->get_permission_name() ) && $this->is_service_usable( $listing_obj ) ? $listing_obj : false;
+		}
+
+		// return false if the service is unknown.
+		return false;
+	}
+
+	/**
+	 * Return the fields of the step to choose the files of another offload plugin.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_migration_source_step(): array {
+		// get the chosen goal.
+		$goal = $this->get_chosen_goal();
+
+		// collect the fields.
+		$fields = array(
+			'chosen' => $this->get_headline( is_null( $goal ) ? '' : $goal['label'], is_null( $goal ) ? '' : $goal['icon'] ),
+		);
+
+		// collect the usable files as options and the hints for the others.
+		$options = array();
+		$hints   = array();
+		foreach ( $this->get_migration_sources() as $id => $source ) {
+			// get the name of the bucket and the amount of files.
+			/* translators: %1$d will be replaced by a number, %2$s by the name of a bucket. */
+			$description = sprintf( _n( '%1$d file in %2$s', '%1$d files in %2$s', absint( $source['count'] ), 'external-files-in-media-library' ), absint( $source['count'] ), (string) $source['bucket'] );
+
+			// get the service.
+			$listing_obj = $this->get_usable_service( (string) $source['service'] );
+
+			// offer the files with the installation of the extension or add a hint, if the service could not be used.
+			if ( ! $listing_obj instanceof Directory_Listing_Base ) {
+				// get the extension, which provides the service.
+				$plugin_obj = $this->get_service_plugin_for( (string) $source['service'] );
+
+				// offer the files, if the extension could be installed in the next step.
+				if ( $plugin_obj instanceof Service_Plugin_Base && $this->can_install_plugins() ) {
+					$options[] = array(
+						/* translators: %1$s will be replaced by the name of a plugin, %2$s by the name of a service. */
+						'label'       => sprintf( __( '%1$s: %2$s', 'external-files-in-media-library' ), (string) $source['label'], $plugin_obj->get_provided_services()[ (string) $source['service'] ] ),
+						'value'       => (string) $id,
+						/* translators: %1$s will be replaced by a description, %2$s by the name of a plugin. */
+						'description' => sprintf( __( '%1$s – needs the free extension %2$s, which the quickstart installs for you.', 'external-files-in-media-library' ), $description, $plugin_obj->get_plugin_label() ),
+						'icon'        => $this->get_service_icon( $plugin_obj->get_name() ),
+					);
+					continue;
+				}
+
+				// add the hint, that the extension must be installed by an administrator.
+				if ( $plugin_obj instanceof Service_Plugin_Base ) {
+					/* translators: %1$s will be replaced by the name of a plugin, %2$s by a description, %3$s by the name of a service, %4$s by the name of a plugin. */
+					$hints[] = sprintf( __( '%1$s (%2$s): %3$s needs the free extension %4$s. Please ask your administrator to install it.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ), esc_html( $description ), esc_html( $plugin_obj->get_provided_services()[ (string) $source['service'] ] ), esc_html( $plugin_obj->get_plugin_label() ) );
+					continue;
+				}
+
+				// add the hint, that the provider is not supported.
+				if ( '' === $source['service'] ) {
+					/* translators: %1$s will be replaced by the name of a plugin, %2$s by a description, %3$s by the name of a provider. */
+					$hints[] = sprintf( __( '%1$s (%2$s): the provider %3$s is not supported.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ), esc_html( $description ), esc_html( (string) $source['provider'] ) );
+					continue;
+				}
+
+				// add the hint, that the service could not be used here.
+				/* translators: %1$s will be replaced by the name of a plugin, %2$s by a description, %3$s by the name of a provider. */
+				$hints[] = sprintf( __( '%1$s (%2$s): %3$s could not be used in the quickstart. Check whether you are allowed to use this service.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ), esc_html( $description ), esc_html( (string) $source['provider'] ) );
+				continue;
+			}
+
+			// add the option.
+			$options[] = array(
+				/* translators: %1$s will be replaced by the name of a plugin, %2$s by the name of a service. */
+				'label'       => sprintf( __( '%1$s: %2$s', 'external-files-in-media-library' ), (string) $source['label'], wp_strip_all_tags( $listing_obj->get_label() ) ),
+				'value'       => (string) $id,
+				'description' => $description,
+				'icon'        => $this->get_service_icon( $listing_obj->get_name() ),
+			);
+		}
+
+		// add the list.
+		$fields[ self::FIELD_MIGRATION_SOURCE ] = array(
+			'type'     => 'CardControl',
+			'label'    => __( 'Which files would you like to take over?', 'external-files-in-media-library' ),
+			'options'  => $options,
+			'required' => true,
+		);
+
+		// add the hints.
+		if ( ! empty( $hints ) ) {
+			$fields['help'] = array(
+				'type' => 'Text',
+				'text' => '<p>' . esc_html__( 'These files could not be taken over yet:', 'external-files-in-media-library' ) . '</p><ul><li>' . implode( '</li><li>', $hints ) . '</li></ul>',
+			);
+		}
+
+		// return the fields.
+		return $fields;
+	}
+
+	/**
+	 * Save a password of another offload plugin as value of the setup, once per chosen files.
+	 *
+	 * Passwords are never sent to the browser, so they could not be set as default value of their field.
+	 *
+	 * @param string $field_name The name of the field.
+	 * @param string $value      The value.
+	 * @param string $source_id  The ID of the chosen files.
+	 *
+	 * @return void
+	 */
+	private function prefill_password( string $field_name, string $value, string $source_id ): void {
+		// get the values, which have already been taken over.
+		$prefilled = get_user_meta( get_current_user_id(), self::PREFILLED_META, true );
+		if ( ! is_array( $prefilled ) ) {
+			$prefilled = array();
+		}
+
+		// bail if this value has already been taken over for these files.
+		if ( isset( $prefilled[ $field_name ] ) && $source_id === $prefilled[ $field_name ] ) {
+			return;
+		}
+
+		// save the value.
+		\easySetupForWordPress\Setup::get_instance()->set_field_value( self::NAME, $field_name, $this->encrypt_password( $value, $field_name, self::NAME ) );
+
+		// remember it.
+		$prefilled[ $field_name ] = $source_id;
+		update_user_meta( get_current_user_id(), self::PREFILLED_META, $prefilled );
 	}
 
 	/**
@@ -687,6 +986,17 @@ class Setup {
 				'value'       => $listing_obj->get_name(),
 				'description' => $service_obj instanceof Service_Base && ! empty( $service_obj->get_setup_connect_dialog() ) ? __( 'You will connect it in the next step.', 'external-files-in-media-library' ) : '',
 				'icon'        => $this->get_service_icon( $listing_obj->get_name() ),
+			);
+		}
+
+		// add the services of extensions, which could be installed in the next step.
+		$installable = $this->get_installable_services_for_goal( $goal );
+		foreach ( $installable as $name => $entry ) {
+			$options[] = array(
+				'label'       => $entry['label'],
+				'value'       => $name,
+				'description' => __( 'Free extension, installed in the next step.', 'external-files-in-media-library' ),
+				'icon'        => $this->get_service_icon( $entry['plugin']->get_name() ),
 			);
 		}
 
@@ -728,8 +1038,340 @@ class Setup {
 			'text' => '<p><span class="dashicons dashicons-admin-plugins"></span> ' . sprintf( __( '<strong>Missing your service?</strong> Further services are provided by extensions, which you can find <a href="%1$s">in the list of services</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ) ) . '</p>',
 		);
 
+		// explain the extensions instead, if some of them could be installed here.
+		if ( ! empty( $installable ) ) {
+			$fields['help']['text'] = '<p><span class="dashicons dashicons-admin-plugins"></span> ' . Service_Plugin_Base::get_extension_reason() . '</p>';
+		}
+
 		// return the fields.
 		return $fields;
+	}
+
+	/**
+	 * Return whether the actual user could install extensions in the quickstart.
+	 *
+	 * @return bool
+	 */
+	private function can_install_plugins(): bool {
+		return current_user_can( 'install_plugins' ) && ! is_multisite();
+	}
+
+	/**
+	 * Return the not active extension, which provides the service with the given name.
+	 *
+	 * @param string $name The name of the service.
+	 *
+	 * @return Service_Plugin_Base|null
+	 */
+	public function get_service_plugin_for( string $name ): ?Service_Plugin_Base {
+		// bail if no name is given.
+		if ( '' === $name ) {
+			return null;
+		}
+
+		// search the extension.
+		foreach ( Directory_Listing::get_instance()->get_service_plugins() as $plugin_obj ) {
+			// bail if the extension is active.
+			if ( Helper::is_plugin_active( $plugin_obj->get_plugin_main_file() ) ) {
+				continue;
+			}
+
+			// return it, if it provides the service.
+			if ( isset( $plugin_obj->get_provided_services()[ $name ] ) ) {
+				return $plugin_obj;
+			}
+		}
+
+		// return null, if no extension provides it.
+		return null;
+	}
+
+	/**
+	 * Return the services of not active extensions, which could be installed for the given goal.
+	 *
+	 * @param array<string,mixed> $goal The goal.
+	 *
+	 * @return array<string,array{label: string, plugin: Service_Plugin_Base}>
+	 */
+	private function get_installable_services_for_goal( array $goal ): array {
+		// bail if the user could not install extensions.
+		if ( ! $this->can_install_plugins() ) {
+			return array();
+		}
+
+		// collect the services.
+		$list = array();
+		foreach ( Directory_Listing::get_instance()->get_service_plugins() as $plugin_obj ) {
+			// bail if the extension is active.
+			if ( Helper::is_plugin_active( $plugin_obj->get_plugin_main_file() ) ) {
+				continue;
+			}
+
+			// bail if the extension does not support all features of the goal.
+			$features = array_keys( array_filter( $plugin_obj->get_features() ) );
+			if ( ! empty( $goal['features'] ) && is_array( $goal['features'] ) && array_diff( $goal['features'], $features ) ) {
+				continue;
+			}
+
+			// add its services.
+			foreach ( $plugin_obj->get_provided_services() as $name => $label ) {
+				// bail if a service is defined by the goal and this is not the service.
+				if ( ! empty( $goal['service'] ) && $goal['service'] !== $name ) {
+					continue;
+				}
+
+				// add the service.
+				$list[ $name ] = array(
+					'label'  => $label,
+					'plugin' => $plugin_obj,
+				);
+			}
+		}
+
+		// return the list.
+		return $list;
+	}
+
+	/**
+	 * Return the name of the chosen service, also if it could not be used yet.
+	 *
+	 * @return string
+	 */
+	private function get_chosen_service_name(): string {
+		// get the chosen goal.
+		$goal = $this->get_chosen_goal();
+
+		// bail if no goal has been chosen.
+		if ( is_null( $goal ) ) {
+			return '';
+		}
+
+		// return the service of the chosen files of another offload plugin.
+		if ( 'migrate' === $goal['action'] ) {
+			$source = $this->get_chosen_migration_source();
+			return is_null( $source ) ? '' : (string) $source['service'];
+		}
+
+		// return the service of the goal or the chosen one.
+		return '' !== $goal['service'] ? $goal['service'] : $this->get_value( self::FIELD_SERVICE );
+	}
+
+	/**
+	 * Return the extension, which must be installed for the chosen service.
+	 *
+	 * @return Service_Plugin_Base|null
+	 */
+	private function get_plugin_to_install(): ?Service_Plugin_Base {
+		// bail if the chosen service could already be used.
+		if ( $this->get_chosen_service() instanceof Directory_Listing_Base ) {
+			return null;
+		}
+
+		// return the extension, which provides the chosen service.
+		return $this->get_service_plugin_for( $this->get_chosen_service_name() );
+	}
+
+	/**
+	 * Return the result of the installation of the extension for the chosen service.
+	 *
+	 * @return array{service: string, plugin: string, label: string, success: bool, message: string}|null
+	 */
+	private function get_install_result(): ?array {
+		// get the result.
+		$result = get_user_meta( get_current_user_id(), self::INSTALL_META, true );
+
+		// bail if it is not for the chosen service.
+		if ( ! is_array( $result ) || ! isset( $result['service'] ) || $this->get_chosen_service_name() !== $result['service'] ) {
+			return null;
+		}
+
+		// return the result.
+		return array(
+			'service' => (string) $result['service'],
+			'plugin'  => isset( $result['plugin'] ) ? (string) $result['plugin'] : '',
+			'label'   => isset( $result['label'] ) ? (string) $result['label'] : '',
+			'success' => ! empty( $result['success'] ),
+			'message' => isset( $result['message'] ) ? (string) $result['message'] : '',
+		);
+	}
+
+	/**
+	 * Return whether the steps to install an extension are part of the setup.
+	 *
+	 * They stay part of it after the installation, so the numbers of the steps do not change.
+	 *
+	 * @return bool
+	 */
+	private function has_install_steps(): bool {
+		return $this->get_plugin_to_install() instanceof Service_Plugin_Base || ! is_null( $this->get_install_result() );
+	}
+
+	/**
+	 * Return the step to confirm the installation of the extension.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_install_step(): array {
+		// get the chosen goal, the extension and the result of its installation.
+		$goal       = $this->get_chosen_goal();
+		$plugin_obj = $this->get_plugin_to_install();
+		$result     = $this->get_install_result();
+
+		// show a hint, if nothing has been chosen yet.
+		if ( is_null( $goal ) ) {
+			return array(
+				'help' => array(
+					'type' => 'Text',
+					'text' => '<p>' . esc_html__( 'Please choose what you would like to do and a service first.', 'external-files-in-media-library' ) . '</p>',
+				),
+			);
+		}
+
+		// collect the fields.
+		$fields = array(
+			'chosen' => $this->get_headline( $goal['label'], $goal['icon'] ),
+		);
+
+		// show the hint, if it has already been installed (the extension object is not available anymore then).
+		if ( ! $plugin_obj instanceof Service_Plugin_Base ) {
+			$fields['install'] = array(
+				'type' => 'Text',
+				/* translators: %1$s will be replaced by the name of a plugin. */
+				'text' => '<div class="efml-setup-check efml-setup-check-success"><p><span class="dashicons dashicons-yes-alt"></span> <strong>' . sprintf( esc_html__( 'The extension %1$s has been installed and activated.', 'external-files-in-media-library' ), esc_html( is_null( $result ) ? '' : $result['label'] ) ) . '</strong></p></div>',
+			);
+			return $fields;
+		}
+
+		// get the name of the service.
+		$services = $plugin_obj->get_provided_services();
+		$service  = $services[ $this->get_chosen_service_name() ] ?? wp_strip_all_tags( $plugin_obj->get_label() );
+
+		// check whether it is installed, but not active.
+		$is_installed = Helper::is_plugin_installed( $plugin_obj->get_plugin_main_file() );
+
+		// describe the extension.
+		if ( $is_installed ) {
+			/* translators: %1$s will be replaced by the name of a service, %2$s by the name of a plugin. */
+			$text = '<p><strong>' . sprintf( esc_html__( '%1$s is provided by the extension %2$s. It is installed, but not active. The quickstart activates it for you when you continue.', 'external-files-in-media-library' ), esc_html( $service ), '<em>' . esc_html( $plugin_obj->get_plugin_label() ) . '</em>' ) . '</strong></p>';
+		} else {
+			/* translators: %1$s will be replaced by the name of a service, %2$s by the name of a plugin. */
+			$text  = '<p><strong>' . sprintf( esc_html__( '%1$s is provided by the free extension %2$s. The quickstart installs and activates it for you when you continue.', 'external-files-in-media-library' ), esc_html( $service ), '<em>' . esc_html( $plugin_obj->get_plugin_label() ) . '</em>' ) . '</strong></p>';
+			$text .= $plugin_obj->get_source_info();
+		}
+		$text .= implode( '', $plugin_obj->get_install_description() );
+		$text .= '<p><span class="dashicons dashicons-info"></span> ' . Service_Plugin_Base::get_extension_reason() . '</p>';
+
+		// add the description.
+		$fields['install'] = array(
+			'type' => 'Text',
+			'text' => $text,
+		);
+
+		// add the confirmation.
+		$fields[ self::FIELD_INSTALL ] = array(
+			'type'     => 'CheckboxControl',
+			/* translators: %1$s will be replaced by the name of a plugin. */
+			'label'    => $is_installed ? sprintf( __( 'Yes, activate the extension %1$s', 'external-files-in-media-library' ), $plugin_obj->get_plugin_label() ) : sprintf( __( 'Yes, install and activate the extension %1$s', 'external-files-in-media-library' ), $plugin_obj->get_plugin_label() ),
+			'required' => true,
+		);
+
+		// return the fields.
+		return $fields;
+	}
+
+	/**
+	 * Return the step with the result of the installation of the extension.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_install_result_step(): array {
+		// get the chosen goal and the result.
+		$goal   = $this->get_chosen_goal();
+		$result = $this->get_install_result();
+
+		// show a hint, if the installation has not been confirmed yet.
+		if ( is_null( $goal ) || is_null( $result ) ) {
+			return array(
+				'help'                     => array(
+					'type' => 'Text',
+					'text' => '<p>' . esc_html__( 'Please confirm the installation of the extension in the previous step.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'efml_setup_not_installed' => array(
+					'type'     => 'CardControl',
+					'options'  => array(),
+					'required' => true,
+				),
+			);
+		}
+
+		// collect the fields.
+		$fields = array(
+			'chosen' => $this->get_headline( $goal['label'], $goal['icon'] ),
+		);
+
+		// show the error.
+		if ( ! $result['success'] ) {
+			$fields['install'] = array(
+				'type' => 'Text',
+				/* translators: %1$s will be replaced by the name of a plugin, %2$s by an URL, %3$s by an URL. */
+				'text' => '<div class="efml-setup-check efml-setup-check-failed"><p><span class="dashicons dashicons-dismiss"></span> <strong>' . sprintf( esc_html__( 'The extension %1$s could not be installed.', 'external-files-in-media-library' ), esc_html( $result['label'] ) ) . '</strong></p>' . ( '' !== $result['message'] ? '<p>' . esc_html( $result['message'] ) . '</p>' : '' ) . '<p>' . sprintf( __( 'Go back to try it again. You can also install the extension via the <a href="%1$s">list of services</a>. Details are in the <a href="%2$s">log</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ), esc_url( Helper::get_log_url() ) ) . '</p></div>',
+			);
+
+			// add an empty card list, which prevents to continue.
+			$fields['efml_setup_install_failed'] = array(
+				'type'     => 'CardControl',
+				'options'  => array(),
+				'required' => true,
+			);
+
+			return $fields;
+		}
+
+		// show the success.
+		$fields['install'] = array(
+			'type' => 'Text',
+			/* translators: %1$s will be replaced by the name of a plugin. */
+			'text' => '<div class="efml-setup-check efml-setup-check-success"><p><span class="dashicons dashicons-yes-alt"></span> <strong>' . sprintf( esc_html__( 'The extension %1$s has been installed and activated.', 'external-files-in-media-library' ), esc_html( $result['label'] ) ) . '</strong></p><p>' . esc_html__( 'Continue to enter the access data.', 'external-files-in-media-library' ) . '</p></div>',
+		);
+
+		// return the fields.
+		return $fields;
+	}
+
+	/**
+	 * Install the extension of the chosen service, if the installation has been confirmed.
+	 *
+	 * @return void
+	 */
+	private function run_install(): void {
+		// get the extension, which must be installed.
+		$plugin_obj = $this->get_plugin_to_install();
+
+		// bail if no extension must be installed or the installation has not been confirmed.
+		if ( ! $plugin_obj instanceof Service_Plugin_Base || 1 !== absint( $this->get_value( self::FIELD_INSTALL ) ) ) {
+			return;
+		}
+
+		// install and activate it.
+		$result = Plugins::get_instance()->install_and_activate_service_plugin( $plugin_obj );
+
+		// save the result.
+		update_user_meta(
+			get_current_user_id(),
+			self::INSTALL_META,
+			array(
+				'service' => $this->get_chosen_service_name(),
+				'plugin'  => $plugin_obj->get_plugin_main_file(),
+				'label'   => $plugin_obj->get_plugin_label(),
+				'success' => true === $result,
+				'message' => $result instanceof WP_Error ? $result->get_error_message() : '',
+			)
+		);
+
+		// remove the confirmation after an error, so a new try must be confirmed again.
+		if ( $result instanceof WP_Error ) {
+			\easySetupForWordPress\Setup::get_instance()->set_field_value( self::NAME, self::FIELD_INSTALL, 0 );
+		}
 	}
 
 	/**
@@ -817,6 +1459,11 @@ class Setup {
 		// get the type of the field.
 		$type = isset( $field['type'] ) ? strtolower( (string) $field['type'] ) : 'text';
 
+		// show text areas with access data (e.g. a JSON with a key) as password field.
+		if ( 'textarea' === $type ) {
+			return empty( $field['credential'] ) ? 'TextControl' : 'PasswordControl';
+		}
+
 		// return the matching control.
 		return match ( $type ) {
 			'text', 'url', 'numeric', 'email' => 'TextControl',
@@ -837,6 +1484,23 @@ class Setup {
 		// get the chosen goal and service.
 		$goal        = $this->get_chosen_goal();
 		$listing_obj = $this->get_chosen_service();
+
+		// show a hint, if the installed extension does not allow to set up its service here.
+		$result = $this->get_install_result();
+		if ( ! is_null( $goal ) && ! $listing_obj instanceof Directory_Listing_Base && ! is_null( $result ) && $result['success'] && ! $this->get_plugin_to_install() instanceof Service_Plugin_Base ) {
+			return array(
+				'help'                  => array(
+					'type' => 'Text',
+					/* translators: %1$s will be replaced by an URL. */
+					'text' => '<p>' . sprintf( __( 'The extension is active, but its service could not be set up in this quickstart. Please set it up via the <a href="%1$s">list of services</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_view_directory_url( false ) ) ) . '</p>',
+				),
+				'efml_setup_not_usable' => array(
+					'type'     => 'CardControl',
+					'options'  => array(),
+					'required' => true,
+				),
+			);
+		}
 
 		// show a hint if nothing has been chosen yet.
 		if ( is_null( $goal ) || ! $listing_obj instanceof Directory_Listing_Base ) {
@@ -908,6 +1572,10 @@ class Setup {
 		// collect the hints for values, which are already set.
 		$hints = array();
 
+		// get the values of the chosen files of another offload plugin.
+		$source  = 'migrate' === $goal['action'] ? $this->get_chosen_migration_source() : null;
+		$prefill = is_null( $source ) ? array() : Migrations::get_instance()->get_fields_of_source( $source );
+
 		// add the fields of the service.
 		$service_fields = $listing_obj->get_fields();
 		foreach ( $service_fields as $name => $field ) {
@@ -950,6 +1618,26 @@ class Setup {
 				$control_field['options'] = isset( $field['options'] ) && is_array( $field['options'] ) ? array_values( $field['options'] ) : array();
 			}
 
+			// get the name of the field in the setup.
+			$field_name = $this->get_field_name( $listing_obj->get_name(), (string) $name );
+
+			// use the values of another offload plugin.
+			if ( ! is_null( $source ) && isset( $prefill[ $name ] ) && '' !== $prefill[ $name ] ) {
+				if ( 'PasswordControl' === $control ) {
+					// save the password, as it could not be sent to the browser.
+					$this->prefill_password( $field_name, $prefill[ $name ], (string) $source['id'] );
+					$control_field['required'] = false;
+					/* translators: %1$s will be replaced by the name of a plugin. */
+					$control_field['help'] = sprintf( esc_html__( 'Taken over from %1$s. Leave this field empty to use it.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ) );
+				} else {
+					$control_field['default'] = 'CheckboxControl' === $control ? absint( $prefill[ $name ] ) : $prefill[ $name ];
+				}
+
+				// add the field.
+				$fields[ $field_name ] = $control_field;
+				continue;
+			}
+
 			// use the value of the field as default, but never for passwords.
 			if ( 'PasswordControl' !== $control && isset( $field['value'] ) && is_scalar( $field['value'] ) && '' !== (string) $field['value'] ) {
 				$control_field['default'] = 'CheckboxControl' === $control ? absint( $field['value'] ) : (string) $field['value'];
@@ -958,7 +1646,7 @@ class Setup {
 			}
 
 			// add the field.
-			$fields[ $this->get_field_name( $listing_obj->get_name(), (string) $name ) ] = $control_field;
+			$fields[ $field_name ] = $control_field;
 		}
 
 		// add the hints.
@@ -1071,6 +1759,28 @@ class Setup {
 				'required'    => true,
 			);
 			$has_options                      = true;
+		}
+
+		// add the information and the deactivation of the other offload plugin.
+		$source = 'migrate' === $goal['action'] ? $this->get_chosen_migration_source() : null;
+		if ( ! is_null( $source ) ) {
+			$fields['migration'] = array(
+				'type' => 'Text',
+				/* translators: %1$d will be replaced by a number, %2$s by the name of a plugin, %3$s by the name of a bucket. */
+				'text' => '<p>' . sprintf( esc_html( _n( '%1$d file of %2$s in %3$s will be used as external file.', '%1$d files of %2$s in %3$s will be used as external files.', absint( $source['count'] ), 'external-files-in-media-library' ) ), absint( $source['count'] ), esc_html( (string) $source['label'] ), '<code>' . esc_html( (string) $source['bucket'] ) . '</code>' ) . ' ' . esc_html__( 'Nothing is uploaded or deleted. Their local copies and the data of the other plugin are kept, so you could switch back.', 'external-files-in-media-library' ) . '</p>',
+			);
+
+			// ask to deactivate the other plugin, if it is active.
+			if ( '' !== $source['plugin_file'] ) {
+				$fields[ self::FIELD_MIGRATION_DEACTIVATE ] = array(
+					'type'     => 'CheckboxControl',
+					/* translators: %1$s will be replaced by the name of a plugin. */
+					'label'    => sprintf( __( 'Deactivate %1$s at the start of the migration', 'external-files-in-media-library' ), (string) $source['label'] ),
+					'help'     => __( 'Both plugins must not change the URLs of your files at the same time. If you do not want to deactivate it, cancel the quickstart.', 'external-files-in-media-library' ),
+					'required' => true,
+				);
+			}
+			$has_options = true;
 		}
 
 		// show a hint if there are no options.
@@ -1188,6 +1898,12 @@ class Setup {
 			return false;
 		}
 
+		// return the service of the chosen files of another offload plugin.
+		if ( 'migrate' === $goal['action'] ) {
+			$source = $this->get_chosen_migration_source();
+			return is_null( $source ) ? false : $this->get_usable_service( (string) $source['service'] );
+		}
+
 		// get the name of the service: the goal could define it.
 		$name = '' !== $goal['service'] ? $goal['service'] : $this->get_value( self::FIELD_SERVICE );
 
@@ -1294,6 +2010,9 @@ class Setup {
 		if ( ! $this->is_allowed() ) {
 			return $response;
 		}
+
+		// install the extension of the chosen service, if this has been confirmed.
+		$this->run_install();
 
 		// run the check, if the access data are complete.
 		$this->run_check();
@@ -1587,7 +2306,7 @@ class Setup {
 
 		// step 3: test the connection, if files should be exported.
 		$this->set_process_label( __( 'Testing the connection.', 'external-files-in-media-library' ) );
-		if ( 'export' === $goal['action'] && $service_obj instanceof Service_Base ) {
+		if ( in_array( $goal['action'], array( 'export', 'migrate' ), true ) && $service_obj instanceof Service_Base ) {
 			$this->run_connection_test( $service_obj, $term_id );
 		}
 		$this->update_process_step();
@@ -1847,6 +2566,10 @@ class Setup {
 				$this->add_process_message( __( 'The first synchronization has been run. Large directories are synchronized in the background, the progress is shown in the admin bar.', 'external-files-in-media-library' ), true );
 				break;
 
+			case 'migrate':
+				$this->run_migration( $term_id );
+				break;
+
 			case 'import':
 				// get the directory of the external source.
 				$term_data = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id );
@@ -1888,6 +2611,57 @@ class Setup {
 		 * @param array<string,mixed> $goal    The goal.
 		 */
 		do_action( 'efml_setup_run_action', $action, $term_id, $goal );
+	}
+
+	/**
+	 * Start the migration of the chosen files of another offload plugin.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return void
+	 */
+	private function run_migration( int $term_id ): void {
+		// get the chosen files.
+		$source = $this->get_chosen_migration_source();
+
+		// bail if they are not known anymore.
+		if ( is_null( $source ) ) {
+			$this->add_process_message( __( 'The files of the other offload plugin could not be found anymore. Nothing has been taken over.', 'external-files-in-media-library' ), false );
+			return;
+		}
+
+		// deactivate the other plugin, if it is active.
+		if ( '' !== $source['plugin_file'] ) {
+			// bail if the deactivation has not been confirmed.
+			if ( 1 !== absint( $this->get_value( self::FIELD_MIGRATION_DEACTIVATE ) ) ) {
+				/* translators: %1$s will be replaced by the name of a plugin. */
+				$this->add_process_message( sprintf( __( 'Nothing has been taken over, as %1$s should not be deactivated.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ) ), false );
+				return;
+			}
+
+			// bail if it could not be deactivated.
+			if ( ! Migrations::get_instance()->deactivate_plugin( $source ) ) {
+				/* translators: %1$s will be replaced by the name of a plugin. */
+				$this->add_process_message( sprintf( __( '%1$s could not be deactivated. Nothing has been taken over.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ) ), false );
+				return;
+			}
+
+			/* translators: %1$s will be replaced by the name of a plugin. */
+			$this->add_process_message( sprintf( __( '%1$s has been deactivated.', 'external-files-in-media-library' ), esc_html( (string) $source['label'] ) ), true );
+		}
+
+		// start the migration.
+		$result = Migrations::get_instance()->start( $source, $term_id );
+
+		// show the result, if it is finished.
+		if ( $result['finished'] ) {
+			/* translators: %1$d and %2$d will be replaced by numbers, %3$s by a URL. */
+			$this->add_process_message( sprintf( __( '%1$d files have been taken over, %2$d failed. Details are in the <a href="%3$s">log</a>.', 'external-files-in-media-library' ), $result['done'], $result['failed'], esc_url( Settings::get_instance()->get_url( 'eml_logs' ) ) ), 0 === $result['failed'] );
+			return;
+		}
+
+		/* translators: %1$d and %2$d will be replaced by numbers. */
+		$this->add_process_message( sprintf( __( '%1$d of %2$d files have been taken over. The others are taken over in the background, the progress is shown in the admin bar.', 'external-files-in-media-library' ), $result['done'], $result['total'] ), true );
 	}
 
 	/**
@@ -2029,8 +2803,14 @@ class Setup {
 	 */
 	public function clear_answers(): void {
 		\easySetupForWordPress\Setup::get_instance()->delete_field_values( self::NAME );
+
+		// delete the values also directly: the library only deletes them after the configuration has been set,
+		// which is not the case when the answers are cleared at the start of the request.
+		delete_user_meta( get_current_user_id(), 'esfw_values_' . self::NAME );
 		delete_user_meta( get_current_user_id(), self::CHECK_META );
 		delete_user_meta( get_current_user_id(), self::OAUTH_RETURN_META );
+		delete_user_meta( get_current_user_id(), self::PREFILLED_META );
+		delete_user_meta( get_current_user_id(), self::INSTALL_META );
 	}
 
 	/**
@@ -2108,5 +2888,7 @@ class Setup {
 		delete_metadata( 'user', 0, self::CHECK_META, '', true );
 		delete_metadata( 'user', 0, self::OAUTH_RETURN_META, '', true );
 		delete_metadata( 'user', 0, self::FORWARD_META, '', true );
+		delete_metadata( 'user', 0, self::PREFILLED_META, '', true );
+		delete_metadata( 'user', 0, self::INSTALL_META, '', true );
 	}
 }

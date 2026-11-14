@@ -7,10 +7,11 @@ You find it under Media → "Add External Files" as second tile "Quickstart", in
 ## Steps
 
 1. **Choose a goal:** What would you like to do? The goals are described below.
-2. **Choose a service:** Only the services, which support the chosen goal, are shown, e.g. only services with export for offloading. Some goals define the service, then this step is skipped.
-3. **Enter the access data:** The quickstart shows the fields of the service. Values, which are already defined as constant (e.g. in your `wp-config.php`) or saved in the settings, are not asked again. Connect Dropbox via the button "Connect Dropbox", afterwards you return to the quickstart.
-4. **Check the connection and choose the options:** The quickstart checks the connection with your details. If it fails, you see the reason and go back to correct your details. If it works, you choose the options of the goal. They are preselected.
-5. **Configure:** The quickstart creates the external source, sets the settings and shows the result of each step.
+2. **Choose a service:** Only the services, which support the chosen goal, are shown, e.g. only services with export for offloading. Some goals define the service, then this step is skipped. Services from extensions, which are not installed yet (e.g. AWS S3 or Cloudflare R2), are shown with a hint about the extension, if you are allowed to install plugins.
+3. **Install the extension (if needed):** If the chosen service needs an extension, the quickstart explains which one and why (see [extensions](extensions.md)). If you confirm the installation, it loads the newest release from GitHub, installs and activates it and shows the result. If this fails, you see the reason and could try it again.
+4. **Enter the access data:** The quickstart shows the fields of the service. Values, which are already defined as constant (e.g. in your `wp-config.php`) or saved in the settings, are not asked again. Connect Dropbox via the button "Connect Dropbox", afterwards you return to the quickstart.
+5. **Check the connection and choose the options:** The quickstart checks the connection with your details. If it fails, you see the reason and go back to correct your details. If it works, you choose the options of the goal. They are preselected.
+6. **Configure:** The quickstart creates the external source, sets the settings and shows the result of each step.
 
 ## Goals
 
@@ -21,6 +22,7 @@ You find it under Media → "Add External Files" as second tile "Quickstart", in
 | Embed and synchronize external files | all services with synchronization | enable the synchronization, interval, first synchronization |
 | Import local files | local directory of your hosting | import of the directory, optionally copied as real files into your media library |
 | Synchronize files from FTP | FTP, FTPS and SFTP | enable the synchronization, interval, first synchronization |
+| Switch from another offload plugin | the service of the found bucket | take over the files of the other plugin without uploading them again, see [migration](migration.md). Only shown if such files have been found. |
 
 Large directories are imported or synchronized in the background as usual, the progress is shown in the admin bar.
 

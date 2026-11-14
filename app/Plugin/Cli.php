@@ -929,4 +929,85 @@ class Cli {
 		}
 		\WP_CLI::success( __( 'This website is the main website.', 'external-files-in-media-library' ) );
 	}
+
+	/**
+	 * Show the state of the migration of files from other offload plugins, continue it or revert it.
+	 *
+	 * Reverting a migration uses the local files and the data of the other plugin again. Activate the other plugin
+	 * afterwards.
+	 *
+	 * <action>
+	 * : "status" to show the state, "run" to continue a running migration, "revert" to revert the migration.
+	 *
+	 * [--attachment=<id>]
+	 * : Revert only the given attachment.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Revert the migration of all files.
+	 *     $ wp eml migration revert
+	 *
+	 * @param array<int,string>    $actions List of actions (only the first one is used).
+	 * @param array<string,string> $arguments List of arguments.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function migration( array $actions = array(), array $arguments = array() ): void {
+		// get the object.
+		$migrations_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Migrations::get_instance();
+
+		// get the requested action.
+		$action = ! empty( $actions[0] ) ? $actions[0] : 'status';
+
+		// continue the running migration.
+		if ( 'run' === $action ) {
+			// bail if no migration is running.
+			if ( empty( $migrations_obj->get_run() ) ) {
+				\WP_CLI::success( __( 'No migration is running.', 'external-files-in-media-library' ) );
+				return;
+			}
+
+			// run it without time limit.
+			$migrations_obj->work( PHP_FLOAT_MAX );
+			$result = $migrations_obj->get_last_result();
+			/* translators: %1$d, %2$d and %3$d will be replaced by numbers. */
+			\WP_CLI::success( sprintf( __( 'The migration has been completed: %1$d files taken over, %2$d skipped, %3$d failed.', 'external-files-in-media-library' ), absint( $result['done'] ?? 0 ), absint( $result['skipped'] ?? 0 ), absint( $result['failed'] ?? 0 ) ) );
+			return;
+		}
+
+		// revert the migration.
+		if ( 'revert' === $action ) {
+			// get the attachments.
+			$attachment_ids = ! empty( $arguments['attachment'] ) ? array( absint( $arguments['attachment'] ) ) : $migrations_obj->get_migrated_attachments();
+
+			// revert them.
+			$count = 0;
+			foreach ( $attachment_ids as $attachment_id ) {
+				if ( $migrations_obj->revert( $attachment_id ) ) {
+					++$count;
+				}
+			}
+
+			/* translators: %1$d will be replaced by a number. */
+			\WP_CLI::success( sprintf( __( 'The migration of %1$d files has been reverted. Activate the other offload plugin again to use them.', 'external-files-in-media-library' ), $count ) );
+			return;
+		}
+
+		// bail on unknown action.
+		if ( 'status' !== $action ) {
+			\WP_CLI::error( __( 'Use "status", "run" or "revert".', 'external-files-in-media-library' ) );
+		}
+
+		// show the running migration.
+		$run = $migrations_obj->get_run();
+		if ( ! empty( $run ) ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			\WP_CLI::log( sprintf( __( 'A migration is running: %1$d of %2$d files processed.', 'external-files-in-media-library' ), absint( $run['done'] ?? 0 ) + absint( $run['skipped'] ?? 0 ) + absint( $run['failed'] ?? 0 ), absint( $run['total'] ?? 0 ) ) );
+		}
+
+		// show the amount of migrated files.
+		/* translators: %1$d will be replaced by a number. */
+		\WP_CLI::success( sprintf( __( '%1$d files have been taken over from other offload plugins.', 'external-files-in-media-library' ), count( $migrations_obj->get_migrated_attachments() ) ) );
+	}
 }

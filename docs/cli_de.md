@@ -113,3 +113,19 @@ Diese Website als Hauptseite festlegen, z. B. nach dem Umzug der Live-Seite auf 
 Diese Website als Kopie bestätigen (der Schutz bleibt aktiv, der Hinweis im Backend wird ausgeblendet):
 
 `wp eml site copy`
+
+## Umzug von anderen Offload-Plugins
+
+Zeigt den Stand des Umzugs von Dateien anderer Offload-Plugins (siehe [Umzug](migration_de.md)):
+
+`wp eml migration status`
+
+Einen laufenden Umzug ohne Zeitlimit fortsetzen, z. B. wenn WP-Cron abgeschaltet ist:
+
+`wp eml migration run`
+
+Den Umzug aller Dateien oder eines einzelnen Anhangs rückgängig machen. Die Dateien werden dann wieder mit ihren lokalen Dateien und den Daten des anderen Plugins genutzt, aktiviere das andere Plugin danach wieder:
+
+`wp eml migration revert`
+
+`wp eml migration revert --attachment=42`

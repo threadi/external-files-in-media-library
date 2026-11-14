@@ -113,3 +113,19 @@ Set this website as main website, e.g. after moving the live site to a new domai
 Confirm this website as copy (the protection stays active, the hint in the backend is hidden):
 
 `wp eml site copy`
+
+## Migration from other offload plugins
+
+Show the state of the migration of files from other offload plugins (see [migration](migration.md)):
+
+`wp eml migration status`
+
+Continue a running migration without time limit, e.g. if WP-Cron is disabled:
+
+`wp eml migration run`
+
+Revert the migration of all files or of a single attachment. The files are used with their local files and the data of the other plugin again, activate the other plugin afterwards:
+
+`wp eml migration revert`
+
+`wp eml migration revert --attachment=42`

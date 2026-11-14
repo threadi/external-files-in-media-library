@@ -1069,75 +1069,8 @@ class Export extends Tools_Base {
 				}
 			}
 
-			// mark this attachment as one of our own plugin through setting the URL.
-			$external_file_obj->set_url( $url );
-
-			// set the used service.
-			$external_file_obj->set_service_name( $listing_obj->get_name() );
-
-			// set the title.
-			$external_file_obj->set_title( basename( $file ) );
-
-			// set availability-status (true is for 'is available', false if it is not).
-			$external_file_obj->set_availability( true );
-
-			// mark if this file is an external file locally saved.
-			$external_file_obj->set_is_local_saved( false );
-
-			// mark if this file is saved privately on the external source.
-			$external_file_obj->set_private( $private_file );
-
-			// save the credentials on the object, if set.
-			$external_file_obj->set_fields( $fields );
-
-			// set date of import (this is not the attachment datetime).
-			$external_file_obj->set_date();
-
-			// assign the file to this term.
-			wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
-
-			// mark as exported file.
-			update_post_meta( $external_file_obj->get_id(), 'eml_exported_file', time() );
-
-			// save the used filename, so it will not be used for other exported files.
-			update_post_meta( $external_file_obj->get_id(), 'efml_export_filename', basename( $file ) );
-
-			// remove the markers of the export via queue.
-			delete_post_meta( $external_file_obj->get_id(), 'efml_export_queued' );
-			delete_post_meta( $external_file_obj->get_id(), 'efml_export_failed' );
-
-			// get the metadata.
-			$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
-			if ( ! is_array( $meta_data ) ) {
-				$meta_data = array();
-			}
-
-			// remove the sizes, as their local files will be deleted.
-			unset( $meta_data['sizes'] );
-
-			// save the metadata - this triggers update_attachment_metadata(), which deletes the local files.
-			wp_update_attachment_metadata( $external_file_obj->get_id(), $meta_data );
-
-			// point the attachment at the external URL - after the local files have been removed.
-			update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
-
-			// add this term to the list of export sources of this file.
-			$export_sources = get_post_meta( $external_file_obj->get_id(), 'efml_export_sources', true );
-			if ( ! is_array( $export_sources ) ) {
-				$export_sources = array();
-			}
-			$export_sources[] = $term_id;
-			update_post_meta( $external_file_obj->get_id(), 'efml_export_sources', $export_sources );
-
-			// save the used folder on this external source, so the file could be deleted there later.
-			if ( '' !== $folder ) {
-				$folders = get_post_meta( $external_file_obj->get_id(), 'efml_export_folders', true );
-				if ( ! is_array( $folders ) ) {
-					$folders = array();
-				}
-				$folders[ $term_id ] = $folder;
-				update_post_meta( $external_file_obj->get_id(), 'efml_export_folders', $folders );
-			}
+			// save the attachment as exported external file.
+			$this->save_as_exported( $external_file_obj, $url, $listing_obj->get_name(), basename( $file ), $private_file, $fields, $term_id, $folder );
 
 			// log this event.
 			/* translators: %1$s will be replaced by the external source title. */
@@ -1151,6 +1084,94 @@ class Export extends Tools_Base {
 
 		// return the result.
 		return $successfully_exported;
+	}
+
+	/**
+	 * Save the given attachment as exported external file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param File                $external_file_obj The external file object of the attachment.
+	 * @param string              $url               The URL of the file on the external source.
+	 * @param string              $service_name      The name of the service.
+	 * @param string              $file_name         The name of the file.
+	 * @param bool                $private_file      Whether the file is saved privately.
+	 * @param array<string,mixed> $fields            The fields of the external source.
+	 * @param int                 $term_id           The ID of the external source.
+	 * @param string              $folder            The folder on the external source (empty for none).
+	 *
+	 * @return void
+	 */
+	public function save_as_exported( File $external_file_obj, string $url, string $service_name, string $file_name, bool $private_file, array $fields, int $term_id, string $folder = '' ): void {
+		// mark this attachment as one of our own plugin through setting the URL.
+		$external_file_obj->set_url( $url );
+
+		// set the used service.
+		$external_file_obj->set_service_name( $service_name );
+
+		// set the title.
+		$external_file_obj->set_title( $file_name );
+
+		// set availability-status (true is for 'is available', false if it is not).
+		$external_file_obj->set_availability( true );
+
+		// mark if this file is an external file locally saved.
+		$external_file_obj->set_is_local_saved( false );
+
+		// mark if this file is saved privately on the external source.
+		$external_file_obj->set_private( $private_file );
+
+		// save the credentials on the object, if set.
+		$external_file_obj->set_fields( $fields );
+
+		// set date of import (this is not the attachment datetime).
+		$external_file_obj->set_date();
+
+		// assign the file to this term.
+		wp_set_object_terms( $external_file_obj->get_id(), $term_id, Taxonomy::get_instance()->get_name() );
+
+		// mark as exported file.
+		update_post_meta( $external_file_obj->get_id(), 'eml_exported_file', time() );
+
+		// save the used filename, so it will not be used for other exported files.
+		update_post_meta( $external_file_obj->get_id(), 'efml_export_filename', $file_name );
+
+		// remove the markers of the export via queue.
+		delete_post_meta( $external_file_obj->get_id(), 'efml_export_queued' );
+		delete_post_meta( $external_file_obj->get_id(), 'efml_export_failed' );
+
+		// get the metadata.
+		$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
+		if ( ! is_array( $meta_data ) ) {
+			$meta_data = array();
+		}
+
+		// remove the sizes, as their local files will be deleted.
+		unset( $meta_data['sizes'] );
+
+		// save the metadata - this triggers update_attachment_metadata(), which deletes the local files.
+		wp_update_attachment_metadata( $external_file_obj->get_id(), $meta_data );
+
+		// point the attachment at the external URL - after the local files have been removed.
+		update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
+
+		// add this term to the list of export sources of this file.
+		$export_sources = get_post_meta( $external_file_obj->get_id(), 'efml_export_sources', true );
+		if ( ! is_array( $export_sources ) ) {
+			$export_sources = array();
+		}
+		$export_sources[] = $term_id;
+		update_post_meta( $external_file_obj->get_id(), 'efml_export_sources', $export_sources );
+
+		// save the used folder on this external source, so the file could be deleted there later.
+		if ( '' !== $folder ) {
+			$folders = get_post_meta( $external_file_obj->get_id(), 'efml_export_folders', true );
+			if ( ! is_array( $folders ) ) {
+				$folders = array();
+			}
+			$folders[ $term_id ] = $folder;
+			update_post_meta( $external_file_obj->get_id(), 'efml_export_folders', $folders );
+		}
 	}
 
 	/**
@@ -1529,6 +1550,11 @@ class Export extends Tools_Base {
 
 		// bail if this is not an exported file.
 		if ( 0 === absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) ) {
+			return $data;
+		}
+
+		// bail if this file has been taken over from another offload plugin, as its local files are kept.
+		if ( ! empty( get_post_meta( $external_file_obj->get_id(), 'efml_migration', true ) ) ) {
 			return $data;
 		}
 

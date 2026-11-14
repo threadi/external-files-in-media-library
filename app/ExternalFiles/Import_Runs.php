@@ -521,7 +521,7 @@ class Import_Runs {
 	 *
 	 * @return float
 	 */
-	private function get_deadline(): float {
+	public function get_deadline(): float {
 		// no limit via WP CLI.
 		if ( Helper::is_cli() ) {
 			return PHP_FLOAT_MAX;

@@ -27,6 +27,13 @@ Exportiere neue Uploads und vorhandene Dateien zu einer externen Quelle, z. B. z
 * Im Backend: Einstellungen → „Export“, danach den Export für eine externe Quelle aktivieren
 * Dokumentation: [Verzeichnisse](import/directories_de.md) für die externen Quellen, die Dokumentationen der Erweiterungen für ihre Dienste
 
+### … von einem anderen Offload-Plugin umsteigen
+
+Dateien, die WP Offload Media, Advanced Media Offloader, Stowaway oder Offload Media – Cloud Storage ausgelagert haben, nutzt du ohne erneuten Upload als externe Dateien weiter. Lokale Kopien und die Daten des anderen Plugins bleiben erhalten.
+
+* Im Backend: Schnellstart → „Von einem anderen Offload-Plugin umsteigen“
+* Dokumentation: [Umzug](migration_de.md)
+
 ### … Dateien privat ausliefern
 
 Speichere exportierte Dateien in Speichern, die nicht öffentlich sind. Sie werden über den Proxy deiner Website oder über zeitlich begrenzte Links ausgeliefert. Das funktioniert auch für Downloads in WooCommerce.
@@ -57,7 +64,7 @@ Auf Kopien deiner Website (z. B. einer Staging-Website) werden keine Dateien zu 
 ## Schnell finden
 
 * **Schnellstart:** Medien → „Externe Dateien hinzufügen“ → Kachel „Schnellstart“ führt dich durch die häufigsten Aufgaben, siehe [Schnellstart](setup_de.md).
-* **Dienst wählen:** Medien → „Externe Dateien hinzufügen“ zeigt alle Dienste als Kacheln. Icons zeigen, welche Funktionen ein Dienst bietet (Synchronisierung, Export, private Dateien, Zugangsdaten per Konstante). Mit dem Filter „Funktion“ über den Kacheln zeigst du nur Dienste mit einer bestimmten Funktion. Dienste aus Erweiterungen, die nicht installiert sind, sind als „Erweiterung“ markiert und lassen sich dort installieren.
+* **Dienst wählen:** Medien → „Externe Dateien hinzufügen“ zeigt alle Dienste als Kacheln. Icons zeigen, welche Funktionen ein Dienst bietet (Synchronisierung, Export, private Dateien, Zugangsdaten per Konstante). Mit dem Filter „Funktion“ über den Kacheln zeigst du nur Dienste mit einer bestimmten Funktion. Dienste aus Erweiterungen, die nicht installiert sind, sind als „Erweiterung“ markiert und lassen sich dort installieren. Warum manche Dienste eine Erweiterung brauchen, steht unter [Erweiterungen](extensions_de.md).
 * **Befehlspalette:** Drücke auf jeder Seite des Backends `Strg + K` (`Cmd + K` unter macOS) und gib z. B. „FTP“, „S3“, „Export“ oder den Namen einer deiner externen Quellen ein. Dienste werden auch unter anderen Namen gefunden, z. B. „Nextcloud“ für WebDAV oder „Hetzner“ für die S3-Erweiterung. Die Befehlspalette gibt es seit WordPress 6.9 auf allen Seiten des Backends.
 * **Hilfe:** Der Reiter „Hilfe“ oben rechts auf den Seiten dieses Plugins beginnt mit „Was ist möglich?“.
 

@@ -134,6 +134,10 @@ class Help_System {
 			$content .= ' <a href="' . esc_url( $goal['docs_url'] ) . '" target="_blank">' . esc_html__( 'Documentation', 'external-files-in-media-library' ) . Helper::get_a11n_window_hint() . '</a></p>';
 		}
 
+		// explain, why some services are provided by extensions.
+		$content .= '<h3>' . esc_html__( 'Why do some services need an extension?', 'external-files-in-media-library' ) . '</h3>';
+		$content .= '<p>' . esc_html__( 'Some providers, e.g. AWS S3 or Google Cloud Storage, offer their libraries only under licenses, which are not compatible with the GPL of WordPress. Such libraries may not be part of a plugin in the WordPress plugin directory. Therefore these services are provided by free extensions, which you can install with one click in the list of services or in the quickstart.', 'external-files-in-media-library' ) . ' <a href="' . esc_url( Helper::get_documentation_url( 'extensions' ) ) . '" target="_blank">' . esc_html__( 'Documentation', 'external-files-in-media-library' ) . Helper::get_a11n_window_hint() . '</a></p>';
+
 		// add the hint for the command palette.
 		$content .= '<p><strong>' . esc_html__( 'Tip:', 'external-files-in-media-library' ) . '</strong> ' . esc_html__( 'Press Ctrl + K (Cmd + K on macOS) to search for services, your external sources and the settings of this plugin, e.g. "FTP" or "Export". This is available in WordPress 6.9 and newer.', 'external-files-in-media-library' ) . '</p>';
 

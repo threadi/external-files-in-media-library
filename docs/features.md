@@ -27,6 +27,13 @@ Export new uploads and existing files to an external source, e.g. AWS S3 and S3-
 * In the backend: settings → "Export", then enable the export for an external source
 * Documentation: [Directories](import/directories.md) for the external sources, the documentations of the extensions for their services
 
+### … switch from another offload plugin
+
+Files, which WP Offload Media, Advanced Media Offloader, Stowaway or Offload Media – Cloud Storage have offloaded, could be used as external files without uploading them again. Local copies and the data of the other plugin are kept.
+
+* In the backend: quickstart → "Switch from another offload plugin"
+* Documentation: [migration](migration.md)
+
 ### … deliver files privately
 
 Save exported files in storages, which are not public. They are delivered via the proxy of your website or via temporary links. This also works for downloads in WooCommerce.
@@ -57,7 +64,7 @@ On copies of your website (e.g. a staging website), files are not exported to or
 ## Find things quickly
 
 * **Quickstart:** Media → "Add External Files" → tile "Quickstart" guides you through the most common tasks, see [quickstart](setup.md).
-* **Choose a service:** Media → "Add external files" shows all services as tiles. Icons show which features each service offers (synchronization, export, private files, access data via constants). Use the filter "Feature" above the tiles to show only services with a specific feature. Services from extensions, which are not installed, are marked as "Extension" and could be installed there.
+* **Choose a service:** Media → "Add external files" shows all services as tiles. Icons show which features each service offers (synchronization, export, private files, access data via constants). Use the filter "Feature" above the tiles to show only services with a specific feature. Services from extensions, which are not installed, are marked as "Extension" and could be installed there. Why some services need an extension is explained in [extensions](extensions.md).
 * **Command palette:** Press `Ctrl + K` (`Cmd + K` on macOS) on any page of the backend and enter e.g. "FTP", "S3", "Export" or the name of one of your external sources. Services are also found by other names, e.g. "Nextcloud" for WebDAV or "Hetzner" for the S3 extension. The command palette is available on all pages of the backend since WordPress 6.9.
 * **Help:** The tab "Help" at the top right of the pages of this plugin starts with "What is possible?".
 

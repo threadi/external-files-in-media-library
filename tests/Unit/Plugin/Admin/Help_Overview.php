@@ -27,6 +27,8 @@ class Help_Overview extends externalFilesTests {
 		$this->assertStringContainsString( 'tab=eml_export', $list[0]['content'] );
 		$this->assertStringContainsString( 'subtab=eml_proxy', $list[0]['content'] );
 		$this->assertStringContainsString( 'docs/constants.md', $list[0]['content'] );
+		$this->assertStringContainsString( 'Why do some services need an extension?', $list[0]['content'] );
+		$this->assertStringContainsString( 'docs/extensions.md', $list[0]['content'] );
 	}
 
 	/**
