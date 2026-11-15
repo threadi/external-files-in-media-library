@@ -319,8 +319,8 @@ class Export extends Tools_Base {
 		$field->set_setting( $setting_local_files );
 		$setting_local_files->set_field( $field );
 
-		// add the button to export all local files, if an external source is enabled for the export.
-		if ( ! empty( $external_sources ) ) {
+		// add the button to export all local files, if an external source is enabled for the export and files could be exported at the moment.
+		if ( ! empty( $external_sources ) && '' === $this->get_export_sources_problem() ) {
 			$setting = $settings_obj->add_setting( 'eml_export_local_files_now' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -466,6 +466,13 @@ class Export extends Tools_Base {
 		// get the listings object.
 		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
 
+		// show the state, if the export is enabled, but the service is not available at the moment (e.g. its extension is not active).
+		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base || $listing_obj->is_disabled() ) {
+			if ( absint( get_term_meta( $term_id, 'efml_export', true ) ) > 0 ) {
+				return $this->get_unusable_export_state( $term_id );
+			}
+		}
+
 		// bail if no object could be found.
 		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
 			return $this->get_not_supported_hint( $listing_obj );
@@ -496,6 +503,26 @@ class Export extends Tools_Base {
 
 		// return the link for export settings.
 		return implode( ' ', $actions );
+	}
+
+	/**
+	 * Return the state of an external source with enabled export, whose service is not available at the moment.
+	 *
+	 * The export could be switched off then, e.g. if the service is not needed anymore.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return string
+	 */
+	private function get_unusable_export_state( int $term_id ): string {
+		// get the reason.
+		$problem = $this->get_export_source_problem( $term_id );
+		if ( '' === $problem ) {
+			$problem = __( 'It is not usable at the moment.', 'external-files-in-media-library' );
+		}
+
+		// show the enabled state, which could only be switched off, and the reason.
+		return '<div class="eml-switch-toggle"><input id="export-on-' . absint( $term_id ) . '" name="export-states[' . absint( $term_id ) . ']" class="green" data-term-id="' . absint( $term_id ) . '" value="1" type="radio" checked /><label for="export-on-' . absint( $term_id ) . '" class="green">' . esc_html__( 'On', 'external-files-in-media-library' ) . '</label><input id="export-off-' . absint( $term_id ) . '" name="export-states[' . absint( $term_id ) . ']" class="red" type="radio" data-term-id="' . absint( $term_id ) . '" value="0" /><label for="export-off-' . absint( $term_id ) . '" class="red">' . esc_html__( 'Off', 'external-files-in-media-library' ) . '</label></div><p class="efml-export-unusable"><span class="dashicons dashicons-warning"></span> <strong>' . esc_html__( 'Not usable at the moment.', 'external-files-in-media-library' ) . '</strong> ' . wp_kses_post( $problem ) . '</p>';
 	}
 
 	/**
@@ -846,19 +873,33 @@ class Export extends Tools_Base {
 			return '';
 		}
 
-		// get the type of this external source.
-		$type = (string) get_term_meta( $term_id, 'type', true );
-
-		// get the service object.
-		$listing_obj = $this->get_service_object_by_type( $type );
-
 		// bail if the service is not available or does not support exports.
-		if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
-			return Services::get_instance()->get_missing_service_hint( $type );
+		if ( $this->is_service_missing( $term_id ) ) {
+			return Services::get_instance()->get_missing_service_hint( (string) get_term_meta( $term_id, 'type', true ) );
 		}
 
 		// all fine.
 		return '';
+	}
+
+	/**
+	 * Return whether the service of the given external source is not available at the moment.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	private function is_service_missing( int $term_id ): bool {
+		// bail if the services are not initialized yet.
+		if ( ! Services::get_instance()->is_initialized() ) {
+			return false;
+		}
+
+		// get the service object.
+		$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// return whether it is not available or does not support exports.
+		return ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base;
 	}
 
 	/**
@@ -1024,10 +1065,16 @@ class Export extends Tools_Base {
 		// create the message.
 		$message  = '<strong>' . __( 'New files in your media library are not exported at the moment.', 'external-files-in-media-library' ) . '</strong> ' . $problem . '<br><br>';
 		$message .= __( 'They stay local files. As soon as the reason is gone, you can export them with "Export now" in the export settings.', 'external-files-in-media-library' ) . ' ';
+		// name the plugins, if a service is missing.
+		foreach ( $this->get_export_terms() as $term_id ) {
+			if ( $this->is_service_missing( $term_id ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				$message .= sprintf( __( 'Activate the missing extension in <a href="%1$s">your plugins</a> or switch off the export of the external source in your external sources.', 'external-files-in-media-library' ), esc_url( admin_url( 'plugins.php' ) ) ) . ' ';
+				break;
+			}
+		}
 		/* translators: %1$s will be replaced by a URL. */
-		$message .= sprintf( __( 'Check <a href="%1$s">your plugins</a>', 'external-files-in-media-library' ), esc_url( admin_url( 'plugins.php' ) ) ) . ' ';
-		/* translators: %1$s will be replaced by a URL. */
-		$message .= sprintf( __( 'or <a href="%1$s">the export settings</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->get_url( 'eml_export' ) ) );
+		$message .= sprintf( __( 'Manage <a href="%1$s">your external sources</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_listing_url() ) );
 
 		// add the hint.
 		$transient_obj = Transients::get_instance()->add();

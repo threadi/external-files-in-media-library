@@ -343,6 +343,31 @@ class ExportSources extends externalFilesTests {
 	}
 
 	/**
+	 * Test the column in the list of external sources: the export of a source without service could be switched off.
+	 *
+	 * @return void
+	 */
+	public function test_sources_list_column(): void {
+		$export_obj = Export::get_instance();
+
+		// the enabled source without service shows its state, the reason and the switch.
+		$content = $export_obj->add_column_content_options( '', 'efml_export', $this->r2_term_id );
+		$this->assertStringContainsString( 'export-off-' . $this->r2_term_id, $content );
+		$this->assertStringContainsString( 'Cloudflare R2', $content );
+		$this->assertStringContainsString( 'efml-export-unusable', $content );
+
+		// after switching it off, it shows the hint as before.
+		$export_obj->set_state_for_term( $this->r2_term_id, 0 );
+		$content = $export_obj->add_column_content_options( '', 'efml_export', $this->r2_term_id );
+		$this->assertStringNotContainsString( 'export-off-' . $this->r2_term_id, $content );
+		$this->assertStringNotContainsString( 'efml-export-unusable', $content );
+		$this->assertEquals( 0, absint( get_option( 'eml_export_main_source' ) ) );
+
+		// usable sources show the switch as before.
+		$this->assertStringContainsString( 'export-off-' . $this->local_term_id, $export_obj->add_column_content_options( '', 'efml_export', $this->local_term_id ) );
+	}
+
+	/**
 	 * Test the export of new uploads, while the main external source is not usable.
 	 *
 	 * @return void

@@ -26,7 +26,7 @@ Export new uploads and existing files to an external source, e.g. AWS S3 and S3-
 
 Files, which are already in your media library, are exported with one click: settings → "Export" → "Export existing files". They are exported one by one in the background, the admin bar shows the progress. A click on it opens the queue, where you could see each file and export files again, which could not be exported. The quickstart offers this as option, too.
 
-If the primary external source for exports could not be used (e.g. because the extension of its service has been deactivated), no files are exported, also not to the other external sources. They stay local files, a hint in the backend names the reason. Your settings are kept: as soon as the reason is gone, the export works again and "Export existing files" exports the files uploaded in the meantime.
+If the primary external source for exports could not be used (e.g. because the extension of its service has been deactivated), no files are exported, also not to the other external sources. They stay local files, a hint in the backend names the reason. If you do not need the external source anymore, switch off its export in the list of your external sources. Your settings are kept: as soon as the reason is gone, the export works again and "Export existing files" exports the files uploaded in the meantime.
 
 * In the backend: settings → "Export", then enable the export for an external source
 * Documentation: [Directories](import/directories.md) for the external sources, the documentations of the extensions for their services

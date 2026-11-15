@@ -907,3 +907,12 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 		}
 	}
 }
+
+/* state of an external source with enabled export, whose service is not available at the moment */
+.efml-export-unusable {
+	margin: 6px 0 0;
+	font-size: 12px;
+}
+.efml-export-unusable .dashicons {
+	color: #d63638;
+}

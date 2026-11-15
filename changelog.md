@@ -115,6 +115,8 @@
 ### Fixed
 
 - Fixed option "Export file" and the bulk action for the export in the media library being shown, although the service of the external source for exports is not available (e.g. its extension has been deactivated)
+- Fixed missing possibility to switch off the export of an external source, whose service is not available (e.g. its extension has been deactivated): the list of external sources shows the state with the reason
+- Fixed button "Export now" being shown, although files could not be exported at the moment
 - Fixed export dialog in the media library naming the last external source with enabled export instead of the primary external source
 - Fixed export of existing files, WP CLI and the abilities using external sources for exports, whose service is not available
 - Fixed: errors during the request of the DropBox account infos (e.g. if DropBox is not reachable) interrupted the request, e.g. of the settings or the quickstart
