@@ -163,6 +163,9 @@ class Install {
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );
+
+		// plan the single events for tasks, which have been interrupted by a deactivation (e.g. delayed exports).
+		Background_Events::get_instance()->resume();
 	}
 
 	/**
@@ -177,5 +180,8 @@ class Install {
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();
+
+		// remove the single events (e.g. delayed exports), their tasks are planned again after the activation.
+		Background_Events::get_instance()->remove_all();
 	}
 }

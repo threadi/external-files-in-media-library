@@ -14,7 +14,7 @@ Erfordert _External Files in Media Library_ 6.0.0 oder neuer.
 | Google Drive (nur mit Zugangsdaten für die ganze Website) | Proxy-Cache |
 | WebDAV | Proxy-Cache |
 
-FTP, SFTP und lokale Verzeichnisse sind ohnehin nicht über eine Browser-URL erreichbar und werden immer über den Proxy ausgeliefert.
+Private Dateien auf FTP, SFTP und in lokalen Verzeichnissen werden immer über den Proxy ausgeliefert. Nicht private Dateien dort werden über die öffentliche URL der externen Quelle ausgeliefert (die URL für exportierte Dateien in ihren Export-Einstellungen), wenn der Proxy für ihren Dateityp ausgeschaltet ist, sonst ebenfalls über den Proxy.
 
 ## Wie die Dateien ausgeliefert werden
 
@@ -22,7 +22,7 @@ In der Mediathek und im Beitragsinhalt steht immer die feste URL der Website, z.
 
 * **Proxy für den Dateityp aktiviert** (Einstellungen → Auslieferung): Die Website lädt die Datei einmal in ihren Cache und liefert sie selbst aus. Für Suchmaschinen ist das der sicherste Weg.
 * **Proxy für den Dateityp deaktiviert:** Die Website leitet auf einen Link mit begrenzter Gültigkeit weiter. Die Datei kommt direkt vom Anbieter, die Website überträgt sie nicht selbst. Kann der Dienst keine solchen Links erzeugen, wird der Cache genutzt.
-* Bestimmte Bildgrößen (z. B. `-150x150`) kommen immer aus dem Cache.
+* Bestimmte Bildgrößen (z. B. `-150x150`) kommen immer aus dem Cache. Wurden die Größen zusammen mit dem Bild exportiert, lädt die Website die angefragte Größe vom Anbieter in ihren Cache, sonst erstellt sie die Größe aus dem Bild. Bilder bekommen ein `srcset` mit diesen Größen, es enthält nur URLs deiner Website.
 
 ## Gültigkeit der Links
 

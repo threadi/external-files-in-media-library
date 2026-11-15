@@ -300,7 +300,36 @@ class FtpExport extends externalFilesTests {
 	}
 
 	/**
-	 * Test that an exported image is delivered via the proxy, even if the proxy for images is disabled.
+	 * Test that the sizes of an image are exported to the FTP server and deleted together with it.
+	 *
+	 * @return void
+	 */
+	public function test_sizes_are_exported_and_deleted(): void {
+		$this->create_export_source();
+		$file = trailingslashit( get_temp_dir() ) . 'efml-ftp-sizes.jpg';
+		imagejpeg( imagecreatetruecolor( 800, 600 ), $file );
+		$attachment_id = @self::factory()->attachment->create_upload_object( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertIsInt( $attachment_id );
+		$this->assertTrue( @Export::get_instance()->export_file( $attachment_id ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		// the sizes are on the server.
+		$sizes = \ExternalFilesInMediaLibrary\ExternalFiles\Sizes::get_instance()->get_sizes( $attachment_id, true );
+		$this->assertNotEmpty( $sizes );
+		foreach ( $sizes as $size ) {
+			$this->assertFileExists( $this->get_server_path( $size['file'] ) );
+			$this->assertStringStartsWith( 'ftp://', (string) $size['url'] );
+		}
+
+		// they are deleted together with the image.
+		Export::get_instance()->delete_exported_file( $attachment_id );
+		foreach ( $sizes as $size ) {
+			$this->assertFileDoesNotExist( $this->get_server_path( $size['file'] ) );
+		}
+	}
+
+	/**
+	 * Test that an exported image is delivered via the public URL of its external source, if the proxy for images is
+	 * disabled, and via the proxy, if no public URL is known.
 	 *
 	 * Browsers could not load its FTP-URL.
 	 *
@@ -313,6 +342,17 @@ class FtpExport extends externalFilesTests {
 		$attachment_id     = $this->upload( 'subdirectory/example-grey.jpg' );
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 		$this->assertTrue( $external_file_obj->is_valid() );
+
+		// the image and its sizes are delivered via the public URL of the external source.
+		$this->assertFalse( $external_file_obj->is_proxy_required() );
+		$this->assertStringStartsWith( 'https://cdn.example.com/files/', (string) wp_get_attachment_url( $attachment_id ) );
+		$image = wp_get_attachment_image_src( $attachment_id, 'thumbnail' );
+		$this->assertIsArray( $image );
+		$this->assertStringStartsWith( 'https://cdn.example.com/files/', $image[0] );
+		$this->assertStringNotContainsString( 'ftp://', (string) wp_get_attachment_image( $attachment_id, 'medium' ) );
+
+		// without public URL it is delivered via the proxy.
+		delete_term_meta( $this->term_id, 'efml_export_url' );
 		$this->assertTrue( $external_file_obj->is_proxy_required() );
 		$this->assertTrue( $external_file_obj->get_file_type_obj()->is_proxy_enabled() );
 
@@ -402,7 +442,9 @@ class FtpExport extends externalFilesTests {
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 		$this->assertTrue( $external_file_obj->is_valid() );
 
-		// the proxy loads it via FTP into its cache without loading it into memory.
+		// the proxy loads it via FTP into its cache without loading it into memory (it is required without the public
+		// URL of the external source, as browsers could not load the FTP-URL).
+		delete_term_meta( $this->term_id, 'efml_export_url' );
 		$external_file_obj->delete_cache();
 		memory_reset_peak_usage();
 		$memory_before = memory_get_usage();

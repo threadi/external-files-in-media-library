@@ -61,6 +61,74 @@ class Export extends Export_Base {
 	 * @return string|bool
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
+		// get the file path.
+		$file_path = get_attached_file( $attachment_id, true );
+
+		// bail if no file could be found.
+		if ( ! is_string( $file_path ) ) {
+			return false;
+		}
+
+		// get the local WP_Filesystem.
+		$wp_filesystem_local = Helper::get_wp_filesystem();
+
+		// bail if source file does not exist.
+		if ( ! $wp_filesystem_local->exists( $file_path ) ) {
+			return false;
+		}
+
+		// upload the file.
+		return $this->upload( $file_path, $target, $credentials, false );
+	}
+
+	/**
+	 * Return whether this service could export the sizes of images.
+	 *
+	 * @return bool
+	 */
+	public function supports_sizes(): bool {
+		return true;
+	}
+
+	/**
+	 * Export an additional file of an attachment (e.g. a size of an image) to the FTP server.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $source        The absolute path of the local file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return string|bool
+	 */
+	public function export_size( int $attachment_id, string $source, string $target, array $credentials ): string|bool {
+		return $this->upload( $source, $target, $credentials, true );
+	}
+
+	/**
+	 * Delete an additional file of an attachment on the FTP server.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $url           The URL of the file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return bool
+	 */
+	public function delete_size( int $attachment_id, string $url, string $target, array $credentials ): bool {
+		return $this->delete_exported_file( $url, $credentials, $attachment_id );
+	}
+
+	/**
+	 * Upload the given local file to the given target on the FTP server and return its URL, or false on error.
+	 *
+	 * @param string              $file_path   The absolute path of the local file.
+	 * @param string              $target      The target.
+	 * @param array<string,mixed> $credentials The credentials.
+	 * @param bool                $overwrite   True to overwrite an existing file (for sizes of images).
+	 *
+	 * @return string|false
+	 */
+	private function upload( string $file_path, string $target, array $credentials, bool $overwrite ): string|false {
 		// get the protocol handler for this URL.
 		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $target );
 
@@ -88,22 +156,6 @@ class Export extends Export_Base {
 			return false;
 		}
 
-		// get the file path.
-		$file_path = get_attached_file( $attachment_id, true );
-
-		// bail if no file could be found.
-		if ( ! is_string( $file_path ) ) {
-			return false;
-		}
-
-		// get the local WP_Filesystem.
-		$wp_filesystem_local = Helper::get_wp_filesystem();
-
-		// bail if source file does not exist.
-		if ( ! $wp_filesystem_local->exists( $file_path ) ) {
-			return false;
-		}
-
 		// get the URL parts.
 		$parse_url = wp_parse_url( $target );
 
@@ -113,7 +165,7 @@ class Export extends Export_Base {
 		}
 
 		// bail if target file does already exist.
-		if ( $ftp_connection->exists( $parse_url['path'] ) ) {
+		if ( ! $overwrite && $ftp_connection->exists( $parse_url['path'] ) ) {
 			// log this event.
 			Log::get_instance()->create( __( 'The file already exists on the FTP server and will not be overwritten. The file has not been exported.', 'external-files-in-media-library' ), $target, 'error' );
 

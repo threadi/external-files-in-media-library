@@ -177,8 +177,23 @@ class Proxy {
 				absint( $matches[2] ),
 				absint( $matches[3] ),
 			);
-			$title             = $matches[1] . '.' . $matches[4];
-			$external_file_obj = Files::get_instance()->get_file_by_title( $title );
+			$external_file_obj = Files::get_instance()->get_file_by_title( $matches[1] . '.' . $matches[4] );
+
+			// use the requested name, if it is not a size (e.g. "example-1920x1080.jpg" as name of the file itself).
+			if ( ! $external_file_obj instanceof File ) {
+				$external_file_obj = Files::get_instance()->get_file_by_former_title( $matches[1] . '.' . $matches[4] );
+			}
+			if ( $external_file_obj instanceof File ) {
+				$title = $matches[1] . '.' . $matches[4];
+			}
+		}
+
+		// use the file, which had this name before (e.g. before it has been edited or renamed).
+		if ( ! $external_file_obj instanceof File ) {
+			$external_file_obj = Files::get_instance()->get_file_by_former_title( $title );
+			if ( $external_file_obj instanceof File ) {
+				$dimensions = array();
+			}
 		}
 
 		// bail if no file object could be loaded, or the loaded object is not valid.
@@ -231,8 +246,22 @@ class Proxy {
 		 */
 		do_action( 'efml_proxy_before', $external_file_obj );
 
+		// deliver a variant of the image in another format (e.g. AVIF or WebP), if the browser supports it.
+		Variants::get_instance()->deliver( $external_file_obj, $dimensions );
+
+		// load an exported size of an image into the cache, so it is not created from the original image.
+		$size_cached = ! empty( $dimensions ) && Sizes::get_instance()->cache_size( $external_file_obj, $dimensions );
+
+		// deliver an exported size with its own format, if it differs from the image (e.g. WebP sizes of a JPEG).
+		if ( $size_cached ) {
+			$size = Sizes::get_instance()->find_by_dimensions( $external_file_obj->get_id(), $dimensions );
+			if ( ! empty( $size['mime-type'] ) && $size['mime-type'] !== $external_file_obj->get_mime_type() && str_starts_with( (string) $size['mime-type'], 'image/' ) ) {
+				Variants::get_instance()->output( $external_file_obj->get_cache_file( array( (int) $dimensions[0], (int) $dimensions[1] ) ), (string) $size['mime-type'], (string) ( $size['file'] ?? '' ) );
+			}
+		}
+
 		// if original file is not cached, do it now.
-		if ( ! $external_file_obj->is_cached() ) {
+		if ( ! $size_cached && ! $external_file_obj->is_cached() ) {
 			// log this event.
 			Log::get_instance()->create( __( 'The proxy creates a cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 

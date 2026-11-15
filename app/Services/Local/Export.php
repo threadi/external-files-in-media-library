@@ -59,9 +59,6 @@ class Export extends Export_Base {
 	 * @return string|bool
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
-		// remove protocol from the target.
-		$local_target = Helper::get_local_path_from_url( $target );
-
 		// get the WP filesystem object.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
@@ -94,6 +91,26 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// copy the file.
+		return $this->copy_to_target( $file_path, $target, false );
+	}
+
+	/**
+	 * Copy the given local file to the given target and return the URL of the target, or false on error.
+	 *
+	 * @param string $file_path The absolute path of the file.
+	 * @param string $target    The target.
+	 * @param bool   $overwrite True to overwrite an existing file (for sizes of images).
+	 *
+	 * @return string|false
+	 */
+	private function copy_to_target( string $file_path, string $target, bool $overwrite ): string|false {
+		// remove protocol from the target.
+		$local_target = Helper::get_local_path_from_url( $target );
+
+		// get the WP filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if the target is not located in the allowed base directory for local files.
 		if ( ! $this->is_target_allowed( $local_target ) ) {
 			/* translators: %1$s will be replaced by a path. */
@@ -113,7 +130,7 @@ class Export extends Export_Base {
 		}
 
 		// bail if target file does already exist.
-		if ( $wp_filesystem->exists( $local_target ) ) {
+		if ( ! $overwrite && $wp_filesystem->exists( $local_target ) ) {
 			/* translators: %1$s will be replaced by the service title. */
 			Log::get_instance()->create( sprintf( __( 'Target file %1$s already exist.', 'external-files-in-media-library' ), '<em>' . $target . '</em>' ), $target, 'error' );
 
@@ -122,7 +139,7 @@ class Export extends Export_Base {
 		}
 
 		// copy file to the given local directory.
-		if ( ! $wp_filesystem->copy( $file_path, $local_target ) ) {
+		if ( ! $wp_filesystem->copy( $file_path, $local_target, $overwrite ) ) {
 			/* translators: %1$s and %2$s will be replaced by filenames. */
 			Log::get_instance()->create( sprintf( __( 'Could not copy file from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>', '<em>' . $local_target . '</em>' ), $target, 'error' );
 
@@ -172,6 +189,43 @@ class Export extends Export_Base {
 
 		// return true as file has been deleted.
 		return true;
+	}
+
+	/**
+	 * Return whether this service could export the sizes of images.
+	 *
+	 * @return bool
+	 */
+	public function supports_sizes(): bool {
+		return true;
+	}
+
+	/**
+	 * Export an additional file of an attachment (e.g. a size of an image) to the local directory.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $source        The absolute path of the local file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return string|bool
+	 */
+	public function export_size( int $attachment_id, string $source, string $target, array $credentials ): string|bool {
+		return $this->copy_to_target( $source, $target, true );
+	}
+
+	/**
+	 * Delete an additional file of an attachment in the local directory.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $url           The URL of the file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return bool
+	 */
+	public function delete_size( int $attachment_id, string $url, string $target, array $credentials ): bool {
+		return $this->delete_exported_file( $url, $credentials, $attachment_id );
 	}
 
 	/**

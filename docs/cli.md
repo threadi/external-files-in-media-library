@@ -38,9 +38,9 @@ Deletes the given URLs from media library.
 
 The following command first executes the commands for deleting the plugin. An installation is then carried out.
 
-Depending on your settings in the plugin, existing files may be removed from your media database.
+Depending on your settings in the plugin, existing files may be removed from your media database. Exported files are restored as local files at their original path before and are never deleted. If one of them could not be restored, the plugin is not reset. With `--force` it is reset nevertheless, the files, which could not be restored, stay exported files then.
 
-`wp eml reset_plugin`
+`wp eml reset_plugin [--force]`
 
 This function can also be performed in the backend under Settings > External files in the media library > Advanced.
 
@@ -99,6 +99,20 @@ This will delete every entry in the queue.
 This will export all local files in the media library, which are not exported yet and whose mime type is allowed in the plugin settings, to the external sources with enabled export. It is the same export as via the button "Export existing files" in the export settings, but all files are exported directly. Files, which could not be exported, stay local files, are marked in the media library and are listed as errors in the queue.
 
 `wp eml export`
+
+## Export sizes of exported images
+
+This will export the sizes of images, which have been exported without them, to their external sources, if their services support it. The sizes are created from the local copy of an image or from the image downloaded from its external source. It is the same as via the button "Export sizes now" in the export settings, but all images are processed directly.
+
+`wp eml export_sizes`
+
+## Restore exported files
+
+This will restore all exported files as local files at their original path in the media library, e.g. before you deactivate the plugin. The files are downloaded from their external sources, their sizes are created again and they are normal local files afterward, so your contents work also without the plugin. The export is disabled for this. It is the same restore as via the button "Restore exported files" in the export settings, but all files are restored directly. Files, which could not be restored, stay exported files and are listed as errors in the queue.
+
+`wp eml localize [--delete-on-target]`
+
+* [--delete-on-target] - Delete the copies on the external sources after the restore. Without it they are kept.
 
 ## Main website or copy
 

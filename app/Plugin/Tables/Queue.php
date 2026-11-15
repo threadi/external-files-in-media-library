@@ -313,6 +313,37 @@ class Queue extends WP_List_Table {
 		// get whether this is an export entry.
 		$is_export = ! empty( $item['type'] ) && 'export' === $item['type'];
 
+		// show the restore run or the sizes run of the entry.
+		if ( ! empty( $item['type'] ) && in_array( $item['type'], array( 'localize', 'sizes' ), true ) ) {
+			$output    = ( 'sizes' === $item['type'] ? esc_html__( 'Sizes', 'external-files-in-media-library' ) : esc_html__( 'Restore', 'external-files-in-media-library' ) ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+			$edit_link = get_edit_post_link( absint( $item['attachment_id'] ) );
+			if ( is_string( $edit_link ) ) {
+				$output .= '<br><a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Edit file', 'external-files-in-media-library' ) . '</a>';
+			}
+			return $output;
+		}
+
+		// show the deletion of exported files.
+		if ( ! empty( $item['type'] ) && 'delete' === $item['type'] ) {
+			$options = json_decode( (string) ( $item['options'] ?? '' ), true );
+			$output  = esc_html__( 'Delete on external source', 'external-files-in-media-library' );
+			if ( is_array( $options ) && ! empty( $options['files'] ) && is_array( $options['files'] ) ) {
+				/* translators: %1$d will be replaced by a number. */
+				$output .= '<br>' . esc_html( sprintf( _n( '%1$d file', '%1$d files', count( $options['files'] ), 'external-files-in-media-library' ), count( $options['files'] ) ) );
+			}
+			if ( is_array( $options ) && ! empty( $options['term_id'] ) ) {
+				$term = get_term( absint( $options['term_id'] ), \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name() );
+				if ( $term instanceof \WP_Term ) {
+					$output .= '<br>' . esc_html( $term->name );
+				}
+			}
+			if ( ! empty( $item['attempts'] ) ) {
+				/* translators: %1$d will be replaced by a number. */
+				$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', (int) $item['attempts'], 'external-files-in-media-library' ), (int) $item['attempts'] ) );
+			}
+			return $output;
+		}
+
 		// show the import run of the entry.
 		if ( ! empty( $item['run_id'] ) && ! $is_export ) {
 			return esc_html__( 'Import', 'external-files-in-media-library' ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
@@ -373,7 +404,7 @@ class Queue extends WP_List_Table {
 			'className' => 'efml',
 			'title'     => __( 'Delete queue entry', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . ( ! empty( $item['type'] ) && 'export' === $item['type'] ? __( 'The file will not be exported and stays a local file. You can export it any time again in the media library.', 'external-files-in-media-library' ) : __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) ) . '</p>',
+				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . ( ! empty( $item['type'] ) && 'export' === $item['type'] ? __( 'The file will not be exported and stays a local file. You can export it any time again in the media library.', 'external-files-in-media-library' ) : ( ! empty( $item['type'] ) && 'localize' === $item['type'] ? __( 'The file will not be restored and stays an exported file. You can restore it any time again in the export settings.', 'external-files-in-media-library' ) : ( ! empty( $item['type'] ) && 'delete' === $item['type'] ? __( 'The files will not be deleted on the external source. Delete them there by hand.', 'external-files-in-media-library' ) : __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) ) ) ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

@@ -106,9 +106,19 @@ class Uninstall {
 			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
 		}
 
+		// restore the exported files as local files at their original path, as far as the time allows: the others
+		// stay exported files, nothing is deleted on the external sources.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Restore::get_instance()->restore_until( Import_Runs::get_instance()->get_deadline() );
+
 		// delete files managed by this plugin, if option is enabled for it.
 		if ( 1 === absint( get_option( 'eml_delete_on_deinstallation' ) ) ) {
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
+				// bail if this is a file of the media library, which has been exported or taken over from another
+				// offload plugin: it is not an external file from the user's view and must never be deleted.
+				if ( $this->is_media_library_file( $external_file_obj->get_id() ) ) {
+					continue;
+				}
+
 				$external_file_obj->delete();
 			}
 		} elseif ( 1 === absint( get_option( 'eml_switch_on_uninstallation' ) ) ) {
@@ -116,6 +126,12 @@ class Uninstall {
 			foreach ( $external_files_obj->get_files() as $external_file_obj ) {
 				// bail if file is already local hosted.
 				if ( $external_file_obj->is_locally_saved() ) {
+					continue;
+				}
+
+				// bail if this is a file of the media library, which could not be restored at its original path:
+				// it stays an exported file, as the switch would save it at another path.
+				if ( $this->is_media_library_file( $external_file_obj->get_id() ) ) {
 					continue;
 				}
 
@@ -191,6 +207,19 @@ class Uninstall {
 		// remove the data of the migrations.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Migrations::get_instance()->uninstall();
 
+		// remove the data of the replacement of local URLs.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Local_Urls::get_instance()->uninstall();
+
+		// remove the data of uploads with sizes created in the browser.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Client_Uploads::get_instance()->uninstall();
+
+		// remove the data of delayed exports of uploads and of attempts to export sizes again.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Delayed_Uploads::get_instance()->uninstall();
+		wp_unschedule_hook( \ExternalFilesInMediaLibrary\ExternalFiles\Sizes::RETRY_HOOK );
+		\ExternalFilesInMediaLibrary\Plugin\Background_Events::get_instance()->remove_all();
+		delete_option( 'efml_export_queue_lock' );
+		delete_post_meta_by_key( \ExternalFilesInMediaLibrary\ExternalFiles\Sizes::RETRY_META );
+
 		// run the uninstallation tasks for each service.
 		Services::get_instance()->uninstall();
 
@@ -208,5 +237,17 @@ class Uninstall {
 
 		// delete Log-database-table.
 		Log::get_instance()->uninstall();
+	}
+
+	/**
+	 * Return whether the given attachment is a file of the media library, which has been exported
+	 * or taken over from another offload plugin (and not an external file added via its URL).
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	private function is_media_library_file( int $attachment_id ): bool {
+		return absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) > 0 || ! empty( get_post_meta( $attachment_id, \ExternalFilesInMediaLibrary\ExternalFiles\Migrations::BACKUP_META, true ) );
 	}
 }

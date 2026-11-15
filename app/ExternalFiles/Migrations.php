@@ -66,13 +66,6 @@ class Migrations {
 	private static ?Migrations $instance = null;
 
 	/**
-	 * Cache for the attachments of former local files.
-	 *
-	 * @var array<string,int>
-	 */
-	private array $file_cache = array();
-
-	/**
 	 * Marker whether the migration is started in this request (its result is shown there).
 	 *
 	 * @var bool
@@ -118,23 +111,7 @@ class Migrations {
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_admin_bar_style' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_admin_bar_style' ) );
 
-		// bail if no file has been migrated.
-		if ( 0 === absint( get_option( self::COUNT_OPTION ) ) ) {
-			return;
-		}
-
-		/**
-		 * Filter the hooks, whose content is checked for local URLs of migrated files.
-		 *
-		 * @since 6.0.0 Available since 6.0.0.
-		 * @param array<int,string> $hooks List of hooks.
-		 */
-		$hooks = apply_filters( 'efml_migration_url_hooks', array( 'the_content', 'the_excerpt', 'widget_text_content', 'widget_block_content' ) );
-
-		// change the local URLs of migrated files in the output.
-		foreach ( $hooks as $hook ) {
-			add_filter( $hook, array( $this, 'replace_urls' ), 100 );
-		}
+		// the local URLs of migrated files are replaced in the output via Local_Urls.
 	}
 
 	/**
@@ -361,6 +338,17 @@ class Migrations {
 	public function get_last_result(): array {
 		$result = get_option( self::RUN_OPTION . '_result', array() );
 		return is_array( $result ) ? $result : array();
+	}
+
+	/**
+	 * Plan the processing of a running migration again (e.g. after the activation of this plugin).
+	 *
+	 * @return void
+	 */
+	public function resume(): void {
+		if ( ! empty( $this->get_run() ) ) {
+			$this->schedule();
+		}
 	}
 
 	/**
@@ -716,90 +704,14 @@ class Migrations {
 	 * Replace the local URLs of migrated files in the given content with their actual URLs.
 	 *
 	 * Other offload plugins keep the local URLs in contents and change them only during the output. This is done
-	 * here for the files, which have been taken over from them.
+	 * for the files, which have been taken over from them, together with the exported files via Local_Urls.
 	 *
 	 * @param mixed $content The content.
 	 *
 	 * @return mixed
 	 */
 	public function replace_urls( mixed $content ): mixed {
-		// bail if this is not a string.
-		if ( ! is_string( $content ) || '' === $content ) {
-			return $content;
-		}
-
-		// get the URL of the uploads directory without its scheme.
-		$base_url = (string) preg_replace( '#^https?:#', '', wp_get_upload_dir()['baseurl'] );
-
-		// bail if the content does not contain any URL of the uploads directory.
-		if ( ! str_contains( $content, $base_url ) ) {
-			return $content;
-		}
-
-		// get the URLs of local files.
-		if ( ! preg_match_all( '#(?:https?:)?' . preg_quote( $base_url, '#' ) . '/([^\s"\'<>()?\#,]+)#i', $content, $matches, PREG_SET_ORDER ) ) {
-			return $content;
-		}
-
-		// get the attachments of these files.
-		$attachments = $this->get_attachments_of_files( array_unique( array_column( $matches, 1 ) ) );
-
-		// bail if none of them has been migrated.
-		if ( empty( $attachments ) ) {
-			return $content;
-		}
-
-		// collect the replacements.
-		$replacements = array();
-		foreach ( $matches as $match ) {
-			// bail if this file has not been migrated.
-			if ( empty( $attachments[ $match[1] ] ) ) {
-				continue;
-			}
-
-			// get the actual URL.
-			$url = $this->get_url_of_local_file( $attachments[ $match[1] ], $match[1] );
-
-			// add it.
-			if ( '' !== $url ) {
-				$replacements[ $match[0] ] = $url;
-			}
-		}
-
-		// return the changed content.
-		return strtr( $content, $replacements );
-	}
-
-	/**
-	 * Return the attachments of the given former local files.
-	 *
-	 * @param array<int,string> $files The files relative to the uploads directory.
-	 *
-	 * @return array<string,int>
-	 */
-	private function get_attachments_of_files( array $files ): array {
-		global $wpdb;
-
-		// get the files, which are not in the cache.
-		$missing = array_values( array_diff( $files, array_keys( $this->file_cache ) ) );
-
-		// load them.
-		if ( ! empty( $missing ) ) {
-			// mark them as not migrated.
-			foreach ( $missing as $file ) {
-				$this->file_cache[ $file ] = 0;
-			}
-
-			// get the migrated ones.
-			$placeholders = implode( ', ', array_fill( 0, count( $missing ), '%s' ) );
-			$results      = $wpdb->get_results( $wpdb->prepare( 'SELECT `post_id`, `meta_value` FROM %i WHERE `meta_key` = %s AND `meta_value` IN (' . $placeholders . ')', array_merge( array( $wpdb->postmeta, self::FILE_META ), $missing ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, WordPress.DB.SlowDBQuery
-			foreach ( (array) $results as $result ) {
-				$this->file_cache[ (string) $result['meta_value'] ] = absint( $result['post_id'] );
-			}
-		}
-
-		// return the migrated files.
-		return array_filter( array_intersect_key( $this->file_cache, array_flip( $files ) ) );
+		return Local_Urls::get_instance()->replace_urls( $content );
 	}
 
 	/**
@@ -810,7 +722,7 @@ class Migrations {
 	 *
 	 * @return string
 	 */
-	private function get_url_of_local_file( int $attachment_id, string $file ): string {
+	public function get_url_of_local_file( int $attachment_id, string $file ): string {
 		// get the data before the migration.
 		$backup = get_post_meta( $attachment_id, self::BACKUP_META, true );
 

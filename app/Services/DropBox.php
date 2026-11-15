@@ -20,6 +20,7 @@ use easySettingsForWordPress\Tab;
 use Error;
 use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
@@ -125,6 +126,9 @@ class DropBox extends Service_Base implements Service {
 
 		// hide files with a not allowed type in the directory listing, if enabled.
 		add_filter( 'efml_service_dropbox_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
+
+		// download exported files via the API for their restore (also without a user, e.g. via cron).
+		add_filter( 'efml_restore_download_urls', array( $this, 'add_restore_download_url' ), 10, 2 );
 
 		// bail if user has no capability for this service.
 		if ( ! $this->is_import_allowed() ) {
@@ -2129,5 +2133,37 @@ class DropBox extends Service_Base implements Service {
 	 */
 	protected function get_keywords(): string {
 		return _x( 'Dropbox, cloud', 'search terms for the Dropbox service, separated by commas', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Add the path of an exported file for the Dropbox API as first URL for its restore.
+	 *
+	 * The public URL of an exported file is the target of its shared link, which could expire. The API
+	 * downloads the file via its path, which is saved during the export.
+	 *
+	 * @param array<int,string> $urls              List of URLs.
+	 * @param File              $external_file_obj The external file object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_restore_download_url( array $urls, File $external_file_obj ): array {
+		// bail if this is not a file of this service.
+		if ( $this->get_name() !== get_post_meta( $external_file_obj->get_id(), 'eml_service', true ) ) {
+			return $urls;
+		}
+
+		// get the path of the file in Dropbox.
+		$path = get_post_meta( $external_file_obj->get_id(), 'efml_dropbox_path', true );
+
+		// bail if it is unknown.
+		if ( empty( $path ) || ! is_string( $path ) ) {
+			return $urls;
+		}
+
+		// add it as first URL.
+		array_unshift( $urls, $this->get_name() . $path );
+
+		// return the list.
+		return array_values( array_unique( $urls ) );
 	}
 }

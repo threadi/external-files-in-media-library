@@ -37,6 +37,36 @@ use wpdb;
  */
 class Queue extends Extension_Base {
 	/**
+	 * Name of the WP-Cron hook, which exports the files in the queue right away (independent of its interval).
+	 *
+	 * @var string
+	 */
+	public const EXPORT_HOOK = 'efml_process_export_queue';
+
+	/**
+	 * Name of the option, which locks the processing of the exports (time of the start).
+	 *
+	 * @var string
+	 */
+	private const EXPORT_LOCK = 'efml_export_queue_lock';
+
+	/**
+	 * The version of the structure of the database table.
+	 *
+	 * 2: ID as BIGINT with primary key, state as VARCHAR, indexes for state and type and for attachment and type.
+	 *
+	 * @var string
+	 */
+	private const DB_VERSION = '2';
+
+	/**
+	 * Name of the option with the version of the structure of the database table.
+	 *
+	 * @var string
+	 */
+	public const DB_VERSION_OPTION = 'efml_queue_db_version';
+
+	/**
 	 * The internal extension name.
 	 *
 	 * @var string
@@ -109,6 +139,8 @@ class Queue extends Extension_Base {
 
 		// use WordPress hooks.
 		add_action( 'delete_attachment', array( $this, 'remove_export_entries_of_attachment' ) );
+		add_action( self::EXPORT_HOOK, array( $this, 'process_exports' ) );
+		add_action( 'admin_init', array( $this, 'maybe_install' ) );
 	}
 
 	/**
@@ -248,6 +280,8 @@ class Queue extends Extension_Base {
 	/**
 	 * Install necessary DB-table.
 	 *
+	 * Also updates the structure of existing tables (see DB_VERSION), their entries are kept.
+	 *
 	 * @return void
 	 */
 	public function install(): void {
@@ -256,29 +290,40 @@ class Queue extends Extension_Base {
 		// set collate.
 		$charset_collate = $wpdb->get_charset_collate();
 
+		// get the table name.
+		$table = $wpdb->prefix . 'eml_queue';
+
+		// change the key of the ID in existing tables, which dbDelta() could not do.
+		$this->migrate_primary_key( $table );
+
 		// table for the queue.
-		$sql = 'CREATE TABLE ' . $wpdb->prefix . "eml_queue (
-		    `id` mediumint(9) NOT NULL AUTO_INCREMENT,
+		$sql = 'CREATE TABLE ' . $table . " (
+		    `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             `time` datetime DEFAULT '1970-01-01 00:00:00' NOT NULL,
             `url` text NOT NULL,
             `fields` text NOT NULL,
-            `state` text NOT NULL,
+            `state` varchar(20) DEFAULT 'new' NOT NULL,
             `options` text NOT NULL,
             `type` varchar(20) DEFAULT 'import' NOT NULL,
             `attachment_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
             `attempts` smallint(5) unsigned DEFAULT 0 NOT NULL,
             `url_hash` char(32) DEFAULT '' NOT NULL,
             `run_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
-            UNIQUE KEY id (id),
+            PRIMARY KEY  (id),
             KEY url_hash (url_hash),
-            KEY run_id (run_id)
+            KEY run_id (run_id),
+            KEY state_type (state,type),
+            KEY attachment_type (attachment_id,type)
         ) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // @phpstan-ignore requireOnce.fileNotFound
 		dbDelta( $sql );
 
 		// add the hash of the URL to existing entries.
-		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `url_hash` = MD5(`url`) WHERE `url_hash` = %s', array( $wpdb->prefix . 'eml_queue', '' ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `url_hash` = MD5(`url`) WHERE `url_hash` = %s', array( $table, '' ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// save the version of the structure.
+		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 
 		// also run initialization.
 		$this->init();
@@ -461,6 +506,12 @@ class Queue extends Extension_Base {
 		// process an export entry.
 		if ( ! empty( $url_data['type'] ) && 'export' === $url_data['type'] ) {
 			$this->process_export_entry( $url_data );
+			return;
+		}
+
+		// process an entry to delete exported files.
+		if ( ! empty( $url_data['type'] ) && 'delete' === $url_data['type'] ) {
+			$this->process_deletion_entry( $url_data );
 			return;
 		}
 
@@ -890,6 +941,64 @@ class Queue extends Extension_Base {
 	}
 
 	/**
+	 * Update the structure of the database table, if it is outdated (e.g. if the files of the plugin have been
+	 * replaced without running its update).
+	 *
+	 * @return void
+	 */
+	public function maybe_install(): void {
+		// bail if the structure is actual.
+		if ( self::DB_VERSION === get_option( self::DB_VERSION_OPTION ) ) {
+			return;
+		}
+
+		// bail if the table does not exist (it is installed during the activation).
+		if ( ! Helper::is_table_available( 'eml_queue', false ) ) {
+			return;
+		}
+
+		// update it.
+		$this->install();
+	}
+
+	/**
+	 * Change the unique key of the ID to the primary key in an existing table of older versions.
+	 *
+	 * Older versions used "mediumint(9)" with a unique key, which allows only about 8.4 million entries during the
+	 * lifetime of the website. dbDelta() could change the type of a column, but not the unique key to a primary
+	 * key, so this is done in one step before (an auto increment column always needs a key).
+	 *
+	 * @param string $table The name of the table.
+	 *
+	 * @return void
+	 */
+	private function migrate_primary_key( string $table ): void {
+		global $wpdb;
+
+		// bail if the table does not exist.
+		if ( ! Helper::is_table_available( 'eml_queue', false ) ) {
+			return;
+		}
+
+		// get the keys of the table.
+		$keys = wp_list_pluck( (array) $wpdb->get_results( $wpdb->prepare( 'SHOW INDEX FROM %i', $table ), ARRAY_A ), 'Key_name' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// bail if it has a primary key already or not the unique key of older versions.
+		if ( in_array( 'PRIMARY', $keys, true ) || ! in_array( 'id', $keys, true ) ) {
+			return;
+		}
+
+		// change it.
+		$result = $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i MODIFY `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT, DROP INDEX `id`, ADD PRIMARY KEY (`id`)', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+
+		// log an error.
+		if ( false === $result ) {
+			/* translators: %1$s will be replaced by an error message. */
+			Log::get_instance()->create( sprintf( __( 'The structure of the queue table could not be updated: %1$s', 'external-files-in-media-library' ), '<code>' . esc_html( $wpdb->last_error ) . '</code>' ), '', 'error' );
+		}
+	}
+
+	/**
 	 * Uninstall the queue table.
 	 *
 	 * @return void
@@ -899,6 +1008,9 @@ class Queue extends Extension_Base {
 
 		// remove the table.
 		$wpdb->query( sprintf( 'DROP TABLE IF EXISTS %s', $wpdb->prefix . 'eml_queue' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
+
+		// remove the version of its structure.
+		delete_option( self::DB_VERSION_OPTION );
 	}
 
 	/**
@@ -1134,7 +1246,7 @@ class Queue extends Extension_Base {
 	 *
 	 * @return bool True if the attachment is in the queue.
 	 */
-	public function add_export( int $attachment_id ): bool {
+	public function add_export( int $attachment_id, int $delay = 0 ): bool {
 		global $wpdb;
 
 		// bail if no ID is given.
@@ -1144,6 +1256,12 @@ class Queue extends Extension_Base {
 
 		// get the local URL of this file for the display in the queue.
 		$url = (string) wp_get_attachment_url( $attachment_id );
+
+		// bail if the file is not exported at all (e.g. its type is not allowed in the settings).
+		if ( ! Export::get_instance()->is_exportable( $attachment_id ) ) {
+			Log::get_instance()->create( __( 'File has not been added to the queue, as it is not exported (e.g. its type is not allowed in the settings).', 'external-files-in-media-library' ), $url, 'info', 2 );
+			return false;
+		}
 
 		// bail if this attachment is already in the queue for export.
 		if ( ! empty( $this->get_export_entry( $attachment_id ) ) ) {
@@ -1182,8 +1300,99 @@ class Queue extends Extension_Base {
 		// log this event.
 		Log::get_instance()->create( __( 'File has been added to the queue for the export.', 'external-files-in-media-library' ), $url, 'info', 2 );
 
+		// export it in the background right away.
+		$this->schedule_exports( $delay );
+
 		// return true as the entry has been added.
 		return true;
+	}
+
+	/**
+	 * Plan the export of the files in the queue in the background, if not planned yet.
+	 *
+	 * @param int $delay The delay in seconds.
+	 *
+	 * @return void
+	 */
+	public function schedule_exports( int $delay = 0 ): void {
+		if ( ! wp_next_scheduled( self::EXPORT_HOOK ) ) {
+			wp_schedule_single_event( time() + $delay, self::EXPORT_HOOK );
+		}
+	}
+
+	/**
+	 * Return whether files wait in the queue for their first export attempt.
+	 *
+	 * @return bool
+	 */
+	public function has_new_exports(): bool {
+		global $wpdb;
+
+		// bail if the table does not exist (yet).
+		if ( ! Helper::is_table_available( 'eml_queue' ) ) {
+			return false;
+		}
+
+		// return whether such entries exist.
+		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE `type` = %s AND `state` = %s AND `run_id` = %d AND `attempts` = %d', array( $wpdb->prefix . 'eml_queue', 'export', 'new', 0, 0 ) ) ) ) > 0; // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Export the files in the queue, which wait for their first export attempt, the oldest first (via WP-Cron).
+	 *
+	 * Runs until the time limit of the request, then the next request continues. Files, whose export has failed,
+	 * are tried again during the next runs of the queue (see process_export_entry()), as their reason (e.g. a
+	 * service, which is not reachable) needs time.
+	 *
+	 * @return void
+	 */
+	public function process_exports(): void {
+		global $wpdb;
+
+		// bail if the export is disabled or this website is a copy: the entries stay in the queue.
+		if ( 1 !== absint( get_option( 'eml_export' ) ) || Site_Copy::get_instance()->is_copy() ) {
+			return;
+		}
+
+		// bail if another request processes the exports (the lock expires after 10 minutes, e.g. after a timeout).
+		if ( ! add_option( self::EXPORT_LOCK, time(), '', false ) ) {
+			if ( time() - absint( get_option( self::EXPORT_LOCK ) ) < 10 * MINUTE_IN_SECONDS ) {
+				return;
+			}
+			update_option( self::EXPORT_LOCK, time(), false );
+		}
+
+		// get the time limit.
+		$deadline = Import_Runs::get_instance()->get_deadline();
+
+		// export the files one by one, the oldest first.
+		$last_id  = 0;
+		$finished = false;
+		while ( microtime( true ) < $deadline ) {
+			// get the next entry.
+			$id = absint( $wpdb->get_var( $wpdb->prepare( 'SELECT `id` FROM %i WHERE `type` = %s AND `state` = %s AND `run_id` = %d AND `attempts` = %d AND `id` > %d ORDER BY `id` ASC LIMIT 1', array( $wpdb->prefix . 'eml_queue', 'export', 'new', 0, 0, $last_id ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+			// bail if no entry is left.
+			if ( 0 === $id ) {
+				$finished = true;
+				break;
+			}
+			$last_id = $id;
+
+			// export it.
+			$url_data = $this->get_url_by_id( $id );
+			if ( ! empty( $url_data ) ) {
+				$this->process_export_entry( $url_data );
+			}
+		}
+
+		// remove the lock.
+		delete_option( self::EXPORT_LOCK );
+
+		// continue in the next request, if files are left.
+		if ( ! $finished ) {
+			$this->schedule_exports();
+		}
 	}
 
 	/**
@@ -1239,6 +1448,14 @@ class Queue extends Extension_Base {
 			return;
 		}
 
+		// remove the entry, if the file is not exported at all (e.g. its type is not allowed in the settings).
+		if ( ! Export::get_instance()->is_exportable( (int) $attachment_id ) ) {
+			Log::get_instance()->create( __( 'Export of file from the queue has been skipped, as its type is not allowed in the settings or its export is prevented. It stays a local file.', 'external-files-in-media-library' ), $url_data['url'], 'info', 1 );
+			$this->remove_url( (int) $id );
+			delete_post_meta( (int) $attachment_id, 'efml_export_queued' );
+			return;
+		}
+
 		// export the file.
 		try {
 			$result = Export::get_instance()->export_file( $attachment_id );
@@ -1286,6 +1503,158 @@ class Queue extends Extension_Base {
 		// log this event.
 		/* translators: %1$d will be replaced by a number. */
 		Log::get_instance()->create( sprintf( __( 'Export of file via queue failed after %1$d attempts. The file stays a local file in the media library.', 'external-files-in-media-library' ), $attempts ), $url_data['url'], 'error' );
+	}
+
+	/**
+	 * Add files of an exported file to the queue, which could not be deleted on the given external source.
+	 *
+	 * They are deleted during the next runs of the queue, also after the attachment has been deleted.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int                             $attachment_id The attachment ID.
+	 * @param int                             $term_id       The ID of the external source.
+	 * @param array<int,array<string,string>> $files         List of files (kind, file, url, target).
+	 * @param array<string,string>            $metas         The post meta of the attachment, which the service needs.
+	 *
+	 * @return bool
+	 */
+	public function add_deletion( int $attachment_id, int $term_id, array $files, array $metas ): bool {
+		global $wpdb;
+
+		// bail if no files are given or the table does not exist.
+		if ( empty( $files ) || ! Helper::is_table_available( 'eml_queue' ) ) {
+			return false;
+		}
+
+		// get the URL for the display in the queue: the file itself or the first file.
+		$url = (string) ( $files[0]['url'] ?? '' );
+
+		// remove an open entry for the same file and external source (e.g. if it has been tried again).
+		$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'type'          => 'delete',
+				'attachment_id' => $attachment_id,
+				'url_hash'      => md5( $url . '|' . $term_id ),
+				'state'         => 'new',
+			),
+			array( '%s', '%d', '%s', '%s' )
+		);
+
+		// add the entry.
+		$result = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'time'          => gmdate( 'Y-m-d H:i:s' ),
+				'url'           => $url,
+				'fields'        => '',
+				'state'         => 'new',
+				'options'       => (string) wp_json_encode(
+					array(
+						'term_id' => $term_id,
+						'files'   => array_values( $files ),
+						'metas'   => $metas,
+					)
+				),
+				'type'          => 'delete',
+				'attachment_id' => $attachment_id,
+				'attempts'      => 0,
+				'url_hash'      => md5( $url . '|' . $term_id ),
+			),
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, $url );
+
+		// return whether it has been added.
+		return false !== $result;
+	}
+
+	/**
+	 * Process an entry of the queue to delete exported files.
+	 *
+	 * If the external source could not be used at the moment (e.g. its service is not available), the entry stays in
+	 * the queue without counting an attempt. Otherwise, the remaining files are tried again during the next runs,
+	 * until the maximum number of attempts is reached.
+	 *
+	 * @param array<string,string> $url_data The entry data.
+	 *
+	 * @return void
+	 */
+	private function process_deletion_entry( array $url_data ): void {
+		// get the entry ID.
+		$id = (int) $url_data['id'];
+
+		// bail if this website is a copy (e.g. a staging site), the entry stays in the queue until this is the main website.
+		if ( Site_Copy::get_instance()->is_copy() ) {
+			return;
+		}
+
+		// get the options.
+		$options = json_decode( (string) $url_data['options'], true );
+
+		// bail if they are not usable.
+		if ( ! is_array( $options ) || empty( $options['term_id'] ) || empty( $options['files'] ) || ! is_array( $options['files'] ) ) {
+			$this->remove_url( $id );
+			return;
+		}
+
+		// get the external source.
+		$term_id = absint( $options['term_id'] );
+
+		// mark the entry as failed, if the external source does not exist anymore.
+		if ( ! get_term( $term_id, \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name() ) instanceof \WP_Term ) {
+			Log::get_instance()->create( __( 'The exported file could not be deleted, as its external source does not exist anymore.', 'external-files-in-media-library' ), $url_data['url'], 'error' );
+			$this->set_url_state( $id, 'error' );
+			return;
+		}
+
+		// delete the files.
+		$remaining = \ExternalFilesInMediaLibrary\ExternalFiles\Deletion::get_instance()->delete_files_of_deleted_attachment( (int) $url_data['attachment_id'], $term_id, $options['files'], isset( $options['metas'] ) && is_array( $options['metas'] ) ? $options['metas'] : array() );
+
+		// bail if the external source could not be used at the moment: the entry stays in the queue.
+		if ( false === $remaining ) {
+			Log::get_instance()->create( __( 'The deletion of the exported file has been skipped, as its external source could not be used at the moment. It will be tried again.', 'external-files-in-media-library' ), $url_data['url'], 'info', 2 );
+			return;
+		}
+
+		// remove the entry, if all files have been deleted.
+		if ( empty( $remaining ) ) {
+			$this->remove_url( $id );
+			Log::get_instance()->create( __( 'The exported files have been deleted via the queue.', 'external-files-in-media-library' ), $url_data['url'], 'success', 1 );
+			return;
+		}
+
+		// save the remaining files and count this attempt.
+		global $wpdb;
+		$options['files'] = array_values( $remaining );
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prefix . 'eml_queue',
+			array( 'options' => (string) wp_json_encode( $options ) ),
+			array( 'id' => $id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+		$attempts = (int) $url_data['attempts'] + 1;
+		$this->set_attempts( $id, $attempts );
+
+		/**
+		 * Filter the maximum number of attempts to delete exported files via the queue.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $max_attempts The maximum number of attempts.
+		 * @param int $term_id      The ID of the external source.
+		 */
+		$max_attempts = absint( apply_filters( 'efml_deletion_queue_max_attempts', 5, $term_id ) );
+
+		// mark the entry as failed, if the maximum is reached.
+		if ( $attempts >= $max_attempts ) {
+			$this->set_url_state( $id, 'error' );
+			/* translators: %1$d will be replaced by a number. */
+			Log::get_instance()->create( sprintf( __( 'The exported files could not be deleted after %1$d attempts. Delete them on the external source by hand or try again via the queue.', 'external-files-in-media-library' ), $attempts ), $url_data['url'], 'error' );
+		}
 	}
 
 	/**

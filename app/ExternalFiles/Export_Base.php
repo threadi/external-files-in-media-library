@@ -125,4 +125,60 @@ class Export_Base {
 		}
 		return false;
 	}
+
+	/**
+	 * Return whether this service could export the sizes of images and their original image.
+	 *
+	 * If true, the sizes of an exported image (e.g. "image-300x200.jpg") and its original image (for scaled
+	 * images) are exported via export_size() to the same folder as the image itself, and deleted via delete_size().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_sizes(): bool {
+		return false;
+	}
+
+	/**
+	 * Export an additional file of an attachment, e.g. a size of an image or its original image, to this service.
+	 *
+	 * Returns the URL of the exported file like export_file() and false on error. Unlike export_file() the file
+	 * is given via its absolute path. The post meta of the attachment must not be changed, as it belongs to the
+	 * main file of the attachment.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $source        The absolute path of the local file.
+	 * @param string              $target        The target of the file (like for export_file(), with its file name).
+	 * @param array<string,mixed> $credentials   The credentials (incl. "private" like for export_file()).
+	 *
+	 * @return string|bool
+	 */
+	public function export_size( int $attachment_id, string $source, string $target, array $credentials ): string|bool {
+		if ( $attachment_id > 0 || empty( $source ) || empty( $target ) || empty( $credentials ) ) {
+			return false;
+		}
+		return false;
+	}
+
+	/**
+	 * Delete an additional file of an attachment, which has been exported via export_size().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $url           The URL, which export_size() returned.
+	 * @param string              $target        The target, which has been used for export_size().
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return bool
+	 */
+	public function delete_size( int $attachment_id, string $url, string $target, array $credentials ): bool {
+		if ( $attachment_id > 0 || empty( $url ) || empty( $target ) || empty( $credentials ) ) {
+			return false;
+		}
+		return false;
+	}
 }

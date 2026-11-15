@@ -273,10 +273,31 @@ class Cli {
 	/**
 	 * Reset the plugin. It will be de- and re-installed.
 	 *
+	 * Exported files are restored as local files at their original path before. If one of them could not be
+	 * restored, the plugin is not reset.
+	 *
+	 * [--force]
+	 * : Reset the plugin, even if exported files could not be restored. They stay exported files then.
+	 *
+	 * @param array<int,string>    $args      List of arguments (not used).
+	 * @param array<string,string> $arguments List of parameters.
+	 *
 	 * @return void
 	 * @noinspection PhpUnused
 	 */
-	public function reset_plugin(): void {
+	public function reset_plugin( array $args = array(), array $arguments = array() ): void {
+		// restore the exported files.
+		$remaining = \ExternalFilesInMediaLibrary\ExternalFiles\Restore::get_instance()->restore_until( PHP_INT_MAX );
+
+		// bail if files could not be restored.
+		if ( $remaining > 0 && ! isset( $arguments['force'] ) ) {
+			/* translators: %1$d will be replaced by a number. */
+			\WP_CLI::error( sprintf( _n( 'The plugin has not been reset, as %1$d exported file could not be restored. The reason is listed in the log. Use --force to reset the plugin nevertheless.', 'The plugin has not been reset, as %1$d exported files could not be restored. The reasons are listed in the log. Use --force to reset the plugin nevertheless.', $remaining, 'external-files-in-media-library' ), $remaining ) );
+
+			// do nothing more.
+			return;
+		}
+
 		// run actions as if the plugin is deactivated.
 		$init = Install::get_instance();
 		$init->deactivation();
@@ -834,6 +855,89 @@ class Cli {
 		}
 
 		// show a warning, if files could not be exported.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Export the sizes of exported images, which have been exported without them.
+	 *
+	 * The sizes are created from the local copy of an image or from the image downloaded from its external source
+	 * and exported to its external sources, if their services support it. This is the same as via the button
+	 * "Export sizes now" in the export settings, but all images are processed directly.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     $ wp eml export_sizes
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function export_sizes(): void {
+		// export the sizes.
+		$result = Import_Runs::get_instance()->start_sizes();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if images failed.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Restore all exported files as local files at their original path in the media library.
+	 *
+	 * The files are downloaded from their external sources, their sizes are created again and they are normal
+	 * local files afterward. The export is disabled for this. This is the same restore as via the button
+	 * "Restore now" in the export settings, but all files are restored directly.
+	 *
+	 * [--delete-on-target]
+	 * : Delete the copies on the external sources after the restore. Without it they are kept.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Restore all exported files, e.g. before you deactivate the plugin.
+	 *     $ wp eml localize
+	 *
+	 * @param array<int,string>    $args      List of arguments (not used).
+	 * @param array<string,string> $arguments List of parameters.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function localize( array $args = array(), array $arguments = array() ): void {
+		// restore the files.
+		$result = Import_Runs::get_instance()->start_localize( isset( $arguments['delete-on-target'] ) );
+
+		// bail if the restore could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if files could not be restored.
 		if ( ! $result['success'] ) {
 			\WP_CLI::warning( $result['message'] );
 

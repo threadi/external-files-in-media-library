@@ -14,7 +14,7 @@ Requires _External Files in Media Library_ 6.0.0 or newer.
 | Google Drive (only with credentials for the complete website) | proxy cache |
 | WebDAV | proxy cache |
 
-FTP, SFTP and local directories could not be reached via a URL in the browser anyway and are always delivered via the proxy.
+Private files on FTP, SFTP and local directories are always delivered via the proxy. Not private files there are delivered via the public URL of the external source (the URL for exported files in its export settings), if the proxy is disabled for their file type, otherwise also via the proxy.
 
 ## How the files are delivered
 
@@ -22,7 +22,7 @@ The media library and the content always use the fixed URL of your website, e.g.
 
 * **Proxy enabled for the file type** (settings → delivery): your website loads the file once into its cache and delivers it itself. This is the safest way for search engines.
 * **Proxy disabled for the file type:** your website redirects to a link with limited validity. The file is loaded directly from the provider, your website does not transfer it. If the service could not create such links, the cache is used.
-* Specific sizes of images (e.g. `-150x150`) are always delivered from the cache.
+* Specific sizes of images (e.g. `-150x150`) are always delivered from the cache. If the sizes have been exported together with the image, your website loads the requested size from the provider into its cache, otherwise it creates the size from the image. Images get a `srcset` with these sizes, it contains only URLs of your website.
 
 ## Validity of the links
 

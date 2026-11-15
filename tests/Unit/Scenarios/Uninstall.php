@@ -38,6 +38,35 @@ class Uninstall extends externalFilesTests {
 	}
 
 	/**
+	 * Run uninstallation with deletion of all external files: exported and taken over files of the media library are kept.
+	 *
+	 * @return void
+	 */
+	public function test_uninstall_keeps_exported_files(): void {
+		// set to delete files on uninstallation.
+		update_option( 'eml_delete_on_deinstallation', 1 );
+		update_option( 'eml_switch_on_uninstallation', 0 );
+
+		// add an external file, an exported file and a file taken over from another offload plugin.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( self::get_test_file( 'pdf', 'http' ) );
+		$exported_id = self::factory()->attachment->create( array( 'post_mime_type' => 'application/pdf' ) );
+		update_post_meta( $exported_id, EFML_POST_META_URL, 'https://example.com/exported.pdf' );
+		update_post_meta( $exported_id, 'eml_exported_file', time() );
+		$migrated_id = self::factory()->attachment->create( array( 'post_mime_type' => 'application/pdf' ) );
+		update_post_meta( $migrated_id, EFML_POST_META_URL, 'https://example.com/migrated.pdf' );
+		update_post_meta( $migrated_id, \ExternalFilesInMediaLibrary\ExternalFiles\Migrations::BACKUP_META, array( 'file' => 'migrated.pdf' ) );
+
+		// run the uninstallation.
+		$this->uninstallation();
+
+		// only the exported and the taken over files are left.
+		$this->assertInstanceOf( \WP_Post::class, get_post( $exported_id ) );
+		$this->assertInstanceOf( \WP_Post::class, get_post( $migrated_id ) );
+		$test_files = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_files();
+		$this->assertCount( 2, $test_files );
+	}
+
+	/**
 	 * Run uninstallation with switching of all external files to local files and test the database.
 	 *
 	 * @return void

@@ -30,6 +30,13 @@ use WP_Term;
  */
 class Files {
 	/**
+	 * Name of the post meta with the former titles (file names) of an exported file, e.g. before it has been edited or renamed.
+	 *
+	 * @var string
+	 */
+	public const FORMER_TITLES_META = 'efml_former_titles';
+
+	/**
 	 * The name for the ability category.
 	 */
 	public const ABILITY_CATEGORY = 'efml';
@@ -90,6 +97,30 @@ class Files {
 
 		// initialize the migrations from other offload plugins.
 		Migrations::get_instance()->init();
+
+		// initialize the replacement of local URLs of exported and migrated files in contents.
+		Local_Urls::get_instance()->init();
+
+		// initialize the restore of exported files.
+		Restore::get_instance()->init();
+
+		// initialize the sizes of exported images.
+		Sizes::get_instance()->init();
+
+		// initialize the handling of uploads with sizes created in the browser.
+		Client_Uploads::get_instance()->init();
+
+		// initialize the work with local files of exported images.
+		Local_Work::get_instance()->init();
+
+		// initialize the deletion of exported files everywhere.
+		Deletion::get_instance()->init();
+
+		// initialize the delayed export of uploads.
+		Delayed_Uploads::get_instance()->init();
+
+		// remove the planned events of deleted files.
+		\ExternalFilesInMediaLibrary\Plugin\Background_Events::get_instance()->init();
 
 		// initialize the export support.
 		Export::get_instance()->init();
@@ -438,6 +469,14 @@ class Files {
 			'efml_dropbox_path',
 			'efml_migration',
 			'efml_migrated_file',
+			Local_Urls::META,
+			Local_Urls::SIZES_META,
+			Sizes::META,
+			Client_Uploads::META,
+			self::FORMER_TITLES_META,
+			Delayed_Uploads::META,
+			Delayed_Uploads::BUSY_META,
+			Sizes::RETRY_META,
 		);
 
 		/**
@@ -500,6 +539,52 @@ class Files {
 
 		// return the object.
 		return $external_file_obj;
+	}
+
+	/**
+	 * Return the external file, which used the given title (file name) before (e.g. before it has been edited or renamed).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $title The former title.
+	 *
+	 * @return bool|File
+	 */
+	public function get_file_by_former_title( string $title ): bool|File {
+		// bail if no title is given.
+		if ( empty( $title ) ) {
+			return false;
+		}
+
+		// query for attachments with this former title.
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => array( 'inherit', 'trash' ),
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for the former title.
+				array(
+					'key'   => self::FORMER_TITLES_META,
+					'value' => $title,
+				),
+			),
+			'posts_per_page' => 2,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		);
+		$result = new WP_Query( $query );
+
+		// get the IDs.
+		$ids = array_map( 'absint', wp_list_pluck( array_map( 'get_post', (array) $result->posts ), 'ID' ) );
+
+		// bail if not a single result is in the array.
+		if ( 1 !== count( $ids ) ) {
+			return false;
+		}
+
+		// get the external file object for this attachment.
+		$external_file_obj = $this->get_file( $ids[0] );
+
+		// return the object, if it is valid.
+		return $external_file_obj->is_valid() ? $external_file_obj : false;
 	}
 
 	/**
@@ -888,6 +973,11 @@ class Files {
 			$post_id = absint( $post_id );
 		}
 
+		// return the local file, while WordPress works with it (e.g. to create the sizes of an exported image again).
+		if ( Local_Work::get_instance()->is_open( $post_id ) ) {
+			return Local_Work::get_instance()->get_local_file( $post_id );
+		}
+
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
@@ -948,6 +1038,12 @@ class Files {
 			return $result;
 		}
 
+		// use the exported size, if it exists (delivered according to the proxy setting of the file).
+		$exported_size = Sizes::get_instance()->image_downsize( $external_file_obj, $size );
+		if ( false !== $exported_size ) {
+			return $exported_size;
+		}
+
 		// if requested size is a string, get its sizes.
 		if ( is_string( $size ) ) {
 			$size = array(
@@ -960,7 +1056,7 @@ class Files {
 		// we just return the original URL with requested sizes.
 		if ( ! $external_file_obj->is_locally_saved() && ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 			return array(
-				$external_file_obj->get_url( true ),
+				$external_file_obj->get_url(),
 				$size[0],
 				$size[1],
 			);
@@ -1192,6 +1288,12 @@ class Files {
 			false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->get_file_type_obj()->has_thumbs()
 		) {
+			// use the exported sizes of the image, if they exist.
+			$exported_sources = Sizes::get_instance()->get_srcset( $sources, $attachment_id );
+			if ( false !== $exported_sources ) {
+				return $exported_sources;
+			}
+
 			// return empty array as we cannot optimize external images.
 			return array();
 		}
@@ -1383,9 +1485,9 @@ class Files {
 			return $image_meta;
 		}
 
-		// bail if given file could have thumbs.
+		// bail if given file could have thumbs: add its exported sizes, if they exist.
 		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
-			return $image_meta;
+			return Sizes::get_instance()->add_sizes_to_srcset_meta( $image_meta, $image_src, $external_file_obj );
 		}
 
 		// remove the file-setting from array.

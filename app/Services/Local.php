@@ -99,6 +99,10 @@ class Local extends Service_Base implements Service {
 		// add settings.
 		add_action( 'init', array( $this, 'init_local' ), 20 );
 
+		// use this object as export object for local external sources, also without a user (e.g. exports via cron or WP CLI),
+		// like all other services; it only assigns the object, the capabilities are checked elsewhere.
+		add_filter( 'efml_export_object', array( $this, 'change_export_object' ) );
+
 		// bail if user has no capability for this service.
 		if ( ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
 			return;
@@ -108,7 +112,6 @@ class Local extends Service_Base implements Service {
 		add_filter( 'efml_service_local_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 2 );
 		add_filter( 'efml_service_local_hide_file', array( $this, 'hide_generic_directories' ), 10, 3 );
 		add_filter( 'efml_directory_listing_local_directory_loading', array( $this, 'add_upload_dirs' ), 10, 3 );
-		add_filter( 'efml_export_object', array( $this, 'change_export_object' ) );
 	}
 
 	/**

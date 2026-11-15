@@ -643,17 +643,18 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
+		$setting     = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
+		$description = __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin. Files of your media library, which have been exported or taken over from another offload plugin, are never deleted.', 'external-files-in-media-library' );
 		$setting->set_section( $advanced_plugin );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Delete all data on uninstallation', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-files-in-media-library' ),
+				'description' => $description,
 			)
 		);
 		$setting->set_default( 1 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+		$setting->set_help( '<p>' . $description . '</p>' );
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_switch_on_uninstallation' );
@@ -1021,6 +1022,7 @@ class Settings {
 				/* translators: %1$s will be replaced by the plugin name. */
 				'<p><strong>' . sprintf( __( 'Are you sure you want to reset all settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
 				'<p>' . __( 'This will reset all settings and all external files in your media library.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Exported files are restored as local files at their original path before. If this takes too long, the reset is cancelled, the files are restored in the background and you can reset the plugin again afterward.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'We recommend creating a backup before resetting the plugin.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
 			'buttons'   => array(
@@ -1400,6 +1402,59 @@ class Settings {
 	}
 
 	/**
+	 * Restore the exported files before the reset of the plugin and return whether all of them have been restored.
+	 *
+	 * The files are restored as far as the time of this request allows. If files are left, the reset is cancelled:
+	 * the other files are restored in the background and a hint asks to reset the plugin again afterward.
+	 *
+	 * @return bool
+	 */
+	private function restore_files_before_reset(): bool {
+		// get the restore object.
+		$restore_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Restore::get_instance();
+
+		// bail if no exported files exist.
+		if ( ! $restore_obj->has_files() ) {
+			return true;
+		}
+
+		// restore as many files as possible.
+		$remaining = $restore_obj->restore_until( \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_deadline() );
+
+		// bail if all files have been restored.
+		if ( 0 === $remaining ) {
+			return true;
+		}
+
+		// restore the other files in the background.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->start_localize();
+
+		// create the URL to reset the plugin nevertheless.
+		$force_url = add_query_arg(
+			array(
+				'action' => 'efml_reset',
+				'force'  => 1,
+				'nonce'  => wp_create_nonce( 'external-files-in-media-library-reset' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// show a hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_reset_cancelled' );
+		$transient_obj->set_type( 'error' );
+		/* translators: %1$d will be replaced by a number, %2$s by a URL. */
+		$message = sprintf( _n( '%1$d exported file is restored at its original path in the background first, so it is not lost. Reset the plugin again afterward. If a file could not be restored, the reason is listed in the <a href="%2$s">log</a>.', '%1$d exported files are restored at their original path in the background first, so they are not lost. Reset the plugin again afterward. If a file could not be restored, the reason is listed in the <a href="%2$s">log</a>.', $remaining, 'external-files-in-media-library' ), $remaining, esc_url( Helper::get_log_url() ) );
+		/* translators: %1$s will be replaced by a URL. */
+		$message .= ' ' . sprintf( __( 'If files could not be restored, you can also <a href="%1$s">reset the plugin nevertheless</a>: they stay exported files and their copies on the external sources are kept.', 'external-files-in-media-library' ), esc_url( $force_url ) );
+		$transient_obj->set_message( '<strong>' . __( 'The plugin has not been reset yet.', 'external-files-in-media-library' ) . '</strong> ' . $message );
+		$transient_obj->save();
+
+		// return false as files are left.
+		return false;
+	}
+
+	/**
 	 * Reset the plugin by request.
 	 *
 	 * @return void
@@ -1411,6 +1466,12 @@ class Settings {
 		// bail if user has not the capability.
 		if ( ! current_user_can( self::get_instance()->get_settings_obj()->get_capability() ) ) {
 			return;
+		}
+
+		// restore the exported files first: bail, if not all of them could be restored in this request (not, if the reset is forced).
+		if ( 1 !== absint( filter_input( INPUT_GET, 'force', FILTER_SANITIZE_NUMBER_INT ) ) && ! $this->restore_files_before_reset() ) {
+			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// uninstall all.

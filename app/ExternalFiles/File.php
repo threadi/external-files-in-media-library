@@ -133,7 +133,7 @@ class File {
 		 * @param File $instance The external file object.
 		 */
 		if ( ! apply_filters( 'efml_file_prevent_proxied_url', $true, $instance ) ) {
-			return $this->url;
+			return $this->get_public_url();
 		}
 
 		// if no permalink structure is set, generate a parameterized URL.
@@ -144,6 +144,70 @@ class File {
 
 		// return link for pretty permalinks.
 		return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+	}
+
+	/**
+	 * Return the public URL of the given URL of this file (its own URL, if none is given).
+	 *
+	 * HTTP-URLs are returned unchanged. Files exported via FTP or to a local directory are saved with their FTP-URL or
+	 * their path, which browsers could not load. If their external source has a public URL (the URL for exported files
+	 * in its export settings), the URL below it is returned, e.g. "https://example.com/files/image-300x200.jpg" for
+	 * "file:///var/www/files/image-300x200.jpg". Otherwise the given URL is returned unchanged.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL (e.g. of a size of this file), empty for the URL of this file.
+	 *
+	 * @return string
+	 */
+	public function get_public_url( string $url = '' ): string {
+		// use the URL of this file, if none is given.
+		if ( '' === $url ) {
+			$url = $this->get_url( true );
+		}
+
+		// use HTTP-URLs and URLs of private files unchanged.
+		$public_url = $url;
+		if ( '' !== $url && ! $this->is_http_url( $url ) && ! $this->is_private() && absint( get_post_meta( $this->get_id(), 'eml_exported_file', true ) ) > 0 ) {
+			// check the external sources of this file.
+			$term_ids = wp_get_object_terms( $this->get_id(), \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name(), array( 'fields' => 'ids' ) );
+			foreach ( is_array( $term_ids ) ? $term_ids : array() as $term_id ) {
+				// get its path and its public URL.
+				$path       = (string) get_term_meta( absint( $term_id ), 'path', true );
+				$export_url = (string) get_term_meta( absint( $term_id ), 'efml_export_url', true );
+
+				// bail if one of them is missing, the public URL is no HTTP-URL or the URL is not located in the path.
+				if ( '' === $path || '' === $export_url || ! $this->is_http_url( $export_url ) || ! str_starts_with( $url, trailingslashit( $path ) ) ) {
+					continue;
+				}
+
+				// get the URL below the public URL.
+				$public_url = trailingslashit( $export_url ) . ltrim( substr( $url, strlen( trailingslashit( $path ) ) ), '/' );
+				break;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the public URL of a URL of an external file.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $public_url The public URL (the given URL, if none is known).
+		 * @param string $url        The given URL.
+		 * @param File   $instance   The external file object.
+		 */
+		return (string) apply_filters( 'efml_file_public_url', $public_url, $url, $instance );
+	}
+
+	/**
+	 * Return whether the given URL is an HTTP-URL, which browsers could load.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_http_url( string $url ): bool {
+		return in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true );
 	}
 
 	/**
@@ -413,8 +477,9 @@ class File {
 		// get the URL of this file.
 		$url = $this->get_url( true );
 
-		// the proxy is required, if the URL is not an HTTP-URL or the file is saved privately on its external source.
-		$required = '' !== $url && ( $this->is_private() || ! in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true ) );
+		// the proxy is required, if the file is saved privately on its external source or if its URL is not an
+		// HTTP-URL without public URL (e.g. exported via FTP or to a local directory without public URL).
+		$required = '' !== $url && ( $this->is_private() || ! $this->is_http_url( $this->get_public_url( $url ) ) );
 
 		/**
 		 * Filter whether the given file must be delivered via the proxy, independent of the proxy setting

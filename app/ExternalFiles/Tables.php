@@ -281,7 +281,13 @@ class Tables {
 
 				// show marker if this file is planned for export via queue.
 				if ( absint( get_post_meta( $attachment_id, 'efml_export_queued', true ) ) > 0 ) {
-					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file to the external source is planned in the queue.', 'external-files-in-media-library' ) . '"></span>';
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file to the external source is planned in the queue.', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
+				} elseif ( Delayed_Uploads::get_instance()->is_waiting( $attachment_id ) ) {
+					// show marker if the export of this upload waits for other plugins (e.g. image optimizers).
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file waits a few minutes until other plugins have finished their work with it (e.g. image optimizers).', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
+				} elseif ( Client_Uploads::get_instance()->is_waiting( $attachment_id ) ) {
+					// show marker if the export of this upload waits for the sizes created in the browser.
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file waits until its sizes have been created in the browser.', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
 				}
 
 				// show marker if the export of this file via queue failed.

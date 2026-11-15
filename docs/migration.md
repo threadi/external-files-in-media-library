@@ -32,7 +32,7 @@ The data are read directly from the database. The other plugin does not have to 
 
 The other plugins keep the local URLs in posts and pages (e.g. `/wp-content/uploads/2026/11/image.jpg`) and change them only during the output. This plugin does the same for the files, which have been taken over: in the output, their local URLs and the ones of their thumbnails are replaced by their actual URLs. The contents themselves are not changed.
 
-The URLs are replaced in the output of `the_content`, `the_excerpt`, `widget_text_content` and `widget_block_content`. Add further hooks via `efml_migration_url_hooks`.
+The URLs are replaced in the output of `the_content`, `the_excerpt`, `widget_text_content` and `widget_block_content`. Add further hooks via `efml_local_url_hooks`.
 
 ## Switch back
 
@@ -42,6 +42,6 @@ Revert the migration with `wp eml migration revert` (see [WP CLI](cli.md)). The 
 
 * `efml_migrations`: list of the classes, which read the data of other plugins (subclasses of `ExternalFilesInMediaLibrary\ExternalFiles\Migrations\Migration_Base`).
 * `efml_migration_batch_size`: amount of files, which are read at once (default 50).
-* `efml_migration_url_hooks`: hooks, in whose output the local URLs of migrated files are replaced.
+* `efml_local_url_hooks`: hooks, in whose output the local URLs of migrated and exported files are replaced.
 
 Services support the migration via `Service_Base::get_offloaded_object_meta_key()` and `Service_Base::get_url_of_offloaded_object()`. The extensions for AWS S3 and Google Cloud Storage provide them.

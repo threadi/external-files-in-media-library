@@ -157,4 +157,22 @@ class LocalExport extends externalFilesTests {
 		$this->assertFileDoesNotExist( $this->forbidden_directory . 'example.pdf' );
 		$this->assertDirectoryDoesNotExist( $this->allowed_directory . 'new' );
 	}
+
+	/**
+	 * Test that the local service is the export object also without a user (e.g. for exports via cron or WP CLI).
+	 *
+	 * @return void
+	 */
+	public function test_export_object_without_user(): void {
+		wp_set_current_user( 0 );
+
+		// initialize the service like in a request without a user.
+		remove_filter( 'efml_export_object', array( \ExternalFilesInMediaLibrary\Services\Local::get_instance(), 'change_export_object' ) );
+		\ExternalFilesInMediaLibrary\Services\Local::get_instance()->init();
+
+		// the service with its export object is used for local external sources.
+		$service_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->get_service_object_by_type( 'local' );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\Local::class, $service_obj );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\Export_Base::class, $service_obj->get_export_object() );
+	}
 }

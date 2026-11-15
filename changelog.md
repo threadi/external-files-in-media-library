@@ -9,6 +9,8 @@
 - Added methods "get_setup_guide()" and "get_setup_guide_html()" for services and hook "efml_service_setup_guide"
 - Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
 - Added option to export new files in the background via the queue, incl. retries of failed exports and markers in the media library
+- Files in the queue for their export are exported in the background right away, the oldest first, independent of the interval of the queue (it still applies to imports and to further attempts after errors)
+- Files, whose type is not allowed for the export in the settings or whose export is prevented, do not wait for their export and are not added to the queue anymore; such entries of older versions are removed from the queue without error
 - Added possibility to define the credentials of all services via constants (e.g. in wp-config.php): FTP, FTPS, SFTP, REST API, ZIP, CSV, XML, YouTube and the app credentials of Dropbox
 - Constants of a service are only used if the constants for all its required fields are defined
 - Credentials from constants are only used for connections to the server defined via constant
@@ -74,7 +76,7 @@
 - The quickstart shows a hint if a supported offload plugin is active, but has not offloaded any files yet
 - Local URLs of migrated files and their thumbnails in contents are replaced by their actual URLs during the output, the contents are not changed
 - Added WP CLI command "wp eml migration" to show the state, to continue and to revert the migration
-- Added hooks "efml_migrations", "efml_migration_batch_size" and "efml_migration_url_hooks"
+- Added hooks "efml_migrations" and "efml_migration_batch_size"
 - Services could support the migration via the new methods "get_offloaded_object_meta_key()" and "get_url_of_offloaded_object()"
 - Added documentation of the migration in docs/migration.md
 - Text areas with access data of services (e.g. the authentication JSON of Google Cloud Storage) could be entered in the quickstart
@@ -91,11 +93,43 @@
 - Added hook "efml_export_run_page_size" to change the number of local files, which are listed at once for their export
 - Added search in the settings: a field at the top right filters the settings of the actual tab, the tabs show the number of their matches and a list shows the matches in other tabs and pages of the plugin (requires easy-settings-for-wordpress 3.10.0)
 - The command palette also finds single settings, incl. other terms (e.g. "offload" for the export), and opens them highlighted
+- Local URLs of exported files in contents (e.g. images inserted before their export) are replaced with their actual URLs during the output, incl. their sizes; the contents in the database are not changed
+- The local paths of files exported before are taken from their upload URL in the background, so their local URLs are replaced, too
+- Added hooks "efml_local_url_hooks" and "efml_local_urls_backfill_size"
 - Added hint in the backend, if new files are not exported, because the service of an external source for exports is not available (e.g. its extension is not active), incl. the name of the extension
 - Added methods "get_export_source_problem()", "is_export_source_usable()", "get_main_export_source()" and "get_export_sources_problem()" for exports and hook "efml_export_source_usable"
+- Added button "Restore now" in the export settings and WP CLI command "wp eml localize" to restore all exported files as local files at their original path in the background, incl. their sizes with their former names: they are normal local files afterward, so the contents work also without the plugin; the export is disabled for this, the copies on the external sources are kept or deleted as chosen
+- Added dialog on "Deactivate" in the list of plugins, if exported files exist: it offers to restore them first
+- Added restore of the exported files during the uninstallation and the reset of the plugin, as far as the time allows; the reset is cancelled, if files are left, and restores them in the background first ("wp eml reset_plugin --force" or the link in the hint resets the plugin nevertheless)
+- Added hooks "efml_file_restored" and "efml_restore_download_urls" and post meta "efml_local_sizes" with the names of the sizes of exported images; exported files from Dropbox are downloaded via the API for their restore
+- Added export of the sizes of images and their original image together with them to external sources, whose services support it (local directory, FTP/FTPS, Dropbox and the extensions for AWS S3, Google Cloud Storage, WebDAV and Google Drive)
+- The sizes are delivered exactly like the images themselves: via the proxy, if it is enabled for images (it loads them from the external source instead of creating them), otherwise from the external source; images get a srcset with their sizes, also in contents
+- Private files deliver their sizes always via the proxy, which loads the exported size via the API of the service into its cache (or creates it from the image, if that fails); they get a srcset with the proxy URLs of the sizes
+- Sizes of exported images could be created again with WordPress ("wp media regenerate", "Regenerate Thumbnails", wp_update_image_subsizes()): the original image is downloaded for this moment, the new sizes are exported and the local files are removed again; replaced sizes are kept on the external sources and deleted together with the image
+- Exported images could be edited in the image editor of WordPress (crop, rotate, scale, "Restore image"): the edited image is exported under its new name with its sizes, the former files are kept as backup and deleted together with the image; the block editor could crop and rotate exported images, too
+- Exported images could be renamed by other plugins: "Media File Renamer" (the files are loaded for this moment), other plugins with access to the files (e.g. local directory as external source); the renamed files are exported, the former files are deleted on the external sources, the proxy still delivers the image via its former names
+- Added hook "efml_deletion_queue_max_attempts"
+- Added hook "efml_local_work_allowed"
+- Uploads are exported reliably: if their export fails (e.g. timeout or rate limit while uploading many files), they are added to the queue and exported again; sizes, which could not be exported, are exported again 3 times every 10 minutes
+- The export of uploads waits 5 minutes, if a plugin is active, which optimizes or renames the local files after the upload (Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media, Media File Renamer), so their optimized or renamed files are exported
+- Added hooks "efml_export_upload_delay", "efml_export_upload_ready" and "efml_sizes_retry_max_attempts"
+- Variants of images in other formats (WebP, AVIF), which image optimizers create, are exported together with the image and its sizes, deleted with it, follow renamed files and are restored with it (Imagify, EWWW Image Optimizer, ShortPixel, TinyPNG, Converter for Media, Modern Image Formats)
+- The proxy delivers these variants in the format the browser supports under the same URL ("Vary: Accept"); without proxy the images are delivered in their own format, the HTML is not changed
+- Sizes in another format than the image (e.g. WebP sizes of a JPEG via Modern Image Formats) are delivered via the proxy with their correct content type
+- The export of uploads waits until Imagify or ShortPixel report the end of their optimization (one hour after the upload at most), EWWW Image Optimizer lets it run right after its optimization
+- Added hooks "efml_image_variants" and "efml_image_variant_formats"
+- TinyPNG: its variants (e.g. "image.webp") are exported, too, and the export runs right after its compression
+- Smush: its backup of the image before the optimization (e.g. "image.bak.jpg") is exported, deleted and restored together with the image, so the original image is not lost after the export
+- The media library shows "Will be exported" for uploads, whose export waits (e.g. for image optimizers, for the sizes from the browser or in the queue)
+- Planned single events of this plugin in WP-Cron (e.g. delayed exports, retries of sizes, imports in the background) are removed, if their file is deleted or the plugin is deactivated, and planned again after its activation
+- Lost single events of waiting uploads (e.g. if another plugin saves the events of WP-Cron at the same time) are planned again in the backend, due uploads are exported directly during WP-Cron (every 5 minutes at most); uploads are exported directly, as soon as the image optimizer reports the end of its work
+- Added button "Export sizes now" in the export settings and WP CLI command "wp eml export_sizes" to export the sizes of images, which have been exported before, in the background
+- Added instructions for AI agents to the repository (AGENTS.md, skills for site operators, developers and code reviews); they are not part of the plugin ZIP
+- Added methods "supports_sizes()", "export_size()" and "delete_size()" for export objects of services and post meta "efml_export_sizes"
 
 ### Changed
 
+- Optimized the database table of the queue for many entries: IDs as BIGINT with primary key (before about 8.4 million entries during the lifetime of the website), state as VARCHAR and indexes for state and type and for attachment and type; existing entries are kept during the update
 - The WP CLI command "wp eml export" uses the same export as the button in the settings: only files with an allowed mime type are exported, files waiting in the queue are skipped and failed files are marked and listed in the queue
 - Now also compatible with Windows-based hostings
 - The dialog to install or activate the extension for AWS S3 now lists all supported platforms and its new features
@@ -114,6 +148,16 @@
 
 ### Fixed
 
+- Fixed the deletion of exported files: they are deleted on each external source they have been exported to, also if the export has been disabled in the meantime (globally or for the external source) or the extension of its service is not active; files, which could not be deleted, are added to the queue and deleted later
+- Local copies of exported files (kept after the export) are deleted together with the file
+- Fixed the image editor of WordPress for exported images: it saved the edited image directly on the external source (local directory) or failed (other services), its sizes were not known to the plugin and stayed on the external source after the deletion of the image
+- Several sizes of an image with the same file (e.g. portrait images) are deleted on the external source only once
+- Fixed missing choice of the size ("Resolution") in the block editor for external and exported images: the REST API returns their sizes now
+- Fixed export of images uploaded in the block editor with WordPress 7.1 or newer, which creates the sizes in the browser: the file was exported before its sizes existed, which have been saved in a directory named like the URL of the exported file and were missing in the metadata (no srcset); the export starts now after the sizes have been saved (after one hour at the latest, then the missing sizes are created on the server)
+- Sizes created in the browser are rejected for files which are already external files
+- Fixed the deletion of the local files after the export of a scaled image to a local directory, which could delete a file with the name of its original image there
+- Fixed exported files and files taken over from another offload plugin being deleted during the uninstallation or the reset of the plugin, incl. their copies on the external sources: they are kept now, the option "Delete all data on uninstallation" applies only to external files added via their URL
+- Fixed the help of the option "Delete all data on uninstallation" showing the description of the allowed MIME types
 - Fixed option "Export file" and the bulk action for the export in the media library being shown, although the service of the external source for exports is not available (e.g. its extension has been deactivated)
 - Fixed missing possibility to switch off the export of an external source, whose service is not available (e.g. its extension has been deactivated): the list of external sources shows the state with the reason
 - Fixed button "Export now" being shown, although files could not be exported at the moment
@@ -126,7 +170,7 @@
 - Fixed exported files with the same name overwriting each other on the external source, as the filename was only checked in the actual upload directory
 - Fixed export of large files via FTP and FTPS failing at the memory limit, as the file was loaded completely into memory
 - Fixed caching and delivery of large files via the proxy failing at the memory limit, as the file was loaded completely into memory (FTP, FTPS and local files, delivery of images, PDF, ZIP and other files)
-- Fixed files which could not be loaded by browsers (e.g. exported via FTP) being embedded with their FTP-URL if the proxy for their file type is disabled, they are now always delivered via the proxy
+- Fixed files which could not be loaded by browsers (e.g. exported via FTP or to a local directory) being embedded with their FTP-URL or path if the proxy for their file type is disabled: they are delivered via the public URL of their external source now (the URL for exported files in its export settings) and via the proxy, if no public URL is known
 - Fixed proxy URLs resulting in 404 after enabling a proxy, if the rewrite rules have been flushed while all proxies were disabled
 - Fixed missing check for existing files with the same name on the external sources for uploads outside the backend (e.g. via REST API in the block editor, WP-CLI or cron)
 - Fixed reading of queue entries if their state is changed or they are deleted

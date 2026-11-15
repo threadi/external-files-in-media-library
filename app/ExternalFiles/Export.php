@@ -139,7 +139,6 @@ class Export extends Tools_Base {
 		add_action( 'admin_enqueue_scripts', array( $this, 'add_styles_and_js_admin' ) );
 		add_filter( 'wp_generate_attachment_metadata', array( $this, 'export_file_by_upload' ), 20, 2 );
 		add_filter( 'wp_unique_filename', array( $this, 'check_for_exported_filenames' ), 10, 3 );
-		add_action( 'delete_attachment', array( $this, 'delete_exported_file' ) );
 		add_filter( 'wp_update_attachment_metadata', array( $this, 'update_attachment_metadata' ), 10, 2 );
 		add_action( 'pre_delete_term', array( $this, 'on_delete_archive_term' ), 10, 2 );
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 20, 2 );
@@ -230,7 +229,7 @@ class Export extends Tools_Base {
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export in background', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
-		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. The queue exports them in the background in the interval configured there. Until then, they are used as local files. If an export fails, it will be tried again. After 3 failed attempts, the file stays a local file and is marked in the media library. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
+		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. They are exported in the background right away, the oldest first. Until then, they are used as local files. If an export fails, it will be tried again in the interval configured for the queue. After 3 failed attempts, the file stays a local file and is marked in the media library. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
@@ -333,6 +332,37 @@ class Export extends Tools_Base {
 			$field->add_data( 'dialog', Helper::get_json( $this->get_export_local_files_dialog( $this->get_main_source_name( $external_sources ) ) ) );
 			$field->add_depend( $setting_export, 1 );
 			$field->add_depend( $setting_local_files, 1 );
+			$setting->set_field( $field );
+		}
+
+		// add the button to export the sizes of exported images, if images without them exist and they could be exported.
+		if ( ! empty( $external_sources ) && '' === $this->get_export_sources_problem() && Sizes::get_instance()->has_images_without_sizes() && Sizes::get_instance()->is_export_of_sizes_possible() ) {
+			$setting = $settings_obj->add_setting( 'efml_export_sizes_now' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->prevent_export( true );
+			$field = new Button( $settings_obj );
+			$field->set_title( __( 'Export sizes of exported images', 'external-files-in-media-library' ) );
+			$field->set_button_title( __( 'Export sizes now', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Images, which have been exported before, get their sizes on the external sources. The sizes are delivered like the images themselves afterward: via the proxy, if it is enabled for images, which loads them from there instead of creating them. The images are processed one by one in the background.', 'external-files-in-media-library' ) );
+			$field->add_class( 'easy-dialog-for-wordpress' );
+			$field->add_data( 'dialog', Helper::get_json( Sizes::get_instance()->get_dialog() ) );
+			$field->add_depend( $setting_export, 1 );
+			$setting->set_field( $field );
+		}
+
+		// add the button to restore the exported files, if some exist (also with disabled export).
+		if ( Restore::get_instance()->has_files() ) {
+			$setting = $settings_obj->add_setting( 'efml_restore_exported_files_now' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->prevent_export( true );
+			$field = new Button( $settings_obj );
+			$field->set_title( __( 'Restore exported files', 'external-files-in-media-library' ) );
+			$field->set_button_title( __( 'Restore now', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Download all exported files from their external sources and save them as local files at their original path in your media library, e.g. before you deactivate this plugin. The export will be disabled for this. They are restored one by one in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ) );
+			$field->add_class( 'easy-dialog-for-wordpress' );
+			$field->add_data( 'dialog', Helper::get_json( Restore::get_instance()->get_dialog() ) );
 			$setting->set_field( $field );
 		}
 
@@ -1123,6 +1153,11 @@ class Export extends Tools_Base {
 			$metadata = array();
 		}
 
+		// bail if WordPress works with the local files of an exported image (e.g. to create its sizes again).
+		if ( Local_Work::get_instance()->is_open( $attachment_id ) ) {
+			return $metadata;
+		}
+
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
@@ -1131,6 +1166,30 @@ class Export extends Tools_Base {
 		if ( '' !== $problem ) {
 			/* translators: %1$s will be replaced by the reason. */
 			Log::get_instance()->create( sprintf( __( 'The file has not been exported and stays local: %1$s', 'external-files-in-media-library' ), $problem ), (string) wp_get_attachment_url( $attachment_id ), 'error' );
+			return $metadata;
+		}
+
+		// bail if the file is not exported at all (e.g. its type is not allowed in the settings): it stays local
+		// without waiting or a marker in the media library.
+		if ( ! $this->is_exportable( $attachment_id ) ) {
+			Log::get_instance()->create( __( 'The uploaded file is not exported, as its type is not allowed in the settings or its export is prevented.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ), 'info', 2 );
+			return $metadata;
+		}
+
+		// wait with the export, if the sizes of this upload are created in the browser (they are not available yet).
+		$client_uploads_obj = Client_Uploads::get_instance();
+		if ( $client_uploads_obj->is_client_upload() ) {
+			$client_uploads_obj->wait_for_finalization( $attachment_id );
+			return $metadata;
+		}
+
+		// the upload does not wait anymore, e.g. as its sizes have been finalized now.
+		$client_uploads_obj->end_waiting( $attachment_id );
+
+		// wait with the export, if other plugins work with the local files of uploads (e.g. image optimizers).
+		$delay = Delayed_Uploads::get_instance()->get_delay( $attachment_id );
+		if ( $delay > 0 ) {
+			Delayed_Uploads::get_instance()->schedule( $attachment_id, $delay );
 			return $metadata;
 		}
 
@@ -1143,8 +1202,9 @@ class Export extends Tools_Base {
 		// save the metadata now, so the cleanup during the export knows which local files exist.
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 
-		// bail if the file has not been exported.
+		// bail if the file has not been exported: try it again later via the queue, if it has failed.
 		if ( ! $this->export_file( $attachment_id ) ) {
+			$this->retry_failed_upload_export( $attachment_id );
 			return $metadata;
 		}
 
@@ -1385,6 +1445,9 @@ class Export extends Tools_Base {
 				}
 			}
 
+			// export the sizes and the original image of an image (before its local files are deleted).
+			Sizes::get_instance()->export_sizes( $attachment_id, $export_obj, $term_id, $export_path, $credentials );
+
 			// save the attachment as exported external file.
 			$this->save_as_exported( $external_file_obj, $url, $listing_obj->get_name(), basename( $file ), $private_file, $fields, $term_id, $folder );
 
@@ -1419,6 +1482,9 @@ class Export extends Tools_Base {
 	 * @return void
 	 */
 	public function save_as_exported( File $external_file_obj, string $url, string $service_name, string $file_name, bool $private_file, array $fields, int $term_id, string $folder = '' ): void {
+		// save the local paths of the file, so its local URLs in contents could be replaced (before its URL is changed).
+		Local_Urls::get_instance()->save_local_paths( $external_file_obj->get_id() );
+
 		// mark this attachment as one of our own plugin through setting the URL.
 		$external_file_obj->set_url( $url );
 
@@ -1503,6 +1569,11 @@ class Export extends Tools_Base {
 			return;
 		}
 
+		// bail during the uninstallation or the reset of this plugin, as it must never delete the files on the external sources.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			return;
+		}
+
 		// get external file object for the given attachment ID.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -1533,51 +1604,13 @@ class Export extends Tools_Base {
 			return;
 		}
 
-		// create successfully marker.
+		// delete the files on each external source the file has been exported to, independent of whether the export
+		// is enabled for it: files, which could not be deleted now, are deleted later via the queue.
 		$successfully_deleted = true;
-
-		// check each term.
-		foreach ( $this->get_usable_export_terms( true ) as $term_id ) {
-			// bail if this file has not been exported to this external source.
-			if ( ! in_array( absint( $term_id ), $export_sources, true ) ) {
-				continue;
-			}
-
-			// get the listing object by this name.
-			$listing_obj = $this->get_service_object_by_type( (string) get_term_meta( $term_id, 'type', true ) );
-
-			// bail if no object could be found.
-			if ( ! $listing_obj instanceof Service_Base || ! $listing_obj->get_export_object() instanceof Export_Base ) {
-				continue;
-			}
-
-			// get the base URL for this term.
-			$term_url = get_term_meta( $term_id, 'path', true );
-
-			// get the folder, which has been used for this file on this external source.
-			$folder = $this->get_used_export_folder( $attachment_id, $term_id );
-
-			// create the external public URL of this file.
-			$url = trailingslashit( $term_url ) . ( '' !== $folder ? trailingslashit( $folder ) : '' ) . basename( $file );
-
-			// get credentials.
-			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
-
-			// get the export object.
-			$export_obj = $listing_obj->get_export_object();
-
-			// delete the exported file.
-			if ( ! $export_obj->delete_exported_file( $url, $credentials, $attachment_id ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'The exported file could not be deleted (maybe it does not exist).', 'external-files-in-media-library' ), $url, 'error' );
-
-				// mark as not successfully.
+		foreach ( $export_sources as $term_id ) {
+			if ( ! Deletion::get_instance()->delete_on_source( $attachment_id, absint( $term_id ), basename( $file ) ) ) {
 				$successfully_deleted = false;
-				continue;
 			}
-
-			// log this event.
-			Log::get_instance()->create( __( 'The exported file has been deleted.', 'external-files-in-media-library' ), $url, 'info', 2 );
 		}
 
 		// cleanup after a successfully deletion.
@@ -1587,6 +1620,58 @@ class Export extends Tools_Base {
 			delete_post_meta( $attachment_id, 'efml_export_folders' );
 			delete_post_meta( $attachment_id, 'efml_private_file' );
 		}
+	}
+
+	/**
+	 * Return whether the given local file could be exported at all: not on a copy of the website, not for a type of
+	 * file, which is not allowed in the settings, and not if the export is prevented via the hook "efml_prevent_export".
+	 *
+	 * A pure check without log entries, e.g. before a file waits for its export or is added to the queue.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_exportable( int $attachment_id ): bool {
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+
+		// bail if it is an external file already, this website is a copy or its type is not allowed.
+		if ( $external_file_obj->is_valid() || Site_Copy::get_instance()->is_copy() || ! $external_file_obj->is_mime_type_allowed() ) {
+			return false;
+		}
+
+		// return whether the export is prevented (the hook is used during the export, too).
+		$false = false;
+		return ! apply_filters( 'efml_prevent_export', $false, $external_file_obj );
+	}
+
+	/**
+	 * Add an upload to the queue, if its export has failed, so it is tried again (e.g. after a timeout or a rate limit
+	 * of the service, which happens if many files are uploaded at once).
+	 *
+	 * Not if the export has been prevented on purpose: on a copy of the website, for a not allowed type of file or
+	 * by the hook "efml_prevent_export".
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	private function retry_failed_upload_export( int $attachment_id ): void {
+		// bail if it has been exported or the export has been prevented on purpose.
+		if ( ! $this->is_exportable( $attachment_id ) ) {
+			return;
+		}
+
+		// add the file to the queue.
+		if ( ! Queue::get_instance()->add_export( $attachment_id, 5 * MINUTE_IN_SECONDS ) ) {
+			return;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The export of the uploaded file has failed. It has been added to the queue and will be tried again.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ), 'info', 1 );
 	}
 
 	/**
@@ -1864,6 +1949,22 @@ class Export extends Tools_Base {
 	 * @return array<string,mixed>
 	 */
 	public function update_attachment_metadata( array $data, int $attachment_id ): array {
+		// do not remove the local files, while WordPress works with them (e.g. to create the sizes again).
+		$local_work_obj = Local_Work::get_instance();
+		if ( $local_work_obj->is_open( $attachment_id ) ) {
+			// bail if WordPress has not finished its work.
+			if ( ! $local_work_obj->is_exported( $attachment_id ) ) {
+				return $data;
+			}
+
+			// remove the local files and the sizes from the metadata, as their files are exported now.
+			$local_work_obj->close( $attachment_id, false );
+			if ( 1 !== absint( get_option( 'eml_export_do_not_delete_local_files' ) ) ) {
+				unset( $data['sizes'] );
+			}
+			return $data;
+		}
+
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
@@ -1887,8 +1988,8 @@ class Export extends Tools_Base {
 			return $data;
 		}
 
-		// get the metadata.
-		$meta_data = wp_get_attachment_metadata( $attachment_id );
+		// get the metadata (unfiltered, as its file must be the local file).
+		$meta_data = wp_get_attachment_metadata( $attachment_id, true );
 
 		// bail if metadata could not be loaded.
 		if ( ! is_array( $meta_data ) ) {
@@ -1903,13 +2004,19 @@ class Export extends Tools_Base {
 			$sizes = array();
 		}
 
-		// get attached file.
-		$file = get_attached_file( $attachment_id );
+		// get the local file relative to the uploads directory: the attached file could be the external URL already,
+		// which must not be used, as WordPress would delete the files with the names of the sizes and the original
+		// image beside it, i.e. on the external source.
+		$local_paths = Local_Urls::get_instance()->get_local_paths( $attachment_id );
+		$file        = ! empty( $local_paths ) ? $local_paths[0] : get_attached_file( $attachment_id, true );
 
-		// bail if file is not a string.
-		if ( ! is_string( $file ) ) {
+		// bail if file is not a string or not a local file.
+		if ( ! is_string( $file ) || preg_match( '#^[a-z][a-z0-9+.-]*://#i', $file ) ) {
 			return $data;
 		}
+
+		// use the path relative to the uploads directory.
+		$file = _wp_relative_upload_path( $file );
 
 		// add the path to the metadata, if not set.
 		if ( ! isset( $meta_data['file'] ) ) {
@@ -1921,6 +2028,9 @@ class Export extends Tools_Base {
 
 		// get all files for this attachment and delete them in local project.
 		wp_delete_attachment_files( $attachment_id, $meta_data, $sizes, $file );
+
+		// delete the local files of the exported variants in other formats (e.g. WebP).
+		Variants::get_instance()->delete_local_files( $attachment_id );
 
 		// remove the sizes from the metadata, as their local files do not exist anymore.
 		unset( $data['sizes'] );
@@ -3347,7 +3457,7 @@ class Export extends Tools_Base {
 	 *
 	 * @return bool
 	 */
-	private function is_enabled(): bool {
+	public function is_enabled(): bool {
 		// bail if this is not a multisite.
 		if ( ! is_multisite() ) {
 			return $this->is_enabled_on_single_site();
