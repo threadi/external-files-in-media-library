@@ -704,6 +704,277 @@ class Import_Runs {
 	}
 
 	/**
+	 * Start the deletion of the local copies of exported files, whose local files have been kept.
+	 *
+	 * Via WP CLI all files are processed directly, otherwise the first ones directly and the others one by one in the
+	 * background.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array{success: bool, message: string, run_id: int}
+	 */
+	public function start_delete_local(): array {
+		// make sure the database structure exists.
+		$this->maybe_install();
+
+		// bail if a run is already active.
+		$run = $this->get_active_delete_local_run();
+		if ( ! empty( $run ) ) {
+			return array(
+				'success' => true,
+				'message' => __( 'The local copies of the exported files are already being deleted in the background.', 'external-files-in-media-library' ),
+				'run_id'  => absint( $run['id'] ),
+			);
+		}
+
+		// bail if this website is a copy.
+		if ( Local_Copies::get_instance()->is_paused() ) {
+			return array(
+				'success' => false,
+				'message' => __( 'The local copies could not be deleted, as this website is a copy of another website.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// get the number of files.
+		$count = Local_Copies::get_instance()->count_files();
+
+		// bail if no file has local copies.
+		if ( 0 === $count ) {
+			Local_Copies::get_instance()->reset_cache();
+			return array(
+				'success' => false,
+				'message' => __( 'Your media library contains no exported files with local copies.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// create the run.
+		$run = $this->create( $this->get_export_url(), 'delete_local', array(), 0 );
+
+		// bail if the run could not be created.
+		if ( empty( $run ) ) {
+			return array(
+				'success' => false,
+				'message' => __( 'The deletion of the local copies could not be started. Check the log for details.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// get the ID of the run.
+		$run_id = absint( $run['id'] );
+
+		// process all files directly via WP CLI.
+		if ( Helper::is_cli() ) {
+			$this->work( $run_id, PHP_INT_MAX );
+
+			// get the result.
+			$run = $this->get_run( $run_id );
+
+			// return the result.
+			return array(
+				'success' => 0 === absint( $run['errors'] ?? 0 ),
+				/* translators: %1$d and %2$d will be replaced by numbers. */
+				'message' => sprintf( __( 'The local copies of %1$d exported files have been deleted, %2$d files kept their local copies.', 'external-files-in-media-library' ), absint( $run['processed'] ?? 0 ), absint( $run['errors'] ?? 0 ) ),
+				'run_id'  => $run_id,
+			);
+		}
+
+		// list the first files directly, so the progress shows them already.
+		$this->list_next_page( $run );
+
+		// process the first files directly, the others in the background.
+		$this->work( $run_id, min( $this->get_deadline(), microtime( true ) + 10 ) );
+
+		// get the run in its actual state.
+		$run = $this->get_run( $run_id );
+
+		// return the result, if all files have been processed: the hint of the finished run shows it.
+		if ( empty( $run ) || $this->is_finished( $run ) ) {
+			return array(
+				'success' => true,
+				'message' => '',
+				'run_id'  => $run_id,
+			);
+		}
+
+		// return the result.
+		return array(
+			'success' => true,
+			/* translators: %1$d will be replaced by a number. */
+			'message' => sprintf( _n( 'The local copies of %1$d exported file will be deleted in the background. The admin bar shows the progress, a click on it opens the queue.', 'The local copies of %1$d exported files will be deleted in the background. The admin bar shows the progress, a click on it opens the queue.', $count, 'external-files-in-media-library' ), $count ),
+			'run_id'  => $run_id,
+		);
+	}
+
+	/**
+	 * Return the unfinished deletion of the local copies of exported files.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_active_delete_local_run(): array {
+		// bail if the table does not exist.
+		if ( ! Helper::is_table_available( 'efml_import_runs' ) ) {
+			return array();
+		}
+
+		// return the run.
+		return $this->get_active_run_by_url( $this->get_export_url(), 'delete_local' );
+	}
+
+	/**
+	 * Start the creation of local working copies of all exported images (e.g. for image optimizers).
+	 *
+	 * Via WP CLI all images are processed directly, otherwise the first ones directly and the others one by one in
+	 * the background.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array{success: bool, message: string, run_id: int}
+	 */
+	public function start_working_copies(): array {
+		return $this->start_working_copy_run(
+			'working_copy',
+			Working_Copies::get_instance()->count_candidates(),
+			array(
+				'active' => __( 'The working copies of the exported images are already being saved in the background.', 'external-files-in-media-library' ),
+				'none'   => __( 'Your media library contains no exported images without working copy.', 'external-files-in-media-library' ),
+				'failed' => __( 'The working copies could not be saved. Check the log for details.', 'external-files-in-media-library' ),
+				/* translators: %1$d and %2$d will be replaced by numbers. */
+				'cli'    => __( 'The working copies of %1$d exported images have been saved, %2$d images failed.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'single' => __( 'The working copy of %1$d exported image will be saved in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'plural' => __( 'The working copies of %1$d exported images will be saved in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ),
+			)
+		);
+	}
+
+	/**
+	 * Start the finishing of all local working copies: their changed files are exported and the local files removed.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array{success: bool, message: string, run_id: int}
+	 */
+	public function start_finish_working_copies(): array {
+		return $this->start_working_copy_run(
+			'working_finish',
+			Working_Copies::get_instance()->count_active(),
+			array(
+				'active' => __( 'The optimized images are already being exported in the background.', 'external-files-in-media-library' ),
+				'none'   => __( 'Your media library contains no images with working copy.', 'external-files-in-media-library' ),
+				'failed' => __( 'The export of the optimized images could not be started. Check the log for details.', 'external-files-in-media-library' ),
+				/* translators: %1$d and %2$d will be replaced by numbers. */
+				'cli'    => __( 'The changed files of %1$d working copies have been exported, %2$d working copies failed.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'single' => __( 'The changed files of %1$d working copy will be exported in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'plural' => __( 'The changed files of %1$d working copies will be exported in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ),
+			)
+		);
+	}
+
+	/**
+	 * Start a run to create or to finish working copies.
+	 *
+	 * @param string               $type     The type of the run ("working_copy" or "working_finish").
+	 * @param int                  $count    The number of images.
+	 * @param array<string,string> $messages The messages.
+	 *
+	 * @return array{success: bool, message: string, run_id: int}
+	 */
+	private function start_working_copy_run( string $type, int $count, array $messages ): array {
+		// make sure the database structure exists.
+		$this->maybe_install();
+
+		// bail if a run of this type is already active.
+		$run = $this->get_active_run_by_url( $this->get_export_url(), $type );
+		if ( ! empty( $run ) ) {
+			return array(
+				'success' => true,
+				'message' => $messages['active'],
+				'run_id'  => absint( $run['id'] ),
+			);
+		}
+
+		// bail if this website is a copy.
+		if ( Site_Copy::get_instance()->is_copy() ) {
+			return array(
+				'success' => false,
+				'message' => __( 'This is not possible, as this website is a copy of another website.', 'external-files-in-media-library' ),
+				'run_id'  => 0,
+			);
+		}
+
+		// bail if no image could be processed.
+		if ( 0 === $count ) {
+			return array(
+				'success' => false,
+				'message' => $messages['none'],
+				'run_id'  => 0,
+			);
+		}
+
+		// create the run.
+		$run = $this->create( $this->get_export_url(), $type, array(), 0 );
+
+		// bail if the run could not be created.
+		if ( empty( $run ) ) {
+			return array(
+				'success' => false,
+				'message' => $messages['failed'],
+				'run_id'  => 0,
+			);
+		}
+
+		// get the ID of the run.
+		$run_id = absint( $run['id'] );
+
+		// process all images directly via WP CLI.
+		if ( Helper::is_cli() ) {
+			$this->work( $run_id, PHP_INT_MAX );
+
+			// get the result.
+			$run = $this->get_run( $run_id );
+
+			// return the result.
+			return array(
+				'success' => 0 === absint( $run['errors'] ?? 0 ),
+				'message' => sprintf( $messages['cli'], absint( $run['processed'] ?? 0 ), absint( $run['errors'] ?? 0 ) ),
+				'run_id'  => $run_id,
+			);
+		}
+
+		// list the first images directly, so the progress shows them already.
+		$this->list_next_page( $run );
+
+		// process the first images directly, the others in the background.
+		$this->work( $run_id, min( $this->get_deadline(), microtime( true ) + 10 ) );
+
+		// get the run in its actual state.
+		$run = $this->get_run( $run_id );
+
+		// return the result, if all images have been processed: the hint of the finished run shows it.
+		if ( empty( $run ) || $this->is_finished( $run ) ) {
+			return array(
+				'success' => true,
+				'message' => '',
+				'run_id'  => $run_id,
+			);
+		}
+
+		// return the result.
+		return array(
+			'success' => true,
+			'message' => sprintf( 1 === $count ? $messages['single'] : $messages['plural'], $count ),
+			'run_id'  => $run_id,
+		);
+	}
+
+	/**
 	 * Return the unfinished export of the sizes of exported images.
 	 *
 	 * @since 6.0.0 Available since 6.0.0.
@@ -823,7 +1094,7 @@ class Import_Runs {
 		$options_json = '';
 		if ( 'localize' === $type ) {
 			$options_json = wp_json_encode( $run_options );
-		} elseif ( ! in_array( $type, array( 'export', 'sizes' ), true ) ) {
+		} elseif ( ! in_array( $type, array( 'export', 'sizes', 'delete_local', 'working_copy', 'working_finish' ), true ) ) {
 			/**
 			 * Filter the options used for the import of this URL. Same as for the queue.
 			 *
@@ -873,6 +1144,12 @@ class Import_Runs {
 			Log::get_instance()->create( __( 'The restore of the exported files has been started. They will be listed and restored one by one at their original path.', 'external-files-in-media-library' ), '', 'info' );
 		} elseif ( 'sizes' === $type ) {
 			Log::get_instance()->create( __( 'The export of the sizes of exported images has been started. The images will be listed and processed one by one.', 'external-files-in-media-library' ), '', 'info' );
+		} elseif ( 'delete_local' === $type ) {
+			Log::get_instance()->create( __( 'The deletion of the local copies of exported files has been started. The files will be listed and processed one by one.', 'external-files-in-media-library' ), '', 'info' );
+		} elseif ( 'working_copy' === $type ) {
+			Log::get_instance()->create( __( 'The creation of local working copies of the exported images has been started. The images will be listed and processed one by one.', 'external-files-in-media-library' ), '', 'info' );
+		} elseif ( 'working_finish' === $type ) {
+			Log::get_instance()->create( __( 'The export of the optimized images has been started. The working copies will be listed and processed one by one.', 'external-files-in-media-library' ), '', 'info' );
 		} else {
 			Log::get_instance()->create( __( 'The files of this directory will be listed and imported one by one.', 'external-files-in-media-library' ), $url, 'info', 2 );
 		}
@@ -994,6 +1271,11 @@ class Import_Runs {
 
 		// bail if the files of an export could not be exported at the moment.
 		if ( 'export' === $run['type'] && ! $this->is_export_possible( $run ) ) {
+			return;
+		}
+
+		// bail if the deletion of local copies is paused (on a copy of the website).
+		if ( $this->is_paused( $run ) ) {
 			return;
 		}
 
@@ -1161,7 +1443,7 @@ class Import_Runs {
 		global $wpdb;
 
 		// list the local files for an export or the exported files for their restore.
-		if ( in_array( $run['type'], array( 'export', 'localize', 'sizes' ), true ) ) {
+		if ( in_array( $run['type'], array( 'export', 'localize', 'sizes', 'delete_local', 'working_copy', 'working_finish' ), true ) ) {
 			$this->list_next_export_page( $run );
 			return;
 		}
@@ -1264,14 +1546,20 @@ class Import_Runs {
 		// get the next files.
 		if ( 'localize' === $run['type'] ) {
 			$attachment_ids = Restore::get_instance()->get_files( absint( $run['cursor'] ), $limit );
+		} elseif ( 'delete_local' === $run['type'] ) {
+			$attachment_ids = Local_Copies::get_instance()->get_candidates( absint( $run['cursor'] ), $limit );
+		} elseif ( 'working_copy' === $run['type'] ) {
+			$attachment_ids = Working_Copies::get_instance()->get_candidates( absint( $run['cursor'] ), $limit );
+		} elseif ( 'working_finish' === $run['type'] ) {
+			$attachment_ids = Working_Copies::get_instance()->get_active( absint( $run['cursor'] ), $limit );
 		} elseif ( 'sizes' === $run['type'] ) {
 			$attachment_ids = Sizes::get_instance()->get_images_without_sizes( absint( $run['cursor'] ), $limit );
 		} else {
 			$attachment_ids = Export::get_instance()->get_local_files_for_export( absint( $run['cursor'] ), $limit );
 		}
 
-		// add them to the queue.
-		$inserted = $this->add_export_entries( $run_id, $attachment_ids, (string) $run['type'] );
+		// add them to the queue: for the deletion of local copies only the files, which have local copies.
+		$inserted = $this->add_export_entries( $run_id, 'delete_local' === $run['type'] ? array_values( array_filter( $attachment_ids, array( Local_Copies::get_instance(), 'has_local_copy' ) ) ) : $attachment_ids, (string) $run['type'] );
 
 		// get the new cursor.
 		$cursor = empty( $attachment_ids ) ? (string) $run['cursor'] : (string) end( $attachment_ids );
@@ -1385,7 +1673,7 @@ class Import_Runs {
 	 * @return bool
 	 */
 	private function is_paused( array $run ): bool {
-		return 'export' === $run['type'] && Site_Copy::get_instance()->is_copy();
+		return in_array( $run['type'], array( 'export', 'delete_local', 'working_copy', 'working_finish' ), true ) && Site_Copy::get_instance()->is_copy();
 	}
 
 	/**
@@ -1595,6 +1883,18 @@ class Import_Runs {
 			return;
 		}
 
+		// delete the local copies of the exported file of a run to delete local copies.
+		if ( 'delete_local' === $run['type'] ) {
+			$this->process_delete_local_entry( $id, $run );
+			return;
+		}
+
+		// create or finish the working copy of the exported image.
+		if ( in_array( $run['type'], array( 'working_copy', 'working_finish' ), true ) ) {
+			$this->process_working_copy_entry( $id, $run );
+			return;
+		}
+
 		// get the URL.
 		$url = (string) $wpdb->get_var( $wpdb->prepare( 'SELECT `url` FROM %i WHERE `id` = %d', array( $this->get_queue_table_name(), $id ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
@@ -1793,6 +2093,103 @@ class Import_Runs {
 	}
 
 	/**
+	 * Delete the local copies of the exported file of the given entry of the given run.
+	 *
+	 * Files, which do not exist anymore, are not exported files anymore or have no local copies, are removed from the
+	 * run. Files, which keep their local copies (e.g. as they could not be loaded from their external source), stay in
+	 * the queue as error.
+	 *
+	 * @param int                 $id  The ID of the entry.
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function process_delete_local_entry( int $id, array $run ): void {
+		global $wpdb;
+
+		// get the attachment ID and the URL.
+		$entry         = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `url`, `attachment_id` FROM %i WHERE `id` = %d', array( $this->get_queue_table_name(), $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$attachment_id = absint( $entry['attachment_id'] ?? 0 );
+		$url           = (string) ( $entry['url'] ?? '' );
+
+		// remove the entry from the run, if the file does not exist anymore, is not exported or has no local copies.
+		if ( 0 === $attachment_id || 'attachment' !== get_post_type( $attachment_id ) || 0 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) || ! Local_Copies::get_instance()->has_local_copy( $attachment_id ) ) {
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `total` = `total` - 1 WHERE `id` = %d AND `total` > 0', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return;
+		}
+
+		// delete the local copies.
+		$success = false;
+		try {
+			$success = Local_Copies::get_instance()->delete_local_copies( $attachment_id );
+		} catch ( \Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during the deletion of the local copies of this file:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url, 'error' );
+		}
+
+		// update the entry and the counter of the run.
+		if ( $success ) {
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `processed` = `processed` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		} else {
+			$wpdb->update( $this->get_queue_table_name(), array( 'state' => 'error' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `errors` = `errors` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+	}
+
+	/**
+	 * Create or finish the working copy of the exported image of the given entry of the given run.
+	 *
+	 * Images, which do not exist anymore or need nothing to do, are removed from the run. Images, which could not be
+	 * processed, stay in the queue as error.
+	 *
+	 * @param int                 $id  The ID of the entry.
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function process_working_copy_entry( int $id, array $run ): void {
+		global $wpdb;
+
+		// get the attachment ID and the URL.
+		$entry         = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT `url`, `attachment_id` FROM %i WHERE `id` = %d', array( $this->get_queue_table_name(), $id ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$attachment_id = absint( $entry['attachment_id'] ?? 0 );
+		$url           = (string) ( $entry['url'] ?? '' );
+
+		// get the object.
+		$working_copies_obj = Working_Copies::get_instance();
+
+		// get whether the working copy is created.
+		$create = 'working_copy' === $run['type'];
+
+		// remove the entry from the run, if the image does not exist anymore or nothing has to be done.
+		if ( 0 === $attachment_id || 'attachment' !== get_post_type( $attachment_id ) || $create === $working_copies_obj->is_active( $attachment_id ) ) {
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `total` = `total` - 1 WHERE `id` = %d AND `total` > 0', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			return;
+		}
+
+		// create or finish it.
+		$success = false;
+		try {
+			$success = $create ? $working_copies_obj->create( $attachment_id ) : $working_copies_obj->finish( $attachment_id );
+		} catch ( \Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Error during the work with the working copy of this image:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url, 'error' );
+		}
+
+		// update the entry and the counter of the run.
+		if ( $success ) {
+			$wpdb->delete( $this->get_queue_table_name(), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `processed` = `processed` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		} else {
+			$wpdb->update( $this->get_queue_table_name(), array( 'state' => 'error' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->query( $wpdb->prepare( 'UPDATE %i SET `errors` = `errors` + 1 WHERE `id` = %d', array( $this->get_table_name(), absint( $run['id'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		}
+	}
+
+	/**
 	 * Set the options of the given run in the request and return the original values.
 	 *
 	 * @param array<string,mixed> $run The run.
@@ -1900,7 +2297,7 @@ class Import_Runs {
 
 		// detect whether entries have been deleted in the queue: the run is cancelled then (not for exports, whose
 		// entries are also removed, if their files are deleted, and whose other files are exported nevertheless).
-		$state = ! in_array( $run['type'], array( 'export', 'localize', 'sizes' ), true ) && absint( $run['processed'] ) + absint( $run['errors'] ) < absint( $run['total'] ) ? 'cancelled' : 'done';
+		$state = ! in_array( $run['type'], array( 'export', 'localize', 'sizes', 'delete_local', 'working_copy', 'working_finish' ), true ) && absint( $run['processed'] ) + absint( $run['errors'] ) < absint( $run['total'] ) ? 'cancelled' : 'done';
 
 		// set the new state.
 		$this->update( $run_id, array( 'state' => $state ) );
@@ -1913,6 +2310,10 @@ class Import_Runs {
 			$this->finish_localize( $run );
 		} elseif ( 'sizes' === $run['type'] ) {
 			$this->finish_sizes( $run );
+		} elseif ( 'delete_local' === $run['type'] ) {
+			$this->finish_delete_local( $run );
+		} elseif ( in_array( $run['type'], array( 'working_copy', 'working_finish' ), true ) ) {
+			$this->finish_working_copies( $run );
 		} else {
 			// log this event.
 			/* translators: %1$d, %2$d and %3$d will be replaced by numbers. */
@@ -2047,6 +2448,92 @@ class Import_Runs {
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_type( $errors > 0 ? 'error' : 'success' );
 		$transient_obj->set_name( 'efml_sizes_run_finished' );
+		$transient_obj->set_message( '<strong>' . esc_html( $message ) . '</strong>' . $details );
+		$transient_obj->save();
+	}
+
+	/**
+	 * Log the result of the given finished run to delete local copies and show it as hint.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function finish_delete_local( array $run ): void {
+		// get the counts.
+		$processed = absint( $run['processed'] );
+		$errors    = absint( $run['errors'] );
+
+		// forget whether local copies exist.
+		Local_Copies::get_instance()->reset_cache();
+
+		// create the message.
+		/* translators: %1$d and %2$d will be replaced by numbers. */
+		$message = sprintf( __( 'The deletion of the local copies of exported files has been finished: %1$d files without local copies now, %2$d files kept their local copies.', 'external-files-in-media-library' ), $processed, $errors );
+
+		// log this event.
+		Log::get_instance()->create( $message, '', $errors > 0 ? 'error' : 'success' );
+
+		// bail if this is WP CLI, which shows the result itself.
+		if ( Helper::is_cli() ) {
+			return;
+		}
+
+		// add the details, if files kept their local copies.
+		$details = '';
+		if ( $errors > 0 ) {
+			/* translators: %1$s and %2$s will be replaced by URLs. */
+			$details = ' ' . sprintf( __( 'The files, which kept their local copies, are unchanged. The reasons are listed in the <a href="%1$s">log</a>. In the <a href="%2$s">queue</a> you can process them again, e.g. after you solved the problem.', 'external-files-in-media-library' ), esc_url( Helper::get_log_url() ), esc_url( add_query_arg( array( 'errors' => 1 ), Settings::get_instance()->get_url( 'eml_queue_table' ) ) ) );
+		}
+
+		// add the hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_type( $errors > 0 ? 'error' : 'success' );
+		$transient_obj->set_name( 'efml_delete_local_run_finished' );
+		$transient_obj->set_message( '<strong>' . esc_html( $message ) . '</strong>' . $details );
+		$transient_obj->save();
+	}
+
+	/**
+	 * Log the result of the given finished run to create or finish working copies and show it as hint.
+	 *
+	 * @param array<string,mixed> $run The run.
+	 *
+	 * @return void
+	 */
+	private function finish_working_copies( array $run ): void {
+		// get the counts.
+		$processed = absint( $run['processed'] );
+		$errors    = absint( $run['errors'] );
+
+		// create the message.
+		if ( 'working_copy' === $run['type'] ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$message = sprintf( __( 'The local working copies of the exported images have been saved: %1$d images could be optimized now, %2$d images failed. The changed files are exported as soon as an image optimizer reports the end of its work, otherwise via "Export optimized images" in the export settings.', 'external-files-in-media-library' ), $processed, $errors );
+		} else {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$message = sprintf( __( 'The optimized images have been exported: %1$d working copies finished, %2$d working copies failed.', 'external-files-in-media-library' ), $processed, $errors );
+		}
+
+		// log this event.
+		Log::get_instance()->create( $message, '', $errors > 0 ? 'error' : 'success' );
+
+		// bail if this is WP CLI, which shows the result itself.
+		if ( Helper::is_cli() ) {
+			return;
+		}
+
+		// add the details, if images failed.
+		$details = '';
+		if ( $errors > 0 ) {
+			/* translators: %1$s and %2$s will be replaced by URLs. */
+			$details = ' ' . sprintf( __( 'The reasons are listed in the <a href="%1$s">log</a>. In the <a href="%2$s">queue</a> you can process them again, e.g. after you solved the problem.', 'external-files-in-media-library' ), esc_url( Helper::get_log_url() ), esc_url( add_query_arg( array( 'errors' => 1 ), Settings::get_instance()->get_url( 'eml_queue_table' ) ) ) );
+		}
+
+		// add the hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_type( $errors > 0 ? 'error' : 'success' );
+		$transient_obj->set_name( 'efml_working_copies_run_finished' );
 		$transient_obj->set_message( '<strong>' . esc_html( $message ) . '</strong>' . $details );
 		$transient_obj->save();
 	}
@@ -2324,15 +2811,18 @@ class Import_Runs {
 	 *
 	 * The values "exports", "export_total" and "export_done" contain the part of the exports of local files,
 	 * the values "restores", "restore_total" and "restore_done" the part of the restores of exported files and the
-	 * values "size_runs", "size_total" and "size_done" the part of the exports of sizes of exported images.
+	 * values "size_runs", "size_total" and "size_done" the part of the exports of sizes of exported images and the values
+	 * "cleanups", "cleanup_total" and "cleanup_done" the part of the deletions of local copies of exported files and the
+	 * values "working_runs", "working_total" and "working_done" the part of the creation and the finishing of working
+	 * copies.
 	 *
-	 * @return array{runs: int, total: int, done: int, listing: int, exports: int, export_total: int, export_done: int, restores: int, restore_total: int, restore_done: int, size_runs: int, size_total: int, size_done: int}
+	 * @return array{runs: int, total: int, done: int, listing: int, exports: int, export_total: int, export_done: int, restores: int, restore_total: int, restore_done: int, size_runs: int, size_total: int, size_done: int, cleanups: int, cleanup_total: int, cleanup_done: int, working_runs: int, working_total: int, working_done: int}
 	 */
 	public function get_progress(): array {
 		global $wpdb;
 
 		// get the sums.
-		$result = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS `runs`, SUM(`total`) AS `total`, SUM(`processed` + `errors`) AS `done`, SUM(`state` = %s) AS `listing`, SUM(`type` = %s) AS `exports`, SUM(IF(`type` = %s, `total`, 0)) AS `export_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `export_done`, SUM(`type` = %s) AS `restores`, SUM(IF(`type` = %s, `total`, 0)) AS `restore_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `restore_done`, SUM(`type` = %s) AS `size_runs`, SUM(IF(`type` = %s, `total`, 0)) AS `size_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `size_done` FROM %i WHERE `state` IN (%s, %s)', array( 'listing', 'export', 'export', 'export', 'localize', 'localize', 'localize', 'sizes', 'sizes', 'sizes', $this->get_table_name(), 'listing', 'processing' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$result = Helper::get_db_result( $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS `runs`, SUM(`total`) AS `total`, SUM(`processed` + `errors`) AS `done`, SUM(`state` = %s) AS `listing`, SUM(`type` = %s) AS `exports`, SUM(IF(`type` = %s, `total`, 0)) AS `export_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `export_done`, SUM(`type` = %s) AS `restores`, SUM(IF(`type` = %s, `total`, 0)) AS `restore_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `restore_done`, SUM(`type` = %s) AS `size_runs`, SUM(IF(`type` = %s, `total`, 0)) AS `size_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `size_done`, SUM(`type` = %s) AS `cleanups`, SUM(IF(`type` = %s, `total`, 0)) AS `cleanup_total`, SUM(IF(`type` = %s, `processed` + `errors`, 0)) AS `cleanup_done`, SUM(`type` IN (%s, %s)) AS `working_runs`, SUM(IF(`type` IN (%s, %s), `total`, 0)) AS `working_total`, SUM(IF(`type` IN (%s, %s), `processed` + `errors`, 0)) AS `working_done` FROM %i WHERE `state` IN (%s, %s)', array( 'listing', 'export', 'export', 'export', 'localize', 'localize', 'localize', 'sizes', 'sizes', 'sizes', 'delete_local', 'delete_local', 'delete_local', 'working_copy', 'working_finish', 'working_copy', 'working_finish', 'working_copy', 'working_finish', $this->get_table_name(), 'listing', 'processing' ) ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		// return the values.
 		return array(
@@ -2349,6 +2839,12 @@ class Import_Runs {
 			'size_runs'     => absint( $result['size_runs'] ?? 0 ),
 			'size_total'    => absint( $result['size_total'] ?? 0 ),
 			'size_done'     => absint( $result['size_done'] ?? 0 ),
+			'cleanups'      => absint( $result['cleanups'] ?? 0 ),
+			'cleanup_total' => absint( $result['cleanup_total'] ?? 0 ),
+			'cleanup_done'  => absint( $result['cleanup_done'] ?? 0 ),
+			'working_runs'  => absint( $result['working_runs'] ?? 0 ),
+			'working_total' => absint( $result['working_total'] ?? 0 ),
+			'working_done'  => absint( $result['working_done'] ?? 0 ),
 		);
 	}
 
@@ -2393,9 +2889,17 @@ class Import_Runs {
 
 		// create the title-attribute for the imports and the exports.
 		$titles = array();
-		if ( $progress['runs'] > $progress['exports'] + $progress['restores'] + $progress['size_runs'] ) {
+		if ( $progress['runs'] > $progress['exports'] + $progress['restores'] + $progress['size_runs'] + $progress['cleanups'] + $progress['working_runs'] ) {
 			/* translators: %1$d and %2$d will be replaced by numbers. */
-			$titles[] = sprintf( __( '%1$d of %2$d external files imported', 'external-files-in-media-library' ), $progress['done'] - $progress['export_done'] - $progress['restore_done'] - $progress['size_done'], $progress['total'] - $progress['export_total'] - $progress['restore_total'] - $progress['size_total'] );
+			$titles[] = sprintf( __( '%1$d of %2$d external files imported', 'external-files-in-media-library' ), $progress['done'] - $progress['export_done'] - $progress['restore_done'] - $progress['size_done'] - $progress['cleanup_done'] - $progress['working_done'], $progress['total'] - $progress['export_total'] - $progress['restore_total'] - $progress['size_total'] - $progress['cleanup_total'] - $progress['working_total'] );
+		}
+		if ( $progress['working_runs'] > 0 ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$titles[] = sprintf( __( 'working copies of %1$d of %2$d exported images processed', 'external-files-in-media-library' ), $progress['working_done'], $progress['working_total'] );
+		}
+		if ( $progress['cleanups'] > 0 ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			$titles[] = sprintf( __( 'local copies of %1$d of %2$d exported files deleted', 'external-files-in-media-library' ), $progress['cleanup_done'], $progress['cleanup_total'] );
 		}
 		if ( $progress['size_runs'] > 0 ) {
 			/* translators: %1$d and %2$d will be replaced by numbers. */
@@ -2481,6 +2985,15 @@ class Import_Runs {
 		}
 		if ( 'sizes' === $run['type'] ) {
 			return esc_html__( 'Export of the sizes of exported images', 'external-files-in-media-library' );
+		}
+		if ( 'delete_local' === $run['type'] ) {
+			return esc_html__( 'Deletion of the local copies of exported files', 'external-files-in-media-library' );
+		}
+		if ( 'working_copy' === $run['type'] ) {
+			return esc_html__( 'Local working copies of the exported images', 'external-files-in-media-library' );
+		}
+		if ( 'working_finish' === $run['type'] ) {
+			return esc_html__( 'Export of the optimized images', 'external-files-in-media-library' );
 		}
 		if ( 'export' === $run['type'] ) {
 			// return a general description, if the main external source is not known.

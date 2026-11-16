@@ -106,6 +106,7 @@ class Export extends Tools_Base {
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 		add_action( 'admin_init', array( $this, 'add_hint_for_unusable_sources' ) );
+		add_action( 'admin_action_efml_export_again', array( $this, 'export_again_via_request' ) );
 
 		// bail if not enabled.
 		if ( ! $this->is_enabled() ) {
@@ -229,7 +230,7 @@ class Export extends Tools_Base {
 		$field = new Checkbox( $settings_obj );
 		$field->set_title( __( 'Export in background', 'external-files-in-media-library' ) );
 		/* translators: %1$s will be replaced by a URL. */
-		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. They are exported in the background right away, the oldest first. Until then, they are used as local files. If an export fails, it will be tried again in the interval configured for the queue. After 3 failed attempts, the file stays a local file and is marked in the media library. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
+		$field->set_description( sprintf( __( 'When enabled, new files in the media library and files of the bulk action are not exported directly during the upload, but added to <a href="%1$s">the queue</a>. They are exported in the background right away, the oldest first. Until then, they are used as local files. If an export fails, it will be tried again after 5 and after 15 minutes. After 3 failed attempts, the file stays a local file and is marked in the media library, where you can filter for it and export it again. If the queue is disabled, the files are exported directly.', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->get_url( 'eml_queue_table' ) ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
@@ -349,6 +350,54 @@ class Export extends Tools_Base {
 			$field->add_data( 'dialog', Helper::get_json( Sizes::get_instance()->get_dialog() ) );
 			$field->add_depend( $setting_export, 1 );
 			$setting->set_field( $field );
+		}
+
+		// add the button to delete the local copies of exported files, if some exist (also with disabled export).
+		if ( is_admin() && Local_Copies::get_instance()->has_files() ) {
+			$setting = $settings_obj->add_setting( 'efml_delete_local_copies_now' );
+			$setting->set_section( $section );
+			$setting->set_autoload( false );
+			$setting->prevent_export( true );
+			$field = new Button( $settings_obj );
+			$field->set_title( __( 'Delete local copies', 'external-files-in-media-library' ) );
+			$field->set_button_title( __( 'Delete local copies now', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'Exported files, whose local files have been kept (setting "Do not delete local files"), are used from their external sources only afterward, to free storage space. Each file is loaded from its external source before, only files, which exist there, are deleted locally. They are processed one by one in the background. The admin bar shows the progress, a click on it opens the queue.', 'external-files-in-media-library' ) );
+			$field->add_class( 'easy-dialog-for-wordpress' );
+			$field->add_data( 'dialog', Helper::get_json( Local_Copies::get_instance()->get_dialog() ) );
+			$setting->set_field( $field );
+		}
+
+		// add the buttons for local working copies of exported images, e.g. for image optimizers (only in the backend).
+		if ( is_admin() ) {
+			$working_copies_obj = Working_Copies::get_instance();
+			if ( $working_copies_obj->count_candidates() > 0 ) {
+				$setting = $settings_obj->add_setting( 'efml_create_working_copies_now' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->prevent_export( true );
+				$field = new Button( $settings_obj );
+				$field->set_title( __( 'Prepare exported images for image optimizers', 'external-files-in-media-library' ) );
+				$field->set_button_title( __( 'Save working copies', 'external-files-in-media-library' ) );
+				$field->set_description( __( 'Image optimizers and other plugins need the local files of images, e.g. for their bulk optimization. This saves local working copies of all exported images, which are still delivered from their external sources. As soon as an image optimizer reports the end of its work for an image, its changed files are exported and its working copy is removed. With EWWW Image Optimizer, single images get their working copy automatically, if you optimize them in the media library.', 'external-files-in-media-library' ) );
+				$field->add_class( 'easy-dialog-for-wordpress' );
+				$field->add_data( 'dialog', Helper::get_json( $working_copies_obj->get_create_dialog() ) );
+				$setting->set_field( $field );
+			}
+			$active = $working_copies_obj->count_active();
+			if ( $active > 0 ) {
+				$setting = $settings_obj->add_setting( 'efml_finish_working_copies_now' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->prevent_export( true );
+				$field = new Button( $settings_obj );
+				$field->set_title( __( 'Export optimized images', 'external-files-in-media-library' ) );
+				$field->set_button_title( __( 'Export now', 'external-files-in-media-library' ) );
+				/* translators: %1$d will be replaced by a number. */
+				$field->set_description( sprintf( _n( '%1$d exported image has a local working copy. Export its changed files and remove the working copy, e.g. after an image optimizer, which does not report the end of its work (like Converter for Media), has finished.', '%1$d exported images have a local working copy. Export their changed files and remove the working copies, e.g. after an image optimizer, which does not report the end of its work (like Converter for Media), has finished.', $active, 'external-files-in-media-library' ), $active ) );
+				$field->add_class( 'easy-dialog-for-wordpress' );
+				$field->add_data( 'dialog', Helper::get_json( $working_copies_obj->get_finish_dialog() ) );
+				$setting->set_field( $field );
+			}
 		}
 
 		// add the button to restore the exported files, if some exist (also with disabled export).
@@ -1522,6 +1571,11 @@ class Export extends Tools_Base {
 		delete_post_meta( $external_file_obj->get_id(), 'efml_export_queued' );
 		delete_post_meta( $external_file_obj->get_id(), 'efml_export_failed' );
 
+		// forget whether local copies exist, if they are kept.
+		if ( 1 === absint( get_option( 'eml_export_do_not_delete_local_files' ) ) ) {
+			Local_Copies::get_instance()->reset_cache();
+		}
+
 		// get the metadata.
 		$meta_data = wp_get_attachment_metadata( $external_file_obj->get_id() );
 		if ( ! is_array( $meta_data ) ) {
@@ -1620,6 +1674,218 @@ class Export extends Tools_Base {
 			delete_post_meta( $attachment_id, 'efml_export_folders' );
 			delete_post_meta( $attachment_id, 'efml_private_file' );
 		}
+	}
+
+	/**
+	 * Return the state of the export of the given local file: "pending" if it waits for its export (in the queue,
+	 * for other plugins or for its sizes from the browser), "failed" if its export has failed, otherwise empty.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_export_state( int $attachment_id ): string {
+		// bail if this is an external file.
+		if ( Files::get_instance()->get_file( $attachment_id )->is_valid() ) {
+			return '';
+		}
+
+		// return "failed", if its export via the queue has failed.
+		if ( absint( get_post_meta( $attachment_id, 'efml_export_failed', true ) ) > 0 ) {
+			return 'failed';
+		}
+
+		// return "pending", if it waits for its export.
+		if ( absint( get_post_meta( $attachment_id, 'efml_export_queued', true ) ) > 0 || Delayed_Uploads::get_instance()->is_waiting( $attachment_id ) || Client_Uploads::get_instance()->is_waiting( $attachment_id ) ) {
+			return 'pending';
+		}
+
+		// return empty string for any other state.
+		return '';
+	}
+
+	/**
+	 * Return the reason, why the given local file could not be exported again at the moment (empty if it could).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_export_again_problem( int $attachment_id ): string {
+		// bail if the export is disabled.
+		if ( ! $this->is_enabled() ) {
+			return __( 'The export is disabled.', 'external-files-in-media-library' );
+		}
+
+		// bail if the file does not exist or does not wait for its export and its export has not failed.
+		if ( 'attachment' !== get_post_type( $attachment_id ) || '' === $this->get_export_state( $attachment_id ) ) {
+			return __( 'The file does not wait for its export and its export has not failed.', 'external-files-in-media-library' );
+		}
+
+		// bail if the file is not exported at all (e.g. its type is not allowed in the settings).
+		if ( ! $this->is_exportable( $attachment_id ) ) {
+			return __( 'The file is not exported, as its type is not allowed in the settings or its export is prevented.', 'external-files-in-media-library' );
+		}
+
+		// return the reason, if the external sources could not be used at the moment.
+		return $this->get_export_sources_problem();
+	}
+
+	/**
+	 * Export the given local file again right away, whose export has failed or which waits for its export.
+	 *
+	 * An upload, which waits for other plugins (e.g. image optimizers), is exported without waiting. An upload, which
+	 * waits for its sizes from the browser, gets its missing sizes from the server before. If the export fails again,
+	 * the file keeps its state: a file in the queue is tried again there, a failed file stays failed. A waiting upload
+	 * is added to the queue then, like an upload whose export has failed.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool True if the file has been exported.
+	 */
+	public function export_again( int $attachment_id ): bool {
+		// get the URL of the file for the log.
+		$url = (string) wp_get_attachment_url( $attachment_id );
+
+		// bail if it could not be exported at the moment.
+		$problem = $this->get_export_again_problem( $attachment_id );
+		if ( '' !== $problem ) {
+			/* translators: %1$s will be replaced by the reason. */
+			Log::get_instance()->create( sprintf( __( 'The file could not be exported again: %1$s', 'external-files-in-media-library' ), $problem ), $url, 'error' );
+			return false;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The file is exported again by request.', 'external-files-in-media-library' ), $url, 'info', 1 );
+
+		// remember whether the file has failed before.
+		$failed = 'failed' === $this->get_export_state( $attachment_id );
+
+		// create the missing sizes of an upload, whose sizes should have been created in the browser: this runs its
+		// export like after an upload.
+		$client_uploads_obj = Client_Uploads::get_instance();
+		if ( $client_uploads_obj->is_waiting( $attachment_id ) ) {
+			$client_uploads_obj->export_unfinalized_upload( $attachment_id );
+		}
+
+		// end the waiting for other plugins (e.g. image optimizers).
+		$delayed_uploads_obj = Delayed_Uploads::get_instance();
+		$was_waiting         = $delayed_uploads_obj->is_waiting( $attachment_id );
+		$delayed_uploads_obj->end_waiting( $attachment_id );
+
+		// export the file, if it is still a local file.
+		$result = Files::get_instance()->get_file( $attachment_id )->is_valid() || $this->export_file( $attachment_id );
+
+		// bail if it has been exported: remove its entries in the queue.
+		if ( $result ) {
+			Queue::get_instance()->remove_export_entries_of_attachment( $attachment_id );
+			return true;
+		}
+
+		// add an upload, which waited for other plugins and is not in the queue, to the queue, so it is tried again.
+		if ( ! $failed && $was_waiting && ! Queue::get_instance()->has_export_entry( $attachment_id ) ) {
+			$this->retry_failed_upload_export( $attachment_id );
+		}
+
+		// return false as the file could not be exported.
+		return false;
+	}
+
+	/**
+	 * Export a local file again by request.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return void
+	 * @noinspection PhpNoReturnAttributeCanBeAddedInspection
+	 */
+	public function export_again_via_request(): void {
+		// check nonce.
+		check_admin_referer( 'efml-export-again', 'nonce' );
+
+		// get referer (the media library, if it is not known).
+		$referer = (string) wp_get_referer();
+		if ( '' === $referer ) {
+			$referer = admin_url( 'upload.php' );
+		}
+
+		// get the post ID.
+		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
+
+		// bail if cap is missing.
+		if ( 0 === $attachment_id || ! current_user_can( 'efml_cap_tools_export' ) || ! current_user_can( 'edit_post', $attachment_id ) ) {
+			wp_safe_redirect( $referer );
+			exit;
+		}
+
+		// export the file.
+		$result = $this->export_again( $attachment_id );
+
+		// show the result.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_export_again' );
+		if ( $result ) {
+			$transient_obj->set_message( '<strong>' . __( 'The file has been exported.', 'external-files-in-media-library' ) . '</strong> ' . __( 'It is now stored in the external source and used from there.', 'external-files-in-media-library' ) );
+			$transient_obj->set_type( 'success' );
+		} else {
+			$message = '<strong>' . __( 'The file could not be exported.', 'external-files-in-media-library' ) . '</strong>';
+			if ( 'pending' === $this->get_export_state( $attachment_id ) ) {
+				$message .= ' ' . __( 'It waits in the queue and is tried again automatically.', 'external-files-in-media-library' );
+			}
+			if ( current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+				/* translators: %1$s will be replaced by a URL. */
+				$message .= ' ' . sprintf( __( 'Check <a href="%1$s">the log</a> to see what happened.', 'external-files-in-media-library' ), esc_url( $this->get_errors_url( $attachment_id ) ) );
+			}
+			$transient_obj->set_message( $message );
+			$transient_obj->set_type( 'error' );
+		}
+		$transient_obj->save();
+
+		// forward user.
+		wp_safe_redirect( $referer );
+		exit;
+	}
+
+	/**
+	 * Return the URL to export the given local file again.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_export_again_url( int $attachment_id ): string {
+		return add_query_arg(
+			array(
+				'action' => 'efml_export_again',
+				'post'   => $attachment_id,
+				'nonce'  => wp_create_nonce( 'efml-export-again' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+	}
+
+	/**
+	 * Return the URL of the log with the errors of the export of the given local file.
+	 *
+	 * The log is filtered by the name of the file, as the entries of the export use its local URL, its local path or
+	 * its URL on the external source.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_errors_url( int $attachment_id ): string {
+		return add_query_arg( array( 'errors' => 1 ), Helper::get_log_url( wp_basename( (string) wp_get_attachment_url( $attachment_id ) ) ) );
 	}
 
 	/**
@@ -1980,6 +2246,11 @@ class Export extends Tools_Base {
 
 		// bail if this file has been taken over from another offload plugin, as its local files are kept.
 		if ( ! empty( get_post_meta( $external_file_obj->get_id(), 'efml_migration', true ) ) ) {
+			return $data;
+		}
+
+		// bail if the image has a local working copy (e.g. for image optimizers): its files are used locally.
+		if ( Working_Copies::get_instance()->is_active( $attachment_id ) ) {
 			return $data;
 		}
 
@@ -2799,6 +3070,11 @@ class Export extends Tools_Base {
 
 		// bail if file is already an external file.
 		if ( $external_file_obj->is_valid() ) {
+			return $actions;
+		}
+
+		// bail if the file waits for its export or its export has failed: it gets the action "Export again" instead.
+		if ( '' !== $this->get_export_state( $post->ID ) ) {
 			return $actions;
 		}
 

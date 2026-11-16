@@ -114,6 +114,18 @@ Dadurch werden alle exportierten Dateien als lokale Dateien an ihren ursprüngli
 
 * [--delete-on-target] - Löscht danach die Kopien in den externen Quellen. Ohne diese Angabe bleiben sie erhalten.
 
+## Lokale Kopien exportierter Dateien entfernen
+
+Dadurch werden die lokalen Kopien exportierter Dateien gelöscht, deren lokale Dateien beim Export behalten wurden (Einstellung „Lokale Dateien nicht löschen“), z. B. um Speicherplatz freizugeben. Jede Datei wird vorher aus ihrer externen Quelle geladen, ihre lokale Kopie wird nur gelöscht, wenn das klappt. Größen, Originalbilder und Varianten (z. B. WebP) werden nur gelöscht, wenn sie in der externen Quelle liegen. Von anderen Offload-Plugins übernommene Dateien behalten ihre lokalen Dateien. Das ist dasselbe wie über den Button „Lokale Kopien entfernen“ in den Export-Einstellungen, nur werden alle Dateien direkt bearbeitet. Dateien, die ihre lokalen Kopien behalten haben, stehen als Fehler in der Warteschlange.
+
+`wp eml delete_local_copies`
+
+## Arbeitskopien für Bildoptimierer
+
+Bildoptimierer brauchen die lokalen Dateien der Bilder. „create“ legt lokale Arbeitskopien aller exportierten Bilder an, die weiter aus ihren externen Quellen ausgeliefert werden: das Bild, seine Größen, sein Original und früher gespeicherte Sicherungen der Bildoptimierer, jeweils an ihrem ursprünglichen Pfad. Danach startest du die Massenoptimierung deines Bildoptimierers. „finish“ exportiert die geänderten und neuen Dateien aller Arbeitskopien (optimierte Dateien unter ihrem Namen, neue Dateien wie WebP und die Sicherungen des Bildoptimierers) und entfernt die lokalen Dateien. Arbeitskopien werden von selbst abgeschlossen, sobald ein Bildoptimierer das Ende seiner Arbeit an einem Bild meldet (EWWW Image Optimizer, Imagify, ShortPixel, TinyPNG, Smush). „status“ zeigt die Anzahl der Bilder mit und ohne Arbeitskopie. Das ist dasselbe wie über die Buttons „Exportierte Bilder für Bildoptimierer vorbereiten“ und „Optimierte Bilder exportieren“ in den Export-Einstellungen, nur werden alle Bilder direkt verarbeitet.
+
+`wp eml working_copies <create|finish|status>`
+
 ## Hauptseite oder Kopie
 
 Zeigt, ob diese Website die Hauptseite oder eine Kopie davon ist (z. B. eine Staging-Seite). Auf einer Kopie werden keine Dateien in externe Quellen exportiert oder dort gelöscht, und zeitgesteuerte Synchronisierungen pausieren.

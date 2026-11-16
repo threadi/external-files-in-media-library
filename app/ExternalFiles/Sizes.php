@@ -555,6 +555,8 @@ class Sizes {
 
 				// add it, if it has been uploaded.
 				if ( is_string( $url ) && '' !== $url ) {
+					/* translators: %1$s will be replaced by a file name, %2$s by the target. */
+					Log::get_instance()->create( sprintf( __( 'The size %1$s of the image has been uploaded to %2$s.', 'external-files-in-media-library' ), '<code>' . esc_html( $file ) . '</code>', '<code>' . esc_html( $target ) . '</code>' ), $url, 'info', 1 );
 					$result[ $size_name ] = array_merge(
 						$size,
 						array(
@@ -891,6 +893,33 @@ class Sizes {
 
 		// save the data.
 		update_post_meta( $attachment_id, self::META, $data );
+	}
+
+	/**
+	 * Set the URL of the given exported file of an image on the given external source (e.g. after it has been
+	 * uploaded again and the service returned another URL).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param int    $term_id       The ID of the external source.
+	 * @param string $size_name     The size name (or the key of the original image).
+	 * @param string $url           The URL.
+	 *
+	 * @return void
+	 */
+	public function set_url( int $attachment_id, int $term_id, string $size_name, string $url ): void {
+		// get the data.
+		$data = $this->get_data( $attachment_id );
+
+		// bail if the file is unknown or its URL has not changed.
+		if ( ! isset( $data['terms'][ $term_id ][ $size_name ] ) || ( $data['terms'][ $term_id ][ $size_name ]['url'] ?? '' ) === $url ) {
+			return;
+		}
+
+		// save the URL.
+		$data['terms'][ $term_id ][ $size_name ]['url'] = $url;
+		$this->save_data( $attachment_id, $data );
 	}
 
 	/**

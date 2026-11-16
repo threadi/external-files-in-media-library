@@ -229,8 +229,17 @@ class Deletion extends externalFilesTests {
 		}
 		$this->assertEquals( 1, absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE `type` = %s AND `attachment_id` = %d', $wpdb->prefix . 'eml_queue', 'delete', $attachment_id ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// process the queue.
+		// the further attempt is not due yet: neither the processing in the background nor the interval of the queue
+		// delete the files.
+		do_action( \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::EXPORT_HOOK );
 		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->process_queue();
+		foreach ( $files as $file ) {
+			$this->assertFileExists( $file );
+		}
+		$this->assertGreaterThan( time() + 4 * MINUTE_IN_SECONDS, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_next_attempt() );
+
+		// process the queue by request of the user.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->process_queue( true );
 
 		// the files are deleted, the entry is removed and no post meta of the deleted image is left.
 		foreach ( $files as $file ) {

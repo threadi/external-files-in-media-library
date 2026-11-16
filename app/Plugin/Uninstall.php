@@ -220,6 +220,9 @@ class Uninstall {
 		delete_option( 'efml_export_queue_lock' );
 		delete_post_meta_by_key( \ExternalFilesInMediaLibrary\ExternalFiles\Sizes::RETRY_META );
 
+		// remove the cached state of local copies of exported files.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Local_Copies::get_instance()->reset_cache();
+
 		// run the uninstallation tasks for each service.
 		Services::get_instance()->uninstall();
 

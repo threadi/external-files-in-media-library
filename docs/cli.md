@@ -114,6 +114,18 @@ This will restore all exported files as local files at their original path in th
 
 * [--delete-on-target] - Delete the copies on the external sources after the restore. Without it they are kept.
 
+## Delete local copies of exported files
+
+This will delete the local copies of exported files, whose local files have been kept during their export (setting "Do not delete local files"), e.g. to free storage space. Each file is loaded from its external source before, its local copy is only deleted, if this works. Sizes, original images and variants (e.g. WebP) are only deleted, if they exist on the external source. Files taken over from other offload plugins keep their local files. It is the same as via the button "Delete local copies" in the export settings, but all files are processed directly. Files, which kept their local copies, are listed as errors in the queue.
+
+`wp eml delete_local_copies`
+
+## Working copies for image optimizers
+
+Image optimizers need the local files of images. "create" saves local working copies of all exported images, which are still delivered from their external sources: the image, its sizes, its original image and the backups of image optimizers saved before, at their original paths. Afterward run the bulk optimization of your image optimizer. "finish" exports the changed and new files of all working copies (optimized files with their names, new files like WebP and the backups of the image optimizer) and removes the local files. Working copies are finished on their own, as soon as an image optimizer reports the end of its work for an image (EWWW Image Optimizer, Imagify, ShortPixel, TinyPNG, Smush). "status" shows the number of images with and without working copy. It is the same as via the buttons "Prepare exported images for image optimizers" and "Export optimized images" in the export settings, but all images are processed directly.
+
+`wp eml working_copies <create|finish|status>`
+
 ## Main website or copy
 
 Shows whether this website is the main website or a copy of it (e.g. a staging site). On a copy, files are not exported to or deleted on external sources, and scheduled synchronizations are paused.

@@ -2790,7 +2790,7 @@ class Abilities {
 
 		try {
 			// process the queue.
-			$queue->process_queue();
+			$queue->process_queue( true );
 		} catch ( Throwable $e ) {
 			return $this->get_error( 'efml_queue_failed', wp_strip_all_tags( $e->getMessage() ), 500 );
 		} finally {

@@ -166,7 +166,7 @@ class UploadExports extends externalFilesTests {
 	}
 
 	/**
-	 * Test that failed exports are not tried again right away, but during the next runs of the queue.
+	 * Test that failed exports are not tried again right away, but at the time of their next attempt.
 	 *
 	 * @return void
 	 */
@@ -174,11 +174,21 @@ class UploadExports extends externalFilesTests {
 		global $wpdb;
 		$attachment_id = $this->upload();
 		$entry         = $this->get_entry( $attachment_id );
-		$wpdb->update( $wpdb->prefix . 'eml_queue', array( 'attempts' => 1 ), array( 'id' => absint( $entry['id'] ) ) );
+		$wpdb->update( $wpdb->prefix . 'eml_queue', array( 'attempts' => 1, 'next_attempt' => time() + 5 * MINUTE_IN_SECONDS ), array( 'id' => absint( $entry['id'] ) ) );
 
+		// WP-Cron removes the event before it runs it.
+		wp_clear_scheduled_hook( Queue::EXPORT_HOOK );
 		do_action( Queue::EXPORT_HOOK );
 		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
 		$this->assertFalse( Queue::get_instance()->has_new_exports() );
+
+		// the processing is planned at the time of the next attempt.
+		$this->assertGreaterThan( time() + 4 * MINUTE_IN_SECONDS, wp_next_scheduled( Queue::EXPORT_HOOK ) );
+
+		// the entry is exported, as soon as it is due.
+		$wpdb->update( $wpdb->prefix . 'eml_queue', array( 'next_attempt' => time() - 1 ), array( 'id' => absint( $entry['id'] ) ) );
+		do_action( Queue::EXPORT_HOOK );
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
 	}
 
 	/**

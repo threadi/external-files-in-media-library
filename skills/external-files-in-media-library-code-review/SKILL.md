@@ -172,7 +172,7 @@ Check each flow with an exported image and with an image waiting for its export:
 - upload in the media library, in the block editor (client-side media processing since WordPress 7.1: `/sideload`, `/finalize`), via REST, via WP-CLI;
 - big images (`-scaled`, `original_image`), HEIC, PDF previews;
 - image editor (crop, rotate, scale, restore original), `wp media regenerate`, Regenerate Thumbnails (P17);
-- optimizers (Imagify, ShortPixel, Smush, EWWW, Modern Image Formats): do they find the local file, and are their files exported (P19, P35)?
+- optimizers (Imagify, ShortPixel, Smush, EWWW, Modern Image Formats): do they find the local file, and are their files exported (P19, P35)? For already exported images: are working copies created, finished after the optimizer reports its end, and are backups exported (P19b)?
 - renaming plugins (Media File Renamer, Phoenix Media Rename) and Enable Media Replace (P36);
 - page builders and SEO plugins which read `get_attached_file()` or the metadata.
 - Is every hook or function of another plugin used only in its own class in `app/ThirdParty/` (rule of the author)? Search the other folders for prefixes of other plugins (e.g. `mfrh_`, `woocommerce_`, `elementor/`, `wpml_`, `pll_`).

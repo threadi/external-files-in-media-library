@@ -73,6 +73,79 @@ class Smush extends Image_Optimizer_Base {
 	}
 
 	/**
+	 * Add the hooks for this plugin.
+	 *
+	 * @return void
+	 */
+	public function add_hooks(): void {
+		parent::add_hooks();
+
+		// provide the working copy of an exported image, before Smush optimizes or restores it.
+		add_action( 'wp_smush_before_smush_attempt', array( $this, 'start' ), 0 );
+		add_action( 'wp_smush_before_restore_backup_attempt', array( $this, 'start' ), 0 );
+
+		// export a waiting upload or a working copy as soon as its optimization or its restore has ended.
+		add_action( 'wp_smush_after_smush_file', array( $this, 'end' ) );
+		add_action( 'wp_smush_after_restore_backup', array( $this, 'end_restore' ), 10, 3 );
+	}
+
+	/**
+	 * Provide the working copy of an exported image, before Smush optimizes or restores it.
+	 *
+	 * Smush has loaded the image already, so its data is loaded again with the local files.
+	 *
+	 * @param mixed $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function start( mixed $attachment_id ): void {
+		// bail if no ID is given.
+		if ( ! is_numeric( $attachment_id ) ) {
+			return;
+		}
+
+		// bail if no working copy is used.
+		if ( ! $this->provide_working_copy( absint( $attachment_id ) ) ) {
+			return;
+		}
+
+		// let Smush load the data of the image again (e.g. its local file and its sizes).
+		if ( ! class_exists( '\Smush\Core\Media\Media_Item_Cache' ) ) {
+			return;
+		}
+		$media_item = \Smush\Core\Media\Media_Item_Cache::get_instance()->get( absint( $attachment_id ) );
+		if ( is_object( $media_item ) && method_exists( $media_item, 'reset' ) ) {
+			$media_item->reset();
+		}
+	}
+
+	/**
+	 * Mark the end of the optimization of an image.
+	 *
+	 * @param mixed $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function end( mixed $attachment_id ): void {
+		if ( is_numeric( $attachment_id ) ) {
+			$this->done( absint( $attachment_id ) );
+		}
+	}
+
+	/**
+	 * Mark the end of the restore of an image from its backup.
+	 *
+	 * @param mixed $restored         Whether it has been restored.
+	 * @param mixed $backup_file_path The path of the backup.
+	 * @param mixed $attachment_id    The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function end_restore( mixed $restored, mixed $backup_file_path, mixed $attachment_id ): void {
+		$this->end( $attachment_id );
+	}
+
+	/**
 	 * Add the backup of the image, which Smush saves before its optimization (e.g. "image.bak.jpg"), so it is
 	 * exported, deleted and restored together with the image.
 	 *

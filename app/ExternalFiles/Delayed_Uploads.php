@@ -213,6 +213,21 @@ class Delayed_Uploads {
 	}
 
 	/**
+	 * End the waiting of the given upload without its export, e.g. as it is exported by request of the user.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function end_waiting( int $attachment_id ): void {
+		delete_post_meta( $attachment_id, self::META );
+		delete_post_meta( $attachment_id, self::BUSY_META );
+		wp_clear_scheduled_hook( self::CRON_HOOK, array( $attachment_id ) );
+	}
+
+	/**
 	 * Return the time, when the delayed export of the given upload is due (0 if it does not wait).
 	 *
 	 * @param int $attachment_id The attachment ID.

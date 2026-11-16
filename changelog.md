@@ -9,7 +9,9 @@
 - Added methods "get_setup_guide()" and "get_setup_guide_html()" for services and hook "efml_service_setup_guide"
 - Added support for Instant Images: images from Unsplash, Pexels and GIPHY could be used as external files
 - Added option to export new files in the background via the queue, incl. retries of failed exports and markers in the media library
-- Files in the queue for their export are exported in the background right away, the oldest first, independent of the interval of the queue (it still applies to imports and to further attempts after errors)
+- Files in the queue for their export are exported in the background right away, the oldest first, independent of the interval of the queue (it still applies to imports)
+- Further attempts of failed exports and deletions in the queue run after growing wait times (5 minutes, 15 minutes, 1 hour, then every 4 hours), independent of the interval of the queue; the queue shows the time of the next attempt
+- Added hook "efml_queue_retry_delays" to change the wait times between the attempts
 - Files, whose type is not allowed for the export in the settings or whose export is prevented, do not wait for their export and are not added to the queue anymore; such entries of older versions are removed from the queue without error
 - Added possibility to define the credentials of all services via constants (e.g. in wp-config.php): FTP, FTPS, SFTP, REST API, ZIP, CSV, XML, YouTube and the app credentials of Dropbox
 - Constants of a service are only used if the constants for all its required fields are defined
@@ -121,6 +123,17 @@
 - TinyPNG: its variants (e.g. "image.webp") are exported, too, and the export runs right after its compression
 - Smush: its backup of the image before the optimization (e.g. "image.bak.jpg") is exported, deleted and restored together with the image, so the original image is not lost after the export
 - The media library shows "Will be exported" for uploads, whose export waits (e.g. for image optimizers, for the sizes from the browser or in the queue)
+- The filter for external files in the media library shows files, which wait for their export or whose export has failed, and it is now available in the grid view, too
+- Added the actions "Export again" and "Show errors" in the media library for files, which wait for their export or whose export has failed
+- Added button "Delete local copies" in the export settings and WP CLI command "wp eml delete_local_copies" to delete the local copies of exported files, which have been kept during their export; only files, which exist on the external source, are deleted
+- Added hook "efml_local_copies_file_usable"
+- Exported images could be optimized later by image optimizers via local working copies: buttons "Prepare exported images for image optimizers" and "Export optimized images" in the export settings and WP CLI command "wp eml working_copies <create|finish|status>"
+- Working copies contain the image, its sizes, its original image and the backups of image optimizers saved before; they are finished on their own, as soon as EWWW Image Optimizer, Imagify, ShortPixel, TinyPNG or Smush report the end of their work for the image
+- Optimized files are exported with their names to the external sources, unchanged files (also backups) are not uploaded again, new files (e.g. WebP) are added and the local files are removed afterward
+- EWWW Image Optimizer shows its actions for exported images in the media library, "Optimize now!" and "Re-optimize" save the working copy for this moment; Smush and TinyPNG use working copies saved before, also if their actions in the media library are used
+- The backups of EWWW Image Optimizer, Imagify, ShortPixel and TinyPNG are exported with the image (e.g. "image.ewww-backup.jpg") to save storage space, saved locally again in working copies, so the image optimizer could restore the image, and deleted on the external source, if the image optimizer removes them
+- Images with working copy are marked in the media library
+- Added post meta "efml_working_copy" and optional "name" for variants of the hook "efml_image_variants"
 - Planned single events of this plugin in WP-Cron (e.g. delayed exports, retries of sizes, imports in the background) are removed, if their file is deleted or the plugin is deactivated, and planned again after its activation
 - Lost single events of waiting uploads (e.g. if another plugin saves the events of WP-Cron at the same time) are planned again in the backend, due uploads are exported directly during WP-Cron (every 5 minutes at most); uploads are exported directly, as soon as the image optimizer reports the end of its work
 - Added button "Export sizes now" in the export settings and WP CLI command "wp eml export_sizes" to export the sizes of images, which have been exported before, in the background
@@ -129,6 +142,7 @@
 
 ### Changed
 
+- New uploads are exported right after Smush has optimized them, instead of waiting 5 minutes
 - Optimized the database table of the queue for many entries: IDs as BIGINT with primary key (before about 8.4 million entries during the lifetime of the website), state as VARCHAR and indexes for state and type and for attachment and type; existing entries are kept during the update
 - The WP CLI command "wp eml export" uses the same export as the button in the settings: only files with an allowed mime type are exported, files waiting in the queue are skipped and failed files are marked and listed in the queue
 - Now also compatible with Windows-based hostings

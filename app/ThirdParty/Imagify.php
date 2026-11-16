@@ -72,6 +72,37 @@ class Imagify extends Image_Optimizer_Base {
 		// wait for the end of the optimization of new uploads via the API of Imagify.
 		add_action( 'imagify_after_auto_optimization_init', array( $this, 'start' ) );
 		add_action( 'imagify_after_optimize', array( $this, 'end' ) );
+
+		// finish a working copy after Imagify restored the image from its backup.
+		add_action( 'imagify_after_restore_media', array( $this, 'end' ) );
+	}
+
+	/**
+	 * Return the possible backup of the given file, which Imagify saves in "wp-content/uploads/backup/" (path => name
+	 * on the external source).
+	 *
+	 * @param string $path The absolute path of the file.
+	 *
+	 * @return array<string,string>
+	 */
+	protected function get_backup_paths( string $path ): array {
+		// bail if the function of Imagify is not available.
+		if ( ! function_exists( 'get_imagify_attachment_backup_path' ) ) {
+			return array();
+		}
+
+		// get the path of the backup.
+		$backup_path = get_imagify_attachment_backup_path( $path );
+
+		// bail if it is not available.
+		if ( ! is_string( $backup_path ) || '' === $backup_path || $backup_path === $path ) {
+			return array();
+		}
+
+		// return the path of the backup.
+		return array(
+			$backup_path => $this->get_backup_name( $path, 'imagify-backup' ),
+		);
 	}
 
 	/**
@@ -102,7 +133,7 @@ class Imagify extends Image_Optimizer_Base {
 		}
 
 		// mark the end.
-		Delayed_Uploads::get_instance()->done( absint( $media->get_id() ) );
+		$this->done( absint( $media->get_id() ) );
 	}
 
 }

@@ -102,10 +102,8 @@ class Background_Events {
 			$this->export_due_uploads();
 		}
 
-		// plan the missing events.
-		if ( Queue::get_instance()->has_new_exports() ) {
-			Queue::get_instance()->schedule_exports();
-		}
+		// plan the missing events: the exports and deletions of the queue at the time of their next attempt.
+		Queue::get_instance()->schedule_waiting_exports();
 		$this->resume_attachments( Delayed_Uploads::META, Delayed_Uploads::CRON_HOOK, MINUTE_IN_SECONDS );
 		$this->resume_attachments( Client_Uploads::META, Client_Uploads::CRON_HOOK, MINUTE_IN_SECONDS );
 		$this->resume_attachments( Sizes::RETRY_META, Sizes::RETRY_HOOK, 10 * MINUTE_IN_SECONDS );
@@ -179,10 +177,9 @@ class Background_Events {
 		$this->resume_attachments( Client_Uploads::META, Client_Uploads::CRON_HOOK, MINUTE_IN_SECONDS );
 		$this->resume_attachments( Sizes::RETRY_META, Sizes::RETRY_HOOK, 10 * MINUTE_IN_SECONDS );
 
-		// continue the exports of the queue, the runs in the background, the backfill of local URLs and a migration.
-		if ( Queue::get_instance()->has_new_exports() ) {
-			Queue::get_instance()->schedule_exports();
-		}
+		// continue the exports and deletions of the queue, the runs in the background, the backfill of local URLs and a
+		// migration.
+		Queue::get_instance()->schedule_waiting_exports();
 		Import_Runs::get_instance()->resume();
 		Local_Urls::get_instance()->schedule_backfill();
 		Migrations::get_instance()->resume();

@@ -54,10 +54,11 @@ class Queue extends Extension_Base {
 	 * The version of the structure of the database table.
 	 *
 	 * 2: ID as BIGINT with primary key, state as VARCHAR, indexes for state and type and for attachment and type.
+	 * 3: column "next_attempt" with the time of the next attempt of a failed export or deletion.
 	 *
 	 * @var string
 	 */
-	private const DB_VERSION = '2';
+	private const DB_VERSION = '3';
 
 	/**
 	 * Name of the option with the version of the structure of the database table.
@@ -65,6 +66,13 @@ class Queue extends Extension_Base {
 	 * @var string
 	 */
 	public const DB_VERSION_OPTION = 'efml_queue_db_version';
+
+	/**
+	 * Whether entries are processed by request of the user, also if their next attempt is not due yet.
+	 *
+	 * @var bool
+	 */
+	private bool $force = false;
 
 	/**
 	 * The internal extension name.
@@ -309,6 +317,7 @@ class Queue extends Extension_Base {
             `attempts` smallint(5) unsigned DEFAULT 0 NOT NULL,
             `url_hash` char(32) DEFAULT '' NOT NULL,
             `run_id` bigint(20) unsigned DEFAULT 0 NOT NULL,
+            `next_attempt` bigint(20) unsigned DEFAULT 0 NOT NULL,
             PRIMARY KEY  (id),
             KEY url_hash (url_hash),
             KEY run_id (run_id),
@@ -408,9 +417,20 @@ class Queue extends Extension_Base {
 	 *
 	 * Import all URLs from queue in media library, which have the state "new".
 	 *
+	 * Further attempts of failed exports and deletions are processed at their time via process_exports(), unless
+	 * the processing is forced (e.g. by request of the user).
+	 *
+	 * @param bool $force True to process also the further attempts, which are not due yet.
+	 *
 	 * @return void
 	 */
-	public function process_queue(): void {
+	public function process_queue( bool $force = false ): void {
+		// remember whether the processing is forced.
+		$this->force = $force;
+
+		// make sure the structure of the table is actual (e.g. in WP-Cron before the backend has been visited).
+		$this->maybe_install();
+
 		// get the queue, without the entries of import runs (they are processed by the runs).
 		$urls_to_import = $this->get_urls( 'new', false, false );
 
@@ -479,6 +499,9 @@ class Queue extends Extension_Base {
 
 		// process the import runs too, e.g. if WP Cron did not run their own event.
 		Import_Runs::get_instance()->process();
+
+		// the next processing is not forced.
+		$this->force = false;
 	}
 
 	/**
@@ -500,6 +523,12 @@ class Queue extends Extension_Base {
 		// process an entry of an import run (incl. the export of local files) with the settings of the run.
 		if ( absint( $url_data['run_id'] ) > 0 ) {
 			Import_Runs::get_instance()->process_entry_by_id( $id );
+			return;
+		}
+
+		// bail if this is a further attempt of an export or deletion, which is not due yet: it is processed at its
+		// time via process_exports(), unless the user requests it.
+		if ( ! empty( $url_data['type'] ) && in_array( $url_data['type'], array( 'export', 'delete' ), true ) && ! $this->force && $this->get_next_attempt_of_entry( $id ) > time() ) {
 			return;
 		}
 
@@ -592,8 +621,8 @@ class Queue extends Extension_Base {
 			return;
 		}
 
-		// process the queue.
-		$this->process_queue();
+		// process the queue, also the further attempts of failed exports, which are not due yet.
+		$this->process_queue( true );
 
 		// show ok message.
 		$transients_obj = Transients::get_instance();
@@ -627,8 +656,13 @@ class Queue extends Extension_Base {
 
 		// delete the entry if ID is given.
 		if ( $id > 0 ) {
-			// process it.
+			// make sure the structure of the table is actual.
+			$this->maybe_install();
+
+			// process it, also if its next attempt is not due yet.
+			$this->force = true;
 			$this->process_entry( $id );
+			$this->force = false;
 
 			// show ok message.
 			$transients_obj = Transients::get_instance();
@@ -1243,6 +1277,7 @@ class Queue extends Extension_Base {
 	 * @since 6.0.0 Available since 6.0.0.
 	 *
 	 * @param int $attachment_id The attachment ID.
+	 * @param int $delay         The delay in seconds before its export.
 	 *
 	 * @return bool True if the attachment is in the queue.
 	 */
@@ -1253,6 +1288,9 @@ class Queue extends Extension_Base {
 		if ( 0 === $attachment_id ) {
 			return false;
 		}
+
+		// make sure the structure of the table is actual.
+		$this->maybe_install();
 
 		// get the local URL of this file for the display in the queue.
 		$url = (string) wp_get_attachment_url( $attachment_id );
@@ -1281,8 +1319,9 @@ class Queue extends Extension_Base {
 				'type'          => 'export',
 				'attachment_id' => $attachment_id,
 				'attempts'      => 0,
+				'next_attempt'  => $delay > 0 ? time() + $delay : 0,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' )
 		);
 
 		// use error-handling.
@@ -1310,14 +1349,27 @@ class Queue extends Extension_Base {
 	/**
 	 * Plan the export of the files in the queue in the background, if not planned yet.
 	 *
+	 * An event, which is planned later, is complemented by an earlier one. WP-Cron does not plan an event within
+	 * 10 minutes of an event with the same hook, so the earlier time could be a few minutes later.
+	 *
 	 * @param int $delay The delay in seconds.
 	 *
 	 * @return void
 	 */
 	public function schedule_exports( int $delay = 0 ): void {
-		if ( ! wp_next_scheduled( self::EXPORT_HOOK ) ) {
-			wp_schedule_single_event( time() + $delay, self::EXPORT_HOOK );
+		// get the requested time.
+		$time = time() + max( 0, $delay );
+
+		// get the next planned event.
+		$next = wp_next_scheduled( self::EXPORT_HOOK );
+
+		// bail if an event is planned already, which is not much later.
+		if ( false !== $next && $next <= $time + 10 * MINUTE_IN_SECONDS ) {
+			return;
 		}
+
+		// plan it.
+		wp_schedule_single_event( $time, self::EXPORT_HOOK );
 	}
 
 	/**
@@ -1338,19 +1390,193 @@ class Queue extends Extension_Base {
 	}
 
 	/**
-	 * Export the files in the queue, which wait for their first export attempt, the oldest first (via WP-Cron).
+	 * Return the types of the entries, which are processed via process_exports() at the moment.
 	 *
-	 * Runs until the time limit of the request, then the next request continues. Files, whose export has failed,
-	 * are tried again during the next runs of the queue (see process_export_entry()), as their reason (e.g. a
-	 * service, which is not reachable) needs time.
+	 * Exports only if the export is enabled, deletions always (exported files are deleted everywhere).
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_types_of_exports(): array {
+		// deletions are always processed.
+		$types = array( 'delete' );
+
+		// exports only, if the export is enabled.
+		if ( 1 === absint( get_option( 'eml_export' ) ) ) {
+			$types[] = 'export';
+		}
+
+		// return the list.
+		return $types;
+	}
+
+	/**
+	 * Return the time of the next attempt of the waiting exports and deletions in the queue.
+	 *
+	 * Returns 0 if no entry waits, otherwise the earliest time (which could be in the past, if entries are due).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return int
+	 */
+	public function get_next_attempt(): int {
+		global $wpdb;
+
+		// bail if the table does not exist (yet) or its structure is outdated.
+		if ( ! Helper::is_table_available( 'eml_queue' ) || self::DB_VERSION !== get_option( self::DB_VERSION_OPTION ) ) {
+			return 0;
+		}
+
+		// get the types.
+		$types = $this->get_types_of_exports();
+
+		// get the earliest time.
+		$result = $wpdb->get_row( $wpdb->prepare( 'SELECT COUNT(*) AS `entries`, MIN(`next_attempt`) AS `next` FROM %i WHERE `type` IN (' . implode( ', ', array_fill( 0, count( $types ), '%s' ) ) . ') AND `state` = %s AND `run_id` = %d', array_merge( array( $wpdb->prefix . 'eml_queue' ), $types, array( 'new', 0 ) ) ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+		// bail if no entry waits.
+		if ( ! is_array( $result ) || 0 === absint( $result['entries'] ?? 0 ) ) {
+			return 0;
+		}
+
+		// return the time, at least 1 for due entries without a time (e.g. of older versions).
+		return max( 1, absint( $result['next'] ?? 0 ) );
+	}
+
+	/**
+	 * Plan the processing of the waiting exports and deletions at the time of the next attempt.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return void
+	 */
+	public function schedule_waiting_exports(): void {
+		// get the time of the next attempt.
+		$next = $this->get_next_attempt();
+
+		// bail if no entry waits.
+		if ( 0 === $next ) {
+			return;
+		}
+
+		// plan it.
+		$this->schedule_exports( max( 0, $next - time() ) );
+	}
+
+	/**
+	 * Return the wait time in seconds before the next attempt after the given number of failed attempts.
+	 *
+	 * The wait time grows with each attempt: 5 minutes, 15 minutes, 1 hour, then 4 hours.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int    $attempts The number of failed attempts (at least 1).
+	 * @param string $type     The type of the entry ("export" or "delete").
+	 *
+	 * @return int
+	 */
+	public function get_retry_delay( int $attempts, string $type ): int {
+		$delays = array( 5 * MINUTE_IN_SECONDS, 15 * MINUTE_IN_SECONDS, HOUR_IN_SECONDS, 4 * HOUR_IN_SECONDS );
+
+		/**
+		 * Filter the wait times in seconds before the further attempts of failed exports and deletions in the queue.
+		 *
+		 * The first value is used after the first failed attempt, the second after the second and so on. The last
+		 * value is used for all further attempts. The number of attempts is set via the hooks
+		 * "efml_export_queue_max_attempts" and "efml_deletion_queue_max_attempts".
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<int,int> $delays List of wait times in seconds.
+		 * @param string         $type   The type of the entry ("export" or "delete").
+		 */
+		$delays = array_values( array_filter( array_map( 'absint', (array) apply_filters( 'efml_queue_retry_delays', $delays, $type ) ) ) );
+
+		// use 5 minutes, if the list is empty.
+		if ( empty( $delays ) ) {
+			return 5 * MINUTE_IN_SECONDS;
+		}
+
+		// return the wait time for this attempt.
+		return $delays[ min( max( 1, $attempts ), count( $delays ) ) - 1 ];
+	}
+
+	/**
+	 * Set the time of the next attempt of the given entry and plan the processing.
+	 *
+	 * @param int $id    The ID of the entry.
+	 * @param int $delay The wait time in seconds.
+	 *
+	 * @return void
+	 */
+	private function set_next_attempt( int $id, int $delay ): void {
+		global $wpdb;
+
+		// update the entry.
+		$result = $wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prefix . 'eml_queue',
+			array(
+				'next_attempt' => time() + $delay,
+			),
+			array(
+				'id' => $id,
+			),
+			array(
+				'%d',
+			),
+			array(
+				'%d',
+			)
+		);
+
+		// use error-handling.
+		$this->db_error_handling( $result, '' );
+
+		// plan the processing.
+		$this->schedule_exports( $delay );
+	}
+
+	/**
+	 * Return the time of the next attempt of the given entry (0 if it is due right away).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $id The ID of the entry.
+	 *
+	 * @return int
+	 */
+	public function get_next_attempt_of_entry( int $id ): int {
+		global $wpdb;
+
+		// bail if the structure of the table is outdated (the entry is due then).
+		if ( self::DB_VERSION !== get_option( self::DB_VERSION_OPTION ) ) {
+			return 0;
+		}
+
+		// return the time.
+		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT `next_attempt` FROM %i WHERE `id` = %d', array( $wpdb->prefix . 'eml_queue', $id ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	}
+
+	/**
+	 * Export the files in the queue and delete exported files of deleted attachments, the oldest first (via WP-Cron).
+	 *
+	 * Processes new entries right away and further attempts of failed entries at their time, which grows with each
+	 * attempt (see get_retry_delay()), independent of the interval of the queue. Runs until the time limit of the
+	 * request, then the next request continues. Afterward, the next processing is planned at the time of the next
+	 * attempt.
 	 *
 	 * @return void
 	 */
 	public function process_exports(): void {
 		global $wpdb;
 
-		// bail if the export is disabled or this website is a copy: the entries stay in the queue.
-		if ( 1 !== absint( get_option( 'eml_export' ) ) || Site_Copy::get_instance()->is_copy() ) {
+		// bail if this website is a copy: the entries stay in the queue.
+		if ( Site_Copy::get_instance()->is_copy() ) {
+			return;
+		}
+
+		// make sure the structure of the table is actual (e.g. in WP-Cron before the backend has been visited).
+		$this->maybe_install();
+
+		// bail if the structure could not be updated.
+		if ( self::DB_VERSION !== get_option( self::DB_VERSION_OPTION ) ) {
 			return;
 		}
 
@@ -1365,12 +1591,15 @@ class Queue extends Extension_Base {
 		// get the time limit.
 		$deadline = Import_Runs::get_instance()->get_deadline();
 
-		// export the files one by one, the oldest first.
+		// get the types to process (exports only, if the export is enabled).
+		$types = $this->get_types_of_exports();
+
+		// process the due entries one by one, the oldest first.
 		$last_id  = 0;
 		$finished = false;
 		while ( microtime( true ) < $deadline ) {
 			// get the next entry.
-			$id = absint( $wpdb->get_var( $wpdb->prepare( 'SELECT `id` FROM %i WHERE `type` = %s AND `state` = %s AND `run_id` = %d AND `attempts` = %d AND `id` > %d ORDER BY `id` ASC LIMIT 1', array( $wpdb->prefix . 'eml_queue', 'export', 'new', 0, 0, $last_id ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$id = absint( $wpdb->get_var( $wpdb->prepare( 'SELECT `id` FROM %i WHERE `type` IN (' . implode( ', ', array_fill( 0, count( $types ), '%s' ) ) . ') AND `state` = %s AND `run_id` = %d AND `next_attempt` <= %d AND `id` > %d ORDER BY `id` ASC LIMIT 1', array_merge( array( $wpdb->prefix . 'eml_queue' ), $types, array( 'new', 0, time(), $last_id ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
 			// bail if no entry is left.
 			if ( 0 === $id ) {
@@ -1379,20 +1608,48 @@ class Queue extends Extension_Base {
 			}
 			$last_id = $id;
 
-			// export it.
+			// process it.
 			$url_data = $this->get_url_by_id( $id );
-			if ( ! empty( $url_data ) ) {
-				$this->process_export_entry( $url_data );
+			if ( empty( $url_data ) ) {
+				continue;
 			}
+			if ( 'delete' === $url_data['type'] ) {
+				$this->process_deletion_entry( $url_data );
+				continue;
+			}
+			$this->process_export_entry( $url_data );
 		}
 
 		// remove the lock.
 		delete_option( self::EXPORT_LOCK );
 
-		// continue in the next request, if files are left.
+		// continue in the next request, if entries are left.
 		if ( ! $finished ) {
 			$this->schedule_exports();
+			return;
 		}
+
+		// plan the processing of the further attempts at their time.
+		$this->schedule_waiting_exports();
+	}
+
+	/**
+	 * Return whether the given attachment waits in the queue for its export.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function has_export_entry( int $attachment_id ): bool {
+		// bail if the table does not exist (yet).
+		if ( ! Helper::is_table_available( 'eml_queue' ) ) {
+			return false;
+		}
+
+		// return whether an open entry exists.
+		return ! empty( $this->get_export_entry( $attachment_id ) );
 	}
 
 	/**
@@ -1486,10 +1743,16 @@ class Queue extends Extension_Base {
 		 */
 		$max_attempts = absint( apply_filters( 'efml_export_queue_max_attempts', 3, $attachment_id ) );
 
-		// try again during the next run, if the maximum is not reached.
+		// try again later, if the maximum is not reached: the wait time grows with each attempt.
 		if ( $attempts < $max_attempts ) {
-			/* translators: %1$d and %2$d will be replaced by numbers. */
-			Log::get_instance()->create( sprintf( __( 'Export of file via queue failed (attempt %1$d of %2$d). It will be tried again during the next run of the queue.', 'external-files-in-media-library' ), $attempts, $max_attempts ), $url_data['url'], 'error' );
+			// get the wait time.
+			$delay = $this->get_retry_delay( $attempts, 'export' );
+
+			// set the time of the next attempt.
+			$this->set_next_attempt( $id, $delay );
+
+			/* translators: %1$d and %2$d will be replaced by numbers, %3$d by a number of minutes. */
+			Log::get_instance()->create( sprintf( __( 'Export of file via queue failed (attempt %1$d of %2$d). It will be tried again in %3$d minutes.', 'external-files-in-media-library' ), $attempts, $max_attempts, (int) ceil( $delay / MINUTE_IN_SECONDS ) ), $url_data['url'], 'error' );
 			return;
 		}
 
@@ -1527,6 +1790,12 @@ class Queue extends Extension_Base {
 			return false;
 		}
 
+		// make sure the structure of the table is actual.
+		$this->maybe_install();
+
+		// get the wait time before the first further attempt.
+		$delay = $this->get_retry_delay( 1, 'delete' );
+
 		// get the URL for the display in the queue: the file itself or the first file.
 		$url = (string) ( $files[0]['url'] ?? '' );
 
@@ -1561,12 +1830,18 @@ class Queue extends Extension_Base {
 				'attachment_id' => $attachment_id,
 				'attempts'      => 0,
 				'url_hash'      => md5( $url . '|' . $term_id ),
+				'next_attempt'  => time() + $delay,
 			),
-			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s' )
+			array( '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%s', '%d' )
 		);
 
 		// use error-handling.
 		$this->db_error_handling( $result, $url );
+
+		// plan the further attempt.
+		if ( false !== $result ) {
+			$this->schedule_exports( $delay );
+		}
 
 		// return whether it has been added.
 		return false !== $result;
@@ -1614,8 +1889,10 @@ class Queue extends Extension_Base {
 		// delete the files.
 		$remaining = \ExternalFilesInMediaLibrary\ExternalFiles\Deletion::get_instance()->delete_files_of_deleted_attachment( (int) $url_data['attachment_id'], $term_id, $options['files'], isset( $options['metas'] ) && is_array( $options['metas'] ) ? $options['metas'] : array() );
 
-		// bail if the external source could not be used at the moment: the entry stays in the queue.
+		// bail if the external source could not be used at the moment: the entry stays in the queue and is tried again
+		// in an hour, without counting an attempt.
 		if ( false === $remaining ) {
+			$this->set_next_attempt( $id, HOUR_IN_SECONDS );
 			Log::get_instance()->create( __( 'The deletion of the exported file has been skipped, as its external source could not be used at the moment. It will be tried again.', 'external-files-in-media-library' ), $url_data['url'], 'info', 2 );
 			return;
 		}
@@ -1654,7 +1931,11 @@ class Queue extends Extension_Base {
 			$this->set_url_state( $id, 'error' );
 			/* translators: %1$d will be replaced by a number. */
 			Log::get_instance()->create( sprintf( __( 'The exported files could not be deleted after %1$d attempts. Delete them on the external source by hand or try again via the queue.', 'external-files-in-media-library' ), $attempts ), $url_data['url'], 'error' );
+			return;
 		}
+
+		// try again later: the wait time grows with each attempt.
+		$this->set_next_attempt( $id, $this->get_retry_delay( $attempts, 'delete' ) );
 	}
 
 	/**

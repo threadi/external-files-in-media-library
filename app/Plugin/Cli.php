@@ -422,7 +422,7 @@ class Cli {
 	 * @noinspection PhpUnused
 	 */
 	public function process_queue(): void {
-		Queue::get_instance()->process_queue();
+		Queue::get_instance()->process_queue( true );
 
 		// return ok-message.
 		\WP_CLI::success( __( 'The queue has been processed.', 'external-files-in-media-library' ) );
@@ -942,6 +942,108 @@ class Cli {
 			\WP_CLI::warning( $result['message'] );
 
 			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Delete the local copies of exported files, whose local files have been kept during their export.
+	 *
+	 * This applies to files exported with the setting "Do not delete local files". Each file is loaded from its external
+	 * source before, its local copy is only deleted, if this works. Sizes, original images and variants (e.g. WebP) are
+	 * only deleted, if they exist on the external source. Files taken over from other offload plugins keep their local
+	 * files. This is the same as via the button "Delete local copies now" in the export settings, but all files are
+	 * processed directly.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Free the storage space of the local copies of exported files.
+	 *     $ wp eml delete_local_copies
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function delete_local_copies(): void {
+		// delete the local copies.
+		$result = Import_Runs::get_instance()->start_delete_local();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if files kept their local copies.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Save or finish local working copies of exported images, e.g. for image optimizers.
+	 *
+	 * Image optimizers and other plugins need the local files of images. "create" saves working copies of all exported
+	 * images, which are still delivered from their external sources. "finish" exports the changed and new files of all
+	 * working copies (e.g. optimized files, WebP files and backups) and removes the working copies. "status" shows the
+	 * number of working copies. Working copies are finished automatically, as soon as an image optimizer reports the
+	 * end of its work for an image.
+	 *
+	 * <action>
+	 * : "create", "finish" or "status".
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Prepare the exported images for the bulk optimization of an image optimizer.
+	 *     $ wp eml working_copies create
+	 *
+	 *     # Export the optimized images afterward.
+	 *     $ wp eml working_copies finish
+	 *
+	 * @param array<int,string> $actions List of actions (only the first one is used).
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function working_copies( array $actions = array() ): void {
+		// get the action.
+		$action = $actions[0] ?? 'status';
+
+		// show the status.
+		if ( 'status' === $action ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			\WP_CLI::line( sprintf( __( 'Images with working copy: %1$d, exported images without working copy: %2$d', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\ExternalFiles\Working_Copies::get_instance()->count_active(), \ExternalFilesInMediaLibrary\ExternalFiles\Working_Copies::get_instance()->count_candidates() ) );
+			return;
+		}
+
+		// bail on unknown actions.
+		if ( ! in_array( $action, array( 'create', 'finish' ), true ) ) {
+			\WP_CLI::error( __( 'Unknown action. Use "create", "finish" or "status".', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// run it.
+		$result = 'create' === $action ? Import_Runs::get_instance()->start_working_copies() : Import_Runs::get_instance()->start_finish_working_copies();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+			return;
+		}
+
+		// show a warning, if images failed.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
 			return;
 		}
 

@@ -314,8 +314,15 @@ class Queue extends WP_List_Table {
 		$is_export = ! empty( $item['type'] ) && 'export' === $item['type'];
 
 		// show the restore run or the sizes run of the entry.
-		if ( ! empty( $item['type'] ) && in_array( $item['type'], array( 'localize', 'sizes' ), true ) ) {
-			$output    = ( 'sizes' === $item['type'] ? esc_html__( 'Sizes', 'external-files-in-media-library' ) : esc_html__( 'Restore', 'external-files-in-media-library' ) ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+		if ( ! empty( $item['type'] ) && in_array( $item['type'], array( 'localize', 'sizes', 'delete_local', 'working_copy', 'working_finish' ), true ) ) {
+			$labels    = array(
+				'localize'       => esc_html__( 'Restore', 'external-files-in-media-library' ),
+				'sizes'          => esc_html__( 'Sizes', 'external-files-in-media-library' ),
+				'delete_local'   => esc_html__( 'Local copies', 'external-files-in-media-library' ),
+				'working_copy'   => esc_html__( 'Working copy', 'external-files-in-media-library' ),
+				'working_finish' => esc_html__( 'Working copy', 'external-files-in-media-library' ),
+			);
+			$output    = $labels[ $item['type'] ] . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
 			$edit_link = get_edit_post_link( absint( $item['attachment_id'] ) );
 			if ( is_string( $edit_link ) ) {
 				$output .= '<br><a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Edit file', 'external-files-in-media-library' ) . '</a>';
@@ -341,7 +348,7 @@ class Queue extends WP_List_Table {
 				/* translators: %1$d will be replaced by a number. */
 				$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', (int) $item['attempts'], 'external-files-in-media-library' ), (int) $item['attempts'] ) );
 			}
-			return $output;
+			return $output . $this->get_next_attempt( $item );
 		}
 
 		// show the import run of the entry.
@@ -362,10 +369,11 @@ class Queue extends WP_List_Table {
 			$output .= '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
 		}
 
-		// add the number of failed attempts.
+		// add the number of failed attempts and the time of the next attempt.
 		if ( ! empty( $item['attempts'] ) ) {
 			/* translators: %1$d will be replaced by a number. */
 			$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', absint( $item['attempts'] ), 'external-files-in-media-library' ), absint( $item['attempts'] ) ) );
+			$output .= $this->get_next_attempt( $item );
 		}
 
 		// add link to the attachment.
@@ -376,6 +384,31 @@ class Queue extends WP_List_Table {
 
 		// return the resulting output.
 		return $output;
+	}
+
+	/**
+	 * Return the time of the next attempt of a waiting export or deletion for the given entry.
+	 *
+	 * @param array<string,string> $item The item data.
+	 *
+	 * @return string
+	 */
+	private function get_next_attempt( array $item ): string {
+		// bail if the entry does not wait for a further attempt.
+		if ( empty( $item['attempts'] ) || 'new' !== ( $item['state'] ?? '' ) || ! empty( $item['run_id'] ) ) {
+			return '';
+		}
+
+		// get the time.
+		$time = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_next_attempt_of_entry( absint( $item['id'] ) );
+
+		// bail if it is due.
+		if ( $time <= time() ) {
+			return '';
+		}
+
+		/* translators: %1$s will be replaced by a date and time. */
+		return '<br>' . esc_html( sprintf( __( 'Next attempt: %1$s', 'external-files-in-media-library' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ) ) );
 	}
 
 	/**

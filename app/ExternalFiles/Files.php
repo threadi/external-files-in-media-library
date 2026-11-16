@@ -103,6 +103,8 @@ class Files {
 
 		// initialize the restore of exported files.
 		Restore::get_instance()->init();
+		Local_Copies::get_instance()->init();
+		Working_Copies::get_instance()->init();
 
 		// initialize the sizes of exported images.
 		Sizes::get_instance()->init();
@@ -477,6 +479,7 @@ class Files {
 			Delayed_Uploads::META,
 			Delayed_Uploads::BUSY_META,
 			Sizes::RETRY_META,
+			Working_Copies::META,
 		);
 
 		/**
@@ -976,6 +979,12 @@ class Files {
 		// return the local file, while WordPress works with it (e.g. to create the sizes of an exported image again).
 		if ( Local_Work::get_instance()->is_open( $post_id ) ) {
 			return Local_Work::get_instance()->get_local_file( $post_id );
+		}
+
+		// return the local file of an exported image with local working copy (e.g. for image optimizers).
+		$working_copy = Working_Copies::get_instance()->get_local_file( $post_id );
+		if ( '' !== $working_copy ) {
+			return $working_copy;
 		}
 
 		// get the external file object.
@@ -1608,11 +1617,11 @@ class Files {
 	 * @return void
 	 */
 	public function use_filter_options( WP_Query $query ): void {
-		// get filter value.
-		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		// get filter value (from the list view or the grid view of the media library).
+		$filter = Tables::get_instance()->get_requested_filter( $query );
 
-		// bail if filter is not set.
-		if ( is_null( $filter ) ) {
+		// bail if filter is not set or not the ID of an external source.
+		if ( is_null( $filter ) || ! is_numeric( $filter ) ) {
 			return;
 		}
 

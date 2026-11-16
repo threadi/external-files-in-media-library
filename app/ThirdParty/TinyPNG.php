@@ -10,7 +10,6 @@ namespace ExternalFilesInMediaLibrary\ThirdParty;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
-use ExternalFilesInMediaLibrary\ExternalFiles\Delayed_Uploads;
 
 /**
  * Object to handle support for this plugin.
@@ -69,8 +68,54 @@ class TinyPNG extends Image_Optimizer_Base {
 	public function add_hooks(): void {
 		parent::add_hooks();
 
-		// export a waiting upload as soon as its compression has ended.
+		// export a waiting upload or a working copy as soon as its compression has ended.
 		add_action( 'tiny_image_after_compression', array( $this, 'end' ) );
+
+		// provide the working copy of an exported image, if it is compressed via the media library.
+		add_action( 'wp_ajax_tiny_compress_image_from_library', array( $this, 'start_manual' ), 0 );
+	}
+
+	/**
+	 * Provide the working copy of an exported image, before TinyPNG compresses it by request in the media library. It
+	 * is finished at the end of the request.
+	 *
+	 * @return void
+	 */
+	public function start_manual(): void {
+		// bail if the request is not valid (the nonce of TinyPNG is used).
+		if ( ! isset( $_POST['_nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_nonce'] ) ), 'tiny-compress' ) ) {
+			return;
+		}
+
+		// get the attachment ID.
+		$attachment_id = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+
+		// provide the working copy.
+		$this->provide_working_copy( $attachment_id );
+	}
+
+	/**
+	 * Return the possible backup of the given file, which TinyPNG saves in "wp-content/uploads/tinify_backup/" (path
+	 * => name on the external source).
+	 *
+	 * @param string $path The absolute path of the file.
+	 *
+	 * @return array<string,string>
+	 */
+	protected function get_backup_paths( string $path ): array {
+		// get the uploads directory.
+		$upload_dir = trailingslashit( wp_normalize_path( wp_get_upload_dir()['basedir'] ) );
+		$path       = wp_normalize_path( $path );
+
+		// bail if the file is not in the uploads directory.
+		if ( ! str_starts_with( $path, $upload_dir ) ) {
+			return array();
+		}
+
+		// return the path of the backup.
+		return array(
+			$upload_dir . 'tinify_backup/' . substr( $path, strlen( $upload_dir ) ) => $this->get_backup_name( $path, 'tinify-backup' ),
+		);
 	}
 
 	/**
@@ -102,8 +147,8 @@ class TinyPNG extends Image_Optimizer_Base {
 	 * @return void
 	 */
 	public function end( mixed $attachment_id ): void {
-		if ( is_numeric( $attachment_id ) && (int) $attachment_id > 0 ) {
-			Delayed_Uploads::get_instance()->done( (int) $attachment_id );
+		if ( is_numeric( $attachment_id ) ) {
+			$this->done( absint( $attachment_id ) );
 		}
 	}
 

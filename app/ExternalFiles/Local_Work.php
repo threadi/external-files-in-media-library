@@ -27,6 +27,9 @@ use ExternalFilesInMediaLibrary\Plugin\Site_Copy;
  *   a new name and keeps the former files as backup for "Restore image".
  * - "rename": plugins, which rename the files of an image. They set the new local file via update_attached_file().
  *   Integrations of such plugins (in ThirdParty) start the work via open() before the plugin renames the files.
+ * - "optimize": image optimizers changed the local working copies of an image (see Working_Copies). Its changed and
+ *   new files are exported via adopt() and close(): files with the same name are overwritten on the external sources,
+ *   files, which are not used anymore (e.g. after a conversion from PNG to JPEG), are deleted there.
  *
  * For these functions this object loads the files to their original local paths (only in the backend, via REST API,
  * cron and WP-CLI, never for visitors), lets WordPress work with them as usual, exports the resulting files to every
@@ -38,7 +41,7 @@ class Local_Work {
 	/**
 	 * The images, which are worked on as local files (attachment ID => data).
 	 *
-	 * @var array<int,array{mode: string, url: string, file: string, original: string, created: array<int,string>, main_changed: bool, exported: bool, sizes: array<int,string>}>
+	 * @var array<int,array{mode: string, url: string, file: string, original: string, created: array<int,string>, main_changed: bool, exported: bool, sizes: array<int,string>, hashes?: array<string,string>, backups?: array<string,string>, kept_backups?: array<int,string>}>
 	 */
 	private array $sessions = array();
 
@@ -175,6 +178,11 @@ class Local_Work {
 			return false;
 		}
 
+		// bail if the image has local working copies: WordPress and other plugins work with them directly.
+		if ( Working_Copies::get_instance()->is_active( $attachment_id ) ) {
+			return false;
+		}
+
 		// return whether this is an exported image, whose files are not local.
 		return $this->is_exported_image( $attachment_id );
 	}
@@ -278,6 +286,81 @@ class Local_Work {
 
 		// return the path of the original image.
 		return $this->get_source_file( $attachment_id );
+	}
+
+	/**
+	 * Use the given local working copies of an exported image, which other plugins have worked with (e.g. image
+	 * optimizers), to export its changed and new files via close().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int                  $attachment_id The attachment ID.
+	 * @param string               $file          The absolute path of the local file of the image (it could have been renamed).
+	 * @param string               $original      The absolute path of the local original image (empty for none).
+	 * @param array<int,string>    $created       The absolute paths of the downloaded files, which are removed afterward.
+	 * @param array<string,string> $hashes        The MD5 hashes of the downloaded files (absolute path => hash).
+	 * @param array<string,string> $backups       The downloaded backups of other plugins (name of the variant => absolute path).
+	 *
+	 * @return void
+	 */
+	public function adopt( int $attachment_id, string $file, string $original, array $created, array $hashes, array $backups ): void {
+		// get the URL of the file.
+		$url = Files::get_instance()->get_file( $attachment_id )->get_url( true );
+
+		// get whether the file of the image has been renamed (e.g. after a conversion from PNG to JPEG).
+		$name = (string) get_post_meta( $attachment_id, 'efml_export_filename', true );
+
+		// remember them.
+		$this->sessions[ $attachment_id ] = array(
+			'mode'         => 'optimize',
+			'url'          => $url,
+			'file'         => $file,
+			'original'     => $original,
+			'created'      => $created,
+			'main_changed' => '' !== $name && wp_basename( $file ) !== $name,
+			'exported'     => false,
+			'sizes'        => array(),
+			'hashes'       => $hashes,
+			'backups'      => $backups,
+		);
+	}
+
+	/**
+	 * Return the MD5 hash of the given local file (empty string, if it does not exist).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $path The absolute path.
+	 *
+	 * @return string
+	 */
+	public function get_hash( string $path ): string {
+		// bail if the file does not exist.
+		if ( '' === $path || ! is_file( $path ) ) {
+			return '';
+		}
+
+		// return the hash.
+		$hash = md5_file( $path );
+		return is_string( $hash ) ? $hash : '';
+	}
+
+	/**
+	 * Return whether the given local file has been changed since its download.
+	 *
+	 * Files, whose hash is unknown, count as changed.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $path          The absolute path.
+	 *
+	 * @return bool
+	 */
+	private function is_changed( int $attachment_id, string $path ): bool {
+		// get the hashes.
+		$hashes = $this->sessions[ $attachment_id ]['hashes'] ?? array();
+
+		// return whether the file has changed.
+		return ! isset( $hashes[ $path ] ) || $hashes[ $path ] !== $this->get_hash( $path );
 	}
 
 	/**
@@ -581,8 +664,9 @@ class Local_Work {
 	 * @return mixed
 	 */
 	public function export_changed_files( mixed $metadata, int $attachment_id ): mixed {
-		// bail if the local files of this attachment are not in use, already exported or used to create the sizes again.
-		if ( ! $this->is_open( $attachment_id ) || $this->sessions[ $attachment_id ]['exported'] || 'regenerate' === $this->sessions[ $attachment_id ]['mode'] || ! is_array( $metadata ) ) {
+		// bail if the local files of this attachment are not in use, already exported or used to create the sizes again
+		// or to optimize them (their files are exported at the end, as image optimizers save the metadata several times).
+		if ( ! $this->is_open( $attachment_id ) || $this->sessions[ $attachment_id ]['exported'] || in_array( $this->sessions[ $attachment_id ]['mode'], array( 'regenerate', 'optimize' ), true ) || ! is_array( $metadata ) ) {
 			return $metadata;
 		}
 
@@ -608,8 +692,8 @@ class Local_Work {
 		// get the external file object.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
 
-		// get whether replaced files are kept (not for renamed files).
-		$keep_replaced = 'rename' !== $session['mode'];
+		// get whether replaced files are kept (not for renamed and optimized files).
+		$keep_replaced = ! in_array( $session['mode'], array( 'rename', 'optimize' ), true );
 
 		// export the changed file of the image itself.
 		if ( $session['main_changed'] ) {
@@ -623,14 +707,20 @@ class Local_Work {
 		// get the local directory of the files.
 		$directory = trailingslashit( dirname( $session['file'] ) );
 
+		// export the optimized files of the image and its original image, and keep the unchanged files.
+		if ( 'optimize' === $session['mode'] ) {
+			$this->prepare_optimized_files( $external_file_obj, $files, $directory );
+		}
+
 		// remember the local files of the sizes to remove them.
 		foreach ( $files as $size ) {
 			$this->sessions[ $attachment_id ]['sizes'][] = $directory . $size['file'];
 		}
 
-		// get the files for their variants in other formats (e.g. WebP): the image itself only, if it has been changed.
+		// get the files for their variants in other formats (e.g. WebP): the image itself only, if it has been changed
+		// or optimized.
 		$base_files = wp_list_pluck( $files, 'file' );
-		if ( $session['main_changed'] ) {
+		if ( $session['main_changed'] || 'optimize' === $session['mode'] ) {
 			$base_files = array( Variants::FULL => wp_basename( $session['file'] ) ) + $base_files;
 		}
 
@@ -642,6 +732,15 @@ class Local_Work {
 			$target_dir  = $this->get_target_directory( $attachment_id, $term_id );
 			$uploaded   += $sizes_obj->update_files( $attachment_id, $term_id, $export_obj, $credentials, $directory, $target_dir, $files, $keep_replaced );
 			$uploaded   += $variants_obj->update( $attachment_id, $export_obj, $term_id, $directory, $target_dir, $credentials, $base_files, $keep_replaced );
+		}
+
+		// delete the backups of other plugins on the external sources, which they have removed locally (e.g. after
+		// they restored the image from them).
+		$kept_backups = $this->sessions[ $attachment_id ]['kept_backups'] ?? array();
+		foreach ( $session['backups'] ?? array() as $name => $path ) {
+			if ( ! file_exists( $path ) && ! in_array( (string) $name, $kept_backups, true ) ) {
+				$variants_obj->remove( $attachment_id, (string) $name );
+			}
 		}
 
 		// remove the local files of the exported variants.
@@ -663,6 +762,93 @@ class Local_Work {
 		// log this event.
 		/* translators: %1$d will be replaced by a number. */
 		Log::get_instance()->create( sprintf( __( 'The changed files of the exported image have been exported, %1$d files have been uploaded.', 'external-files-in-media-library' ), $uploaded ), $external_file_obj->get_url( true ), 'info', 1 );
+	}
+
+	/**
+	 * Export the optimized file of the image and its optimized original image with their names to each external source,
+	 * and remove the local files of sizes, which have not been changed, so they are not uploaded again.
+	 *
+	 * @param File                              $external_file_obj The external file object.
+	 * @param array<string,array<string,mixed>> $files             The files of the sizes (size name => data).
+	 * @param string                            $directory         The local directory of the files, with trailing slash.
+	 *
+	 * @return void
+	 */
+	private function prepare_optimized_files( File $external_file_obj, array $files, string $directory ): void {
+		// get the attachment ID and the session.
+		$attachment_id = $external_file_obj->get_id();
+		$session       = $this->sessions[ $attachment_id ];
+
+		// collect the changed files of the image itself and of its original image (size name => absolute path).
+		$changed = array();
+		if ( ! $session['main_changed'] && $this->is_changed( $attachment_id, $session['file'] ) && file_exists( $session['file'] ) ) {
+			$changed[ Variants::FULL ] = $session['file'];
+		}
+		if ( '' !== $session['original'] && isset( Sizes::get_instance()->get_sizes( $attachment_id, true )[ Sizes::ORIGINAL ] ) && $this->is_changed( $attachment_id, $session['original'] ) && file_exists( $session['original'] ) ) {
+			$changed[ Sizes::ORIGINAL ] = $session['original'];
+		}
+
+		// upload them with their names to each external source, which supports sizes.
+		$sizes_obj = Sizes::get_instance();
+		foreach ( $changed as $size_name => $path ) {
+			foreach ( $sizes_obj->get_export_sources_with_sizes( $attachment_id ) as $term_id => $export_obj ) {
+				// get the target.
+				$name   = Variants::FULL === $size_name ? (string) get_post_meta( $attachment_id, 'efml_export_filename', true ) : wp_basename( $path );
+				$target = $this->get_target_directory( $attachment_id, $term_id ) . ( '' !== $name ? $name : wp_basename( $path ) );
+
+				// upload it.
+				try {
+					$url = $export_obj->export_size( $attachment_id, $path, $target, $this->get_credentials( $term_id, $external_file_obj ) );
+				} catch ( \Throwable $e ) {
+					$url = false;
+				}
+
+				// bail if it could not be uploaded.
+				if ( ! is_string( $url ) || '' === $url ) {
+					/* translators: %1$s will be replaced by a file name. */
+					Log::get_instance()->create( sprintf( __( 'The optimized file %1$s could not be exported to an external source.', 'external-files-in-media-library' ), '<code>' . esc_html( wp_basename( $path ) ) . '</code>' ), $target, 'error' );
+					continue;
+				}
+
+				/* translators: %1$s will be replaced by a file name, %2$s by the target. */
+				Log::get_instance()->create( sprintf( __( 'The optimized file %1$s has been uploaded to %2$s.', 'external-files-in-media-library' ), '<code>' . esc_html( wp_basename( $path ) ) . '</code>', '<code>' . esc_html( $target ) . '</code>' ), $url, 'info', 1 );
+
+				// use a changed URL of the image on its main external source.
+				if ( Variants::FULL === $size_name && $this->is_main_term( $attachment_id, $term_id ) && $url !== $external_file_obj->get_url( true ) ) {
+					$external_file_obj->set_url( $url );
+					update_post_meta( $attachment_id, '_wp_attached_file', $url );
+				}
+
+				// save a changed URL of the original image.
+				if ( Sizes::ORIGINAL === $size_name ) {
+					$sizes_obj->set_url( $attachment_id, $term_id, Sizes::ORIGINAL, $url );
+				}
+			}
+		}
+
+		// remove the file of the image in the cache of the proxy, so the optimized file is used.
+		if ( isset( $changed[ Variants::FULL ] ) ) {
+			$external_file_obj->delete_cache();
+		}
+
+		// remove the downloaded files of the sizes, which have not been changed and exist with the same name on the
+		// external sources: they are kept there and not uploaded again.
+		$exported = wp_list_pluck( $sizes_obj->get_sizes( $attachment_id ), 'file' );
+		foreach ( $files as $size ) {
+			$path = $directory . (string) ( $size['file'] ?? '' );
+			if ( in_array( $path, $session['created'], true ) && in_array( wp_basename( $path ), $exported, true ) && ! $this->is_changed( $attachment_id, $path ) ) {
+				wp_delete_file( $path );
+			}
+		}
+
+		// remove the downloaded backups of other plugins, which have not been changed: they are kept on the external
+		// sources and not uploaded again.
+		foreach ( $session['backups'] ?? array() as $name => $path ) {
+			if ( file_exists( $path ) && ! $this->is_changed( $attachment_id, $path ) ) {
+				wp_delete_file( $path );
+				$this->sessions[ $attachment_id ]['kept_backups'][] = (string) $name;
+			}
+		}
 	}
 
 	/**
@@ -835,8 +1021,9 @@ class Local_Work {
 			return;
 		}
 
-		// export a changed file, which has not been exported yet (e.g. if no metadata has been saved after the change).
-		if ( ! $this->sessions[ $attachment_id ]['exported'] && $this->sessions[ $attachment_id ]['main_changed'] ) {
+		// export a changed file, which has not been exported yet (e.g. if no metadata has been saved after the change),
+		// and the optimized files.
+		if ( ! $this->sessions[ $attachment_id ]['exported'] && ( $this->sessions[ $attachment_id ]['main_changed'] || 'optimize' === $this->sessions[ $attachment_id ]['mode'] ) ) {
 			$metadata = wp_get_attachment_metadata( $attachment_id );
 			$this->export_files( $attachment_id, is_array( $metadata ) ? $metadata : array() );
 		}

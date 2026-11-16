@@ -118,10 +118,11 @@ class Variants {
 		 * mime type. Only existing files in the content directory of WordPress in the formats of the hook
 		 * "efml_image_variant_formats" are used. Entries with "kind" => "backup" are backups of the plugin (e.g. of
 		 * the image before its optimization) in any image format: they are exported, deleted and restored together
-		 * with the image, but never delivered.
+		 * with the image, but never delivered. The optional "name" sets the name on the external source, e.g. for
+		 * backups with the same name as the file of the image in another directory.
 		 *
 		 * @since 6.0.0 Available since 6.0.0.
-		 * @param array<int,array{size: string, path: string, mime-type: string, kind?: string}> $variants      The variants.
+		 * @param array<int,array{size: string, path: string, mime-type: string, kind?: string, name?: string}> $variants      The variants.
 		 * @param int                                                             $attachment_id The attachment ID.
 		 * @param array<string,string>                                            $paths         The absolute paths of the files of the image (size name => path).
 		 */
@@ -179,8 +180,15 @@ class Variants {
 				continue;
 			}
 
+			// get its name on the external source: its own name or the given name.
+			$name = ! empty( $variant['name'] ) ? sanitize_file_name( wp_basename( (string) $variant['name'] ) ) : wp_basename( $path );
+
+			// bail if this name is the name of a file of the image (e.g. a backup with the same name in another directory).
+			if ( in_array( $name, array_map( 'wp_basename', $paths ), true ) ) {
+				continue;
+			}
+
 			// add it (each file once).
-			$name            = wp_basename( $path );
 			$result[ $name ] = array(
 				'file'      => $name,
 				'of'        => wp_basename( $paths[ $size_name ] ),
@@ -918,6 +926,114 @@ class Variants {
 		// return the relative path.
 		$path = wp_normalize_path( $path );
 		return str_starts_with( $path, $content_dir ) ? substr( $path, strlen( $content_dir ) ) : '';
+	}
+
+	/**
+	 * Save the exported backups of the given image at their local paths and return these paths (e.g. for the work with
+	 * the local files of the image, so other plugins could restore the image from them).
+	 *
+	 * Existing local files are not overwritten and not returned.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array<string,string> The absolute paths of the saved backups (name of the variant => path).
+	 */
+	public function fetch_backups( int $attachment_id ): array {
+		// get WP_Filesystem.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// save each backup of the main external source.
+		$paths       = array();
+		$content_dir = trailingslashit( wp_normalize_path( WP_CONTENT_DIR ) );
+		foreach ( $this->get_variants( $attachment_id ) as $name => $variant ) {
+			// bail if this is not a backup.
+			if ( 'backup' !== ( $variant['kind'] ?? '' ) ) {
+				continue;
+			}
+
+			// get the local path.
+			$local = (string) ( $variant['local'] ?? '' );
+			if ( '' === $local || 0 !== validate_file( $local ) ) {
+				continue;
+			}
+			$path = $content_dir . $local;
+
+			// bail if it exists.
+			if ( $wp_filesystem->exists( $path ) ) {
+				continue;
+			}
+
+			// download it.
+			$tmp_file = $this->download( $attachment_id, (string) ( $variant['url'] ?? '' ) );
+			if ( '' === $tmp_file ) {
+				/* translators: %1$s will be replaced by a file name. */
+				Log::get_instance()->create( sprintf( __( 'The variant %1$s of the image could not be restored.', 'external-files-in-media-library' ), '<code>' . esc_html( (string) $name ) . '</code>' ), (string) ( $variant['url'] ?? '' ), 'error' );
+				continue;
+			}
+
+			// move it to its local path.
+			wp_mkdir_p( dirname( $path ) );
+			if ( ! $wp_filesystem->move( $tmp_file, $path, true ) ) {
+				$wp_filesystem->delete( $tmp_file );
+				continue;
+			}
+			$paths[ (string) $name ] = $path;
+		}
+
+		// return the list.
+		return $paths;
+	}
+
+	/**
+	 * Delete the given exported variant of an image on each external source and remove it from its data (e.g. a
+	 * backup, which another plugin has removed after it restored the image from it).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int    $attachment_id The attachment ID.
+	 * @param string $name          The name of the variant.
+	 *
+	 * @return void
+	 */
+	public function remove( int $attachment_id, string $name ): void {
+		// get the data.
+		$data = Sizes::get_instance()->get_data( $attachment_id );
+
+		// delete it on each external source.
+		foreach ( $data['variants'] as $term_id => $variants ) {
+			// bail if it does not exist there.
+			if ( ! isset( $variants[ $name ] ) ) {
+				continue;
+			}
+			$variant = (array) $variants[ $name ];
+
+			// get the export object.
+			$export_obj = Deletion::get_instance()->get_export_object( absint( $term_id ) );
+
+			// delete it.
+			$deleted = false;
+			if ( $export_obj instanceof Export_Base ) {
+				$credentials            = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( absint( $term_id ) );
+				$credentials['private'] = Files::get_instance()->get_file( $attachment_id )->is_private();
+				try {
+					$deleted = $export_obj->delete_size( $attachment_id, (string) ( $variant['url'] ?? '' ), (string) ( $variant['target'] ?? '' ), $credentials );
+				} catch ( \Throwable $e ) {
+					$deleted = false;
+				}
+			}
+
+			// keep it in the data, if it could not be deleted (it is deleted together with the image then).
+			if ( ! $deleted ) {
+				/* translators: %1$s will be replaced by a file name. */
+				Log::get_instance()->create( sprintf( __( 'The exported variant %1$s could not be deleted (maybe it does not exist).', 'external-files-in-media-library' ), '<code>' . esc_html( $name ) . '</code>' ), (string) ( $variant['target'] ?? '' ), 'error' );
+				continue;
+			}
+
+			// remove it from the data.
+			$this->forget( $attachment_id, absint( $term_id ), $name );
+		}
 	}
 
 	/**
