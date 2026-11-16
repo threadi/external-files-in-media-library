@@ -14,7 +14,6 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Filesystem_Base;
-use WP_Query;
 
 /**
  * Object to handle base functions for each protocol.
@@ -493,24 +492,8 @@ class Protocol_Base {
 			return false;
 		}
 
-		// query for the file with same URL.
-		$query   = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'value'   => $url,
-					'compare' => '=',
-				),
-			),
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-		$results = new WP_Query( $query );
-
-		// return true if any file with this URL has been found.
-		return $results->post_count > 0;
+		// return true if any file with this URL has been found (via the index of the database).
+		return Url_Index::get_instance()->find( $url ) > 0;
 	}
 
 	/**

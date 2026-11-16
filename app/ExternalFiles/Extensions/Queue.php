@@ -552,6 +552,8 @@ class Queue extends Extension_Base {
 		if ( ! empty( $url_data['fields'] ) && is_string( $url_data['fields'] ) ) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
 			$fields = json_decode( Crypt::get_instance()->decrypt( $url_data['fields'] ), true );
 			if ( ! is_array( $fields ) ) {
+				/* translators: %1$d will be replaced by the ID of the entry. */
+				Log::get_instance()->create( sprintf( __( 'The saved access data of the entry %1$d in the queue could not be read. The URL is imported without access data.', 'external-files-in-media-library' ), absint( $url_data['id'] ?? 0 ) ), (string) $url_data['url'], 'error' );
 				$fields = array();
 			}
 		}

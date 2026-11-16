@@ -134,6 +134,10 @@
 - The backups of EWWW Image Optimizer, Imagify, ShortPixel and TinyPNG are exported with the image (e.g. "image.ewww-backup.jpg") to save storage space, saved locally again in working copies, so the image optimizer could restore the image, and deleted on the external source, if the image optimizer removes them
 - Images with working copy are marked in the media library
 - Added post meta "efml_working_copy" and optional "name" for variants of the hook "efml_image_variants"
+- External files are found by their URL via the index of the database (e.g. during imports, synchronizations, REST, WP CLI and abilities): each external file gets a protected post meta with the hash of its URL in its key ("_efml_url_…"), which is kept together with the URL
+- External files of older versions get this post meta in the background after the update, until then they are found as before
+- Added hook "efml_url_index_backfill_size"
+- Saved access data of import runs and queue entries, which could not be read, are logged as error (before, the files were imported without access data without any hint)
 - Planned single events of this plugin in WP-Cron (e.g. delayed exports, retries of sizes, imports in the background) are removed, if their file is deleted or the plugin is deactivated, and planned again after its activation
 - Lost single events of waiting uploads (e.g. if another plugin saves the events of WP-Cron at the same time) are planned again in the backend, due uploads are exported directly during WP-Cron (every 5 minutes at most); uploads are exported directly, as soon as the image optimizer reports the end of its work
 - Added button "Export sizes now" in the export settings and WP CLI command "wp eml export_sizes" to export the sizes of images, which have been exported before, in the background

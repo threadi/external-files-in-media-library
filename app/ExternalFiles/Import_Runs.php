@@ -1428,8 +1428,15 @@ class Import_Runs {
 		// decrypt them.
 		$fields = json_decode( Crypt::get_instance()->decrypt( $run['fields'] ), true );
 
+		// log, if they could not be read: the files are imported without access data then.
+		if ( ! is_array( $fields ) ) {
+			/* translators: %1$d will be replaced by the ID of the run, %2$d by the ID of the external source. */
+			Log::get_instance()->create( sprintf( __( 'The saved access data of the run %1$d (external source %2$d) could not be read. Its files are imported without access data. Start the import or the synchronization again.', 'external-files-in-media-library' ), absint( $run['id'] ?? 0 ), absint( $run['term_id'] ?? 0 ) ), (string) ( $run['url'] ?? '' ), 'error' );
+			return array();
+		}
+
 		// return the fields.
-		return is_array( $fields ) ? $fields : array();
+		return $fields;
 	}
 
 	/**

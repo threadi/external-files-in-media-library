@@ -100,6 +100,7 @@ class Files {
 
 		// initialize the replacement of local URLs of exported and migrated files in contents.
 		Local_Urls::get_instance()->init();
+		Url_Index::get_instance()->init();
 
 		// initialize the restore of exported files.
 		Restore::get_instance()->init();
@@ -381,29 +382,16 @@ class Files {
 			return false;
 		}
 
-		// query for the post with the given URL.
-		$query  = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'value'   => $url,
-					'compare' => '=',
-				),
-			),
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-		$result = new WP_Query( $query );
+		// find the attachment with the given URL (via the index of the database).
+		$attachment_id = Url_Index::get_instance()->find( $url );
 
 		// bail if none has been found.
-		if ( 0 === $result->post_count ) {
+		if ( 0 === $attachment_id ) {
 			return false;
 		}
 
 		// get the external file object for the match.
-		$external_file_obj = $this->get_file( absint( $result->get_posts()[0] ) );
+		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if the external file object is not valid.
 		if ( ! $external_file_obj->is_valid() ) {

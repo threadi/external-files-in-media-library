@@ -210,6 +210,9 @@ class Uninstall {
 		// remove the data of the replacement of local URLs.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Local_Urls::get_instance()->uninstall();
 
+		// remove the index of the URLs of external files.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Url_Index::get_instance()->uninstall();
+
 		// remove the data of uploads with sizes created in the browser.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Client_Uploads::get_instance()->uninstall();
 

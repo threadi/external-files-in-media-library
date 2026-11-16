@@ -687,6 +687,24 @@ class Admin {
 			__( 'Data', 'external-files-in-media-library' )    => '<code>' . Helper::get_json( $data ) . '</code>',
 		);
 
+		// TEMPORARY (search for the cause of decryption errors, remove afterward): add the request and the callers
+		// (without arguments, so no values are logged).
+		$log_entry['Request'] = '<code>' . esc_html( ( wp_doing_cron() ? 'cron ' : '' ) . ( wp_doing_ajax() ? 'ajax ' : '' ) . ( defined( 'WP_CLI' ) && WP_CLI ? 'cli ' : '' ) . sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) ) ) . '</code>'; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		$callers              = array();
+		foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 25 ) as $frame ) { // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+			$file = wp_normalize_path( (string) ( $frame['file'] ?? '' ) );
+			if ( '' === $file || str_contains( $file, '/crypt-for-wordpress/' ) || str_contains( $file, '/wp-includes/' ) ) {
+				continue;
+			}
+			$callers[] = esc_html( ( isset( $frame['class'] ) ? $frame['class'] . '::' : '' ) . $frame['function'] . '() ' . wp_basename( dirname( $file ) ) . '/' . wp_basename( $file ) . ':' . ( $frame['line'] ?? 0 ) );
+			if ( count( $callers ) >= 8 ) {
+				break;
+			}
+		}
+		$log_entry['Callers'] = '<code>' . implode( '<br>', $callers ) . '</code>';
+		global $wp_current_filter;
+		$log_entry['Hooks'] = '<code>' . esc_html( implode( ' > ', is_array( $wp_current_filter ) ? $wp_current_filter : array() ) ) . '</code>';
+
 		// log the data.
 		Log::get_instance()->create(
 			'<strong>' . __( 'Error in encryption:', 'external-files-in-media-library' ) . '</strong><br>' . wp_kses_post(

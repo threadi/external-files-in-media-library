@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Local_Urls;
 use ExternalFilesInMediaLibrary\ExternalFiles\Migrations;
 use ExternalFilesInMediaLibrary\ExternalFiles\Sizes;
+use ExternalFilesInMediaLibrary\ExternalFiles\Url_Index;
 
 /**
  * Object to handle the single events of this plugin in WP-Cron.
@@ -133,6 +134,7 @@ class Background_Events {
 			array(
 				Import_Runs::CRON_HOOK,
 				Local_Urls::CRON_HOOK,
+				Url_Index::CRON_HOOK,
 				Migrations::CRON_HOOK,
 				Queue::EXPORT_HOOK,
 			)
@@ -177,11 +179,12 @@ class Background_Events {
 		$this->resume_attachments( Client_Uploads::META, Client_Uploads::CRON_HOOK, MINUTE_IN_SECONDS );
 		$this->resume_attachments( Sizes::RETRY_META, Sizes::RETRY_HOOK, 10 * MINUTE_IN_SECONDS );
 
-		// continue the exports and deletions of the queue, the runs in the background, the backfill of local URLs and a
-		// migration.
+		// continue the exports and deletions of the queue, the runs in the background, the backfill of local URLs and of
+		// the index of URLs and a migration.
 		Queue::get_instance()->schedule_waiting_exports();
 		Import_Runs::get_instance()->resume();
 		Local_Urls::get_instance()->schedule_backfill();
+		Url_Index::get_instance()->schedule_backfill();
 		Migrations::get_instance()->resume();
 	}
 
