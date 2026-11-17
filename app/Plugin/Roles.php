@@ -64,7 +64,7 @@ class Roles {
 	 */
 	public function init(): void {
 		add_action( 'init', array( $this, 'add_settings' ), 30 );
-		add_filter( 'user_has_cap', array( $this, 'check_user_cap' ), 10, 2 );
+		add_filter( 'user_has_cap', array( $this, 'check_user_cap' ), 10, 4 );
 	}
 
 	/**
@@ -391,14 +391,20 @@ class Roles {
 	/**
 	 * Check if current user it not on the forbidden list to access the external files.
 	 *
+	 * Users on this list are not allowed to use any function of this plugin: they lose the main capability and
+	 * the capabilities of the services and tools.
+	 *
 	 * @param array<string,mixed> $allcaps List of all caps.
-	 * @param array<string,mixed> $caps List of requested caps.
+	 * @param array<string,mixed> $caps    List of requested caps.
+	 * @param array<int,mixed>    $args    The arguments of the check (unused).
+	 * @param WP_User|null        $user    The user to check (the actual user, if not given).
 	 *
 	 * @return array<string,mixed>
+	 * @noinspection PhpUnusedParameterInspection
 	 */
-	public function check_user_cap( array $allcaps, array $caps ): array {
-		// bail if our cap is not in caps list.
-		if ( ! in_array( EFML_CAP_NAME, $caps, true ) ) {
+	public function check_user_cap( array $allcaps, array $caps, array $args = array(), ?WP_User $user = null ): array {
+		// bail if none of our caps is in caps list (the main capability, the capabilities of the services and tools).
+		if ( empty( array_filter( $caps, array( $this, 'is_own_capability' ) ) ) ) {
 			return $allcaps;
 		}
 
@@ -408,16 +414,33 @@ class Roles {
 			$forbidden_users = array();
 		}
 
-		// bail if current user is not in this list.
-		if ( ! in_array( get_current_user_id(), array_map( 'absint', $forbidden_users ), true ) ) {
+		// bail if the user is not in this list.
+		$user_id = $user instanceof WP_User ? $user->ID : get_current_user_id();
+		if ( ! in_array( $user_id, array_map( 'absint', $forbidden_users ), true ) ) {
 			return $allcaps;
 		}
 
-		// remove the cap from list.
-		unset( $allcaps[ EFML_CAP_NAME ] );
+		// remove all our caps from list: the user is not allowed to use any function of this plugin.
+		foreach ( array_keys( $allcaps ) as $cap ) {
+			if ( $this->is_own_capability( $cap ) ) {
+				unset( $allcaps[ $cap ] );
+			}
+		}
 
 		// return the resulting list.
 		return $allcaps;
+	}
+
+	/**
+	 * Return whether the given capability is one of this plugin: the main capability or the capability of a
+	 * service or tool ("efml_cap_*").
+	 *
+	 * @param mixed $cap The capability.
+	 *
+	 * @return bool
+	 */
+	public function is_own_capability( mixed $cap ): bool {
+		return is_string( $cap ) && ( EFML_CAP_NAME === $cap || str_starts_with( $cap, 'efml_cap_' ) );
 	}
 
 	/**

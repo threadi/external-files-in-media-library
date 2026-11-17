@@ -960,7 +960,7 @@ class Service_Base extends Directory_Listing_Base {
 				}
 
 				// get actual value.
-				$value = Crypt::get_instance()->decrypt( get_user_meta( $user_id, 'efml_' . $name, true ) );
+				$value = Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_' . $name, true ), $this->get_user_setting_crypt_context( (string) $name ) );
 
 				// if no value is set, use the default value, if set.
 				if ( empty( $value ) && ! empty( $setting['default'] ) ) {
@@ -1069,7 +1069,7 @@ class Service_Base extends Directory_Listing_Base {
 			}
 
 			// save the value in the database.
-			update_user_meta( $user_id, 'efml_' . $name, Crypt::get_instance()->encrypt( (string) $value ) );
+			update_user_meta( $user_id, 'efml_' . $name, Crypt::get_instance()->encrypt( (string) $value, $this->get_user_setting_crypt_context( (string) $name ) ) );
 		}
 	}
 
@@ -1210,6 +1210,37 @@ class Service_Base extends Directory_Listing_Base {
 	public function uninstall(): void {}
 
 	/**
+	 * Return whether the user settings of this service are encrypted with a context.
+	 *
+	 * Services of extensions read their user settings themselves. Older versions of extensions decrypt
+	 * them without context, so a value saved with context would not be readable for them. Therefore, the
+	 * context is only used for the services of this plugin and for services of extensions, which return
+	 * true here. Values saved without context stay readable in every case.
+	 *
+	 * @return bool
+	 */
+	public function is_crypt_context_supported(): bool {
+		return str_starts_with( static::class, 'ExternalFilesInMediaLibrary\\Services\\' ) && ! str_contains( static::class, '@anonymous' );
+	}
+
+	/**
+	 * Return the context for the encryption of a user setting of this service.
+	 *
+	 * @param string $name The name of the user setting (without the prefix "efml_").
+	 *
+	 * @return string
+	 */
+	public function get_user_setting_crypt_context( string $name ): string {
+		// bail if this service does not use the context.
+		if ( ! $this->is_crypt_context_supported() ) {
+			return '';
+		}
+
+		// return the context.
+		return 'usermeta:efml_' . $name;
+	}
+
+	/**
 	 * Encrypt a given value.
 	 *
 	 * @param string|null $value The value.
@@ -1233,6 +1264,9 @@ class Service_Base extends Directory_Listing_Base {
 
 	/**
 	 * Decrypt a given value.
+	 *
+	 * Encrypts and decrypts without context. Services of this plugin bind their values to a context via
+	 * Crypt::get_instance()->get_save_callback() and get_read_callback(). These methods stay for extensions.
 	 *
 	 * @param string|null $value The value.
 	 *

@@ -72,6 +72,7 @@ Search: `admin_action_`, `wp_ajax_`, `register_rest_route`, `permission_callback
 - Can a URL import reach internal addresses or files it must not (SSRF, `file://`, path traversal)? Does the local service stay inside its base directory (`efml_file_base`)?
 - Does the proxy deliver only files of the media library, with the right MIME type, and never a file outside its cache directory?
 - Are credentials stored encrypted, never logged, never returned by REST or abilities, and never sent to AI services?
+- Is every encrypted value bound to a fixed context (no ID, nothing secret), and does a value saved by an older version without context stay readable?
 - Is nothing deleted or exported on a copy of the website (`Site_Copy::is_blocked()`)?
 
 ### 4. The external file object

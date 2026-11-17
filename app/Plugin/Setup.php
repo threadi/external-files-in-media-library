@@ -302,7 +302,7 @@ class Setup {
 	 * @return bool
 	 */
 	public function is_allowed(): bool {
-		return $this->is_library_available() && current_user_can( 'manage_options' );
+		return $this->is_library_available() && current_user_can( 'manage_options' ) && current_user_can( EFML_CAP_NAME );
 	}
 
 	/**
@@ -2282,7 +2282,6 @@ class Setup {
 	 * @param string $config_name The name of the setup configuration.
 	 *
 	 * @return string
-	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function encrypt_password( string $value, string $field_name, string $config_name ): string {
 		// bail if this is not our setup.
@@ -2290,8 +2289,8 @@ class Setup {
 			return $value;
 		}
 
-		// return the encrypted value.
-		return Crypt::get_instance()->encrypt( $value );
+		// return the encrypted value, bound to the field.
+		return Crypt::get_instance()->encrypt( $value, 'setup:' . $field_name );
 	}
 
 	/**
@@ -2302,7 +2301,6 @@ class Setup {
 	 * @param string $config_name The name of the setup configuration.
 	 *
 	 * @return string
-	 * @noinspection PhpUnusedParameterInspection
 	 */
 	public function decrypt_password( string $value, string $field_name, string $config_name ): string {
 		// bail if this is not our setup.
@@ -2311,7 +2309,7 @@ class Setup {
 		}
 
 		// return the decrypted value.
-		return Crypt::get_instance()->decrypt( $value );
+		return Crypt::get_instance()->decrypt( $value, 'setup:' . $field_name );
 	}
 
 	/**

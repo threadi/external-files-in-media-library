@@ -807,6 +807,12 @@ class Files {
 			wp_send_json( $result );
 		}
 
+		// bail if the user is not allowed to edit this file.
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			$result['message'] = __( 'You are not allowed to edit this file.', 'external-files-in-media-library' );
+			wp_send_json( $result );
+		}
+
 		// get the file.
 		$external_file_obj = $this->get_file( $attachment_id );
 
@@ -1383,8 +1389,8 @@ class Files {
 		// get the file ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if post ID is not given.
-		if ( 0 === $post_id ) {
+		// bail if post ID is not given or the user is not allowed to edit this file.
+		if ( 0 === $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}

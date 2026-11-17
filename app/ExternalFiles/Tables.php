@@ -421,8 +421,8 @@ class Tables {
 			return $actions;
 		}
 
-		// add the action to export it again, if it could be exported at the moment.
-		if ( '' === $export_obj->get_export_again_problem( $post->ID ) ) {
+		// add the action to export it again, if it could be exported at the moment and the user is allowed to edit it.
+		if ( current_user_can( 'edit_post', $post->ID ) && '' === $export_obj->get_export_again_problem( $post->ID ) ) {
 			$actions['efml-export-again'] = '<a href="' . esc_url( $export_obj->get_export_again_url( $post->ID ) ) . '">' . esc_html__( 'Export again', 'external-files-in-media-library' ) . '</a>';
 		}
 

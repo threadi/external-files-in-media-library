@@ -219,8 +219,8 @@ class Youtube extends Service_Base implements Service {
 				$setting->set_section( $section );
 				$setting->set_autoload( false );
 				$setting->set_type( 'string' );
-				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:eml_youtube_api_key' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:eml_youtube_api_key' ) );
 				$field = new Password( $settings_obj );
 				$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
 				$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
@@ -1147,7 +1147,7 @@ class Youtube extends Service_Base implements Service {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			$values['channel_id'] = get_option( 'eml_youtube_channel_id', '' );
-			$values['api_key']    = Crypt::get_instance()->decrypt( get_option( 'eml_youtube_api_key', '' ) );
+			$values['api_key']    = Crypt::get_instance()->decrypt( (string) get_option( 'eml_youtube_api_key', '' ), 'option:eml_youtube_api_key' );
 		}
 
 		// save it user-specific, if this is enabled.
@@ -1161,8 +1161,8 @@ class Youtube extends Service_Base implements Service {
 			}
 
 			// get the values.
-			$values['channel_id'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_channel_id', true ) );
-			$values['api_key']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_api_key', true ) );
+			$values['channel_id'] = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_youtube_channel_id', true ), $this->get_user_setting_crypt_context( 'youtube_channel_id' ) );
+			$values['api_key']    = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_youtube_api_key', true ), $this->get_user_setting_crypt_context( 'youtube_api_key' ) );
 		}
 
 		// return the resulting list of values.

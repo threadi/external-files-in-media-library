@@ -177,7 +177,7 @@ class Connection_Test {
 		$service = $this->get_service_by_name( $type );
 
 		// bail if service is unknown or the user is not allowed to use it.
-		if ( ! $service instanceof Service_Base || ! current_user_can( 'efml_cap_' . $service->get_name() ) ) {
+		if ( ! $service instanceof Service_Base || ! current_user_can( EFML_CAP_NAME ) || ! current_user_can( 'efml_cap_' . $service->get_name() ) ) {
 			$dialog['detail']['texts'][] = '<p>' . __( 'The connection test could not be run.', 'external-files-in-media-library' ) . '</p>';
 			wp_send_json( $dialog );
 		}

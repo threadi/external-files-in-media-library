@@ -1179,7 +1179,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'queue_process' ),
-				'permission_callback' => array( $this, 'can_manage_files' ),
+				'permission_callback' => array( $this, 'can_manage_queue' ),
 				'annotations'         => $this->get_annotations( false, false, false ),
 			),
 			'queue-cleanup' => array(
@@ -1206,7 +1206,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'queue_cleanup' ),
-				'permission_callback' => array( $this, 'can_manage_files' ),
+				'permission_callback' => array( $this, 'can_manage_queue' ),
 				'annotations'         => $this->get_annotations( false, true, true ),
 			),
 		);
@@ -1477,6 +1477,16 @@ class Abilities {
 	 */
 	public function can_manage_files(): bool {
 		return current_user_can( EFML_CAP_NAME );
+	}
+
+	/**
+	 * Return whether the actual user is allowed to process or clean up the queue (like the actions of the queue
+	 * in the settings).
+	 *
+	 * @return bool
+	 */
+	public function can_manage_queue(): bool {
+		return Queue::get_instance()->is_queue_action_allowed();
 	}
 
 	/**
@@ -1865,7 +1875,7 @@ class Abilities {
 
 		if ( $this->get_int( $input, 'attachment_id' ) > 0 || '' !== $this->get_string( $input, 'url' ) ) {
 			// get the single requested file.
-			$external_file_obj = $this->get_file_by_input( $input );
+			$external_file_obj = $this->get_file_by_input( $input, 'edit_post' );
 
 			// bail if the external file could not be loaded.
 			if ( is_wp_error( $external_file_obj ) ) {
@@ -1988,7 +1998,7 @@ class Abilities {
 	 */
 	public function reset_thumbnails( mixed $input = null ): bool|WP_Error {
 		// get the external file.
-		$external_file_obj = $this->get_file_by_input( $this->get_input( $input ) );
+		$external_file_obj = $this->get_file_by_input( $this->get_input( $input ), 'edit_post' );
 
 		// bail if the external file could not be loaded.
 		if ( is_wp_error( $external_file_obj ) ) {
@@ -3189,7 +3199,7 @@ class Abilities {
 	 */
 	private function switch_hosting( array $input, bool $to_local ): array|WP_Error {
 		// get the external file.
-		$external_file_obj = $this->get_file_by_input( $input );
+		$external_file_obj = $this->get_file_by_input( $input, 'edit_post' );
 
 		// bail if the external file could not be loaded.
 		if ( is_wp_error( $external_file_obj ) ) {
@@ -3496,11 +3506,33 @@ class Abilities {
 	/**
 	 * Return the external file object which is requested with "attachment_id" or "url".
 	 *
+	 * @param array<string,mixed> $input      The input.
+	 * @param string              $capability The capability the actual user needs for the file, e.g. "edit_post" (optional).
+	 *
+	 * @return File|WP_Error
+	 */
+	private function get_file_by_input( array $input, string $capability = '' ): File|WP_Error {
+		// get the file.
+		$external_file_obj = $this->get_file_by_input_without_check( $input );
+
+		// bail if the actual user does not have the requested capability for this file.
+		if ( ! is_wp_error( $external_file_obj ) && '' !== $capability && ! current_user_can( $capability, $external_file_obj->get_id() ) ) {
+			return $this->get_error( 'efml_not_allowed', __( 'You are not allowed to edit this file.', 'external-files-in-media-library' ), 403 );
+		}
+
+		// return the result.
+		return $external_file_obj;
+	}
+
+	/**
+	 * Return the external file object which is requested with "attachment_id" or "url", without checking the
+	 * permissions of the actual user for it.
+	 *
 	 * @param array<string,mixed> $input The input.
 	 *
 	 * @return File|WP_Error
 	 */
-	private function get_file_by_input( array $input ): File|WP_Error {
+	private function get_file_by_input_without_check( array $input ): File|WP_Error {
 		// get the file by its ID.
 		$attachment_id = $this->get_int( $input, 'attachment_id' );
 		if ( $attachment_id > 0 ) {

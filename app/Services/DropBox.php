@@ -44,6 +44,16 @@ use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
  */
 class DropBox extends Service_Base implements Service {
 	/**
+	 * The context for the encryption of the global access tokens.
+	 */
+	public const ACCESS_TOKENS_OPTION_CONTEXT = 'option:efml_dropbox_access_tokens';
+
+	/**
+	 * The context for the encryption of the access tokens of a user.
+	 */
+	public const ACCESS_TOKENS_USER_CONTEXT = 'usermeta:efml_dropbox_access_tokens';
+
+	/**
 	 * The object name.
 	 *
 	 * @var string
@@ -475,7 +485,8 @@ class DropBox extends Service_Base implements Service {
 	public function get_access_token(): array {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
-			$data = Crypt::get_instance()->decrypt( get_option( 'efml_dropbox_access_tokens', array() ) );
+			$data = get_option( 'efml_dropbox_access_tokens', '' );
+			$data = Crypt::get_instance()->decrypt( is_string( $data ) ? $data : '', self::ACCESS_TOKENS_OPTION_CONTEXT );
 		} else {
 			// get current user.
 			$user = $this->get_user();
@@ -486,7 +497,7 @@ class DropBox extends Service_Base implements Service {
 			}
 
 			// get and return the value.
-			$data = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
+			$data = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ), self::ACCESS_TOKENS_USER_CONTEXT );
 		}
 
 		// convert JSON to array.
@@ -521,7 +532,7 @@ class DropBox extends Service_Base implements Service {
 			Log::get_instance()->create( __( 'New DropBox API access token has been saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			// save the updated token.
-			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), self::ACCESS_TOKENS_OPTION_CONTEXT ) );
 		}
 
 		// get the user_id from the session if it is not set.
@@ -541,7 +552,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . ( $user instanceof WP_User ? $user->display_name : '' ) . '</em>' ), '', 'info', 2 ); // @phpstan-ignore instanceof.alwaysTrue
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), self::ACCESS_TOKENS_USER_CONTEXT ) );
 	}
 
 	/**
@@ -580,7 +591,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// return the decrypted API key.
-		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_key', true ) );
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_key', true ), 'usermeta:efml_dropbox_api_key' );
 	}
 
 	/**
@@ -622,7 +633,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_api_key', Crypt::get_instance()->encrypt( $key ) );
+		update_user_meta( $user_id, 'efml_dropbox_api_key', Crypt::get_instance()->encrypt( $key, 'usermeta:efml_dropbox_api_key' ) );
 	}
 
 	/**
@@ -661,7 +672,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// return the decrypted API key.
-		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_secret', true ) );
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_secret', true ), 'usermeta:efml_dropbox_api_secret' );
 	}
 
 	/**
@@ -703,7 +714,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API secret saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_api_secret', Crypt::get_instance()->encrypt( $secret ) );
+		update_user_meta( $user_id, 'efml_dropbox_api_secret', Crypt::get_instance()->encrypt( $secret, 'usermeta:efml_dropbox_api_secret' ) );
 	}
 
 	/**

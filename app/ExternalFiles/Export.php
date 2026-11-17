@@ -3040,8 +3040,8 @@ class Export extends Tools_Base {
 	 * @return array<string,string>
 	 */
 	public function change_media_row_actions( array $actions, WP_Post $post ): array {
-		// bail if cap is missing.
-		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+		// bail if cap is missing or the user is not allowed to edit this file.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) || ! current_user_can( 'edit_post', $post->ID ) ) {
 			return $actions;
 		}
 
@@ -3183,8 +3183,8 @@ class Export extends Tools_Base {
 		// get the post ID.
 		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if no ID is given.
-		if ( 0 === $attachment_id ) {
+		// bail if no ID is given or the user is not allowed to edit this file.
+		if ( 0 === $attachment_id || ! current_user_can( 'edit_post', $attachment_id ) ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -3473,7 +3473,7 @@ class Export extends Tools_Base {
 		$referer = (string) wp_get_referer();
 
 		// bail if cap is missing.
-		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+		if ( ! $this->is_settings_action_allowed() ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -3767,6 +3767,18 @@ class Export extends Tools_Base {
 	 */
 	public function has_capability(): bool {
 		return true;
+	}
+
+	/**
+	 * Return whether the actual user is allowed to start an action of the export settings, which works with all
+	 * files of the media library (e.g. "Export now", "Restore now", "Delete local copies now"): the user needs the
+	 * capability for the export and the capability for the settings, as these actions also change settings
+	 * (e.g. the restore disables the export) and are only available in the settings.
+	 *
+	 * @return bool
+	 */
+	public function is_settings_action_allowed(): bool {
+		return current_user_can( 'efml_cap_tools_export' ) && current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() );
 	}
 
 	/**

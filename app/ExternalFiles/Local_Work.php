@@ -117,11 +117,56 @@ class Local_Work {
 			return $path;
 		}
 
+		// bail if the path is only requested for its name or the image dimensions, e.g. for the media library.
+		if ( $this->is_requested_for_information_only() ) {
+			return $path;
+		}
+
 		// get the local file.
 		$local_path = $this->open( $attachment_id, 'regenerate' );
 
 		// return the local file or the path as before, if it could not be loaded.
 		return '' !== $local_path ? $local_path : $path;
+	}
+
+	/**
+	 * Return whether the path of the original image is only requested for information, not to work with the
+	 * image: WordPress asks for it to show the name of the original image in the media library, in the
+	 * details of an attachment and in the REST API, and for the dimensions of the original image. The files are
+	 * not downloaded for this (it would happen for every exported image on every view of the media library).
+	 *
+	 * @return bool
+	 */
+	private function is_requested_for_information_only(): bool {
+		$callers = array(
+			'wp_prepare_attachment_for_js',
+			'attachment_submitbox_metadata',
+			'wp_get_missing_image_subsizes',
+			'WP_REST_Attachments_Controller::get_attachment_filename',
+			'WP_REST_Attachments_Controller::get_attachment_filesize',
+		);
+
+		/**
+		 * Filter the functions, which request the path of the original image of an exported image only for
+		 * information (e.g. its name). For them, the files are not downloaded.
+		 *
+		 * Use "Class::method" for methods.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<int,string> $callers The list of functions and methods.
+		 */
+		$callers = apply_filters( 'efml_local_work_information_callers', $callers );
+
+		// check the calling functions.
+		foreach ( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 12 ) as $frame ) { // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+			$function = ( isset( $frame['class'] ) ? $frame['class'] . '::' : '' ) . $frame['function'];
+			if ( in_array( $function, $callers, true ) ) {
+				return true;
+			}
+		}
+
+		// return false as the path is requested to work with the image.
+		return false;
 	}
 
 	/**
@@ -163,8 +208,12 @@ class Local_Work {
 	 * @return bool
 	 */
 	public function is_allowed( int $attachment_id ): bool {
-		// only in the backend, via REST API, cron and WP-CLI, never for visitors of the website.
-		$allowed = is_admin() || wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST );
+		// only via cron and WP-CLI, or in the backend and via REST API for users, who are allowed to edit the image,
+		// never for visitors of the website.
+		$allowed = wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI );
+		if ( ! $allowed && ( is_admin() || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) ) {
+			$allowed = current_user_can( 'edit_post', $attachment_id );
+		}
 
 		/**
 		 * Filter whether the local files of an exported image could be used in this request, e.g. to create its

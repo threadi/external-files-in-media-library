@@ -323,8 +323,8 @@ class Import_Export extends Extension_Base {
 		// get the post ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if ID is not given.
-		if ( 0 === $post_id ) {
+		// bail if ID is not given or the user is not allowed to edit this file.
+		if ( 0 === $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_safe_redirect( (string) wp_get_referer() );
 			exit;
 		}

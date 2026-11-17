@@ -268,6 +268,60 @@ class LocalWork extends externalFilesTests {
 	}
 
 	/**
+	 * Test that the local files are only used in the backend for users, who are allowed to edit the image, and
+	 * not if WordPress requests the original image only for information (e.g. its name in the media library).
+	 *
+	 * @return void
+	 */
+	public function test_backend_requires_permission_and_work(): void {
+		$attachment_id = $this->create_exported_image( 3000, 2000 );
+		remove_filter( 'efml_local_work_allowed', '__return_true' );
+		set_current_screen( 'upload' );
+
+		// an author is not allowed to edit the image of the administrator.
+		$admin_id = get_current_user_id();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		wp_get_original_image_path( $attachment_id );
+		$this->assertFalse( Local_Work_Object::get_instance()->is_open( $attachment_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+
+		// the media library requests the original image only for its name: nothing is downloaded.
+		wp_set_current_user( $admin_id );
+		wp_prepare_attachment_for_js( $attachment_id );
+		$this->assertFalse( Local_Work_Object::get_instance()->is_open( $attachment_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+
+		// to create the sizes again, the local files are used.
+		add_image_size( 'efml-test', 500, 500, true );
+		$this->assertIsArray( wp_update_image_subsizes( $attachment_id ) );
+		Local_Work_Object::get_instance()->close_all();
+		$this->assertArrayHasKey( 'efml-test', Sizes_Object::get_instance()->get_sizes( $attachment_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+
+		set_current_screen( 'front' );
+	}
+
+	/**
+	 * Test that visitors do not download the files via the REST API.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 *
+	 * @return void
+	 */
+	public function test_not_for_visitors_via_rest_api(): void {
+		$attachment_id = $this->create_exported_image( 3000, 2000 );
+		remove_filter( 'efml_local_work_allowed', '__return_true' );
+		wp_set_current_user( 0 );
+		define( 'REST_REQUEST', true );
+
+		$response = rest_get_server()->dispatch( new WP_REST_Request( 'GET', '/wp/v2/media/' . $attachment_id ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertFalse( Local_Work_Object::get_instance()->is_open( $attachment_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+	}
+
+	/**
 	 * Save the given exported image in the image editor of WordPress.
 	 *
 	 * @param int    $attachment_id The attachment ID.

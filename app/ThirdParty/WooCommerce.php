@@ -159,8 +159,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$setting->set_type( 'string' );
 		$setting->set_default( '' );
 		$setting->prevent_export( true );
-		$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-		$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+		$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:eml_woocommerce_login' ) );
+		$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:eml_woocommerce_login' ) );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_woocommerce_password' );
@@ -168,8 +168,8 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$setting->set_type( 'string' );
 		$setting->set_default( '' );
 		$setting->prevent_export( true );
-		$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-		$setting->set_read_callback( array( $this, 'decrypt_value' ) );
+		$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:eml_woocommerce_password' ) );
+		$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:eml_woocommerce_password' ) );
 	}
 
 	/**

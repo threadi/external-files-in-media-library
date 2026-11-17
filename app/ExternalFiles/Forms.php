@@ -515,6 +515,9 @@ class Forms {
 		// add the fields.
 		$import_obj->set_fields( is_array( $fields ) ? $fields : array() ); // @phpstan-ignore function.alreadyNarrowedType
 
+		// set the used external source, so the protocols know it (e.g. to detect the platform of a custom domain).
+		$import_obj->set_term_id( $term_id );
+
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
 			// bail if URL is empty.
@@ -554,6 +557,9 @@ class Forms {
 				$errors[] = $url;
 			}
 		}
+
+		// forget the used external source.
+		$import_obj->set_term_id( 0 );
 
 		// if marker to load more is set, return this info via AJAX.
 		if ( 1 === absint( get_option( 'eml_import_url_loading_more_' . $user_id ) ) ) {
@@ -827,6 +833,9 @@ class Forms {
 		// add the credentials.
 		$import_obj->set_fields( $fields );
 
+		// set the used external source, so the protocols know it (e.g. to detect the platform of a custom domain).
+		$import_obj->set_term_id( $term_id );
+
 		// loop through the list of URLs to add them.
 		foreach ( (array) $url_array as $url ) {
 			// bail if URL is empty.
@@ -856,6 +865,9 @@ class Forms {
 				$errors[] = $url;
 			}
 		}
+
+		// forget the used external source.
+		$import_obj->set_term_id( 0 );
 
 		// show deprecated warning for the old hook name.
 		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );

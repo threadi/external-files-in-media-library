@@ -110,6 +110,7 @@ class Directory_Listing {
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing_plugins' ) );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'sort_list' ), 100 );
+		add_filter( 'efml_directory_listing_term_allowed', array( $this, 'is_term_allowed_in_listing' ), 10, 2 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 30 );
 		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoints' ) );
@@ -955,6 +956,21 @@ class Directory_Listing {
 
 		// return whether the actual user is one of them.
 		return in_array( get_current_user_id(), $user_ids, true );
+	}
+
+	/**
+	 * Return whether the actual user is allowed to open the given external source in the directory listing.
+	 *
+	 * The directory listing loads the saved source incl. its credentials, if its ID is given. Sources of other
+	 * users could only be used by administrators (or if this is enabled in the settings).
+	 *
+	 * @param bool $allowed True if the source could be used.
+	 * @param int  $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_term_allowed_in_listing( bool $allowed, int $term_id ): bool {
+		return $allowed && $this->is_source_allowed_for_current_user( $term_id );
 	}
 
 	/**

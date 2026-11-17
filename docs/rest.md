@@ -30,6 +30,7 @@ application password provided by WordPress.
 ### DELETE
 
 * Deletes a specified external URL
+* The user must be allowed to delete the file (otherwise status 403)
 * Parameters:
   * "url" with the external URL
 

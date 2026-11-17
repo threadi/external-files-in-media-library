@@ -639,7 +639,7 @@ class Working_Copies {
 		$referer = (string) wp_get_referer();
 
 		// bail if cap is missing.
-		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+		if ( ! Export::get_instance()->is_settings_action_allowed() ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}

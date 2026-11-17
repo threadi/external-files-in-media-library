@@ -24,6 +24,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
+use ExternalFilesInMediaLibrary\Services\DropBox;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term_Query;
 
@@ -348,9 +349,9 @@ class Update {
 			// create fields.
 			$fields                      = $protocol_handler->get_fields();
 			$fields['server']['value']   = $url;
-			$fields['login']['value']    = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'login', true ) );
-			$fields['password']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'password', true ) );
-			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
+			$fields['login']['value']    = Crypt::get_instance()->decrypt( (string) get_term_meta( $term->term_id, 'login', true ), 'term_meta:login' );
+			$fields['password']['value'] = Crypt::get_instance()->decrypt( (string) get_term_meta( $term->term_id, 'password', true ), 'term_meta:password' );
+			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ), Taxonomy::FIELDS_CONTEXT ) );
 		}
 	}
 
@@ -379,7 +380,7 @@ class Update {
 		// encrypt the global Dropbox token.
 		$data = get_option( 'efml_dropbox_access_tokens', array() );
 		if ( ! empty( $data ) ) {
-			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), DropBox::ACCESS_TOKENS_OPTION_CONTEXT ) );
 		}
 	}
 

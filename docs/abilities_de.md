@@ -89,12 +89,13 @@ add_filter( 'efml_abilities_mode', function() { return 'all'; } );
 Jede Ability prüft die Berechtigungen, die auch im Backend verwendet werden:
 
 * Alle Abilities erfordern die Berechtigung zum Verwalten externer Dateien (`eml_manage_files`).
-* `get-log` erfordert zusätzlich `manage_options`.
+* `get-log`, `queue-process` und `queue-cleanup` erfordern zusätzlich `manage_options` (wie die Warteschlange in den Einstellungen).
 * `sync-source` und `delete-synced-files` erfordern die Berechtigung für die Synchronisation.
 * `export-file` und `set-export-state` erfordern die Berechtigung für den Export.
 * `add-source` und `delete-source` erfordern die Berechtigungen zum Verwalten bzw. Löschen externer Quellen.
 * `import` mit `real_import` erfordert die Berechtigung für den echten Import.
-* `delete` und `export-file` prüfen zusätzlich, ob der Benutzer den Anhang löschen bzw. bearbeiten darf.
+* `delete` prüft, ob der Benutzer den Anhang löschen darf, `export-file`, `switch-to-local`, `switch-to-external`, `reset-thumbnails` und `check-availability` (für eine einzelne Datei), ob er ihn bearbeiten darf.
+* Benutzer auf der Liste „Zugriff für diese Benutzer verhindern“ können keine Ability nutzen.
 * Externe Quellen anderer Benutzer können nur von Administratoren verwendet werden (oder wenn die Einstellung zum Anzeigen aller Quellen aktiv ist).
 * Der Dienst einer externen Quelle muss für den aktuellen Benutzer erlaubt sein.
 

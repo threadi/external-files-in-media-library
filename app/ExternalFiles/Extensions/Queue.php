@@ -37,6 +37,13 @@ use wpdb;
  */
 class Queue extends Extension_Base {
 	/**
+	 * The context for the encryption of the fields (access data) of an entry.
+	 *
+	 * Fields saved before this context has been used stay readable.
+	 */
+	public const FIELDS_CONTEXT = 'queue_fields';
+
+	/**
 	 * Name of the WP-Cron hook, which exports the files in the queue right away (independent of its interval).
 	 *
 	 * @var string
@@ -399,7 +406,7 @@ class Queue extends Extension_Base {
 				'time'     => gmdate( 'Y-m-d H:i:s' ),
 				'url'      => $url,
 				'url_hash' => md5( $url ),
-				'fields'   => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) : '',
+				'fields'   => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ), self::FIELDS_CONTEXT ) : '',
 				'state'    => 'new',
 				'options'  => $options_json,
 			)
@@ -550,7 +557,7 @@ class Queue extends Extension_Base {
 		// get the fields. Entries without credentials are saved with an empty string, which results in an empty list.
 		$fields = array();
 		if ( ! empty( $url_data['fields'] ) && is_string( $url_data['fields'] ) ) { // @phpstan-ignore booleanAnd.rightAlwaysTrue
-			$fields = json_decode( Crypt::get_instance()->decrypt( $url_data['fields'] ), true );
+			$fields = json_decode( Crypt::get_instance()->decrypt( $url_data['fields'], self::FIELDS_CONTEXT ), true );
 			if ( ! is_array( $fields ) ) {
 				/* translators: %1$d will be replaced by the ID of the entry. */
 				Log::get_instance()->create( sprintf( __( 'The saved access data of the entry %1$d in the queue could not be read. The URL is imported without access data.', 'external-files-in-media-library' ), absint( $url_data['id'] ?? 0 ) ), (string) $url_data['url'], 'error' );
@@ -610,6 +617,18 @@ class Queue extends Extension_Base {
 	}
 
 	/**
+	 * Return whether the actual user is allowed to use the actions of the queue (process, clear, delete entries).
+	 *
+	 * The queue is part of the settings and contains also entries of exports and deletions on external sources,
+	 * therefore the capability for the settings is required in addition to the capability for external files.
+	 *
+	 * @return bool
+	 */
+	public function is_queue_action_allowed(): bool {
+		return current_user_can( EFML_CAP_NAME ) && current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() );
+	}
+
+	/**
 	 * Process the queue by request.
 	 *
 	 * @return void
@@ -618,8 +637,8 @@ class Queue extends Extension_Base {
 		// check the nonce.
 		check_admin_referer( 'eml-queue-process', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability (the queue is part of the settings).
+		if ( ! $this->is_queue_action_allowed() ) {
 			return;
 		}
 
@@ -648,8 +667,8 @@ class Queue extends Extension_Base {
 		// check the nonce.
 		check_admin_referer( 'eml-queue-process-entry', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability (the queue is part of the settings).
+		if ( ! $this->is_queue_action_allowed() ) {
 			return;
 		}
 
@@ -707,8 +726,8 @@ class Queue extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-queue-clear', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability (the queue is part of the settings).
+		if ( ! $this->is_queue_action_allowed() ) {
 			return;
 		}
 
@@ -737,8 +756,8 @@ class Queue extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-queue-clear-errors', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability (the queue is part of the settings).
+		if ( ! $this->is_queue_action_allowed() ) {
 			return;
 		}
 
@@ -1058,8 +1077,8 @@ class Queue extends Extension_Base {
 		// check nonce.
 		check_admin_referer( 'eml-queue-delete-entry', 'nonce' );
 
-		// bail if user has not the capability.
-		if ( ! current_user_can( EFML_CAP_NAME ) ) {
+		// bail if user has not the capability (the queue is part of the settings).
+		if ( ! $this->is_queue_action_allowed() ) {
 			return;
 		}
 

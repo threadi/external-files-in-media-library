@@ -199,8 +199,8 @@ class Ftp extends Service_Base implements Service {
 				$setting->set_section( $section );
 				$setting->set_type( 'string' );
 				$setting->set_default( '' );
-				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:efml_ftp_login' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:efml_ftp_login' ) );
 				$field = new Text( $settings_obj );
 				$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
 				$field->set_setting( $setting );
@@ -216,8 +216,8 @@ class Ftp extends Service_Base implements Service {
 				$setting->set_section( $section );
 				$setting->set_type( 'string' );
 				$setting->set_default( '' );
-				$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-				$setting->set_save_callback( array( $this, 'encrypt_value' ) );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:efml_ftp_password' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:efml_ftp_password' ) );
 				$field = new Password( $settings_obj );
 				$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
 				$field->set_setting( $setting );
@@ -839,8 +839,8 @@ class Ftp extends Service_Base implements Service {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			$values['server']   = get_option( 'efml_ftp_server', '' );
-			$values['login']    = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_login', '' ) );
-			$values['password'] = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_password', '' ) );
+			$values['login']    = Crypt::get_instance()->decrypt( (string) get_option( 'efml_ftp_login', '' ), 'option:efml_ftp_login' );
+			$values['password'] = Crypt::get_instance()->decrypt( (string) get_option( 'efml_ftp_password', '' ), 'option:efml_ftp_password' );
 		}
 
 		// save it user-specific, if this is enabled.
@@ -854,9 +854,9 @@ class Ftp extends Service_Base implements Service {
 			}
 
 			// get the values.
-			$values['server']   = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_server', true ) );
-			$values['login']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_login', true ) );
-			$values['password'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_password', true ) );
+			$values['server']   = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_server', true ), $this->get_user_setting_crypt_context( 'ftp_server' ) );
+			$values['login']    = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_login', true ), $this->get_user_setting_crypt_context( 'ftp_login' ) );
+			$values['password'] = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_password', true ), $this->get_user_setting_crypt_context( 'ftp_password' ) );
 		}
 
 		// return the resulting list of values.

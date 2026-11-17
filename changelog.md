@@ -107,7 +107,7 @@
 - Added export of the sizes of images and their original image together with them to external sources, whose services support it (local directory, FTP/FTPS, Dropbox and the extensions for AWS S3, Google Cloud Storage, WebDAV and Google Drive)
 - The sizes are delivered exactly like the images themselves: via the proxy, if it is enabled for images (it loads them from the external source instead of creating them), otherwise from the external source; images get a srcset with their sizes, also in contents
 - Private files deliver their sizes always via the proxy, which loads the exported size via the API of the service into its cache (or creates it from the image, if that fails); they get a srcset with the proxy URLs of the sizes
-- Sizes of exported images could be created again with WordPress ("wp media regenerate", "Regenerate Thumbnails", wp_update_image_subsizes()): the original image is downloaded for this moment, the new sizes are exported and the local files are removed again; replaced sizes are kept on the external sources and deleted together with the image
+- Sizes of exported images could be created again with WordPress ("wp media regenerate", "Regenerate Thumbnails", wp_update_image_subsizes()): the original image is downloaded for this moment, the new sizes are exported and the local files are removed again; replaced sizes are kept on the external sources and deleted together with the image; only for users, who are allowed to edit the image, and not if WordPress requests the original image only for information (e.g. its name in the media library)
 - Exported images could be edited in the image editor of WordPress (crop, rotate, scale, "Restore image"): the edited image is exported under its new name with its sizes, the former files are kept as backup and deleted together with the image; the block editor could crop and rotate exported images, too
 - Exported images could be renamed by other plugins: "Media File Renamer" (the files are loaded for this moment), other plugins with access to the files (e.g. local directory as external source); the renamed files are exported, the former files are deleted on the external sources, the proxy still delivers the image via its former names
 - Added hook "efml_deletion_queue_max_attempts"
@@ -143,9 +143,15 @@
 - Added button "Export sizes now" in the export settings and WP CLI command "wp eml export_sizes" to export the sizes of images, which have been exported before, in the background
 - Added instructions for AI agents to the repository (AGENTS.md, skills for site operators, developers and code reviews); they are not part of the plugin ZIP
 - Added methods "supports_sizes()", "export_size()" and "delete_size()" for export objects of services and post meta "efml_export_sizes"
+- Added methods "is_crypt_context_supported()" and "get_user_setting_crypt_context()" for services: services of extensions return true in the first one, if they read their user settings with the context
+- Errors of the encryption name the affected value in the log ("Affected value", e.g. "option:eml_youtube_api_key")
 
 ### Changed
 
+- The actions of the export settings for all files ("Export now", "Restore now", "Delete local copies now", "Export sizes now", working copies) and the actions of the queue require the capability to manage the settings in addition (also the abilities "queue-process" and "queue-cleanup")
+- The quickstart and the connection test require the capability to manage external files in addition
+- Added hook "efml_local_work_information_callers" for functions, which request the original image of exported images only for information
+- Encrypted values are bound to their purpose, e.g. the access data of external sources, files, runs and queue entries, the access tokens of Dropbox and the credentials of the services: an encrypted value copied into another field cannot be decrypted there; values encrypted by older versions stay readable and are bound to their purpose when they are saved again
 - New uploads are exported right after Smush has optimized them, instead of waiting 5 minutes
 - Optimized the database table of the queue for many entries: IDs as BIGINT with primary key (before about 8.4 million entries during the lifetime of the website), state as VARCHAR and indexes for state and type and for attachment and type; existing entries are kept during the update
 - The WP CLI command "wp eml export" uses the same export as the button in the settings: only files with an allowed mime type are exported, files waiting in the queue are skipped and failed files are marked and listed in the queue
@@ -166,6 +172,10 @@
 
 ### Fixed
 
+- Fixed missing check whether the user is allowed to edit or delete the single file in these actions: deletion via REST API, switching between local and external hosting, reset of thumbnails, export of a file, real import (also as bulk action), check of availability, download of the data of a file and the abilities "switch-to-local", "switch-to-external", "reset-thumbnails" and "check-availability"
+- Fixed users on the list "Prevent access for these users" keeping the capabilities of the services and tools (e.g. synchronization, export, connection test), now they can not use any function of this plugin
+- Fixed the directory listing loading an external source of another user, if its ID is given
+- Fixed missing external source during the import of single URLs from an external source in the dialog: e.g. files of Cloudflare R2 on a custom domain were handled as files of DigitalOcean Spaces (error 500)
 - Fixed the deletion of exported files: they are deleted on each external source they have been exported to, also if the export has been disabled in the meantime (globally or for the external source) or the extension of its service is not active; files, which could not be deleted, are added to the queue and deleted later
 - Local copies of exported files (kept after the export) are deleted together with the file
 - Fixed the image editor of WordPress for exported images: it saved the edited image directly on the external source (local directory) or failed (other services), its sizes were not known to the plugin and stayed on the external source after the deletion of the image

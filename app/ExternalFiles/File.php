@@ -22,6 +22,12 @@ use finfo;
  * Initialize the model for single external file-object.
  */
 class File {
+	/**
+	 * The context for the encryption of the fields (access data) of the file.
+	 *
+	 * Fields saved before this context has been used stay readable.
+	 */
+	public const FIELDS_CONTEXT = 'attachment_fields';
 
 	/**
 	 * The attachment-id of this file (post.ID).
@@ -832,7 +838,7 @@ class File {
 		}
 
 		// save as encrypted value in the database.
-		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
+		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ), self::FIELDS_CONTEXT ) );
 	}
 
 	/**
@@ -864,7 +870,7 @@ class File {
 		}
 
 		// return decrypted string.
-		$fields = json_decode( Crypt::get_instance()->decrypt( $field_encoded_json ), true );
+		$fields = json_decode( Crypt::get_instance()->decrypt( $field_encoded_json, self::FIELDS_CONTEXT ), true );
 
 		// bail if fields is not an array.
 		if ( ! is_array( $fields ) ) {

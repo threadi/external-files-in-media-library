@@ -43,6 +43,13 @@ use WP_Admin_Bar;
  */
 class Import_Runs {
 	/**
+	 * The context for the encryption of the fields (access data) of a run.
+	 *
+	 * Fields saved before this context has been used stay readable.
+	 */
+	public const FIELDS_CONTEXT = 'import_run_fields';
+
+	/**
 	 * Name of the cron hook to process the runs in the background.
 	 *
 	 * @var string
@@ -1116,7 +1123,7 @@ class Import_Runs {
 				'type'       => $type,
 				'url'        => $url,
 				'url_hash'   => md5( $url ),
-				'fields'     => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) : '',
+				'fields'     => ! empty( $fields ) ? Crypt::get_instance()->encrypt( Helper::get_json( $fields ), self::FIELDS_CONTEXT ) : '',
 				'options'    => $options_json ? $options_json : '',
 				'term_id'    => $term_id,
 				'user_id'    => Helper::get_current_user_id(),
@@ -1426,7 +1433,7 @@ class Import_Runs {
 		}
 
 		// decrypt them.
-		$fields = json_decode( Crypt::get_instance()->decrypt( $run['fields'] ), true );
+		$fields = json_decode( Crypt::get_instance()->decrypt( $run['fields'], self::FIELDS_CONTEXT ), true );
 
 		// log, if they could not be read: the files are imported without access data then.
 		if ( ! is_array( $fields ) ) {
