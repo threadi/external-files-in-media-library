@@ -481,7 +481,7 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ); ?>"><?php echo wp_kses_post( $this->get_error_help() ); ?></div>
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $this->get_config_json( $config ) ); ?>"><?php echo wp_kses_post( $this->get_error_help() ); ?></div>
 				<?php
 			}
 			?>
@@ -492,6 +492,21 @@ class Directory_Listing {
 			/* translators: %1$s will be replaced by a URL. */
 			echo '<div class="wrap"><div class="eml_add_external_files_wrapper"><p>' . wp_kses_post( sprintf( __( 'The external source could not be loaded. See <a href="%1$s">log</a> for details.', 'external-files-in-media-library' ), Settings::get_instance()->get_url( 'eml_logs' ) ) ) . '</p></div></div>';
 		}
+	}
+
+	/**
+	 * Return the configuration of a directory listing as JSON for the attribute "data-config".
+	 *
+	 * "&", quotes, apostrophes and tags are written as unicode escapes, as esc_attr() does not encode existing
+	 * entities again: e.g. "&quot;" in a text of the configuration (like the escaped IAM policy in the help for
+	 * AWS S3) would otherwise become a quote in the browser and break the JSON.
+	 *
+	 * @param array<string,mixed> $config The configuration.
+	 *
+	 * @return string
+	 */
+	public function get_config_json( array $config ): string {
+		return Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT );
 	}
 
 	/**
