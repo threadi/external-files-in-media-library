@@ -132,4 +132,59 @@ class Export_By_Size extends externalFilesTests {
 		$this->assertArrayHasKey( 'eml-export-file', $this->get_actions( 0, $this->file_size ) );
 		$this->assertArrayHasKey( 'eml-export-file', $this->get_actions( $this->file_size, $this->file_size ) );
 	}
+
+	/**
+	 * Test the reasons for files, which are not exported due to their size, the export prevention and the marker.
+	 *
+	 * @return void
+	 */
+	public function test_size_problem_of_local_file(): void {
+		$obj           = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Export_By_Size::get_instance();
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$this->assertIsInt( $attachment_id );
+		$file_obj  = \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file( $attachment_id );
+		$file_size = (int) filesize( (string) get_attached_file( $attachment_id ) );
+
+		// test 1: without limits there is no problem.
+		update_option( 'eml_export_min_size', 0 );
+		update_option( 'eml_export_max_size', 0 );
+		$this->assertSame( '', $obj->get_size_problem( $attachment_id ) );
+		$this->assertFalse( $obj->prevent_export( false, $file_obj ) );
+
+		// test 2: a too large file with readable sizes.
+		update_option( 'eml_export_max_size', $file_size - 1 );
+		$this->assertStringContainsString( 'larger than the maximum file size', $obj->get_size_problem( $attachment_id ) );
+		$this->assertStringContainsString( size_format( $file_size, 1 ), $obj->get_size_problem( $attachment_id ) );
+		$this->assertTrue( $obj->prevent_export( false, $file_obj ) );
+		$this->assertSame( $obj->get_size_problem( $attachment_id ), \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->get_prevent_reason( $file_obj ) );
+
+		// test 3: a too small file.
+		update_option( 'eml_export_max_size', 0 );
+		update_option( 'eml_export_min_size', $file_size + 1 );
+		$this->assertStringContainsString( 'smaller than the minimum file size', $obj->get_size_problem( $attachment_id ) );
+
+		// test 4: the limits of an external source.
+		update_option( 'eml_export_min_size', 0 );
+		$term_id = self::factory()->term->create( array( 'taxonomy' => 'edlfw_archive' ) );
+		$this->assertIsInt( $term_id );
+		update_term_meta( $term_id, 'eml_export_max_size', $file_size - 1 );
+		$this->assertSame( '', $obj->get_size_problem( $attachment_id ) );
+		$this->assertStringContainsString( 'for this external source', $obj->get_size_problem( $attachment_id, $term_id ) );
+		$this->assertTrue( $obj->prevent_export_by_service( false, $file_obj, $term_id ) );
+
+		// test 5: the marker in the media library, only with enabled export.
+		update_option( 'eml_export_max_size', $file_size - 1 );
+		update_option( 'eml_export', 1 );
+		ob_start();
+		$obj->show_marker( $attachment_id );
+		$this->assertStringContainsString( 'larger than the maximum file size', (string) ob_get_clean() );
+		update_option( 'eml_export', 0 );
+		ob_start();
+		$obj->show_marker( $attachment_id );
+		$this->assertSame( '', ob_get_clean() );
+
+		// test 6: not if the extension is not enabled.
+		update_option( 'eml_export_extensions', array() );
+		$this->assertSame( '', $obj->get_size_problem( $attachment_id ) );
+	}
 }

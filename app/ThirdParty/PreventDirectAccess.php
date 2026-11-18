@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
  * Object to handle support for this plugin.
@@ -32,12 +31,6 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 	 */
 	private static ?PreventDirectAccess $instance = null;
 
-	/**
-	 * The attachments, whose prevented export has been logged in this request.
-	 *
-	 * @var array<int,bool>
-	 */
-	private array $logged = array();
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -100,6 +93,7 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 		}
 
 		add_filter( 'efml_prevent_export', array( $this, 'prevent_export' ), 10, 2 );
+		add_filter( 'efml_export_prevent_reason', array( $this, 'get_prevent_reason' ), 10, 2 );
 		add_action( 'wp_ajax_myaction', array( $this, 'prevent_protection_of_external_files' ), 1 );
 		add_action( 'manage_media_custom_column', array( $this, 'hide_column_for_external_files' ), -1, 2 );
 		add_action( 'efml_table_column_local_file', array( $this, 'show_marker' ) );
@@ -130,15 +124,26 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 			return $result;
 		}
 
-		// log the reason once in this request.
-		if ( empty( $this->logged[ $external_file_obj->get_id() ] ) ) {
-			$this->logged[ $external_file_obj->get_id() ] = true;
-			/* translators: %1$s will be replaced by the name of a plugin. */
-			Log::get_instance()->create( sprintf( __( 'This file is not exported, as it is protected by %1$s: it would be public on the external source.', 'external-files-in-media-library' ), 'Prevent Direct Access' ), (string) wp_get_attachment_url( $external_file_obj->get_id() ), 'info', 2 );
-		}
-
 		// prevent the export.
 		return true;
+	}
+
+	/**
+	 * Return the reason, why the export of the given file is prevented, for the log.
+	 *
+	 * @param string $reason            The reason.
+	 * @param File   $external_file_obj The file object.
+	 *
+	 * @return string
+	 */
+	public function get_prevent_reason( string $reason, File $external_file_obj ): string {
+		// bail if a reason is known already or this support does not prevent the export.
+		if ( '' !== $reason || ! ( $this->is_protected( $external_file_obj->get_id() ) ) ) {
+			return $reason;
+		}
+
+		/* translators: %1$s will be replaced by the name of a plugin. */
+		return sprintf( __( 'It is protected by %1$s, it would be public on the external source.', 'external-files-in-media-library' ), 'Prevent Direct Access' );
 	}
 
 	/**

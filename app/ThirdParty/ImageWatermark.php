@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Restore;
 use ExternalFilesInMediaLibrary\ExternalFiles\Working_Copies;
-use ExternalFilesInMediaLibrary\Plugin\Log;
 
 /**
  * Object to handle support for this plugin.
@@ -58,12 +57,6 @@ class ImageWatermark extends Image_Optimizer_Base {
 	 */
 	private const OPTION = 'image_watermark_options';
 
-	/**
-	 * List of attachment IDs, whose prevented export has been logged in this request.
-	 *
-	 * @var array<int,bool>
-	 */
-	private array $logged = array();
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -124,6 +117,7 @@ class ImageWatermark extends Image_Optimizer_Base {
 
 		// keep the image of the watermark local, as the plugin reads it only from the uploads directory.
 		add_filter( 'efml_prevent_export', array( $this, 'prevent_export_of_watermark_image' ), 10, 2 );
+		add_filter( 'efml_export_prevent_reason', array( $this, 'get_prevent_reason' ), 10, 2 );
 		add_action( 'add_option_' . self::OPTION, array( $this, 'restore_watermark_image' ) );
 		add_action( 'update_option_' . self::OPTION, array( $this, 'restore_watermark_image' ) );
 		add_filter( 'wp_handle_upload_prefilter', array( $this, 'restore_watermark_image_before_upload' ) );
@@ -166,15 +160,26 @@ class ImageWatermark extends Image_Optimizer_Base {
 			return $result;
 		}
 
-		// log the reason once in this request.
-		if ( empty( $this->logged[ $external_file_obj->get_id() ] ) ) {
-			$this->logged[ $external_file_obj->get_id() ] = true;
-			/* translators: %1$s will be replaced by the name of a plugin. */
-			Log::get_instance()->create( sprintf( __( 'This image is not exported, as it is used as watermark by %1$s, which reads it only from the uploads directory.', 'external-files-in-media-library' ), 'Image Watermark' ), (string) wp_get_attachment_url( $external_file_obj->get_id() ), 'info', 2 );
-		}
-
 		// prevent the export.
 		return true;
+	}
+
+	/**
+	 * Return the reason, why the export of the given file is prevented, for the log.
+	 *
+	 * @param string $reason            The reason.
+	 * @param File   $external_file_obj The file object.
+	 *
+	 * @return string
+	 */
+	public function get_prevent_reason( string $reason, File $external_file_obj ): string {
+		// bail if a reason is known already or this support does not prevent the export.
+		if ( '' !== $reason || ! ( 0 !== $external_file_obj->get_id() && $external_file_obj->get_id() === $this->get_watermark_image_id() ) ) {
+			return $reason;
+		}
+
+		/* translators: %1$s will be replaced by the name of a plugin. */
+		return sprintf( __( 'It is used as watermark by %1$s, which reads it only from the uploads directory.', 'external-files-in-media-library' ), 'Image Watermark' );
 	}
 
 	/**

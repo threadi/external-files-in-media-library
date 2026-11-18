@@ -108,6 +108,9 @@
 - The URLs of the proxy, which WordPress creates for the output (e.g. in "srcset" and for featured images), contain the version of the file, which changes with every change of the file (e.g. by image optimizers or Image Watermark), so browsers load changed files at once
 - Added hook "efml_proxy_file_version" and methods "get_version()", "set_changed()" and "add_version()" for the proxy
 - Added hook "efml_export_is_upload" and methods "mark_as_upload()" and "is_upload()" for exports
+- Files from 50 MB are exported in the background right after their upload (also via the bulk action), even if the export in background is not enabled, so the upload is not interrupted by time limits of the web server; added hook "efml_export_large_file_size" and methods "get_large_file_size()" and "is_large_file()" for exports
+- Files, which are not exported due to the extension "Export by file size", are logged with their size and the limit and marked in the media library; the settings show the limits also in MB
+- The log names the reason, why the export of a file has been prevented (e.g. its size or a protection plugin), added hook "efml_export_prevent_reason" and method "get_prevent_reason()" for exports
 - Added hook "efml_proxy_cache_control" to change the caching of files delivered by the proxy
 - Services, which save it with the file (AWS S3 and S3-compatible storages, Google Cloud Storage), get the header "Cache-Control" for exported files: one day, with object versioning (timestamp in the folders) one week, private files none
 - Added methods "get_cache_control()" and "is_object_versioning_enabled()" for exports and hook "efml_export_cache_control"

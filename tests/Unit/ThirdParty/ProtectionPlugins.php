@@ -134,6 +134,8 @@ class ProtectionPlugins extends externalFilesTests {
 		$this->assertFalse( Export::get_instance()->is_exportable( $attachment_id ) );
 		$this->assertFalse( Export::get_instance()->export_file( $attachment_id ) );
 		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		$this->assertStringContainsString( 'Prevent Direct Access', $obj->get_prevent_reason( '', Files::get_instance()->get_file( $attachment_id ) ) );
+		$this->assertSame( 'other', $obj->get_prevent_reason( 'other', Files::get_instance()->get_file( $attachment_id ) ) );
 
 		// test 3: also files in the protected folder.
 		delete_post_meta( $attachment_id, '_pda_protection' );
@@ -180,6 +182,7 @@ class ProtectionPlugins extends externalFilesTests {
 		delete_option( 'mo_media_restriction_file_types' );
 		$this->assertContains( 'jpg', $obj->get_protected_extensions() );
 		$this->assertFalse( Export::get_instance()->is_exportable( $attachment_id ) );
+		$this->assertStringContainsString( 'Prevent Files / Folders Access', $obj->get_prevent_reason( '', Files::get_instance()->get_file( $attachment_id ) ) );
 
 		// test 3: only the configured types are protected.
 		update_option( 'mo_media_restriction_file_types', 'pdf|docx' );
@@ -223,6 +226,7 @@ class ProtectionPlugins extends externalFilesTests {
 		$this->assertSame( $attachment_id, $obj->get_watermark_image_id() );
 		$this->assertFalse( Export::get_instance()->is_exportable( $attachment_id ) );
 		$this->assertFalse( Export::get_instance()->export_file( $attachment_id ) );
+		$this->assertStringContainsString( 'Image Watermark', $obj->get_prevent_reason( '', Files::get_instance()->get_file( $attachment_id ) ) );
 
 		// test 3: an exported image is restored as local file, when it is chosen as watermark.
 		list( $exported_id, $files ) = $this->create_exported_image();

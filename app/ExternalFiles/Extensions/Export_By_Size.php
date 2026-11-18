@@ -14,11 +14,11 @@ use easySettingsForWordPress\Fields\Number;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extension_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
-use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use WP_Post;
 
@@ -86,6 +86,8 @@ class Export_By_Size extends Extension_Base {
 		add_filter( 'efml_export_config_dialog', array( $this, 'extend_export_config_dialog' ), 10, 2 );
 		add_action( 'efml_export_save_config', array( $this, 'save_export_config' ) );
 		add_filter( 'efml_prevent_export_on_service', array( $this, 'prevent_export_by_service' ), 10, 3 );
+		add_filter( 'efml_export_prevent_reason', array( $this, 'get_prevent_reason' ), 10, 3 );
+		add_action( 'efml_table_column_local_file', array( $this, 'show_marker' ) );
 
 		// misc.
 		add_filter( 'media_row_actions', array( $this, 'change_media_row_actions' ), 30, 2 );
@@ -133,7 +135,7 @@ class Export_By_Size extends Extension_Base {
 		$setting->set_default( 0 );
 		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Minimum file size', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
+		$field->set_description( $this->get_size_description( absint( get_option( 'eml_export_min_size' ) ) ) );
 		$field->set_min( 0 );
 		$setting->set_field( $field );
 
@@ -144,13 +146,112 @@ class Export_By_Size extends Extension_Base {
 		$setting->set_default( 0 );
 		$field = new Number( $settings_obj );
 		$field->set_title( __( 'Maximum file size', 'external-files-in-media-library' ) );
-		$field->set_description( __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) );
+		$field->set_description( $this->get_size_description( absint( get_option( 'eml_export_max_size' ) ) ) );
 		$field->set_min( 0 );
 		$setting->set_field( $field );
 	}
 
 	/**
-	 * Prevent the export of a single file by global setting for its file type.
+	 * Return the description for a field of a file size with the given value.
+	 *
+	 * @param int $size The size in bytes.
+	 *
+	 * @return string
+	 */
+	private function get_size_description( int $size ): string {
+		// get the description.
+		$description = __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' );
+
+		// add the value in a readable form.
+		if ( $size > 0 ) {
+			/* translators: %1$s will be replaced by a file size, e.g. "50 MB". */
+			$description .= ' ' . sprintf( __( 'Currently %1$s.', 'external-files-in-media-library' ), size_format( $size, 1 ) );
+		}
+
+		// return the description.
+		return $description;
+	}
+
+	/**
+	 * Return the size of the local file of the given attachment or -1, if it does not exist.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return int
+	 */
+	private function get_local_file_size( int $attachment_id ): int {
+		// get "WP_Filesystem" object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// get the absolute file path.
+		$file_path = (string) get_attached_file( $attachment_id );
+
+		// bail if file does not exist.
+		if ( '' === $file_path || ! $wp_filesystem->exists( $file_path ) ) {
+			return -1;
+		}
+
+		// return the file size.
+		return absint( $wp_filesystem->size( $file_path ) );
+	}
+
+	/**
+	 * Return the reason, why the given file is not exported due to its size, or an empty string, if it is exported.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 * @param int $term_id       The ID of an external source to use its limits or 0 for the global limits.
+	 *
+	 * @return string
+	 */
+	public function get_size_problem( int $attachment_id, int $term_id = 0 ): string {
+		// bail if the extension is not enabled.
+		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+			return '';
+		}
+
+		// get the limits.
+		$min_size = $term_id > 0 ? absint( get_term_meta( $term_id, 'eml_export_min_size', true ) ) : absint( get_option( 'eml_export_min_size' ) );
+		$max_size = $term_id > 0 ? absint( get_term_meta( $term_id, 'eml_export_max_size', true ) ) : absint( get_option( 'eml_export_max_size' ) );
+
+		// bail if no limits are set.
+		if ( 0 === $min_size && 0 === $max_size ) {
+			return '';
+		}
+
+		// get the file size.
+		$file_size = $this->get_local_file_size( $attachment_id );
+
+		// bail if the file does not exist.
+		if ( $file_size < 0 ) {
+			return '';
+		}
+
+		// return the reason for a too small file.
+		if ( $min_size > 0 && $file_size < $min_size ) {
+			if ( $term_id > 0 ) {
+				/* translators: %1$s will be replaced by the size of the file, %2$s by the minimum size, e.g. "50 MB". */
+				return sprintf( __( 'Its size of %1$s is smaller than the minimum file size of %2$s for this external source.', 'external-files-in-media-library' ), size_format( $file_size, 1 ), size_format( $min_size, 1 ) );
+			}
+			/* translators: %1$s will be replaced by the size of the file, %2$s by the minimum size, e.g. "50 MB". */
+			return sprintf( __( 'Its size of %1$s is smaller than the minimum file size of %2$s in the settings for the export.', 'external-files-in-media-library' ), size_format( $file_size, 1 ), size_format( $min_size, 1 ) );
+		}
+
+		// return the reason for a too large file.
+		if ( $max_size > 0 && $file_size > $max_size ) {
+			if ( $term_id > 0 ) {
+				/* translators: %1$s will be replaced by the size of the file, %2$s by the maximum size, e.g. "50 MB". */
+				return sprintf( __( 'Its size of %1$s is larger than the maximum file size of %2$s for this external source.', 'external-files-in-media-library' ), size_format( $file_size, 1 ), size_format( $max_size, 1 ) );
+			}
+			/* translators: %1$s will be replaced by the size of the file, %2$s by the maximum size, e.g. "50 MB". */
+			return sprintf( __( 'Its size of %1$s is larger than the maximum file size of %2$s in the settings for the export.', 'external-files-in-media-library' ), size_format( $file_size, 1 ), size_format( $max_size, 1 ) );
+		}
+
+		// return an empty string as the file is exported.
+		return '';
+	}
+
+	/**
+	 * Prevent the export of a single file by the global limits for the file size.
 	 *
 	 * @param bool $result             True for prevent the export.
 	 * @param File $external_file_obj The external file object to use.
@@ -158,53 +259,17 @@ class Export_By_Size extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export( bool $result, File $external_file_obj ): bool {
-		// only add if it is enabled in settings.
-		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		// bail if the export is prevented already.
+		if ( $result ) {
 			return $result;
 		}
 
-		// get the global setting.
-		$min_size = absint( get_option( 'eml_export_min_size' ) );
-		$max_size = absint( get_option( 'eml_export_max_size' ) );
-
-		// get "WP_Filesystem" object.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// get the absolute file path.
-		$file_path = (string) get_attached_file( $external_file_obj->get_id() );
-
-		// bail if file does not exist.
-		if ( ! $wp_filesystem->exists( $file_path ) ) {
-			return $result;
-		}
-
-		// get the file size.
-		$file_size = $wp_filesystem->size( $file_path );
-
-		// prevent export if file size is lower than the minimum size, if configured.
-		if ( $min_size > 0 && $file_size < $min_size ) {
-			// log the result.
-			Log::get_instance()->create( __( 'Result to prevent the export of this file due to its file size because of the global setting:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $result ) . '</code>', $external_file_obj->get_url( true ), 'info', 2 );
-
-			// return true to prevent the export.
-			return true;
-		}
-
-		// prevent export if file size is higher than the maximum size, if configured.
-		if ( $max_size > 0 && $file_size > $max_size ) {
-			// log the result.
-			Log::get_instance()->create( __( 'Result to prevent the export of this file due to its file size because of the global setting:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $result ) . '</code>', $external_file_obj->get_url( true ), 'info', 2 );
-
-			// return true to prevent the export.
-			return true;
-		}
-
-		// return the previous resulting value.
-		return $result;
+		// return whether the size does not match the limits.
+		return '' !== $this->get_size_problem( $external_file_obj->get_id() );
 	}
 
 	/**
-	 * Prevent the export of a single file by global setting for its file type.
+	 * Prevent the export of a single file to an external source by its limits for the file size.
 	 *
 	 * @param bool $result             True for prevent the export.
 	 * @param File $external_file_obj The external file object to use.
@@ -213,49 +278,57 @@ class Export_By_Size extends Extension_Base {
 	 * @return bool
 	 */
 	public function prevent_export_by_service( bool $result, File $external_file_obj, int $term_id ): bool {
-		// only add if it is enabled in settings.
-		if ( ! in_array( $this->get_name(), ExportDialog::get_instance()->get_enabled_extensions(), true ) ) {
+		// bail if the export is prevented already.
+		if ( $result ) {
 			return $result;
 		}
 
-		// get the setting for this term.
-		$min_size = absint( get_term_meta( $term_id, 'eml_export_min_size', true ) );
-		$max_size = absint( get_term_meta( $term_id, 'eml_export_max_size', true ) );
+		// return whether the size does not match the limits of this external source.
+		return '' !== $this->get_size_problem( $external_file_obj->get_id(), $term_id );
+	}
 
-		// get "WP_Filesystem" object.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// get the absolute file path.
-		$file_path = (string) get_attached_file( $external_file_obj->get_id() );
-
-		// bail if file does not exist.
-		if ( ! $wp_filesystem->exists( $file_path ) ) {
-			return $result;
+	/**
+	 * Return the reason, why the export of the given file is prevented, for the log.
+	 *
+	 * @param string $reason            The reason.
+	 * @param File   $external_file_obj The external file object.
+	 * @param int    $term_id           The ID of the external source or 0.
+	 *
+	 * @return string
+	 */
+	public function get_prevent_reason( string $reason, File $external_file_obj, int $term_id ): string {
+		// bail if a reason is known already.
+		if ( '' !== $reason ) {
+			return $reason;
 		}
 
-		// get the file size.
-		$file_size = $wp_filesystem->size( $file_path );
+		// return the reason due to the size.
+		return $this->get_size_problem( $external_file_obj->get_id(), $term_id );
+	}
 
-		// prevent export if file size is lower than the minimum size, if configured.
-		if ( $min_size > 0 && $file_size < $min_size ) {
-			// log the result.
-			Log::get_instance()->create( __( 'Result to prevent the export of this file due to its file size because of the external source setting:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $result ) . '</code>', $external_file_obj->get_url( true ), 'info', 2 );
-
-			// return true to prevent the export.
-			return true;
+	/**
+	 * Show a marker for local files, which are not exported due to their size, in the media library.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function show_marker( int $attachment_id ): void {
+		// bail if the export is not enabled.
+		if ( ! Export::get_instance()->is_enabled() ) {
+			return;
 		}
 
-		// prevent export if file size is higher than the maximum size, if configured.
-		if ( $max_size > 0 && $file_size > $max_size ) {
-			// log the result.
-			Log::get_instance()->create( __( 'Result to prevent the export of this file due to its file size because of the external source setting:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $result ) . '</code>', $external_file_obj->get_url( true ), 'info', 2 );
+		// get the reason.
+		$reason = $this->get_size_problem( $attachment_id );
 
-			// return true to prevent the export.
-			return true;
+		// bail if the file is exported.
+		if ( '' === $reason ) {
+			return;
 		}
 
-		// return the previous resulting value.
-		return $result;
+		// show the marker.
+		echo ' <span class="dashicons dashicons-media-default" title="' . esc_attr( __( 'This file is not exported.', 'external-files-in-media-library' ) . ' ' . $reason ) . '"></span>';
 	}
 
 	/**
@@ -277,8 +350,8 @@ class Export_By_Size extends Extension_Base {
 		$max_size = absint( get_term_meta( $term_id, 'eml_export_max_size', true ) );
 
 		// add the field to the dialog.
-		$dialog['texts'][] = '<div><label for="min_size">' . __( 'Minimum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="min_size" id="min_size" value="' . $min_size . '">' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
-		$dialog['texts'][] = '<div><label for="max_size">' . __( 'Maximum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="max_size" id="max_size" value="' . $max_size . '">' . __( 'In Byte. If set to 0 it will be ignored.', 'external-files-in-media-library' ) . '</div>';
+		$dialog['texts'][] = '<div><label for="min_size">' . __( 'Minimum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="min_size" id="min_size" value="' . $min_size . '">' . esc_html( $this->get_size_description( $min_size ) ) . '</div>';
+		$dialog['texts'][] = '<div><label for="max_size">' . __( 'Maximum file size:', 'external-files-in-media-library' ) . '</label><input type="number" name="max_size" id="max_size" value="' . $max_size . '">' . esc_html( $this->get_size_description( $max_size ) ) . '</div>';
 
 		// return the resulting dialog.
 		return $dialog;

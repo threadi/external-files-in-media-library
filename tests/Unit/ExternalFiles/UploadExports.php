@@ -141,6 +141,59 @@ class UploadExports extends externalFilesTests {
 	}
 
 	/**
+	 * Return a small size in bytes, from which files are large in the test.
+	 *
+	 * @return int
+	 */
+	public function get_small_large_file_size(): int {
+		return 1000;
+	}
+
+	/**
+	 * Test that large uploads are exported in the background, also if the export in background is not enabled.
+	 *
+	 * @return void
+	 */
+	public function test_large_uploads_are_exported_in_background(): void {
+		update_option( 'eml_export_in_background', 0 );
+		$export_obj = Export::get_instance();
+
+		// test 1: 50 MB by default.
+		$this->assertSame( 50 * MB_IN_BYTES, $export_obj->get_large_file_size() );
+
+		// test 2: a small upload is exported during the upload.
+		$attachment_id = $this->upload();
+		$this->assertFalse( $export_obj->is_large_file( $attachment_id ) );
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+
+		// test 3: a large upload waits in the queue.
+		add_filter( 'efml_export_large_file_size', array( $this, 'get_small_large_file_size' ) );
+		$attachment_id = $this->upload();
+		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		$this->assertNotEmpty( $this->get_entry( $attachment_id ) );
+		$this->assertTrue( $export_obj->is_large_file( $attachment_id ) );
+
+		// test 4: the processing of the queue exports it.
+		wp_clear_scheduled_hook( Queue::EXPORT_HOOK );
+		do_action( Queue::EXPORT_HOOK );
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+
+		// test 5: not if the queue is not processed.
+		update_option( 'eml_queue_interval', 'eml_disable_check' );
+		$attachment_id = $this->upload();
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		update_option( 'eml_queue_interval', 'efml_hourly' );
+
+		// test 6: not if it is disabled.
+		remove_filter( 'efml_export_large_file_size', array( $this, 'get_small_large_file_size' ) );
+		add_filter( 'efml_export_large_file_size', '__return_zero' );
+		$attachment_id = $this->upload();
+		$this->assertFalse( $export_obj->is_large_file( $attachment_id ) );
+		$this->assertTrue( Files::get_instance()->get_file( $attachment_id )->is_valid() );
+		remove_filter( 'efml_export_large_file_size', '__return_zero' );
+	}
+
+	/**
 	 * Test that uploads are exported right away in the background, the oldest first.
 	 *
 	 * @return void

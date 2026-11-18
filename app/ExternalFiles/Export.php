@@ -1238,7 +1238,14 @@ class Export extends Tools_Base {
 		// bail if the file is not exported at all (e.g. its type is not allowed in the settings): it stays local
 		// without waiting or a marker in the media library.
 		if ( ! $this->is_exportable( $attachment_id ) ) {
-			Log::get_instance()->create( __( 'The uploaded file is not exported, as its type is not allowed in the settings or its export is prevented.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ), 'info', 2 );
+			// log this event, with its reason, if it is known.
+			$reason = $this->get_prevent_reason( Files::get_instance()->get_file( $attachment_id ) );
+			if ( '' !== $reason ) {
+				/* translators: %1$s will be replaced by the reason. */
+				Log::get_instance()->create( sprintf( __( 'The uploaded file is not exported and stays local: %1$s', 'external-files-in-media-library' ), $reason ), (string) wp_get_attachment_url( $attachment_id ), 'info' );
+			} else {
+				Log::get_instance()->create( __( 'The uploaded file is not exported, as its type is not allowed in the settings or its export is prevented.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ), 'info', 2 );
+			}
 			return $metadata;
 		}
 
@@ -1265,6 +1272,16 @@ class Export extends Tools_Base {
 			return $metadata;
 		}
 
+		// add a large file to the queue, so the upload is not interrupted by time limits of the web server during the
+		// export.
+		if ( $this->is_large_file( $attachment_id ) && Queue::get_instance()->add_export( $attachment_id ) ) {
+			/* translators: %1$s will be replaced by a file size, e.g. "50 MB". */
+			Log::get_instance()->create( sprintf( __( 'The file is larger than %1$s. It is exported in the background right away, so the upload is not interrupted by time limits of the web server.', 'external-files-in-media-library' ), size_format( $this->get_large_file_size() ) ), (string) wp_get_attachment_url( $attachment_id ), 'info', 1 );
+
+			// return the metadata unchanged, as the file stays local until it has been exported.
+			return $metadata;
+		}
+
 		// save the metadata now, so the cleanup during the export knows which local files exist.
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 
@@ -1279,6 +1296,30 @@ class Export extends Tools_Base {
 
 		// return the metadata WordPress will save now.
 		return $metadata;
+	}
+
+	/**
+	 * Return the reason, why the export of the given file is prevented (e.g. its size), for the log and the media
+	 * library, or an empty string, if it is unknown.
+	 *
+	 * @param File $external_file_obj The file object.
+	 * @param int  $term_id           The ID of the external source, if the export to it is prevented, otherwise 0.
+	 *
+	 * @return string
+	 */
+	public function get_prevent_reason( File $external_file_obj, int $term_id = 0 ): string {
+		$reason = '';
+
+		/**
+		 * Filter the reason, why the export of a file is prevented via the hook "efml_prevent_export" or
+		 * "efml_prevent_export_on_service". It is shown in the log.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $reason            The reason (a sentence) or an empty string.
+		 * @param File   $external_file_obj The file object.
+		 * @param int    $term_id           The ID of the external source or 0.
+		 */
+		return (string) apply_filters( 'efml_export_prevent_reason', $reason, $external_file_obj, $term_id );
 	}
 
 	/**
@@ -1368,8 +1409,14 @@ class Export extends Tools_Base {
 		 * @param File $external_file_obj The external file object to use.
 		 */
 		if ( apply_filters( 'efml_prevent_export', $false, $external_file_obj ) ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Export of file has been prevented.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+			// log this event, with its reason, if it is known.
+			$reason = $this->get_prevent_reason( $external_file_obj );
+			if ( '' !== $reason ) {
+				/* translators: %1$s will be replaced by the reason. */
+				Log::get_instance()->create( sprintf( __( 'The file has not been exported: %1$s', 'external-files-in-media-library' ), $reason ), (string) wp_get_attachment_url( $attachment_id ), 'info' );
+			} else {
+				Log::get_instance()->create( __( 'Export of file has been prevented.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
+			}
 
 			// do nothing more.
 			return false;
@@ -1462,9 +1509,15 @@ class Export extends Tools_Base {
 			 * @param int $term_id The ID of the external source.
 			 */
 			if ( apply_filters( 'efml_prevent_export_on_service', $false, $external_file_obj, $term_id ) ) {
-				// log this event.
-				/* translators: %1$s will be replaced by a title. */
-				Log::get_instance()->create( sprintf( __( 'Export of file via %1$s has been prevented.', 'external-files-in-media-library' ), $term_name ), $external_file_obj->get_url( true ), 'info', 2 );
+				// log this event, with its reason, if it is known.
+				$reason = $this->get_prevent_reason( $external_file_obj, $term_id );
+				if ( '' !== $reason ) {
+					/* translators: %1$s will be replaced by the name of an external source, %2$s by the reason. */
+					Log::get_instance()->create( sprintf( __( 'The file has not been exported to %1$s: %2$s', 'external-files-in-media-library' ), $term_name, $reason ), (string) wp_get_attachment_url( $attachment_id ), 'info' );
+				} else {
+					/* translators: %1$s will be replaced by a title. */
+					Log::get_instance()->create( sprintf( __( 'Export of file via %1$s has been prevented.', 'external-files-in-media-library' ), $term_name ), $external_file_obj->get_url( true ), 'info', 2 );
+				}
 
 				// do nothing more.
 				continue;
@@ -3416,8 +3469,8 @@ class Export extends Tools_Base {
 				continue;
 			}
 
-			// add the file to the queue, if the export should run in background.
-			if ( $export_in_background && Queue::get_instance()->add_export( $attachment_id ) ) {
+			// add the file to the queue, if the export should run in background or the file is large.
+			if ( ( $export_in_background || $this->is_large_file( $attachment_id ) ) && Queue::get_instance()->add_export( $attachment_id ) ) {
 				$added_to_queue = true;
 				continue;
 			}
@@ -3454,6 +3507,56 @@ class Export extends Tools_Base {
 
 		// return the given value.
 		return $sendback;
+	}
+
+	/**
+	 * Return the file size in bytes, from which uploads are exported in the background via the queue, even if the
+	 * export in background is not enabled: 50 MB by default, 0 to disable this.
+	 *
+	 * @return int
+	 */
+	public function get_large_file_size(): int {
+		$size = 50 * MB_IN_BYTES;
+
+		/**
+		 * Filter the file size in bytes, from which files are exported in the background via the queue, even if the
+		 * export in background is not enabled. So the upload or the bulk action is not interrupted by time limits of
+		 * the web server during the export of large files.
+		 *
+		 * Return 0 to export all files during the upload.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $size The size in bytes.
+		 */
+		return absint( apply_filters( 'efml_export_large_file_size', $size ) );
+	}
+
+	/**
+	 * Return whether the given local file is large: it is exported in the background via the queue then.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_large_file( int $attachment_id ): bool {
+		// get the size, from which files are large.
+		$large_size = $this->get_large_file_size();
+
+		// bail if this is disabled or the queue is not processed.
+		if ( 0 === $large_size || ! Queue::get_instance()->is_processing_enabled() ) {
+			return false;
+		}
+
+		// get the local file.
+		$file = get_attached_file( $attachment_id, true );
+
+		// bail if it does not exist.
+		if ( ! is_string( $file ) || '' === $file || ! file_exists( $file ) ) {
+			return false;
+		}
+
+		// return whether it is large.
+		return absint( wp_filesize( $file ) ) >= $large_size;
 	}
 
 	/**
