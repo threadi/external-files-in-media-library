@@ -195,16 +195,19 @@ class ServicesTest extends Live_Test_Base {
 	 */
 	private function synchronize( int $term_id ): void {
 		// give the synchronization time, counted from now.
-		$time_limit = static fn() => 300;
+		$time_limit   = static fn() => 300;
+		$request_time = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? (float) $_SERVER['REQUEST_TIME_FLOAT'] : null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		add_filter( 'efml_import_run_time_limit', $time_limit );
-		$request_time                  = $_SERVER['REQUEST_TIME_FLOAT'] ?? null;
 		$_SERVER['REQUEST_TIME_FLOAT'] = microtime( true );
 
 		try {
 			$this->run_ability( 'sync-source', array( 'source_id' => $term_id ) );
 
 			// process the part, which would be continued in the background.
-			for ( $i = 0; $i < 20 && wp_next_scheduled( Import_Runs::CRON_HOOK ); $i++ ) {
+			for ( $i = 0; $i < 20; $i++ ) {
+				if ( ! wp_next_scheduled( Import_Runs::CRON_HOOK ) ) {
+					break;
+				}
 				wp_clear_scheduled_hook( Import_Runs::CRON_HOOK );
 				$_SERVER['REQUEST_TIME_FLOAT'] = microtime( true );
 				Import_Runs::get_instance()->process();
@@ -275,7 +278,9 @@ class ServicesTest extends Live_Test_Base {
 		wp_set_current_user( $this->create_user_without_service( 'editor', $name ) );
 		$this->assertFalse( current_user_can( 'efml_cap_' . $name ) );
 		$upload = $this->upload_image( $name . '-editor' );
-		$this->assertTrue( Export::get_instance()->export_file( $upload['id'] ), 'The upload of the editor has not been exported.' . $this->get_log_errors() );
+		if ( ! Export::get_instance()->export_file( $upload['id'] ) ) {
+			$this->fail( 'The upload of the editor has not been exported.' . $this->get_log_errors() . $this->get_failed_export_details( $name, $term_id, $upload['id'] ) );
+		}
 		$this->assertSame( $upload['md5'], md5( (string) $this->load_as_visitor( $upload['id'] ) ), 'The exported file could not be loaded.' );
 
 		// the editor could not import files of this service. Public URLs of files (e.g. of a bucket with its own
@@ -372,7 +377,10 @@ class ServicesTest extends Live_Test_Base {
 
 		// upload and export an image.
 		$upload = $this->upload_image( $name . ( $is_private ? '-private' : '' ) );
-		$this->run_ability( 'export-file', array( 'attachment_id' => $upload['id'] ) );
+		$result = $this->run_ability_raw( 'export-file', array( 'attachment_id' => $upload['id'] ) );
+		if ( $result instanceof WP_Error ) {
+			$this->fail( 'The ability export-file failed: ' . $result->get_error_message() . $this->get_log_errors() . $this->get_failed_export_details( $name, $term_id, $upload['id'] ) );
+		}
 
 		// it is an exported file now.
 		$external_file_obj = Files::get_instance()->get_file( $upload['id'] );
@@ -396,6 +404,54 @@ class ServicesTest extends Live_Test_Base {
 	}
 
 	/**
+	 * Return the URLs of the files in the directory of the external source, whose name contains the given text.
+	 *
+	 * @param int    $term_id The ID of the external source.
+	 * @param string $name    The text, e.g. the name of a file without extension.
+	 *
+	 * @return array<int,string>
+	 */
+	private function find_files_on_source( int $term_id, string $name ): array {
+		$found = array();
+		foreach ( $this->get_files( $term_id ) as $file ) {
+			$file_url = (string) ( $file['url'] ?? '' );
+			if ( str_contains( rawurldecode( $file_url ), $name ) ) {
+				$found[] = $file_url;
+			}
+		}
+		return $found;
+	}
+
+	/**
+	 * Return the message for a failed export: whether the uploaded file remained on the external source, which the
+	 * plugin must prevent.
+	 *
+	 * @param string $name          The name of the service.
+	 * @param int    $term_id       The ID of the external source.
+	 * @param int    $attachment_id The attachment ID of the upload.
+	 *
+	 * @return string
+	 */
+	private function get_failed_export_details( string $name, int $term_id, int $attachment_id ): string {
+		// bail if the service has no directory listing.
+		if ( empty( $this->get_definition( $name )['listing'] ) ) {
+			return '';
+		}
+
+		// search as administrator, as the actual user might not be allowed to use the service.
+		$user_id = get_current_user_id();
+		wp_set_current_user( 1 );
+		try {
+			$found = $this->find_files_on_source( $term_id, pathinfo( (string) get_attached_file( $attachment_id, true ), PATHINFO_FILENAME ) );
+		} finally {
+			wp_set_current_user( $user_id );
+		}
+		return empty( $found )
+			? PHP_EOL . 'No uploaded file remained on the external source.'
+			: PHP_EOL . 'ERROR: the uploaded file remained on the external source: ' . implode( ', ', $found );
+	}
+
+	/**
 	 * Check that the given exported file has been deleted on its external source.
 	 *
 	 * With directory listing the check uses the API of the service: its public URL could be delivered by the cache of
@@ -411,7 +467,7 @@ class ServicesTest extends Live_Test_Base {
 	 * @return void
 	 */
 	private function assert_deleted( string $name, int $term_id, string $url, string $md5 ): void {
-		$still_delivered = $md5 === md5( (string) $this->load_url( $url, $term_id ) );
+		$still_delivered = md5( (string) $this->load_url( $url, $term_id ) ) === $md5;
 
 		// bail if the service has no directory listing: the URL is the only possible check.
 		if ( empty( $this->get_definition( $name )['listing'] ) ) {
@@ -420,14 +476,7 @@ class ServicesTest extends Live_Test_Base {
 		}
 
 		// search the file in the directory of the external source.
-		$file_name = pathinfo( (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_FILENAME );
-		$found     = array();
-		foreach ( $this->get_files( $term_id ) as $file ) {
-			$file_url = (string) ( $file['url'] ?? '' );
-			if ( str_contains( rawurldecode( $file_url ), $file_name ) ) {
-				$found[] = $file_url;
-			}
-		}
+		$found = $this->find_files_on_source( $term_id, pathinfo( (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_FILENAME ) );
 		$this->assertEmpty( $found, 'The exported file (or one of its sizes) still exists on the external source after its deletion: ' . implode( ', ', $found ) );
 
 		// report a still delivered public URL (e.g. by the cache of a CDN).

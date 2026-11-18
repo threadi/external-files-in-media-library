@@ -160,7 +160,7 @@ class Proxy {
 		// bail if the value is not a usable string (e.g. an array via "?emlproxy[]=x" or an overlong value).
 		// This request can be sent by anyone, so we do not log it.
 		if ( ! is_string( $title ) || strlen( $title ) > 1024 ) {
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		// log this event.
@@ -203,7 +203,7 @@ class Proxy {
 			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'error', 2 );
 
 			// fallback to 404.
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		// bail if the file is in trash, as it should not be delivered anymore.
@@ -213,7 +213,7 @@ class Proxy {
 			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as it is in trash.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
 
 			// fallback to 404.
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		$true = true;
@@ -232,7 +232,7 @@ class Proxy {
 			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as its delivery is not allowed.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
 
 			// fallback to 404.
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		// redirect to a signed URL, if this is a private file, which should not be delivered from the cache.
@@ -284,8 +284,8 @@ class Proxy {
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for the proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
-			// return the template.
-			return $template;
+			// fallback to 404.
+			return $this->get_not_found_template( $template );
 		}
 
 		// get the object of this file type.
@@ -300,6 +300,31 @@ class Proxy {
 
 		// fallback to 404.
 		return $template;
+	}
+
+	/**
+	 * Return the template for a file, which could not be delivered by the proxy: the 404 template of the theme with
+	 * the HTTP status 404 (before, the template of the front page was used with the HTTP status 200).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $template The template WordPress has chosen for the request.
+	 *
+	 * @return string
+	 */
+	private function get_not_found_template( string $template ): string {
+		global $wp_query;
+
+		// mark the request as not found.
+		if ( $wp_query instanceof \WP_Query ) {
+			$wp_query->set_404();
+		}
+		status_header( 404 );
+		nocache_headers();
+
+		// use the 404 template of the theme, if it has one.
+		$template_404 = get_404_template();
+		return '' !== $template_404 ? $template_404 : $template;
 	}
 
 	/**

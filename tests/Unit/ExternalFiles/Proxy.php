@@ -41,6 +41,21 @@ class Proxy extends externalFilesTests {
 	 */
 	public function test_run_without_proxy_request(): void {
 		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assertFalse( is_404() );
+	}
+
+	/**
+	 * Assert that the proxy answers with "not found": the 404 template of the theme (or the given template, if the
+	 * theme has none) and the request is marked as 404, not the front page.
+	 *
+	 * @param string $template The returned template.
+	 *
+	 * @return void
+	 */
+	private function assert_not_found( string $template ): void {
+		$this->assertTrue( is_404(), 'The request has not been marked as 404.' );
+		$this->assertContains( $template, array( 'my-template.php', get_404_template() ) );
+		$GLOBALS['wp_query']->is_404 = false;
 	}
 
 	/**
@@ -57,7 +72,7 @@ class Proxy extends externalFilesTests {
 		// request unknown files.
 		foreach ( array( 'unknown-file.jpg', 'unknown-file-150x150.jpg', '<img src=x onerror=alert(1)>' ) as $title ) {
 			set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), $title );
-			$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+			$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 		}
 
 		// no new log entry must exist.
@@ -76,7 +91,7 @@ class Proxy extends externalFilesTests {
 
 		// request an unknown file with HTML in its name.
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), 'x<img src=x onerror=alert(1)>.jpg' );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// log entries must exist, but without the HTML.
 		$entries = \ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->get_entries();
@@ -96,11 +111,11 @@ class Proxy extends externalFilesTests {
 
 		// an array, e.g. via "?emlproxy[]=x".
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), array( 'x' ) );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// an overlong value.
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), str_repeat( 'a', 5000 ) . '.jpg' );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// no new log entry must exist.
 		$this->assertEquals( $log_count, $this->get_log_count() );
@@ -123,7 +138,7 @@ class Proxy extends externalFilesTests {
 		// request it via proxy.
 		$proxy_actions = did_action( 'efml_proxy_before' );
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), get_the_title( $external_file_obj->get_id() ) );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// the proxy must not try to load or cache the file.
 		$this->assertSame( $proxy_actions, did_action( 'efml_proxy_before' ) );

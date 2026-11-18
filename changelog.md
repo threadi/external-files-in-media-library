@@ -176,6 +176,7 @@
 
 ### Fixed
 
+- Fixed the proxy delivering the front page with HTTP status 200 instead of HTTP status 404 for files, which could not be delivered: the 404 template of the theme is used now
 - Fixed files remaining in Dropbox, if no shared link could be created for an exported file (e.g. without the permission "sharing.write" of the app): the uploaded file is removed again and the log names the reason
 - Fixed removal of finished import runs and their progress with SQLite (e.g. WordPress Playground)
 - Fixed exported files on Dropbox and imported shared links of Dropbox being saved with the temporary URL of their content, which expires after 4 hours (afterward e.g. the proxy could not load them anymore): their shared link is saved now; files exported before are loaded via the Dropbox API (for visitors, e.g. via the proxy, only if Dropbox is connected for the whole website)
