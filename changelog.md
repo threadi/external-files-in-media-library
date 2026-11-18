@@ -99,6 +99,11 @@
 - Local URLs of exported files in contents (e.g. images inserted before their export) are replaced with their actual URLs during the output, incl. their sizes; the contents in the database are not changed
 - The local paths of files exported before are taken from their upload URL in the background, so their local URLs are replaced, too
 - Added hooks "efml_local_url_hooks" and "efml_local_urls_backfill_size"
+- Local URLs of exported files are also replaced in the header and background image of the theme, in the additional CSS, with escaped slashes (e.g. in JSON settings of page builders) and without domain (e.g. "/wp-content/uploads/…" in style attributes)
+- Requests for local files of exported files, which do not exist anymore, are redirected to their actual URL (e.g. images in the block editor or in CSS files of page builders), with a check in Site Health whether the web server forwards such requests to WordPress
+- Added hook "efml_redirect_missing_uploads" to disable this redirection
+- The block editor and the classic editor show exported images also with their old local URL, if the web server does not pass requests for missing files to WordPress; only the display is changed, the contents stay unchanged
+- The check in Site Health explains how to pass requests for missing files to WordPress (also for locations of images in nginx and for the rules of Converter for Media)
 - Added hint in the backend, if new files are not exported, because the service of an external source for exports is not available (e.g. its extension is not active), incl. the name of the extension
 - Added methods "get_export_source_problem()", "is_export_source_usable()", "get_main_export_source()" and "get_export_sources_problem()" for exports and hook "efml_export_source_usable"
 - Added button "Restore now" in the export settings and WP CLI command "wp eml localize" to restore all exported files as local files at their original path in the background, incl. their sizes with their former names: they are normal local files afterward, so the contents work also without the plugin; the export is disabled for this, the copies on the external sources are kept or deleted as chosen

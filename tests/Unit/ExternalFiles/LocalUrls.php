@@ -11,6 +11,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Local_Urls;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use ReflectionProperty;
+use WP_REST_Request;
 
 /**
  * Object to test the replacement of local URLs of exported files in contents.
@@ -155,6 +156,218 @@ class LocalUrls extends externalFilesTests {
 		delete_post_meta( $attachment_id, 'eml_exported_file' );
 		$this->reset_cache();
 		$this->assertEquals( $content, Local_Urls::get_instance()->replace_urls( $content ) );
+	}
+
+	/**
+	 * Test the replacement of local URLs in other notations: escaped slashes like in JSON (e.g. "data-settings" of
+	 * page builders) and paths without domain (e.g. in "style" attributes). The notation is kept.
+	 *
+	 * @return void
+	 */
+	public function test_replacement_of_other_notations(): void {
+		$attachment_id = $this->create_image();
+		$local_url     = (string) wp_get_attachment_url( $attachment_id );
+		$local_path    = (string) wp_parse_url( $local_url, PHP_URL_PATH );
+		$this->assertTrue( Export::get_instance()->export_file( $attachment_id ) );
+		$this->reset_cache();
+		$url = (string) wp_get_attachment_url( $attachment_id );
+
+		// test 1: escaped slashes in JSON (also HTML encoded in an attribute), the JSON stays valid.
+		$json    = (string) wp_json_encode( array( 'url' => $local_url ) );
+		$this->assertStringContainsString( '\\/', $json );
+		$content = '<div data-settings="' . esc_attr( $json ) . '"></div><script>var x = ' . $json . ';</script>';
+		$output  = (string) Local_Urls::get_instance()->replace_urls( $content );
+		$this->assertStringNotContainsString( str_replace( '/', '\\/', $local_path ), $output );
+		$this->assertStringContainsString( (string) wp_json_encode( array( 'url' => $url ) ), $output );
+
+		// test 2: escaped path without domain in JSON.
+		$json   = (string) wp_json_encode( array( 'url' => $local_path ) );
+		$output = (string) Local_Urls::get_instance()->replace_urls( '<div data-x=\'' . $json . '\'></div>' );
+		$this->assertStringContainsString( (string) wp_json_encode( array( 'url' => $url ) ), $output );
+
+		// test 3: path without domain in a style attribute and in CSS.
+		$output = (string) Local_Urls::get_instance()->replace_urls( '<div style="background-image:url(' . $local_path . ')"></div>' );
+		$this->assertStringContainsString( 'url(' . $url . ')', $output );
+		$output = (string) Local_Urls::get_instance()->replace_urls( '.x { background: url("' . $local_path . '"); }' );
+		$this->assertStringContainsString( 'url("' . $url . '")', $output );
+
+		// test 4: a path, which is part of another URL, is not changed.
+		$content = '<a href="https://other.example.com' . $local_path . '">x</a>';
+		$this->assertEquals( $content, Local_Urls::get_instance()->replace_urls( $content ) );
+
+		// test 5: URLs are still replaced, if the uploads directory has no own path (e.g. on its own domain).
+		$file     = ltrim( substr( $local_path, strlen( (string) wp_parse_url( wp_get_upload_dir()['baseurl'], PHP_URL_PATH ) ) ), '/' );
+		$callback = static function ( array $dir ): array {
+			$dir['baseurl'] = 'https://uploads.example.com';
+			return $dir;
+		};
+		add_filter( 'upload_dir', $callback );
+		$output = (string) Local_Urls::get_instance()->replace_urls( '<img src="https://uploads.example.com/' . $file . '"><div style="background:url(/' . $file . ')"></div>' );
+		remove_filter( 'upload_dir', $callback );
+		$this->assertStringContainsString( '<img src="' . $url . '">', $output );
+		$this->assertStringContainsString( 'url(/' . $file . ')', $output );
+	}
+
+	/**
+	 * Test the additional places of the replacement: the header and background image of the theme and the
+	 * additional CSS.
+	 *
+	 * @return void
+	 */
+	public function test_replacement_in_theme_settings(): void {
+		$attachment_id = $this->create_image();
+		$local_url     = (string) wp_get_attachment_url( $attachment_id );
+		$this->assertTrue( Export::get_instance()->export_file( $attachment_id ) );
+		$this->reset_cache();
+
+		// initialize the replacement again, as it is active now.
+		Local_Urls::get_instance()->init();
+		set_theme_mod( 'header_image', $local_url );
+		set_theme_mod( 'background_image', $local_url );
+		$this->assertEquals( wp_get_attachment_url( $attachment_id ), get_theme_mod( 'header_image' ) );
+		$this->assertEquals( wp_get_attachment_url( $attachment_id ), get_theme_mod( 'background_image' ) );
+		$this->assertEquals( '.x{background:url(' . wp_get_attachment_url( $attachment_id ) . ')}', apply_filters( 'wp_get_custom_css', '.x{background:url(' . $local_url . ')}', '' ) );
+
+		// the saved values are not changed.
+		$mods = get_option( 'theme_mods_' . get_option( 'stylesheet' ) );
+		$this->assertEquals( $local_url, $mods['header_image'] );
+		remove_theme_mod( 'header_image' );
+		remove_theme_mod( 'background_image' );
+	}
+
+	/**
+	 * Test the endpoint, which returns the actual URLs of local files for the editors.
+	 *
+	 * @return void
+	 */
+	public function test_urls_for_editors(): void {
+		$attachment_id = $this->create_image();
+		$attached_file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
+		$this->assertTrue( Export::get_instance()->export_file( $attachment_id ) );
+		$this->reset_cache();
+		wp_delete_file( trailingslashit( wp_get_upload_dir()['basedir'] ) . $attached_file );
+
+		// test 1: the actual URL of exported files, nothing for unknown and invalid files.
+		$request = new WP_REST_Request( 'POST', '/efml/v1/local-file-urls/' );
+		$request->set_param( 'files', array( $attached_file, '2026/11/unknown.jpg', '../wp-config.php', '/etc/passwd', 42 ) );
+		$data = (array) Local_Urls::get_instance()->get_urls_via_rest( $request )->get_data();
+		$this->assertEquals( wp_get_attachment_url( $attachment_id ), $data[ $attached_file ] );
+		$this->assertEquals( '', $data['2026/11/unknown.jpg'] );
+		$this->assertArrayNotHasKey( '../wp-config.php', $data );
+		$this->assertArrayNotHasKey( '/etc/passwd', $data );
+		$this->assertCount( 2, $data );
+
+		// test 2: an empty list returns an empty object.
+		$request->set_param( 'files', array() );
+		$this->assertEquals( (object) array(), Local_Urls::get_instance()->get_urls_via_rest( $request )->get_data() );
+
+		// test 3: the endpoint needs the right to edit contents.
+		Local_Urls::get_instance()->init();
+		do_action( 'rest_api_init' );
+		$request = new WP_REST_Request( 'POST', '/efml/v1/local-file-urls' );
+		$request->set_param( 'files', array( $attached_file ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$this->assertContains( rest_get_server()->dispatch( $request )->get_status(), array( 401, 403 ) );
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'author' ) ) );
+		$response = rest_get_server()->dispatch( $request );
+		$this->assertEquals( 200, $response->get_status() );
+		$this->assertEquals( wp_get_attachment_url( $attachment_id ), ( (array) $response->get_data() )[ $attached_file ] );
+
+		// test 4: the script is only added in the backend.
+		wp_dequeue_script( 'efml-local-urls' );
+		Local_Urls::get_instance()->add_block_editor_script();
+		$this->assertFalse( wp_script_is( 'efml-local-urls' ) );
+		set_current_screen( 'post' );
+		Local_Urls::get_instance()->add_block_editor_script();
+		$this->assertTrue( wp_script_is( 'efml-local-urls' ) );
+		$this->assertStringContainsString( 'efmlLocalUrlsConfig', (string) wp_scripts()->get_inline_script_data( 'efml-local-urls', 'before' ) );
+		wp_dequeue_script( 'efml-local-urls' );
+		Local_Urls::get_instance()->add_classic_editor_script( 'upload.php' );
+		$this->assertFalse( wp_script_is( 'efml-local-urls' ) );
+		Local_Urls::get_instance()->add_classic_editor_script( 'post.php' );
+		$this->assertTrue( wp_script_is( 'efml-local-urls' ) );
+		wp_dequeue_script( 'efml-local-urls' );
+		set_current_screen( 'front' );
+	}
+
+	/**
+	 * Test the help in the Site Health, if requests for missing files do not reach WordPress.
+	 *
+	 * @return void
+	 */
+	public function test_site_health_without_redirect(): void {
+		// simulate a web server, which answers requests for missing files itself.
+		$callback = static function () {
+			return array(
+				'headers'  => array(),
+				'body'     => 'Not found',
+				'response' => array(
+					'code'    => 404,
+					'message' => 'Not Found',
+				),
+				'cookies'  => array(),
+			);
+		};
+		$this->replace_http_mock( $callback );
+
+		// test 1: the help for nginx without the hint for Converter for Media.
+		$result = Local_Urls::get_instance()->check_redirect();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'efml-setup-guide', (string) $result['description'] );
+		$this->assertStringContainsString( 'try_files $uri /index.php?$args;', (string) $result['description'] );
+		$this->assertStringNotContainsString( 'uploads-webpc', (string) $result['description'] );
+
+		// test 2: with the hint for Converter for Media, if it is active.
+		$plugins = (array) get_option( 'active_plugins', array() );
+		update_option( 'active_plugins', array_merge( $plugins, array( 'webp-converter-for-media/webp-converter-for-media.php' ) ) );
+		$result = Local_Urls::get_instance()->check_redirect();
+		update_option( 'active_plugins', $plugins );
+		$this->restore_http_mock( $callback );
+		$this->assertStringContainsString( 'uploads-webpc', (string) $result['description'] );
+	}
+
+	/**
+	 * Test the redirection of requests for local files of exported files, which do not exist anymore.
+	 *
+	 * @return void
+	 */
+	public function test_redirect_url(): void {
+		$attachment_id = $this->create_image();
+		$attached_file = (string) get_post_meta( $attachment_id, '_wp_attached_file', true );
+		$metadata      = wp_get_attachment_metadata( $attachment_id );
+		$this->assertIsArray( $metadata );
+		$size      = (array) reset( $metadata['sizes'] );
+		$size_file = trailingslashit( dirname( $attached_file ) ) . $size['file'];
+
+		// test 1: a local file, which is not exported, is not redirected.
+		$this->assertEquals( '', Local_Urls::get_instance()->get_redirect_url( $attached_file ) );
+
+		// export it and remove the local files.
+		$this->assertTrue( Export::get_instance()->export_file( $attachment_id ) );
+		$this->reset_cache();
+		wp_delete_file( trailingslashit( wp_get_upload_dir()['basedir'] ) . $attached_file );
+		wp_delete_file( trailingslashit( wp_get_upload_dir()['basedir'] ) . $size_file );
+
+		// test 2: the file and its sizes are redirected to their actual URL.
+		$this->assertEquals( wp_get_attachment_url( $attachment_id ), Local_Urls::get_instance()->get_redirect_url( $attached_file ) );
+		$size_image = wp_get_attachment_image_src( $attachment_id, array( absint( $size['width'] ), absint( $size['height'] ) ) );
+		$this->assertIsArray( $size_image );
+		$this->assertEquals( $size_image[0], Local_Urls::get_instance()->get_redirect_url( $size_file ) );
+
+		// test 3: unknown files are not redirected.
+		$this->assertEquals( '', Local_Urls::get_instance()->get_redirect_url( '2026/11/unknown.jpg' ) );
+
+		// test 4: an existing local file is never redirected (e.g. uploaded again).
+		$local_file = trailingslashit( wp_get_upload_dir()['basedir'] ) . $attached_file;
+		wp_mkdir_p( dirname( $local_file ) );
+		file_put_contents( $local_file, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		$this->assertEquals( '', Local_Urls::get_instance()->get_redirect_url( $attached_file ) );
+		wp_delete_file( $local_file );
+
+		// test 5: the redirection could be disabled.
+		add_filter( 'efml_redirect_missing_uploads', '__return_false' );
+		$this->assertEquals( '', Local_Urls::get_instance()->get_redirect_url( $attached_file ) );
+		remove_filter( 'efml_redirect_missing_uploads', '__return_false' );
 	}
 
 	/**

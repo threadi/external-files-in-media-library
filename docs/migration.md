@@ -32,7 +32,9 @@ The data are read directly from the database. The other plugin does not have to 
 
 The other plugins keep the local URLs in posts and pages (e.g. `/wp-content/uploads/2026/11/image.jpg`) and change them only during the output. This plugin does the same for the files, which have been taken over: in the output, their local URLs and the ones of their thumbnails are replaced by their actual URLs. The contents themselves are not changed.
 
-The URLs are replaced in the output of `the_content`, `the_excerpt`, `widget_text_content` and `widget_block_content`. Add further hooks via `efml_local_url_hooks`.
+The URLs are replaced in the output of `the_content`, `the_excerpt`, `widget_text_content` and `widget_block_content`, in the header and background image of the theme (`theme_mod_header_image`, `theme_mod_background_image`) and in the additional CSS (`wp_get_custom_css`). Add further hooks via `efml_local_url_hooks`. URLs with escaped slashes (e.g. `https:\/\/…` in JSON) and without domain (e.g. `/wp-content/uploads/…`) are replaced, too, in their notation.
+
+If a local file does not exist anymore and the request for it reaches WordPress (e.g. via an old URL in the block editor or in a CSS file), it is redirected to the actual URL of the file. Tools → "Site Health" shows whether your web server forwards such requests to WordPress and how to change this (e.g. for locations of images in nginx). Independent of this, the block editor and the classic editor show images, which could not be loaded via their old URL, with their actual URL; only the display is changed, not the contents.
 
 ## Switch back
 
@@ -43,5 +45,6 @@ Revert the migration with `wp eml migration revert` (see [WP CLI](cli.md)). The 
 * `efml_migrations`: list of the classes, which read the data of other plugins (subclasses of `ExternalFilesInMediaLibrary\ExternalFiles\Migrations\Migration_Base`).
 * `efml_migration_batch_size`: amount of files, which are read at once (default 50).
 * `efml_local_url_hooks`: hooks, in whose output the local URLs of migrated and exported files are replaced.
+* `efml_redirect_missing_uploads`: return `false` to disable the redirection of requests for missing local files.
 
 Services support the migration via `Service_Base::get_offloaded_object_meta_key()` and `Service_Base::get_url_of_offloaded_object()`. The extensions for AWS S3 and Google Cloud Storage provide them.
