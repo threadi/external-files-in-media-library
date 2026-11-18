@@ -43,6 +43,12 @@ class DropboxProtocolForVisitors extends externalFilesTests {
 	/**
 	 * Test if only users with the capability for Dropbox are allowed to import files from Dropbox, as well as cron.
 	 *
+	 * Runs in a separate process, as other tests define constants like "EFML_SYNC_RUNNING" (e.g. the tests of
+	 * synchronizations), which allow the import for everyone.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 *
 	 * @return void
 	 */
 	public function test_import_requires_capability(): void {

@@ -1052,12 +1052,7 @@ class Local_Urls {
 		$names    = array_values( $this->get_local_sizes( $attachment_id ) );
 		$metadata = wp_get_attachment_metadata( $attachment_id );
 		if ( is_array( $metadata ) ) {
-			if ( ! empty( $metadata['original_image'] ) ) {
-				$names[] = $metadata['original_image'];
-			}
-			foreach ( $metadata['sizes'] ?? array() as $size ) {
-				$names[] = $size['file'];
-			}
+			$names = array_merge( $names, $this->get_file_names_of_metadata( $metadata ) );
 		}
 
 		// add them for the folder of the first file.
@@ -1070,6 +1065,39 @@ class Local_Urls {
 		return array_values( array_unique( $files ) );
 	}
 
+
+	/**
+	 * Return the file names of the original image and of the sizes in the given metadata of an attachment.
+	 *
+	 * @param array<string,mixed> $metadata The metadata of the attachment.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_file_names_of_metadata( array $metadata ): array {
+		// collect the names.
+		$names = array();
+
+		// add the original image.
+		if ( ! empty( $metadata['original_image'] ) && is_string( $metadata['original_image'] ) ) {
+			$names[] = $metadata['original_image'];
+		}
+
+		// bail if there are no sizes.
+		if ( empty( $metadata['sizes'] ) || ! is_array( $metadata['sizes'] ) ) {
+			return $names;
+		}
+
+		// add the sizes.
+		foreach ( $metadata['sizes'] as $size ) {
+			if ( ! is_array( $size ) || empty( $size['file'] ) || ! is_string( $size['file'] ) ) {
+				continue;
+			}
+			$names[] = $size['file'];
+		}
+
+		// return the resulting list.
+		return $names;
+	}
 	/**
 	 * Return the ID of the exported or migrated attachment, to which the given local file belongs (also for the
 	 * files of its sizes), or 0, if there is none.

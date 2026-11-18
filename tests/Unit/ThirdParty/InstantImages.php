@@ -42,6 +42,18 @@ class InstantImages extends externalFilesTests {
 	}
 
 	/**
+	 * Skip the test, if the host of the URL could not be resolved (e.g. in a test environment without DNS): the
+	 * plugin validates the URL with wp_http_validate_url(), which needs the DNS lookup.
+	 *
+	 * @return void
+	 */
+	private function require_dns_for_url(): void {
+		if ( ! wp_http_validate_url( $this->url ) ) {
+			$this->markTestSkipped( 'The host of the URL could not be resolved via DNS: ' . $this->url );
+		}
+	}
+
+	/**
 	 * Return the object to test.
 	 *
 	 * @return \ExternalFilesInMediaLibrary\ThirdParty\InstantImages
@@ -88,6 +100,7 @@ class InstantImages extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_switch_to_external(): void {
+		$this->require_dns_for_url();
 		$data       = $this->create_image();
 		$local_file = (string) get_attached_file( $data['attachment_id'], true );
 		$this->assertFileExists( $local_file );
@@ -218,6 +231,7 @@ class InstantImages extends externalFilesTests {
 	public function test_switch_to_external_without_proxy(): void {
 		update_option( 'eml_images_proxy', 0 );
 		$this->url = 'https://images.pexels.com/photos/123/example.jpeg?dpr=1&w=1600&h=1200';
+		$this->require_dns_for_url();
 
 		$data = $this->create_image( 'pexels' );
 		$this->get_object()->switch_to_external( $data );

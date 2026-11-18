@@ -204,6 +204,7 @@
 
 ### Fixed
 
+- Fixed missing log entries for errors of the encryption, if the directory of the plugin has another name (e.g. after the installation of a ZIP file from GitHub)
 - Fixed proxy URLs in contents of files, which are no external files anymore (e.g. after their real import or the restore of exported files), resulting in "not found": the proxy redirects them to the actual URL of the file now, also for their sizes (hook "efml_former_proxy_url_redirect")
 - Fixed export of existing local files, if other plugins create their sizes again (e.g. Regenerate Thumbnails or Image Watermark while removing a watermark): only new uploads are exported via their metadata now, which also prevented the removal of watermarks
 - Fixed the proxy delivering the front page with HTTP status 200 instead of HTTP status 404 for files, which could not be delivered: the 404 template of the theme is used now

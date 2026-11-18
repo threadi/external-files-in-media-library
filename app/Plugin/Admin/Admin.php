@@ -118,7 +118,9 @@ class Admin {
 		add_action( 'efml_directory_listing_added', array( $this, 'mark_directory_listing_as_used' ) );
 		add_action( 'delete_' . Taxonomy::get_instance()->get_name(), array( $this, 'check_if_directory_listing_is_used' ) );
 		add_action( 'admin_action_efml_download_key', array( $this, 'export_installation_key' ) );
-		add_action( 'external-files-in-media-library_crypt_error', array( $this, 'save_crypt_error' ), 10, 3 );
+		// log the errors of the crypt library: its hook is named by the slug of the crypt object, which is derived
+		// from the directory of the plugin (e.g. different for a renamed directory or outside the plugin directory).
+		add_action( dirname( plugin_basename( EFML_PLUGIN ) ) . '_crypt_error', array( $this, 'save_crypt_error' ), 10, 3 );
 
 		// register our own importer in the backend.
 		add_action( 'admin_init', array( $this, 'add_importer' ) );

@@ -1645,7 +1645,7 @@ class Service_Base extends Directory_Listing_Base {
 		$guide = apply_filters( 'efml_service_setup_guide', $guide, $instance );
 
 		// bail if there is no help.
-		if ( empty( $guide ) || ! is_array( $guide ) ) {
+		if ( empty( $guide ) ) {
 			return '';
 		}
 

@@ -59,6 +59,14 @@ class UrlList extends externalFilesTests {
 		// initialize the services for the logged-in user (they use their hooks only for users with their capability).
 		Csv::get_instance()->init();
 		Xml::get_instance()->init();
+
+		// forget the lists of former tests: they are cached per attachment ID, which could be used again after the
+		// rollback of the database (e.g. with SQLite), and a cached list is not marked as used again.
+		$property = new \ReflectionProperty( Url_List_Base::class, 'lists' );
+		$property->setAccessible( true );
+		$property->setValue( Csv::get_instance(), array() );
+		$property->setValue( Xml::get_instance(), array() );
+
 		$this->list_content = (string) file_get_contents( UNIT_TESTS_DATA_PLUGIN_DIR . 'url-list.csv' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		$this->list_status  = 200;
 		$this->requests     = array();

@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use WP_Post;
 
 /**
  * Object to restore exported files as local files at their original path.
@@ -495,7 +496,8 @@ class Restore {
 
 		// use the GUID for files exported before 6.0.0, if their paths are not saved yet.
 		if ( empty( $paths ) ) {
-			$path = Local_Urls::get_instance()->get_relative_path( (string) get_post_field( 'guid', $attachment_id, 'raw' ) );
+			$post = get_post( $attachment_id );
+			$path = $post instanceof WP_Post ? Local_Urls::get_instance()->get_relative_path( $post->guid ) : '';
 			if ( '' !== $path ) {
 				$paths = array( $path );
 			}
@@ -698,8 +700,8 @@ class Restore {
 	 *
 	 * The sizes are created from the original image, so they get its name (e.g. image-300x200.jpg) as before.
 	 *
-	 * @param int                                  $attachment_id The attachment ID.
-	 * @param string                               $source_file   The absolute path of the file to create the sizes from.
+	 * @param int                                   $attachment_id The attachment ID.
+	 * @param string                                $source_file   The absolute path of the file to create the sizes from.
 	 * @param array{file: string, original: string} $paths         The original paths relative to the uploads directory.
 	 * @param array<string,string>                  $sizes         The file names of the sizes before the export (size name => file name).
 	 *

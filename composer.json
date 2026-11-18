@@ -12,7 +12,10 @@
             "composer dump-autoload"
         ],
         "phpstan": "vendor/bin/phpstan clear-result-cache && vendor/bin/phpstan analyze",
-        "test": "phpunit",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit"
+        ],
         "test-coverage": "php -d pcov.enabled=1 -d pcov.directory=app vendor/bin/phpunit --coverage-filter app --coverage-text",
         "test-multisite": [
             "@putenv WP_MULTISITE=1",

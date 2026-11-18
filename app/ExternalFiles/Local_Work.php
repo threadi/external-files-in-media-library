@@ -602,17 +602,17 @@ class Local_Work {
 	 * an image. Exported images use other URLs (via the proxy or of the external source), so their file names are
 	 * compared.
 	 *
-	 * @param bool   $match          Whether the URL is a file of the image.
+	 * @param bool   $is_match       Whether the URL is a file of the image.
 	 * @param string $image_location The URL.
 	 * @param mixed  $image_meta     The metadata of the image.
 	 * @param int    $attachment_id  The attachment ID.
 	 *
 	 * @return bool
 	 */
-	public function match_image_file( bool $match, string $image_location, mixed $image_meta, int $attachment_id ): bool {
+	public function match_image_file( bool $is_match, string $image_location, mixed $image_meta, int $attachment_id ): bool {
 		// bail if it matches already or this is not an exported image.
-		if ( $match || 0 === $attachment_id || ! $this->is_exported_image( $attachment_id ) ) {
-			return $match;
+		if ( $is_match || 0 === $attachment_id || ! $this->is_exported_image( $attachment_id ) ) {
+			return $is_match;
 		}
 
 		// WordPress removes the query of the URL, so the URL of the proxy without pretty permalinks ("?emlproxy=…") is

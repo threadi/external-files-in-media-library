@@ -1704,10 +1704,10 @@ class Synchronization extends Tools_Base {
 	 */
 	private function add_schedule( int $term_id ): void {
 		// get the interval to set.
-		$interval = (string) get_term_meta( $term_id, 'interval', true );
-		if ( empty( $interval ) ) {
+		$interval = get_term_meta( $term_id, 'interval', true );
+		if ( empty( $interval ) || ! is_string( $interval ) ) {
 			update_term_meta( $term_id, 'interval', 'efml_hourly' );
-			$interval = (string) get_term_meta( $term_id, 'interval', true );
+			$interval = 'efml_hourly';
 		}
 
 		// get the schedule object.

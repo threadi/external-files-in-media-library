@@ -146,11 +146,13 @@ class Service_Tiles extends externalFilesTests {
 		// the features of the FTP service.
 		$this->assertStringContainsString( '<li class="efml-ftp" data-efml-features="sync export constants">', $html );
 		$this->assertStringContainsString( '<li class="efml-dropbox" data-efml-features="sync export private constants">', $html );
-		$this->assertStringContainsString( 'dashicons-shield', $html );
+		// the icon for private files: SVG since WordPress 7.2 (registered as "core-admin/shield"), Dashicon before.
+		$this->assertMatchesRegularExpression( '#title="Private files"><svg |dashicons dashicons-shield" role="img" aria-label="Private files"#', $html );
 
 		// the service plugins, which are not installed, are marked.
 		$this->assertStringContainsString( 'efml-service-badge', $html );
 		$this->assertStringContainsString( 'efml-is-extension', $html );
-		$this->assertStringContainsString( 'dashicons-admin-plugins', $html );
+		// the icon of the badge: SVG since WordPress 7.2, Dashicon before.
+		$this->assertMatchesRegularExpression( '#efml-service-badge"><span class="efml-icon (svg-icon"><svg |dashicons dashicons-admin-plugins")#', $html );
 	}
 }

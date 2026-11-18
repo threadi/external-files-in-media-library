@@ -423,14 +423,14 @@ class Sizes {
 	/**
 	 * Export the given files of an image from the given directory to the given external source and save them.
 	 *
-	 * @param int                                $attachment_id The attachment ID.
-	 * @param Export_Base                        $export_obj    The export object of the service.
-	 * @param int                                $term_id       The ID of the external source.
-	 * @param string                             $directory     The local directory of the files, with trailing slash.
-	 * @param array<string,array<string,mixed>>  $files         The files (size name => file, width, height, mime-type).
-	 * @param string                             $target_dir    The target directory, with trailing slash.
-	 * @param array<string,mixed>                $credentials   The credentials of the external source.
-	 * @param bool                               $keep_former   True to keep replaced files as former files (instead of forgetting them).
+	 * @param int                               $attachment_id The attachment ID.
+	 * @param Export_Base                       $export_obj    The export object of the service.
+	 * @param int                               $term_id       The ID of the external source.
+	 * @param string                            $directory     The local directory of the files, with trailing slash.
+	 * @param array<string,array<string,mixed>> $files         The files (size name => file, width, height, mime-type).
+	 * @param string                            $target_dir    The target directory, with trailing slash.
+	 * @param array<string,mixed>               $credentials   The credentials of the external source.
+	 * @param bool                              $keep_former   True to keep replaced files as former files (instead of forgetting them).
 	 *
 	 * @return int The number of exported files.
 	 */
@@ -1643,14 +1643,14 @@ class Sizes {
 		wp_mkdir_p( $directory );
 
 		// get the local files of the image, if they have been kept.
-		$base_dir      = trailingslashit( wp_get_upload_dir()['basedir'] );
-		$local_file    = $base_dir . $paths['file'];
-		$local_orig    = '' !== $paths['original'] ? $base_dir . $paths['original'] : '';
-		$source_name   = '' !== $paths['original'] ? wp_basename( $paths['original'] ) : wp_basename( $paths['file'] );
-		$source        = $directory . $source_name;
-		$files         = array();
-		$has_original  = '' !== $local_orig && $wp_filesystem->exists( $local_orig );
-		$has_local     = $wp_filesystem->exists( $local_file );
+		$base_dir     = trailingslashit( wp_get_upload_dir()['basedir'] );
+		$local_file   = $base_dir . $paths['file'];
+		$local_orig   = '' !== $paths['original'] ? $base_dir . $paths['original'] : '';
+		$source_name  = '' !== $paths['original'] ? wp_basename( $paths['original'] ) : wp_basename( $paths['file'] );
+		$source       = $directory . $source_name;
+		$files        = array();
+		$has_original = '' !== $local_orig && $wp_filesystem->exists( $local_orig );
+		$has_local    = $wp_filesystem->exists( $local_file );
 
 		// get the image to create the sizes from: the local original image, the local image or the download.
 		if ( $has_original ) {
@@ -1665,7 +1665,7 @@ class Sizes {
 		// create the sizes with their former names (they could differ by one pixel, if created from the scaled image).
 		add_filter( 'big_image_size_threshold', '__return_false', PHP_INT_MAX );
 		$editor = wp_get_image_editor( $source );
-		$sizes  = is_wp_error( $editor ) ? array() : $editor->multi_resize( wp_get_registered_image_subsizes() );
+		$sizes  = is_wp_error( $editor ) ? array() : $editor->multi_resize( $this->get_sub_sizes_for_resize( wp_get_registered_image_subsizes() ) );
 		remove_filter( 'big_image_size_threshold', '__return_false', PHP_INT_MAX );
 		$sizes = Restore::get_instance()->rename_sizes( $sizes, Local_Urls::get_instance()->get_local_sizes( $attachment_id ), $directory );
 		foreach ( $sizes as $size_name => $size ) {
@@ -1725,6 +1725,31 @@ class Sizes {
 		return $exported > 0;
 	}
 
+
+	/**
+	 * Return the given registered sizes in the format of WP_Image_Editor::multi_resize().
+	 *
+	 * @param array<string,array<string,mixed>> $sub_sizes The registered sizes (e.g. from wp_get_registered_image_subsizes()).
+	 *
+	 * @return array<string,array{width: int, height: int, crop: array<int,string>|bool}>
+	 */
+	private function get_sub_sizes_for_resize( array $sub_sizes ): array {
+		// collect the sizes.
+		$list = array();
+
+		// add each size with its dimensions and crop setting.
+		foreach ( $sub_sizes as $size_name => $sub_size ) {
+			$crop               = $sub_size['crop'] ?? false;
+			$list[ $size_name ] = array(
+				'width'  => isset( $sub_size['width'] ) && is_numeric( $sub_size['width'] ) ? absint( $sub_size['width'] ) : 0,
+				'height' => isset( $sub_size['height'] ) && is_numeric( $sub_size['height'] ) ? absint( $sub_size['height'] ) : 0,
+				'crop'   => is_array( $crop ) ? array_map( 'strval', array_values( $crop ) ) : (bool) $crop,
+			);
+		}
+
+		// return the resulting list.
+		return $list;
+	}
 	/**
 	 * Return the names of the local files of an exported image before its export (size name or "full" => file name).
 	 *

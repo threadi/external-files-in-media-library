@@ -88,7 +88,8 @@ class SetupGuide extends externalFilesTests {
 			2
 		);
 		$html = \ExternalFilesInMediaLibrary\Services\Rest::get_instance()->get_setup_guide_html();
-		$this->assertStringContainsString( 'Intro alert(1)<code>x</code>', $html );
+		// the script is removed: since WordPress 7.2 KSES also removes its content.
+		$this->assertMatchesRegularExpression( '#Intro (alert\(1\))?<code>x</code>#', $html );
 		$this->assertStringNotContainsString( '<script>', $html );
 		$this->assertStringContainsString( '<textarea readonly="readonly" rows="3">', $html );
 		$this->assertStringContainsString( '&lt;b&gt;', $html );
