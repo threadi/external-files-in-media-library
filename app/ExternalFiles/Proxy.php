@@ -212,6 +212,10 @@ class Proxy {
 
 		// bail if no file object could be loaded, or the loaded object is not valid.
 		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
+			// redirect to the actual URL of the file, if it has been an external file before (e.g. before its real
+			// import or the restore of an exported file), as contents still contain its proxy URL.
+			Former_Proxy_Urls::get_instance()->redirect( $title );
+
 			// log this event only in debug mode, as this request can be sent by anyone with any value.
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'error', 2 );

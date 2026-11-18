@@ -213,6 +213,9 @@ class Uninstall {
 		// remove the index of the URLs of external files.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Url_Index::get_instance()->uninstall();
 
+		// remove the names of former external files in the proxy.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Former_Proxy_Urls::get_instance()->uninstall();
+
 		// remove the data of uploads with sizes created in the browser.
 		\ExternalFilesInMediaLibrary\ExternalFiles\Client_Uploads::get_instance()->uninstall();
 

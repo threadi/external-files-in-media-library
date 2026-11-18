@@ -102,6 +102,9 @@ class Files {
 		Local_Urls::get_instance()->init();
 		Url_Index::get_instance()->init();
 
+		// initialize the redirect of proxy URLs of files, which are no external files anymore.
+		Former_Proxy_Urls::get_instance()->init();
+
 		// initialize the restore of exported files.
 		Restore::get_instance()->init();
 		Local_Copies::get_instance()->init();
