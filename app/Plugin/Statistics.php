@@ -151,7 +151,7 @@ class Statistics {
 		$service_sizes_setting->prevent_export( true );
 		$service_sizes_field = new TextInfo( $settings_obj );
 		$service_sizes_field->set_title( __( 'External file sizes per service', 'external-files-in-media-library' ) );
-		$service_sizes_field->set_description( $this->get_sizes_per_service_as_html() );
+		$service_sizes_field->set_description( Settings::get_instance()->is_settings_request() ? $this->get_sizes_per_service_as_html() : '' ); // only shown in the settings, it needs a query.
 		$service_sizes_setting->set_field( $service_sizes_field );
 
 		// create re-calc URL.

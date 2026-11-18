@@ -201,6 +201,9 @@
 - The search for services and external sources in the command palette is case-insensitive and matches all words of the search
 - Files are not exported, as long as the primary external source for exports could not be used (e.g. because the extension of its service is not active), also not to the other external sources; they stay local files and could be exported later via "Export now"
 - External sources for exports are kept in the settings while their service is not available and marked as not usable at the moment
+- Reduced the database queries in each request (e.g. in the backend from about 35 to none on most pages, in the frontend to none): default values of settings, which have not been saved yet, are saved once as autoloaded options, saved settings and markers, which are read in each request, are changed to autoloaded once, buttons and lists of the settings are only loaded on the settings page, hints are only saved again if their message has changed, not dismissed hints get an autoloaded marker, the progress in the admin bar is only loaded after the start of a run, and some checks use autoloaded options instead of transients
+- Unusable external sources for exports are checked only in the media library, on the plugins page, in the external sources and in the settings (hook "efml_export_check_sources_on_screen"); the hint stays visible on all pages until the check removes it
+- Added hook "efml_is_settings_request" to mark requests, in which the settings are shown or saved
 
 ### Fixed
 

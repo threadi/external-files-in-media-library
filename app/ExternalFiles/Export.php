@@ -31,6 +31,7 @@ use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Post;
 use WP_Query;
+use WP_Screen;
 use WP_Term;
 use WP_Term_Query;
 
@@ -112,7 +113,7 @@ class Export extends Tools_Base {
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_export_state_in_info_dialog' ), 10, 2 );
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_column_for_hint' ) );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
-		add_action( 'admin_init', array( $this, 'add_hint_for_unusable_sources' ) );
+		add_action( 'current_screen', array( $this, 'add_hint_for_unusable_sources' ) );
 		add_action( 'admin_action_efml_export_again', array( $this, 'export_again_via_request' ) );
 
 		// remember the uploads of this request, as only they are exported with their metadata.
@@ -285,8 +286,12 @@ class Export extends Tools_Base {
 		$field->set_setting( $setting );
 		$setting->set_field( $field );
 
+		// check whether the settings are shown or saved in this request: the external sources and the buttons, which
+		// need queries, are only needed there.
+		$is_settings_request = Settings::get_instance()->is_settings_request();
+
 		// collect the external sources (also not usable ones, so the setting is not changed, while e.g. an extension is not active).
-		$external_sources = $this->get_external_sources_as_name_list( false );
+		$external_sources = $is_settings_request ? $this->get_external_sources_as_name_list( false ) : array();
 
 		// create URL.
 		$url = add_query_arg(
@@ -363,7 +368,7 @@ class Export extends Tools_Base {
 		}
 
 		// add the button to delete the local copies of exported files, if some exist (also with disabled export).
-		if ( is_admin() && Local_Copies::get_instance()->has_files() ) {
+		if ( $is_settings_request && Local_Copies::get_instance()->has_files() ) {
 			$setting = $settings_obj->add_setting( 'efml_delete_local_copies_now' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -378,7 +383,7 @@ class Export extends Tools_Base {
 		}
 
 		// add the buttons for local working copies of exported images, e.g. for image optimizers (only in the backend).
-		if ( is_admin() ) {
+		if ( $is_settings_request ) {
 			$working_copies_obj = Working_Copies::get_instance();
 			if ( $working_copies_obj->count_candidates() > 0 ) {
 				$setting = $settings_obj->add_setting( 'efml_create_working_copies_now' );
@@ -411,7 +416,7 @@ class Export extends Tools_Base {
 		}
 
 		// add the button to restore the exported files, if some exist (also with disabled export).
-		if ( Restore::get_instance()->has_files() ) {
+		if ( $is_settings_request && Restore::get_instance()->has_files() ) {
 			$setting = $settings_obj->add_setting( 'efml_restore_exported_files_now' );
 			$setting->set_section( $section );
 			$setting->set_autoload( false );
@@ -1121,6 +1126,39 @@ class Export extends Tools_Base {
 		return implode( ' ', $reasons );
 	}
 
+
+	/**
+	 * Return whether the actual page in the backend is one, on which the external sources for the export are checked.
+	 *
+	 * These are the pages, where the hint is relevant: the media library and the upload of files, the plugins (e.g.
+	 * after the activation of a missing extension), the external sources and the settings of this plugin.
+	 *
+	 * @return bool
+	 */
+	private function is_screen_for_source_checks(): bool {
+		// check always, if no page is set (e.g. via WP CLI).
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $screen instanceof WP_Screen ) {
+			return true;
+		}
+
+		// check the external sources.
+		if ( in_array( $screen->base, array( 'edit-tags', 'term' ), true ) ) {
+			return Taxonomy::get_instance()->get_name() === $screen->taxonomy;
+		}
+
+		// check the other pages.
+		$is_screen = in_array( $screen->base, array( 'upload', 'media', 'plugins', 'settings_page_' . Settings::get_instance()->get_menu_slug() ), true );
+
+		/**
+		 * Filter whether the external sources for the export are checked on the actual page in the backend.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool      $is_screen True, if they are checked.
+		 * @param WP_Screen $screen    The actual page.
+		 */
+		return (bool) apply_filters( 'efml_export_check_sources_on_screen', $is_screen, $screen );
+	}
 	/**
 	 * Show a hint in the backend, if files could not be exported because of their external sources.
 	 *
@@ -1136,6 +1174,12 @@ class Export extends Tools_Base {
 			return;
 		}
 
+		// bail if this is not one of the pages, on which the external sources are checked (the check needs queries,
+		// the saved hint is shown on all pages until the check removes it).
+		if ( ! $this->is_screen_for_source_checks() ) {
+			return;
+		}
+
 		// get the reason, if the export is enabled and at least one external source is enabled for the export.
 		$problem = '';
 		if ( $this->is_enabled() && ! empty( $this->get_export_terms() ) ) {
@@ -1144,10 +1188,7 @@ class Export extends Tools_Base {
 
 		// remove the hint, if files could be exported.
 		if ( '' === $problem ) {
-			$transient_obj = Transients::get_instance()->get_transient_by_name( 'efml_export_sources_problem' );
-			if ( $transient_obj->is_set() ) {
-				$transient_obj->delete();
-			}
+			Helper::delete_hint( 'efml_export_sources_problem' );
 			return;
 		}
 
@@ -1164,6 +1205,11 @@ class Export extends Tools_Base {
 		}
 		/* translators: %1$s will be replaced by a URL. */
 		$message .= sprintf( __( 'Manage <a href="%1$s">your external sources</a>.', 'external-files-in-media-library' ), esc_url( Directory_Listing::get_instance()->get_listing_url() ) );
+
+		// bail if the hint is saved with this message.
+		if ( Helper::is_hint_unchanged( 'efml_export_sources_problem', $message ) ) {
+			return;
+		}
 
 		// add the hint.
 		$transient_obj = Transients::get_instance()->add();

@@ -43,6 +43,13 @@ use WP_Admin_Bar;
  */
 class Import_Runs {
 	/**
+	 * The progress for the admin bar, loaded once per request (its entry and its style need it).
+	 *
+	 * @var array<string,int>|null
+	 */
+	private ?array $admin_bar_progress = null;
+
+	/**
 	 * The context for the encryption of the fields (access data) of a run.
 	 *
 	 * Fields saved before this context has been used stay readable.
@@ -55,6 +62,23 @@ class Import_Runs {
 	 * @var string
 	 */
 	public const CRON_HOOK = 'efml_import_runs';
+
+	/**
+	 * Name of the autoloaded option with the time of the last start of a run.
+	 *
+	 * Runs are only started via add(), so the progress in the admin bar needs no query, while no run has been started
+	 * since the last check without unfinished runs (see EMPTY_OPTION).
+	 *
+	 * @var string
+	 */
+	public const STARTED_OPTION = 'efml_import_runs_started';
+
+	/**
+	 * Name of the autoloaded option with the time of the last check, which found no unfinished runs.
+	 *
+	 * @var string
+	 */
+	public const EMPTY_OPTION = 'efml_import_runs_empty';
 
 	/**
 	 * Version of the database structure for the runs (incl. the columns in the queue).
@@ -241,8 +265,10 @@ class Import_Runs {
 	public function uninstall(): void {
 		global $wpdb;
 
-		// remove the schedule.
+		// remove the schedule and the times for the progress.
 		wp_clear_scheduled_hook( self::CRON_HOOK );
+		delete_option( self::STARTED_OPTION );
+		delete_option( self::EMPTY_OPTION );
 
 		// remove the table.
 		$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $this->get_table_name() ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
@@ -1143,6 +1169,9 @@ class Import_Runs {
 
 		// get the ID of the run (before the log entry is added).
 		$run_id = absint( $wpdb->insert_id );
+
+		// save the time of the start for the progress in the admin bar.
+		update_option( self::STARTED_OPTION, time(), true );
 
 		// log this event.
 		if ( 'export' === $type ) {
@@ -2821,6 +2850,39 @@ class Import_Runs {
 		update_option( 'eml_import_title_' . get_current_user_id(), sprintf( __( 'Import file %1$s ..', 'external-files-in-media-library' ), esc_html( Helper::shorten_url( $url ) ) ) );
 	}
 
+
+	/**
+	 * Return the progress for the admin bar, which is loaded only once per request.
+	 *
+	 * @return array<string,int>
+	 */
+	private function get_admin_bar_progress(): array {
+		// bail if it is loaded.
+		if ( ! is_null( $this->admin_bar_progress ) ) {
+			return $this->admin_bar_progress;
+		}
+
+		// use an empty progress without query, if no run has been started since the last check without runs (a start
+		// in the same second is checked again).
+		$started = absint( Helper::get_autoloaded_option( self::STARTED_OPTION, time() ) );
+		$empty   = absint( Helper::get_autoloaded_option( self::EMPTY_OPTION, 0 ) );
+		if ( $started < $empty ) {
+			$this->admin_bar_progress = array( 'runs' => 0 );
+			return $this->admin_bar_progress;
+		}
+
+		// load the progress (the time is taken before, so a run started during the query is checked again).
+		$time                     = time();
+		$this->admin_bar_progress = $this->get_progress();
+
+		// remember the time of this check without unfinished runs.
+		if ( 0 === $this->admin_bar_progress['runs'] ) {
+			update_option( self::EMPTY_OPTION, $time, true );
+		}
+
+		// return the progress.
+		return $this->admin_bar_progress;
+	}
 	/**
 	 * Return the progress of all unfinished runs.
 	 *
@@ -2881,7 +2943,7 @@ class Import_Runs {
 		}
 
 		// show it if unfinished runs exist.
-		return $this->get_progress()['runs'] > 0;
+		return $this->get_admin_bar_progress()['runs'] > 0;
 	}
 
 	/**
@@ -2898,7 +2960,10 @@ class Import_Runs {
 		}
 
 		// get the progress.
-		$progress = $this->get_progress();
+		$progress = $this->get_admin_bar_progress();
+
+		// load it again in later calls (the admin bar is shown once per request).
+		$this->admin_bar_progress = null;
 
 		// calculate the percentage.
 		$percentage = $progress['total'] > 0 ? (int) floor( $progress['done'] / $progress['total'] * 100 ) : 0;

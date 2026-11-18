@@ -68,6 +68,8 @@ class Uninstall {
 	 * @return void
 	 */
 	public function run(): void {
+		global $wpdb;
+
 		if ( ! defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
 			define( 'EFML_DEINSTALLATION_RUNNING', 1 );
 		}
@@ -105,6 +107,10 @@ class Uninstall {
 			// backward-compatibility to < 2.0.0.
 			delete_option( 'pi-dismissed-' . md5( $transient_obj->get_name() ) );
 		}
+
+		// delete the markers of all hints, also of hints, which are not saved anymore.
+		$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE `option_name` LIKE %s', $wpdb->options, $wpdb->esc_like( Transients::get_instance()->get_slug() . '-dismissed-' ) . '%' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		wp_cache_delete( 'alloptions', 'options' );
 
 		// restore the exported files as local files at their original path, as far as the time allows: the others
 		// stay exported files, nothing is deleted on the external sources.
@@ -174,6 +180,7 @@ class Uninstall {
 
 		// clean the managed settings.
 		$settings_obj->delete_settings();
+		delete_option( Settings::DEFAULTS_OPTION );
 
 		// delete options this plugin has used.
 		$options = array(

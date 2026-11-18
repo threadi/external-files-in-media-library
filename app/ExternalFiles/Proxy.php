@@ -687,7 +687,7 @@ class Proxy {
 		flush_rewrite_rules();
 
 		// delete marker.
-		Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->delete();
+		Helper::delete_hint( 'eml_refresh_rewrite_rules' );
 	}
 
 	/**

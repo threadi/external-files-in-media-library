@@ -343,7 +343,7 @@ class DelayedUploads extends externalFilesTests {
 		// lose the event and let the delay pass.
 		wp_clear_scheduled_hook( Delayed_Uploads_Object::CRON_HOOK, array( $attachment_id ) );
 		update_post_meta( $attachment_id, Delayed_Uploads_Object::META, time() - 10 * MINUTE_IN_SECONDS );
-		delete_transient( 'efml_background_events_check' );
+		delete_option( \ExternalFilesInMediaLibrary\Plugin\Background_Events::CHECK_OPTION );
 
 		// the check during WP-Cron exports it.
 		add_filter( 'wp_doing_cron', '__return_true' );
@@ -415,7 +415,7 @@ class DelayedUploads extends externalFilesTests {
 
 		// lose the event (e.g. another request saved the events at the same time).
 		wp_clear_scheduled_hook( Delayed_Uploads_Object::CRON_HOOK, array( $attachment_id ) );
-		delete_transient( 'efml_background_events_check' );
+		delete_option( \ExternalFilesInMediaLibrary\Plugin\Background_Events::CHECK_OPTION );
 
 		// the check in the backend plans it again.
 		set_current_screen( 'upload' );

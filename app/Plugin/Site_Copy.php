@@ -317,6 +317,11 @@ class Site_Copy {
 		$message .= '<a href="' . esc_url( $this->get_action_url( 'efml_site_is_main' ) ) . '" class="button button-primary">' . __( 'This website is now the main website', 'external-files-in-media-library' ) . '</a> ';
 		$message .= '<a href="' . esc_url( $this->get_action_url( 'efml_site_is_copy' ) ) . '" class="button button-secondary">' . __( 'This website is a copy', 'external-files-in-media-library' ) . '</a>';
 
+		// bail if the hint is saved with this message.
+		if ( Helper::is_hint_unchanged( self::TRANSIENT_HINT, $message ) ) {
+			return;
+		}
+
 		// add the hint.
 		$transient_obj = Transients::get_instance()->add();
 		$transient_obj->set_name( self::TRANSIENT_HINT );
@@ -332,16 +337,7 @@ class Site_Copy {
 	 * @return void
 	 */
 	private function delete_hint(): void {
-		// get the transient.
-		$transient_obj = Transients::get_instance()->get_transient_by_name( self::TRANSIENT_HINT );
-
-		// bail if it is not set.
-		if ( ! $transient_obj->is_set() ) {
-			return;
-		}
-
-		// delete it.
-		$transient_obj->delete();
+		Helper::delete_hint( self::TRANSIENT_HINT );
 	}
 
 	/**

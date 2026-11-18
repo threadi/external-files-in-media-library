@@ -159,7 +159,7 @@ class Install {
 		}
 
 		// set flag to enable syncs later.
-		update_option( 'efml_recreate_sync_schedules', 1, false );
+		update_option( 'efml_recreate_sync_schedules', 1, true );
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );

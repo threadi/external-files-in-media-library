@@ -165,7 +165,7 @@ class Local_Urls {
 			update_option( self::ACTIVE_OPTION, $active );
 		}
 
-		return absint( $active ) > 0 || absint( get_option( Migrations::COUNT_OPTION ) ) > 0;
+		return absint( $active ) > 0 || absint( Helper::get_autoloaded_option( Migrations::COUNT_OPTION, 0 ) ) > 0;
 	}
 
 	/**
@@ -308,8 +308,8 @@ class Local_Urls {
 	 * @return void
 	 */
 	public function schedule_backfill(): void {
-		// bail if it is done.
-		$state = get_option( self::BACKFILL_OPTION );
+		// bail if it is done (the state is read in every request, so it is autoloaded).
+		$state = Helper::get_autoloaded_option( self::BACKFILL_OPTION, array() );
 		if ( is_array( $state ) && ! empty( $state['done'] ) ) {
 			return;
 		}
@@ -376,8 +376,8 @@ class Local_Urls {
 			$state['done'] = true;
 		}
 
-		// save the state.
-		update_option( self::BACKFILL_OPTION, $state, false );
+		// save the state (autoloaded, as it is checked in every request).
+		update_option( self::BACKFILL_OPTION, $state, true );
 
 		// continue with the next part.
 		if ( empty( $state['done'] ) ) {

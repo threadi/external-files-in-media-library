@@ -2301,13 +2301,13 @@ class Synchronization extends Tools_Base {
 	 * @return void
 	 */
 	public function recreate_schedules(): void {
-		// bail if no re-creation is pending.
-		if ( 1 !== absint( get_option( 'efml_recreate_sync_schedules' ) ) ) {
+		// bail if no re-creation is pending (the marker is read in every request, so it is autoloaded).
+		if ( 1 !== absint( Helper::get_autoloaded_option( 'efml_recreate_sync_schedules', 0 ) ) ) {
 			return;
 		}
 
-		// remove the marker first, so a failure does not repeat on every request.
-		delete_option( 'efml_recreate_sync_schedules' );
+		// reset the marker first, so a failure does not repeat on every request.
+		update_option( 'efml_recreate_sync_schedules', 0, true );
 
 		// add the schedules.
 		$this->add_schedules();

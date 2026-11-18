@@ -113,6 +113,8 @@ External source (term of the taxonomy `edlfw_archive` of easy-directory-listing,
 
 **5. Copies of a website do nothing on external sources.** On a copy (`Site_Copy::is_blocked()`), nothing is exported or deleted on external sources and schedules are paused.
 
+**6. No queries in normal requests.** The plugin stays unobtrusive: a request in the frontend or the backend without own pages must not query the database for this plugin. Settings get their default values saved once as autoloaded options (`Settings::save_missing_defaults()`); other options read in every request use `Helper::get_autoloaded_option()` (saves missing ones and changes non-autoloaded ones once) and are never deleted while the plugin is active; never save them with `autoload` false. Lists, counts and buttons in `add_settings()` are only loaded if `Settings::get_instance()->is_settings_request()`. Hints checked in every request use `Helper::delete_hint()` and `Helper::is_hint_unchanged()` instead of loading the hint (each missing transient is a query). Transients with expiration are not autoloaded: use an autoloaded option with a timestamp for checks in every request. Measure with Query Monitor (component of the plugin) after changes in hooks of `init`, `admin_init`, `current_screen` or the admin bar.
+
 ## Export (critical)
 
 - Entry points: upload (`Export::export_file_by_upload()` on `wp_generate_attachment_metadata` priority 20), "Export existing files" (background run of `Import_Runs`, type `export`), bulk action, REST, ability, WP-CLI. All end in `Export::export_file()`.

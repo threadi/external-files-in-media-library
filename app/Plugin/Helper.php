@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
@@ -274,6 +275,146 @@ class Helper {
 		return apply_filters( 'efml_supported_mime_types', $mime_types );
 	}
 
+
+
+	/**
+	 * Return whether the hint with the given name is saved.
+	 *
+	 * Uses the autoloaded list of the hints of this plugin, which the transients library saves for its display:
+	 * loading a hint as object needs an own query for each hint, if it is not saved.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return bool
+	 */
+	public static function is_hint_saved( string $name ): bool {
+		$transients = get_option( 'etfw_transients', array() );
+		return is_array( $transients ) && ! empty( $transients[ Transients::get_instance()->get_slug() ][ $name ] );
+	}
+
+
+	/**
+	 * Return whether the hint with the given name is saved with the given message.
+	 *
+	 * Hints, which are checked in every request, are saved again only, if their message has changed (e.g. by a new
+	 * nonce in a link): saving them needs several queries.
+	 *
+	 * @param string $name    The name of the hint.
+	 * @param string $message The message of the hint.
+	 *
+	 * @return bool
+	 */
+	public static function is_hint_unchanged( string $name, string $message ): bool {
+		// bail if it is not saved.
+		if ( ! self::is_hint_saved( $name ) ) {
+			return false;
+		}
+
+		// compare the messages.
+		return Transients::get_instance()->get_transient_by_name( $name )->get_message() === $message;
+	}
+	/**
+	 * Delete the hint with the given name, if it is saved.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return void
+	 */
+	public static function delete_hint( string $name ): void {
+		// bail if it is not saved.
+		if ( ! self::is_hint_saved( $name ) ) {
+			return;
+		}
+
+		// delete it.
+		Transients::get_instance()->get_transient_by_name( $name )->delete();
+
+		// delete the marker for not dismissed hints (a dismissed hint keeps its marker, so it stays hidden).
+		$key = self::get_dismiss_marker_name( $name );
+		if ( empty( get_option( $key ) ) ) {
+			delete_option( $key );
+		}
+	}
+
+	/**
+	 * Return the name of the option, in which the transients library saves the dismissal of the given hint.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return string
+	 */
+	private static function get_dismiss_marker_name( string $name ): string {
+		return Transients::get_instance()->get_slug() . '-dismissed-' . md5( $name );
+	}
+
+	/**
+	 * Save the dismissal of each saved hint, which is not dismissed, as autoloaded option with the value 0.
+	 *
+	 * The transients library reads the dismissal of each saved hint in every request (also in the frontend). A hint,
+	 * which is not dismissed, has no option for it, so each one needs an own query. The value 0 means "not dismissed"
+	 * for the library, a dismissal replaces it.
+	 *
+	 * @return void
+	 */
+	public static function save_missing_dismiss_markers(): void {
+		// bail during the installation or uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) || wp_installing() ) {
+			return;
+		}
+
+		// get the saved hints of this plugin.
+		$transients = get_option( 'etfw_transients', array() );
+		$slug       = Transients::get_instance()->get_slug();
+		if ( ! is_array( $transients ) || empty( $transients[ $slug ] ) || ! is_array( $transients[ $slug ] ) ) {
+			return;
+		}
+
+		// save the missing markers.
+		$autoloaded = wp_load_alloptions();
+		foreach ( array_keys( $transients[ $slug ] ) as $name ) {
+			$key = self::get_dismiss_marker_name( (string) $name );
+			if ( array_key_exists( $key, $autoloaded ) ) {
+				continue;
+			}
+			add_option( $key, 0, '', true );
+		}
+	}
+	/**
+	 * Return the value of an option of this plugin, which is read in every request, and make sure it is autoloaded.
+	 *
+	 * WordPress reads each option, which is not saved or not autoloaded, with an own query in every request. A missing
+	 * option is saved with the given default value, a saved option, which is not autoloaded (e.g. saved so by an older
+	 * version), is changed to autoloaded. Both happen only once.
+	 *
+	 * @param string $option        The name of the option.
+	 * @param mixed  $default_value The default value.
+	 *
+	 * @return mixed
+	 */
+	public static function get_autoloaded_option( string $option, mixed $default_value ): mixed {
+		// do not change anything during the installation or uninstallation.
+		$is_changeable = ! defined( 'EFML_DEINSTALLATION_RUNNING' ) && ! wp_installing();
+
+		// get the value with a marker for a missing option (also for settings, whose default value is set via filter).
+		$missing = 'efml_missing_option';
+		$value   = get_option( $option, $missing );
+
+		// save the default value as autoloaded option, if it is missing.
+		if ( $missing === $value ) {
+			if ( $is_changeable ) {
+				add_option( $option, $default_value, '', true );
+			}
+			return $default_value;
+		}
+
+		// change a saved option to autoloaded, if it is not.
+		if ( $is_changeable && function_exists( 'wp_set_option_autoload' ) && ! array_key_exists( $option, wp_load_alloptions() ) ) {
+			wp_set_option_autoload( $option, true );
+		}
+
+		// return the saved value.
+		return $value;
+	}
 	/**
 	 * Return the allowed mime types.
 	 *

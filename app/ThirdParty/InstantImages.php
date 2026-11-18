@@ -143,7 +143,7 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 
 		// remove the hint if any platform is enabled.
 		if ( ! empty( $this->get_enabled_providers() ) ) {
-			$transients_obj->get_transient_by_name( self::HINT_NAME )->delete();
+			Helper::delete_hint( self::HINT_NAME );
 			return;
 		}
 
@@ -153,7 +153,7 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// bail if the hint is already set.
-		if ( $transients_obj->get_transient_by_name( self::HINT_NAME )->is_set() ) {
+		if ( Helper::is_hint_saved( self::HINT_NAME ) ) {
 			return;
 		}
 
@@ -172,7 +172,7 @@ class InstantImages extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function remove_hint(): void {
-		Transients::get_instance()->get_transient_by_name( self::HINT_NAME )->delete();
+		Helper::delete_hint( self::HINT_NAME );
 	}
 
 	/**

@@ -147,7 +147,7 @@ class Intro {
 
 		// remove the transient after installation.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
-		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
+		Helper::delete_hint( 'eml_welcome' );
 
 		// response with success message.
 		wp_send_json_success();
@@ -411,6 +411,13 @@ class Intro {
 	 * @return void
 	 */
 	public function reset_intro(): void {
-		delete_option( 'efml_intro' );
+		// remove the option during the uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			delete_option( 'efml_intro' );
+			return;
+		}
+
+		// save the default value otherwise, as the option is read in every request.
+		update_option( 'efml_intro', 0 );
 	}
 }

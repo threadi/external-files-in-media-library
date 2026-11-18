@@ -179,7 +179,9 @@ class ExportRuns extends externalFilesTests {
 		// add the settings in the backend.
 		set_current_screen( 'options-general.php' );
 		update_option( 'efml_directory_listing_used', 1 );
+		add_filter( 'efml_is_settings_request', '__return_true' );
 		Export::get_instance()->add_settings();
+		remove_filter( 'efml_is_settings_request', '__return_true' );
 		set_current_screen( 'front' );
 
 		// get the setting with the button.

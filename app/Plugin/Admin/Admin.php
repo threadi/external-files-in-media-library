@@ -199,18 +199,23 @@ class Admin {
 	 * @return void
 	 */
 	public function check_php(): void {
-		// get transients object.
-		$transients_obj = Transients::get_instance();
-
 		// bail if PHP >= 8.2 is used.
 		if ( PHP_VERSION_ID > 80200 ) {
-			$transients_obj->get_transient_by_name( 'eml_php_hint' )->delete();
+			Helper::delete_hint( 'eml_php_hint' );
 			return;
 		}
 
 		// bail if WordPress is in developer mode.
 		if ( Helper::is_development_mode() ) {
-			$transients_obj->get_transient_by_name( 'eml_php_hint' )->delete();
+			Helper::delete_hint( 'eml_php_hint' );
+			return;
+		}
+
+		// create the message.
+		$message = '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">have been outdated</a> since December 2025. To continue using the new features of the plugins, update your PHP version please.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' );
+
+		// bail if the hint is saved with this message.
+		if ( Helper::is_hint_unchanged( 'eml_php_hint', $message ) ) {
 			return;
 		}
 
@@ -219,7 +224,7 @@ class Admin {
 		$transient_obj->set_type( 'error' );
 		$transient_obj->set_name( 'eml_php_hint' );
 		$transient_obj->set_dismissible_days( 90 );
-		$transient_obj->set_message( '<strong>' . __( 'Your website is using an old PHP-version!', 'external-files-in-media-library' ) . '</strong><br>' . __( 'Future versions of <i>External Files in Media Library</i> will no longer be compatible with PHP 8.1 or older. These versions <a href="https://www.php.net/supported-versions.php" target="_blank">have been outdated</a> since December 2025. To continue using the new features of the plugins, update your PHP version please.', 'external-files-in-media-library' ) . '<br>' . __( 'Talk to your hosting support team about this.', 'external-files-in-media-library' ) );
+		$transient_obj->set_message( $message );
 		$transient_obj->save();
 	}
 
@@ -349,24 +354,21 @@ class Admin {
 	 * @return void
 	 */
 	public function check_gprd(): void {
-		// get transients object.
-		$transients_obj = Transients::get_instance();
-
 		// bail if setting to hide this hint is enabled.
 		if ( 1 === absint( get_option( 'eml_disable_gprd_warning' ) ) ) {
-			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
+			Helper::delete_hint( 'eml_gprd_hint' );
 			return;
 		}
 
 		// bail if language is not german.
 		if ( ! Languages::get_instance()->is_german_language() ) {
-			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
+			Helper::delete_hint( 'eml_gprd_hint' );
 			return;
 		}
 
 		// bail if WordPress is in developer mode.
 		if ( Helper::is_development_mode() ) {
-			$transients_obj->get_transient_by_name( 'eml_gprd_hint' )->delete();
+			Helper::delete_hint( 'eml_gprd_hint' );
 			return;
 		}
 
@@ -376,6 +378,11 @@ class Admin {
 		$message .= __( 'Please note that according to these rules, the usage of external, directly loaded files (such as images or videos) in a website requires active information to the visitor before these files are loaded. We recommend that you use the proxy mode offered when using <i>External Files in Media Library</i>. This means that the files are not loaded directly from an external source but are cached locally. If you have any further questions about these rules, please contact your legal advisor.', 'external-files-in-media-library' ) . '<br><br>';
 		/* translators: %1$s will be replaced by a URL. */
 		$message .= sprintf( __( 'This detection is based on the language you use in WordPress. If you are not affected by the GPRD-rules, we apologize for this information. You can hide it at any time <a href="%1$s">by clicking on this link</a>.', 'external-files-in-media-library' ), esc_url( Settings::get_instance()->disable_gprd_hint_url() ) );
+
+		// bail if the hint is saved with this message.
+		if ( Helper::is_hint_unchanged( 'eml_gprd_hint', $message ) ) {
+			return;
+		}
 
 		// show hint for GPRD.
 		$transient_obj = Transients::get_instance()->add();
@@ -518,6 +525,9 @@ class Admin {
 			)
 		);
 		$transients_obj->init();
+
+		// save the markers for not dismissed hints, which the library reads in every request.
+		Helper::save_missing_dismiss_markers();
 	}
 
 	/**
@@ -536,7 +546,7 @@ class Admin {
 
 		// dismiss the welcome hint.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
-		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
+		Helper::delete_hint( 'eml_welcome' );
 
 		// get URL from request.
 		$url = filter_input( INPUT_GET, 'forward', FILTER_SANITIZE_URL );

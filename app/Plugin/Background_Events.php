@@ -28,11 +28,14 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Url_Index;
  */
 class Background_Events {
 	/**
-	 * Name of the transient, which limits the check for missing events.
+	 * Name of the option with the time of the next check for missing events.
+	 *
+	 * It is autoloaded, so it needs no own query in each request in the backend (unlike a transient with an
+	 * expiration, which WordPress does not autoload).
 	 *
 	 * @var string
 	 */
-	private const CHECK_TRANSIENT = 'efml_background_events_check';
+	public const CHECK_OPTION = 'efml_background_events_next_check';
 
 	/**
 	 * Instance of actual object.
@@ -92,10 +95,10 @@ class Background_Events {
 		}
 
 		// bail if it has been checked in the last 5 minutes.
-		if ( false !== get_transient( self::CHECK_TRANSIENT ) ) {
+		if ( absint( get_option( self::CHECK_OPTION, 0 ) ) > time() ) {
 			return;
 		}
-		set_transient( self::CHECK_TRANSIENT, 1, 5 * MINUTE_IN_SECONDS );
+		update_option( self::CHECK_OPTION, time() + 5 * MINUTE_IN_SECONDS, true );
 
 		// export waiting uploads, whose event is missing and which are due, during WP-Cron directly: a planned event
 		// could get lost again, as long as another plugin saves the events in parallel requests.
@@ -165,7 +168,7 @@ class Background_Events {
 		foreach ( $this->get_hooks() as $hook ) {
 			wp_unschedule_hook( $hook );
 		}
-		delete_transient( self::CHECK_TRANSIENT );
+		delete_option( self::CHECK_OPTION );
 	}
 
 	/**

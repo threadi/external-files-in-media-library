@@ -292,7 +292,7 @@ class Migrations {
 			'user_id' => get_current_user_id(),
 			'started' => time(),
 		);
-		update_option( self::RUN_OPTION, $run, false );
+		update_option( self::RUN_OPTION, $run, true );
 
 		// log this event.
 		/* translators: %1$s will be replaced by the name of a plugin. */
@@ -326,7 +326,7 @@ class Migrations {
 	 * @return array<string,mixed>
 	 */
 	public function get_run(): array {
-		$run = get_option( self::RUN_OPTION, array() );
+		$run = Helper::get_autoloaded_option( self::RUN_OPTION, array() );
 		return is_array( $run ) ? $run : array();
 	}
 
@@ -468,7 +468,7 @@ class Migrations {
 				}
 
 				// save the progress.
-				update_option( self::RUN_OPTION, $run, false );
+				update_option( self::RUN_OPTION, $run, true );
 			}
 		} finally {
 			// remove the credentials from the service object.
@@ -645,8 +645,8 @@ class Migrations {
 	 * @return void
 	 */
 	private function finish( array $run ): void {
-		// remove the run.
-		delete_option( self::RUN_OPTION );
+		// remove the run (the empty option is autoloaded, as it is read in every request for the admin bar).
+		update_option( self::RUN_OPTION, array(), true );
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 
 		// save the result.
@@ -696,7 +696,7 @@ class Migrations {
 	 * @return void
 	 */
 	public function cancel(): void {
-		delete_option( self::RUN_OPTION );
+		update_option( self::RUN_OPTION, array(), true );
 		wp_clear_scheduled_hook( self::CRON_HOOK );
 	}
 
@@ -904,6 +904,7 @@ class Migrations {
 	 */
 	public function uninstall(): void {
 		$this->cancel();
+		delete_option( self::RUN_OPTION );
 		delete_option( self::RUN_OPTION . '_result' );
 		delete_option( self::COUNT_OPTION );
 	}

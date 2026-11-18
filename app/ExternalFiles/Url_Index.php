@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use WP_Query;
 
 /**
@@ -269,7 +270,7 @@ class Url_Index {
 	 * @return bool
 	 */
 	public function is_complete(): bool {
-		$state = get_option( self::BACKFILL_OPTION );
+		$state = Helper::get_autoloaded_option( self::BACKFILL_OPTION, array() ); // read in every request, so it is autoloaded.
 		return is_array( $state ) && ! empty( $state['done'] );
 	}
 
@@ -338,8 +339,8 @@ class Url_Index {
 			$state['done'] = true;
 		}
 
-		// save the state.
-		update_option( self::BACKFILL_OPTION, $state, false );
+		// save the state (autoloaded, as it is checked in every request).
+		update_option( self::BACKFILL_OPTION, $state, true );
 
 		// continue with the next part.
 		if ( empty( $state['done'] ) ) {

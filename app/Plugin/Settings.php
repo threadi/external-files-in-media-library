@@ -34,6 +34,16 @@ use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
  */
 class Settings {
 	/**
+	 * Name of the option with the names of the settings, whose default values have been saved.
+	 */
+	public const DEFAULTS_OPTION = 'efml_saved_defaults';
+
+	/**
+	 * Version of the check of the settings in save_missing_defaults() (raise it to check all settings again).
+	 */
+	private const DEFAULTS_CHECK_VERSION = 2;
+
+	/**
 	 * The settings object.
 	 *
 	 * @var ?\easySettingsForWordPress\Settings
@@ -81,6 +91,9 @@ class Settings {
 		// set all settings for this plugin.
 		add_action( 'init', array( $this, 'add_settings' ) );
 
+		// save the default values of settings, which are not saved yet (after all settings have been added).
+		add_action( 'wp_loaded', array( $this, 'save_missing_defaults' ), PHP_INT_MAX );
+
 		// misc.
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ) );
 
@@ -90,6 +103,106 @@ class Settings {
 
 		// forward requests for tabs, which have been moved into other tabs.
 		add_action( 'admin_init', array( $this, 'forward_moved_tabs' ) );
+	}
+
+
+
+	/**
+	 * Return whether the settings of this plugin are shown or saved in this request.
+	 *
+	 * Settings, whose fields need queries (e.g. lists or buttons depending on the files), are only needed there.
+	 *
+	 * @return bool
+	 */
+	public function is_settings_request(): bool {
+		// check the page of the settings and the saving of settings via options.php.
+		$is_settings_request = is_admin() && ( $this->get_menu_slug() === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) || ( isset( $GLOBALS['pagenow'] ) && 'options.php' === $GLOBALS['pagenow'] ) );
+
+		/**
+		 * Filter whether the settings of this plugin are shown or saved in this request.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $is_settings_request True, if the settings are shown or saved.
+		 */
+		return (bool) apply_filters( 'efml_is_settings_request', $is_settings_request );
+	}
+	/**
+	 * Save the default values of all settings, which have not been saved yet, as autoloaded options, and change saved
+	 * settings, which should be autoloaded, to autoloaded.
+	 *
+	 * WordPress reads each option, which is not saved or not autoloaded, with an own query in every request. Settings
+	 * are only saved during the activation, if they are added at this time, and if they are saved in the settings.
+	 * Each setting is checked only once: the names of the checked settings are saved in an autoloaded option.
+	 *
+	 * @return void
+	 */
+	public function save_missing_defaults(): void {
+		// bail during installation or uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) || wp_installing() ) {
+			return;
+		}
+
+		// get the names of the checked settings (with the version of the check: 2 includes the check of the autoload).
+		$checked = Helper::get_autoloaded_option( self::DEFAULTS_OPTION, array() );
+		if ( ! is_array( $checked ) ) {
+			$checked = array();
+		}
+
+		// collect the autoloaded settings, which have not been checked yet.
+		$settings = array();
+		foreach ( $this->get_settings_obj()->get_settings() as $setting ) {
+			// bail if it has been checked.
+			if ( isset( $checked[ $setting->get_name() ] ) && absint( $checked[ $setting->get_name() ] ) >= self::DEFAULTS_CHECK_VERSION ) {
+				continue;
+			}
+
+			// bail if it is not autoloaded (it would be read with an own query anyway).
+			if ( ! $setting->is_autoloaded() ) {
+				continue;
+			}
+
+			// add it to the list.
+			$settings[] = $setting;
+		}
+
+		// bail if all settings have been checked.
+		if ( empty( $settings ) ) {
+			return;
+		}
+
+		// get the autoloaded options.
+		$autoloaded = wp_load_alloptions();
+
+		// check each setting.
+		$missing = 'efml_missing_option';
+		foreach ( $settings as $setting ) {
+			// mark it as checked.
+			$checked[ $setting->get_name() ] = self::DEFAULTS_CHECK_VERSION;
+
+			// bail if it is autoloaded.
+			if ( array_key_exists( $setting->get_name(), $autoloaded ) ) {
+				continue;
+			}
+
+			// get the saved value.
+			$value = get_option( $setting->get_name(), $missing );
+
+			// save the default value, if it is missing and set.
+			if ( $missing === $value ) {
+				if ( $setting->is_default_set() ) {
+					add_option( $setting->get_name(), $setting->get_default(), '', true );
+				}
+				continue;
+			}
+
+			// change the saved setting to autoloaded, if it is not too large for this (e.g. saved so by an older version).
+			if ( function_exists( 'wp_set_option_autoload' ) && strlen( (string) maybe_serialize( $value ) ) <= 150000 ) {
+				wp_set_option_autoload( $setting->get_name(), true );
+			}
+		}
+
+		// save the list of checked settings.
+		update_option( self::DEFAULTS_OPTION, $checked, true );
 	}
 
 	/**
@@ -1153,8 +1266,7 @@ class Settings {
 
 		// if list is not empty, remove any notification about it.
 		if ( ! empty( $values ) ) {
-			$transients_obj = Transients::get_instance();
-			$transients_obj->get_transient_by_name( 'eml_missing_mime_types' )->delete();
+			Helper::delete_hint( 'eml_missing_mime_types' );
 		}
 
 		// return resulting list.

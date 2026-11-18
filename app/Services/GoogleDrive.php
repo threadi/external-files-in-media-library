@@ -127,8 +127,14 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	 * If yes, show hint for user to install the separate Google Drive plugin.
 	 */
 	public function check_for_old_google_drive_usage(): void {
-		// bail if marker is not set.
-		if ( empty( get_option( 'eml_google_drive_access_tokens' ) ) ) {
+		// bail if marker is not set: the tokens exist only on websites, which have used Google Drive before 5.0.0.
+		// The result is saved as autoloaded option, as the check would need an own query in each request otherwise.
+		$has_tokens = get_option( 'efml_google_drive_old_tokens' );
+		if ( false === $has_tokens ) {
+			$has_tokens = empty( get_option( 'eml_google_drive_access_tokens' ) ) ? 0 : 1;
+			add_option( 'efml_google_drive_old_tokens', $has_tokens, '', true );
+		}
+		if ( 1 !== absint( $has_tokens ) || empty( get_option( 'eml_google_drive_access_tokens' ) ) ) {
 			return;
 		}
 
@@ -195,6 +201,7 @@ class GoogleDrive extends Service_Plugin_Base implements Service {
 	 */
 	public function uninstall(): void {
 		delete_option( 'eml_google_drive_access_tokens' );
+		delete_option( 'efml_google_drive_old_tokens' );
 	}
 
 	/**
