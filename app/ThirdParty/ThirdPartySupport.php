@@ -138,6 +138,7 @@ class ThirdPartySupport {
 			'ExternalFilesInMediaLibrary\ThirdParty\InstantImages',
 			'ExternalFilesInMediaLibrary\ThirdParty\Massedge',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaCloudSync',
+			'ExternalFilesInMediaLibrary\ThirdParty\MediaCleaner',
 			'ExternalFilesInMediaLibrary\ThirdParty\MediaFileRenamer',
 			'ExternalFilesInMediaLibrary\ThirdParty\Imagify',
 			'ExternalFilesInMediaLibrary\ThirdParty\ShortPixel',

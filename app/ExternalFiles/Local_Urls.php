@@ -1027,6 +1027,65 @@ class Local_Urls {
 	}
 
 	/**
+	 * Return all local files of the given exported or migrated attachment, relative to the uploads directory: the
+	 * file itself, its original image and the files of its sizes.
+	 *
+	 * Used e.g. to check whether contents use the attachment via one of its former local URLs.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_all_local_files( int $attachment_id ): array {
+		// get the main files of exported and migrated files.
+		$files = array_merge( $this->get_local_paths( $attachment_id ), array_map( 'strval', (array) get_post_meta( $attachment_id, Migrations::FILE_META, false ) ) );
+		$files = array_values( array_filter( array_unique( $files ) ) );
+
+		// bail if there are none.
+		if ( empty( $files ) ) {
+			return array();
+		}
+
+		// get the names of the sizes and of the original image, which are saved in the same folder.
+		$names    = array_values( $this->get_local_sizes( $attachment_id ) );
+		$metadata = wp_get_attachment_metadata( $attachment_id );
+		if ( is_array( $metadata ) ) {
+			if ( ! empty( $metadata['original_image'] ) ) {
+				$names[] = $metadata['original_image'];
+			}
+			foreach ( $metadata['sizes'] ?? array() as $size ) {
+				$names[] = $size['file'];
+			}
+		}
+
+		// add them for the folder of the first file.
+		$folder = dirname( $files[0] );
+		foreach ( array_unique( $names ) as $name ) {
+			$files[] = ( '.' === $folder ? '' : trailingslashit( $folder ) ) . wp_basename( $name );
+		}
+
+		// return the list.
+		return array_values( array_unique( $files ) );
+	}
+
+	/**
+	 * Return the ID of the exported or migrated attachment, to which the given local file belongs (also for the
+	 * files of its sizes), or 0, if there is none.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $file The file relative to the uploads directory.
+	 *
+	 * @return int
+	 */
+	public function get_attachment_of_local_file( string $file ): int {
+		$attachments = $this->get_attachments_of_files( array( $file ) );
+		return $attachments[ $file ] ?? 0;
+	}
+
+	/**
 	 * Add the local paths of images in contents to the cache, as their attachment ID is known there.
 	 *
 	 * This prevents queries for them during the replacement of the local URLs.

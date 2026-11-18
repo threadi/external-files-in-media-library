@@ -40,6 +40,8 @@ Do you want to optimize images later, which are exported already? Image optimize
 
 If the primary external source for exports could not be used (e.g. because the extension of its service has been deactivated), no files are exported, also not to the other external sources. They stay local files, a hint in the backend names the reason. If you do not need the external source anymore, switch off its export in the list of your external sources. Your settings are kept: as soon as the reason is gone, the export works again and "Export existing files" exports the files uploaded in the meantime.
 
+Do you use a plugin, which finds and deletes unused media? Be careful: deleting an exported file deletes it on its external sources, too. External files have no local file and their usage via external URLs could often not be detected, so such plugins could show them as unused or broken. "Media Cleaner" is supported: it checks exported files via their former local URLs in your contents, files imported from external sources are always considered as used (hook `efml_media_cleaner_check_external_files`), local copies and working copies of exported files are not shown in its filesystem scan, and FTP sources are not contacted during its scans. While a file is in the trash of Media Cleaner, it is not delivered; restore it there, if it is still needed. With other plugins of this kind, check each file before you delete it.
+
 * In the backend: settings → "Export", then enable the export for an external source
 * Documentation: [Directories](import/directories.md) for the external sources, the documentations of the extensions for their services
 
