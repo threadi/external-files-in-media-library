@@ -280,4 +280,87 @@ class Proxy extends externalFilesTests {
 		$this->assertSame( '', $output );
 		$this->assertSame( $level, ob_get_level() );
 	}
+
+	/**
+	 * Return a mocked external file.
+	 *
+	 * @param bool $private Whether the file is private.
+	 *
+	 * @return \ExternalFilesInMediaLibrary\ExternalFiles\File
+	 */
+	private function get_file_mock( bool $private ): \ExternalFilesInMediaLibrary\ExternalFiles\File {
+		$file_obj = $this->getMockBuilder( \ExternalFilesInMediaLibrary\ExternalFiles\File::class )->disableOriginalConstructor()->onlyMethods( array( 'is_private', 'get_file_type_obj' ) )->getMock();
+		$file_obj->method( 'is_private' )->willReturn( $private );
+		$file_obj->method( 'get_file_type_obj' )->willReturn( new \ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image( false ) );
+		return $file_obj;
+	}
+
+	/**
+	 * Test the header "Cache-Control" for files delivered by the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_cache_control(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$max   = get_option( 'eml_images_proxy_max_age' );
+
+		// test 1: public files for one day.
+		update_option( 'eml_images_proxy_max_age', 0 );
+		$this->assertEquals( 'public, max-age=86400', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+
+		// test 2: not longer than the cache of the proxy.
+		update_option( 'eml_images_proxy_max_age', 2 );
+		$this->assertEquals( 'public, max-age=7200', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+		update_option( 'eml_images_proxy_max_age', 168 );
+		$this->assertEquals( 'public, max-age=86400', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+
+		// test 3: private files only in the browser with a check on every use.
+		$this->assertEquals( 'private, no-cache', $proxy->get_cache_control( $this->get_file_mock( true ) ) );
+
+		// test 4: the value could be changed.
+		$callback = static function (): string {
+			return 'no-store';
+		};
+		add_filter( 'efml_proxy_cache_control', $callback );
+		$this->assertEquals( 'no-store', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+		remove_filter( 'efml_proxy_cache_control', $callback );
+		update_option( 'eml_images_proxy_max_age', $max );
+	}
+
+	/**
+	 * Test the check of conditional requests.
+	 *
+	 * @return void
+	 */
+	public function test_not_modified(): void {
+		$method = new \ReflectionMethod( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::class, 'is_not_modified' );
+		$proxy  = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$backup = $_SERVER; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$time   = 1763460000;
+
+		// test 1: without conditional headers.
+		unset( $_SERVER['HTTP_IF_NONE_MATCH'], $_SERVER['HTTP_IF_MODIFIED_SINCE'] );
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		// test 2: matching ETag, also weak and in a list; not matching ETag wins over the date.
+		$_SERVER['HTTP_IF_NONE_MATCH'] = '"a-b"';
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$_SERVER['HTTP_IF_NONE_MATCH'] = '"x-y", W/"a-b"';
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$_SERVER['HTTP_IF_NONE_MATCH']     = '"x-y"';
+		$_SERVER['HTTP_IF_MODIFIED_SINCE'] = gmdate( 'D, d M Y H:i:s', $time ) . ' GMT';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		// test 3: the date.
+		unset( $_SERVER['HTTP_IF_NONE_MATCH'] );
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time + 10 ) );
+
+		// test 4: only for GET and HEAD.
+		$_SERVER['REQUEST_METHOD'] = 'POST';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		$_SERVER = $backup;
+	}
 }

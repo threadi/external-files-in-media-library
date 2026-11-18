@@ -267,7 +267,7 @@ class Export extends Tools_Base {
 		$field->set_title( __( 'Structure of the folders', 'external-files-in-media-library' ) );
 		$field->set_list_title( __( 'Available placeholders:', 'external-files-in-media-library' ) );
 		$field->set_options( $this->get_folder_structure_placeholders() );
-		$field->set_description( __( 'Year, month and day are the date of the upload of the file, like in the folders of WordPress. The timestamp is the time of the export, e.g. to bypass outdated caches of a CDN. Use "/" to separate folders.', 'external-files-in-media-library' ) . $yearmonth_hint );
+		$field->set_description( __( 'Year, month and day are the date of the upload of the file, like in the folders of WordPress. Use "/" to separate folders.', 'external-files-in-media-library' ) . ' ' . __( 'The timestamp is the time of the export and enables the object versioning: each export gets its own URL, so outdated caches of CDNs and browsers are bypassed and services like AWS S3 and Google Cloud Storage let them cache the files for one week instead of one day.', 'external-files-in-media-library' ) . $yearmonth_hint );
 		$field->set_sanitize_callback( array( $this, 'sanitize_folder_structure' ) );
 		$field->add_depend( $setting_export, 1 );
 		$field->add_depend( $setting_folders, 1 );
@@ -2811,6 +2811,53 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Return whether the object versioning is used: the folders of exported files contain the time of the export,
+	 * so each export gets its own URL.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_object_versioning_enabled(): bool {
+		return $this->is_folder_structure_enabled() && str_contains( (string) get_option( 'eml_export_folder_structure', '' ), '%timestamp%' );
+	}
+
+	/**
+	 * Return the value of the header "Cache-Control" for files, which are exported to services, which save it with
+	 * the file (e.g. AWS S3 and Google Cloud Storage).
+	 *
+	 * Browsers and CDNs could cache public files for one day, with object versioning for one week. Private files get
+	 * no value, as they are delivered via signed URLs or the proxy.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int  $attachment_id The attachment ID.
+	 * @param bool $is_private       Whether the file is saved privately.
+	 *
+	 * @return string
+	 */
+	public function get_cache_control( int $attachment_id, bool $is_private = false ): string {
+		// get the value.
+		$cache_control = '';
+		if ( ! $is_private ) {
+			$cache_control = 'public, max-age=' . ( $this->is_object_versioning_enabled() ? WEEK_IN_SECONDS : DAY_IN_SECONDS );
+		}
+
+		/**
+		 * Filter the value of the header "Cache-Control" for exported files.
+		 *
+		 * Used by services, which save it with the file (e.g. AWS S3 and Google Cloud Storage). Return an empty
+		 * string to save no value.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $cache_control The value of the header.
+		 * @param int    $attachment_id The attachment ID.
+		 * @param bool   $is_private       Whether the file is saved privately.
+		 */
+		return (string) apply_filters( 'efml_export_cache_control', $cache_control, $attachment_id, $is_private );
+	}
+
+	/**
 	 * Return whether files should be saved privately on the given external source.
 	 *
 	 * This requires the support of the service and the enabled option in the export settings of the external source.
@@ -2851,7 +2898,7 @@ class Export extends Tools_Base {
 			'year'      => __( 'Year', 'external-files-in-media-library' ),
 			'monthnum'  => __( 'Month', 'external-files-in-media-library' ),
 			'day'       => __( 'Day', 'external-files-in-media-library' ),
-			'timestamp' => __( 'Timestamp', 'external-files-in-media-library' ),
+			'timestamp' => __( 'Timestamp (object versioning)', 'external-files-in-media-library' ),
 		);
 
 		/**

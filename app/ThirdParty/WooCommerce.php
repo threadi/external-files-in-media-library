@@ -108,6 +108,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		add_filter( 'woocommerce_download_product_filepath', array( $this, 'get_download_file_path' ) );
 		add_filter( 'woocommerce_file_download_method', array( $this, 'use_force_method_for_cached_files' ), 10, 3 );
 		add_filter( 'efml_proxy_allow_delivery', array( $this, 'prevent_proxy_for_protected_downloads' ), 10, 2 );
+		add_filter( 'efml_proxy_cache_control', array( $this, 'prevent_shared_caching_of_protected_downloads' ), 10, 2 );
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_download_info_in_dialog' ), 10, 2 );
 	}
 
@@ -782,6 +783,25 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 
 		// return whether the actual user is allowed to edit this file.
 		return current_user_can( 'edit_post', $external_file_obj->get_id() );
+	}
+
+	/**
+	 * Prevent the caching of protected downloads by CDNs and other shared caches, as the proxy delivers them only
+	 * to some users.
+	 *
+	 * @param string $cache_control     The value of the header "Cache-Control".
+	 * @param File   $external_file_obj The external file object.
+	 *
+	 * @return string
+	 */
+	public function prevent_shared_caching_of_protected_downloads( string $cache_control, File $external_file_obj ): string {
+		// bail if this is not a protected download.
+		if ( ! $this->is_protected_download( $external_file_obj ) ) {
+			return $cache_control;
+		}
+
+		// allow only the browser to cache it, with a check on every use.
+		return 'private, no-cache';
 	}
 
 	/**

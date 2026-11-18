@@ -371,4 +371,47 @@ class Export extends externalFilesTests {
 		$this->assertFileExists( $this->export_directory . $filename );
 		$this->assertEmpty( get_post_meta( $attachment_id, 'efml_export_folders', true ) );
 	}
+
+	/**
+	 * Test the header "Cache-Control" for exported files.
+	 *
+	 * @return void
+	 */
+	public function test_cache_control(): void {
+		$export    = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance();
+		$folders   = get_option( 'eml_export_folders' );
+		$structure = get_option( 'eml_export_folder_structure' );
+		$yearmonth = get_option( 'uploads_use_yearmonth_folders' );
+		update_option( 'uploads_use_yearmonth_folders', 1 );
+
+		// test 1: one day without object versioning, also with folders without timestamp.
+		update_option( 'eml_export_folders', 0 );
+		update_option( 'eml_export_folder_structure', '%year%/%timestamp%' );
+		$this->assertFalse( $export->is_object_versioning_enabled() );
+		$this->assertEquals( 'public, max-age=86400', $export->get_cache_control( 0 ) );
+		update_option( 'eml_export_folders', 1 );
+		update_option( 'eml_export_folder_structure', '%year%/%monthnum%' );
+		$this->assertFalse( $export->is_object_versioning_enabled() );
+		$this->assertEquals( 'public, max-age=86400', $export->get_cache_control( 0 ) );
+
+		// test 2: one week with object versioning.
+		update_option( 'eml_export_folder_structure', '%year%/%timestamp%' );
+		$this->assertTrue( $export->is_object_versioning_enabled() );
+		$this->assertEquals( 'public, max-age=604800', $export->get_cache_control( 0 ) );
+
+		// test 3: nothing for private files.
+		$this->assertEquals( '', $export->get_cache_control( 0, true ) );
+
+		// test 4: the value could be changed.
+		$callback = static function (): string {
+			return 'public, max-age=31536000, immutable';
+		};
+		add_filter( 'efml_export_cache_control', $callback );
+		$this->assertEquals( 'public, max-age=31536000, immutable', $export->get_cache_control( 0 ) );
+		remove_filter( 'efml_export_cache_control', $callback );
+
+		update_option( 'eml_export_folders', $folders );
+		update_option( 'eml_export_folder_structure', $structure );
+		update_option( 'uploads_use_yearmonth_folders', $yearmonth );
+	}
 }

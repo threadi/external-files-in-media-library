@@ -659,7 +659,7 @@ class Variants {
 		Log::get_instance()->create( __( 'Proxy delivers the variant of the image in the format supported by the browser.', 'external-files-in-media-library' ), (string) ( $variant['url'] ?? '' ), 'info', 2 );
 
 		// output it.
-		$this->output( $path, (string) ( $variant['mime-type'] ?? '' ), (string) ( $variant['file'] ?? '' ) );
+		$this->output( $path, (string) ( $variant['mime-type'] ?? '' ), (string) ( $variant['file'] ?? '' ), $external_file_obj );
 	}
 
 	/**
@@ -826,19 +826,25 @@ class Variants {
 	/**
 	 * Output the given file of the proxy cache and end the request.
 	 *
-	 * @param string $path      The absolute path of the file.
-	 * @param string $mime_type The mime type of the file.
-	 * @param string $file_name The name of the file for the browser.
+	 * @param string    $path      The absolute path of the file.
+	 * @param string    $mime_type The mime type of the file.
+	 * @param string    $file_name The name of the file for the browser.
+	 * @param File|null $external_file_obj The external file object of the image (for the headers of the caching).
 	 *
 	 * @return void
 	 */
-	public function output( string $path, string $mime_type, string $file_name ): void {
+	public function output( string $path, string $mime_type, string $file_name, ?File $external_file_obj = null ): void {
 		// get the file name for the header.
 		$file_name = sanitize_file_name( $file_name );
 		if ( '' === $file_name ) {
 			$file_name = 'image';
 		}
 		$file_name_ascii = str_replace( array( '"', '\\' ), '_', (string) preg_replace( '/[^\x20-\x7E]/', '_', $file_name ) );
+
+		// send the headers for the caching (ends the request, if the browser has the actual file already).
+		if ( $external_file_obj instanceof File ) {
+			Proxy::get_instance()->send_cache_headers( $path, $external_file_obj );
+		}
 
 		// send the headers.
 		header( 'Content-Type: ' . $mime_type );

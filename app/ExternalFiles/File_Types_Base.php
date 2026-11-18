@@ -335,6 +335,9 @@ class File_Types_Base {
 		$filename_ascii = (string) preg_replace( '/[^\x20-\x7E]/', '_', $filename );
 		$filename_ascii = str_replace( array( '"', '\\' ), '_', $filename_ascii );
 
+		// send the headers for the caching (ends the request, if the browser has the actual file already).
+		Proxy::get_instance()->send_cache_headers( $cached_file, $external_file_obj );
+
 		// send the headers.
 		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
 		header( 'X-Content-Type-Options: nosniff' );

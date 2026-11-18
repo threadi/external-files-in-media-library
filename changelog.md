@@ -104,6 +104,11 @@
 - Added hook "efml_redirect_missing_uploads" to disable this redirection
 - The block editor and the classic editor show exported images also with their old local URL, if the web server does not pass requests for missing files to WordPress; only the display is changed, the contents stay unchanged
 - The check in Site Health explains how to pass requests for missing files to WordPress (also for locations of images in nginx and for the rules of Converter for Media)
+- The proxy sends headers for caching: browsers and CDNs could cache public files for one day (not longer than the proxy caches them), private files and protected downloads of WooCommerce only the browser; with ETag and Last-Modified, unchanged files are answered with "304 Not Modified" without their content
+- Added hook "efml_proxy_cache_control" to change the caching of files delivered by the proxy
+- Services, which save it with the file (AWS S3 and S3-compatible storages, Google Cloud Storage), get the header "Cache-Control" for exported files: one day, with object versioning (timestamp in the folders) one week, private files none
+- Added methods "get_cache_control()" and "is_object_versioning_enabled()" for exports and hook "efml_export_cache_control"
+- The timestamp in the structure of the folders for exported files is named "object versioning"
 - Added hint in the backend, if new files are not exported, because the service of an external source for exports is not available (e.g. its extension is not active), incl. the name of the extension
 - Added methods "get_export_source_problem()", "is_export_source_usable()", "get_main_export_source()" and "get_export_sources_problem()" for exports and hook "efml_export_source_usable"
 - Added button "Restore now" in the export settings and WP CLI command "wp eml localize" to restore all exported files as local files at their original path in the background, incl. their sizes with their former names: they are normal local files afterward, so the contents work also without the plugin; the export is disabled for this, the copies on the external sources are kept or deleted as chosen

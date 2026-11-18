@@ -256,7 +256,7 @@ class Proxy {
 		if ( $size_cached ) {
 			$size = Sizes::get_instance()->find_by_dimensions( $external_file_obj->get_id(), $dimensions );
 			if ( ! empty( $size['mime-type'] ) && $size['mime-type'] !== $external_file_obj->get_mime_type() && str_starts_with( (string) $size['mime-type'], 'image/' ) ) {
-				Variants::get_instance()->output( $external_file_obj->get_cache_file( array( (int) $dimensions[0], (int) $dimensions[1] ) ), (string) $size['mime-type'], (string) ( $size['file'] ?? '' ) );
+				Variants::get_instance()->output( $external_file_obj->get_cache_file( array( (int) $dimensions[0], (int) $dimensions[1] ) ), (string) $size['mime-type'], (string) ( $size['file'] ?? '' ), $external_file_obj );
 			}
 		}
 
@@ -355,6 +355,118 @@ class Proxy {
 
 		// prevent the redirect.
 		return false;
+	}
+
+	/**
+	 * Send the headers for the caching of a file delivered by the proxy and answer conditional requests.
+	 *
+	 * Public files could be cached by browsers and CDNs for one day at most (and not longer than the cache of the
+	 * proxy for their file type), private files only by the browser with a check on every use. The ETag and
+	 * Last-Modified are taken from the file in the cache of the proxy: if the browser has the actual file already,
+	 * the request is answered with "304 Not Modified" and ends without the content.
+	 *
+	 * @param string $file              The absolute path to the file in the cache of the proxy.
+	 * @param File   $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function send_cache_headers( string $file, File $external_file_obj ): void {
+		// bail if headers are sent already or the file does not exist.
+		if ( headers_sent() || ! file_exists( $file ) ) {
+			return;
+		}
+
+		// get the values for the validation of the cache.
+		$modified = absint( filemtime( $file ) );
+		$etag     = '"' . dechex( $modified ) . '-' . dechex( absint( wp_filesize( $file ) ) ) . '"';
+
+		// remove the headers of WordPress, which prevent the caching (e.g. for logged-in users).
+		header_remove( 'Expires' );
+		header_remove( 'Pragma' );
+		header_remove( 'Last-Modified' );
+
+		// send the headers.
+		header( 'Cache-Control: ' . $this->get_cache_control( $external_file_obj ) );
+		header( 'ETag: ' . $etag );
+		header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $modified ) . ' GMT' );
+
+		// bail if the browser has the actual file already.
+		if ( $this->is_not_modified( $etag, $modified ) ) {
+			status_header( 304 );
+			exit;
+		}
+	}
+
+	/**
+	 * Return the value of the header "Cache-Control" for the given file delivered by the proxy.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 *
+	 * @return string
+	 */
+	public function get_cache_control( File $external_file_obj ): string {
+		// private files could only be cached by the browser of the visitor, which checks them on every use.
+		if ( $external_file_obj->is_private() ) {
+			$cache_control = 'private, no-cache';
+		} else {
+			// get the maximum age: one day, but not longer than the cache of the proxy for this file type.
+			$max_age = DAY_IN_SECONDS;
+			$hours   = absint( get_option( 'eml_' . strtolower( $external_file_obj->get_file_type_obj()->get_name() ) . '_proxy_max_age', 0 ) );
+			if ( $hours > 0 ) {
+				$max_age = min( $max_age, $hours * HOUR_IN_SECONDS );
+			}
+			$cache_control = 'public, max-age=' . $max_age;
+		}
+
+		/**
+		 * Filter the value of the header "Cache-Control" for a file delivered by the proxy.
+		 *
+		 * Use e.g. "private, no-cache" for files, which are only delivered to some users.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $cache_control The value of the header.
+		 * @param File   $external_file_obj The external file object.
+		 */
+		return (string) apply_filters( 'efml_proxy_cache_control', $cache_control, $external_file_obj );
+	}
+
+	/**
+	 * Return whether the browser has the actual file already, according to its conditional headers.
+	 *
+	 * @param string $etag     The ETag of the file.
+	 * @param int    $modified The time of the last modification of the file.
+	 *
+	 * @return bool
+	 */
+	private function is_not_modified( string $etag, int $modified ): bool {
+		// only GET and HEAD requests could be answered with 304.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+		if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) ) {
+			return false;
+		}
+
+		// check the ETag, if the browser sends one (it takes precedence over the date).
+		$if_none_match = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
+		if ( '' !== $if_none_match ) {
+			if ( '*' === trim( $if_none_match ) ) {
+				return true;
+			}
+			foreach ( explode( ',', $if_none_match ) as $value ) {
+				// compare weakly, e.g. if a CDN or compression marked the ETag as weak.
+				if ( $etag === preg_replace( '#^W/#', '', trim( $value ) ) ) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// check the date.
+		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
+		if ( '' === $if_modified_since ) {
+			return false;
+		}
+		$since = strtotime( $if_modified_since );
+		return false !== $since && $modified <= $since;
 	}
 
 	/**
