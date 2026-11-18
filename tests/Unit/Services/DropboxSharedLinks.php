@@ -73,6 +73,36 @@ class DropboxSharedLinksClient extends Client {
 	}
 
 	/**
+	 * The deleted paths.
+	 *
+	 * @var array<int,string>
+	 */
+	public array $deleted = array();
+
+	/**
+	 * Whether the deletion fails.
+	 *
+	 * @var bool
+	 */
+	public bool $fail_delete = false;
+
+	/**
+	 * Delete a file.
+	 *
+	 * @param string $path The path.
+	 *
+	 * @return array<string,mixed>
+	 * @throws Exception If the deletion should fail.
+	 */
+	public function delete( string $path ): array {
+		if ( $this->fail_delete ) {
+			throw new Exception( 'path_lookup/not_found' );
+		}
+		$this->deleted[] = $path;
+		return array();
+	}
+
+	/**
 	 * Return the content of a file as stream.
 	 *
 	 * @param string $path The path.
@@ -190,6 +220,30 @@ class DropboxSharedLinks extends externalFilesTests {
 	public function test_export_uses_existing_shared_link(): void {
 		$this->client->links['/photos/red.jpg'] = 'https://www.dropbox.com/scl/fi/old/photos/red.jpg?rlkey=xyz&dl=0';
 		$this->assertEquals( 'https://www.dropbox.com/scl/fi/old/photos/red.jpg?rlkey=xyz&raw=1', $this->get_shared_link( '/photos/red.jpg' ) );
+	}
+
+	/**
+	 * Test that an uploaded file is removed again, if it could not be used (e.g. without shared link).
+	 *
+	 * @return void
+	 */
+	public function test_unused_upload_is_removed(): void {
+		$method = new ReflectionMethod( Export::class, 'remove_uploaded_file' );
+		$method->setAccessible( true );
+
+		// the file is deleted in Dropbox.
+		$method->invoke( Export::get_instance(), '/photos/red.jpg', 'DropBox/photos/red.jpg', false );
+		$this->assertSame( array( '/photos/red.jpg' ), $this->client->deleted );
+
+		// without path nothing is deleted.
+		$method->invoke( Export::get_instance(), '', 'DropBox/photos/red.jpg', false );
+		$this->assertCount( 1, $this->client->deleted );
+
+		// a failed deletion is logged with the hint to remove the file manually.
+		$this->client->fail_delete = true;
+		$method->invoke( Export::get_instance(), '/photos/blue.jpg', 'DropBox/photos/blue.jpg', false );
+		$this->assertCount( 1, $this->client->deleted );
+		$this->assertStringContainsString( 'Please remove it manually', (string) wp_json_encode( \ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->get_logs( '', 'error' ) ) );
 	}
 
 	/**

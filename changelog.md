@@ -27,6 +27,7 @@
 - Added documentation for the constants in docs/constants.md
 - Added check for existing files with the same name on the external sources before a file is exported
 - Added more hooks
+- Added live tests with real accounts of all services for development (PHPUnit and Playwright, credentials in .env.live, see docs/live-tests.md)
 - Added protection of external sources on copies of the website (e.g. staging sites): files are not exported to or deleted on external sources, and scheduled synchronizations are paused, reading and delivering of files is not affected
 - Copies are detected by a changed address of the website or by a production website used as staging or development website, the actual website is saved as main website without any question
 - Added hint for copies in the backend with the options to use the website as main website or to confirm it as copy
@@ -175,6 +176,8 @@
 
 ### Fixed
 
+- Fixed files remaining in Dropbox, if no shared link could be created for an exported file (e.g. without the permission "sharing.write" of the app): the uploaded file is removed again and the log names the reason
+- Fixed removal of finished import runs and their progress with SQLite (e.g. WordPress Playground)
 - Fixed exported files on Dropbox and imported shared links of Dropbox being saved with the temporary URL of their content, which expires after 4 hours (afterward e.g. the proxy could not load them anymore): their shared link is saved now; files exported before are loaded via the Dropbox API (for visitors, e.g. via the proxy, only if Dropbox is connected for the whole website)
 - Fixed export to Dropbox failing, if the file has already a shared link
 - Fixed import of shared links of Dropbox by users without the capability for Dropbox: the preview page of Dropbox was loaded instead of the file ("The presumed directory URL does not contain any linked files."); shared links are public URLs, which do not use the connection to Dropbox, so each user who is allowed to add external files could import them

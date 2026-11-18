@@ -110,8 +110,50 @@ class Export extends Export_Base {
 			return $dropbox_obj->get_name() . ( ! empty( $result['path_display'] ) ? $result['path_display'] : $dropbox_target );
 		}
 
-		// return the shared link, which does not expire.
-		return $this->get_shared_link( $result, $target, $user );
+		// get the shared link, which does not expire.
+		$url = $this->get_shared_link( $result, $target, $user );
+
+		// remove the uploaded file again, if no shared link could be created (e.g. if the app of the connection is not
+		// allowed to share files), so it does not remain unused in Dropbox. It is always a new file, as existing files
+		// are never overwritten here.
+		if ( false === $url ) {
+			$this->remove_uploaded_file( (string) $result['path_lower'], $target, $user );
+			delete_post_meta( $attachment_id, 'efml_dropbox_path' );
+		}
+
+		// return the shared link.
+		return $url;
+	}
+
+	/**
+	 * Remove a file, which has just been uploaded, but could not be used.
+	 *
+	 * @param string        $path   The path of the file in Dropbox.
+	 * @param string        $target The target of the file (for the log).
+	 * @param WP_User|false $user   The user, whose connection is used.
+	 *
+	 * @return void
+	 */
+	private function remove_uploaded_file( string $path, string $target, WP_User|false $user ): void {
+		// bail if no path is given.
+		if ( '' === $path ) {
+			return;
+		}
+
+		try {
+			$client = DropBox::get_instance()->get_client_for_user( $user );
+			if ( ! $client instanceof Client ) {
+				return;
+			}
+			$client->delete( $path );
+		} catch ( Exception $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The uploaded file could not be removed from Dropbox again. Please remove it manually. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $target, 'error' );
+			return;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The uploaded file has been removed from Dropbox again, as no shared link could be created for it. Check whether the app of your Dropbox connection is allowed to share files (permission "sharing.write").', 'external-files-in-media-library' ), $target, 'error' );
 	}
 
 	/**

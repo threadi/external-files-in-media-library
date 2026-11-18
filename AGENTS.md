@@ -56,6 +56,9 @@ vendor/bin/phpstan analyse
 vendor/bin/phpcs .
 vendor/bin/phpcbf .
 npx playwright test       # end-to-end tests in tests/Playwright/
+composer test-install-live   # test suite incl. the extensions (bin/install-addons.sh, settings in .env.live)
+composer test-live           # live tests with real accounts (tests/Live/, credentials in .env.live, docs/live-tests.md)
+composer test-live-e2e       # Playwright live tests against the development website (tests/Live/Playwright/)
 task release -- x.y.z     # checks and the release ZIP (bin/build-release.sh)
 ```
 
@@ -73,7 +76,7 @@ task release -- x.y.z     # checks and the release ZIP (bin/build-release.sh)
 | `app/Dependencies/` | Mozart output (do not edit by hand) |
 | `blocks/`, `src/`, `js/`, `admin/` | Block, command palette and admin scripts and styles |
 | `docs/` | User and developer documentation in English and German (`*_de.md`); `docs/hooks.md` is generated |
-| `tests/Unit/` | PHPUnit tests; `tests/Servers/` test servers; `tests/Playwright/` browser tests |
+| `tests/Unit/` | PHPUnit tests; `tests/Servers/` test servers; `tests/Playwright/` browser tests; `tests/Live/` live tests with real accounts (`services.json` lists the services and their keys in `.env.live`) |
 | `skills/`, `AGENTS.md` | Instructions for AI agents; not part of the release ZIP |
 
 ## Domain model (keep this straight)
@@ -151,6 +154,7 @@ External source (term of the taxonomy `edlfw_archive` of easy-directory-listing,
 - Tests must also pass in a full run, not only alone: IDs are reused after the rollback of each test; constants defined by other tests (e.g. `EFML_URL_IMPORT_RUNNING`) persist in the process — such tests run with `@runTestsInSeparateProcesses`.
 - Tests with FTP/SFTP/HTTP need the test servers (`bin/test-servers.sh`), otherwise they are skipped.
 - Each fixed problem gets a test which fails without the fix. Compare a full run with the run before the change: no new failures.
+- Live tests (`tests/Live/`) use real accounts from `.env.live` (never commit it). A new service or a new constant of a service is added to `tests/Live/services.json` and `.env.live.example`, so the live tests and the plugin EFML Dev Credentials know it.
 
 ## Do not
 

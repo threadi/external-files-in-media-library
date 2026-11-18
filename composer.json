@@ -19,7 +19,21 @@
             "phpunit --filter Multisite"
         ],
         "test-install": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest",
-        "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true"
+        "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true",
+        "test-install-live": [
+            "@putenv EFML_ADDONS_DEFAULT_SOURCE=github",
+            "@test-install"
+        ],
+        "test-install-addons": [
+            "@putenv EFML_ADDONS_DEFAULT_SOURCE=github",
+            "bash bin/install-addons.sh"
+        ],
+        "test-live": "phpunit -c phpunit-live.xml.dist",
+        "test-with-live": [
+            "@test",
+            "@test-live"
+        ],
+        "test-live-e2e": "npx playwright test -c playwright-live.config.ts"
     },
     "extra": {
         "mozart": {
