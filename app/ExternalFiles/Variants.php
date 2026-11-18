@@ -1017,6 +1017,7 @@ class Variants {
 			if ( $export_obj instanceof Export_Base ) {
 				$credentials            = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( absint( $term_id ) );
 				$credentials['private'] = Files::get_instance()->get_file( $attachment_id )->is_private();
+				$credentials['term_id'] = absint( $term_id );
 				try {
 					$deleted = $export_obj->delete_size( $attachment_id, (string) ( $variant['url'] ?? '' ), (string) ( $variant['target'] ?? '' ), $credentials );
 				} catch ( \Throwable $e ) {

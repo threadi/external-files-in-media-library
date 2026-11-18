@@ -243,6 +243,15 @@ class Import extends Directory_Listing_Base {
 			return false;
 		}
 
+		/**
+		 * Do nothing if the actual user is not allowed to import files with this protocol (e.g. its service).
+		 */
+		if ( ! $protocol_handler_obj->is_import_allowed_for_user() ) {
+			/* translators: %1$s will be replaced by the title of the protocol (e.g. DropBox). */
+			$log->create( sprintf( __( 'The URL could not be used, as you are not allowed to import files from %1$s.', 'external-files-in-media-library' ), $protocol_handler_obj->get_title() ), $url, 'error', 0, $this->get_identifier() );
+			return false;
+		}
+
 		// embed necessary files.
 		require_once ABSPATH . 'wp-admin/includes/image.php'; // @phpstan-ignore requireOnce.fileNotFound
 		require_once ABSPATH . 'wp-admin/includes/file.php'; // @phpstan-ignore requireOnce.fileNotFound

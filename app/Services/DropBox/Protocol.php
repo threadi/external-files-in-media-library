@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use Error;
 use Exception;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
@@ -25,6 +26,7 @@ use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
 use Spatie\Dropbox\Exceptions\BadRequest;
 use WP_Filesystem_Base;
+use WP_User;
 
 /**
  * Object to handle different protocols.
@@ -43,6 +45,20 @@ class Protocol extends Protocol_Base {
 	 * @var string
 	 */
 	protected string $name = 'dropbox';
+
+	/**
+	 * Return whether files could be imported from DropBox in the actual request.
+	 *
+	 * The protocol is also registered for visitors (e.g. to deliver private files via the proxy), but only users
+	 * with the capability for DropBox are allowed to import files (as well as cron and WP CLI).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_import_allowed_for_user(): bool {
+		return DropBox::get_instance()->is_import_permitted();
+	}
 
 	/**
 	 * Return whether this protocol is available in this hosting.
@@ -272,6 +288,9 @@ class Protocol extends Protocol_Base {
 	/**
 	 * Return the DropBox client for the fields of this object.
 	 *
+	 * For an external file it uses the connection of the owner of its external source, if each user has its own
+	 * connection (otherwise e.g. visitors could not load private files via the proxy).
+	 *
 	 * @return Client|false
 	 */
 	private function get_client(): Client|false {
@@ -281,11 +300,30 @@ class Protocol extends Protocol_Base {
 		// set the fields.
 		$dropbox_obj->set_fields( $this->get_fields() );
 
-		// get the client with the given token.
-		$client = $dropbox_obj->get_client();
+		// get the client with the token of the owner of the external file, otherwise of the actual user.
+		$client = $dropbox_obj->get_client_for_user( $this->get_owner() );
 
 		// return the client, if it could be loaded.
 		return $client instanceof Client ? $client : false;
+	}
+
+	/**
+	 * Return the user, whose connection to DropBox is used for the external file of this object: the owner of its
+	 * external source. False, if no file is set or the connection of the website is used.
+	 *
+	 * @return WP_User|false
+	 */
+	private function get_owner(): WP_User|false {
+		// get the external file.
+		$external_file_obj = $this->get_external_file();
+
+		// bail if no file is set.
+		if ( ! $external_file_obj instanceof File ) {
+			return false;
+		}
+
+		// return the owner of its external source.
+		return DropBox::get_instance()->get_owner_of_file( $external_file_obj->get_id() );
 	}
 
 	/**
@@ -445,11 +483,8 @@ class Protocol extends Protocol_Base {
 		// cleanup the URL.
 		$url = (string) preg_replace( '#^' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(/' . preg_quote( $dropbox_obj->get_name(), '#' ) . '(?=/))?#i', '', $url );
 
-		// set the fields.
-		$dropbox_obj->set_fields( $this->get_fields() );
-
-		// get the client with the given token.
-		$client = $dropbox_obj->get_client();
+		// get the client (for files with the connection of the owner of their external source).
+		$client = $this->get_client();
 
 		// bail if client could not be loaded.
 		if ( ! $client instanceof Client ) {
@@ -551,7 +586,8 @@ class Protocol extends Protocol_Base {
 		}
 
 		// get the cached link.
-		$transient_name = 'efml_dropbox_link_' . md5( $url . (string) wp_json_encode( $this->get_fields() ) );
+		$owner          = $this->get_owner();
+		$transient_name = 'efml_dropbox_link_' . md5( $url . (string) wp_json_encode( $this->get_fields() ) . ( $owner instanceof WP_User ? '|' . $owner->ID : '' ) );
 		$cached         = get_transient( $transient_name );
 
 		// use the cached link, if it is valid long enough.
@@ -562,11 +598,8 @@ class Protocol extends Protocol_Base {
 		// get the DropBox object.
 		$dropbox_obj = DropBox::get_instance();
 
-		// set the fields.
-		$dropbox_obj->set_fields( $this->get_fields() );
-
-		// get the client with the given token.
-		$client = $dropbox_obj->get_client();
+		// get the client (for files with the connection of the owner of their external source).
+		$client = $this->get_client();
 
 		// bail if client could not be loaded.
 		if ( ! $client instanceof Client ) {

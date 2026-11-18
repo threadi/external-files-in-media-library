@@ -2951,6 +2951,19 @@ class Service_Base extends Directory_Listing_Base {
 	}
 
 	/**
+	 * Return whether files could be imported with this service in the actual request.
+	 *
+	 * Public variant of is_import_allowed() for the protocols of the services.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_import_permitted(): bool {
+		return $this->is_import_allowed();
+	}
+
+	/**
 	 * Return whether the actual import or synchronization is for this service.
 	 *
 	 * The import dialog sends the service with the request. A synchronization (also via cron or WP CLI)

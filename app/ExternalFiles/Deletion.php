@@ -209,6 +209,7 @@ class Deletion {
 		// get the credentials.
 		$credentials            = Taxonomy::get_instance()->get_entry( $term_id );
 		$credentials['private'] = ! empty( get_post_meta( $attachment_id, 'efml_private_file', true ) );
+		$credentials['term_id'] = $term_id;
 
 		// delete each file.
 		$remaining = array();

@@ -1042,6 +1042,7 @@ class Local_Work {
 	private function get_credentials( int $term_id, File $external_file_obj ): array {
 		$credentials            = Taxonomy::get_instance()->get_entry( $term_id );
 		$credentials['private'] = $external_file_obj->is_private();
+		$credentials['term_id'] = $term_id;
 		return $credentials;
 	}
 

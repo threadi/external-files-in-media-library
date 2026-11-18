@@ -125,6 +125,8 @@ External source (term of the taxonomy `edlfw_archive` of easy-directory-listing,
 - `File::is_proxy_required()` is true for private files and non-HTTP URLs. Do not add a way around it.
 - The proxy (`Proxy`, slug `emlproxy`) delivers files and sizes (`-WxH`) from its cache; `Sizes::cache_size()` loads an exported size, otherwise a size is created from the cached original.
 - `srcset` for exported images comes from `Sizes::add_sizes_to_srcset_meta()` and `Sizes::add_srcset_to_content_image()`.
+- Protocols of services (`efml_protocols`) are registered in every request, also for visitors: the proxy needs them for private and non-HTTP files, exports of uploads need them for users without the capability of the service. Never register them only behind a capability check. Imports check the capability via `Protocol_Base::is_import_allowed_for_user()` in `Import::add_url()`; protocols of services override it (usually with `Service_Base::is_import_permitted()`).
+- The access data for a file always come from the file, never from the actual user: e.g. Dropbox with one connection per user uses the connection of the owner of the external source of the file (`DropBox::get_owner_of_file()`, `get_owner_of_source()`, `get_client_for_user()`), also for visitors, in cron and for other users. The protocol of a file knows it via `Protocol_Base::get_external_file()` (set in `Protocols::get_protocol_object_for_external_file()`); exports pass the external source in `$credentials['term_id']`.
 
 ## Restore and uninstall
 

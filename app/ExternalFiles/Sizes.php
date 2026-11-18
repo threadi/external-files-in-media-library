@@ -1697,6 +1697,7 @@ class Sizes {
 			// get the credentials.
 			$credentials            = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id );
 			$credentials['private'] = $external_file_obj->is_private();
+			$credentials['term_id'] = $term_id;
 
 			// get the folder of the image on this external source.
 			$folders = get_post_meta( $attachment_id, 'efml_export_folders', true );

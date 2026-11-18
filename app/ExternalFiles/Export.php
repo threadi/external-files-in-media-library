@@ -1453,8 +1453,9 @@ class Export extends Tools_Base {
 			// create the export path of this file.
 			$export_path = trailingslashit( $term_url ) . ( '' !== $folder ? trailingslashit( $folder ) : '' ) . basename( $file );
 
-			// get credentials.
-			$credentials = Taxonomy::get_instance()->get_entry( $term_id );
+			// get credentials, with the ID of the external source (e.g. to use the connection of its owner).
+			$credentials            = Taxonomy::get_instance()->get_entry( $term_id );
+			$credentials['term_id'] = $term_id;
 
 			// get whether the file should be saved privately on this external source.
 			$private_file = $this->is_private_export( $term_id, $export_obj );
@@ -3023,7 +3024,7 @@ class Export extends Tools_Base {
 				'term_id'     => $term_id,
 				'export_obj'  => $export_obj,
 				'path'        => $path,
-				'credentials' => Taxonomy::get_instance()->get_entry( $term_id ),
+				'credentials' => array_merge( Taxonomy::get_instance()->get_entry( $term_id ), array( 'term_id' => $term_id ) ),
 			);
 		}
 

@@ -909,6 +909,23 @@ class Http extends Protocol_Base {
 			return false;
 		}
 
+		$instance = $this;
+		/**
+		 * Filter the temporary file for the given URL before it is downloaded via HTTP.
+		 *
+		 * Return the absolute path of a temporary file to use it instead of the download, e.g. if a service could
+		 * load the file via its API.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string|null $tmp_file The path of the temporary file, null to download it via HTTP.
+		 * @param string      $url      The given URL.
+		 * @param Http        $instance The protocol object.
+		 */
+		$tmp_file = apply_filters( 'efml_http_temp_file', null, $url, $instance );
+		if ( is_string( $tmp_file ) && '' !== $tmp_file ) {
+			return $tmp_file;
+		}
+
 		// download file as temporary file.
 		add_filter( 'http_request_args', array( $this, 'set_download_url_header' ), 10, 2 );
 		$tmp_file = download_url( $url );

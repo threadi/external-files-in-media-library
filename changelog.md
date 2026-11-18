@@ -103,6 +103,9 @@
 - Added button "Restore now" in the export settings and WP CLI command "wp eml localize" to restore all exported files as local files at their original path in the background, incl. their sizes with their former names: they are normal local files afterward, so the contents work also without the plugin; the export is disabled for this, the copies on the external sources are kept or deleted as chosen
 - Added dialog on "Deactivate" in the list of plugins, if exported files exist: it offers to restore them first
 - Added restore of the exported files during the uninstallation and the reset of the plugin, as far as the time allows; the reset is cancelled, if files are left, and restores them in the background first ("wp eml reset_plugin --force" or the link in the hint resets the plugin nevertheless)
+- Added methods "set_external_file()" and "get_external_file()" for protocols: the protocol of an external file knows the file, e.g. to use the access data of the file independent of the actual user
+- Added methods "is_import_allowed_for_user()" for protocols and "is_import_permitted()" for services: imports via a protocol are only possible, if the user is allowed to use its service (e.g. Dropbox), as the protocols of services are known in each request
+- Added hook "efml_http_temp_file" to load the file for a URL in another way than via HTTP (e.g. via the API of a service)
 - Added hooks "efml_file_restored" and "efml_restore_download_urls" and post meta "efml_local_sizes" with the names of the sizes of exported images; exported files from Dropbox are downloaded via the API for their restore
 - Added export of the sizes of images and their original image together with them to external sources, whose services support it (local directory, FTP/FTPS, Dropbox and the extensions for AWS S3, Google Cloud Storage, WebDAV and Google Drive)
 - The sizes are delivered exactly like the images themselves: via the proxy, if it is enabled for images (it loads them from the external source instead of creating them), otherwise from the external source; images get a srcset with their sizes, also in contents
@@ -172,6 +175,11 @@
 
 ### Fixed
 
+- Fixed exported files on Dropbox and imported shared links of Dropbox being saved with the temporary URL of their content, which expires after 4 hours (afterward e.g. the proxy could not load them anymore): their shared link is saved now; files exported before are loaded via the Dropbox API (for visitors, e.g. via the proxy, only if Dropbox is connected for the whole website)
+- Fixed export to Dropbox failing, if the file has already a shared link
+- Fixed import of shared links of Dropbox by users without the capability for Dropbox: the preview page of Dropbox was loaded instead of the file ("The presumed directory URL does not contain any linked files."); shared links are public URLs, which do not use the connection to Dropbox, so each user who is allowed to add external files could import them
+- Fixed private files of Dropbox not being delivered via the proxy to visitors and users without the capability for Dropbox, and export of uploads to Dropbox by such users: the protocol of Dropbox is known in each request now, imports from Dropbox still require the capability for Dropbox
+- Fixed exported files of Dropbox, if each user has its own connection to Dropbox: they are loaded, exported and deleted with the connection of the owner of their external source, independent of the actual user (e.g. for visitors via the proxy, in the background or for other users); before, the connection of the actual user was used, which failed without a connection or used another Dropbox
 - Fixed missing check whether the user is allowed to edit or delete the single file in these actions: deletion via REST API, switching between local and external hosting, reset of thumbnails, export of a file, real import (also as bulk action), check of availability, download of the data of a file and the abilities "switch-to-local", "switch-to-external", "reset-thumbnails" and "check-availability"
 - Fixed users on the list "Prevent access for these users" keeping the capabilities of the services and tools (e.g. synchronization, export, connection test), now they can not use any function of this plugin
 - Fixed the directory listing loading an external source of another user, if its ID is given

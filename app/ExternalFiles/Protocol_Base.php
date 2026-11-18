@@ -49,6 +49,13 @@ class Protocol_Base {
 	private array $fields = array();
 
 	/**
+	 * The external file this object is used for, if known.
+	 *
+	 * @var File|null
+	 */
+	private ?File $external_file = null;
+
+	/**
 	 * Cache for the complete list of files of a directory during this request.
 	 *
 	 * @var array<string,array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>>
@@ -406,6 +413,47 @@ class Protocol_Base {
 	 */
 	protected function get_service_names_for_blocking(): array {
 		return Services::get_instance()->get_service_names_for_blocking( $this->get_name() );
+	}
+
+	/**
+	 * Set the external file this object is used for.
+	 *
+	 * Protocols could use it to get the access data of the file (e.g. the connection of the owner of its external
+	 * source), independent of the actual user.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param File $external_file The external file.
+	 *
+	 * @return void
+	 */
+	public function set_external_file( File $external_file ): void {
+		$this->external_file = $external_file;
+	}
+
+	/**
+	 * Return the external file this object is used for, if known.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return File|null
+	 */
+	public function get_external_file(): ?File {
+		return $this->external_file;
+	}
+
+	/**
+	 * Return whether files could be imported with this protocol in the actual request.
+	 *
+	 * Protocols of services are also registered for visitors (e.g. to deliver private files via the proxy), so
+	 * their imports must check the capability of the service: protocols of services override this method.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_import_allowed_for_user(): bool {
+		return true;
 	}
 
 	/**
