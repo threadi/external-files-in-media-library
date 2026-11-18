@@ -104,13 +104,25 @@
 - Added hook "efml_redirect_missing_uploads" to disable this redirection
 - The block editor and the classic editor show exported images also with their old local URL, if the web server does not pass requests for missing files to WordPress; only the display is changed, the contents stay unchanged
 - The check in Site Health explains how to pass requests for missing files to WordPress (also for locations of images in nginx and for the rules of Converter for Media)
-- The proxy sends headers for caching: browsers and CDNs could cache public files for one day (not longer than the proxy caches them), private files and protected downloads of WooCommerce only the browser; with ETag and Last-Modified, unchanged files are answered with "304 Not Modified" without their content
+- The proxy sends headers for caching: browsers and CDNs could cache public files requested with their version for one day (not longer than the proxy caches them), public files without version (e.g. URLs in contents) are checked on every use, private files and protected downloads of WooCommerce could only be cached by the browser; with ETag and Last-Modified, unchanged files are answered with "304 Not Modified" without their content
+- The URLs of the proxy, which WordPress creates for the output (e.g. in "srcset" and for featured images), contain the version of the file, which changes with every change of the file (e.g. by image optimizers or Image Watermark), so browsers load changed files at once
+- Added hook "efml_proxy_file_version" and methods "get_version()", "set_changed()" and "add_version()" for the proxy
+- Added hook "efml_export_is_upload" and methods "mark_as_upload()" and "is_upload()" for exports
 - Added hook "efml_proxy_cache_control" to change the caching of files delivered by the proxy
 - Services, which save it with the file (AWS S3 and S3-compatible storages, Google Cloud Storage), get the header "Cache-Control" for exported files: one day, with object versioning (timestamp in the folders) one week, private files none
 - Added methods "get_cache_control()" and "is_object_versioning_enabled()" for exports and hook "efml_export_cache_control"
 - The timestamp in the structure of the folders for exported files is named "object versioning"
 - Added support for the plugin "Media Cleaner": external files are no longer shown as broken because of their missing local file, exported files are checked via their former local URLs (incl. their sizes), files imported from external sources are considered as used, local copies and working copies of exported files are not shown in its filesystem scan and external sources like FTP are not contacted during its scans
 - Added hook "efml_media_cleaner_check_external_files" and methods "get_all_local_files()" and "get_attachment_of_local_file()" for local URLs
+- Added support for the plugin "Media Bulk Download": external files are added to its ZIP files with their real name
+- Added support for the plugin "Image Watermark": the watermark could be added to and removed from exported images, via a working copy, its backups are exported beside the image; the image of the watermark is not exported, as the plugin reads it only from the uploads directory, and restored as local file, if it has been exported before
+- Added support for the plugin "Prevent Files / Folders Access": files of the protected types are not exported, while the restriction is enabled
+- Added hint in Site Health, if Simply Static is active without pretty permalinks, as it does not copy the files of the proxy then
+- Supported plugins are marked in the list of plugins (could be disabled in the advanced settings), incl. hook "efml_supported_plugin_files" and method "get_plugin_files()" for each support of other plugins
+- Added documentation of all supported plugins in docs/plugins.md
+- Added hook "efml_table_column_local_file" to show infos for local files in the media library
+- The Playwright live tests name missing or wrong settings exactly (e.g. a not resolvable URL or a failed login) and are skipped, if the website is not configured, instead of failing with a missing "admin.json"; their documentation has been extended
+- The Playwright live tests work independent of the language of the backend, fail at once with the text of a dialog, which shows an error, and are not stopped by Composer after 300 seconds anymore
 - Added hint in the backend, if new files are not exported, because the service of an external source for exports is not available (e.g. its extension is not active), incl. the name of the extension
 - Added methods "get_export_source_problem()", "is_export_source_usable()", "get_main_export_source()" and "get_export_sources_problem()" for exports and hook "efml_export_source_usable"
 - Added button "Restore now" in the export settings and WP CLI command "wp eml localize" to restore all exported files as local files at their original path in the background, incl. their sizes with their former names: they are normal local files afterward, so the contents work also without the plugin; the export is disabled for this, the copies on the external sources are kept or deleted as chosen
@@ -164,6 +176,7 @@
 
 ### Changed
 
+- Support for "Prevent Direct Access": protected files are not exported, external files could not be protected anymore and the column of the plugin is hidden per row instead of loading all external files on every page of the media library
 - The actions of the export settings for all files ("Export now", "Restore now", "Delete local copies now", "Export sizes now", working copies) and the actions of the queue require the capability to manage the settings in addition (also the abilities "queue-process" and "queue-cleanup")
 - The quickstart and the connection test require the capability to manage external files in addition
 - Added hook "efml_local_work_information_callers" for functions, which request the original image of exported images only for information
@@ -188,6 +201,7 @@
 
 ### Fixed
 
+- Fixed export of existing local files, if other plugins create their sizes again (e.g. Regenerate Thumbnails or Image Watermark while removing a watermark): only new uploads are exported via their metadata now, which also prevented the removal of watermarks
 - Fixed the proxy delivering the front page with HTTP status 200 instead of HTTP status 404 for files, which could not be delivered: the 404 template of the theme is used now
 - Fixed files remaining in Dropbox, if no shared link could be created for an exported file (e.g. without the permission "sharing.write" of the app): the uploaded file is removed again and the log names the reason
 - Fixed removal of finished import runs and their progress with SQLite (e.g. WordPress Playground)

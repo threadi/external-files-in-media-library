@@ -812,6 +812,9 @@ class File {
 	 * @return void
 	 */
 	public function delete_cache(): void {
+		// mark the file as changed, so the URLs of the proxy get a new version.
+		Proxy::get_instance()->set_changed( $this->get_id() );
+
 		// bail if is not cached.
 		if ( ! $this->is_cached() ) {
 			return;
@@ -1334,6 +1337,9 @@ class File {
 	 * @return void
 	 */
 	public function delete_thumbs(): void {
+		// mark the file as changed, so the URLs of the proxy get a new version.
+		Proxy::get_instance()->set_changed( $this->get_id() );
+
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 

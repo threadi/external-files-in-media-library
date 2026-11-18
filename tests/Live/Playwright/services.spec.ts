@@ -89,6 +89,45 @@ async function loadAsVisitor(browser: Browser, url: string): Promise<{ status: n
     }
 }
 
+/**
+ * Confirm the copyrights in the import dialog and start the import (independent of the language of the backend).
+ *
+ * @param page The page.
+ */
+async function startImport(page: Page): Promise<void> {
+    const dialog = page.locator('.efml-import-dialog[role="dialog"]');
+    await dialog.waitFor({ timeout: 60_000 });
+    await dialog.locator('#privacy_hint').check();
+    await dialog.locator('button.is-primary').first().click();
+}
+
+/**
+ * Wait until new attachments exist after the given ID and return them, fail with the text of the open dialog.
+ *
+ * @param page     The page.
+ * @param site     The website.
+ * @param latestId The ID of the latest attachment before the import.
+ * @param message  The message, if no attachment has been added.
+ */
+async function waitForNewMedia(page: Page, site: Site, latestId: number, message: string): Promise<number[]> {
+    const end = Date.now() + 120_000;
+    while (Date.now() < end) {
+        // return the new attachments.
+        const ids = await site.getMediaAfter(latestId);
+        if (ids.length > 0) {
+            return ids;
+        }
+
+        // stop, if the import has been finished without new attachments (its result is shown in a dialog).
+        if ((await page.locator('.efml-import-result-list').count()) > 0 && 0 === (await site.getMediaAfter(latestId)).length) {
+            break;
+        }
+        await page.waitForTimeout(2_000);
+    }
+    const dialog = (await page.locator('[role="dialog"]').last().innerText().catch(() => '')).trim();
+    throw new Error(`${message}${dialog ? ` The dialog shows: ${dialog}` : ''}`);
+}
+
 for (const service of env.configuredServices) {
     test.describe(service.label, () => {
         const sources: number[] = [];
@@ -109,7 +148,8 @@ for (const service of env.configuredServices) {
 
                 // open the external source.
                 await page.goto(site.adminUrl(`upload.php?page=efml_local_directories&method=${service.name}&term=${sourceId}`));
-                const importButtons = page.getByRole('button', { name: 'Import', exact: true });
+                // the first action of each file is the import (independent of the language of the backend).
+                const importButtons = page.locator('#easy-directory-listing-for-wordpress-listing td.actions button');
                 const details = page.locator('#easy-directory-listing-for-wordpress-details');
                 await details.waitFor({ timeout: 60_000 }).catch(async () => {
                     throw new Error(`The directory listing could not be loaded: ${await page.locator('#wpbody-content').innerText()}`);
@@ -129,14 +169,11 @@ for (const service of env.configuredServices) {
                 // import the first file via the dialog.
                 const latestId = await site.getLatestMediaId();
                 await importButtons.first().click();
-                await page.getByLabel('I confirm that I will respect the copyrights of these external files.').check();
-                await page.getByRole('button', { name: 'Add URL', exact: true }).click();
-                await expect(page.getByText(/Import has been executed/)).toBeVisible({ timeout: 120_000 });
+                await startImport(page);
 
                 // it is in the media library as external file.
-                const ids = await site.getMediaAfter(latestId);
+                const ids = await waitForNewMedia(page, site, latestId, 'The file has not been imported, see the log of the plugin.');
                 attachments.push(...ids);
-                expect(ids.length, 'The file has not been imported, see the log of the plugin.').toBeGreaterThan(0);
                 const file = await site.getFile(ids[0]);
 
                 // visitors get it.
@@ -231,13 +268,10 @@ test.describe('Single URLs', () => {
             await page.goto(site.adminUrl('media-new.php'));
             await page.locator('#plupload-upload-ui').locator('a.efml-import-dialog').click();
             await page.locator('#urls').fill(url);
-            await page.getByLabel('I confirm that I will respect the copyrights of these external files.').check();
-            await page.getByRole('button', { name: 'Add URLs' }).click();
-            await expect(page.getByText(/Import has been executed/)).toBeVisible({ timeout: 120_000 });
+            await startImport(page);
 
-            const ids = await site.getMediaAfter(latestId);
+            const ids = await waitForNewMedia(page, site, latestId, `The URL ${url} has not been added, see the log of the plugin.`);
             attachments.push(...ids);
-            expect(ids.length, `The URL ${url} has not been added, see the log of the plugin.`).toBeGreaterThan(0);
         });
     }
 });

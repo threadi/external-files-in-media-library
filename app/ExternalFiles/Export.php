@@ -53,6 +53,13 @@ class Export extends Tools_Base {
 	private bool $sync_running = false;
 
 	/**
+	 * List of attachment IDs, which have been uploaded in this request or whose export as upload is running.
+	 *
+	 * @var array<int,bool>
+	 */
+	private array $uploads = array();
+
+	/**
 	 * Instance of actual object.
 	 *
 	 * @var ?Export
@@ -107,6 +114,9 @@ class Export extends Tools_Base {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_hint_content' ), 10, 3 );
 		add_action( 'admin_init', array( $this, 'add_hint_for_unusable_sources' ) );
 		add_action( 'admin_action_efml_export_again', array( $this, 'export_again_via_request' ) );
+
+		// remember the uploads of this request, as only they are exported with their metadata.
+		add_action( 'add_attachment', array( $this, 'mark_as_upload' ) );
 
 		// bail if not enabled.
 		if ( ! $this->is_enabled() ) {
@@ -1207,6 +1217,13 @@ class Export extends Tools_Base {
 			return $metadata;
 		}
 
+		// bail if this is not an upload, but the metadata of an existing local file are created again (e.g. by a plugin
+		// to regenerate the sizes): it stays local, as other plugins could still work with its files.
+		if ( ! $this->is_upload( $attachment_id ) ) {
+			Log::get_instance()->create( __( 'The metadata of an existing local file have been created again. It is not exported now, use "Export existing files" for it.', 'external-files-in-media-library' ), (string) wp_get_attachment_url( $attachment_id ), 'info', 2 );
+			return $metadata;
+		}
+
 		// log this event.
 		Log::get_instance()->create( __( 'Checking if new uploaded file should be exported.', 'external-files-in-media-library' ), '', 'info', 2 );
 
@@ -1262,6 +1279,44 @@ class Export extends Tools_Base {
 
 		// return the metadata WordPress will save now.
 		return $metadata;
+	}
+
+	/**
+	 * Mark the given attachment as upload, whose metadata could be exported via the hook
+	 * "wp_generate_attachment_metadata" in this request (e.g. as it has been added to the media library now).
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function mark_as_upload( int $attachment_id ): void {
+		$this->uploads[ $attachment_id ] = true;
+	}
+
+	/**
+	 * Return whether the metadata of the given attachment are created for an upload, which should be exported: it has
+	 * been added in this request, it is marked as upload or it waits for its export (e.g. for the sizes created in the
+	 * browser or for an image optimizer).
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_upload( int $attachment_id ): bool {
+		// check the attachment.
+		$is_upload = isset( $this->uploads[ $attachment_id ] ) || Client_Uploads::get_instance()->is_waiting( $attachment_id ) || Delayed_Uploads::get_instance()->is_waiting( $attachment_id );
+
+		/**
+		 * Filter whether the metadata of an attachment are created for an upload, which is exported then.
+		 *
+		 * Return true to export also existing local files, whose metadata are created again (e.g. by a plugin to
+		 * regenerate the sizes of images), like before version 6.0.0.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $is_upload     True if this is an upload.
+		 * @param int  $attachment_id The attachment ID.
+		 */
+		return (bool) apply_filters( 'efml_export_is_upload', $is_upload, $attachment_id );
 	}
 
 	/**

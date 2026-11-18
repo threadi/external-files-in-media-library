@@ -76,6 +76,15 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'woocommerce/woocommerce.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void

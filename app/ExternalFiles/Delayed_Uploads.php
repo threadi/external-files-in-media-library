@@ -288,6 +288,7 @@ class Delayed_Uploads {
 		}
 
 		// run the export like after an upload, without delay.
+		Export::get_instance()->mark_as_upload( $attachment_id );
 		$this->running = true;
 		$metadata      = Export::get_instance()->export_file_by_upload( wp_get_attachment_metadata( $attachment_id, true ), $attachment_id );
 		$this->running = false;

@@ -76,21 +76,60 @@ The Playwright live tests use your development website in the browser like you d
 each service, import a file via the dialog, upload images via "Add Media File" with the export enabled (public,
 private and as editor), check the files as visitor and add the URLs of `EFML_LIVE_URLS`.
 
+### Set up
+
+1. Install the plugin **EFML Dev Credentials** (see below) on your development website. It reads the same `.env.live`
+   and provides the credentials of the services there.
+2. Copy `.env.live.example` to `.env.live` (if not done for the PHPUnit tests) and set in the section "Playwright live
+   tests" (remove the `#` at the start of the lines):
+
+   | Setting | Meaning |
+   |---|---|
+   | `EFML_LIVE_SITE_URL` | **required**: the address of your development website, e.g. `https://dev.example.com`, with `http://` or `https://`, without `/wp-admin`. Replace the example value `https://efml.local`. |
+   | `EFML_LIVE_SITE_ADMIN_USER`, `EFML_LIVE_SITE_ADMIN_PASSWORD` | **required**: login and password of an administrator |
+   | `EFML_LIVE_SITE_EDITOR_USER`, `EFML_LIVE_SITE_EDITOR_PASSWORD` | optional: an editor for the export of his uploads (best without the capabilities for the services) |
+   | `EFML_LIVE_BROWSER_CHANNEL` | optional: `chrome` for your installed Google Chrome, otherwise the browser of Playwright |
+
+3. Install the dependencies and the browser once: `npm install` and `npx playwright install chromium` (not needed
+   with `EFML_LIVE_BROWSER_CHANNEL=chrome`). On a Linux server without desktop, `npx playwright install --with-deps
+   chromium` installs the required system libraries, too.
+4. Run the tests:
+
 ```bash
 composer test-live-e2e
 ```
 
-Settings in `.env.live`:
+The tests run on the computer where you start them: the address in `EFML_LIVE_SITE_URL` must be reachable from there
+(a real domain or an entry in the hosts file of this computer). The users must be able to log in via `wp-login.php`
+without two-factor authentication or captcha.
 
-| Setting | Meaning |
+### What happens
+
+Before the tests, Playwright checks the configuration, checks that the website is reachable and logs in once with each
+user. The sessions are saved automatically in `tests/Live/Playwright/.auth/admin.json` and `editor.json` (you never
+create them yourself; the directory is ignored by Git). If the website is not configured, empty sessions are saved and
+all tests are skipped with the reason.
+
+The tests skip services, which are disabled or incomplete in EFML Dev Credentials or whose extension is not active.
+The list in the console shows skipped tests without reason; the report shows the reason of each test, also the error
+message and a screenshot of failed tests: it is in `playwright-report/live` (`npx playwright show-report
+playwright-report/live`).
+
+The language of the backend does not matter, the tests find buttons and fields independent of it. If a dialog shows an
+error, the test fails at once with the text of the dialog. A complete run takes some minutes; Composer does not stop it
+after 300 seconds.
+
+### Typical errors
+
+| Message | Solution |
 |---|---|
-| `EFML_LIVE_SITE_URL` | the URL of your development website |
-| `EFML_LIVE_SITE_ADMIN_USER`, `EFML_LIVE_SITE_ADMIN_PASSWORD` | an administrator |
-| `EFML_LIVE_SITE_EDITOR_USER`, `EFML_LIVE_SITE_EDITOR_PASSWORD` | optional: an editor for the export of his uploads |
-| `EFML_LIVE_BROWSER_CHANNEL` | optional: `chrome` for your installed Google Chrome, otherwise the browser of Playwright (`npx playwright install chromium`) |
-
-The website needs the plugin EFML Dev Credentials with the same credentials. The tests skip services which are disabled
-or incomplete there or whose extension is not active. The report is in `playwright-report/live`.
+| `These values are missing in …/.env.live: …` | Set the named values and remove the `#` at the start of their lines. |
+| `The name "…" could not be resolved` | The address is not known on this computer: use the real domain or add it to the hosts file. Did you keep the example value `https://efml.local`? |
+| `Nothing answers at "…"` | The web server is not reachable: check the address and the port. |
+| `… shows no login form of WordPress` | The URL contains `/wp-admin`, or a plugin hides or protects the login page. |
+| `The login of "…" failed: …` | Check login and password. Two-factor authentication or a captcha must be disabled for this user. |
+| `ENOENT … .auth/admin.json` | Comes from older versions of these tests: update the tests. |
+| `The process … exceeded the timeout of 300 seconds` | Comes from older versions of these tests: update `composer.json`. |
 
 ## EFML Dev Credentials
 

@@ -56,6 +56,15 @@ class MediaFileRenamer extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'media-file-renamer/media-file-renamer.php', 'media-file-renamer-pro/media-file-renamer-pro.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void

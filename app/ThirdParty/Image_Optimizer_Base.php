@@ -26,13 +26,6 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
  */
 abstract class Image_Optimizer_Base extends ThirdParty_Base implements ThirdParty {
 	/**
-	 * Return the main files of the plugin (also of its variants, e.g. a pro version), relative to the plugin directory.
-	 *
-	 * @return array<int,string>
-	 */
-	abstract protected function get_plugin_files(): array;
-
-	/**
 	 * Initialize this support.
 	 *
 	 * @return void
@@ -53,12 +46,7 @@ abstract class Image_Optimizer_Base extends ThirdParty_Base implements ThirdPart
 	 * @return bool
 	 */
 	public function is_active(): bool {
-		foreach ( $this->get_plugin_files() as $plugin_file ) {
-			if ( Helper::is_plugin_active( $plugin_file ) ) {
-				return true;
-			}
-		}
-		return false;
+		return $this->is_supported_plugin_active();
 	}
 
 	/**

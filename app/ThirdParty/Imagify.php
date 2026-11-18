@@ -57,7 +57,7 @@ class Imagify extends Image_Optimizer_Base {
 	 *
 	 * @return array<int,string>
 	 */
-	protected function get_plugin_files(): array {
+	public function get_plugin_files(): array {
 		return array( 'imagify/imagify.php' );
 	}
 
@@ -135,5 +135,4 @@ class Imagify extends Image_Optimizer_Base {
 		// mark the end.
 		$this->done( absint( $media->get_id() ) );
 	}
-
 }

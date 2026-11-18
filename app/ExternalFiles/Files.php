@@ -468,6 +468,7 @@ class Files {
 			Delayed_Uploads::BUSY_META,
 			Sizes::RETRY_META,
 			Working_Copies::META,
+			Proxy::VERSION_META,
 		);
 
 		/**

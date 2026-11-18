@@ -71,6 +71,15 @@ class MediaCleaner extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'media-cleaner/media-cleaner.php', 'media-cleaner-pro/media-cleaner-pro.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void

@@ -62,6 +62,15 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'folders/folders.php' );
+	}
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void

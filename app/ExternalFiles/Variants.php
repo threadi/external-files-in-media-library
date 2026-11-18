@@ -1101,6 +1101,9 @@ class Variants {
 	 * @return void
 	 */
 	public function delete_cache( int $attachment_id ): void {
+		// mark the files as changed, so the URLs of the proxy get a new version.
+		Proxy::get_instance()->set_changed( $attachment_id );
+
 		// get the data.
 		$data = Sizes::get_instance()->get_data( $attachment_id );
 

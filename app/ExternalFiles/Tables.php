@@ -538,6 +538,14 @@ class Tables {
 				if ( absint( get_post_meta( $attachment_id, 'efml_export_failed', true ) ) > 0 ) {
 					echo '<span class="dashicons dashicons-warning" title="' . esc_attr__( 'The export of this file to the external source failed. Check the log and the queue for details.', 'external-files-in-media-library' ) . '"></span>';
 				}
+
+				/**
+				 * Run additional tasks to show more infos for local files here (e.g. why they are not exported).
+				 *
+				 * @since 6.0.0 Available since 6.0.0.
+				 * @param int $attachment_id The ID of the attachment.
+				 */
+				do_action( 'efml_table_column_local_file', $attachment_id );
 				return;
 			}
 

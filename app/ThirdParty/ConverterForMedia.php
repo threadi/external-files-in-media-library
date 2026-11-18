@@ -54,7 +54,7 @@ class ConverterForMedia extends Image_Optimizer_Base {
 	 *
 	 * @return array<int,string>
 	 */
-	protected function get_plugin_files(): array {
+	public function get_plugin_files(): array {
 		return array( 'webp-converter-for-media/webp-converter-for-media.php' );
 	}
 
@@ -92,5 +92,4 @@ class ConverterForMedia extends Image_Optimizer_Base {
 		// return the possible paths.
 		return $paths;
 	}
-
 }

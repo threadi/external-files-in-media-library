@@ -57,7 +57,7 @@ class ShortPixel extends Image_Optimizer_Base {
 	 *
 	 * @return array<int,string>
 	 */
-	protected function get_plugin_files(): array {
+	public function get_plugin_files(): array {
 		return array( 'shortpixel-image-optimiser/wp-shortpixel.php' );
 	}
 
@@ -183,5 +183,4 @@ class ShortPixel extends Image_Optimizer_Base {
 			$this->done( absint( $attachment_id ) );
 		}
 	}
-
 }

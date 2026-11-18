@@ -669,6 +669,19 @@ class Settings {
 		$setting->set_default( 0 );
 
 		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'eml_mark_supported_plugins' );
+		$setting->set_section( $advanced_plugin );
+		$setting->set_type( 'integer' );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Mark supported plugins', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled, the list of plugins shows a hint for each plugin, which this plugin supports with external files.', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_default( 1 );
+
+		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_preview' );
 		$setting->set_section( $advanced_files );
 		$setting->set_field(

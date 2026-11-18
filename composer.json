@@ -28,12 +28,18 @@
             "@putenv EFML_ADDONS_DEFAULT_SOURCE=github",
             "bash bin/install-addons.sh"
         ],
-        "test-live": "phpunit -c phpunit-live.xml.dist",
+        "test-live": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit -c phpunit-live.xml.dist"
+        ],
         "test-with-live": [
             "@test",
             "@test-live"
         ],
-        "test-live-e2e": "npx playwright test -c playwright-live.config.ts"
+        "test-live-e2e": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx playwright test -c playwright-live.config.ts"
+        ]
     },
     "extra": {
         "mozart": {

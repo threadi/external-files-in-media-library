@@ -78,22 +78,60 @@ Dienstes, importieren eine Datei über den Dialog, laden Bilder über „Mediend
 Export hoch (öffentlich, privat und als Redakteur), prüfen die Dateien als Besucher und fügen die URLs aus
 `EFML_LIVE_URLS` hinzu.
 
+### Einrichten
+
+1. Installiere auf deiner Entwicklungsseite das Plugin **EFML Dev Credentials** (siehe unten). Es liest dieselbe
+   `.env.live` und stellt dort die Zugangsdaten der Dienste bereit.
+2. Kopiere `.env.live.example` nach `.env.live` (falls nicht schon für die PHPUnit-Tests geschehen) und setze im
+   Abschnitt „Playwright live tests“ (entferne das `#` am Zeilenanfang):
+
+   | Einstellung | Bedeutung |
+   |---|---|
+   | `EFML_LIVE_SITE_URL` | **Pflicht**: die Adresse deiner Entwicklungsseite, z. B. `https://dev.example.com`, mit `http://` oder `https://`, ohne `/wp-admin`. Ersetze den Beispielwert `https://efml.local`. |
+   | `EFML_LIVE_SITE_ADMIN_USER`, `EFML_LIVE_SITE_ADMIN_PASSWORD` | **Pflicht**: Benutzername und Passwort eines Administrators |
+   | `EFML_LIVE_SITE_EDITOR_USER`, `EFML_LIVE_SITE_EDITOR_PASSWORD` | optional: ein Redakteur für den Export seiner Uploads (am besten ohne die Rechte für die Dienste) |
+   | `EFML_LIVE_BROWSER_CHANNEL` | optional: `chrome` für dein installiertes Google Chrome, sonst der Browser von Playwright |
+
+3. Installiere einmalig die Abhängigkeiten und den Browser: `npm install` und `npx playwright install chromium`
+   (nicht nötig mit `EFML_LIVE_BROWSER_CHANNEL=chrome`). Auf einem Linux-Server ohne Desktop installiert
+   `npx playwright install --with-deps chromium` auch die nötigen Systembibliotheken.
+4. Starte die Tests:
+
 ```bash
 composer test-live-e2e
 ```
 
-Einstellungen in `.env.live`:
+Die Tests laufen auf dem Rechner, auf dem du sie startest: Die Adresse in `EFML_LIVE_SITE_URL` muss von dort erreichbar
+sein (echte Domain oder Eintrag in der hosts-Datei dieses Rechners). Die Benutzer müssen sich über `wp-login.php` ohne
+Zwei-Faktor-Anmeldung oder Captcha anmelden können.
 
-| Einstellung | Bedeutung |
+### Was passiert
+
+Vor den Tests prüft Playwright die Konfiguration und ob die Seite erreichbar ist, und meldet sich einmal mit jedem
+Benutzer an. Die Sitzungen werden automatisch in `tests/Live/Playwright/.auth/admin.json` und `editor.json`
+gespeichert (die legst du nie selbst an; das Verzeichnis ignoriert Git). Ist die Seite nicht konfiguriert, werden
+leere Sitzungen gespeichert und alle Tests mit dem Grund übersprungen.
+
+Die Tests überspringen Dienste, die in EFML Dev Credentials ausgeschaltet oder unvollständig sind oder deren
+Erweiterung nicht aktiv ist. Die Liste in der Konsole zeigt übersprungene Tests ohne Grund; den Grund jedes Tests, bei
+fehlgeschlagenen Tests auch die Fehlermeldung und einen Screenshot, zeigt der Bericht in `playwright-report/live`
+(`npx playwright show-report playwright-report/live`).
+
+Die Sprache des Backends spielt keine Rolle, die Tests finden Buttons und Felder unabhängig davon. Zeigt ein Dialog einen
+Fehler, schlägt der Test sofort mit dem Text des Dialogs fehl. Ein kompletter Lauf dauert einige Minuten; Composer bricht
+ihn nicht nach 300 Sekunden ab.
+
+### Typische Fehler
+
+| Meldung | Lösung |
 |---|---|
-| `EFML_LIVE_SITE_URL` | die URL deiner Entwicklungsseite |
-| `EFML_LIVE_SITE_ADMIN_USER`, `EFML_LIVE_SITE_ADMIN_PASSWORD` | ein Administrator |
-| `EFML_LIVE_SITE_EDITOR_USER`, `EFML_LIVE_SITE_EDITOR_PASSWORD` | optional: ein Redakteur für den Export seiner Uploads |
-| `EFML_LIVE_BROWSER_CHANNEL` | optional: `chrome` für dein installiertes Google Chrome, sonst der Browser von Playwright (`npx playwright install chromium`) |
-
-Die Seite braucht das Plugin EFML Dev Credentials mit denselben Zugangsdaten. Die Tests überspringen Dienste, die dort
-ausgeschaltet oder unvollständig sind oder deren Erweiterung nicht aktiv ist. Den Bericht findest du in
-`playwright-report/live`.
+| `These values are missing in …/.env.live: …` | Setze die genannten Werte und entferne das `#` am Zeilenanfang. |
+| `The name "…" could not be resolved` | Die Adresse ist auf diesem Rechner unbekannt: Nutze die echte Domain oder trage sie in die hosts-Datei ein. Steht noch der Beispielwert `https://efml.local` drin? |
+| `Nothing answers at "…"` | Der Webserver ist nicht erreichbar: Prüfe Adresse und Port. |
+| `… shows no login form of WordPress` | Die URL enthält `/wp-admin`, oder ein Plugin versteckt oder schützt die Anmeldeseite. |
+| `The login of "…" failed: …` | Prüfe Benutzername und Passwort. Zwei-Faktor-Anmeldung oder Captcha müssen für diesen Benutzer aus sein. |
+| `ENOENT … .auth/admin.json` | Kommt von älteren Ständen dieser Tests: Aktualisiere die Tests. |
+| `The process … exceeded the timeout of 300 seconds` | Kommt von älteren Ständen dieser Tests: Aktualisiere die `composer.json`. |
 
 ## EFML Dev Credentials
 

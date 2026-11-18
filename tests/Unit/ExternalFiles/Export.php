@@ -373,6 +373,52 @@ class Export extends externalFilesTests {
 	}
 
 	/**
+	 * Test that only uploads are exported via the hook "wp_generate_attachment_metadata", not existing local files,
+	 * whose metadata are created again (e.g. by a plugin to regenerate their sizes).
+	 *
+	 * Runs in a separate process, as other tests define constants like "EFML_URL_IMPORT_RUNNING", which prevent the
+	 * export of uploads.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 *
+	 * @return void
+	 */
+	public function test_only_uploads_are_exported_with_their_metadata(): void {
+		$export_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance();
+		update_option( 'eml_export', 0 );
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$this->assertIsInt( $attachment_id );
+		update_option( 'eml_export', 1 );
+		update_option( 'eml_export_do_not_delete_local_files', 1 );
+		update_option( 'eml_export_in_background', 0 );
+		update_option( 'eml_export_folders', 0 );
+		update_option( 'eml_export_main_source', 0 );
+		update_term_meta( $this->term_id, 'efml_export_url', 'https://example.com/export/' );
+
+		// test 1: an upload of this request is known as upload.
+		$this->assertTrue( $export_obj->is_upload( $attachment_id ) );
+
+		// test 2: in a later request, the existing local file is not exported with its new metadata.
+		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\Export::class, 'uploads' );
+		$property->setAccessible( true );
+		$property->setValue( $export_obj, array() );
+		$this->assertFalse( $export_obj->is_upload( $attachment_id ) );
+		$export_obj->export_file_by_upload( wp_get_attachment_metadata( $attachment_id ), $attachment_id );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file( $attachment_id )->is_valid() );
+
+		// test 3: the former behavior could be enabled via hook.
+		add_filter( 'efml_export_is_upload', '__return_true' );
+		$this->assertTrue( $export_obj->is_upload( $attachment_id ) );
+		remove_filter( 'efml_export_is_upload', '__return_true' );
+
+		// test 4: a file marked as upload (e.g. by a delayed export) is exported.
+		$export_obj->mark_as_upload( $attachment_id );
+		$export_obj->export_file_by_upload( wp_get_attachment_metadata( $attachment_id ), $attachment_id );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file( $attachment_id )->is_valid() );
+	}
+
+	/**
 	 * Test the header "Cache-Control" for exported files.
 	 *
 	 * @return void

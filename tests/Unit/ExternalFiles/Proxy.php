@@ -316,6 +316,15 @@ class Proxy extends externalFilesTests {
 
 		// test 3: private files only in the browser with a check on every use.
 		$this->assertEquals( 'private, no-cache', $proxy->get_cache_control( $this->get_file_mock( true ) ) );
+		$this->assertEquals( 'private, no-cache', $proxy->get_cache_control( $this->get_file_mock( true ), false ) );
+
+		// test 3b: public files requested without version with a check on every use.
+		$this->assertEquals( 'public, no-cache', $proxy->get_cache_control( $this->get_file_mock( false ), false ) );
+		unset( $_GET['ver'] );
+		$this->assertFalse( $proxy->is_versioned_request() );
+		$_GET['ver'] = '123';
+		$this->assertTrue( $proxy->is_versioned_request() );
+		unset( $_GET['ver'] );
 
 		// test 4: the value could be changed.
 		$callback = static function (): string {
@@ -325,6 +334,59 @@ class Proxy extends externalFilesTests {
 		$this->assertEquals( 'no-store', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
 		remove_filter( 'efml_proxy_cache_control', $callback );
 		update_option( 'eml_images_proxy_max_age', $max );
+	}
+
+	/**
+	 * Test the version of files in the URLs of the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_version_in_urls(): void {
+		$proxy         = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$attachment_id = self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg' ) );
+		$this->assertIsInt( $attachment_id );
+		$pretty = trailingslashit( get_home_url() ) . 'emlproxy/example.jpg';
+		$simple = trailingslashit( get_home_url() ) . '?emlproxy=example.jpg';
+
+		// test 1: without known version, the URLs are not changed.
+		$this->assertSame( 0, $proxy->get_version( $attachment_id ) );
+		$this->assertSame( $pretty, $proxy->add_version( $pretty, $attachment_id ) );
+
+		// test 2: the time of the import or export is used as version.
+		update_post_meta( $attachment_id, 'eml_external_file_date', 1000 );
+		$this->assertSame( 1000, $proxy->get_version( $attachment_id ) );
+		$this->assertSame( $pretty . '?ver=1000', $proxy->add_version( $pretty, $attachment_id ) );
+		$this->assertSame( $simple . '&ver=1000', $proxy->add_version( $simple, $attachment_id ) );
+		$this->assertSame( str_replace( 'http:', 'https:', $pretty ) . '?ver=1000', $proxy->add_version( str_replace( 'http:', 'https:', $pretty ), $attachment_id ) );
+
+		// test 3: other URLs and URLs with version are not changed.
+		$this->assertSame( 'https://example.com/emlproxy/example.jpg', $proxy->add_version( 'https://example.com/emlproxy/example.jpg', $attachment_id ) );
+		$this->assertSame( $pretty . '?ver=5', $proxy->add_version( $pretty . '?ver=5', $attachment_id ) );
+
+		// test 4: a change of the files changes the version, also within one second.
+		$proxy->set_changed( $attachment_id );
+		$first = $proxy->get_version( $attachment_id );
+		$this->assertGreaterThanOrEqual( time() - 1, $first );
+		$proxy->set_changed( $attachment_id );
+		$this->assertGreaterThan( $first, $proxy->get_version( $attachment_id ) );
+		$proxy->set_changed( 0 );
+		$proxy->set_changed( PHP_INT_MAX );
+		$this->assertSame( '', get_post_meta( PHP_INT_MAX, \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::VERSION_META, true ) );
+
+		// test 5: the version is added to image data and to the sources of the srcset.
+		update_post_meta( $attachment_id, \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::VERSION_META, 2000 );
+		$image = $proxy->add_version_to_image_src( array( $pretty, 10, 10, false ), $attachment_id );
+		$this->assertIsArray( $image );
+		$this->assertSame( $pretty . '?ver=2000', $image[0] );
+		$this->assertFalse( $proxy->add_version_to_image_src( false, $attachment_id ) );
+		$sources = $proxy->add_version_to_srcset( array( 300 => array( 'url' => $simple, 'descriptor' => 'w', 'value' => 300 ) ), array(), $simple, array(), $attachment_id );
+		$this->assertIsArray( $sources );
+		$this->assertSame( $simple . '&ver=2000', $sources[300]['url'] );
+
+		// test 6: the version could be disabled.
+		add_filter( 'efml_proxy_file_version', '__return_zero' );
+		$this->assertSame( $pretty, $proxy->add_version( $pretty, $attachment_id ) );
+		remove_filter( 'efml_proxy_file_version', '__return_zero' );
 	}
 
 	/**

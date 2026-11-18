@@ -41,6 +41,16 @@ class Proxy {
 	private string $slug = 'emlproxy';
 
 	/**
+	 * Name of the parameter for the version of a file in the URLs of the proxy.
+	 */
+	public const VERSION_PARAM = 'ver';
+
+	/**
+	 * Name of the post meta for the time of the last change of the files of an attachment.
+	 */
+	public const VERSION_META = 'efml_proxy_version';
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -74,6 +84,10 @@ class Proxy {
 		// misc.
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
+
+		// add the version of the file to the URLs of the proxy, which WordPress generates for the output.
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'add_version_to_image_src' ), PHP_INT_MAX, 2 );
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'add_version_to_srcset' ), PHP_INT_MAX, 5 );
 
 		// refresh the rewrite rules if a proxy setting has been changed.
 		add_action( 'added_option', array( $this, 'refresh_on_proxy_setting_change' ), 10, 1 );
@@ -360,10 +374,12 @@ class Proxy {
 	/**
 	 * Send the headers for the caching of a file delivered by the proxy and answer conditional requests.
 	 *
-	 * Public files could be cached by browsers and CDNs for one day at most (and not longer than the cache of the
-	 * proxy for their file type), private files only by the browser with a check on every use. The ETag and
-	 * Last-Modified are taken from the file in the cache of the proxy: if the browser has the actual file already,
-	 * the request is answered with "304 Not Modified" and ends without the content.
+	 * Public files requested with their version (see add_version()) could be cached by browsers and CDNs for one day
+	 * at most (and not longer than the cache of the proxy for their file type): their URL changes with every change
+	 * of the file. Public files requested without version (e.g. URLs saved in the content) and private files are
+	 * checked on every use. The ETag and Last-Modified are taken from the file in the cache of the proxy: if the
+	 * browser has the actual file already, the request is answered with "304 Not Modified" and ends without the
+	 * content.
 	 *
 	 * @param string $file              The absolute path to the file in the cache of the proxy.
 	 * @param File   $external_file_obj The external file object.
@@ -386,7 +402,7 @@ class Proxy {
 		header_remove( 'Last-Modified' );
 
 		// send the headers.
-		header( 'Cache-Control: ' . $this->get_cache_control( $external_file_obj ) );
+		header( 'Cache-Control: ' . $this->get_cache_control( $external_file_obj, $this->is_versioned_request() ) );
 		header( 'ETag: ' . $etag );
 		header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $modified ) . ' GMT' );
 
@@ -401,13 +417,18 @@ class Proxy {
 	 * Return the value of the header "Cache-Control" for the given file delivered by the proxy.
 	 *
 	 * @param File $external_file_obj The external file object.
+	 * @param bool $versioned         Whether the file has been requested with its version (since 6.0.0).
 	 *
 	 * @return string
 	 */
-	public function get_cache_control( File $external_file_obj ): string {
+	public function get_cache_control( File $external_file_obj, bool $versioned = true ): string {
 		// private files could only be cached by the browser of the visitor, which checks them on every use.
 		if ( $external_file_obj->is_private() ) {
 			$cache_control = 'private, no-cache';
+		} elseif ( ! $versioned ) {
+			// files requested without version could be cached, but are checked on every use, as their URL does not
+			// change, if the file is changed (e.g. by an image optimizer).
+			$cache_control = 'public, no-cache';
 		} else {
 			// get the maximum age: one day, but not longer than the cache of the proxy for this file type.
 			$max_age = DAY_IN_SECONDS;
@@ -428,6 +449,152 @@ class Proxy {
 		 * @param File   $external_file_obj The external file object.
 		 */
 		return (string) apply_filters( 'efml_proxy_cache_control', $cache_control, $external_file_obj );
+	}
+
+	/**
+	 * Return whether the actual request of the proxy contains the version of the file.
+	 *
+	 * @return bool
+	 */
+	public function is_versioned_request(): bool {
+		return isset( $_GET[ self::VERSION_PARAM ] ) && is_string( $_GET[ self::VERSION_PARAM ] ) && '' !== $_GET[ self::VERSION_PARAM ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
+	 * Return the version of the files of the given attachment for the URLs of the proxy: the time of their last
+	 * change or, if they have not been changed since then, the time of their import or export.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_version( int $attachment_id ): int {
+		// get the time of the last change.
+		$version = absint( get_post_meta( $attachment_id, self::VERSION_META, true ) );
+
+		// use the time of the import or export, if the files have not been changed since then.
+		if ( 0 === $version ) {
+			$version = absint( get_post_meta( $attachment_id, 'eml_external_file_date', true ) );
+		}
+
+		/**
+		 * Filter the version of the files of an attachment, which is added to the URLs of the proxy.
+		 *
+		 * Return 0 to use the URLs without version: browsers check the file then on every use.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $version       The version.
+		 * @param int $attachment_id The attachment ID.
+		 */
+		return absint( apply_filters( 'efml_proxy_file_version', $version, $attachment_id ) );
+	}
+
+	/**
+	 * Mark the files of the given attachment as changed, so their URLs of the proxy get a new version.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function set_changed( int $attachment_id ): void {
+		// bail if no ID is given or the attachment does not exist (anymore).
+		if ( $attachment_id <= 0 || ! get_post( $attachment_id ) instanceof \WP_Post ) {
+			return;
+		}
+
+		// save the time, at least one more than before, so the version changes also within one second.
+		update_post_meta( $attachment_id, self::VERSION_META, max( time(), absint( get_post_meta( $attachment_id, self::VERSION_META, true ) ) + 1 ) );
+	}
+
+	/**
+	 * Add the version of the files of the given attachment to the given URL, if it is a URL of the proxy.
+	 *
+	 * @param string $url           The URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function add_version( string $url, int $attachment_id ): string {
+		// bail if this is not a URL of the proxy or it has a version already.
+		if ( ! $this->is_proxy_url( $url ) || str_contains( $url, self::VERSION_PARAM . '=' ) ) {
+			return $url;
+		}
+
+		// get the version.
+		$version = $this->get_version( $attachment_id );
+
+		// bail if it is unknown.
+		if ( 0 === $version ) {
+			return $url;
+		}
+
+		// return the URL with version.
+		return add_query_arg( self::VERSION_PARAM, $version, $url );
+	}
+
+	/**
+	 * Return whether the given URL is a URL of the proxy.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_proxy_url( string $url ): bool {
+		// get the URL of the website without scheme, as WordPress could use another scheme for the output.
+		$home = (string) preg_replace( '#^https?:#', '', trailingslashit( get_home_url() ) );
+		$url  = (string) preg_replace( '#^https?:#', '', $url );
+
+		// return whether the URL is a URL of the proxy with pretty or simple permalinks.
+		return str_starts_with( $url, $home . $this->get_slug() . '/' ) || str_starts_with( $url, $home . '?' . $this->get_slug() . '=' );
+	}
+
+	/**
+	 * Add the version of the file to the URL of the proxy of an image, e.g. for featured images.
+	 *
+	 * @param mixed $image         The image data (URL, width, height, whether it is resized) or false.
+	 * @param mixed $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function add_version_to_image_src( mixed $image, mixed $attachment_id ): mixed {
+		// bail if this is not a usable image.
+		if ( ! is_array( $image ) || empty( $image[0] ) || ! is_string( $image[0] ) ) {
+			return $image;
+		}
+
+		// add the version.
+		$image[0] = $this->add_version( $image[0], absint( $attachment_id ) );
+
+		// return the image data.
+		return $image;
+	}
+
+	/**
+	 * Add the version of the file to the URLs of the proxy in the "srcset" of an image.
+	 *
+	 * @param mixed  $sources       The sources.
+	 * @param mixed  $size_array    The requested size.
+	 * @param string $image_src     The URL of the image.
+	 * @param mixed  $image_meta    The metadata of the image.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function add_version_to_srcset( mixed $sources, mixed $size_array, string $image_src, mixed $image_meta, int $attachment_id ): mixed {
+		// bail if the sources are not usable.
+		if ( ! is_array( $sources ) ) {
+			return $sources;
+		}
+
+		// add the version to each source.
+		foreach ( $sources as $key => $source ) {
+			if ( is_array( $source ) && ! empty( $source['url'] ) && is_string( $source['url'] ) ) {
+				$sources[ $key ]['url'] = $this->add_version( $source['url'], $attachment_id );
+			}
+		}
+
+		// return the sources.
+		return $sources;
 	}
 
 	/**
@@ -453,7 +620,7 @@ class Proxy {
 			}
 			foreach ( explode( ',', $if_none_match ) as $value ) {
 				// compare weakly, e.g. if a CDN or compression marked the ETag as weak.
-				if ( $etag === preg_replace( '#^W/#', '', trim( $value ) ) ) {
+				if ( preg_replace( '#^W/#', '', trim( $value ) ) === $etag ) {
 					return true;
 				}
 			}

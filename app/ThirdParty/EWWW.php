@@ -57,7 +57,7 @@ class EWWW extends Image_Optimizer_Base {
 	 *
 	 * @return array<int,string>
 	 */
-	protected function get_plugin_files(): array {
+	public function get_plugin_files(): array {
 		return array( 'ewww-image-optimizer/ewww-image-optimizer.php', 'ewww-image-optimizer-cloud/ewww-image-optimizer-cloud.php' );
 	}
 
@@ -229,5 +229,4 @@ class EWWW extends Image_Optimizer_Base {
 			$this->done( absint( $attachment_id ) );
 		}
 	}
-
 }

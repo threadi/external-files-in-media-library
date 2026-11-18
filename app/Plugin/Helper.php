@@ -452,6 +452,20 @@ class Helper {
 	}
 
 	/**
+	 * Return the URL of the documentation of the supported plugins.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public static function get_plugins_doc_url(): string {
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/plugins_de.md';
+		}
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/plugins.md';
+	}
+
+	/**
 	 * Return whether the given URL is located on the given domain or one of its subdomains.
 	 *
 	 * Only the host of the URL is checked, not the complete URL. So "https://example.com/?imgur.com" is not on "imgur.com".

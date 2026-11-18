@@ -56,6 +56,15 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'exmage-wp-image-links/exmage-wp-image-links.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void

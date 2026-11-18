@@ -168,14 +168,15 @@ class Sizes extends externalFilesTests {
 		$image = wp_get_attachment_image_src( $attachment_id, 'medium' );
 		$this->assertIsArray( $image );
 		$this->assertStringContainsString( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), $image[0] );
-		$this->assertStringEndsWith( '-' . $medium['width'] . 'x' . $medium['height'] . '.jpg', $image[0] );
+		$this->assertStringEndsWith( '-' . $medium['width'] . 'x' . $medium['height'] . '.jpg', remove_query_arg( 'ver', $image[0] ) );
+		$this->assertStringContainsString( 'ver=', $image[0] );
 		$this->assertEquals( $medium['width'], $image[1] );
 
 		// the srcset contains the proxy URLs of the sizes.
 		$html = wp_get_attachment_image( $attachment_id, 'large' );
 		$this->assertStringContainsString( 'srcset="', $html );
 		$this->assertStringNotContainsString( 'file://', $html );
-		$this->assertStringContainsString( '-' . $medium['width'] . 'x' . $medium['height'] . '.jpg ' . $medium['width'] . 'w', $html );
+		$this->assertMatchesRegularExpression( '/-' . $medium['width'] . 'x' . $medium['height'] . '\\.jpg(&amp;ver=\\d+)? ' . $medium['width'] . 'w/', $html );
 
 		// the proxy loads the size from the external source into its cache.
 		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
@@ -230,7 +231,8 @@ class Sizes extends externalFilesTests {
 		$image = wp_get_attachment_image_src( $attachment_id, 'medium' );
 		$this->assertIsArray( $image );
 		$this->assertStringContainsString( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), $image[0] );
-		$this->assertStringEndsWith( '-' . $medium['width'] . 'x' . $medium['height'] . '.jpg', $image[0] );
+		$this->assertStringEndsWith( '-' . $medium['width'] . 'x' . $medium['height'] . '.jpg', remove_query_arg( 'ver', $image[0] ) );
+		$this->assertStringContainsString( 'ver=', $image[0] );
 
 		// the srcset contains only proxy URLs.
 		$html = wp_get_attachment_image( $attachment_id, 'large' );

@@ -55,7 +55,7 @@ class Smush extends Image_Optimizer_Base {
 	 *
 	 * @return array<int,string>
 	 */
-	protected function get_plugin_files(): array {
+	public function get_plugin_files(): array {
 		return array( 'wp-smushit/wp-smush.php', 'wp-smush-pro/wp-smush.php' );
 	}
 
@@ -201,5 +201,4 @@ class Smush extends Image_Optimizer_Base {
 		// return the list.
 		return $variants;
 	}
-
 }
