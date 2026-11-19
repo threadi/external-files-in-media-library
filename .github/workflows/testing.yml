@@ -91,7 +91,7 @@ jobs:
 
       # the Python modules are used by the FTP, FTPS and SFTP test servers.
       - name: Install SVN and Python modules for the test servers
-        run: sudo apt-get update && sudo apt-get install -y subversion python3-pyftpdlib python3-openssl python3-paramiko
+        run: sudo apt-get update && sudo apt-get install -y subversion python3-pyftpdlib python3-openssl python3-paramiko ghostscript
 
       - name: Setup tests
         run: bash bin/install-wp-tests.sh wordpress_tests root root 127.0.0.1 latest true

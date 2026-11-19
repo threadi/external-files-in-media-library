@@ -405,7 +405,7 @@ class FtpExport extends externalFilesTests {
 		update_option( 'eml_allowed_mime_types', array( 'application/pdf', 'image/jpeg', 'image/png', 'video/mp4' ) );
 
 		// generate a video file with 30 MB (a unique name, as WordPress would rename it otherwise).
-		$size = 30 * MB_IN_BYTES;
+		$size = 90 * MB_IN_BYTES;
 		$tmp  = trailingslashit( get_temp_dir() ) . 'large-' . strtolower( wp_generate_password( 8, false, false ) ) . '.mp4';
 		$file = fopen( $tmp, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$this->assertIsResource( $file );
@@ -413,7 +413,7 @@ class FtpExport extends externalFilesTests {
 		$header = "\x00\x00\x00\x18ftypmp42\x00\x00\x00\x00mp42isom";
 		fwrite( $file, $header ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 		fwrite( $file, random_bytes( MB_IN_BYTES - strlen( $header ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
-		for ( $i = 1; $i < 30; $i++ ) {
+		for ( $i = 1; $i < 90; $i++ ) {
 			fwrite( $file, random_bytes( MB_IN_BYTES ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 		}
 		fclose( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose
