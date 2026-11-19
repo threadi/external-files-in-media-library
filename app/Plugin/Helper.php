@@ -1290,10 +1290,13 @@ class Helper {
 	 */
 	public static function get_local_path_from_url( string $url ): string {
 		// remove the protocol.
-		if ( str_starts_with( strtolower( $url ), 'file://localhost/' ) ) {
-			$url = substr( $url, 16 );
-		} elseif ( str_starts_with( strtolower( $url ), 'file://' ) ) {
+		if ( str_starts_with( strtolower( $url ), 'file://' ) ) {
 			$url = substr( $url, 7 );
+
+			// "file://localhost/path" is the same as "file:///path" (RFC 8089).
+			if ( str_starts_with( strtolower( $url ), 'localhost/' ) ) {
+				$url = substr( $url, 9 );
+			}
 		}
 
 		// remove the leading slash before a Windows drive letter (e.g., "/C:/inetpub" → "C:/inetpub").
