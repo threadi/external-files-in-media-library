@@ -119,7 +119,7 @@ class Service_Tiles extends externalFilesTests {
 		$html = Helper::get_icon( 'efml-test/update', 'dashicons-update', 'Synchronization', 18 );
 		$this->assertStringContainsString( '<svg', $html );
 		$this->assertStringContainsString( 'svg-icon', $html );
-		$this->assertStringContainsString( 'width="18"', $html );
+		$this->assertStringContainsString( 'width="24"', $html );
 		$this->assertStringContainsString( 'aria-label="Synchronization"', $html );
 		$this->assertStringNotContainsString( 'dashicons', $html );
 

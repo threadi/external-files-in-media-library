@@ -46,19 +46,13 @@ See [what is possible](https://github.com/threadi/external-files-in-media-librar
 
 == Support for other plugins ==
 
-Use external URLs when importing products via CSV in a [WooCommerce](https://wordpress.org/plugins/woocommerce/) store (including access data for these e.g., via an FTP).
+✅ **Image optimizers:** Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media and Modern Image Formats – optimized files and their WebP and AVIF variants are exported, too.
+✅ **Folders and galleries:** sort, import and synchronize external files with plugins like Filebird, Folders, Real Media Library Lite or NextGen Gallery.
+✅ **Media tools:** Media Cleaner, Media File Renamer, Image Watermark and Media Bulk Download.
+✅ **WooCommerce:** use external URLs in the product import via CSV (also with access data, e.g. for FTP) and external files as downloads.
+✅ **More:** Instant Images (Unsplash, Pexels and GIPHY as external files), Polylang, Network Media Library, Download Lists with Icons, Document Embedder and Prevent Files / Folders Access.
 
-Add external files on download lists of [Download Lists with Icons](https://wordpress.org/plugins/download-list-block-with-icons/).
-
-Sort your external files in a folder of [CatFolders](https://wordpress.org/plugins/catfolders/), [Filebird](https://wordpress.org/plugins/filebird/), [Folderly](https://wordpress.org/plugins/folderly/), [Folders](https://wordpress.org/plugins/folders/), [iFolders](https://wordpress.org/plugins/ifolders/), [Media Library Organizer](https://wordpress.org/plugins/media-library-organizer/) or assign them into categories from [Enhanced Media Library](https://wpuxsolutions.com/plugins/enhanced-media-library/) and [Real Media Library Lite](https://wordpress.org/plugins/real-media-library-lite/). Also supported: [NextGen Gallery](https://wordpress.org/plugins/nextgen-gallery/) and [Robo Gallery](https://wordpress.org/plugins/robo-gallery/). You can import and synchronize them in these plugins.
-
-And compatible with [Network Media Library](https://github.com/humanmade/network-media-library) for use in multisites and [Document Embedder](https://wordpress.org/plugins/document-emberdder/) to show external hostet PDF files.
-
-And it is also compatible with multilingual plugins like Polylang to translate the media files.
-
-Use images from Unsplash, Pexels and GIPHY, which you add with [Instant Images](https://wordpress.org/plugins/instant-images/), as external files – they are loaded directly from the platform instead of being saved in your hosting.
-
-The plugin is also compatible with a variety of other plugins not listed here. If, contrary to expectations, something does not work properly, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
+See [all supported plugins](https://github.com/threadi/external-files-in-media-library/blob/master/docs/plugins.md) for details. If something does not work as expected, please report it [in the support forum](https://wordpress.org/support/plugin/external-files-in-media-library/).
 
 == REST API ==
 
@@ -66,23 +60,15 @@ You can manage your external files with REST API requests as documented [here](h
 
 == Mass-Import ==
 
-You can import complete directories from any of the supported TCP protocols. Just enter the directory as path to import, and the plugin will import any supported files from it or use the external source tools to navigate to the directory to import.
+Import complete directories from any supported source: your local hosting, FTP, FTPS, SFTP, Dropbox and, via service plugins, AWS S3 and S3-compatible storages, Google Cloud Storage, Google Drive and WebDAV. Browse to the directory in the plugin or simply enter its path or URL.
 
-For large directories, there is also an automatically processed queue. You could also use the [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md) for large directories.
+Directories with thousands of files are imported in the background, with the progress shown in the admin bar. Files that are already in your media library are skipped. For scripted imports, use [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
 
-== TCP Protocols ==
+You can also import lists of URLs from CSV and XML files, the videos of a YouTube channel, and the contents of ZIP files.
 
-You can use the following TCP-protocols to import external files in your media library:
+Browse to the directory in the plugin or simply enter its path or URL (see [supported protocols](https://github.com/threadi/external-files-in-media-library/blob/master/docs/protocols.md)).
 
-📡 `http://`
-📡 `https://`
-📡 `ftp://`
-📡 `ftps://`
-📡 `sftp://`
-📡 `ssh://`
-📡 `file://`
-
-Some of them require credentials, for http(s) it is optional.
+See [import of directories](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/directories.md) for details.
 
 == Service plugins ==
 
@@ -204,7 +190,14 @@ WordPress website.
 = @@VersionNumber@@ =
 
 - Updated dependencies
-- Fixed detection of URLs if proxy on every file type is disabled
-- Fixed URL encoding if
+- Added quickstart for the most common tasks
+- Added migration from other offload plugins
+- Added private files and support for WooCommerce downloads
+- Added credentials via constants and protection of staging websites
+- Extended export: background export, image sizes, WebP/AVIF, folder structure, restore as local files
+- Added support for image optimizers and further plugins
+- Added search in the settings and in the command palette
+- Restructured settings and improved performance
+- Many bug fixes, especially for Dropbox, the proxy and large files
 
 [older changes](https://github.com/threadi/external-files-in-media-library/blob/master/changelog.md)

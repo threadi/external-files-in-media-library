@@ -1392,10 +1392,11 @@ class Helper {
 	public static function get_icon( string $icon_name, string $dashicon, string $label = '', int $size = 20 ): string {
 		// use the SVG icon, if it is registered.
 		if ( function_exists( 'wp_get_icon' ) && class_exists( 'WP_Icons_Registry' ) && \WP_Icons_Registry::get_instance()->is_registered( $icon_name ) ) {
-			$svg = wp_get_icon(
+			$svg_size = (int) round( $size * 4 / 3 );
+			$svg      = wp_get_icon(
 				$icon_name,
 				array(
-					'size'  => $size,
+					'size'  => $svg_size,
 					'label' => $label,
 				)
 			);
@@ -1432,11 +1433,14 @@ class Helper {
 			'svg'      => array_merge(
 				$a11y,
 				array(
-					'xmlns'   => true,
-					'viewbox' => true,
-					'width'   => true,
-					'height'  => true,
-					'fill'    => true,
+					'xmlns'        => true,
+					'viewbox'      => true,
+					'width'        => true,
+					'height'       => true,
+					'fill'         => true,
+					'stroke'       => true,
+					'stroke-width' => true,
+					'style'        => true,
 				)
 			),
 			'g'        => array( 'fill' => true ),

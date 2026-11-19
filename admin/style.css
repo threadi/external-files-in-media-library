@@ -31,19 +31,19 @@
 }
 
 input[type="password"].eml-field-width, input[type="text"].eml-field-width, select.eml-field-width {
-    width: 320px;
+	width: 320px;
 }
 
 .eml_settings_link {
-    display: inline-block;
+	display: inline-block;
 	margin-top: .5em;
-    text-decoration: none;
+	text-decoration: none;
 	vertical-align: middle;
 }
 
 .eml-transient {
-    position: relative;
-    z-index: 1;
+	position: relative;
+	z-index: 1;
 }
 
 body.settings_page_eml_settings .review-hint-button:after, body.media_page_efml_local_directories .review-hint-button:after, body.taxonomy-edlfw_archive .review-hint-button:after {
@@ -393,6 +393,10 @@ body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
 		svg {
 			fill: currentColor;
 		}
+		&.svg-icon {
+			height: auto;
+			width: auto;
+		}
 	}
 }
 
@@ -737,11 +741,11 @@ body.settings_page_eml_settings {
 
 /* hint about the automatic deletion of used lists with URLs */
 .efml-url-list-cleanup-hint {
-    margin-top: 0;
+	margin-top: 0;
 }
 .efml-url-list-cleanup-hint .dashicons {
-    color: #996800;
-    vertical-align: text-bottom;
+	color: #996800;
+	vertical-align: text-bottom;
 }
 
 body.settings_page_eml_settings .nav-tab-help.components-button .components-tab-panel__tabs-item-label {
