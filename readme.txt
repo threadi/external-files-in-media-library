@@ -1,6 +1,6 @@
 === External files in Media Library ===
 Contributors: threadi
-Tags: external files, media library, media, embed
+Tags: offload, external files, media library, cloud storage, embed
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 8.2
