@@ -457,6 +457,9 @@ class Real_Import extends Extension_Base {
 		// remove the locally saved marker.
 		$external_file_obj->remove_local_saved();
 
+		// remove the private marker.
+		$external_file_obj->remove_private();
+
 		// remove the credentials.
 		$external_file_obj->remove_fields();
 
@@ -501,8 +504,8 @@ class Real_Import extends Extension_Base {
 		// get attachment ID.
 		$attachment_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if attachment ID is not given.
-		if ( 0 === $attachment_id ) {
+		// bail if attachment ID is not given or the user is not allowed to edit this file.
+		if ( 0 === $attachment_id || ! current_user_can( 'edit_post', $attachment_id ) ) {
 			wp_safe_redirect( $referer );
 			exit;
 		}
@@ -580,6 +583,11 @@ class Real_Import extends Extension_Base {
 
 		// check the files and change its state.
 		foreach ( $items as $attachment_id ) {
+			// bail if the user is not allowed to edit this file.
+			if ( ! current_user_can( 'edit_post', absint( $attachment_id ) ) ) {
+				continue;
+			}
+
 			// get external file object for this attachment.
 			$external_file_obj = Files::get_instance()->get_file( absint( $attachment_id ) );
 

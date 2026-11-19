@@ -50,6 +50,13 @@ class File_Types_Base {
 	private string $mime_type = '';
 
 	/**
+	 * Marker to ignore the requirement of the proxy for the actual file during the check of the proxy settings.
+	 *
+	 * @var bool
+	 */
+	private bool $ignore_proxy_requirement = false;
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @param File|false $external_file_obj The external file as object or false.
@@ -199,7 +206,49 @@ class File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return false;
+		return $this->is_proxy_required_for_file();
+	}
+
+	/**
+	 * Return whether the file of this object must be delivered via the proxy, independent of the proxy setting.
+	 *
+	 * File types should use this in their is_proxy_enabled().
+	 *
+	 * @return bool
+	 */
+	protected function is_proxy_required_for_file(): bool {
+		// bail if the requirement should be ignored (during the check of the settings only).
+		if ( $this->ignore_proxy_requirement ) {
+			return false;
+		}
+
+		// get the file object.
+		$external_file_obj = $this->get_file();
+
+		// return whether the proxy is required for this file.
+		return $external_file_obj instanceof File && $external_file_obj->is_proxy_required();
+	}
+
+	/**
+	 * Return whether the proxy is enabled for this file type via its settings, independent of the requirement of
+	 * the proxy for the actual file (e.g. as it is saved privately).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_enabled_by_settings(): bool {
+		// ignore the requirement of the proxy for the actual file.
+		$this->ignore_proxy_requirement = true;
+
+		// get the result from the settings of this file type.
+		$enabled = $this->is_proxy_enabled();
+
+		// reset the marker.
+		$this->ignore_proxy_requirement = false;
+
+		// return the result.
+		return $enabled;
 	}
 
 	/**
@@ -285,6 +334,9 @@ class File_Types_Base {
 		// create an ASCII-only variant for clients which do not support RFC 5987.
 		$filename_ascii = (string) preg_replace( '/[^\x20-\x7E]/', '_', $filename );
 		$filename_ascii = str_replace( array( '"', '\\' ), '_', $filename_ascii );
+
+		// send the headers for the caching (ends the request, if the browser has the actual file already).
+		Proxy::get_instance()->send_cache_headers( $cached_file, $external_file_obj );
 
 		// send the headers.
 		header( 'Content-Type: ' . $external_file_obj->get_mime_type() );
@@ -397,6 +449,28 @@ class File_Types_Base {
 	}
 
 	/**
+	 * Output the complete given file in chunks.
+	 *
+	 * The headers must be sent before.
+	 *
+	 * @param string $file The absolute path to the file.
+	 *
+	 * @return void
+	 */
+	protected function output_file( string $file ): void {
+		// get the size of the file.
+		$filesize = absint( wp_filesize( $file ) );
+
+		// bail if the file is empty.
+		if ( 0 === $filesize ) {
+			return;
+		}
+
+		// output the file.
+		$this->read_file_part( $file, 0, $filesize - 1 );
+	}
+
+	/**
 	 * Output a part of the given file in chunks.
 	 *
 	 * @param string $file The absolute path to the file.
@@ -406,6 +480,11 @@ class File_Types_Base {
 	 * @return void
 	 */
 	private function read_file_part( string $file, int $start, int $end ): void {
+		// bail if this is a HEAD request, which only gets the headers.
+		if ( $this->is_head_request() ) {
+			return;
+		}
+
 		// remove any output buffering to not hold the file in memory.
 		while ( ob_get_level() > 0 ) {
 			ob_end_clean();
@@ -438,5 +517,14 @@ class File_Types_Base {
 		}
 
 		fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+	}
+
+	/**
+	 * Return whether the actual request is a HEAD request.
+	 *
+	 * @return bool
+	 */
+	protected function is_head_request(): bool {
+		return isset( $_SERVER['REQUEST_METHOD'] ) && 'HEAD' === strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) );
 	}
 }

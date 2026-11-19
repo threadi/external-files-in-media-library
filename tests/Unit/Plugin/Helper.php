@@ -267,4 +267,153 @@ class Helper extends externalFilesTests {
 		\ExternalFilesInMediaLibrary\Plugin\Helper::delete_directory_recursively( $base );
 	}
 
+
+	/**
+	 * Test the check whether a table of this plugin exists.
+	 *
+	 * @return void
+	 */
+	public function test_is_table_available(): void {
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_queue' ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_not_existing' ) );
+	}
+
+	/**
+	 * Test that no database errors occur on another website of a multisite, where this plugin has not been installed.
+	 *
+	 * @return void
+	 */
+	public function test_no_database_errors_on_website_without_tables(): void {
+		global $wpdb;
+
+		// bail if this is not a multisite.
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Runs only in a multisite (WP_MULTISITE=1).' );
+		}
+
+		// create a website without the tables of this plugin and an attachment on it.
+		$blog_id = absint( self::factory()->blog->create() );
+		switch_to_blog( $blog_id );
+		$attachment_id = (int) self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_queue' ) );
+
+		// delete the attachment and write a log entry: no database errors.
+		$wpdb->last_error = '';
+		$suppress         = $wpdb->suppress_errors( false );
+		ob_start();
+		wp_delete_attachment( $attachment_id, true );
+		\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->create( 'test', '', 'info' );
+		$output = (string) ob_get_clean();
+		$wpdb->suppress_errors( $suppress );
+		$this->assertSame( '', $wpdb->last_error );
+		$this->assertStringNotContainsString( 'database error', $output );
+		$this->assertNull( get_post( $attachment_id ) );
+		restore_current_blog();
+
+		// the tables of the main website are still detected.
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::is_table_available( 'eml_logs' ) );
+	}
+
+	/**
+	 * Test the download from a local filesystem, which is not supported (the caller should use get_contents() then).
+	 *
+	 * @return void
+	 */
+	public function test_download_from_remote_filesystem_not_supported(): void {
+		$this->assertNull( \ExternalFilesInMediaLibrary\Plugin\Helper::download_from_remote_filesystem( \ExternalFilesInMediaLibrary\Plugin\Helper::get_wp_filesystem(), __FILE__, wp_tempnam() ) );
+	}
+
+	/**
+	 * Test the download via SFTP: the file is copied via the SFTP stream into the local file.
+	 *
+	 * @return void
+	 */
+	public function test_download_from_remote_filesystem_via_sftp(): void {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ssh2.php';
+
+		// create a remote file, which is reachable via the path of the SFTP stream.
+		$remote = wp_tempnam();
+		file_put_contents( $remote, str_repeat( 'sftp', 1024 * 1024 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		$local = wp_tempnam();
+
+		// get a SSH2 filesystem, which uses the path directly instead of the SFTP stream.
+		$filesystem = ( new \ReflectionClass(
+			get_class(
+				new class() extends \WP_Filesystem_SSH2 {
+					/**
+					 * Constructor without connection.
+					 */
+					public function __construct() {}
+
+					/**
+					 * Return the path of the file.
+					 *
+					 * @param string $path The path.
+					 *
+					 * @return string
+					 */
+					public function sftp_path( $path ) {
+						return $path;
+					}
+				}
+			)
+		) )->newInstanceWithoutConstructor();
+
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::download_from_remote_filesystem( $filesystem, $remote, $local ) );
+		$this->assertSame( md5_file( $remote ), md5_file( $local ) );
+
+		// a missing file results in false and no local file.
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::download_from_remote_filesystem( $filesystem, $remote . '-missing', $local . '-missing' ) );
+		$this->assertFileDoesNotExist( $local . '-missing' );
+
+		wp_delete_file( $remote );
+		wp_delete_file( $local );
+	}
+
+	/**
+	 * Test the download via FTP sockets: the file is written via the handle into the local file.
+	 *
+	 * @return void
+	 */
+	public function test_download_from_remote_filesystem_via_ftp_sockets(): void {
+		require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-ftpsockets.php';
+
+		// get a filesystem with an FTP object, which writes the content into the handle.
+		$filesystem      = ( new \ReflectionClass( \WP_Filesystem_ftpsockets::class ) )->newInstanceWithoutConstructor();
+		$filesystem->ftp = new class() {
+			/**
+			 * Write the content of the requested file into the handle.
+			 *
+			 * @param resource $handle The handle.
+			 * @param string   $file   The file.
+			 *
+			 * @return bool
+			 */
+			public function fget( $handle, string $file ): bool {
+				if ( 'missing.jpg' === $file ) {
+					return false;
+				}
+				fwrite( $handle, 'content of ' . $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+				return true;
+			}
+
+			/**
+			 * Close the connection (called by the destructor of the filesystem).
+			 *
+			 * @return void
+			 */
+			public function quit(): void {}
+		};
+		$local           = wp_tempnam();
+
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Plugin\Helper::download_from_remote_filesystem( $filesystem, 'example.jpg', $local ) );
+		$this->assertSame( 'content of example.jpg', file_get_contents( $local ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Helper::download_from_remote_filesystem( $filesystem, 'missing.jpg', $local ) );
+		$this->assertFileDoesNotExist( $local );
+	}
 }

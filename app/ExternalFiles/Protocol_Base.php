@@ -11,8 +11,9 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Services\Service_Base;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Filesystem_Base;
-use WP_Query;
 
 /**
  * Object to handle base functions for each protocol.
@@ -46,6 +47,20 @@ class Protocol_Base {
 	 * @var array<string,array<string,mixed>>
 	 */
 	private array $fields = array();
+
+	/**
+	 * The external file this object is used for, if known.
+	 *
+	 * @var File|null
+	 */
+	private ?File $external_file = null;
+
+	/**
+	 * Cache for the complete list of files of a directory during this request.
+	 *
+	 * @var array<string,array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>>
+	 */
+	private static array $file_list_cache = array();
 
 	/**
 	 * Constructor, not used as this a Singleton object.
@@ -209,6 +224,137 @@ class Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could list the files of a directory page by page, without loading them.
+	 *
+	 * Protocols with this support import directories via import runs: the files are listed first and then
+	 * imported one by one, in the background for large directories.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory, whose files could be listed via get_file_list().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		return false;
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object, without loading the files.
+	 *
+	 * The list contains the same files, which the import of the directory via get_url_infos() would import.
+	 * Each entry contains the URL to import the single file and optional its size and its modification time
+	 * (as timestamp). If the import saves the file with another URL in the media library (e.g. with its public
+	 * URL), this URL is given as "media-url", so files, which are already in the media library, are detected.
+	 *
+	 * The cursor is empty for the first page. The result contains the cursor for the next page, which is empty
+	 * if this was the last page. On errors the method returns false and logs the error.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function get_file_list( string $cursor ): array|false { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		return array(
+			'files'  => array(),
+			'cursor' => '',
+		);
+	}
+
+	/**
+	 * Return the maximum count of files per page of get_file_list().
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return int
+	 */
+	protected function get_file_list_page_size(): int {
+		$instance = $this;
+
+		/**
+		 * Filter the maximum count of files, which are listed per request to the external source during an import run.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $page_size The page size.
+		 * @param Protocol_Base $instance The protocol object.
+		 */
+		return max( 1, absint( apply_filters( 'efml_file_list_page_size', 500, $instance ) ) );
+	}
+
+	/**
+	 * Return the complete list of files of the directory of this object for get_file_list(), loaded only once per
+	 * request (e.g. for protocols, which could only load the complete list of a directory with one request).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param callable $loader Callback, which loads the list of files (or returns false on errors).
+	 * @param bool     $reload True to load the list again (e.g. for the first page).
+	 *
+	 * @return array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>|false
+	 */
+	protected function get_cached_file_list( callable $loader, bool $reload = false ): array|false {
+		// get the key for this directory.
+		$key = static::class . '|' . $this->get_url();
+
+		// load the list, if it is not cached or the first page is requested (e.g. by a new run).
+		if ( $reload || ! isset( self::$file_list_cache[ $key ] ) ) {
+			$files = $loader();
+
+			// bail on errors.
+			if ( ! is_array( $files ) ) {
+				return false;
+			}
+
+			// cache only one list to limit the used memory.
+			self::$file_list_cache = array( $key => $files );
+		}
+
+		// return the list.
+		return self::$file_list_cache[ $key ];
+	}
+
+	/**
+	 * Return the given list of files as page for get_file_list(), starting at the position in the given cursor.
+	 *
+	 * Helper for protocols, which load the complete list of a directory with one request (e.g. local, FTP).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}> $files  The complete list of files.
+	 * @param string                                                                                 $cursor The cursor with the position.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}
+	 */
+	protected function get_file_list_page( array $files, string $cursor ): array {
+		// get the position.
+		$offset = absint( $cursor );
+
+		// get the page.
+		$page = array_slice( array_values( $files ), $offset, $this->get_file_list_page_size() );
+
+		// get the position of the next page.
+		$next = $offset + count( $page );
+
+		// return the page with the cursor for the next page, if there are more files.
+		return array(
+			'files'  => $page,
+			'cursor' => $next < count( $files ) ? (string) $next : '',
+		);
+	}
+
+	/**
 	 * Return whether the file should be saved local (true) or not (false).
 	 *
 	 * @return bool
@@ -220,10 +366,120 @@ class Protocol_Base {
 	/**
 	 * Return the fields.
 	 *
+	 * Values of fields, which are defined via constants for the service using this protocol, replace
+	 * the given values, if the URL of this object is matching the server of these constants.
+	 *
 	 * @return array<string,array<string,mixed>>
 	 */
 	public function get_fields(): array {
+		return $this->get_fields_for_url( $this->get_url() );
+	}
+
+	/**
+	 * Return the fields to use for a connection to the given URL.
+	 *
+	 * Values from constants are only used if the URL is matching the server of these constants.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	protected function get_fields_for_url( string $url ): array {
+		return Services::get_instance()->apply_constants_to_fields( $this->get_fields_without_constants(), $this->get_service_names_for_constants(), $url ); // @phpstan-ignore return.type
+	}
+
+	/**
+	 * Return the fields as they are set, without values from constants.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	protected function get_fields_without_constants(): array {
 		return $this->fields;
+	}
+
+	/**
+	 * Return the names of the services, whose constants should be used for the fields of this protocol.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_constants(): array {
+		return Services::get_instance()->get_service_names_for_constants( $this->get_name() );
+	}
+
+	/**
+	 * Return the names of the services, to which the URL of this protocol belongs.
+	 *
+	 * @return array<int,string>
+	 */
+	protected function get_service_names_for_blocking(): array {
+		return Services::get_instance()->get_service_names_for_blocking( $this->get_name() );
+	}
+
+	/**
+	 * Set the external file this object is used for.
+	 *
+	 * Protocols could use it to get the access data of the file (e.g. the connection of the owner of its external
+	 * source), independent of the actual user.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param File $external_file The external file.
+	 *
+	 * @return void
+	 */
+	public function set_external_file( File $external_file ): void {
+		$this->external_file = $external_file;
+	}
+
+	/**
+	 * Return the external file this object is used for, if known.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return File|null
+	 */
+	public function get_external_file(): ?File {
+		return $this->external_file;
+	}
+
+	/**
+	 * Return whether files could be imported with this protocol in the actual request.
+	 *
+	 * Protocols of services are also registered for visitors (e.g. to deliver private files via the proxy), so
+	 * their imports must check the capability of the service: protocols of services override this method.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_import_allowed_for_user(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the service, which prevents the usage of the URL of this object, as its credentials are defined
+	 * via constants for another server. Returns false if the URL could be used.
+	 *
+	 * @return Service_Base|false
+	 */
+	public function get_service_blocking_by_constants(): Service_Base|false {
+		foreach ( array_unique( $this->get_service_names_for_blocking() ) as $service_name ) {
+			// get the service object.
+			$service_obj = Services::get_instance()->get_service_by_name( $service_name );
+
+			// bail if this is not a service object.
+			if ( ! $service_obj instanceof Service_Base ) {
+				continue;
+			}
+
+			// return the service, if it blocks the URL.
+			if ( $service_obj->is_target_blocked_by_constants( $this->get_url(), $this->get_fields_without_constants() ) ) {
+				return $service_obj;
+			}
+		}
+
+		// return false as the URL could be used.
+		return false;
 	}
 
 	/**
@@ -284,24 +540,8 @@ class Protocol_Base {
 			return false;
 		}
 
-		// query for the file with same URL.
-		$query   = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'value'   => $url,
-					'compare' => '=',
-				),
-			),
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-		$results = new WP_Query( $query );
-
-		// return true if any file with this URL has been found.
-		return $results->post_count > 0;
+		// return true if any file with this URL has been found (via the index of the database).
+		return Url_Index::get_instance()->find( $url ) > 0;
 	}
 
 	/**
@@ -372,6 +612,37 @@ class Protocol_Base {
 
 		// return false in any other case.
 		return false;
+	}
+
+	/**
+	 * Return a signed URL for the given URL of a private file, which is valid in the given time range.
+	 *
+	 * Used by the proxy to redirect to private files, which are not delivered from the cache, and for downloads
+	 * of WooCommerce products. The URL must be valid from the start to the expiration time. Services, which can
+	 * sign URLs without a request to their API, should create the same URL for the same time range, so browsers and
+	 * caches can reuse it. Return an empty string if this is not possible, then the file is delivered from the cache.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url     The URL of the file (as saved on the external file).
+	 * @param int    $start   The start of the validity as timestamp.
+	 * @param int    $expires The end of the validity as timestamp.
+	 *
+	 * @return string
+	 */
+	public function get_signed_url( string $url, int $start, int $expires ): string {
+		// bail if url is empty.
+		if ( empty( $url ) ) {
+			return '';
+		}
+
+		// bail if time range is not valid.
+		if ( $expires <= $start ) {
+			return '';
+		}
+
+		// return empty string as this protocol could not sign URLs.
+		return '';
 	}
 
 	/**

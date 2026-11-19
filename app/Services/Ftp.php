@@ -18,6 +18,7 @@ use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
@@ -40,6 +41,13 @@ class Ftp extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $name = 'ftp';
+
+	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = 'server';
 
 	/**
 	 * The public label.
@@ -169,45 +177,54 @@ class Ftp extends Service_Base implements Service {
 
 		// add setting for the button to connect.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || $this->is_mode( 'global' ) ) {
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_server' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the server is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'server', __( 'Server', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_server' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Server', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'ftps://example.com', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_login' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the login is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'login', __( 'Login', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_login' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:efml_ftp_login' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:efml_ftp_login' ) );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Login', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'Your login', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 
-			// add setting to show also shared files.
-			$setting = $settings_obj->add_setting( 'efml_ftp_password' );
-			$setting->set_section( $section );
-			$setting->set_type( 'string' );
-			$setting->set_default( '' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password( $settings_obj );
-			$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
-			$field->set_setting( $setting );
-			$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
-			$field->set_readonly( $this->is_disabled() );
-			$setting->set_field( $field );
+			// show hint if the password is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'password', __( 'Password', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'efml_ftp_password' );
+				$setting->set_section( $section );
+				$setting->set_type( 'string' );
+				$setting->set_default( '' );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:efml_ftp_password' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:efml_ftp_password' ) );
+				$field = new Password( $settings_obj );
+				$field->set_title( __( 'Password', 'external-files-in-media-library' ) );
+				$field->set_setting( $setting );
+				$field->set_placeholder( __( 'Your password', 'external-files-in-media-library' ) );
+				$field->set_readonly( $this->is_disabled() );
+				$setting->set_field( $field );
+			}
 		}
 
 		if ( $this->is_mode( 'user' ) ) {
@@ -553,9 +570,10 @@ class Ftp extends Service_Base implements Service {
 	 */
 	public function do_login( string $directory ): bool {
 		// check if all fields are set.
-		$counter = 0;
-		$fields  = 0;
-		foreach ( $this->fields as $field ) {
+		$counter       = 0;
+		$fields        = 0;
+		$fields_values = $this->get_fields();
+		foreach ( $fields_values as $field ) {
 			++$fields;
 			if ( ! empty( $field['value'] ) ) {
 				++$counter;
@@ -576,7 +594,7 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		// override the directory.
-		$server = $this->fields['server']['value'];
+		$server = (string) $fields_values['server']['value'];
 
 		// prepend the directory with ftp:// if that is not given.
 		if ( 0 !== stripos( $server, 'ftp://' ) && 0 !== stripos( $server, 'ftps://' ) ) {
@@ -730,13 +748,16 @@ class Ftp extends Service_Base implements Service {
 			return $this->directory;
 		}
 
+		// get the fields incl. values from constants.
+		$fields = $this->get_fields();
+
 		// bail if no directory is set.
-		if ( empty( $this->fields['server']['value'] ) ) {
+		if ( empty( $fields['server']['value'] ) || ! is_string( $fields['server']['value'] ) ) {
 			return '';
 		}
 
 		// return the directory.
-		return $this->fields['server']['value'];
+		return $fields['server']['value'];
 	}
 
 	/**
@@ -818,8 +839,8 @@ class Ftp extends Service_Base implements Service {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			$values['server']   = get_option( 'efml_ftp_server', '' );
-			$values['login']    = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_login', '' ) );
-			$values['password'] = Crypt::get_instance()->decrypt( get_option( 'efml_ftp_password', '' ) );
+			$values['login']    = Crypt::get_instance()->decrypt( (string) get_option( 'efml_ftp_login', '' ), 'option:efml_ftp_login' );
+			$values['password'] = Crypt::get_instance()->decrypt( (string) get_option( 'efml_ftp_password', '' ), 'option:efml_ftp_password' );
 		}
 
 		// save it user-specific, if this is enabled.
@@ -833,9 +854,9 @@ class Ftp extends Service_Base implements Service {
 			}
 
 			// get the values.
-			$values['server']   = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_server', true ) );
-			$values['login']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_login', true ) );
-			$values['password'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_ftp_password', true ) );
+			$values['server']   = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_server', true ), $this->get_user_setting_crypt_context( 'ftp_server' ) );
+			$values['login']    = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_login', true ), $this->get_user_setting_crypt_context( 'ftp_login' ) );
+			$values['password'] = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_ftp_password', true ), $this->get_user_setting_crypt_context( 'ftp_password' ) );
 		}
 
 		// return the resulting list of values.
@@ -857,6 +878,27 @@ class Ftp extends Service_Base implements Service {
 		}
 
 		return __( 'Enter your FTP connection details', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You get the access data for FTP, FTPS or SFTP from your hosting provider. Usually you find them in the customer area or control panel of your hosting (e.g. Plesk, cPanel or ISPConfig) under FTP accounts or SSH access.', 'external-files-in-media-library' ),
+			'steps' => array(
+				__( 'If possible, create an own FTP account for this website and restrict it to the directory with your files.', 'external-files-in-media-library' ),
+				__( 'Enter the server with protocol, e.g. <code>ftps://ftp.example.com</code> for an encrypted connection, <code>sftp://example.com</code> for SFTP or <code>ftp://ftp.example.com</code>. You can add a directory and a port, e.g. <code>ftps://ftp.example.com:2121/files/</code>.', 'external-files-in-media-library' ),
+				__( 'Enter login and password of the FTP account. For SFTP, these are usually the access data of the SSH user.', 'external-files-in-media-library' ),
+			),
+			'hints' => array(
+				__( 'If you do not know the access data or the name of the server, ask your hosting provider.', 'external-files-in-media-library' ),
+				__( 'Prefer FTPS or SFTP: plain FTP transfers the password unencrypted.', 'external-files-in-media-library' ),
+				__( 'Some servers only allow connections from certain IP addresses. Then the IP address of the server of your website must be allowed.', 'external-files-in-media-library' ),
+			),
+		);
 	}
 
 	/**
@@ -898,5 +940,165 @@ class Ftp extends Service_Base implements Service {
 	 */
 	public function get_export_object(): Export_Base|false {
 		return Export::get_instance();
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the URL of the directory for the connection test.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_url(): string {
+		// use the actual directory, if it is an FTP-URL.
+		$url = $this->get_connection_test_directory();
+
+		// otherwise use the server from the fields.
+		if ( 0 !== stripos( $url, 'ftp://' ) && 0 !== stripos( $url, 'ftps://' ) && 0 !== stripos( $url, 'sftp://' ) ) {
+			$fields = $this->get_fields();
+			$url    = ! empty( $fields['server']['value'] ) && is_string( $fields['server']['value'] ) ? $fields['server']['value'] : '';
+
+			// prepend the URL with ftp:// if that is not given.
+			if ( '' !== $url && 0 !== stripos( $url, 'ftp://' ) && 0 !== stripos( $url, 'ftps://' ) && 0 !== stripos( $url, 'sftp://' ) ) {
+				$url = 'ftp://' . $url;
+			}
+		}
+
+		// return the URL with trailing slash.
+		return trailingslashit( $url );
+	}
+
+	/**
+	 * Return the FTP connection for the connection test.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return WP_Filesystem_FTPext
+	 * @throws Exception If the connection failed.
+	 */
+	private function get_connection_test_connection( string $url ): WP_Filesystem_FTPext {
+		// get the protocol handler for this URL.
+		$protocol_handler_obj = Protocols::get_instance()->get_protocol_object_for_url( $url );
+
+		// bail if handler is not FTP (e.g. for SFTP, which could not be used for exports).
+		if ( ! $protocol_handler_obj instanceof Protocols\Ftp ) {
+			throw new Exception( esc_html__( 'Only FTP and FTPS connections could be tested, as only they could be used to export files.', 'external-files-in-media-library' ) );
+		}
+
+		// set the login.
+		$protocol_handler_obj->set_fields( $this->get_fields() );
+
+		// get the FTP-connection.
+		$ftp_connection = $protocol_handler_obj->get_connection( $url );
+
+		// bail if connection failed.
+		if ( ! $ftp_connection instanceof WP_Filesystem_FTPext ) {
+			throw new Exception( esc_html__( 'The connection to the FTP server failed. Check the server and the credentials.', 'external-files-in-media-library' ) );
+		}
+
+		// return the connection.
+		return $ftp_connection;
+	}
+
+	/**
+	 * Return the path of the given URL.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_path( string $url ): string {
+		$path = (string) wp_parse_url( $url, PHP_URL_PATH );
+		return '' !== $path ? $path : '/';
+	}
+
+	/**
+	 * Connect to the FTP server and list the directory for the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_list(): string {
+		// get the URL.
+		$url = $this->get_connection_test_url();
+
+		// bail if no server is set.
+		if ( '/' === $url ) {
+			throw new Exception( esc_html__( 'No credentials set for this FTP connection!', 'external-files-in-media-library' ) );
+		}
+
+		// get the connection.
+		$ftp_connection = $this->get_connection_test_connection( $url );
+
+		// bail if the directory could not be read.
+		if ( false === @$ftp_connection->dirlist( $this->get_connection_test_path( $url ) ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			/* translators: %1$s will be replaced by a path. */
+			throw new Exception( esc_html( sprintf( __( 'The directory %1$s could not be read on the FTP server.', 'external-files-in-media-library' ), $this->get_connection_test_path( $url ) ) ) );
+		}
+
+		// return the message.
+		return __( 'The directory could be read.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Upload the test file to the FTP server.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		// get the URL and the connection.
+		$url            = $this->get_connection_test_url();
+		$ftp_connection = $this->get_connection_test_connection( $url );
+
+		// upload the file.
+		if ( ! @$ftp_connection->put_contents( $this->get_connection_test_path( $url ) . $file_name, (string) Helper::get_wp_filesystem()->get_contents( $local_file ) ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			throw new Exception( esc_html__( 'The test file could not be saved on the FTP server. Check the permissions of the directory.', 'external-files-in-media-library' ) );
+		}
+
+		// return the URL of the file.
+		return $url . $file_name;
+	}
+
+	/**
+	 * Delete the test file from the FTP server.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		if ( ! Export::get_instance()->delete_exported_file( $url, array( 'fields' => $this->get_fields() ), 0 ) ) {
+			throw new Exception( esc_html__( 'The test file could not be deleted.', 'external-files-in-media-library' ) );
+		}
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'FTP, FTPS, SFTP, SSH, server, hosting', 'search terms for the FTP service, separated by commas', 'external-files-in-media-library' );
 	}
 }

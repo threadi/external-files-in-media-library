@@ -171,4 +171,29 @@ class File extends externalFilesTests {
 		$this->assertIsObject( $protocol_handler );
 		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http::class, $protocol_handler );
 	}
+
+	/**
+	 * Test the file name, which is used if the file is saved locally.
+	 *
+	 * @return void
+	 */
+	public function test_get_local_file_name(): void {
+		$file_obj = $this->get_file_object();
+
+		// test 1: the title is a valid file name.
+		$file_obj->set_title( 'example.pdf' );
+		$this->assertSame( 'example.pdf', $file_obj->get_local_file_name() );
+
+		// test 2: the title is not a file name, so the name from the URL is used.
+		$file_obj->set_title( 'My document' );
+		$this->assertSame( 'example.pdf', $file_obj->get_local_file_name() );
+
+		// test 3: the URL does not contain a file name with extension, so the title with the extension of the mime type is used.
+		$file_obj->set_url( 'https://example.com/download?id=5&format=pdf' );
+		$this->assertSame( 'My-document.pdf', $file_obj->get_local_file_name() );
+
+		// test 4: the query string of the URL is never part of the name.
+		$file_obj->set_url( 'https://example.com/files/report.pdf?version=2' );
+		$this->assertSame( 'report.pdf', $file_obj->get_local_file_name() );
+	}
 }

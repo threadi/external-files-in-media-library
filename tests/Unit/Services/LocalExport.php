@@ -130,4 +130,49 @@ class LocalExport extends externalFilesTests {
 		// a second export must not overwrite the existing file.
 		$this->assertFalse( \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->export_file( $attachment_id, $target, array() ) );
 	}
+
+	/**
+	 * Test if missing folders are created during the export, but never outside the allowed directory.
+	 *
+	 * @return void
+	 */
+	public function test_export_file_into_new_folders(): void {
+		$attachment_id = self::factory()->attachment->create_upload_object( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_path() . 'tests/Data/example.pdf' );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->supports_folders() );
+
+		// export to new folders in the allowed directory.
+		$target = 'file://' . $this->allowed_directory . '2026/11/example.pdf';
+		$this->assertEquals( $target, \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->export_file( $attachment_id, $target, array() ) );
+		$this->assertFileExists( $this->allowed_directory . '2026/11/example.pdf' );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->file_exists_on_target( $target, array() ) );
+
+		// new folders outside the allowed directory.
+		$target = 'file://' . $this->forbidden_directory . '2026/11/example.pdf';
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->export_file( $attachment_id, $target, array() ) );
+		$this->assertDirectoryDoesNotExist( $this->forbidden_directory . '2026' );
+
+		// relative folders, which leave the allowed directory.
+		$target = 'file://' . $this->allowed_directory . 'new/../../' . basename( $this->forbidden_directory ) . '/example.pdf';
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Services\Local\Export::get_instance()->export_file( $attachment_id, $target, array() ) );
+		$this->assertFileDoesNotExist( $this->forbidden_directory . 'example.pdf' );
+		$this->assertDirectoryDoesNotExist( $this->allowed_directory . 'new' );
+	}
+
+	/**
+	 * Test that the local service is the export object also without a user (e.g. for exports via cron or WP CLI).
+	 *
+	 * @return void
+	 */
+	public function test_export_object_without_user(): void {
+		wp_set_current_user( 0 );
+
+		// initialize the service like in a request without a user.
+		remove_filter( 'efml_export_object', array( \ExternalFilesInMediaLibrary\Services\Local::get_instance(), 'change_export_object' ) );
+		\ExternalFilesInMediaLibrary\Services\Local::get_instance()->init();
+
+		// the service with its export object is used for local external sources.
+		$service_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance()->get_service_object_by_type( 'local' );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\Local::class, $service_obj );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\Export_Base::class, $service_obj->get_export_object() );
+	}
 }

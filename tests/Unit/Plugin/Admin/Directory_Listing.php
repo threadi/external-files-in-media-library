@@ -172,4 +172,46 @@ class Directory_Listing extends externalFilesTests {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->is_source_allowed_for_current_user( $category_id ) );
 	}
+
+	/**
+	 * Test if the configuration in the attribute "data-config" is valid JSON in the browser, also if a text of it
+	 * contains escaped quotes (like the IAM policy in the help for AWS S3, which broke the form of AWS S3).
+	 *
+	 * @return void
+	 */
+	public function test_config_with_escaped_quotes_is_valid_json(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+
+		// add a help with a code to copy, as AWS S3 does it.
+		$code   = "{\n    \"Version\": \"2012-10-17\",\n    \"Resource\": \"arn:aws:s3:::my-bucket/*\"\n}";
+		$filter = static function ( array $guide ) use ( $code ): array {
+			$guide['code'] = array(
+				'label'   => 'IAM policy',
+				'content' => $code,
+			);
+			return $guide;
+		};
+		add_filter( 'efml_service_setup_guide', $filter );
+
+		// get the configuration of the FTP service.
+		$service = \ExternalFilesInMediaLibrary\Services\Services::get_instance()->get_service_by_name( 'ftp' );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\Services\Service_Base::class, $service );
+		$config = $service->get_config();
+		remove_filter( 'efml_service_setup_guide', $filter );
+		$this->assertStringContainsString( '&quot;Version&quot;', $config['form_description'] );
+
+		// the value of the attribute as the browser reads it.
+		$attribute = esc_attr( \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->get_config_json( $config ) );
+		$value     = html_entity_decode( $attribute, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+
+		// the JSON must be valid and contain the escaped code, which the browser shows as the original code.
+		$decoded = json_decode( $value, true );
+		$this->assertIsArray( $decoded );
+		$this->assertEquals( $config['form_description'], $decoded['form_description'] );
+		$this->assertEquals( count( $config['fields'] ), count( $decoded['fields'] ) );
+
+		// with the former flags the JSON was broken in the browser.
+		$former = html_entity_decode( esc_attr( \ExternalFilesInMediaLibrary\Plugin\Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		$this->assertNull( json_decode( $former, true ) );
+	}
 }

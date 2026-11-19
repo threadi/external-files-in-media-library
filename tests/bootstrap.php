@@ -49,6 +49,12 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 // provide all abilities in tests, not only the read-only abilities (which is the default).
 tests_add_filter( 'efml_abilities_mode', static fn() => 'all' );
 
+// use GD before Imagick for images in the tests: Imagick is considerably slower with the large test images.
+// Set EFML_TEST_IMAGE_EDITOR=imagick to test with Imagick first, like WordPress does it by default.
+if ( 'imagick' !== getenv( 'EFML_TEST_IMAGE_EDITOR' ) ) {
+	tests_add_filter( 'wp_image_editors', static fn(): array => array( 'WP_Image_Editor_GD', 'WP_Image_Editor_Imagick' ) );
+}
+
 // Start up the WP testing environment.
 require "{$_tests_dir}/includes/bootstrap.php";
 

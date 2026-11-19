@@ -34,6 +34,16 @@ use ExternalFilesInMediaLibrary\ThirdParty\ThirdPartySupport;
  */
 class Settings {
 	/**
+	 * Name of the option with the names of the settings, whose default values have been saved.
+	 */
+	public const DEFAULTS_OPTION = 'efml_saved_defaults';
+
+	/**
+	 * Version of the check of the settings in save_missing_defaults() (raise it to check all settings again).
+	 */
+	private const DEFAULTS_CHECK_VERSION = 2;
+
+	/**
 	 * The settings object.
 	 *
 	 * @var ?\easySettingsForWordPress\Settings
@@ -81,12 +91,118 @@ class Settings {
 		// set all settings for this plugin.
 		add_action( 'init', array( $this, 'add_settings' ) );
 
+		// save the default values of settings, which are not saved yet (after all settings have been added).
+		add_action( 'wp_loaded', array( $this, 'save_missing_defaults' ), PHP_INT_MAX );
+
 		// misc.
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ) );
 
 		// set actions.
 		add_action( 'admin_action_eml_disable_gprd_hint', array( $this, 'disable_gprd_hint_by_request' ) );
 		add_action( 'admin_action_efml_reset', array( $this, 'reset_plugin_by_request' ) );
+
+		// forward requests for tabs, which have been moved into other tabs.
+		add_action( 'admin_init', array( $this, 'forward_moved_tabs' ) );
+	}
+
+
+
+	/**
+	 * Return whether the settings of this plugin are shown or saved in this request.
+	 *
+	 * Settings, whose fields need queries (e.g. lists or buttons depending on the files), are only needed there.
+	 *
+	 * @return bool
+	 */
+	public function is_settings_request(): bool {
+		// check the page of the settings and the saving of settings via options.php.
+		$is_settings_request = is_admin() && ( $this->get_menu_slug() === filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) || ( isset( $GLOBALS['pagenow'] ) && 'options.php' === $GLOBALS['pagenow'] ) );
+
+		/**
+		 * Filter whether the settings of this plugin are shown or saved in this request.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $is_settings_request True, if the settings are shown or saved.
+		 */
+		return (bool) apply_filters( 'efml_is_settings_request', $is_settings_request );
+	}
+	/**
+	 * Save the default values of all settings, which have not been saved yet, as autoloaded options, and change saved
+	 * settings, which should be autoloaded, to autoloaded.
+	 *
+	 * WordPress reads each option, which is not saved or not autoloaded, with an own query in every request. Settings
+	 * are only saved during the activation, if they are added at this time, and if they are saved in the settings.
+	 * Each setting is checked only once: the names of the checked settings are saved in an autoloaded option.
+	 *
+	 * @return void
+	 */
+	public function save_missing_defaults(): void {
+		// bail during installation or uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) || wp_installing() ) {
+			return;
+		}
+
+		// get the names of the checked settings (with the version of the check: 2 includes the check of the autoload).
+		$checked = Helper::get_autoloaded_option( self::DEFAULTS_OPTION, array() );
+		if ( ! is_array( $checked ) ) {
+			$checked = array();
+		}
+
+		// collect the autoloaded settings, which have not been checked yet.
+		$settings = array();
+		foreach ( $this->get_settings_obj()->get_settings() as $setting ) {
+			// bail if it has been checked.
+			if ( isset( $checked[ $setting->get_name() ] ) && absint( $checked[ $setting->get_name() ] ) >= self::DEFAULTS_CHECK_VERSION ) {
+				continue;
+			}
+
+			// bail if it is not autoloaded (it would be read with an own query anyway).
+			if ( ! $setting->is_autoloaded() ) {
+				continue;
+			}
+
+			// add it to the list.
+			$settings[] = $setting;
+		}
+
+		// bail if all settings have been checked.
+		if ( empty( $settings ) ) {
+			return;
+		}
+
+		// get the autoloaded options.
+		$autoloaded = wp_load_alloptions();
+
+		// check each setting.
+		$missing = 'efml_missing_option';
+		foreach ( $settings as $setting ) {
+			// mark it as checked.
+			$checked[ $setting->get_name() ] = self::DEFAULTS_CHECK_VERSION;
+
+			// bail if it is autoloaded.
+			if ( array_key_exists( $setting->get_name(), $autoloaded ) ) {
+				continue;
+			}
+
+			// get the saved value.
+			$value = get_option( $setting->get_name(), $missing );
+
+			// save the default value, if it is missing and set.
+			if ( $missing === $value ) {
+				if ( $setting->is_default_set() ) {
+					add_option( $setting->get_name(), $setting->get_default(), '', true );
+				}
+				continue;
+			}
+
+			// change the saved setting to autoloaded, if it is not too large for this (e.g. saved so by an older version).
+			if ( function_exists( 'wp_set_option_autoload' ) && strlen( (string) maybe_serialize( $value ) ) <= 150000 ) {
+				wp_set_option_autoload( $setting->get_name(), true );
+			}
+		}
+
+		// save the list of checked settings.
+		update_option( self::DEFAULTS_OPTION, $checked, true );
 	}
 
 	/**
@@ -122,6 +238,13 @@ class Settings {
 			'page' => $this->get_menu_slug(),
 		);
 
+		// use the parent tab, if the requested tab is a sub-tab of another tab (e.g. the logs in "Status").
+		$moved_tabs = $this->get_moved_tabs();
+		if ( empty( $sub_tab ) && isset( $moved_tabs[ $tab ] ) ) {
+			$sub_tab = $tab;
+			$tab     = $moved_tabs[ $tab ];
+		}
+
 		// add a tab, if set.
 		if ( ! empty( $tab ) ) {
 			$array['tab'] = $tab;
@@ -142,6 +265,226 @@ class Settings {
 		return add_query_arg(
 			$array,
 			get_admin_url() . $this->get_php_page()
+		);
+	}
+
+	/**
+	 * Return the tabs, which are sub-tabs of other tabs since 6.0.0, with the names of their parent tabs.
+	 *
+	 * URLs for these tabs are created with their parent tab (see @get_url()) and requests with their old URLs
+	 * are forwarded (see @forward_moved_tabs()).
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_moved_tabs(): array {
+		$list = array(
+			'eml_proxy'       => 'eml_file_types',
+			'eml_permissions' => 'eml_advanced',
+			'eml_logs'        => 'eml_status',
+			'eml_queue_table' => 'eml_status',
+			'eml_statistics'  => 'eml_status',
+			'polylang'        => 'eml_integrations',
+			'woocommerce'     => 'eml_integrations',
+			'instant_images'  => 'eml_integrations',
+		);
+
+		/**
+		 * Filter the list of tabs, which are sub-tabs of other tabs, with the names of their parent tabs.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param array<string,string> $list List of tab names (key) with the names of their parent tabs (value).
+		 */
+		return apply_filters( 'efml_settings_moved_tabs', $list );
+	}
+
+	/**
+	 * Return the definitions of the tabs, which group other tabs (e.g. "Status" for logs, queue and statistics).
+	 *
+	 * @return array<string,array{title: string, position: int}>
+	 */
+	private function get_group_tabs(): array {
+		return array(
+			'eml_file_types'   => array(
+				'title'    => __( 'Delivery', 'external-files-in-media-library' ),
+				'position' => 30,
+			),
+			'eml_advanced'     => array(
+				'title'    => __( 'Advanced', 'external-files-in-media-library' ),
+				'position' => 90,
+			),
+			'eml_status'       => array(
+				'title'    => __( 'Status', 'external-files-in-media-library' ),
+				'position' => 100,
+			),
+			'eml_integrations' => array(
+				'title'    => __( 'Integrations', 'external-files-in-media-library' ),
+				'position' => 120,
+			),
+		);
+	}
+
+	/**
+	 * Return the tab, which groups other tabs. It is added, if it does not exist yet.
+	 *
+	 * @param string $name The name of the tab (e.g. "eml_status").
+	 *
+	 * @return Tab|false
+	 */
+	public function get_group_tab( string $name ): Tab|false {
+		// get the settings page.
+		$settings_page = $this->get_settings_obj()->get_page( $this->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// return the tab, if it exists.
+		$tab = $settings_page->get_tab( $name );
+		if ( $tab instanceof Tab ) {
+			return $tab;
+		}
+
+		// get the definitions.
+		$groups = $this->get_group_tabs();
+
+		// bail if this is not a group tab.
+		if ( ! isset( $groups[ $name ] ) ) {
+			return false;
+		}
+
+		// add the tab.
+		$tab = $settings_page->add_tab( $name, $groups[ $name ]['position'] );
+		$tab->set_title( $groups[ $name ]['title'] );
+
+		// return the tab.
+		return $tab;
+	}
+
+	/**
+	 * Add a sub-tab to a tab, which groups other tabs, and use the sub-tab with the lowest position as default.
+	 *
+	 * The group tab is added, if it does not exist yet.
+	 *
+	 * @param string $group    The name of the group tab (e.g. "eml_status").
+	 * @param string $name     The name of the sub-tab.
+	 * @param int    $position The position of the sub-tab.
+	 *
+	 * @return Tab|false
+	 */
+	public function add_sub_tab( string $group, string $name, int $position ): Tab|false {
+		// get the group tab.
+		$group_tab = $this->get_group_tab( $group );
+
+		// bail if the group tab could not be loaded.
+		if ( ! $group_tab instanceof Tab ) {
+			return false;
+		}
+
+		// add the sub-tab.
+		$tab = $group_tab->add_tab( $name, $position );
+
+		// use the sub-tab with the lowest position as default (a group could change this afterward).
+		$sub_tabs = $group_tab->get_tabs();
+		$first    = reset( $sub_tabs );
+		if ( $first instanceof Tab ) {
+			$group_tab->set_default_tab( $first );
+		}
+
+		// return the sub-tab.
+		return $tab;
+	}
+
+	/**
+	 * Return a tab of the settings page by its name, also if it is a sub-tab of another tab.
+	 *
+	 * @param string $name The name of the tab.
+	 *
+	 * @return Tab|false
+	 */
+	public function get_tab( string $name ): Tab|false {
+		// get the settings page.
+		$settings_page = $this->get_settings_obj()->get_page( $this->get_menu_slug() );
+
+		// bail if page does not exist.
+		if ( ! $settings_page instanceof Page ) {
+			return false;
+		}
+
+		// search in the tabs and their sub-tabs.
+		foreach ( $settings_page->get_tabs() as $tab ) {
+			// return the tab, if the name matches.
+			if ( $tab->get_name() === $name ) {
+				return $tab;
+			}
+
+			// search in its sub-tabs.
+			$sub_tab = $tab->get_tab( $name );
+			if ( $sub_tab instanceof Tab ) {
+				return $sub_tab;
+			}
+		}
+
+		// return false, as the tab could not be found.
+		return false;
+	}
+
+	/**
+	 * Forward requests for tabs, which are sub-tabs of other tabs since 6.0.0, to their new URLs.
+	 *
+	 * This keeps bookmarks and links in older hints or documentations working.
+	 *
+	 * @return void
+	 */
+	public function forward_moved_tabs(): void {
+		// bail if this is not our settings page.
+		if ( $this->get_menu_slug() !== filter_input( INPUT_GET, 'page', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) {
+			return;
+		}
+
+		// bail if a sub-tab is requested.
+		if ( ! is_null( filter_input( INPUT_GET, 'subtab', FILTER_SANITIZE_FULL_SPECIAL_CHARS ) ) ) {
+			return;
+		}
+
+		// get the requested tab.
+		$tab = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+
+		// get the moved tabs.
+		$moved_tabs = $this->get_moved_tabs();
+
+		// bail if the requested tab has not been moved.
+		if ( ! is_string( $tab ) || ! isset( $moved_tabs[ $tab ] ) ) {
+			return;
+		}
+
+		// forward to the new URL with all other parameters of the request.
+		wp_safe_redirect( $this->get_forward_url_for_moved_tab( $tab ) );
+		exit;
+	}
+
+	/**
+	 * Return the URL of the actual request for a tab, which has been moved into the given parent tab.
+	 *
+	 * @param string $tab The name of the moved tab.
+	 *
+	 * @return string
+	 */
+	public function get_forward_url_for_moved_tab( string $tab ): string {
+		// get the moved tabs.
+		$moved_tabs = $this->get_moved_tabs();
+
+		// bail if the tab has not been moved.
+		if ( ! isset( $moved_tabs[ $tab ] ) ) {
+			return $this->get_url( $tab );
+		}
+
+		// return the URL of the request with the parent tab and the sub-tab.
+		return add_query_arg(
+			array(
+				'tab'    => $moved_tabs[ $tab ],
+				'subtab' => $tab,
+			)
 		);
 	}
 
@@ -196,10 +539,33 @@ class Settings {
 				'file_choose_file'                   => __( 'Choose file', 'external-files-in-media-library' ),
 				'file_choose_image'                  => __( 'Upload or choose image', 'external-files-in-media-library' ),
 				'drag_n_drop'                        => __( 'Hold to drag & drop', 'external-files-in-media-library' ),
+				'search_placeholder'                 => __( 'Search settings', 'external-files-in-media-library' ),
+				'search_label'                       => __( 'Search settings', 'external-files-in-media-library' ),
+				'search_no_results'                  => __( 'No setting found.', 'external-files-in-media-library' ),
+				'search_no_results_tab'              => __( 'No matches in this tab.', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'search_other_results'               => __( 'Matches in other tabs (%1$d)', 'external-files-in-media-library' ),
+				/* translators: %1$d will be replaced by a number. */
+				'search_results'                     => __( 'Search results (%1$d)', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_depends'                     => __( 'Only visible if "%1$s" is set accordingly.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_depends_enabled'             => __( 'Only visible if "%1$s" is enabled.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_go_to'                       => __( 'Go to "%1$s"', 'external-files-in-media-library' ),
+				'search_open_tab'                    => __( 'Open tab', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by the title of a setting. */
+				'search_command_label'               => __( 'External files settings: %1$s', 'external-files-in-media-library' ),
 			)
 		);
 		if ( method_exists( $this->settings_obj, 'set_view' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_view( get_option( 'eml_setting_view', 'classic' ) );
+		}
+
+		// enable the search in the settings (requires easy-settings-for-wordpress 3.10.0). The command palette of this
+		// plugin finds the settings via its own command loader (see Commands), so the one of the library is not used.
+		if ( method_exists( $this->settings_obj, 'set_search' ) ) { // @phpstan-ignore function.alreadyNarrowedType
+			$this->settings_obj->set_search( true );
 		}
 		if ( method_exists( $this->settings_obj, 'set_update_version' ) ) { // @phpstan-ignore function.alreadyNarrowedType
 			$this->settings_obj->set_update_version( EFML_PLUGIN_VERSION );
@@ -221,17 +587,18 @@ class Settings {
 		$general_tab->set_name( 'eml_general' );
 		$general_tab->set_title( __( 'General Settings', 'external-files-in-media-library' ) );
 
-		// the proxy tab.
-		$proxy_tab = $settings_page->add_tab( 'eml_proxy', 40 );
+		// the proxy tab as sub-tab of the tab for the delivery of files.
+		$proxy_tab = $this->add_sub_tab( 'eml_file_types', 'eml_proxy', 900 );
+		if ( ! $proxy_tab instanceof Tab ) {
+			return;
+		}
 		$proxy_tab->set_title( __( 'Proxy', 'external-files-in-media-library' ) );
 
-		// the permissions tab.
-		$permissions_tab = $settings_page->add_tab( 'eml_permissions', 80 );
-		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
-
 		// the advanced tab.
-		$advanced_tab = $settings_page->add_tab( 'eml_advanced', 90 );
-		$advanced_tab->set_title( __( 'Advanced', 'external-files-in-media-library' ) );
+		$advanced_tab = $this->get_group_tab( 'eml_advanced' );
+		if ( ! $advanced_tab instanceof Tab ) {
+			return;
+		}
 
 		// the sub-tab for the file handling in advanced tab.
 		$advanced_files_tab = $advanced_tab->add_tab( 'eml_advanced_files', 10 );
@@ -250,8 +617,15 @@ class Settings {
 		$advanced_misc_tab = $advanced_tab->add_tab( 'eml_advanced_misc', 40 );
 		$advanced_misc_tab->set_title( __( 'Miscellaneous', 'external-files-in-media-library' ) );
 
-		// the logs tab.
-		$logs_tab = $settings_page->add_tab( 'eml_logs', 100 );
+		// the permissions tab as sub-tab of the advanced tab.
+		$permissions_tab = $advanced_tab->add_tab( 'eml_permissions', 50 );
+		$permissions_tab->set_title( __( 'Permissions', 'external-files-in-media-library' ) );
+
+		// the logs tab as sub-tab of the status tab.
+		$logs_tab = $this->add_sub_tab( 'eml_status', 'eml_logs', 10 );
+		if ( ! $logs_tab instanceof Tab ) {
+			return;
+		}
 		$logs_tab->set_title( __( 'Logs', 'external-files-in-media-library' ) );
 		$logs_tab->set_callback( array( $this, 'show_logs' ) );
 		$logs_tab->set_hide_save( true );
@@ -382,17 +756,18 @@ class Settings {
 		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
 
 		// add setting.
-		$setting = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
+		$setting     = $this->get_settings_obj()->add_setting( 'eml_delete_on_deinstallation' );
+		$description = __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin. Files of your media library, which have been exported or taken over from another offload plugin, are never deleted.', 'external-files-in-media-library' );
 		$setting->set_section( $advanced_plugin );
 		$setting->set_field(
 			array(
 				'type'        => 'Checkbox',
 				'title'       => __( 'Delete all data on uninstallation', 'external-files-in-media-library' ),
-				'description' => __( 'If this option is enabled all URL-files will be deleted during deinstallation of this plugin.', 'external-files-in-media-library' ),
+				'description' => $description,
 			)
 		);
 		$setting->set_default( 1 );
-		$setting->set_help( '<p>' . $field->get_description() . '</p>' );
+		$setting->set_help( '<p>' . $description . '</p>' );
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_switch_on_uninstallation' );
@@ -405,6 +780,19 @@ class Settings {
 			)
 		);
 		$setting->set_default( 0 );
+
+		// add setting.
+		$setting = $this->get_settings_obj()->add_setting( 'eml_mark_supported_plugins' );
+		$setting->set_section( $advanced_plugin );
+		$setting->set_type( 'integer' );
+		$setting->set_field(
+			array(
+				'type'        => 'Checkbox',
+				'title'       => __( 'Mark supported plugins', 'external-files-in-media-library' ),
+				'description' => __( 'If this option is enabled, the list of plugins shows a hint for each plugin, which this plugin supports with external files.', 'external-files-in-media-library' ),
+			)
+		);
+		$setting->set_default( 1 );
 
 		// add setting.
 		$setting = $this->get_settings_obj()->add_setting( 'eml_directory_listing_hide_preview' );
@@ -760,6 +1148,7 @@ class Settings {
 				/* translators: %1$s will be replaced by the plugin name. */
 				'<p><strong>' . sprintf( __( 'Are you sure you want to reset all settings and data for the plugin %1$s?', 'external-files-in-media-library' ), Helper::get_plugin_name() ) . '</strong></p>',
 				'<p>' . __( 'This will reset all settings and all external files in your media library.', 'external-files-in-media-library' ) . '</p>',
+				'<p>' . __( 'Exported files are restored as local files at their original path before. If this takes too long, the reset is cancelled, the files are restored in the background and you can reset the plugin again afterward.', 'external-files-in-media-library' ) . '</p>',
 				'<p><strong>' . __( 'We recommend creating a backup before resetting the plugin.', 'external-files-in-media-library' ) . '</strong></p>',
 			),
 			'buttons'   => array(
@@ -877,8 +1266,7 @@ class Settings {
 
 		// if list is not empty, remove any notification about it.
 		if ( ! empty( $values ) ) {
-			$transients_obj = Transients::get_instance();
-			$transients_obj->get_transient_by_name( 'eml_missing_mime_types' )->delete();
+			Helper::delete_hint( 'eml_missing_mime_types' );
 		}
 
 		// return resulting list.
@@ -902,7 +1290,8 @@ class Settings {
 		<div class="wrap eml-log-table">
 			<form method="get">
 				<input type="hidden" name="page" value="eml_settings">
-				<input type="hidden" name="tab" value="eml_logs">
+				<input type="hidden" name="tab" value="eml_status">
+				<input type="hidden" name="subtab" value="eml_logs">
 				<?php
 				$log->search_box( __( 'Search for URL', 'external-files-in-media-library' ), 'link' );
 				$log->views();
@@ -1138,6 +1527,59 @@ class Settings {
 	}
 
 	/**
+	 * Restore the exported files before the reset of the plugin and return whether all of them have been restored.
+	 *
+	 * The files are restored as far as the time of this request allows. If files are left, the reset is cancelled:
+	 * the other files are restored in the background and a hint asks to reset the plugin again afterward.
+	 *
+	 * @return bool
+	 */
+	private function restore_files_before_reset(): bool {
+		// get the restore object.
+		$restore_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Restore::get_instance();
+
+		// bail if no exported files exist.
+		if ( ! $restore_obj->has_files() ) {
+			return true;
+		}
+
+		// restore as many files as possible.
+		$remaining = $restore_obj->restore_until( \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_deadline() );
+
+		// bail if all files have been restored.
+		if ( 0 === $remaining ) {
+			return true;
+		}
+
+		// restore the other files in the background.
+		\ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->start_localize();
+
+		// create the URL to reset the plugin nevertheless.
+		$force_url = add_query_arg(
+			array(
+				'action' => 'efml_reset',
+				'force'  => 1,
+				'nonce'  => wp_create_nonce( 'external-files-in-media-library-reset' ),
+			),
+			get_admin_url() . 'admin.php'
+		);
+
+		// show a hint.
+		$transient_obj = Transients::get_instance()->add();
+		$transient_obj->set_name( 'efml_reset_cancelled' );
+		$transient_obj->set_type( 'error' );
+		/* translators: %1$d will be replaced by a number, %2$s by a URL. */
+		$message = sprintf( _n( '%1$d exported file is restored at its original path in the background first, so it is not lost. Reset the plugin again afterward. If a file could not be restored, the reason is listed in the <a href="%2$s">log</a>.', '%1$d exported files are restored at their original path in the background first, so they are not lost. Reset the plugin again afterward. If a file could not be restored, the reason is listed in the <a href="%2$s">log</a>.', $remaining, 'external-files-in-media-library' ), $remaining, esc_url( Helper::get_log_url() ) );
+		/* translators: %1$s will be replaced by a URL. */
+		$message .= ' ' . sprintf( __( 'If files could not be restored, you can also <a href="%1$s">reset the plugin nevertheless</a>: they stay exported files and their copies on the external sources are kept.', 'external-files-in-media-library' ), esc_url( $force_url ) );
+		$transient_obj->set_message( '<strong>' . __( 'The plugin has not been reset yet.', 'external-files-in-media-library' ) . '</strong> ' . $message );
+		$transient_obj->save();
+
+		// return false as files are left.
+		return false;
+	}
+
+	/**
 	 * Reset the plugin by request.
 	 *
 	 * @return void
@@ -1149,6 +1591,12 @@ class Settings {
 		// bail if user has not the capability.
 		if ( ! current_user_can( self::get_instance()->get_settings_obj()->get_capability() ) ) {
 			return;
+		}
+
+		// restore the exported files first: bail, if not all of them could be restored in this request (not, if the reset is forced).
+		if ( 1 !== absint( filter_input( INPUT_GET, 'force', FILTER_SANITIZE_NUMBER_INT ) ) && ! $this->restore_files_before_reset() ) {
+			wp_safe_redirect( (string) wp_get_referer() );
+			exit;
 		}
 
 		// uninstall all.

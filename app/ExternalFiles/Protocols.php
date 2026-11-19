@@ -172,6 +172,7 @@ class Protocols {
 			if ( $protocol_obj instanceof Protocol_Base ) {
 				// configure its fields.
 				$protocol_obj->set_fields( $external_file->get_fields() );
+				$protocol_obj->set_external_file( $external_file );
 
 				// return the resulting object.
 				return $protocol_obj;
@@ -200,6 +201,9 @@ class Protocols {
 			if ( ! $protocol_obj->is_url_compatible() ) {
 				continue;
 			}
+
+			// set the file on the object.
+			$protocol_obj->set_external_file( $external_file );
 
 			// return resulting object.
 			return $protocol_obj;

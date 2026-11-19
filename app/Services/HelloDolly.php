@@ -15,6 +15,15 @@ defined( 'ABSPATH' ) || exit;
  */
 class HelloDolly extends Service_Plugin_Base implements Service {
 	/**
+	 * Whether the services of this plugin could be set up in the quickstart after installing the plugin.
+	 *
+	 * Not, as it is only an example.
+	 *
+	 * @var bool
+	 */
+	protected bool $setup_support = false;
+
+	/**
 	 * The object name.
 	 *
 	 * @var string

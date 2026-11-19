@@ -195,3 +195,8 @@ install_db() {
 install_wp
 install_test_suite
 install_db
+
+# install the extensions for the live tests, only if requested (composer test-install-live, see bin/install-addons.sh).
+if [ -n "${EFML_ADDONS_DEFAULT_SOURCE}${EFML_ADDONS_SOURCE}" ]; then
+	bash "$(dirname "$0")/install-addons.sh"
+fi

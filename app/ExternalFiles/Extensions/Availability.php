@@ -248,8 +248,8 @@ class Availability extends Extension_Base {
 		// get ID.
 		$attachment_id = absint( filter_input( INPUT_POST, 'id', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if no file is given.
-		if ( 0 === $attachment_id ) {
+		// bail if no file is given or the user is not allowed to edit this file.
+		if ( 0 === $attachment_id || ! current_user_can( 'edit_post', $attachment_id ) ) {
 			// send response as JSON.
 			wp_send_json( $result );
 		}

@@ -15,6 +15,17 @@ jQuery(document).ready(function($) {
     });
 
     /**
+     * Filter the services by their features.
+     */
+    $('#efml-directory-listing-services-filter').on('change', function() {
+      let feature = $(this).val();
+      $('#efml-directory-listing-services > li[data-efml-features]').each(function() {
+        let features = String( $(this).attr('data-efml-features') ).split(' ');
+        this.hidden = '' !== feature && ! features.includes( feature );
+      });
+    });
+
+    /**
      * Add file action.
      */
     $('body.settings_page_eml_settings h1.wp-heading-inline, body.taxonomy-edlfw_archive h1.wp-heading-inline').each(function() {
@@ -191,11 +202,28 @@ jQuery(document).ready(function($) {
 
     /**
      * Copy strings in clipboard.
+     *
+     * The handler is delegated to the document, as the DataView of the settings adds its content
+     * (e.g. the table of the logs) after this script has been loaded.
      */
-    $(".settings_page_eml_settings .copy-text-attr").on("click", function( e ) {
+    $(document).on("click", ".settings_page_eml_settings .copy-text-attr", function( e ) {
       e.preventDefault();
       $(this).removeClass("copied");
       if( efml_copy_to_clipboard($(this).data( 'text' ).trim()) ) {
+        $(this).addClass("copied");
+      }
+    });
+
+    /**
+     * Copy the text of the help for the setup of a service.
+     *
+     * The handler is delegated to the document, as the forms of the services and the quickstart add the help
+     * after this script has been loaded.
+     */
+    $(document).on("click", ".efml-setup-guide-copy", function( e ) {
+      e.preventDefault();
+      $(this).removeClass("copied");
+      if( efml_copy_to_clipboard( $(this).siblings( 'textarea' ).val() ) ) {
         $(this).addClass("copied");
       }
     });

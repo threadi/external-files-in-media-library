@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use ZipArchive;
 
 /**
@@ -210,6 +211,11 @@ class Zip extends Zip_Base {
 			$fields = json_decode( $fields_json, true );
 		}
 
+		// add the values of constants for the ZIP service (the password is only used locally to open the file).
+		if ( is_array( $fields ) ) {
+			$fields = Services::get_instance()->apply_constants_to_fields( $fields, Services::get_instance()->get_service_names_for_constants( 'zip' ), '' );
+		}
+
 		// if password is set, set if on the zip object.
 		if ( is_array( $fields ) && ! empty( $fields['zip_password']['value'] ) ) {
 			$zip->setPassword( $fields['zip_password']['value'] );
@@ -385,8 +391,8 @@ class Zip extends Zip_Base {
 				continue;
 			}
 
-			// get parts of the path.
-			$parts = explode( DIRECTORY_SEPARATOR, $name );
+			// get parts of the path (ZIP archives always use "/" as separator, independent of the OS).
+			$parts = explode( '/', $name );
 
 			// if array contains more than 1 entry this file is in a directory.
 			if ( end( $parts ) ) {

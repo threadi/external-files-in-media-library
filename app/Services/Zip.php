@@ -45,6 +45,13 @@ class Zip extends Service_Base implements Service {
 	protected string $name = 'zip';
 
 	/**
+	 * Name of the field, which contains the URL of the server this service connects to.
+	 *
+	 * @var string
+	 */
+	protected string $constants_host_field = 'server';
+
+	/**
 	 * The public label.
 	 *
 	 * @var string
@@ -782,13 +789,16 @@ class Zip extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_directory(): string {
+		// get the fields incl. values from constants.
+		$fields = $this->get_fields();
+
 		// bail if no directory is set.
-		if ( empty( $this->fields['server']['value'] ) ) {
+		if ( empty( $fields['server']['value'] ) || ! is_string( $fields['server']['value'] ) ) {
 			return '';
 		}
 
 		// return the directory.
-		return $this->fields['server']['value'];
+		return $fields['server']['value'];
 	}
 
 	/**
@@ -798,6 +808,20 @@ class Zip extends Service_Base implements Service {
 	 */
 	public function get_form_title(): string {
 		return __( 'Enter the URL', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'Login and password are only needed, if the URL of the ZIP file is protected by a login of the web server (HTTP Basic Auth). You get them from the provider of the file. Otherwise leave the fields empty.', 'external-files-in-media-library' ),
+			'hints' => array(
+				__( 'The password for the ZIP file is only needed for encrypted archives. It is the password, which has been set when the archive was created.', 'external-files-in-media-library' ),
+			),
+		);
 	}
 
 	/**
@@ -1133,5 +1157,14 @@ class Zip extends Service_Base implements Service {
 
 		// set the service name.
 		$external_file_obj->set_service_name( $this->get_name() );
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'ZIP, archive, extract, unpack', 'search terms for the ZIP service, separated by commas', 'external-files-in-media-library' );
 	}
 }

@@ -199,27 +199,33 @@ class Youtube extends Service_Base implements Service {
 
 		// add setting.
 		if ( defined( 'EFML_ACTIVATION_RUNNING' ) || 'global' === get_option( 'eml_' . $this->get_name() . '_credentials_vault' ) ) {
-			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_youtube_channel_id' );
-			$setting->set_section( $section );
-			$setting->set_autoload( false );
-			$setting->set_type( 'string' );
-			$field = new Text( $settings_obj );
-			$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
-			$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
-			$setting->set_field( $field );
+			// show hint if the value is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'channel_id', __( 'Channel ID', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'eml_youtube_channel_id' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->set_type( 'string' );
+				$field = new Text( $settings_obj );
+				$field->set_title( __( 'Channel ID', 'external-files-in-media-library' ) );
+				$field->set_placeholder( __( 'Your Channel ID', 'external-files-in-media-library' ) );
+				$setting->set_field( $field );
+			}
 
-			// add setting.
-			$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
-			$setting->set_section( $section );
-			$setting->set_autoload( false );
-			$setting->set_type( 'string' );
-			$setting->set_read_callback( array( $this, 'decrypt_value' ) );
-			$setting->set_save_callback( array( $this, 'encrypt_value' ) );
-			$field = new Password( $settings_obj );
-			$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
-			$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
-			$setting->set_field( $field );
+			// show hint if the value is defined via constant, otherwise the setting.
+			if ( ! $this->add_constant_hint_setting( $section, 'api_key', __( 'API Key', 'external-files-in-media-library' ) ) ) {
+				// add setting.
+				$setting = $settings_obj->add_setting( 'eml_youtube_api_key' );
+				$setting->set_section( $section );
+				$setting->set_autoload( false );
+				$setting->set_type( 'string' );
+				$setting->set_read_callback( Crypt::get_instance()->get_read_callback( 'option:eml_youtube_api_key' ) );
+				$setting->set_save_callback( Crypt::get_instance()->get_save_callback( 'option:eml_youtube_api_key' ) );
+				$field = new Password( $settings_obj );
+				$field->set_title( __( 'API Key', 'external-files-in-media-library' ) );
+				$field->set_placeholder( __( 'Your API Key', 'external-files-in-media-library' ) );
+				$setting->set_field( $field );
+			}
 		}
 
 		// show hint for user settings.
@@ -641,6 +647,17 @@ class Youtube extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the URL of the web interface of YouTube.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_platform_url(): string {
+		return 'https://www.youtube.com/';
+	}
+
+	/**
 	 * Return global actions.
 	 *
 	 * @return array<int,array<string,string>>
@@ -649,6 +666,10 @@ class Youtube extends Service_Base implements Service {
 		return array_merge(
 			parent::get_global_actions(),
 			array(
+				array(
+					'action' => 'location.href="' . esc_url( $this->get_platform_url() ) . '";',
+					'label'  => __( 'Go to YouTube', 'external-files-in-media-library' ),
+				),
 				array(
 					'action' => 'efml_get_import_dialog( { "service": "' . $this->get_name() . '", "urls": "' . $this->get_channel_url() . '" + url, "fields": config.fields, "term": config.term } );',
 					'label'  => __( 'Import all videos', 'external-files-in-media-library' ),
@@ -1036,6 +1057,40 @@ class Youtube extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You need the ID of the YouTube channel and an API key for the YouTube Data API. Both are free.', 'external-files-in-media-library' ),
+			'steps' => array(
+				__( 'Sign in to the Google Cloud console with your Google account and create a project.', 'external-files-in-media-library' ),
+				__( 'Enable the "YouTube Data API v3" in the API library of the project.', 'external-files-in-media-library' ),
+				__( 'Create an API key under "APIs & Services" → "Credentials" and restrict it to the YouTube Data API v3.', 'external-files-in-media-library' ),
+				__( 'You find the ID of your channel on YouTube under Settings → Advanced settings. It usually starts with <code>UC</code>.', 'external-files-in-media-library' ),
+			),
+			'hints' => array(
+				__( 'The API has a daily quota. Large channels are imported in several requests.', 'external-files-in-media-library' ),
+			),
+			'links' => array(
+				array(
+					'label' => __( 'Google Cloud console', 'external-files-in-media-library' ),
+					'url'   => 'https://console.cloud.google.com/apis/credentials',
+				),
+				array(
+					'label' => __( 'YouTube Data API', 'external-files-in-media-library' ),
+					'url'   => 'https://developers.google.com/youtube/v3/getting-started',
+				),
+				array(
+					'label' => __( 'Find your channel ID', 'external-files-in-media-library' ),
+					'url'   => 'https://support.google.com/youtube/answer/3250431',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string
@@ -1092,7 +1147,7 @@ class Youtube extends Service_Base implements Service {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			$values['channel_id'] = get_option( 'eml_youtube_channel_id', '' );
-			$values['api_key']    = Crypt::get_instance()->decrypt( get_option( 'eml_youtube_api_key', '' ) );
+			$values['api_key']    = Crypt::get_instance()->decrypt( (string) get_option( 'eml_youtube_api_key', '' ), 'option:eml_youtube_api_key' );
 		}
 
 		// save it user-specific, if this is enabled.
@@ -1106,8 +1161,8 @@ class Youtube extends Service_Base implements Service {
 			}
 
 			// get the values.
-			$values['channel_id'] = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_channel_id', true ) );
-			$values['api_key']    = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_youtube_api_key', true ) );
+			$values['channel_id'] = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_youtube_channel_id', true ), $this->get_user_setting_crypt_context( 'youtube_channel_id' ) );
+			$values['api_key']    = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_youtube_api_key', true ), $this->get_user_setting_crypt_context( 'youtube_api_key' ) );
 		}
 
 		// return the resulting list of values.
@@ -1204,5 +1259,14 @@ class Youtube extends Service_Base implements Service {
 
 		// replace the base URL.
 		return str_replace( $uploads['baseurl'] . '/', '', $url );
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'YouTube, video, channel', 'search terms for the YouTube service, separated by commas', 'external-files-in-media-library' );
 	}
 }

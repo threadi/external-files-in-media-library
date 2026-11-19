@@ -17,10 +17,10 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Csv;
 use ExternalFilesInMediaLibrary\Services\Xml;
-use WP_Query;
 use WP_Term_Query;
 
 /**
@@ -273,10 +273,31 @@ class Cli {
 	/**
 	 * Reset the plugin. It will be de- and re-installed.
 	 *
+	 * Exported files are restored as local files at their original path before. If one of them could not be
+	 * restored, the plugin is not reset.
+	 *
+	 * [--force]
+	 * : Reset the plugin, even if exported files could not be restored. They stay exported files then.
+	 *
+	 * @param array<int,string>    $args      List of arguments (not used).
+	 * @param array<string,string> $arguments List of parameters.
+	 *
 	 * @return void
 	 * @noinspection PhpUnused
 	 */
-	public function reset_plugin(): void {
+	public function reset_plugin( array $args = array(), array $arguments = array() ): void {
+		// restore the exported files.
+		$remaining = \ExternalFilesInMediaLibrary\ExternalFiles\Restore::get_instance()->restore_until( PHP_INT_MAX );
+
+		// bail if files could not be restored.
+		if ( $remaining > 0 && ! isset( $arguments['force'] ) ) {
+			/* translators: %1$d will be replaced by a number. */
+			\WP_CLI::error( sprintf( _n( 'The plugin has not been reset, as %1$d exported file could not be restored. The reason is listed in the log. Use --force to reset the plugin nevertheless.', 'The plugin has not been reset, as %1$d exported files could not be restored. The reasons are listed in the log. Use --force to reset the plugin nevertheless.', $remaining, 'external-files-in-media-library' ), $remaining ) );
+
+			// do nothing more.
+			return;
+		}
+
 		// run actions as if the plugin is deactivated.
 		$init = Install::get_instance();
 		$init->deactivation();
@@ -401,7 +422,7 @@ class Cli {
 	 * @noinspection PhpUnused
 	 */
 	public function process_queue(): void {
-		Queue::get_instance()->process_queue();
+		Queue::get_instance()->process_queue( true );
 
 		// return ok-message.
 		\WP_CLI::success( __( 'The queue has been processed.', 'external-files-in-media-library' ) );
@@ -813,65 +834,356 @@ class Cli {
 	}
 
 	/**
-	 * Export files from media library to an external source.
+	 * Export the local files in the media library to the external sources with enabled export.
+	 *
+	 * Exports all local files, which are not exported yet and whose mime type is allowed in the plugin settings.
+	 * This is the same export as via the button "Export now" in the export settings or via the quickstart, but all
+	 * files are exported directly.
 	 *
 	 * @return void
 	 */
 	public function export(): void {
-		// bail if export is not enabled.
-		if ( 1 !== absint( get_option( 'eml_export' ) ) ) {
-			// show hint.
-			\WP_CLI::error( __( 'Export is not enabled!', 'external-files-in-media-library' ) );
+		// export the files.
+		$result = Import_Runs::get_instance()->start_export();
+
+		// bail if the export could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
 
 			// do nothing more.
 			return;
 		}
 
-		// bail if option is disabled.
-		if ( 1 !== absint( get_option( 'eml_export_local_files' ) ) ) {
-			// show hint.
-			\WP_CLI::error( __( 'Export for local files is not enabled!', 'external-files-in-media-library' ) );
+		// show a warning, if files could not be exported.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
 
 			// do nothing more.
 			return;
-		}
-
-		// get all not external files in media library.
-		$query = array(
-			'post_type'      => 'attachment',
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'compare' => 'NOT EXISTS',
-				),
-			),
-		);
-		$files = new WP_Query( $query );
-
-		// bail if no files could be found.
-		if ( 0 === $files->found_posts ) {
-			// show hint.
-			\WP_CLI::error( __( 'No files to export could be found!', 'external-files-in-media-library' ) );
-
-			// do nothing more.
-			return;
-		}
-
-		// collect the results.
-		$result_counter = 0;
-
-		// export each file.
-		foreach ( $files->posts as $attachment_id ) {
-			if ( Export::get_instance()->export_file( absint( $attachment_id ) ) ) {
-				++$result_counter;
-			}
 		}
 
 		// show ok message.
-		/* translators: %1$s will be replaced by a number. */
-		\WP_CLI::success( sprintf( _n( '%1$d file have been exported.', '%1$d files have been exported.', $result_counter, 'external-files-in-media-library' ), $result_counter ) );
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Export the sizes of exported images, which have been exported without them.
+	 *
+	 * The sizes are created from the local copy of an image or from the image downloaded from its external source
+	 * and exported to its external sources, if their services support it. This is the same as via the button
+	 * "Export sizes now" in the export settings, but all images are processed directly.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     $ wp eml export_sizes
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function export_sizes(): void {
+		// export the sizes.
+		$result = Import_Runs::get_instance()->start_sizes();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if images failed.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Restore all exported files as local files at their original path in the media library.
+	 *
+	 * The files are downloaded from their external sources, their sizes are created again and they are normal
+	 * local files afterward. The export is disabled for this. This is the same restore as via the button
+	 * "Restore now" in the export settings, but all files are restored directly.
+	 *
+	 * [--delete-on-target]
+	 * : Delete the copies on the external sources after the restore. Without it they are kept.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Restore all exported files, e.g. before you deactivate the plugin.
+	 *     $ wp eml localize
+	 *
+	 * @param array<int,string>    $args      List of arguments (not used).
+	 * @param array<string,string> $arguments List of parameters.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function localize( array $args = array(), array $arguments = array() ): void {
+		// restore the files.
+		$result = Import_Runs::get_instance()->start_localize( isset( $arguments['delete-on-target'] ) );
+
+		// bail if the restore could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if files could not be restored.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Delete the local copies of exported files, whose local files have been kept during their export.
+	 *
+	 * This applies to files exported with the setting "Do not delete local files". Each file is loaded from its external
+	 * source before, its local copy is only deleted, if this works. Sizes, original images and variants (e.g. WebP) are
+	 * only deleted, if they exist on the external source. Files taken over from other offload plugins keep their local
+	 * files. This is the same as via the button "Delete local copies now" in the export settings, but all files are
+	 * processed directly.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Free the storage space of the local copies of exported files.
+	 *     $ wp eml delete_local_copies
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function delete_local_copies(): void {
+		// delete the local copies.
+		$result = Import_Runs::get_instance()->start_delete_local();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show a warning, if files kept their local copies.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+
+			// do nothing more.
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Save or finish local working copies of exported images, e.g. for image optimizers.
+	 *
+	 * Image optimizers and other plugins need the local files of images. "create" saves working copies of all exported
+	 * images, which are still delivered from their external sources. "finish" exports the changed and new files of all
+	 * working copies (e.g. optimized files, WebP files and backups) and removes the working copies. "status" shows the
+	 * number of working copies. Working copies are finished automatically, as soon as an image optimizer reports the
+	 * end of its work for an image.
+	 *
+	 * <action>
+	 * : "create", "finish" or "status".
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Prepare the exported images for the bulk optimization of an image optimizer.
+	 *     $ wp eml working_copies create
+	 *
+	 *     # Export the optimized images afterward.
+	 *     $ wp eml working_copies finish
+	 *
+	 * @param array<int,string> $actions List of actions (only the first one is used).
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function working_copies( array $actions = array() ): void {
+		// get the action.
+		$action = $actions[0] ?? 'status';
+
+		// show the status.
+		if ( 'status' === $action ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			\WP_CLI::line( sprintf( __( 'Images with working copy: %1$d, exported images without working copy: %2$d', 'external-files-in-media-library' ), \ExternalFilesInMediaLibrary\ExternalFiles\Working_Copies::get_instance()->count_active(), \ExternalFilesInMediaLibrary\ExternalFiles\Working_Copies::get_instance()->count_candidates() ) );
+			return;
+		}
+
+		// bail on unknown actions.
+		if ( ! in_array( $action, array( 'create', 'finish' ), true ) ) {
+			\WP_CLI::error( __( 'Unknown action. Use "create", "finish" or "status".', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// run it.
+		$result = 'create' === $action ? Import_Runs::get_instance()->start_working_copies() : Import_Runs::get_instance()->start_finish_working_copies();
+
+		// bail if it could not be started.
+		if ( 0 === $result['run_id'] ) {
+			\WP_CLI::error( $result['message'] );
+			return;
+		}
+
+		// show a warning, if images failed.
+		if ( ! $result['success'] ) {
+			\WP_CLI::warning( $result['message'] );
+			return;
+		}
+
+		// show ok message.
+		\WP_CLI::success( $result['message'] );
+	}
+
+	/**
+	 * Show or set whether this website is the main website or a copy (e.g. a staging site).
+	 *
+	 * On a copy, files are not exported to or deleted on external sources, and scheduled synchronizations are paused.
+	 *
+	 * <state>
+	 * : "main" to set this website as main website, "copy" to confirm it as copy, "status" to show the actual state.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Use this website as main website, e.g. after the go-live of a new domain.
+	 *     $ wp eml site main
+	 *
+	 * @param array<int,string> $states List of states (only the first one is used).
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function site( array $states = array() ): void {
+		// get the object.
+		$site_copy_obj = Site_Copy::get_instance();
+
+		// get the requested state.
+		$state = ! empty( $states[0] ) ? $states[0] : 'status';
+
+		// set this website as main website.
+		if ( 'main' === $state ) {
+			$site_copy_obj->set_as_main();
+			\WP_CLI::success( __( 'This website is now the main website.', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// confirm this website as copy.
+		if ( 'copy' === $state ) {
+			if ( ! $site_copy_obj->is_copy() ) {
+				\WP_CLI::error( __( 'This website is the main website. Change its address or its environment type to use it as copy.', 'external-files-in-media-library' ) );
+			}
+			$site_copy_obj->confirm_copy();
+			\WP_CLI::success( __( 'This website has been confirmed as copy.', 'external-files-in-media-library' ) );
+			return;
+		}
+
+		// bail on unknown state.
+		if ( 'status' !== $state ) {
+			\WP_CLI::error( __( 'Use "main", "copy" or "status".', 'external-files-in-media-library' ) );
+		}
+
+		// show the actual state.
+		if ( $site_copy_obj->is_copy() ) {
+			\WP_CLI::warning( __( 'This website is a copy of another website: files are not exported and not deleted on external sources, scheduled synchronizations are paused.', 'external-files-in-media-library' ) );
+			return;
+		}
+		\WP_CLI::success( __( 'This website is the main website.', 'external-files-in-media-library' ) );
+	}
+
+	/**
+	 * Show the state of the migration of files from other offload plugins, continue it or revert it.
+	 *
+	 * Reverting a migration uses the local files and the data of the other plugin again. Activate the other plugin
+	 * afterwards.
+	 *
+	 * <action>
+	 * : "status" to show the state, "run" to continue a running migration, "revert" to revert the migration.
+	 *
+	 * [--attachment=<id>]
+	 * : Revert only the given attachment.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Revert the migration of all files.
+	 *     $ wp eml migration revert
+	 *
+	 * @param array<int,string>    $actions List of actions (only the first one is used).
+	 * @param array<string,string> $arguments List of arguments.
+	 *
+	 * @return void
+	 * @noinspection PhpUnused
+	 */
+	public function migration( array $actions = array(), array $arguments = array() ): void {
+		// get the object.
+		$migrations_obj = \ExternalFilesInMediaLibrary\ExternalFiles\Migrations::get_instance();
+
+		// get the requested action.
+		$action = ! empty( $actions[0] ) ? $actions[0] : 'status';
+
+		// continue the running migration.
+		if ( 'run' === $action ) {
+			// bail if no migration is running.
+			if ( empty( $migrations_obj->get_run() ) ) {
+				\WP_CLI::success( __( 'No migration is running.', 'external-files-in-media-library' ) );
+				return;
+			}
+
+			// run it without time limit.
+			$migrations_obj->work( PHP_FLOAT_MAX );
+			$result = $migrations_obj->get_last_result();
+			/* translators: %1$d, %2$d and %3$d will be replaced by numbers. */
+			\WP_CLI::success( sprintf( __( 'The migration has been completed: %1$d files taken over, %2$d skipped, %3$d failed.', 'external-files-in-media-library' ), absint( $result['done'] ?? 0 ), absint( $result['skipped'] ?? 0 ), absint( $result['failed'] ?? 0 ) ) );
+			return;
+		}
+
+		// revert the migration.
+		if ( 'revert' === $action ) {
+			// get the attachments.
+			$attachment_ids = ! empty( $arguments['attachment'] ) ? array( absint( $arguments['attachment'] ) ) : $migrations_obj->get_migrated_attachments();
+
+			// revert them.
+			$count = 0;
+			foreach ( $attachment_ids as $attachment_id ) {
+				if ( $migrations_obj->revert( $attachment_id ) ) {
+					++$count;
+				}
+			}
+
+			/* translators: %1$d will be replaced by a number. */
+			\WP_CLI::success( sprintf( __( 'The migration of %1$d files has been reverted. Activate the other offload plugin again to use them.', 'external-files-in-media-library' ), $count ) );
+			return;
+		}
+
+		// bail on unknown action.
+		if ( 'status' !== $action ) {
+			\WP_CLI::error( __( 'Use "status", "run" or "revert".', 'external-files-in-media-library' ) );
+		}
+
+		// show the running migration.
+		$run = $migrations_obj->get_run();
+		if ( ! empty( $run ) ) {
+			/* translators: %1$d and %2$d will be replaced by numbers. */
+			\WP_CLI::log( sprintf( __( 'A migration is running: %1$d of %2$d files processed.', 'external-files-in-media-library' ), absint( $run['done'] ?? 0 ) + absint( $run['skipped'] ?? 0 ) + absint( $run['failed'] ?? 0 ), absint( $run['total'] ?? 0 ) ) );
+		}
+
+		// show the amount of migrated files.
+		/* translators: %1$d will be replaced by a number. */
+		\WP_CLI::success( sprintf( __( '%1$d files have been taken over from other offload plugins.', 'external-files-in-media-library' ), count( $migrations_obj->get_migrated_attachments() ) ) );
 	}
 }

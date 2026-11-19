@@ -10,3 +10,5 @@ languages/*.json
 /playwright-report/
 .phpunit.result.cache
 /dist/
+/.env.live
+/tests/Live/Playwright/.auth/

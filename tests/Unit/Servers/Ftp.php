@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\ManyFilesTrait;
 use ExternalFilesInMediaLibrary\Tests\StreamWrapperSpy;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
@@ -22,6 +23,8 @@ use ExternalFilesInMediaLibrary\Tests\TestServers;
  * Object to test the FTP support with a real FTP server.
  */
 class Ftp extends externalFilesTests {
+	use ManyFilesTrait;
+
 	/**
 	 * The name of the used test server.
 	 *

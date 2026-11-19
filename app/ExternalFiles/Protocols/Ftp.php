@@ -45,11 +45,11 @@ class Ftp extends Protocol_Base {
 	);
 
 	/**
-	 * List of FTP-connections in this object.
+	 * List of FTP-connections, shared by all objects in this request (e.g. for the files of an import run).
 	 *
 	 * @var array<WP_Filesystem_FTPext>
 	 */
-	private array $ftp_connections = array();
+	private static array $ftp_connections = array();
 
 	/**
 	 * Initialize the object to handle FTP-connections.
@@ -131,6 +131,119 @@ class Ftp extends Protocol_Base {
 	 */
 	public function check_availability( string $url ): bool {
 		return true;
+	}
+
+	/**
+	 * Return whether this protocol could list the files of a directory page by page.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		// bail if no credentials are set.
+		if ( empty( $this->get_fields() ) ) {
+			return false;
+		}
+
+		// get the path.
+		$path = wp_parse_url( $this->get_url(), PHP_URL_PATH );
+
+		// bail if no path is given.
+		if ( ! is_string( $path ) ) {
+			return false;
+		}
+
+		// get the connection.
+		$ftp_connection = $this->get_connection( $this->get_url() );
+
+		// return whether the path is a directory.
+		return $ftp_connection && $ftp_connection->is_dir( $path );
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object.
+	 *
+	 * Like the import of a directory, only the files directly in the directory are used.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 */
+	public function get_file_list( string $cursor ): array|false {
+		// get the complete list of the directory, loaded once per request.
+		$files = $this->get_cached_file_list(
+			function () {
+				// get the path.
+				$path = wp_parse_url( $this->get_url(), PHP_URL_PATH );
+
+				// bail if no path is given.
+				if ( ! is_string( $path ) ) {
+					return false;
+				}
+
+				// get the connection.
+				$ftp_connection = $this->get_connection( $this->get_url() );
+
+				// bail if connection could not be established.
+				if ( ! $ftp_connection ) {
+					return false;
+				}
+
+				// get the list of the directory.
+				$file_list = $ftp_connection->dirlist( $path );
+
+				// bail if list could not be loaded.
+				if ( ! is_array( $file_list ) ) {
+					Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+					return false;
+				}
+
+				// collect the files.
+				$files = array();
+				foreach ( $file_list as $filename => $settings ) {
+					// not all servers return all data for each file.
+					$settings = wp_parse_args(
+						$settings,
+						array(
+							'size'        => 0,
+							'lastmodunix' => 0,
+						)
+					);
+
+					// bail if this is a directory.
+					if ( 'd' === $settings['type'] ) {
+						continue;
+					}
+
+					// add the file.
+					$files[] = array(
+						'url'           => trailingslashit( $this->get_url() ) . $filename,
+						'filesize'      => absint( $settings['size'] ),
+						'last-modified' => absint( $settings['lastmodunix'] ),
+					);
+				}
+
+				// return the list.
+				return $files;
+			},
+			'' === $cursor
+		);
+
+		// bail on errors.
+		if ( false === $files ) {
+			return false;
+		}
+
+		// return the requested page.
+		return $this->get_file_list_page( $files, $cursor );
 	}
 
 	/**
@@ -466,8 +579,8 @@ class Ftp extends Protocol_Base {
 			return false;
 		}
 
-		// get the fields.
-		$fields = $this->get_fields();
+		// get the fields for this URL.
+		$fields = $this->get_fields_for_url( $url );
 
 		// bail if fields are missing.
 		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
@@ -494,9 +607,12 @@ class Ftp extends Protocol_Base {
 			$connection_arguments_json = '';
 		}
 
-		// check if connection is already in the cache.
-		if ( ! empty( $this->ftp_connections[ md5( $connection_arguments_json ) ] ) ) {
-			return $this->ftp_connections[ md5( $connection_arguments_json ) ];
+		// use the connection from the cache, if it is still usable (the server could have closed it).
+		if ( ! empty( self::$ftp_connections[ md5( $connection_arguments_json ) ] ) ) {
+			if ( false !== @self::$ftp_connections[ md5( $connection_arguments_json ) ]->cwd() ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				return self::$ftp_connections[ md5( $connection_arguments_json ) ];
+			}
+			unset( self::$ftp_connections[ md5( $connection_arguments_json ) ] );
 		}
 
 		// get the connection.
@@ -531,7 +647,7 @@ class Ftp extends Protocol_Base {
 		}
 
 		// add connection to the list.
-		$this->ftp_connections[ md5( $connection_arguments_json ) ] = $connection;
+		self::$ftp_connections[ md5( $connection_arguments_json ) ] = $connection;
 
 		// return the connection object.
 		return $connection;
@@ -624,6 +740,46 @@ class Ftp extends Protocol_Base {
 
 		// set the file as tmp-file for import.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
+
+		// download the file directly into the tmp file, if a native FTP connection is available.
+		// this does not load the complete file into memory (like get_contents() does it).
+		if ( $ftp_filesystem instanceof WP_Filesystem_FTPext && $ftp_filesystem->link instanceof \FTP\Connection ) {
+			// delete the tmp file.
+			$wp_filesystem->delete( $tmp_file_name );
+
+			// bail if the file could not be downloaded or is empty.
+			if ( ! @ftp_get( $ftp_filesystem->link, $tmp_file, $file_path, FTP_BINARY ) || 0 === wp_filesize( $tmp_file ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
+
+		// download the file directly into the tmp file via other remote connections (e.g. FTP sockets), if possible.
+		$wp_filesystem->delete( $tmp_file_name );
+		$downloaded = Helper::download_from_remote_filesystem( $ftp_filesystem, $file_path, $tmp_file );
+		if ( ! is_null( $downloaded ) ) {
+			// bail if the file could not be downloaded or is empty.
+			if ( ! $downloaded || 0 === wp_filesize( $tmp_file ) ) {
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
 
 		// get content of the file.
 		$content = $ftp_filesystem->get_contents( $file_path );

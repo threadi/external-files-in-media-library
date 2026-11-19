@@ -68,6 +68,8 @@ collect() {
     vendor/threadi/easy-directory-listing-for-wordpress/build \
     vendor/threadi/easy-directory-listing-for-wordpress/lib \
     vendor/threadi/easy-settings-for-wordpress \
+    vendor/threadi/easy-setup-for-wordpress/build \
+    vendor/threadi/easy-setup-for-wordpress/lib \
     "$DIST/"
 
   # Driver.js is copied to admin/driverjs by "npm run build". Without it the intro would be missing silently.

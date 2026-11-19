@@ -14,4 +14,12 @@
             <file>./tests/Unit/Scenarios/Uninstall.php</file>
         </testsuite>
     </testsuites>
+    <php>
+        <!-- fewer files for the tests with many files (see tests/ManyFilesTrait.php), for faster everyday runs.
+             For the full run set the variables in the shell, they take precedence:
+             EFML_TEST_LIST_COUNT=10000 EFML_TEST_IMPORT_COUNT=300 vendor/bin/phpunit -->
+        <env name="EFML_TEST_LIST_COUNT" value="200"/>
+        <env name="EFML_TEST_IMPORT_COUNT" value="20"/>
+        <env name="EFML_TEST_IMAGE_EDITOR" value="gd"/>
+    </php>
 </phpunit>

@@ -41,6 +41,16 @@ class Proxy {
 	private string $slug = 'emlproxy';
 
 	/**
+	 * Name of the parameter for the version of a file in the URLs of the proxy.
+	 */
+	public const VERSION_PARAM = 'ver';
+
+	/**
+	 * Name of the post meta for the time of the last change of the files of an attachment.
+	 */
+	public const VERSION_META = 'efml_proxy_version';
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -75,13 +85,19 @@ class Proxy {
 		add_action( 'wp_ajax_eml_reset_proxy', array( $this, 'reset_via_ajax' ) );
 		add_filter( 'efml_file_prevent_proxied_url', array( $this, 'prevent_proxied_url' ), 10, 2 );
 
-		// bail if no proxy is enabled.
-		if ( ! $this->is_any_proxy_enabled() ) {
-			return;
-		}
+		// add the version of the file to the URLs of the proxy, which WordPress generates for the output.
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'add_version_to_image_src' ), PHP_INT_MAX, 2 );
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'add_version_to_srcset' ), PHP_INT_MAX, 5 );
+
+		// refresh the rewrite rules if a proxy setting has been changed.
+		add_action( 'added_option', array( $this, 'refresh_on_proxy_setting_change' ), 10, 1 );
+		add_action( 'updated_option', array( $this, 'refresh_on_proxy_setting_change' ), 10, 1 );
 
 		/**
 		 * Main init on each request.
+		 *
+		 * The proxy is always registered, as files, which could not be loaded by the browser (e.g. via FTP),
+		 * are delivered via the proxy independent of the proxy settings (see File::is_proxy_required()).
 		 */
 		add_action( 'init', array( $this, 'wp_init' ), 10, 0 );
 
@@ -94,6 +110,21 @@ class Proxy {
 		 * Run proxy to show called file.
 		 */
 		add_filter( 'template_include', array( $this, 'run' ), 10, 1 );
+
+		/**
+		 * Prevent the redirect of proxy URLs to their variant with trailing slash.
+		 */
+		add_filter( 'redirect_canonical', array( $this, 'prevent_canonical_redirect' ), PHP_INT_MAX, 1 );
+
+		/**
+		 * Answer HEAD requests for proxy URLs with the headers of the file.
+		 */
+		add_filter( 'exit_on_http_head', array( $this, 'allow_head_requests' ), 10, 1 );
+
+		// bail if no proxy is enabled.
+		if ( ! $this->is_any_proxy_enabled() ) {
+			return;
+		}
 
 		// misc.
 		add_filter( 'efml_table_column_file_source_dialog', array( $this, 'show_cache_state_in_info_dialog' ), 10, 2 );
@@ -133,7 +164,7 @@ class Proxy {
 	 */
 	public function run( string $template ): string {
 		// bail if this is not our proxy-slug.
-		if ( empty( get_query_var( $this->get_slug() ) ) ) {
+		if ( ! $this->is_proxy_request() ) {
 			return $template;
 		}
 
@@ -143,7 +174,7 @@ class Proxy {
 		// bail if the value is not a usable string (e.g. an array via "?emlproxy[]=x" or an overlong value).
 		// This request can be sent by anyone, so we do not log it.
 		if ( ! is_string( $title ) || strlen( $title ) > 1024 ) {
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		// log this event.
@@ -160,18 +191,37 @@ class Proxy {
 				absint( $matches[2] ),
 				absint( $matches[3] ),
 			);
-			$title             = $matches[1] . '.' . $matches[4];
-			$external_file_obj = Files::get_instance()->get_file_by_title( $title );
+			$external_file_obj = Files::get_instance()->get_file_by_title( $matches[1] . '.' . $matches[4] );
+
+			// use the requested name, if it is not a size (e.g. "example-1920x1080.jpg" as name of the file itself).
+			if ( ! $external_file_obj instanceof File ) {
+				$external_file_obj = Files::get_instance()->get_file_by_former_title( $matches[1] . '.' . $matches[4] );
+			}
+			if ( $external_file_obj instanceof File ) {
+				$title = $matches[1] . '.' . $matches[4];
+			}
+		}
+
+		// use the file, which had this name before (e.g. before it has been edited or renamed).
+		if ( ! $external_file_obj instanceof File ) {
+			$external_file_obj = Files::get_instance()->get_file_by_former_title( $title );
+			if ( $external_file_obj instanceof File ) {
+				$dimensions = array();
+			}
 		}
 
 		// bail if no file object could be loaded, or the loaded object is not valid.
 		if ( ! $external_file_obj || ! ( $external_file_obj instanceof File && $external_file_obj->is_valid() ) ) {
+			// redirect to the actual URL of the file, if it has been an external file before (e.g. before its real
+			// import or the restore of an exported file), as contents still contain its proxy URL.
+			Former_Proxy_Urls::get_instance()->redirect( $title );
+
 			// log this event only in debug mode, as this request can be sent by anyone with any value.
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'Proxy could not load the filename %1$s as external file.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'error', 2 );
 
 			// fallback to 404.
-			return $template;
+			return $this->get_not_found_template( $template );
 		}
 
 		// bail if the file is in trash, as it should not be delivered anymore.
@@ -181,7 +231,32 @@ class Proxy {
 			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as it is in trash.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
 
 			// fallback to 404.
-			return $template;
+			return $this->get_not_found_template( $template );
+		}
+
+		$true = true;
+		/**
+		 * Filter whether the proxy may deliver the given file.
+		 *
+		 * E.g. used to prevent the direct delivery of protected downloads of WooCommerce products.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $true True if the file could be delivered.
+		 * @param File $external_file_obj The external file object.
+		 */
+		if ( ! apply_filters( 'efml_proxy_allow_delivery', $true, $external_file_obj ) ) {
+			// log this event only in debug mode, as this request can be sent by anyone.
+			/* translators: %1$s will be replaced by the detected filename. */
+			Log::get_instance()->create( sprintf( __( 'Proxy will not deliver the filename %1$s as its delivery is not allowed.', 'external-files-in-media-library' ), '<code>' . esc_html( $title ) . '</code>' ), '', 'info', 2 );
+
+			// fallback to 404.
+			return $this->get_not_found_template( $template );
+		}
+
+		// redirect to a signed URL, if this is a private file, which should not be delivered from the cache.
+		$redirect_url = Private_Files::get_instance()->get_redirect_url( $external_file_obj, $dimensions );
+		if ( '' !== $redirect_url ) {
+			Private_Files::get_instance()->redirect( $redirect_url );
 		}
 
 		/**
@@ -189,8 +264,22 @@ class Proxy {
 		 */
 		do_action( 'efml_proxy_before', $external_file_obj );
 
+		// deliver a variant of the image in another format (e.g. AVIF or WebP), if the browser supports it.
+		Variants::get_instance()->deliver( $external_file_obj, $dimensions );
+
+		// load an exported size of an image into the cache, so it is not created from the original image.
+		$size_cached = ! empty( $dimensions ) && Sizes::get_instance()->cache_size( $external_file_obj, $dimensions );
+
+		// deliver an exported size with its own format, if it differs from the image (e.g. WebP sizes of a JPEG).
+		if ( $size_cached ) {
+			$size = Sizes::get_instance()->find_by_dimensions( $external_file_obj->get_id(), $dimensions );
+			if ( ! empty( $size['mime-type'] ) && $size['mime-type'] !== $external_file_obj->get_mime_type() && str_starts_with( (string) $size['mime-type'], 'image/' ) ) {
+				Variants::get_instance()->output( $external_file_obj->get_cache_file( array( (int) $dimensions[0], (int) $dimensions[1] ) ), (string) $size['mime-type'], (string) ( $size['file'] ?? '' ), $external_file_obj );
+			}
+		}
+
 		// if original file is not cached, do it now.
-		if ( ! $external_file_obj->is_cached() ) {
+		if ( ! $size_cached && ! $external_file_obj->is_cached() ) {
 			// log this event.
 			Log::get_instance()->create( __( 'The proxy creates a cache for the file.', 'external-files-in-media-library' ), $external_file_obj->get_url( true ), 'info', 2 );
 
@@ -213,8 +302,8 @@ class Proxy {
 			/* translators: %1$s will be replaced by the detected filename. */
 			Log::get_instance()->create( sprintf( __( 'The requested file %1$s for the proxy does not exist.', 'external-files-in-media-library' ), '<code>' . $external_file_obj->get_cache_file() . '</code>' ), $external_file_obj->get_url( true ), 'error' );
 
-			// return the template.
-			return $template;
+			// fallback to 404.
+			return $this->get_not_found_template( $template );
 		}
 
 		// get the object of this file type.
@@ -229,6 +318,347 @@ class Proxy {
 
 		// fallback to 404.
 		return $template;
+	}
+
+	/**
+	 * Return the template for a file, which could not be delivered by the proxy: the 404 template of the theme with
+	 * the HTTP status 404 (before, the template of the front page was used with the HTTP status 200).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $template The template WordPress has chosen for the request.
+	 *
+	 * @return string
+	 */
+	private function get_not_found_template( string $template ): string {
+		global $wp_query;
+
+		// mark the request as not found.
+		if ( $wp_query instanceof \WP_Query ) {
+			$wp_query->set_404();
+		}
+		status_header( 404 );
+		nocache_headers();
+
+		// use the 404 template of the theme, if it has one.
+		$template_404 = get_404_template();
+		return '' !== $template_404 ? $template_404 : $template;
+	}
+
+	/**
+	 * Return whether the actual request is a request for the proxy.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_request(): bool {
+		return ! empty( get_query_var( $this->get_slug() ) );
+	}
+
+	/**
+	 * Prevent the canonical redirect for proxy URLs.
+	 *
+	 * Without this, WordPress redirects each proxy URL with 301 to its variant with trailing slash
+	 * (e.g. "/emlproxy/example.pdf/"), if the permalinks end with a slash. This costs one more request
+	 * per file and results in URLs with unusual endings.
+	 *
+	 * @param mixed $redirect_url The URL WordPress would redirect to, false if no redirect is planned.
+	 *
+	 * @return mixed
+	 */
+	public function prevent_canonical_redirect( mixed $redirect_url ): mixed {
+		// bail if this is not a request for the proxy.
+		if ( ! $this->is_proxy_request() ) {
+			return $redirect_url;
+		}
+
+		// prevent the redirect.
+		return false;
+	}
+
+	/**
+	 * Send the headers for the caching of a file delivered by the proxy and answer conditional requests.
+	 *
+	 * Public files requested with their version (see add_version()) could be cached by browsers and CDNs for one day
+	 * at most (and not longer than the cache of the proxy for their file type): their URL changes with every change
+	 * of the file. Public files requested without version (e.g. URLs saved in the content) and private files are
+	 * checked on every use. The ETag and Last-Modified are taken from the file in the cache of the proxy: if the
+	 * browser has the actual file already, the request is answered with "304 Not Modified" and ends without the
+	 * content.
+	 *
+	 * @param string $file              The absolute path to the file in the cache of the proxy.
+	 * @param File   $external_file_obj The external file object.
+	 *
+	 * @return void
+	 */
+	public function send_cache_headers( string $file, File $external_file_obj ): void {
+		// bail if headers are sent already or the file does not exist.
+		if ( headers_sent() || ! file_exists( $file ) ) {
+			return;
+		}
+
+		// get the values for the validation of the cache.
+		$modified = absint( filemtime( $file ) );
+		$etag     = '"' . dechex( $modified ) . '-' . dechex( absint( wp_filesize( $file ) ) ) . '"';
+
+		// remove the headers of WordPress, which prevent the caching (e.g. for logged-in users).
+		header_remove( 'Expires' );
+		header_remove( 'Pragma' );
+		header_remove( 'Last-Modified' );
+
+		// send the headers.
+		header( 'Cache-Control: ' . $this->get_cache_control( $external_file_obj, $this->is_versioned_request() ) );
+		header( 'ETag: ' . $etag );
+		header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s', $modified ) . ' GMT' );
+
+		// bail if the browser has the actual file already.
+		if ( $this->is_not_modified( $etag, $modified ) ) {
+			status_header( 304 );
+			exit;
+		}
+	}
+
+	/**
+	 * Return the value of the header "Cache-Control" for the given file delivered by the proxy.
+	 *
+	 * @param File $external_file_obj The external file object.
+	 * @param bool $versioned         Whether the file has been requested with its version (since 6.0.0).
+	 *
+	 * @return string
+	 */
+	public function get_cache_control( File $external_file_obj, bool $versioned = true ): string {
+		// private files could only be cached by the browser of the visitor, which checks them on every use.
+		if ( $external_file_obj->is_private() ) {
+			$cache_control = 'private, no-cache';
+		} elseif ( ! $versioned ) {
+			// files requested without version could be cached, but are checked on every use, as their URL does not
+			// change, if the file is changed (e.g. by an image optimizer).
+			$cache_control = 'public, no-cache';
+		} else {
+			// get the maximum age: one day, but not longer than the cache of the proxy for this file type.
+			$max_age = DAY_IN_SECONDS;
+			$hours   = absint( get_option( 'eml_' . strtolower( $external_file_obj->get_file_type_obj()->get_name() ) . '_proxy_max_age', 0 ) );
+			if ( $hours > 0 ) {
+				$max_age = min( $max_age, $hours * HOUR_IN_SECONDS );
+			}
+			$cache_control = 'public, max-age=' . $max_age;
+		}
+
+		/**
+		 * Filter the value of the header "Cache-Control" for a file delivered by the proxy.
+		 *
+		 * Use e.g. "private, no-cache" for files, which are only delivered to some users.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $cache_control The value of the header.
+		 * @param File   $external_file_obj The external file object.
+		 */
+		return (string) apply_filters( 'efml_proxy_cache_control', $cache_control, $external_file_obj );
+	}
+
+	/**
+	 * Return whether the actual request of the proxy contains the version of the file.
+	 *
+	 * @return bool
+	 */
+	public function is_versioned_request(): bool {
+		return isset( $_GET[ self::VERSION_PARAM ] ) && is_string( $_GET[ self::VERSION_PARAM ] ) && '' !== $_GET[ self::VERSION_PARAM ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
+	 * Return the version of the files of the given attachment for the URLs of the proxy: the time of their last
+	 * change or, if they have not been changed since then, the time of their import or export.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return int
+	 */
+	public function get_version( int $attachment_id ): int {
+		// get the time of the last change.
+		$version = absint( get_post_meta( $attachment_id, self::VERSION_META, true ) );
+
+		// use the time of the import or export, if the files have not been changed since then.
+		if ( 0 === $version ) {
+			$version = absint( get_post_meta( $attachment_id, 'eml_external_file_date', true ) );
+		}
+
+		/**
+		 * Filter the version of the files of an attachment, which is added to the URLs of the proxy.
+		 *
+		 * Return 0 to use the URLs without version: browsers check the file then on every use.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param int $version       The version.
+		 * @param int $attachment_id The attachment ID.
+		 */
+		return absint( apply_filters( 'efml_proxy_file_version', $version, $attachment_id ) );
+	}
+
+	/**
+	 * Mark the files of the given attachment as changed, so their URLs of the proxy get a new version.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return void
+	 */
+	public function set_changed( int $attachment_id ): void {
+		// bail if no ID is given or the attachment does not exist (anymore).
+		if ( $attachment_id <= 0 || ! get_post( $attachment_id ) instanceof \WP_Post ) {
+			return;
+		}
+
+		// save the time, at least one more than before, so the version changes also within one second.
+		update_post_meta( $attachment_id, self::VERSION_META, max( time(), absint( get_post_meta( $attachment_id, self::VERSION_META, true ) ) + 1 ) );
+	}
+
+	/**
+	 * Add the version of the files of the given attachment to the given URL, if it is a URL of the proxy.
+	 *
+	 * @param string $url           The URL.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function add_version( string $url, int $attachment_id ): string {
+		// bail if this is not a URL of the proxy or it has a version already.
+		if ( ! $this->is_proxy_url( $url ) || str_contains( $url, self::VERSION_PARAM . '=' ) ) {
+			return $url;
+		}
+
+		// get the version.
+		$version = $this->get_version( $attachment_id );
+
+		// bail if it is unknown.
+		if ( 0 === $version ) {
+			return $url;
+		}
+
+		// return the URL with version.
+		return add_query_arg( self::VERSION_PARAM, $version, $url );
+	}
+
+	/**
+	 * Return whether the given URL is a URL of the proxy.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_proxy_url( string $url ): bool {
+		// get the URL of the website without scheme, as WordPress could use another scheme for the output.
+		$home = (string) preg_replace( '#^https?:#', '', trailingslashit( get_home_url() ) );
+		$url  = (string) preg_replace( '#^https?:#', '', $url );
+
+		// return whether the URL is a URL of the proxy with pretty or simple permalinks.
+		return str_starts_with( $url, $home . $this->get_slug() . '/' ) || str_starts_with( $url, $home . '?' . $this->get_slug() . '=' );
+	}
+
+	/**
+	 * Add the version of the file to the URL of the proxy of an image, e.g. for featured images.
+	 *
+	 * @param mixed $image         The image data (URL, width, height, whether it is resized) or false.
+	 * @param mixed $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function add_version_to_image_src( mixed $image, mixed $attachment_id ): mixed {
+		// bail if this is not a usable image.
+		if ( ! is_array( $image ) || empty( $image[0] ) || ! is_string( $image[0] ) ) {
+			return $image;
+		}
+
+		// add the version.
+		$image[0] = $this->add_version( $image[0], absint( $attachment_id ) );
+
+		// return the image data.
+		return $image;
+	}
+
+	/**
+	 * Add the version of the file to the URLs of the proxy in the "srcset" of an image.
+	 *
+	 * @param mixed  $sources       The sources.
+	 * @param mixed  $size_array    The requested size.
+	 * @param string $image_src     The URL of the image.
+	 * @param mixed  $image_meta    The metadata of the image.
+	 * @param int    $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function add_version_to_srcset( mixed $sources, mixed $size_array, string $image_src, mixed $image_meta, int $attachment_id ): mixed {
+		// bail if the sources are not usable.
+		if ( ! is_array( $sources ) ) {
+			return $sources;
+		}
+
+		// add the version to each source.
+		foreach ( $sources as $key => $source ) {
+			if ( is_array( $source ) && ! empty( $source['url'] ) && is_string( $source['url'] ) ) {
+				$sources[ $key ]['url'] = $this->add_version( $source['url'], $attachment_id );
+			}
+		}
+
+		// return the sources.
+		return $sources;
+	}
+
+	/**
+	 * Return whether the browser has the actual file already, according to its conditional headers.
+	 *
+	 * @param string $etag     The ETag of the file.
+	 * @param int    $modified The time of the last modification of the file.
+	 *
+	 * @return bool
+	 */
+	private function is_not_modified( string $etag, int $modified ): bool {
+		// only GET and HEAD requests could be answered with 304.
+		$method = isset( $_SERVER['REQUEST_METHOD'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) ) ) : 'GET';
+		if ( ! in_array( $method, array( 'GET', 'HEAD' ), true ) ) {
+			return false;
+		}
+
+		// check the ETag, if the browser sends one (it takes precedence over the date).
+		$if_none_match = isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_NONE_MATCH'] ) ) : '';
+		if ( '' !== $if_none_match ) {
+			if ( '*' === trim( $if_none_match ) ) {
+				return true;
+			}
+			foreach ( explode( ',', $if_none_match ) as $value ) {
+				// compare weakly, e.g. if a CDN or compression marked the ETag as weak.
+				if ( preg_replace( '#^W/#', '', trim( $value ) ) === $etag ) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// check the date.
+		$if_modified_since = isset( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) : '';
+		if ( '' === $if_modified_since ) {
+			return false;
+		}
+		$since = strtotime( $if_modified_since );
+		return false !== $since && $modified <= $since;
+	}
+
+	/**
+	 * Allow HEAD requests for proxy URLs.
+	 *
+	 * WordPress ends HEAD requests before "template_include" is used. Then the proxy could not run and the
+	 * response would be an empty HTML document without the headers of the file. This affects e.g. link checkers
+	 * and CDNs. The proxy only sends the headers on HEAD requests, not the content of the file.
+	 *
+	 * @param mixed $do_exit Whether WordPress should end the HEAD request.
+	 *
+	 * @return mixed
+	 */
+	public function allow_head_requests( mixed $do_exit ): mixed {
+		// bail if this is not a request for the proxy.
+		if ( ! $this->is_proxy_request() ) {
+			return $do_exit;
+		}
+
+		// let the proxy handle this request.
+		return false;
 	}
 
 	/**
@@ -251,15 +681,51 @@ class Proxy {
 	 */
 	public static function do_refresh(): void {
 		// register our rewrite rule, as it is missing if the plugin has been activated in this request after "init".
-		if ( self::get_instance()->is_any_proxy_enabled() ) {
-			self::get_instance()->wp_init();
-		}
+		self::get_instance()->wp_init();
 
 		// flush the permalinks.
 		flush_rewrite_rules();
 
 		// delete marker.
-		Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->delete();
+		Helper::delete_hint( 'eml_refresh_rewrite_rules' );
+	}
+
+	/**
+	 * Refresh the rewrite rules on the next request, if one of the proxy settings has been changed.
+	 *
+	 * Otherwise, the rewrite rule of the proxy could be missing if the rules have been flushed while it was
+	 * not registered, which results in 404 for all proxied files until the permalinks are saved again.
+	 *
+	 * @param string $option The name of the changed option.
+	 *
+	 * @return void
+	 */
+	public function refresh_on_proxy_setting_change( string $option ): void {
+		// bail if this could not be one of our proxy settings.
+		if ( ! str_starts_with( $option, 'eml_' ) ) {
+			return;
+		}
+
+		// collect the proxy settings of all file types (e.g. "eml_images_proxy" and "eml_images_mode").
+		$proxy_settings = array();
+		foreach ( File_Types::get_instance()->get_file_types_as_objects() as $file_type_obj ) {
+			$name             = strtolower( $file_type_obj->get_name() );
+			$proxy_settings[] = 'eml_' . $name . '_proxy';
+			$proxy_settings[] = 'eml_' . $name . '_mode';
+		}
+
+		// bail if this is not one of our proxy settings.
+		if ( ! in_array( $option, $proxy_settings, true ) ) {
+			return;
+		}
+
+		// bail if the refresh is already planned.
+		if ( Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' )->is_set() ) {
+			return;
+		}
+
+		// plan the refresh.
+		$this->set_refresh();
 	}
 
 	/**

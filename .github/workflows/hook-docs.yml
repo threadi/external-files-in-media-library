@@ -1,12 +1,6 @@
 name: Hook documentation
 
 on:
-  pull_request:
-    branches:
-      - master
-    # only if PHP code of the plugin changed.
-    paths:
-      - 'app/**'
   workflow_dispatch:
 
 permissions:
@@ -20,7 +14,6 @@ jobs:
   docs:
     name: Update docs/hooks.md
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       # this job commits the generated file.
       contents: write

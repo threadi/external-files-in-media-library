@@ -186,6 +186,12 @@ class ExportDialog {
 			$form .= '<div><label for="url">' . __( 'URL:', 'external-files-in-media-library' ) . '</label><input type="url" placeholder="https://example.com" name="url" id="url" value="' . esc_url( $url ) . '">' . __( 'This must be the URL where files uploaded to this external source are available.', 'external-files-in-media-library' ) . '</div>';
 		}
 
+		// -> the option to save files privately, if supported by the service.
+		if ( $listing_obj->get_export_object()->supports_private_files() ) {
+			$private = absint( get_term_meta( $term_id, 'efml_export_private', true ) );
+			$form   .= '<div><label for="private">' . __( 'Save files privately:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="private" id="private" value="1"' . ( $private > 0 ? ' checked="checked"' : '' ) . '> ' . __( 'Files are not public available on this external source. Your website delivers them via its own URL, either from its cache, if the proxy is enabled for the file type, or via a redirect to a link with limited validity. Applies to newly exported files.', 'external-files-in-media-library' ) . '</div>';
+		}
+
 		// -> the term ID.
 		$form .= '<input type="hidden" name="term_id" value="' . $term_id . '">';
 
@@ -285,56 +291,27 @@ class ExportDialog {
 		if ( $listing_obj->get_export_object()->is_url_required() ) {
 			$url = filter_input( INPUT_POST, 'url', FILTER_SANITIZE_URL );
 
-			// bail if URL is not given.
-			if ( empty( $url ) ) {
-				$dialog['texts'][] = '<p>' . __( 'No URL specified.', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
+			// check the URL.
+			$error = $this->check_url( is_string( $url ) ? $url : '' );
 
-			// bail if given URL is not valid.
-			if ( ! wp_http_validate_url( $url ) ) {
-				$dialog['texts'][] = '<p>' . __( 'Given URL cannot be used.', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// send a test request to this URL.
-			$response = wp_safe_remote_head( $url );
-
-			// bail on any error.
-			if ( is_wp_error( $response ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'Given URL could not be reached! Error:', 'external-files-in-media-library' ) . '<em>' . wp_json_encode( $response ) . '</em>', $url, 'error' );
-
-				// configure the dialog and return it.
-				$dialog['texts'][] = '<p>' . __( 'Given URL could not be reached!', 'external-files-in-media-library' ) . '</p>';
-				wp_send_json( array( 'detail' => $dialog ) );
-			}
-
-			// get the HTTP status for this URL.
-			$response_code = wp_remote_retrieve_response_code( $response );
-
-			// check the HTTP status, should be 200, 403 or 404.
-			$result = in_array( $response_code, array( 200, 403, 404 ), true );
-
-			/**
-			 * Filter the possible HTTP states for export URLs during export configuration.
-			 *
-			 * @since 5.0.0 Available since 5.0.0.
-			 *
-			 * @param bool   $result The check result.
-			 * @param string $url    The given URL.
-			 */
-			if ( ! apply_filters( 'efml_export_configuration_url_state', $result, $url ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'Given URL is returning a not allowed HTTP state:', 'external-files-in-media-library' ) . ' <code>' . $response_code . '</code>', $url, 'info' );
-
-				// configure the dialog and return it.
-				$dialog['texts'][] = '<p>' . __( 'Given URL is returning a not allowed HTTP state!', 'external-files-in-media-library' ) . '</p>';
+			// bail if the URL could not be used.
+			if ( '' !== $error ) {
+				$dialog['texts'][] = '<p>' . $error . '</p>';
 				wp_send_json( array( 'detail' => $dialog ) );
 			}
 
 			// save URL.
 			update_term_meta( $term_id, 'efml_export_url', $url );
+		}
+
+		// save the option to save files privately, if supported by the service.
+		if ( $listing_obj->get_export_object()->supports_private_files() ) {
+			$private = absint( filter_input( INPUT_POST, 'private', FILTER_SANITIZE_NUMBER_INT ) );
+			if ( 1 === $private ) {
+				update_term_meta( $term_id, 'efml_export_private', 1 );
+			} else {
+				delete_term_meta( $term_id, 'efml_export_private' );
+			}
 		}
 
 		// get the state.
@@ -391,5 +368,65 @@ class ExportDialog {
 
 		// send the dialog.
 		wp_send_json( array( 'detail' => $dialog ) );
+	}
+
+	/**
+	 * Check the given URL for exported files and return an error text, if it could not be used.
+	 *
+	 * Returns an empty string, if the URL could be used.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	public function check_url( string $url ): string {
+		// bail if URL is not given.
+		if ( empty( $url ) ) {
+			return __( 'No URL specified.', 'external-files-in-media-library' );
+		}
+
+		// bail if given URL is not valid.
+		if ( ! wp_http_validate_url( $url ) ) {
+			return __( 'Given URL cannot be used.', 'external-files-in-media-library' );
+		}
+
+		// send a test request to this URL.
+		$response = wp_safe_remote_head( $url );
+
+		// bail on any error.
+		if ( is_wp_error( $response ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Given URL could not be reached! Error:', 'external-files-in-media-library' ) . '<em>' . wp_json_encode( $response ) . '</em>', $url, 'error' );
+
+			// return the error.
+			return __( 'Given URL could not be reached!', 'external-files-in-media-library' );
+		}
+
+		// get the HTTP status for this URL.
+		$response_code = wp_remote_retrieve_response_code( $response );
+
+		// check the HTTP status, should be 200, 403 or 404.
+		$result = in_array( $response_code, array( 200, 403, 404 ), true );
+
+		/**
+		 * Filter the possible HTTP states for export URLs during export configuration.
+		 *
+		 * @since 5.0.0 Available since 5.0.0.
+		 *
+		 * @param bool   $result The check result.
+		 * @param string $url    The given URL.
+		 */
+		if ( ! apply_filters( 'efml_export_configuration_url_state', $result, $url ) ) {
+			// log this event.
+			Log::get_instance()->create( __( 'Given URL is returning a not allowed HTTP state:', 'external-files-in-media-library' ) . ' <code>' . $response_code . '</code>', $url, 'info' );
+
+			// return the error.
+			return __( 'Given URL is returning a not allowed HTTP state!', 'external-files-in-media-library' );
+		}
+
+		// the URL could be used.
+		return '';
 	}
 }

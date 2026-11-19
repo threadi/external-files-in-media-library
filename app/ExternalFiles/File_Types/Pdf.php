@@ -11,7 +11,6 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types_Base;
-use ExternalFilesInMediaLibrary\Plugin\Helper;
 
 /**
  * Object to handle PDF files.
@@ -78,14 +77,11 @@ class Pdf extends File_Types_Base {
 		// get the cached file.
 		$cached_file = $external_file_obj->get_cache_file( $this->get_dimensions() );
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
 		// send optimized headers for proxy.
 		$this->send_proxy_headers( $cached_file );
 
-		// return file content via WP filesystem.
-		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput
+		// output the file in chunks, so it is not loaded completely into memory.
+		$this->output_file( $cached_file );
 		exit;
 	}
 
@@ -104,7 +100,7 @@ class Pdf extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 'external' === get_option( 'eml_pdf_mode' ) && 1 === absint( get_option( 'eml_pdf_proxy' ) );
+		return $this->is_proxy_required_for_file() || ( 'external' === get_option( 'eml_pdf_mode' ) && 1 === absint( get_option( 'eml_pdf_proxy' ) ) );
 	}
 
 	/**

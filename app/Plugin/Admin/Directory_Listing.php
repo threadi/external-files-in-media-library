@@ -21,6 +21,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Roles;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use ExternalFilesInMediaLibrary\Services\AwsS3;
 use ExternalFilesInMediaLibrary\Services\GoogleCloudStorage;
 use ExternalFilesInMediaLibrary\Services\GoogleDrive;
@@ -109,6 +110,7 @@ class Directory_Listing {
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing_plugins' ) );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'sort_list' ), 100 );
+		add_filter( 'efml_directory_listing_term_allowed', array( $this, 'is_term_allowed_in_listing' ), 10, 2 );
 		add_action( 'registered_taxonomy_' . Taxonomy::get_instance()->get_name(), array( $this, 'show_taxonomy_in_media_menu' ) );
 		add_filter( 'efml_help_tabs', array( $this, 'add_help' ), 30 );
 		add_filter( 'efml_site_health_endpoints', array( $this, 'add_site_health_endpoints' ) );
@@ -155,8 +157,8 @@ class Directory_Listing {
 			return;
 		}
 
-		// get the permission tab.
-		$permissions_tab = $settings_page->get_tab( 'eml_permissions' );
+		// get the permission tab (a sub-tab of the advanced tab).
+		$permissions_tab = Settings::get_instance()->get_tab( 'eml_permissions' );
 
 		// bail if tab could not be found.
 		if ( ! $permissions_tab instanceof Tab ) {
@@ -279,6 +281,12 @@ class Directory_Listing {
 	 * @return void
 	 */
 	public function render_view_directory_page(): void {
+		// show the setup, if it is requested.
+		if ( Setup::get_instance()->is_setup_page() ) {
+			Setup::get_instance()->display();
+			return;
+		}
+
 		// get method from request.
 		$method = filter_input( INPUT_GET, 'method', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
@@ -287,19 +295,59 @@ class Directory_Listing {
 			?>
 			<div class="wrap">
 				<h1 class="wp-heading-inline"><?php echo esc_html__( 'Select the source of your external files', 'external-files-in-media-library' ); ?></h1>
+				<label class="efml-services-filter">
+					<?php echo esc_html__( 'Feature:', 'external-files-in-media-library' ); ?>
+					<select id="efml-directory-listing-services-filter">
+						<option value=""><?php echo esc_html__( 'All', 'external-files-in-media-library' ); ?></option>
+						<?php
+						foreach ( Services::get_instance()->get_feature_definitions() as $name => $definition ) {
+							?>
+							<option value="<?php echo esc_attr( $name ); ?>"><?php echo esc_html( $definition['label'] ); ?></option>
+							<?php
+						}
+						?>
+					</select>
+				</label>
+				<hr class="wp-header-end">
 				<ul id="efml-directory-listing-services">
 					<?php
+					// marker whether the tile for the setup has been shown (or should not be shown) and whether a tile has been shown.
+					$setup_shown = ! Setup::get_instance()->is_allowed();
+					$tile_shown  = false;
+
 					foreach ( Directory_Listings::get_instance()->get_directory_listings_objects() as $obj ) {
 						// hide listing object if user has no capability for it.
 						if ( ! current_user_can( $obj->get_permission_name() ) ) {
 							continue;
 						}
 
+						// show the tile for the setup as second tile.
+						if ( ! $setup_shown && $tile_shown ) {
+							$this->show_setup_tile();
+							$setup_shown = true;
+						}
+						$tile_shown = true;
+
+						// get the features of this service and their icons.
+						$features      = implode( ' ', Services::get_instance()->get_supported_features( $obj ) );
+						$feature_icons = Services::get_instance()->get_feature_icons( $obj );
+
 						// show disabled listing object.
 						if ( $obj->is_disabled() ) {
 							// show enabled listing object.
 							?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?><?php echo $obj instanceof Service_Plugin_Base ? ' efml-is-extension' : ''; ?>" data-efml-features="<?php echo esc_attr( $features ); ?>">
+								<?php
+								// show a marker for service plugins, which are not installed or not active.
+								if ( $obj instanceof Service_Plugin_Base ) {
+									?>
+									<div class="efml-service-badge"><?php echo wp_kses( Helper::get_icon( 'core-admin/plugins', 'dashicons-admin-plugins', '', 14 ), Helper::get_allowed_html_for_icons() ); ?> <?php echo esc_html__( 'Extension', 'external-files-in-media-library' ); ?></div>
+									<?php
+								}
+								?>
+								<span><?php echo esc_html( $obj->get_label() ); ?></span><?php echo wp_kses_post( $obj->get_description() ); ?>
+								<div class="efml-service-features"><?php echo wp_kses( $feature_icons, Helper::get_allowed_html_for_icons() ); ?></div>
+							</li>
 							<?php
 							continue;
 						}
@@ -312,12 +360,18 @@ class Directory_Listing {
 
 						// show enabled listing object.
 						?>
-							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a></li>
+							<li class="efml-<?php echo esc_attr( sanitize_html_class( $obj->get_name() ) ); ?>" data-efml-features="<?php echo esc_attr( $features ); ?>"><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $obj->get_label() ); ?></a>
+								<div class="efml-service-features"><?php echo wp_kses( $feature_icons, Helper::get_allowed_html_for_icons() ); ?></div>
+							</li>
 							<?php
 					}
 
+					// show the tile for the setup, if it has not been shown yet.
+					if ( ! $setup_shown ) {
+						$this->show_setup_tile();
+					}
 					?>
-					<li class="efml-directory"><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
+					<li class="efml-directory" data-efml-features=""><a href="<?php echo esc_url( $this->get_url() ); ?>"><?php echo esc_html__( 'Your external sources', 'external-files-in-media-library' ); ?></a></li>
 					<li class="efml-hint">
 						<?php
 							/* translators: %1$s will be replaced by a URL. */
@@ -329,6 +383,15 @@ class Directory_Listing {
 						}
 						?>
 					</li>
+				</ul>
+				<ul class="efml-services-legend">
+					<?php
+					foreach ( Services::get_instance()->get_feature_definitions() as $definition ) {
+						?>
+						<li><?php echo wp_kses( Helper::get_icon( $definition['icon'], $definition['dashicon'], '', 18 ), Helper::get_allowed_html_for_icons() ); ?> <?php echo esc_html( $definition['label'] ); ?></li>
+						<?php
+					}
+					?>
 				</ul>
 			</div>
 			<?php
@@ -368,6 +431,13 @@ class Directory_Listing {
 				// bail if the actual user is not allowed to use this entry (not saved by this user, no administrator and setting is disabled).
 				if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
 					$this->show_error( '<p><strong>' . __( 'Access not allowed!', 'external-files-in-media-library' ) . '</strong> ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) . '</p>' );
+					return;
+				}
+
+				// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+				if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+					Services::get_instance()->log_blocked_source( $term_id );
+					$this->show_error( '<p><strong>' . esc_html( Services::get_instance()->get_blocked_source_hint( $term_id ) ) . '</strong></p>' );
 					return;
 				}
 
@@ -411,7 +481,7 @@ class Directory_Listing {
 					<?php
 			} else {
 				?>
-					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ); ?>"><?php echo wp_kses_post( $this->get_error_help() ); ?></div>
+					<div id="easy-directory-listing-for-wordpress" data-type="<?php echo esc_attr( $method ); ?>" data-config="<?php echo esc_attr( $this->get_config_json( $config ) ); ?>"><?php echo wp_kses_post( $this->get_error_help() ); ?></div>
 				<?php
 			}
 			?>
@@ -425,12 +495,38 @@ class Directory_Listing {
 	}
 
 	/**
+	 * Return the configuration of a directory listing as JSON for the attribute "data-config".
+	 *
+	 * "&", quotes, apostrophes and tags are written as unicode escapes, as esc_attr() does not encode existing
+	 * entities again: e.g. "&quot;" in a text of the configuration (like the escaped IAM policy in the help for
+	 * AWS S3) would otherwise become a quote in the browser and break the JSON.
+	 *
+	 * @param array<string,mixed> $config The configuration.
+	 *
+	 * @return string
+	 */
+	public function get_config_json( array $config ): string {
+		return Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT );
+	}
+
+	/**
 	 * Return the nonce name.
 	 *
 	 * @return string
 	 */
 	private function get_nonce_name(): string {
 		return $this->nonce_name;
+	}
+
+	/**
+	 * Show the tile for the setup ("Quickstart").
+	 *
+	 * @return void
+	 */
+	private function show_setup_tile(): void {
+		?>
+		<li class="efml-setup-tile" data-efml-features=""><a href="<?php echo esc_url( Setup::get_instance()->get_url() ); ?>"><?php echo esc_html__( 'Quickstart', 'external-files-in-media-library' ); ?></a></li>
+		<?php
 	}
 
 	/**
@@ -878,6 +974,21 @@ class Directory_Listing {
 	}
 
 	/**
+	 * Return whether the actual user is allowed to open the given external source in the directory listing.
+	 *
+	 * The directory listing loads the saved source incl. its credentials, if its ID is given. Sources of other
+	 * users could only be used by administrators (or if this is enabled in the settings).
+	 *
+	 * @param bool $allowed True if the source could be used.
+	 * @param int  $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_term_allowed_in_listing( bool $allowed, int $term_id ): bool {
+		return $allowed && $this->is_source_allowed_for_current_user( $term_id );
+	}
+
+	/**
 	 * Show an error.
 	 *
 	 * @param string $error The error text.
@@ -1111,6 +1222,18 @@ class Directory_Listing {
 			return array();
 		}
 
+		// return the list.
+		return $this->get_service_plugins();
+	}
+
+	/**
+	 * Return the list of possible service plugins, also if their hints are disabled.
+	 *
+	 * Array index should be the slug of the real plugin.
+	 *
+	 * @return array<string,Service_Plugin_Base>
+	 */
+	public function get_service_plugins(): array {
 		// create the list.
 		$list = array(
 			'external-files-from-aws-s3'               => AwsS3::get_instance(),

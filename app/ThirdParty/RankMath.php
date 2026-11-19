@@ -51,6 +51,15 @@ class RankMath extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'seo-by-rank-math/rank-math.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void

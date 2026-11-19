@@ -22,10 +22,12 @@ use easyDirectoryListingForWordPress\Directory_Listings;
 use easySettingsForWordPress\Section;
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_Error;
 use WP_Upgrader;
 
 /**
@@ -221,6 +223,87 @@ class Plugins {
 
 		// forward user to the service page.
 		wp_safe_redirect( $service_obj->get_forward_url() );
+	}
+
+	/**
+	 * Install and activate the plugin of the given service, e.g. from the quickstart.
+	 *
+	 * Uses the same steps as the installation via the list of services and logs the reason, if it fails.
+	 *
+	 * @param Service_Plugin_Base $service_obj The service object of the not installed plugin.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function install_and_activate_service_plugin( Service_Plugin_Base $service_obj ): true|WP_Error {
+		// get the label of the plugin for the messages.
+		$label = $service_obj->get_plugin_label();
+
+		// bail if the user is not allowed to install plugins.
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			return new WP_Error( 'efml_plugin_not_allowed', __( 'You are not allowed to install plugins. Please contact your administrator.', 'external-files-in-media-library' ) );
+		}
+
+		// bail if this is a multisite: plugins could only be installed in the network.
+		if ( is_multisite() ) {
+			return new WP_Error( 'efml_plugin_multisite', __( 'In a multisite network, plugins could only be installed by the administrator of the network.', 'external-files-in-media-library' ) );
+		}
+
+		// bail if the plugin is already active.
+		if ( Helper::is_plugin_active( $service_obj->get_plugin_main_file() ) ) {
+			return true;
+		}
+
+		// get the source configuration for the plugin.
+		$source_config = $service_obj->get_source_config();
+
+		// get the source.
+		$source = $this->get_source_by_name( $source_config['type'] ?? '' );
+
+		// bail if the source is unknown.
+		if ( ! $source instanceof Plugin_Sources_Base ) {
+			return $this->get_installation_error( 'efml_plugin_source', __( 'The source of the plugin is unknown.', 'external-files-in-media-library' ), $label );
+		}
+
+		// load the release, if the plugin is not installed.
+		$plugin_zip = '';
+		if ( ! Helper::is_plugin_installed( $service_obj->get_plugin_main_file() ) ) {
+			$plugin_zip = $source->get_file( $source_config );
+
+			// bail if it could not be loaded.
+			if ( empty( $plugin_zip ) ) {
+				return $this->get_installation_error( 'efml_plugin_download', __( 'The plugin could not be downloaded. Please check whether your server can reach GitHub, or install the plugin manually.', 'external-files-in-media-library' ), $label );
+			}
+		}
+
+		// install and activate it.
+		$this->install_and_activate_plugin( '' !== $plugin_zip ? $plugin_zip : $service_obj->get_plugin_main_file(), $service_obj->get_plugin_slug(), $service_obj->get_plugin_main_file() );
+
+		// bail if it is not active (the installation changes the state, which PHPStan does not know).
+		if ( ! Helper::is_plugin_active( $service_obj->get_plugin_main_file() ) ) { // @phpstan-ignore booleanNot.alwaysTrue
+			return $this->get_installation_error( 'efml_plugin_activation', __( 'The plugin could not be installed or activated. Please check the write permissions of your plugin directory, or install the plugin manually.', 'external-files-in-media-library' ), $label );
+		}
+
+		// log the success.
+		/* translators: %1$s will be replaced by the name of a plugin. */
+		Log::get_instance()->create( sprintf( __( 'The plugin %1$s has been installed and activated.', 'external-files-in-media-library' ), $label ), '', 'success', 2 ); // @phpstan-ignore deadCode.unreachable
+
+		// return true as the plugin is active.
+		return true;
+	}
+
+	/**
+	 * Log the error of an installation and return it.
+	 *
+	 * @param string $code    The code of the error.
+	 * @param string $message The message.
+	 * @param string $label   The name of the plugin.
+	 *
+	 * @return WP_Error
+	 */
+	private function get_installation_error( string $code, string $message, string $label ): WP_Error {
+		/* translators: %1$s will be replaced by the name of a plugin. */
+		Log::get_instance()->create( sprintf( __( 'The plugin %1$s could not be installed:', 'external-files-in-media-library' ), $label ) . ' ' . $message, '', 'error' );
+		return new WP_Error( $code, $message );
 	}
 
 	/**

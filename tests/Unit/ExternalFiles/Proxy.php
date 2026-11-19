@@ -41,6 +41,21 @@ class Proxy extends externalFilesTests {
 	 */
 	public function test_run_without_proxy_request(): void {
 		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assertFalse( is_404() );
+	}
+
+	/**
+	 * Assert that the proxy answers with "not found": the 404 template of the theme (or the given template, if the
+	 * theme has none) and the request is marked as 404, not the front page.
+	 *
+	 * @param string $template The returned template.
+	 *
+	 * @return void
+	 */
+	private function assert_not_found( string $template ): void {
+		$this->assertTrue( is_404(), 'The request has not been marked as 404.' );
+		$this->assertContains( $template, array( 'my-template.php', get_404_template() ) );
+		$GLOBALS['wp_query']->is_404 = false;
 	}
 
 	/**
@@ -57,7 +72,7 @@ class Proxy extends externalFilesTests {
 		// request unknown files.
 		foreach ( array( 'unknown-file.jpg', 'unknown-file-150x150.jpg', '<img src=x onerror=alert(1)>' ) as $title ) {
 			set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), $title );
-			$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+			$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 		}
 
 		// no new log entry must exist.
@@ -76,7 +91,7 @@ class Proxy extends externalFilesTests {
 
 		// request an unknown file with HTML in its name.
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), 'x<img src=x onerror=alert(1)>.jpg' );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// log entries must exist, but without the HTML.
 		$entries = \ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->get_entries();
@@ -96,11 +111,11 @@ class Proxy extends externalFilesTests {
 
 		// an array, e.g. via "?emlproxy[]=x".
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), array( 'x' ) );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// an overlong value.
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), str_repeat( 'a', 5000 ) . '.jpg' );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// no new log entry must exist.
 		$this->assertEquals( $log_count, $this->get_log_count() );
@@ -123,10 +138,291 @@ class Proxy extends externalFilesTests {
 		// request it via proxy.
 		$proxy_actions = did_action( 'efml_proxy_before' );
 		set_query_var( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->get_slug(), get_the_title( $external_file_obj->get_id() ) );
-		$this->assertEquals( 'my-template.php', \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
+		$this->assert_not_found( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance()->run( 'my-template.php' ) );
 
 		// the proxy must not try to load or cache the file.
 		$this->assertSame( $proxy_actions, did_action( 'efml_proxy_before' ) );
 		$this->assertFalse( $external_file_obj->is_cached() );
+	}
+	/**
+	 * Test that changing a proxy setting plans the refresh of the rewrite rules.
+	 *
+	 * @return void
+	 */
+	public function test_proxy_setting_change_plans_refresh_of_rewrite_rules(): void {
+		$transient = \ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients::get_instance()->get_transient_by_name( 'eml_refresh_rewrite_rules' );
+		$transient->delete();
+		$this->assertFalse( $transient->is_set() );
+
+		// another option does not plan it.
+		update_option( 'eml_log_mode', 1 );
+		$this->assertFalse( $transient->is_set() );
+
+		// the proxy setting of a file type plans it.
+		update_option( 'eml_images_proxy', 0 === absint( get_option( 'eml_images_proxy' ) ) ? 1 : 0 );
+		$this->assertTrue( $transient->is_set() );
+
+		// also the mode of a file type.
+		$transient->delete();
+		update_option( 'eml_pdf_mode', 'local' === get_option( 'eml_pdf_mode' ) ? 'external' : 'local' );
+		$this->assertTrue( $transient->is_set() );
+		$transient->delete();
+	}
+
+	/**
+	 * Test that the proxy is registered (rewrite rule, query var and delivery) also if all proxy settings are disabled.
+	 *
+	 * Files which could not be loaded by the browser (e.g. via FTP) are always delivered via the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_proxy_is_registered_without_enabled_proxy(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		foreach ( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance()->get_file_types_as_objects() as $file_type_obj ) {
+			update_option( 'eml_' . strtolower( $file_type_obj->get_name() ) . '_proxy', 0 );
+		}
+		$this->assertFalse( $proxy->is_any_proxy_enabled() );
+
+		// initialize the proxy like in a request with these settings.
+		remove_action( 'init', array( $proxy, 'wp_init' ) );
+		remove_filter( 'query_vars', array( $proxy, 'set_query_vars' ) );
+		remove_filter( 'template_include', array( $proxy, 'run' ) );
+		$proxy->init();
+		$this->assertSame( 10, has_action( 'init', array( $proxy, 'wp_init' ) ) );
+		$this->assertSame( 10, has_filter( 'query_vars', array( $proxy, 'set_query_vars' ) ) );
+		$this->assertSame( 10, has_filter( 'template_include', array( $proxy, 'run' ) ) );
+
+		// the rewrite rule is created during the refresh.
+		$this->set_permalink_structure( '/%postname%/' );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Proxy::do_refresh();
+		$rules = get_option( 'rewrite_rules' );
+		$this->assertIsArray( $rules );
+		$this->assertArrayHasKey( $proxy->get_slug() . '/([a-zA-Z0-9-_.]+)?$', $rules );
+		$this->set_permalink_structure( '' );
+	}
+
+	/**
+	 * Test that proxy URLs are not redirected to their variant with trailing slash.
+	 *
+	 * @return void
+	 */
+	public function test_canonical_redirect_is_prevented_for_proxy_urls(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$this->assertSame( PHP_INT_MAX, has_filter( 'redirect_canonical', array( $proxy, 'prevent_canonical_redirect' ) ) );
+
+		// other requests are not changed.
+		$this->assertSame( 'https://example.com/page/', $proxy->prevent_canonical_redirect( 'https://example.com/page/' ) );
+		$this->assertFalse( $proxy->prevent_canonical_redirect( false ) );
+
+		// requests for the proxy are not redirected.
+		set_query_var( $proxy->get_slug(), 'example.pdf' );
+		$this->assertFalse( $proxy->prevent_canonical_redirect( 'https://example.com/emlproxy/example.pdf/' ) );
+		$this->assertFalse( apply_filters( 'redirect_canonical', 'https://example.com/emlproxy/example.pdf/', 'https://example.com/emlproxy/example.pdf' ) );
+	}
+
+	/**
+	 * Test that HEAD requests for proxy URLs reach the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_head_requests_reach_the_proxy(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+
+		// other requests are ended by WordPress as before.
+		$this->assertTrue( apply_filters( 'exit_on_http_head', true ) );
+
+		// requests for the proxy are not ended.
+		set_query_var( $proxy->get_slug(), 'example.pdf' );
+		$this->assertFalse( apply_filters( 'exit_on_http_head', true ) );
+	}
+
+	/**
+	 * Test that the proxy outputs no content on HEAD requests.
+	 *
+	 * @return void
+	 */
+	public function test_head_request_outputs_no_content(): void {
+		// create a file to output.
+		$file = wp_tempnam( 'efml-head' );
+		file_put_contents( $file, 'content of the file' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+
+		// get an object to output files.
+		$file_type_obj = new class( false ) extends \ExternalFilesInMediaLibrary\ExternalFiles\File_Types\File {
+			/**
+			 * Output the given file.
+			 *
+			 * @param string $file The file.
+			 *
+			 * @return void
+			 */
+			public function output( string $file ): void {
+				$this->output_file( $file );
+			}
+		};
+
+		// simulate a HEAD request.
+		$method                       = $_SERVER['REQUEST_METHOD'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$_SERVER['REQUEST_METHOD']    = 'HEAD';
+		$level                        = ob_get_level();
+		ob_start();
+		$file_type_obj->output( $file );
+		$output = ob_get_clean();
+
+		// restore the environment.
+		if ( is_null( $method ) ) {
+			unset( $_SERVER['REQUEST_METHOD'] );
+		} else {
+			$_SERVER['REQUEST_METHOD'] = $method;
+		}
+		wp_delete_file( $file );
+
+		// no content and no change of the output buffers.
+		$this->assertSame( '', $output );
+		$this->assertSame( $level, ob_get_level() );
+	}
+
+	/**
+	 * Return a mocked external file.
+	 *
+	 * @param bool $private Whether the file is private.
+	 *
+	 * @return \ExternalFilesInMediaLibrary\ExternalFiles\File
+	 */
+	private function get_file_mock( bool $private ): \ExternalFilesInMediaLibrary\ExternalFiles\File {
+		$file_obj = $this->getMockBuilder( \ExternalFilesInMediaLibrary\ExternalFiles\File::class )->disableOriginalConstructor()->onlyMethods( array( 'is_private', 'get_file_type_obj' ) )->getMock();
+		$file_obj->method( 'is_private' )->willReturn( $private );
+		$file_obj->method( 'get_file_type_obj' )->willReturn( new \ExternalFilesInMediaLibrary\ExternalFiles\File_Types\Image( false ) );
+		return $file_obj;
+	}
+
+	/**
+	 * Test the header "Cache-Control" for files delivered by the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_cache_control(): void {
+		$proxy = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$max   = get_option( 'eml_images_proxy_max_age' );
+
+		// test 1: public files for one day.
+		update_option( 'eml_images_proxy_max_age', 0 );
+		$this->assertEquals( 'public, max-age=86400', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+
+		// test 2: not longer than the cache of the proxy.
+		update_option( 'eml_images_proxy_max_age', 2 );
+		$this->assertEquals( 'public, max-age=7200', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+		update_option( 'eml_images_proxy_max_age', 168 );
+		$this->assertEquals( 'public, max-age=86400', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+
+		// test 3: private files only in the browser with a check on every use.
+		$this->assertEquals( 'private, no-cache', $proxy->get_cache_control( $this->get_file_mock( true ) ) );
+		$this->assertEquals( 'private, no-cache', $proxy->get_cache_control( $this->get_file_mock( true ), false ) );
+
+		// test 3b: public files requested without version with a check on every use.
+		$this->assertEquals( 'public, no-cache', $proxy->get_cache_control( $this->get_file_mock( false ), false ) );
+		unset( $_GET['ver'] );
+		$this->assertFalse( $proxy->is_versioned_request() );
+		$_GET['ver'] = '123';
+		$this->assertTrue( $proxy->is_versioned_request() );
+		unset( $_GET['ver'] );
+
+		// test 4: the value could be changed.
+		$callback = static function (): string {
+			return 'no-store';
+		};
+		add_filter( 'efml_proxy_cache_control', $callback );
+		$this->assertEquals( 'no-store', $proxy->get_cache_control( $this->get_file_mock( false ) ) );
+		remove_filter( 'efml_proxy_cache_control', $callback );
+		update_option( 'eml_images_proxy_max_age', $max );
+	}
+
+	/**
+	 * Test the version of files in the URLs of the proxy.
+	 *
+	 * @return void
+	 */
+	public function test_version_in_urls(): void {
+		$proxy         = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$attachment_id = self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg' ) );
+		$this->assertIsInt( $attachment_id );
+		$pretty = trailingslashit( get_home_url() ) . 'emlproxy/example.jpg';
+		$simple = trailingslashit( get_home_url() ) . '?emlproxy=example.jpg';
+
+		// test 1: without known version, the URLs are not changed.
+		$this->assertSame( 0, $proxy->get_version( $attachment_id ) );
+		$this->assertSame( $pretty, $proxy->add_version( $pretty, $attachment_id ) );
+
+		// test 2: the time of the import or export is used as version.
+		update_post_meta( $attachment_id, 'eml_external_file_date', 1000 );
+		$this->assertSame( 1000, $proxy->get_version( $attachment_id ) );
+		$this->assertSame( $pretty . '?ver=1000', $proxy->add_version( $pretty, $attachment_id ) );
+		$this->assertSame( $simple . '&ver=1000', $proxy->add_version( $simple, $attachment_id ) );
+		$this->assertSame( str_replace( 'http:', 'https:', $pretty ) . '?ver=1000', $proxy->add_version( str_replace( 'http:', 'https:', $pretty ), $attachment_id ) );
+
+		// test 3: other URLs and URLs with version are not changed.
+		$this->assertSame( 'https://example.com/emlproxy/example.jpg', $proxy->add_version( 'https://example.com/emlproxy/example.jpg', $attachment_id ) );
+		$this->assertSame( $pretty . '?ver=5', $proxy->add_version( $pretty . '?ver=5', $attachment_id ) );
+
+		// test 4: a change of the files changes the version, also within one second.
+		$proxy->set_changed( $attachment_id );
+		$first = $proxy->get_version( $attachment_id );
+		$this->assertGreaterThanOrEqual( time() - 1, $first );
+		$proxy->set_changed( $attachment_id );
+		$this->assertGreaterThan( $first, $proxy->get_version( $attachment_id ) );
+		$proxy->set_changed( 0 );
+		$proxy->set_changed( PHP_INT_MAX );
+		$this->assertSame( '', get_post_meta( PHP_INT_MAX, \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::VERSION_META, true ) );
+
+		// test 5: the version is added to image data and to the sources of the srcset.
+		update_post_meta( $attachment_id, \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::VERSION_META, 2000 );
+		$image = $proxy->add_version_to_image_src( array( $pretty, 10, 10, false ), $attachment_id );
+		$this->assertIsArray( $image );
+		$this->assertSame( $pretty . '?ver=2000', $image[0] );
+		$this->assertFalse( $proxy->add_version_to_image_src( false, $attachment_id ) );
+		$sources = $proxy->add_version_to_srcset( array( 300 => array( 'url' => $simple, 'descriptor' => 'w', 'value' => 300 ) ), array(), $simple, array(), $attachment_id );
+		$this->assertIsArray( $sources );
+		$this->assertSame( $simple . '&ver=2000', $sources[300]['url'] );
+
+		// test 6: the version could be disabled.
+		add_filter( 'efml_proxy_file_version', '__return_zero' );
+		$this->assertSame( $pretty, $proxy->add_version( $pretty, $attachment_id ) );
+		remove_filter( 'efml_proxy_file_version', '__return_zero' );
+	}
+
+	/**
+	 * Test the check of conditional requests.
+	 *
+	 * @return void
+	 */
+	public function test_not_modified(): void {
+		$method = new \ReflectionMethod( \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::class, 'is_not_modified' );
+		$proxy  = \ExternalFilesInMediaLibrary\ExternalFiles\Proxy::get_instance();
+		$backup = $_SERVER; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$time   = 1763460000;
+
+		// test 1: without conditional headers.
+		unset( $_SERVER['HTTP_IF_NONE_MATCH'], $_SERVER['HTTP_IF_MODIFIED_SINCE'] );
+		$_SERVER['REQUEST_METHOD'] = 'GET';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		// test 2: matching ETag, also weak and in a list; not matching ETag wins over the date.
+		$_SERVER['HTTP_IF_NONE_MATCH'] = '"a-b"';
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$_SERVER['HTTP_IF_NONE_MATCH'] = '"x-y", W/"a-b"';
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$_SERVER['HTTP_IF_NONE_MATCH']     = '"x-y"';
+		$_SERVER['HTTP_IF_MODIFIED_SINCE'] = gmdate( 'D, d M Y H:i:s', $time ) . ' GMT';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		// test 3: the date.
+		unset( $_SERVER['HTTP_IF_NONE_MATCH'] );
+		$this->assertTrue( $method->invoke( $proxy, '"a-b"', $time ) );
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time + 10 ) );
+
+		// test 4: only for GET and HEAD.
+		$_SERVER['REQUEST_METHOD'] = 'POST';
+		$this->assertFalse( $method->invoke( $proxy, '"a-b"', $time ) );
+
+		$_SERVER = $backup;
 	}
 }

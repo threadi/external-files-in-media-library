@@ -89,12 +89,13 @@ add_filter( 'efml_abilities_mode', function() { return 'all'; } );
 Each ability checks the capabilities which are also used in the backend:
 
 * All abilities require the capability to manage external files (`eml_manage_files`).
-* `get-log` additionally requires `manage_options`.
+* `get-log`, `queue-process` and `queue-cleanup` additionally require `manage_options` (like the queue in the settings).
 * `sync-source` and `delete-synced-files` require the capability for the synchronization.
 * `export-file` and `set-export-state` require the capability for the export.
 * `add-source` and `delete-source` require the capabilities to manage and to delete external sources.
 * `import` with `real_import` requires the capability for the real import.
-* `delete` and `export-file` additionally check whether the user is allowed to delete or edit the attachment.
+* `delete` checks whether the user is allowed to delete the attachment, `export-file`, `switch-to-local`, `switch-to-external`, `reset-thumbnails` and `check-availability` (for a single file) whether the user is allowed to edit it.
+* Users on the list "Prevent access for these users" can not use any ability.
 * External sources saved by other users can only be used by administrators (or if the setting to show all sources is enabled).
 * The service of an external source must be allowed for the actual user.
 

@@ -59,9 +59,6 @@ class Export extends Export_Base {
 	 * @return string|bool
 	 */
 	public function export_file( int $attachment_id, string $target, array $credentials ): string|bool {
-		// remove protocol from the target.
-		$local_target = str_replace( 'file://', '', $target );
-
 		// get the WP filesystem object.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
@@ -94,8 +91,28 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// copy the file.
+		return $this->copy_to_target( $file_path, $target, false );
+	}
+
+	/**
+	 * Copy the given local file to the given target and return the URL of the target, or false on error.
+	 *
+	 * @param string $file_path The absolute path of the file.
+	 * @param string $target    The target.
+	 * @param bool   $overwrite True to overwrite an existing file (for sizes of images).
+	 *
+	 * @return string|false
+	 */
+	private function copy_to_target( string $file_path, string $target, bool $overwrite ): string|false {
+		// remove protocol from the target.
+		$local_target = Helper::get_local_path_from_url( $target );
+
+		// get the WP filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
 		// bail if the target is not located in the allowed base directory for local files.
-		if ( ! Helper::is_local_path_allowed( $local_target ) ) {
+		if ( ! $this->is_target_allowed( $local_target ) ) {
 			/* translators: %1$s will be replaced by a path. */
 			Log::get_instance()->create( sprintf( __( 'The target %1$s is not located in the allowed directory for local files.', 'external-files-in-media-library' ), '<em>' . esc_html( $local_target ) . '</em>' ), $target, 'error' );
 
@@ -103,8 +120,17 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// create the folder of the target, if it does not exist (e.g., for the folder structure of exports).
+		if ( ! $wp_filesystem->is_dir( dirname( $local_target ) ) && ! wp_mkdir_p( dirname( $local_target ) ) ) {
+			/* translators: %1$s will be replaced by a path. */
+			Log::get_instance()->create( sprintf( __( 'The folder %1$s could not be created.', 'external-files-in-media-library' ), '<em>' . esc_html( dirname( $local_target ) ) . '</em>' ), $target, 'error' );
+
+			// do nothing more.
+			return false;
+		}
+
 		// bail if target file does already exist.
-		if ( $wp_filesystem->exists( $local_target ) ) {
+		if ( ! $overwrite && $wp_filesystem->exists( $local_target ) ) {
 			/* translators: %1$s will be replaced by the service title. */
 			Log::get_instance()->create( sprintf( __( 'Target file %1$s already exist.', 'external-files-in-media-library' ), '<em>' . $target . '</em>' ), $target, 'error' );
 
@@ -113,7 +139,7 @@ class Export extends Export_Base {
 		}
 
 		// copy file to the given local directory.
-		if ( ! $wp_filesystem->copy( $file_path, $local_target ) ) {
+		if ( ! $wp_filesystem->copy( $file_path, $local_target, $overwrite ) ) {
 			/* translators: %1$s and %2$s will be replaced by filenames. */
 			Log::get_instance()->create( sprintf( __( 'Could not copy file from %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $file_path . '</em>', '<em>' . $local_target . '</em>' ), $target, 'error' );
 
@@ -142,7 +168,7 @@ class Export extends Export_Base {
 		$wp_filesystem = Helper::get_wp_filesystem();
 
 		// remove protocol from the URL.
-		$local_file = str_replace( 'file://', '', $url );
+		$local_file = Helper::get_local_path_from_url( $url );
 
 		// bail if file does not exist or is not a file.
 		if ( ! $wp_filesystem->exists( $local_file ) || ! $wp_filesystem->is_file( $local_file ) ) {
@@ -166,6 +192,43 @@ class Export extends Export_Base {
 	}
 
 	/**
+	 * Return whether this service could export the sizes of images.
+	 *
+	 * @return bool
+	 */
+	public function supports_sizes(): bool {
+		return true;
+	}
+
+	/**
+	 * Export an additional file of an attachment (e.g. a size of an image) to the local directory.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $source        The absolute path of the local file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return string|bool
+	 */
+	public function export_size( int $attachment_id, string $source, string $target, array $credentials ): string|bool {
+		return $this->copy_to_target( $source, $target, true );
+	}
+
+	/**
+	 * Delete an additional file of an attachment in the local directory.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $url           The URL of the file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return bool
+	 */
+	public function delete_size( int $attachment_id, string $url, string $target, array $credentials ): bool {
+		return $this->delete_exported_file( $url, $credentials, $attachment_id );
+	}
+
+	/**
 	 * Return whether this export requires a specific URL.
 	 *
 	 * If this is false, the external plattform must create this URL.
@@ -174,5 +237,61 @@ class Export extends Export_Base {
 	 */
 	public function is_url_required(): bool {
 		return true;
+	}
+
+	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the given target is located in the allowed base directory for local files.
+	 *
+	 * The folders of the target might not exist yet, so the nearest existing folder is checked. Targets with
+	 * relative folders like ".." are never allowed.
+	 *
+	 * @param string $local_target The local target path.
+	 *
+	 * @return bool
+	 */
+	private function is_target_allowed( string $local_target ): bool {
+		// bail if the target contains relative folders.
+		if ( in_array( '..', explode( '/', str_replace( '\\', '/', $local_target ) ), true ) ) {
+			return false;
+		}
+
+		// get the nearest existing folder of the target.
+		$folder = dirname( $local_target );
+		while ( ! is_dir( $folder ) && dirname( $folder ) !== $folder ) {
+			$folder = dirname( $folder );
+		}
+
+		// return whether this folder is allowed.
+		return Helper::is_local_path_allowed( trailingslashit( $folder ) . basename( $local_target ) );
+	}
+
+	/**
+	 * Return whether a file with the given target path already exists in the local target directory.
+	 *
+	 * @param string              $target The target path of the file on the external source.
+	 * @param array<string,mixed> $credentials The credentials to use (not used for local files).
+	 *
+	 * @return bool
+	 */
+	public function file_exists_on_target( string $target, array $credentials ): bool {
+		// remove protocol from the target.
+		$local_target = str_replace( 'file://', '', $target );
+
+		// bail if the target is not located in the allowed base directory for local files.
+		if ( ! Helper::is_local_path_allowed( $local_target ) ) {
+			return false;
+		}
+
+		// return whether the file exists.
+		return Helper::get_wp_filesystem()->exists( $local_target );
 	}
 }

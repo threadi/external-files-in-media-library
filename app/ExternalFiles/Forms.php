@@ -18,6 +18,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Screen;
 
 /**
@@ -108,7 +109,7 @@ class Forms {
 	public function add_styles_and_js_admin( string $hook ): void {
 		// bail if page is used where we do not use it.
 		// TODO find better way.
-		if ( ! in_array( $hook, array( 'plugins_page_efml_service_plugins', 'upload.php', 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php' ), true ) ) {
+		if ( ! in_array( $hook, array( 'plugins_page_efml_service_plugins', 'upload.php', 'media-new.php', 'edit-tags.php', 'post.php', 'settings_page_eml_settings', 'options-general.php', 'media_page_efml_local_directories', 'term.php', 'profile.php', 'site-health.php' ), true ) ) {
 			return;
 		}
 
@@ -435,6 +436,16 @@ class Forms {
 			unset( $_POST['term'] );
 		}
 
+		// do not use the external source if it is not usable, as the credentials of its service are defined via constants for another server.
+		if ( $term_id > 0 && Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			// log this event.
+			Services::get_instance()->log_blocked_source( $term_id );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
 		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
@@ -504,6 +515,9 @@ class Forms {
 		// add the fields.
 		$import_obj->set_fields( is_array( $fields ) ? $fields : array() ); // @phpstan-ignore function.alreadyNarrowedType
 
+		// set the used external source, so the protocols know it (e.g. to detect the platform of a custom domain).
+		$import_obj->set_term_id( $term_id );
+
 		// loop through the list of URLs to add them.
 		foreach ( $url_array as $url ) {
 			// bail if URL is empty.
@@ -543,6 +557,9 @@ class Forms {
 				$errors[] = $url;
 			}
 		}
+
+		// forget the used external source.
+		$import_obj->set_term_id( 0 );
 
 		// if marker to load more is set, return this info via AJAX.
 		if ( 1 === absint( get_option( 'eml_import_url_loading_more_' . $user_id ) ) ) {
@@ -778,6 +795,16 @@ class Forms {
 			unset( $_POST['term'] );
 		}
 
+		// do not use the external source if it is not usable, as the credentials of its service are defined via constants for another server.
+		if ( $term_id > 0 && Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			// log this event.
+			Services::get_instance()->log_blocked_source( $term_id );
+
+			// do not use this term, also not in the following steps of the import, which read it from the request.
+			$term_id = 0;
+			unset( $_POST['term'] );
+		}
+
 		if ( $term_id > 0 ) {
 			// get the term data.
 			$term_data = Taxonomy::get_instance()->get_entry( $term_id );
@@ -805,6 +832,9 @@ class Forms {
 
 		// add the credentials.
 		$import_obj->set_fields( $fields );
+
+		// set the used external source, so the protocols know it (e.g. to detect the platform of a custom domain).
+		$import_obj->set_term_id( $term_id );
 
 		// loop through the list of URLs to add them.
 		foreach ( (array) $url_array as $url ) {
@@ -835,6 +865,9 @@ class Forms {
 				$errors[] = $url;
 			}
 		}
+
+		// forget the used external source.
+		$import_obj->set_term_id( 0 );
 
 		// show deprecated warning for the old hook name.
 		$errors = apply_filters_deprecated( 'eml_import_urls_errors', array( $errors ), '5.0.0', 'efml_import_urls_errors' );

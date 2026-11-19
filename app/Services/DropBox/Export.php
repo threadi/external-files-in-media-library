@@ -18,7 +18,7 @@ use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\DropBox;
 use Spatie\Dropbox\Client;
 use Spatie\Dropbox\Exceptions\BadRequest;
-use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
+use WP_User;
 
 /**
  * Object for export files to Dropbox.
@@ -77,16 +77,6 @@ class Export extends Export_Base {
 			return false;
 		}
 
-		// get the main object.
-		$dropbox_obj = DropBox::get_instance();
-
-		// set the credentials.
-		$dropbox_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
-
-		// get the access token.
-		$access_token_data = $dropbox_obj->get_access_token();
-		$access_token = $access_token_data['access_token'];
-
 		// get the file path.
 		$file_path = get_attached_file( $attachment_id, true );
 
@@ -94,6 +84,132 @@ class Export extends Export_Base {
 		if ( ! is_string( $file_path ) ) {
 			return false;
 		}
+
+		// get the user, whose connection to DropBox is used: the owner of the external source.
+		$user = $this->get_owner( $attachment_id, $credentials );
+
+		// upload the file.
+		$result = $this->upload( $file_path, $target, $credentials, false, $user );
+
+		// bail if result is not an array.
+		if ( ! is_array( $result ) ) {
+			return false;
+		}
+
+		// get the main object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// get the target file name.
+		$dropbox_target = str_replace( 'DropBox', '', $target );
+
+		// save the Dropbox path for this file.
+		update_post_meta( $attachment_id, 'efml_dropbox_path', $result['path_lower'] );
+
+		// return the internal DropBox URL without a shared link, if the file should be saved privately.
+		if ( ! empty( $credentials['private'] ) ) {
+			return $dropbox_obj->get_name() . ( ! empty( $result['path_display'] ) ? $result['path_display'] : $dropbox_target );
+		}
+
+		// get the shared link, which does not expire.
+		$url = $this->get_shared_link( $result, $target, $user );
+
+		// remove the uploaded file again, if no shared link could be created (e.g. if the app of the connection is not
+		// allowed to share files), so it does not remain unused in Dropbox. It is always a new file, as existing files
+		// are never overwritten here.
+		if ( false === $url ) {
+			$this->remove_uploaded_file( (string) $result['path_lower'], $target, $user );
+			delete_post_meta( $attachment_id, 'efml_dropbox_path' );
+		}
+
+		// return the shared link.
+		return $url;
+	}
+
+	/**
+	 * Remove a file, which has just been uploaded, but could not be used.
+	 *
+	 * @param string        $path   The path of the file in Dropbox.
+	 * @param string        $target The target of the file (for the log).
+	 * @param WP_User|false $user   The user, whose connection is used.
+	 *
+	 * @return void
+	 */
+	private function remove_uploaded_file( string $path, string $target, WP_User|false $user ): void {
+		// bail if no path is given.
+		if ( '' === $path ) {
+			return;
+		}
+
+		try {
+			$client = DropBox::get_instance()->get_client_for_user( $user );
+			if ( ! $client instanceof Client ) {
+				return;
+			}
+			$client->delete( $path );
+		} catch ( Exception $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The uploaded file could not be removed from Dropbox again. Please remove it manually. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $target, 'error' );
+			return;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The uploaded file has been removed from Dropbox again, as no shared link could be created for it. Check whether the app of your Dropbox connection is allowed to share files (permission "sharing.write").', 'external-files-in-media-library' ), $target, 'error' );
+	}
+
+	/**
+	 * Return the user, whose connection to DropBox is used for the given file and external source: the owner of
+	 * the external source, if each user has its own connection. False to use the connection of the website or of
+	 * the actual user.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param array<string,mixed> $credentials   The credentials (with the ID of the external source, if known).
+	 *
+	 * @return WP_User|false
+	 */
+	private function get_owner( int $attachment_id, array $credentials ): WP_User|false {
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// use the owner of the given external source.
+		if ( ! empty( $credentials['term_id'] ) ) {
+			$user = $dropbox_obj->get_owner_of_source( absint( $credentials['term_id'] ) );
+			if ( $user instanceof WP_User ) {
+				return $user;
+			}
+		}
+
+		// otherwise use the owner of the external source of the file.
+		return $dropbox_obj->get_owner_of_file( $attachment_id );
+	}
+
+	/**
+	 * Upload the given local file to the given target in Dropbox and return the data of the uploaded file.
+	 *
+	 * @param string              $file_path   The absolute path of the local file.
+	 * @param string              $target      The target.
+	 * @param array<string,mixed> $credentials The credentials.
+	 * @param bool                $overwrite   True to overwrite an existing file (for sizes of images), otherwise
+	 *                                         Dropbox renames the new file.
+	 * @param WP_User|false       $user        The user, whose connection is used (false for the actual user).
+	 *
+	 * @return array<string,mixed>|false
+	 */
+	private function upload( string $file_path, string $target, array $credentials, bool $overwrite, WP_User|false $user = false ): array|false {
+		// get the main object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// set the credentials.
+		$dropbox_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
+
+		// get the access token.
+		$access_token_data = $dropbox_obj->get_access_token_for_user( $user );
+
+		// bail if no access token is available.
+		if ( empty( $access_token_data['access_token'] ) ) {
+			Log::get_instance()->create( __( 'DropBox client could not be loaded. Please check your DropBox connection.', 'external-files-in-media-library' ), $target, 'error' );
+			return false;
+		}
+		$access_token = $access_token_data['access_token'];
 
 		// get the local "WP_Filesystem".
 		$wp_filesystem_local = Helper::get_wp_filesystem();
@@ -214,8 +330,8 @@ class Export extends Export_Base {
 						),
 						'commit' => array(
 							'path'       => $dropbox_target,
-							'mode'       => 'add',
-							'autorename' => true,
+							'mode'       => $overwrite ? 'overwrite' : 'add',
+							'autorename' => ! $overwrite,
 							'mute'       => false,
 						),
 					),
@@ -229,80 +345,144 @@ class Export extends Export_Base {
 			return false;
 		}
 
-		// save the Dropbox path for this file.
-		update_post_meta( $attachment_id, 'efml_dropbox_path', $result['path_lower'] );
+		// return the data of the uploaded file.
+		return $result;
+	}
 
-		// get the shared files to get the public URL of the uploaded file.
-		$client = $dropbox_obj->get_client();
+	/**
+	 * Return the shared link of the given uploaded file with "raw=1", or false on error.
+	 *
+	 * This link does not expire, Dropbox forwards it to a temporary URL of the file content (valid for 4 hours).
+	 * Therefore, the link itself must be saved and not the target of its forwarding. If the file has already a
+	 * shared link, Dropbox does not create a new one: then its existing link is used.
+	 *
+	 * @param array<string,mixed> $result The data of the uploaded file.
+	 * @param string              $target The target.
+	 * @param WP_User|false       $user   The user, whose connection is used (false for the actual user).
+	 *
+	 * @return string|false
+	 */
+	private function get_shared_link( array $result, string $target, WP_User|false $user = false ): string|false {
+		// get the path of the file in Dropbox.
+		$path = ! empty( $result['path_lower'] ) ? (string) $result['path_lower'] : str_replace( 'DropBox', '', $target );
+
+		// get the client.
+		$client = DropBox::get_instance()->get_client_for_user( $user );
 
 		// bail if client could not be loaded.
-		if( ! $client instanceof Client ) {
+		if ( ! $client instanceof Client ) {
 			return false;
 		}
 
-		// create the shared link for this file.
+		// get the shared link of this file: create it or use the existing one.
+		$url = '';
 		try {
-			$shared_file_data = $client->createSharedLinkWithSettings( $dropbox_target );
-
-			// if we got share file data, use the URL from there.
-			if ( ! empty( $shared_file_data ) ) {
-				$url = add_query_arg(
-					array(
-						'raw' => 1,
-					),
-					$shared_file_data['url']
-				);
-
-				// get the header of this URL to get the forward URL Dropbox is using.
-				$response    = wp_remote_head( $url );
-				$headers_obj = wp_remote_retrieve_headers( $response );
-
-				// bail if header results not in the expected object.
-				if ( ! $headers_obj instanceof CaseInsensitiveDictionary ) {
-					return false;
+			$shared_file_data = $client->createSharedLinkWithSettings( $path );
+			$url              = (string) ( $shared_file_data['url'] ?? '' );
+		} catch ( Exception $e ) {
+			try {
+				foreach ( $client->listSharedLinks( $path, true ) as $link ) {
+					if ( ! empty( $link['url'] ) ) {
+						$url = (string) $link['url'];
+						break;
+					}
 				}
-
-				// get the headers.
-				$header = $headers_obj->getAll();
-
-				// return the generic URL if no location returned.
-				if ( empty( $header['location'] ) ) {
-					return $url;
-				}
-
-				// return the location we got.
-				return $header['location'];
+			} catch ( Exception $e ) {
+				// log this event.
+				Log::get_instance()->create( __( 'Error occurred during request for public DropBox URL of a given file:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $target, 'error' );
 			}
+		}
+
+		// bail if no link could be loaded.
+		if ( '' === $url ) {
+			return false;
+		}
+
+		// return the link to the file itself.
+		return DropBox::get_instance()->get_raw_shared_link( $url );
+	}
+
+	/**
+	 * Return whether this service could export the sizes of images.
+	 *
+	 * @return bool
+	 */
+	public function supports_sizes(): bool {
+		return true;
+	}
+
+	/**
+	 * Export an additional file of an attachment (e.g. a size of an image) to Dropbox.
+	 *
+	 * Returns its shared link (with "raw=1"), which does not expire, or its internal URL for private files.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $source        The absolute path of the local file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return string|bool
+	 */
+	public function export_size( int $attachment_id, string $source, string $target, array $credentials ): string|bool {
+		// get the user, whose connection to DropBox is used: the owner of the external source.
+		$user = $this->get_owner( $attachment_id, $credentials );
+
+		// upload the file.
+		$result = $this->upload( $source, $target, $credentials, true, $user );
+
+		// bail if it could not be uploaded.
+		if ( ! is_array( $result ) || empty( $result['path_lower'] ) ) {
+			return false;
+		}
+
+		// get the main object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// return the internal URL for private files.
+		if ( ! empty( $credentials['private'] ) ) {
+			return $dropbox_obj->get_name() . ( ! empty( $result['path_display'] ) ? $result['path_display'] : (string) $result['path_lower'] );
+		}
+
+		// return the shared link, which does not expire.
+		return $this->get_shared_link( $result, $target, $user );
+	}
+
+	/**
+	 * Delete an additional file of an attachment in Dropbox.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param string              $url           The URL of the file.
+	 * @param string              $target        The target of the file.
+	 * @param array<string,mixed> $credentials   The credentials.
+	 *
+	 * @return bool
+	 */
+	public function delete_size( int $attachment_id, string $url, string $target, array $credentials ): bool {
+		// get the main object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// set the fields.
+		$dropbox_obj->set_fields( isset( $credentials['fields'] ) ? $credentials['fields'] : array() );
+
+		// delete the file via its path.
+		try {
+			$client = $dropbox_obj->get_client_for_user( $this->get_owner( $attachment_id, $credentials ) );
+
+			// bail if client could not be loaded.
+			if ( ! $client instanceof Client ) {
+				return false;
+			}
+
+			// delete the file.
+			$client->delete( str_replace( 'DropBox', '', $target ) );
 		} catch ( Exception $e ) {
 			// log this event.
-			Log::get_instance()->create( __( 'Error occurred during request for public DropBox URL of a given file:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $target, 'error' );
-
-			// return empty array to not load anything more.
+			Log::get_instance()->create( __( 'Error occurred during request to delete a file from DropBox:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $target, 'error' );
 			return false;
 		}
 
-		// otherwise try to find the URL in all shared links.
-		$url          = '';
-		$shared_files = $client->listSharedLinks();
-
-		// search for the one we uploaded.
-		foreach ( $shared_files as $shared_file ) {
-			// bail if file ID does not match.
-			if ( $shared_file['id'] !== $result['id'] ) {
-				continue;
-			}
-
-			// get the file URL.
-			$url = $shared_file['url'];
-		}
-
-		// if no URL could be found, return false.
-		if ( empty( $url ) ) {
-			return false;
-		}
-
-		// return the URL for this file.
-		return $url;
+		// return true as the file has been deleted.
+		return true;
 	}
 
 	/**
@@ -333,9 +513,9 @@ class Export extends Export_Base {
 		// set the fields.
 		$dropbox_obj->set_fields( $credentials['fields'] );
 
-		// get the shared files to get the public URL of the uploaded file.
+		// delete the file with the connection of the owner of its external source.
 		try {
-			$client = $dropbox_obj->get_client();
+			$client = $dropbox_obj->get_client_for_user( $this->get_owner( $attachment_id, $credentials ) );
 
 			// bail if client could not be loaded.
 			if ( ! $client instanceof Client ) {
@@ -362,6 +542,17 @@ class Export extends Export_Base {
 		}
 
 		// return true as file has been deleted.
+		return true;
+	}
+
+	/**
+	 * Return whether this service supports folders for exported files.
+	 *
+	 * DropBox creates missing folders automatically during the upload.
+	 *
+	 * @return bool
+	 */
+	public function supports_folders(): bool {
 		return true;
 	}
 
@@ -414,5 +605,19 @@ class Export extends Export_Base {
 
 		// return the resulting response as array.
 		return json_decode( $response, true );
+	}
+
+	/**
+	 * Return whether this service could save exported files privately.
+	 *
+	 * Private files get no shared link in DropBox. They are delivered via the proxy, from its cache or via a
+	 * redirect to a temporary link of DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_private_files(): bool {
+		return true;
 	}
 }

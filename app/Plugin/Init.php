@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\ExternalFiles\Private_Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
 use ExternalFilesInMediaLibrary\Services\Services;
@@ -80,6 +81,7 @@ class Init {
 
 		// initialize proxy.
 		Proxy::get_instance()->init();
+		Private_Files::get_instance()->init();
 
 		// initialize schedules.
 		Schedules::get_instance()->init();
@@ -95,6 +97,15 @@ class Init {
 
 		// initialize the command palette.
 		Commands::get_instance()->init();
+
+		// init the protection of external sources on copies of this website.
+		Site_Copy::get_instance()->init();
+
+		// initialize the connection test of services.
+		Connection_Test::get_instance()->init();
+
+		// initialize the setup.
+		Setup::get_instance()->init();
 
 		// initialize the network settings.
 		\ExternalFilesInMediaLibrary\Plugin\Network\Settings::get_instance()->init();

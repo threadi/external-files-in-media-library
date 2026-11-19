@@ -158,7 +158,7 @@ class Configurations {
 
 		echo '<p>' . esc_html__( 'Use predefined configurations to quickly limit the plugin settings to what you want to use. You can then make changes to everything at any time.', 'external-files-in-media-library' ) . '</p>';
 
-		echo '<p>';
+		echo '<p class="efml-configurations">';
 
 		// show the possible sets.
 		foreach ( $configurations as $configuration_obj ) {

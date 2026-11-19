@@ -28,21 +28,18 @@ class Queue extends WP_List_Table {
 			'options' => __( 'Options', 'external-files-in-media-library' ),
 			'state'   => __( 'State', 'external-files-in-media-library' ),
 			'date'    => __( 'Date', 'external-files-in-media-library' ),
+			'type'    => __( 'Task', 'external-files-in-media-library' ),
 			'url'     => __( 'URL', 'external-files-in-media-library' ),
 		);
 	}
 
 	/**
-	 * Get the table data
+	 * Return the state to filter the entries (empty for all).
 	 *
-	 * @return array<int,array<string>>
+	 * @return string
 	 */
-	private function table_data(): array {
-		// get state filter.
-		$state = 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
-
-		// get logs.
-		return \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( $state, true );
+	private function get_state_filter(): string {
+		return 1 === absint( filter_input( INPUT_GET, 'errors', FILTER_SANITIZE_NUMBER_INT ) ) ? 'error' : '';
 	}
 
 	/**
@@ -55,11 +52,12 @@ class Queue extends WP_List_Table {
 		$hidden   = $this->get_hidden_columns();
 		$sortable = $this->get_sortable_columns();
 
-		$data = $this->table_data();
+		// get the queue object.
+		$queue = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance();
 
 		$per_page     = 50;
 		$current_page = $this->get_pagenum();
-		$total_items  = count( $data );
+		$total_items  = $queue->count_urls( $this->get_state_filter() );
 
 		$this->set_pagination_args(
 			array(
@@ -68,7 +66,8 @@ class Queue extends WP_List_Table {
 			)
 		);
 
-		$data = array_slice( $data, ( ( $current_page - 1 ) * $per_page ), $per_page );
+		// get only the entries of the actual page, as the queue could contain many entries of import runs.
+		$data = $queue->get_urls_page( $this->get_state_filter(), ( $current_page - 1 ) * $per_page, $per_page );
 
 		$this->_column_headers = array( $columns, $hidden, $sortable );
 		$this->items           = $data;
@@ -105,6 +104,7 @@ class Queue extends WP_List_Table {
 			'options' => $this->get_options( $item ),
 			'date' => Helper::get_format_date_time( $item[ $column_name ] ),
 			'state' => $this->get_state( $item[ $column_name ] ),
+			'type' => $this->get_type( $item ),
 			'url' => '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank">' . esc_url( $item[ $column_name ] ) . '</a>',
 			default => '',
 		};
@@ -203,7 +203,7 @@ class Queue extends WP_List_Table {
 			<?php
 
 			// get all error entries.
-			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_urls( 'error' );
+			$errors = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->count_urls( 'error' );
 
 			// define clear error URL.
 			$clear_errors_url = add_query_arg(
@@ -243,7 +243,7 @@ class Queue extends WP_List_Table {
 			}
 
 			?>
-			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === count( $errors ) ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
+			<a href="<?php echo esc_url( $clear_errors_url ); ?>" class="button button-secondary easy-dialog-for-wordpress<?php echo ( 0 === $errors ? ' disabled' : '' ); ?>" data-dialog="<?php echo esc_attr( $dialog ); ?>"><?php echo esc_html__( 'Delete error entries', 'external-files-in-media-library' ); ?></a>
 			<?php
 		}
 	}
@@ -303,6 +303,115 @@ class Queue extends WP_List_Table {
 	}
 
 	/**
+	 * Return the task of a single entry (import or export).
+	 *
+	 * @param array<string,string> $item The item data.
+	 *
+	 * @return string
+	 */
+	private function get_type( array $item ): string {
+		// get whether this is an export entry.
+		$is_export = ! empty( $item['type'] ) && 'export' === $item['type'];
+
+		// show the restore run or the sizes run of the entry.
+		if ( ! empty( $item['type'] ) && in_array( $item['type'], array( 'localize', 'sizes', 'delete_local', 'working_copy', 'working_finish' ), true ) ) {
+			$labels    = array(
+				'localize'       => esc_html__( 'Restore', 'external-files-in-media-library' ),
+				'sizes'          => esc_html__( 'Sizes', 'external-files-in-media-library' ),
+				'delete_local'   => esc_html__( 'Local copies', 'external-files-in-media-library' ),
+				'working_copy'   => esc_html__( 'Working copy', 'external-files-in-media-library' ),
+				'working_finish' => esc_html__( 'Working copy', 'external-files-in-media-library' ),
+			);
+			$output    = $labels[ $item['type'] ] . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+			$edit_link = get_edit_post_link( absint( $item['attachment_id'] ) );
+			if ( is_string( $edit_link ) ) {
+				$output .= '<br><a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Edit file', 'external-files-in-media-library' ) . '</a>';
+			}
+			return $output;
+		}
+
+		// show the deletion of exported files.
+		if ( ! empty( $item['type'] ) && 'delete' === $item['type'] ) {
+			$options = json_decode( (string) ( $item['options'] ?? '' ), true );
+			$output  = esc_html__( 'Delete on external source', 'external-files-in-media-library' );
+			if ( is_array( $options ) && ! empty( $options['files'] ) && is_array( $options['files'] ) ) {
+				/* translators: %1$d will be replaced by a number. */
+				$output .= '<br>' . esc_html( sprintf( _n( '%1$d file', '%1$d files', count( $options['files'] ), 'external-files-in-media-library' ), count( $options['files'] ) ) );
+			}
+			if ( is_array( $options ) && ! empty( $options['term_id'] ) ) {
+				$term = get_term( absint( $options['term_id'] ), \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name() );
+				if ( $term instanceof \WP_Term ) {
+					$output .= '<br>' . esc_html( $term->name );
+				}
+			}
+			if ( ! empty( $item['attempts'] ) ) {
+				/* translators: %1$d will be replaced by a number. */
+				$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', (int) $item['attempts'], 'external-files-in-media-library' ), (int) $item['attempts'] ) );
+			}
+			return $output . $this->get_next_attempt( $item );
+		}
+
+		// show the import run of the entry.
+		if ( ! empty( $item['run_id'] ) && ! $is_export ) {
+			return esc_html__( 'Import', 'external-files-in-media-library' ) . '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+		}
+
+		// bail if this is not an export entry.
+		if ( ! $is_export ) {
+			return esc_html__( 'Import', 'external-files-in-media-library' );
+		}
+
+		// create the output for the export.
+		$output = esc_html__( 'Export', 'external-files-in-media-library' );
+
+		// add the export run of the entry.
+		if ( ! empty( $item['run_id'] ) ) {
+			$output .= '<br>' . \ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->get_description( absint( $item['run_id'] ) );
+		}
+
+		// add the number of failed attempts and the time of the next attempt.
+		if ( ! empty( $item['attempts'] ) ) {
+			/* translators: %1$d will be replaced by a number. */
+			$output .= '<br>' . esc_html( sprintf( _n( '%1$d failed attempt', '%1$d failed attempts', absint( $item['attempts'] ), 'external-files-in-media-library' ), absint( $item['attempts'] ) ) );
+			$output .= $this->get_next_attempt( $item );
+		}
+
+		// add link to the attachment.
+		$edit_link = get_edit_post_link( absint( $item['attachment_id'] ) );
+		if ( is_string( $edit_link ) ) {
+			$output .= '<br><a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Edit file', 'external-files-in-media-library' ) . '</a>';
+		}
+
+		// return the resulting output.
+		return $output;
+	}
+
+	/**
+	 * Return the time of the next attempt of a waiting export or deletion for the given entry.
+	 *
+	 * @param array<string,string> $item The item data.
+	 *
+	 * @return string
+	 */
+	private function get_next_attempt( array $item ): string {
+		// bail if the entry does not wait for a further attempt.
+		if ( empty( $item['attempts'] ) || 'new' !== ( $item['state'] ?? '' ) || ! empty( $item['run_id'] ) ) {
+			return '';
+		}
+
+		// get the time.
+		$time = \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->get_next_attempt_of_entry( absint( $item['id'] ) );
+
+		// bail if it is due.
+		if ( $time <= time() ) {
+			return '';
+		}
+
+		/* translators: %1$s will be replaced by a date and time. */
+		return '<br>' . esc_html( sprintf( __( 'Next attempt: %1$s', 'external-files-in-media-library' ), wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $time ) ) );
+	}
+
+	/**
 	 * Return list of options for a single entry.
 	 *
 	 * @param array<string,string> $item The item data.
@@ -328,7 +437,7 @@ class Queue extends WP_List_Table {
 			'className' => 'efml',
 			'title'     => __( 'Delete queue entry', 'external-files-in-media-library' ),
 			'texts'     => array(
-				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) . '</p>',
+				'<p><strong>' . __( 'Are you sure you want to delete this queue entry?', 'external-files-in-media-library' ) . '</strong><br>' . ( ! empty( $item['type'] ) && 'export' === $item['type'] ? __( 'The file will not be exported and stays a local file. You can export it any time again in the media library.', 'external-files-in-media-library' ) : ( ! empty( $item['type'] ) && 'localize' === $item['type'] ? __( 'The file will not be restored and stays an exported file. You can restore it any time again in the export settings.', 'external-files-in-media-library' ) : ( ! empty( $item['type'] ) && 'delete' === $item['type'] ? __( 'The files will not be deleted on the external source. Delete them there by hand.', 'external-files-in-media-library' ) : __( 'The URL will not be imported. You can add the URL any time again.', 'external-files-in-media-library' ) ) ) ) . '</p>',
 			),
 			'buttons'   => array(
 				array(

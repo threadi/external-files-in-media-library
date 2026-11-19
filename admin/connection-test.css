@@ -1,0 +1,53 @@
+/* Results of the connection test: one row per step with its state as icon. */
+.efml-connection-test-steps {
+	margin: 0 0 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.efml-connection-test-steps li {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+	margin: 0;
+	padding: 10px 0;
+	border-bottom: 1px solid #f0f0f1;
+}
+
+.efml-connection-test-steps li:last-child {
+	border-bottom: 0;
+}
+
+.efml-connection-test-steps .dashicons {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	font-size: 24px;
+}
+
+.efml-connection-test-steps .efml-connection-test-success .dashicons {
+	color: #00a32a;
+}
+
+.efml-connection-test-steps .efml-connection-test-failed .dashicons {
+	color: #d63638;
+}
+
+.efml-connection-test-steps .efml-connection-test-skipped .dashicons {
+	color: #8c8f94;
+}
+
+.efml-connection-test-steps strong {
+	display: block;
+}
+
+.efml-connection-test-steps p {
+	margin: 2px 0 0;
+	color: #50575e;
+	overflow-wrap: anywhere;
+}
+
+.efml-connection-test-steps .efml-connection-test-skipped strong,
+.efml-connection-test-steps .efml-connection-test-skipped p {
+	color: #787c82;
+}

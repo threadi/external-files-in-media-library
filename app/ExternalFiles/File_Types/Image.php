@@ -65,12 +65,10 @@ class Image extends File_Types_Base {
 		// get the cached file.
 		$cached_file = $external_file_obj->get_cache_file( $this->get_dimensions() );
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
 		// send optimized headers for proxy.
 		$this->send_proxy_headers( $cached_file );
-		echo $wp_filesystem->get_contents( $cached_file ); // phpcs:ignore WordPress.Security.EscapeOutput
+		// output the file in chunks, so it is not loaded completely into memory.
+		$this->output_file( $cached_file );
 		exit;
 	}
 
@@ -170,7 +168,19 @@ class Image extends File_Types_Base {
 	 * @return bool
 	 */
 	public function is_proxy_enabled(): bool {
-		return 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) );
+		// get the global setting (the proxy is always used for files, which require it).
+		$enabled = $this->is_proxy_required_for_file() || ( 'external' === get_option( 'eml_images_mode' ) && 1 === absint( get_option( 'eml_images_proxy' ) ) );
+
+		/**
+		 * Filter whether the proxy is used for an image.
+		 *
+		 * The external file object is given if the check is for a specific file, otherwise it is false.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool                                                 $enabled           True if the proxy is enabled.
+		 * @param \ExternalFilesInMediaLibrary\ExternalFiles\File|false $external_file_obj The external file object or false.
+		 */
+		return (bool) apply_filters( 'efml_image_proxy_enabled', $enabled, $this->get_file() );
 	}
 
 	/**

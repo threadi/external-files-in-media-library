@@ -10,6 +10,7 @@ namespace ExternalFilesInMediaLibrary\Plugin;
 // prevent direct access.
 defined( 'ABSPATH' ) || exit;
 
+use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use WP_Error;
 use WP_Filesystem_Base;
 use WP_Filesystem_Direct;
@@ -274,6 +275,146 @@ class Helper {
 		return apply_filters( 'efml_supported_mime_types', $mime_types );
 	}
 
+
+
+	/**
+	 * Return whether the hint with the given name is saved.
+	 *
+	 * Uses the autoloaded list of the hints of this plugin, which the transients library saves for its display:
+	 * loading a hint as object needs an own query for each hint, if it is not saved.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return bool
+	 */
+	public static function is_hint_saved( string $name ): bool {
+		$transients = get_option( 'etfw_transients', array() );
+		return is_array( $transients ) && ! empty( $transients[ Transients::get_instance()->get_slug() ][ $name ] );
+	}
+
+
+	/**
+	 * Return whether the hint with the given name is saved with the given message.
+	 *
+	 * Hints, which are checked in every request, are saved again only, if their message has changed (e.g. by a new
+	 * nonce in a link): saving them needs several queries.
+	 *
+	 * @param string $name    The name of the hint.
+	 * @param string $message The message of the hint.
+	 *
+	 * @return bool
+	 */
+	public static function is_hint_unchanged( string $name, string $message ): bool {
+		// bail if it is not saved.
+		if ( ! self::is_hint_saved( $name ) ) {
+			return false;
+		}
+
+		// compare the messages.
+		return Transients::get_instance()->get_transient_by_name( $name )->get_message() === $message;
+	}
+	/**
+	 * Delete the hint with the given name, if it is saved.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return void
+	 */
+	public static function delete_hint( string $name ): void {
+		// bail if it is not saved.
+		if ( ! self::is_hint_saved( $name ) ) {
+			return;
+		}
+
+		// delete it.
+		Transients::get_instance()->get_transient_by_name( $name )->delete();
+
+		// delete the marker for not dismissed hints (a dismissed hint keeps its marker, so it stays hidden).
+		$key = self::get_dismiss_marker_name( $name );
+		if ( empty( get_option( $key ) ) ) {
+			delete_option( $key );
+		}
+	}
+
+	/**
+	 * Return the name of the option, in which the transients library saves the dismissal of the given hint.
+	 *
+	 * @param string $name The name of the hint.
+	 *
+	 * @return string
+	 */
+	private static function get_dismiss_marker_name( string $name ): string {
+		return Transients::get_instance()->get_slug() . '-dismissed-' . md5( $name );
+	}
+
+	/**
+	 * Save the dismissal of each saved hint, which is not dismissed, as autoloaded option with the value 0.
+	 *
+	 * The transients library reads the dismissal of each saved hint in every request (also in the frontend). A hint,
+	 * which is not dismissed, has no option for it, so each one needs an own query. The value 0 means "not dismissed"
+	 * for the library, a dismissal replaces it.
+	 *
+	 * @return void
+	 */
+	public static function save_missing_dismiss_markers(): void {
+		// bail during the installation or uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) || wp_installing() ) {
+			return;
+		}
+
+		// get the saved hints of this plugin.
+		$transients = get_option( 'etfw_transients', array() );
+		$slug       = Transients::get_instance()->get_slug();
+		if ( ! is_array( $transients ) || empty( $transients[ $slug ] ) || ! is_array( $transients[ $slug ] ) ) {
+			return;
+		}
+
+		// save the missing markers.
+		$autoloaded = wp_load_alloptions();
+		foreach ( array_keys( $transients[ $slug ] ) as $name ) {
+			$key = self::get_dismiss_marker_name( (string) $name );
+			if ( array_key_exists( $key, $autoloaded ) ) {
+				continue;
+			}
+			add_option( $key, 0, '', true );
+		}
+	}
+	/**
+	 * Return the value of an option of this plugin, which is read in every request, and make sure it is autoloaded.
+	 *
+	 * WordPress reads each option, which is not saved or not autoloaded, with an own query in every request. A missing
+	 * option is saved with the given default value, a saved option, which is not autoloaded (e.g. saved so by an older
+	 * version), is changed to autoloaded. Both happen only once.
+	 *
+	 * @param string $option        The name of the option.
+	 * @param mixed  $default_value The default value.
+	 *
+	 * @return mixed
+	 */
+	public static function get_autoloaded_option( string $option, mixed $default_value ): mixed {
+		// do not change anything during the installation or uninstallation.
+		$is_changeable = ! defined( 'EFML_DEINSTALLATION_RUNNING' ) && ! wp_installing();
+
+		// get the value with a marker for a missing option (also for settings, whose default value is set via filter).
+		$missing = 'efml_missing_option';
+		$value   = get_option( $option, $missing );
+
+		// save the default value as autoloaded option, if it is missing.
+		if ( $missing === $value ) {
+			if ( $is_changeable ) {
+				add_option( $option, $default_value, '', true );
+			}
+			return $default_value;
+		}
+
+		// change a saved option to autoloaded, if it is not.
+		if ( $is_changeable && function_exists( 'wp_set_option_autoload' ) && ! array_key_exists( $option, wp_load_alloptions() ) ) {
+			wp_set_option_autoload( $option, true );
+		}
+
+		// return the saved value.
+		return $value;
+	}
 	/**
 	 * Return the allowed mime types.
 	 *
@@ -452,6 +593,20 @@ class Helper {
 	}
 
 	/**
+	 * Return the URL of the documentation of the supported plugins.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public static function get_plugins_doc_url(): string {
+		if ( Languages::get_instance()->is_german_language() ) {
+			return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/plugins_de.md';
+		}
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/plugins.md';
+	}
+
+	/**
 	 * Return whether the given URL is located on the given domain or one of its subdomains.
 	 *
 	 * Only the host of the URL is checked, not the complete URL. So "https://example.com/?imgur.com" is not on "imgur.com".
@@ -593,6 +748,60 @@ class Helper {
 	}
 
 	/**
+	 * Download the given file from the given remote filesystem (FTP, FTPS or SFTP) into the given local file.
+	 *
+	 * The file is transferred in parts, so it is not loaded completely into memory (like with
+	 * get_contents() of WordPress).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param WP_Filesystem_Base $filesystem The remote filesystem.
+	 * @param string             $remote_file The path of the file on the remote filesystem.
+	 * @param string             $local_file The absolute path of the local file.
+	 *
+	 * @return bool|null True if the file has been downloaded, false if the download failed, null if the filesystem
+	 *                   does not support this (then the caller should use get_contents()).
+	 */
+	public static function download_from_remote_filesystem( WP_Filesystem_Base $filesystem, string $remote_file, string $local_file ): ?bool {
+		$result = null;
+
+		// use the native FTP connection.
+		if ( $filesystem instanceof \WP_Filesystem_FTPext && $filesystem->link instanceof \FTP\Connection ) {
+			$result = @ftp_get( $filesystem->link, $local_file, $remote_file, FTP_BINARY ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+
+		// use the SFTP stream of the SSH2 connection.
+		if ( $filesystem instanceof \WP_Filesystem_SSH2 ) {
+			$result = @copy( $filesystem->sftp_path( $remote_file ), $local_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions
+		}
+
+		// use the FTP sockets connection.
+		if ( $filesystem instanceof \WP_Filesystem_ftpsockets ) {
+			$handle = fopen( $local_file, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+			if ( false === $handle ) {
+				return false;
+			}
+			mbstring_binary_safe_encoding();
+			$result = (bool) $filesystem->ftp->fget( $handle, $remote_file );
+			reset_mbstring_encoding();
+			fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions
+		}
+
+		// bail if the filesystem is not supported.
+		if ( is_null( $result ) ) {
+			return null;
+		}
+
+		// remove the incomplete file, if the download failed.
+		if ( ! $result && file_exists( $local_file ) ) {
+			wp_delete_file( $local_file );
+		}
+
+		// return the result.
+		return $result;
+	}
+
+	/**
 	 * Return the WP Filesystem object.
 	 *
 	 * @param string $type The type to force.
@@ -648,6 +857,46 @@ class Helper {
 
 		// simply return the now checked string value.
 		return $value;
+	}
+
+	/**
+	 * Return whether the given table of this plugin exists for the actual website.
+	 *
+	 * On multisites the tables exist only for websites, where this plugin has been activated. But the hooks of
+	 * this plugin also run after "switch_to_blog()" to other websites (e.g. during the export to them).
+	 * Only existing tables are cached, so a table created later in the same request is detected.
+	 *
+	 * @param string $table     The name of the table without the prefix (e.g. "eml_logs").
+	 * @param bool   $use_cache False to check the table also if it is known as existing (e.g. for tables of other
+	 *                          plugins, which could be removed at any time).
+	 *
+	 * @return bool
+	 */
+	public static function is_table_available( string $table, bool $use_cache = true ): bool {
+		global $wpdb;
+
+		// the cache for existing tables.
+		static $available = array();
+
+		// get the full name of the table.
+		$table_name = $wpdb->prefix . $table;
+
+		// bail if the table is already known as existing.
+		if ( $use_cache && isset( $available[ $table_name ] ) ) {
+			return true;
+		}
+
+		// check the table.
+		$found = $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table_name ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// bail if the table does not exist.
+		if ( $table_name !== $found ) {
+			return false;
+		}
+
+		// remember it and return true.
+		$available[ $table_name ] = true;
+		return true;
 	}
 
 	/**
@@ -972,10 +1221,8 @@ class Helper {
 	 * @return bool
 	 */
 	public static function is_local_path_allowed( string $path ): bool {
-		// remove the protocol.
-		if ( str_starts_with( $path, 'file://' ) ) {
-			$path = substr( $path, 7 );
-		}
+		// remove the protocol (also handles Windows paths like "file:///C:/…").
+		$path = self::get_local_path_from_url( $path );
 
 		// bail on empty path.
 		if ( '' === $path ) {
@@ -1022,8 +1269,59 @@ class Helper {
 			return false;
 		}
 
+		// normalize both paths to forward slashes (on Windows realpath() returns backslashes).
+		$real_path = untrailingslashit( wp_normalize_path( $real_path ) );
+		$base_real = untrailingslashit( wp_normalize_path( $base_real ) );
+
 		// return whether the path is the base or is located in it.
-		return $real_path === $base_real || str_starts_with( $real_path, rtrim( $base_real, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR );
+		return $real_path === $base_real || str_starts_with( $real_path, $base_real . '/' );
+	}
+
+	/**
+	 * Return the local file system path from a "file://" URL.
+	 *
+	 * Supports Unix paths ("file:///var/www/file.jpg" → "/var/www/file.jpg") and
+	 * Windows paths ("file:///C:/inetpub/file.jpg" or "file://C:/inetpub/file.jpg" → "C:/inetpub/file.jpg").
+	 * Strings without "file://" are returned unchanged (except the Windows-specific leading slash).
+	 *
+	 * @param string $url The URL or path.
+	 *
+	 * @return string
+	 */
+	public static function get_local_path_from_url( string $url ): string {
+		// remove the protocol.
+		if ( str_starts_with( strtolower( $url ), 'file://localhost/' ) ) {
+			$url = substr( $url, 16 );
+		} elseif ( str_starts_with( strtolower( $url ), 'file://' ) ) {
+			$url = substr( $url, 7 );
+		}
+
+		// remove the leading slash before a Windows drive letter (e.g., "/C:/inetpub" → "C:/inetpub").
+		if ( preg_match( '#^/[a-zA-Z]:[/\\\\]#', $url ) ) {
+			$url = substr( $url, 1 );
+		}
+
+		// return the resulting path.
+		return $url;
+	}
+
+	/**
+	 * Return a "file://" URL for the given local file system path.
+	 *
+	 * The path is normalized to forward slashes, so the URL is identical on Unix
+	 * ("/var/www/file.jpg" → "file:///var/www/file.jpg") and works on Windows
+	 * ("C:\inetpub\file.jpg" → "file:///C:/inetpub/file.jpg").
+	 *
+	 * @param string $path The local path.
+	 *
+	 * @return string
+	 */
+	public static function get_file_url_from_path( string $path ): string {
+		// normalize the path.
+		$path = wp_normalize_path( $path );
+
+		// return the URL with three slashes in every case.
+		return 'file://' . ( str_starts_with( $path, '/' ) ? '' : '/' ) . $path;
 	}
 
 	/**
@@ -1076,5 +1374,151 @@ class Helper {
 			},
 			$url
 		);
+	}
+
+	/**
+	 * Return the HTML code for an icon of the WordPress admin.
+	 *
+	 * Uses the SVG icon of WordPress (e.g. "core-admin/update", available since WordPress 7.2), if it is registered.
+	 * Otherwise, the given Dashicon is used (e.g. in older WordPress versions).
+	 *
+	 * @param string $icon_name The name of the SVG icon (e.g. "core-admin/update").
+	 * @param string $dashicon  The class of the Dashicon as fallback (e.g. "dashicons-update").
+	 * @param string $label     The accessible label (optional, the icon is hidden for screen readers without it).
+	 * @param int    $size      The size in pixel.
+	 *
+	 * @return string
+	 */
+	public static function get_icon( string $icon_name, string $dashicon, string $label = '', int $size = 20 ): string {
+		// use the SVG icon, if it is registered.
+		if ( function_exists( 'wp_get_icon' ) && class_exists( 'WP_Icons_Registry' ) && \WP_Icons_Registry::get_instance()->is_registered( $icon_name ) ) {
+			$svg_size = (int) round( $size * 4 / 3 );
+			$svg      = wp_get_icon(
+				$icon_name,
+				array(
+					'size'  => $svg_size,
+					'label' => $label,
+				)
+			);
+			if ( '' !== $svg ) {
+				return '<span class="efml-icon svg-icon"' . ( '' !== $label ? ' title="' . esc_attr( $label ) . '"' : '' ) . '>' . $svg . '</span>';
+			}
+		}
+
+		// use the Dashicon otherwise.
+		if ( '' !== $label ) {
+			return '<span class="efml-icon dashicons ' . esc_attr( $dashicon ) . '" role="img" aria-label="' . esc_attr( $label ) . '" title="' . esc_attr( $label ) . '"></span>';
+		}
+		return '<span class="efml-icon dashicons ' . esc_attr( $dashicon ) . '" aria-hidden="true"></span>';
+	}
+
+	/**
+	 * Return the allowed HTML for the output of icons via wp_kses() (see @get_icon()).
+	 *
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function get_allowed_html_for_icons(): array {
+		// the attributes for accessibility.
+		$a11y = array(
+			'role'        => true,
+			'aria-label'  => true,
+			'aria-hidden' => true,
+			'focusable'   => true,
+			'class'       => true,
+		);
+
+		// return the list.
+		return array(
+			'span'     => array_merge( $a11y, array( 'title' => true ) ),
+			'svg'      => array_merge(
+				$a11y,
+				array(
+					'xmlns'        => true,
+					'viewbox'      => true,
+					'width'        => true,
+					'height'       => true,
+					'fill'         => true,
+					'stroke'       => true,
+					'stroke-width' => true,
+					'style'        => true,
+				)
+			),
+			'g'        => array( 'fill' => true ),
+			'path'     => array(
+				'd'         => true,
+				'fill'      => true,
+				'fill-rule' => true,
+				'clip-rule' => true,
+			),
+			'circle'   => array(
+				'cx'   => true,
+				'cy'   => true,
+				'r'    => true,
+				'fill' => true,
+			),
+			'rect'     => array(
+				'x'      => true,
+				'y'      => true,
+				'width'  => true,
+				'height' => true,
+				'rx'     => true,
+				'fill'   => true,
+			),
+			'polygon'  => array(
+				'points' => true,
+				'fill'   => true,
+			),
+			'title'    => array(),
+			'polyline' => array(
+				'points' => true,
+				'fill'   => true,
+			),
+		);
+	}
+
+	/**
+	 * Return whether all words of the given search are contained in the given texts (case-insensitive).
+	 *
+	 * @param string            $search The search.
+	 * @param array<int,string> $texts  List of texts (e.g. a label and search terms).
+	 *
+	 * @return bool
+	 */
+	public static function is_search_matching( string $search, array $texts ): bool {
+		// get the words of the search.
+		$words = preg_split( '/\s+/', trim( $search ), -1, PREG_SPLIT_NO_EMPTY );
+
+		// bail if no word is given.
+		if ( empty( $words ) ) {
+			return false;
+		}
+
+		// get the texts as one text.
+		$haystack = implode( ' ', $texts );
+
+		// check each word.
+		foreach ( $words as $word ) {
+			if ( false === mb_stripos( $haystack, $word ) ) {
+				return false;
+			}
+		}
+
+		// return true as all words are contained.
+		return true;
+	}
+
+	/**
+	 * Return the URL of a documentation of this plugin in the language of the actual user (German or English).
+	 *
+	 * @param string $name The name of the documentation file without extension (e.g. "constants" or "import/directories").
+	 *
+	 * @return string
+	 */
+	public static function get_documentation_url( string $name ): string {
+		// get the suffix for the language of the user.
+		$suffix = str_starts_with( get_user_locale(), 'de' ) ? '_de' : '';
+
+		// return the URL.
+		return 'https://github.com/threadi/external-files-in-media-library/blob/master/docs/' . $name . $suffix . '.md';
 	}
 }

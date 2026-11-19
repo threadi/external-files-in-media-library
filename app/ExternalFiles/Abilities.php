@@ -828,6 +828,17 @@ class Abilities {
 												'label'    => array( 'type' => 'string' ),
 												'type'     => array( 'type' => 'string' ),
 												'required' => array( 'type' => 'boolean' ),
+												'defined_via_constant' => array( 'type' => 'boolean' ),
+												'options'  => array(
+													'type' => 'array',
+													'items' => array(
+														'type'       => 'object',
+														'properties' => array(
+															'value' => array( 'type' => 'string' ),
+															'label' => array( 'type' => 'string' ),
+														),
+													),
+												),
 											),
 										),
 									),
@@ -1168,7 +1179,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'queue_process' ),
-				'permission_callback' => array( $this, 'can_manage_files' ),
+				'permission_callback' => array( $this, 'can_manage_queue' ),
 				'annotations'         => $this->get_annotations( false, false, false ),
 			),
 			'queue-cleanup' => array(
@@ -1195,7 +1206,7 @@ class Abilities {
 					),
 				),
 				'execute_callback'    => array( $this, 'queue_cleanup' ),
-				'permission_callback' => array( $this, 'can_manage_files' ),
+				'permission_callback' => array( $this, 'can_manage_queue' ),
 				'annotations'         => $this->get_annotations( false, true, true ),
 			),
 		);
@@ -1454,6 +1465,7 @@ class Abilities {
 				'sync_interval'      => array( 'type' => 'string' ),
 				'export_enabled'     => array( 'type' => 'boolean' ),
 				'main_export_source' => array( 'type' => 'boolean' ),
+				'usable'             => array( 'type' => 'boolean' ),
 			),
 		);
 	}
@@ -1465,6 +1477,16 @@ class Abilities {
 	 */
 	public function can_manage_files(): bool {
 		return current_user_can( EFML_CAP_NAME );
+	}
+
+	/**
+	 * Return whether the actual user is allowed to process or clean up the queue (like the actions of the queue
+	 * in the settings).
+	 *
+	 * @return bool
+	 */
+	public function can_manage_queue(): bool {
+		return Queue::get_instance()->is_queue_action_allowed();
 	}
 
 	/**
@@ -1853,7 +1875,7 @@ class Abilities {
 
 		if ( $this->get_int( $input, 'attachment_id' ) > 0 || '' !== $this->get_string( $input, 'url' ) ) {
 			// get the single requested file.
-			$external_file_obj = $this->get_file_by_input( $input );
+			$external_file_obj = $this->get_file_by_input( $input, 'edit_post' );
 
 			// bail if the external file could not be loaded.
 			if ( is_wp_error( $external_file_obj ) ) {
@@ -1976,7 +1998,7 @@ class Abilities {
 	 */
 	public function reset_thumbnails( mixed $input = null ): bool|WP_Error {
 		// get the external file.
-		$external_file_obj = $this->get_file_by_input( $this->get_input( $input ) );
+		$external_file_obj = $this->get_file_by_input( $this->get_input( $input ), 'edit_post' );
 
 		// bail if the external file could not be loaded.
 		if ( is_wp_error( $external_file_obj ) ) {
@@ -2265,6 +2287,12 @@ class Abilities {
 				return $this->get_error( 'efml_invalid_field', sprintf( __( 'The value of the field %1$s must be a string.', 'external-files-in-media-library' ), sanitize_key( (string) $key ) ), 400 );
 			}
 
+			// bail if the value is not one of the connections defined via constants.
+			if ( Service_Base::CONNECTION_FIELD === $key && isset( $fields[ $key ]['options'] ) && is_array( $fields[ $key ]['options'] ) && ! in_array( (string) $value, array_map( fn( $option ) => is_array( $option ) ? $this->get_scalar_as_string( $option['value'] ?? '' ) : '', $fields[ $key ]['options'] ), true ) ) {
+				/* translators: %1$s will be replaced by a field name. */
+				return $this->get_error( 'efml_invalid_field', sprintf( __( 'The value of the field %1$s is not one of its options.', 'external-files-in-media-library' ), $key ), 400 );
+			}
+
 			// set the value.
 			$fields[ $key ]['value'] = (string) $value;
 		}
@@ -2286,13 +2314,19 @@ class Abilities {
 				return $this->get_error( 'efml_missing_directory', __( 'No directory given for this external source.', 'external-files-in-media-library' ), 400 );
 			}
 
+			// bail if the credentials of this service are defined via constants for another target.
+			if ( $service_obj instanceof Service_Base && $service_obj->is_target_blocked_by_constants( $directory, $fields ) ) {
+				/* translators: %1$s will be replaced by the service title (e.g. FTP). */
+				return $this->get_error( 'efml_source_blocked_by_constants', sprintf( __( 'The URL could not be used, as the access data for %1$s are defined as constants for another server, e.g. in your wp-config.php.', 'external-files-in-media-library' ), $service_obj->get_label() ), 409 );
+			}
+
 			// bail if the connection with these settings is not possible.
 			if ( ! $service_obj->do_login( $directory ) ) {
 				return $this->get_error( 'efml_login_failed', $this->get_error_text( $this->get_errors_since( $last_log_id ), $this->get_service_error_text( $service_obj, __( 'The connection to the external source failed. Check the directory and the credentials.', 'external-files-in-media-library' ), $error_offset ) ), 400 );
 			}
 
-			// save the external source.
-			$term_id = Taxonomy::get_instance()->add( $service_obj->get_name(), $directory, $fields );
+			// save the external source without the values of constants, which are set again on each usage.
+			$term_id = Taxonomy::get_instance()->add( $service_obj->get_name(), $directory, $service_obj instanceof Service_Base ? $service_obj->remove_constant_values_from_fields( $fields ) : $fields );
 		} catch ( Throwable $e ) {
 			return $this->get_error( 'efml_source_not_saved', wp_strip_all_tags( $e->getMessage() ), 500 );
 		} finally {
@@ -2766,7 +2800,7 @@ class Abilities {
 
 		try {
 			// process the queue.
-			$queue->process_queue();
+			$queue->process_queue( true );
 		} catch ( Throwable $e ) {
 			return $this->get_error( 'efml_queue_failed', wp_strip_all_tags( $e->getMessage() ), 500 );
 		} finally {
@@ -2851,9 +2885,10 @@ class Abilities {
 			return $this->get_error( 'efml_export_disabled', __( 'Export for local files is not enabled!', 'external-files-in-media-library' ), 400 );
 		}
 
-		// bail if no external source is enabled for the export.
-		if ( empty( Export::get_instance()->get_export_terms() ) ) {
-			return $this->get_error( 'efml_no_export_source', __( 'No external source is enabled for the export.', 'external-files-in-media-library' ), 400 );
+		// bail if the external sources could not be used for the export (e.g. none is enabled or the main external source is not usable).
+		$problem = Export::get_instance()->get_export_sources_problem();
+		if ( '' !== $problem ) {
+			return $this->get_error( 'efml_no_export_source', wp_strip_all_tags( $problem ), 400 );
 		}
 
 		// get the attachment ID.
@@ -3164,7 +3199,7 @@ class Abilities {
 	 */
 	private function switch_hosting( array $input, bool $to_local ): array|WP_Error {
 		// get the external file.
-		$external_file_obj = $this->get_file_by_input( $input );
+		$external_file_obj = $this->get_file_by_input( $input, 'edit_post' );
 
 		// bail if the external file could not be loaded.
 		if ( is_wp_error( $external_file_obj ) ) {
@@ -3471,11 +3506,33 @@ class Abilities {
 	/**
 	 * Return the external file object which is requested with "attachment_id" or "url".
 	 *
+	 * @param array<string,mixed> $input      The input.
+	 * @param string              $capability The capability the actual user needs for the file, e.g. "edit_post" (optional).
+	 *
+	 * @return File|WP_Error
+	 */
+	private function get_file_by_input( array $input, string $capability = '' ): File|WP_Error {
+		// get the file.
+		$external_file_obj = $this->get_file_by_input_without_check( $input );
+
+		// bail if the actual user does not have the requested capability for this file.
+		if ( ! is_wp_error( $external_file_obj ) && '' !== $capability && ! current_user_can( $capability, $external_file_obj->get_id() ) ) {
+			return $this->get_error( 'efml_not_allowed', __( 'You are not allowed to edit this file.', 'external-files-in-media-library' ), 403 );
+		}
+
+		// return the result.
+		return $external_file_obj;
+	}
+
+	/**
+	 * Return the external file object which is requested with "attachment_id" or "url", without checking the
+	 * permissions of the actual user for it.
+	 *
 	 * @param array<string,mixed> $input The input.
 	 *
 	 * @return File|WP_Error
 	 */
-	private function get_file_by_input( array $input ): File|WP_Error {
+	private function get_file_by_input_without_check( array $input ): File|WP_Error {
 		// get the file by its ID.
 		$attachment_id = $this->get_int( $input, 'attachment_id' );
 		if ( $attachment_id > 0 ) {
@@ -3782,12 +3839,33 @@ class Abilities {
 		$fields = array();
 		foreach ( $service_fields as $name => $field ) {
 			// add the field without its value.
-			$fields[] = array(
-				'name'     => (string) $name,
-				'label'    => wp_strip_all_tags( $this->get_scalar_as_string( $field['label'] ?? '' ) ),
-				'type'     => $this->get_scalar_as_string( $field['type'] ?? 'text' ),
-				'required' => empty( $field['not_required'] ),
+			$entry = array(
+				'name'                 => (string) $name,
+				'label'                => wp_strip_all_tags( $this->get_scalar_as_string( $field['label'] ?? '' ) ),
+				'type'                 => $this->get_scalar_as_string( $field['type'] ?? 'text' ),
+				'required'             => empty( $field['not_required'] ) && empty( $field['constant'] ),
+				'defined_via_constant' => ! empty( $field['constant'] ),
 			);
+
+			// add the connections defined via constants as options.
+			if ( Service_Base::CONNECTION_FIELD === $name && isset( $field['options'] ) && is_array( $field['options'] ) ) {
+				$entry['options'] = array();
+				foreach ( $field['options'] as $option ) {
+					// bail if the option is not an array.
+					if ( ! is_array( $option ) ) {
+						continue;
+					}
+
+					// add the option.
+					$entry['options'][] = array(
+						'value' => $this->get_scalar_as_string( $option['value'] ?? '' ),
+						'label' => wp_strip_all_tags( $this->get_scalar_as_string( $option['label'] ?? '' ) ),
+					);
+				}
+			}
+
+			// add the field.
+			$fields[] = $entry;
 		}
 
 		// return the fields.
@@ -3879,6 +3957,11 @@ class Abilities {
 			return $this->get_error( 'efml_not_allowed', __( 'Access not allowed!', 'external-files-in-media-library' ) . ' ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ), 403 );
 		}
 
+		// bail if the external source is not usable, as the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term->term_id ) ) {
+			return $this->get_error( 'efml_source_blocked_by_constants', Services::get_instance()->get_blocked_source_hint( $term->term_id ), 409 );
+		}
+
 		// return the term.
 		return $term;
 	}
@@ -3923,6 +4006,7 @@ class Abilities {
 			'sync_interval'      => (string) get_term_meta( $term->term_id, 'interval', true ),
 			'export_enabled'     => ! empty( get_term_meta( $term->term_id, 'efml_export', true ) ),
 			'main_export_source' => absint( get_option( 'eml_export_main_source' ) ) === $term->term_id,
+			'usable'             => ! Services::get_instance()->is_source_blocked_by_constants( $term->term_id ),
 		);
 	}
 

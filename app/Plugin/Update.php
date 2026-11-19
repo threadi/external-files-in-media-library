@@ -17,12 +17,14 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Schedules\Check_Files;
+use ExternalFilesInMediaLibrary\Services\DropBox;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Term_Query;
 
@@ -124,6 +126,9 @@ class Update {
 			}
 			if ( version_compare( $db_plugin_version, '5.5.1', '<' ) ) {
 				$this->version551();
+			}
+			if ( version_compare( $db_plugin_version, '6.0.0', '<' ) ) {
+				$this->version570();
 			}
 
 			// install the schedules, which are new in this version (or have been missing).
@@ -344,9 +349,9 @@ class Update {
 			// create fields.
 			$fields                      = $protocol_handler->get_fields();
 			$fields['server']['value']   = $url;
-			$fields['login']['value']    = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'login', true ) );
-			$fields['password']['value'] = Crypt::get_instance()->decrypt( get_term_meta( $term->term_id, 'password', true ) );
-			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
+			$fields['login']['value']    = Crypt::get_instance()->decrypt( (string) get_term_meta( $term->term_id, 'login', true ), 'term_meta:login' );
+			$fields['password']['value'] = Crypt::get_instance()->decrypt( (string) get_term_meta( $term->term_id, 'password', true ), 'term_meta:password' );
+			update_term_meta( $term->term_id, 'fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ), Taxonomy::FIELDS_CONTEXT ) );
 		}
 	}
 
@@ -375,7 +380,7 @@ class Update {
 		// encrypt the global Dropbox token.
 		$data = get_option( 'efml_dropbox_access_tokens', array() );
 		if ( ! empty( $data ) ) {
-			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), DropBox::ACCESS_TOKENS_OPTION_CONTEXT ) );
 		}
 	}
 
@@ -473,5 +478,18 @@ class Update {
 				array( 'id' => absint( $entry['id'] ) )
 			);
 		}
+	}
+
+	/**
+	 * To run on the update to version 6.0.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version570(): void {
+		// update the table structure of the queue for the export of files and the import runs.
+		Queue::get_instance()->install();
+
+		// install the table for the import runs.
+		Import_Runs::get_instance()->install();
 	}
 }

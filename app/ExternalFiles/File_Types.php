@@ -14,6 +14,7 @@ use easySettingsForWordPress\Fields\Checkbox;
 use easySettingsForWordPress\Fields\Number;
 use easySettingsForWordPress\Fields\Select;
 use easySettingsForWordPress\Page;
+use easySettingsForWordPress\Tab;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
 
@@ -87,9 +88,13 @@ class File_Types {
 			return;
 		}
 
-		// add file types tab.
-		$file_types_tab = $settings_page->add_tab( 'eml_file_types', 30 );
-		$file_types_tab->set_title( __( 'File types', 'external-files-in-media-library' ) );
+		// get the tab for the delivery of files, which contains the settings for each file type and the proxy.
+		$file_types_tab = Settings::get_instance()->get_group_tab( 'eml_file_types' );
+
+		// bail if tab could not be loaded.
+		if ( ! $file_types_tab instanceof Tab ) {
+			return;
+		}
 
 		// add settings for each supported file type.
 		foreach ( $this->get_file_types_as_objects() as $index => $file_type_obj ) {
@@ -138,7 +143,7 @@ class File_Types {
 			$field = new Checkbox( $settings_obj );
 			/* translators: %1$s will be replaced by the file type title (e.g., "Images"). */
 			$field->set_title( sprintf( __( 'Enable proxy for %1$s', 'external-files-in-media-library' ), $file_type_obj->get_title() ) );
-			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) );
+			$field->set_description( __( 'This option is only available if these files are hosted external. If this option is disabled, external files of this type will be embedded with their external URL. To prevent privacy protection issue you could enable this option to load these files locally.', 'external-files-in-media-library' ) . ' ' . __( 'Files which could not be loaded by browsers via their URL (e.g. files on an FTP server) are always delivered via the proxy, regardless of this setting.', 'external-files-in-media-library' ) );
 			$field->add_depend( $mode_setting, 'external' );
 			$setting->set_field( $field );
 			$setting->set_help( '<p>' . $field->get_description() . '</p>' );

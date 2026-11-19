@@ -56,6 +56,15 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'exmage-wp-image-links/exmage-wp-image-links.php' );
+	}
+
+	/**
 	 * Initialize this support.
 	 *
 	 * @return void
@@ -83,12 +92,9 @@ class Exmage extends ThirdParty_Base implements ThirdParty {
 	 * @return void
 	 */
 	public function show_hint(): void {
-		// get transients object.
-		$transients_obj = Transients::get_instance();
-
 		// bail if no exmage files are found.
 		if ( empty( $this->get_files() ) ) {
-			$transients_obj->get_transient_by_name( 'eml_exmage_migrate' )->delete();
+			Helper::delete_hint( 'eml_exmage_migrate' );
 			return;
 		}
 

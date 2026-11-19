@@ -13,8 +13,10 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Directory_Listings;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Settings;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
+use WP_Post;
 use WP_Query;
 use WP_Term_Query;
 use WP_User;
@@ -64,6 +66,9 @@ class Tables {
 	public function init(): void {
 		add_action( 'restrict_manage_posts', array( $this, 'add_media_filter' ) );
 		add_action( 'pre_get_posts', array( $this, 'add_media_do_filter' ) );
+		add_filter( 'ajax_query_attachments_args', array( $this, 'add_media_filter_to_grid_query' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'add_media_filter_to_grid' ) );
+		add_filter( 'media_row_actions', array( $this, 'add_export_row_actions' ), 20, 2 );
 		add_action( 'pre_get_terms', array( $this, 'hide_services' ) );
 		add_action( 'pre_get_terms', array( $this, 'use_user_mark' ) );
 		add_filter( 'manage_upload_columns', array( $this, 'add_media_columns' ) );
@@ -97,20 +102,8 @@ class Tables {
 			$request_value = '';
 		}
 
-		// define possible options.
-		$options = array(
-			'none'         => __( 'All files', 'external-files-in-media-library' ),
-			'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
-			'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
-		);
-
-		/**
-		 * Filter the possible options.
-		 *
-		 * @since 4.0.0 Available since 4.0.0.
-		 * @param array<string,string> $options The list of possible options.
-		 */
-		$options = apply_filters( 'efml_filter_options', $options );
+		// get the possible options.
+		$options = $this->get_filter_options();
 
 		?>
 		<!--suppress HtmlFormInputWithoutLabel -->
@@ -118,7 +111,7 @@ class Tables {
 			<?php
 			foreach ( $options as $value => $label ) {
 				?>
-				<option value="<?php echo esc_attr( $value ); ?>"<?php echo $request_value === (string) $value ? ' selected="selected"' : ''; ?>><?php echo esc_html( $label ); ?></option>
+				<option value="<?php echo esc_attr( (string) $value ); ?>"<?php echo $request_value === (string) $value ? ' selected="selected"' : ''; ?>><?php echo esc_html( $label ); ?></option>
 				<?php
 			}
 			?>
@@ -127,59 +120,190 @@ class Tables {
 	}
 
 	/**
-	 * Change a main query to filter external files in media library if requested.
+	 * Return the options of the filter for external files in the media library.
+	 *
+	 * @return array<int|string,string>
+	 */
+	public function get_filter_options(): array {
+		// define possible options.
+		$options = array(
+			'none'         => __( 'All files', 'external-files-in-media-library' ),
+			'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
+			'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
+		);
+
+		// add the options for the state of the export, if it is enabled or files with these states exist.
+		if ( Export::get_instance()->is_enabled() || $this->has_files_with_export_state() ) {
+			$options['export-pending'] = __( 'Will be exported', 'external-files-in-media-library' );
+			$options['export-failed']  = __( 'Export failed', 'external-files-in-media-library' );
+		}
+
+		/**
+		 * Filter the possible options.
+		 *
+		 * @since 4.0.0 Available since 4.0.0.
+		 * @param array<string,string> $options The list of possible options.
+		 */
+		return apply_filters( 'efml_filter_options', $options );
+	}
+
+	/**
+	 * Return whether local files wait for their export or their export has failed.
+	 *
+	 * @return bool
+	 */
+	private function has_files_with_export_state(): bool {
+		global $wpdb;
+
+		// return whether a file with one of the markers exists.
+		return null !== $wpdb->get_var( $wpdb->prepare( 'SELECT `post_id` FROM %i WHERE `meta_key` IN (%s, %s, %s, %s) LIMIT 1', $wpdb->postmeta, 'efml_export_queued', 'efml_export_failed', Delayed_Uploads::META, Client_Uploads::META ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery
+	}
+
+	/**
+	 * Return the requested value of the filter for external files in the media library for the given query.
+	 *
+	 * In the list view it is part of the request, in the grid view it is set as query variable of the query (see
+	 * add_media_filter_to_grid_query()).
+	 *
+	 * @param WP_Query $query The query object.
+	 *
+	 * @return string|null Null if the filter is not requested for this query.
+	 */
+	public function get_requested_filter( WP_Query $query ): ?string {
+		// use the value of the grid view.
+		$filter = $query->get( 'efml_media_filter' );
+		if ( is_string( $filter ) && '' !== $filter ) {
+			return $filter;
+		}
+
+		// bail if this is not the main query (e.g. queries of other plugins on the same page).
+		if ( ! $query->is_main_query() ) {
+			return null;
+		}
+
+		// return the value of the list view.
+		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		return is_string( $filter ) ? $filter : null;
+	}
+
+	/**
+	 * Return the meta query for the given value of the filter for external files (empty, if it is not ours).
+	 *
+	 * @param string $filter The value of the filter.
+	 *
+	 * @return array<int|string,mixed>
+	 */
+	private function get_meta_query_for_filter( string $filter ): array {
+		// filter to any external file.
+		if ( 'external' === $filter ) {
+			return array(
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'EXISTS',
+				),
+			);
+		}
+
+		// filter for any non-external file.
+		if ( 'non-external' === $filter ) {
+			return array(
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'NOT EXISTS',
+				),
+			);
+		}
+
+		// filter for local files, which wait for their export (in the queue, for other plugins or their sizes).
+		if ( 'export-pending' === $filter ) {
+			return array(
+				'relation' => 'AND',
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'efml_export_failed',
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'relation' => 'OR',
+					array(
+						'key'     => 'efml_export_queued',
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => Delayed_Uploads::META,
+						'compare' => 'EXISTS',
+					),
+					array(
+						'key'     => Client_Uploads::META,
+						'compare' => 'EXISTS',
+					),
+				),
+			);
+		}
+
+		// filter for local files, whose export has failed.
+		if ( 'export-failed' === $filter ) {
+			return array(
+				'relation' => 'AND',
+				array(
+					'key'     => EFML_POST_META_URL,
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => 'efml_export_failed',
+					'compare' => 'EXISTS',
+				),
+			);
+		}
+
+		// return an empty list for any other value (e.g. the ID of an external source).
+		return array();
+	}
+
+	/**
+	 * Change a query to filter external files in media library if requested.
+	 *
+	 * Used for the main query of the list view and for the queries of the grid view.
 	 *
 	 * @param WP_Query $query The Query-object.
 	 * @return void
 	 */
 	public function add_media_do_filter( WP_Query $query ): void {
+		// bail if this is not the backend.
+		if ( ! is_admin() ) {
+			return;
+		}
+
 		// get filter value.
-		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$filter = $this->get_requested_filter( $query );
 
 		// bail if filter is not set.
 		if ( is_null( $filter ) ) {
 			return;
 		}
 
-		// bail if this is not the backend.
-		if ( ! is_admin() ) {
-			return;
-		}
-
-		// bail if this is not the main query.
-		if ( ! $query->is_main_query() ) {
-			return;
-		}
-
 		// bail if this is not the attachment post type.
-		if ( 'attachment' !== $query->query_vars['post_type'] ) {
+		if ( 'attachment' !== $query->get( 'post_type' ) ) {
 			return;
 		}
 
-		// filter to any external file.
-		if ( 'external' === $filter ) {
-			$query->set(
-				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					array(
-						'key'     => EFML_POST_META_URL,
-						'compare' => 'EXISTS',
-					),
-				)
-			);
-		}
+		// get the meta query for this filter.
+		$meta_query = $this->get_meta_query_for_filter( $filter );
 
-		// filter for any non-external file.
-		if ( 'non-external' === $filter ) {
-			$query->set(
-				'meta_query', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					array(
-						'key'     => EFML_POST_META_URL,
-						'compare' => 'NOT EXISTS',
-					),
-				)
-			);
+		// add it to the query, together with an existing meta query.
+		if ( ! empty( $meta_query ) ) {
+			$existing = $query->get( 'meta_query' );
+			if ( is_array( $existing ) && ! empty( $existing ) ) {
+				$meta_query = array(
+					'relation' => 'AND',
+					$existing,
+					$meta_query,
+				);
+			}
+			$query->set( 'meta_query', $meta_query ); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
 		}
 
 		/**
@@ -189,6 +313,126 @@ class Tables {
 		 * @param WP_Query $query The "WP_Query" object.
 		 */
 		do_action_ref_array( 'efml_filter_query', array( &$query ) );
+	}
+
+	/**
+	 * Add the requested value of the filter for external files to the query of the grid view of the media library.
+	 *
+	 * WordPress removes unknown values from the request of the grid view, so the value is read from it here and set
+	 * as query variable, which add_media_do_filter() uses.
+	 *
+	 * @param array<string,mixed> $query The query arguments.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function add_media_filter_to_grid_query( array $query ): array {
+		// get the request.
+		$request = isset( $_REQUEST['query'] ) && is_array( $_REQUEST['query'] ) ? wp_unslash( $_REQUEST['query'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WordPress checks the request, the value is sanitized below.
+
+		// bail if our filter is not requested.
+		if ( empty( $request['admin_filter_media_external_files'] ) || ! is_scalar( $request['admin_filter_media_external_files'] ) ) {
+			return $query;
+		}
+
+		// get the value.
+		$filter = sanitize_text_field( (string) $request['admin_filter_media_external_files'] );
+
+		// bail if it is not one of the options.
+		if ( 'none' === $filter || ! array_key_exists( $filter, $this->get_filter_options() ) ) {
+			return $query;
+		}
+
+		// add it to the query.
+		$query['efml_media_filter'] = $filter;
+
+		// return the resulting query.
+		return $query;
+	}
+
+	/**
+	 * Add the filter for external files to the grid view of the media library.
+	 *
+	 * @param string $hook The used hook.
+	 *
+	 * @return void
+	 */
+	public function add_media_filter_to_grid( string $hook ): void {
+		// bail if this is not the media library in grid view.
+		if ( 'upload.php' !== $hook || ! wp_script_is( 'media-grid' ) ) {
+			return;
+		}
+
+		// collect the options in their order.
+		$options = array();
+		foreach ( $this->get_filter_options() as $value => $label ) {
+			$options[] = array(
+				'value' => (string) $value,
+				'label' => $label,
+			);
+		}
+
+		// add the script.
+		wp_enqueue_script(
+			'efml-media-filter',
+			Helper::get_plugin_url() . 'admin/media-filter.js',
+			array( 'media-views' ),
+			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/media-filter.js' ),
+			true
+		);
+
+		// show the filter beside the other filters of WordPress.
+		wp_add_inline_style( 'media-views', '.media-frame.mode-grid select#media-attachment-efml-filter { width: auto; max-width: 15em; }' );
+
+		// add the options.
+		wp_localize_script(
+			'efml-media-filter',
+			'efmlMediaFilter',
+			array(
+				'label'   => __( 'Filter by external files', 'external-files-in-media-library' ),
+				'options' => $options,
+			)
+		);
+	}
+
+	/**
+	 * Add the actions to export a local file again and to show the errors of its export in the media table.
+	 *
+	 * Only for local files, which wait for their export or whose export has failed.
+	 *
+	 * @param array<string,string> $actions List of actions.
+	 * @param WP_Post              $post    The post object of the attachment.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_export_row_actions( array $actions, WP_Post $post ): array {
+		// bail if the user could not use the export.
+		if ( ! current_user_can( 'efml_cap_tools_export' ) ) {
+			return $actions;
+		}
+
+		// get the export object.
+		$export_obj = Export::get_instance();
+
+		// get the state of the export.
+		$state = $export_obj->get_export_state( $post->ID );
+
+		// bail if the file does not wait for its export and its export has not failed.
+		if ( '' === $state ) {
+			return $actions;
+		}
+
+		// add the action to export it again, if it could be exported at the moment and the user is allowed to edit it.
+		if ( current_user_can( 'edit_post', $post->ID ) && '' === $export_obj->get_export_again_problem( $post->ID ) ) {
+			$actions['efml-export-again'] = '<a href="' . esc_url( $export_obj->get_export_again_url( $post->ID ) ) . '">' . esc_html__( 'Export again', 'external-files-in-media-library' ) . '</a>';
+		}
+
+		// add the link to the errors in the log, if the user could see the log.
+		if ( current_user_can( Settings::get_instance()->get_settings_obj()->get_capability() ) ) {
+			$actions['efml-export-errors'] = '<a href="' . esc_url( $export_obj->get_errors_url( $post->ID ) ) . '">' . esc_html__( 'Show errors', 'external-files-in-media-library' ) . '</a>';
+		}
+
+		// return the resulting list.
+		return $actions;
 	}
 
 	/**
@@ -278,11 +522,38 @@ class Tables {
 			// show no-icon if it is not an external file.
 			if ( ! $external_file_obj->is_valid() ) {
 				echo '<span class="dashicons dashicons-no" title="' . esc_html__( 'local file', 'external-files-in-media-library' ) . '"></span>';
+
+				// show marker if this file is planned for export via queue.
+				if ( absint( get_post_meta( $attachment_id, 'efml_export_queued', true ) ) > 0 ) {
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file to the external source is planned in the queue.', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
+				} elseif ( Delayed_Uploads::get_instance()->is_waiting( $attachment_id ) ) {
+					// show marker if the export of this upload waits for other plugins (e.g. image optimizers).
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file waits a few minutes until other plugins have finished their work with it (e.g. image optimizers).', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
+				} elseif ( Client_Uploads::get_instance()->is_waiting( $attachment_id ) ) {
+					// show marker if the export of this upload waits for the sizes created in the browser.
+					echo '<span class="dashicons dashicons-clock" title="' . esc_attr__( 'The export of this file waits until its sizes have been created in the browser.', 'external-files-in-media-library' ) . '"></span> <span class="efml-export-pending">' . esc_html__( 'Will be exported', 'external-files-in-media-library' ) . '</span>';
+				}
+
+				// show marker if the export of this file via queue failed.
+				if ( absint( get_post_meta( $attachment_id, 'efml_export_failed', true ) ) > 0 ) {
+					echo '<span class="dashicons dashicons-warning" title="' . esc_attr__( 'The export of this file to the external source failed. Check the log and the queue for details.', 'external-files-in-media-library' ) . '"></span>';
+				}
+
+				/**
+				 * Run additional tasks to show more infos for local files here (e.g. why they are not exported).
+				 *
+				 * @since 6.0.0 Available since 6.0.0.
+				 * @param int $attachment_id The ID of the attachment.
+				 */
+				do_action( 'efml_table_column_local_file', $attachment_id );
 				return;
 			}
 
 			// show yes-icon as it is an external file.
 			echo '<span class="dashicons dashicons-yes" title="' . esc_html__( 'external file', 'external-files-in-media-library' ) . '"></span>';
+
+			// show a marker, if it has a local working copy.
+			Working_Copies::get_instance()->show_marker( $attachment_id );
 
 			// show deprecated hint for the old hook.
 			do_action_deprecated( 'eml_table_column_content', array( $attachment_id ), '5.0.0' );

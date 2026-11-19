@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!--
+  Live tests with real accounts, see docs/live-tests.md.
+
+  Run them with "composer test-live" after "composer test-install-live". They test only the services, whose
+  credentials are complete in ".env.live", and do nothing without it.
+-->
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+        bootstrap="tests/Live/bootstrap.php"
+        colors="true"
+        convertDeprecationsToExceptions="true"
+>
+    <testsuites>
+        <testsuite name="live">
+            <directory suffix="Test.php">./tests/Live/</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

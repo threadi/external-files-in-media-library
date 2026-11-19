@@ -30,6 +30,13 @@ use WP_Term;
  */
 class Files {
 	/**
+	 * Name of the post meta with the former titles (file names) of an exported file, e.g. before it has been edited or renamed.
+	 *
+	 * @var string
+	 */
+	public const FORMER_TITLES_META = 'efml_former_titles';
+
+	/**
 	 * The name for the ability category.
 	 */
 	public const ABILITY_CATEGORY = 'efml';
@@ -84,6 +91,42 @@ class Files {
 
 		// initialize the synchronization.
 		Synchronization::get_instance()->init();
+
+		// initialize the import runs for directories with many files.
+		Import_Runs::get_instance()->init();
+
+		// initialize the migrations from other offload plugins.
+		Migrations::get_instance()->init();
+
+		// initialize the replacement of local URLs of exported and migrated files in contents.
+		Local_Urls::get_instance()->init();
+		Url_Index::get_instance()->init();
+
+		// initialize the redirect of proxy URLs of files, which are no external files anymore.
+		Former_Proxy_Urls::get_instance()->init();
+
+		// initialize the restore of exported files.
+		Restore::get_instance()->init();
+		Local_Copies::get_instance()->init();
+		Working_Copies::get_instance()->init();
+
+		// initialize the sizes of exported images.
+		Sizes::get_instance()->init();
+
+		// initialize the handling of uploads with sizes created in the browser.
+		Client_Uploads::get_instance()->init();
+
+		// initialize the work with local files of exported images.
+		Local_Work::get_instance()->init();
+
+		// initialize the deletion of exported files everywhere.
+		Deletion::get_instance()->init();
+
+		// initialize the delayed export of uploads.
+		Delayed_Uploads::get_instance()->init();
+
+		// remove the planned events of deleted files.
+		\ExternalFilesInMediaLibrary\Plugin\Background_Events::get_instance()->init();
 
 		// initialize the export support.
 		Export::get_instance()->init();
@@ -342,29 +385,16 @@ class Files {
 			return false;
 		}
 
-		// query for the post with the given URL.
-		$query  = array(
-			'post_type'      => 'attachment',
-			'post_status'    => array( 'inherit', 'trash' ),
-			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for additional data.
-				array(
-					'key'     => EFML_POST_META_URL,
-					'value'   => $url,
-					'compare' => '=',
-				),
-			),
-			'posts_per_page' => 1,
-			'fields'         => 'ids',
-		);
-		$result = new WP_Query( $query );
+		// find the attachment with the given URL (via the index of the database).
+		$attachment_id = Url_Index::get_instance()->find( $url );
 
 		// bail if none has been found.
-		if ( 0 === $result->post_count ) {
+		if ( 0 === $attachment_id ) {
 			return false;
 		}
 
 		// get the external file object for the match.
-		$external_file_obj = $this->get_file( absint( $result->get_posts()[0] ) );
+		$external_file_obj = $this->get_file( $attachment_id );
 
 		// bail if the external file object is not valid.
 		if ( ! $external_file_obj->is_valid() ) {
@@ -394,6 +424,18 @@ class Files {
 			return $is_protected;
 		}
 
+		// return whether the given key is one of our own meta keys.
+		return in_array( $meta_key, $this->get_meta_keys(), true );
+	}
+
+	/**
+	 * Return the post meta keys of this plugin, which are saved on attachments.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_meta_keys(): array {
 		// define the list of our own meta keys.
 		$meta_keys = array(
 			EFML_POST_META_URL,
@@ -410,8 +452,26 @@ class Files {
 			'eml_exported_file',
 			'efml_export_sources',
 			'efml_former_export_sources',
+			'efml_export_filename',
+			'efml_export_folders',
+			'efml_private_file',
+			'efml_woocommerce_product',
+			'efml_export_queued',
+			'efml_export_failed',
 			'efml_multisite_attachment_id',
 			'efml_dropbox_path',
+			'efml_migration',
+			'efml_migrated_file',
+			Local_Urls::META,
+			Local_Urls::SIZES_META,
+			Sizes::META,
+			Client_Uploads::META,
+			self::FORMER_TITLES_META,
+			Delayed_Uploads::META,
+			Delayed_Uploads::BUSY_META,
+			Sizes::RETRY_META,
+			Working_Copies::META,
+			Proxy::VERSION_META,
 		);
 
 		/**
@@ -422,8 +482,8 @@ class Files {
 		 */
 		$meta_keys = apply_filters( 'efml_protected_meta_keys', $meta_keys );
 
-		// return whether the given key is one of them.
-		return in_array( $meta_key, $meta_keys, true );
+		// return the list.
+		return $meta_keys;
 	}
 
 	/**
@@ -474,6 +534,52 @@ class Files {
 
 		// return the object.
 		return $external_file_obj;
+	}
+
+	/**
+	 * Return the external file, which used the given title (file name) before (e.g. before it has been edited or renamed).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $title The former title.
+	 *
+	 * @return bool|File
+	 */
+	public function get_file_by_former_title( string $title ): bool|File {
+		// bail if no title is given.
+		if ( empty( $title ) ) {
+			return false;
+		}
+
+		// query for attachments with this former title.
+		$query  = array(
+			'post_type'      => 'attachment',
+			'post_status'    => array( 'inherit', 'trash' ),
+			'meta_query'     => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Filter for the former title.
+				array(
+					'key'   => self::FORMER_TITLES_META,
+					'value' => $title,
+				),
+			),
+			'posts_per_page' => 2,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		);
+		$result = new WP_Query( $query );
+
+		// get the IDs.
+		$ids = array_map( 'absint', wp_list_pluck( array_map( 'get_post', (array) $result->posts ), 'ID' ) );
+
+		// bail if not a single result is in the array.
+		if ( 1 !== count( $ids ) ) {
+			return false;
+		}
+
+		// get the external file object for this attachment.
+		$external_file_obj = $this->get_file( $ids[0] );
+
+		// return the object, if it is valid.
+		return $external_file_obj->is_valid() ? $external_file_obj : false;
 	}
 
 	/**
@@ -563,6 +669,30 @@ class Files {
 				<?php
 			} else {
 				echo '<code>' . esc_html( $url ) . '</code>';
+			}
+
+			// get the service of this file.
+			$service_obj  = Services::get_instance()->get_service_by_name( $external_file_obj->get_service_name() );
+			$platform_url = $service_obj instanceof Service_Base ? $service_obj->get_platform_url() : '';
+
+			$instance = $this;
+			/**
+			 * Filter the URL of the platform, where the file is saved (e.g. the website of DropBox).
+			 *
+			 * @since 6.0.0 Available since 6.0.0.
+			 * @param string $platform_url The URL (empty, if not available).
+			 * @param File $external_file_obj The external file object.
+			 * @param Files $instance The files object.
+			 */
+			$platform_url = (string) apply_filters( 'efml_file_platform_url', $platform_url, $external_file_obj, $instance );
+
+			// show the link to the platform, if available.
+			if ( '' !== $platform_url ) {
+				/* translators: %1$s will be replaced by the name of the platform (e.g. DropBox). */
+				$platform_title = sprintf( __( 'Go to %1$s', 'external-files-in-media-library' ), $service_obj instanceof Service_Base ? $service_obj->get_label() : $protocol_handler->get_title() );
+				?>
+				<br><a href="<?php echo esc_url( $platform_url ); ?>" target="_blank"><span class="dashicons dashicons-external"></span> <?php echo esc_html( $platform_title ); ?></a>
+				<?php
 			}
 			?>
 		</p>
@@ -678,6 +808,12 @@ class Files {
 
 		// bail if ID is not given.
 		if ( 0 === $attachment_id ) {
+			wp_send_json( $result );
+		}
+
+		// bail if the user is not allowed to edit this file.
+		if ( ! current_user_can( 'edit_post', $attachment_id ) ) {
+			$result['message'] = __( 'You are not allowed to edit this file.', 'external-files-in-media-library' );
 			wp_send_json( $result );
 		}
 
@@ -838,6 +974,17 @@ class Files {
 			$post_id = absint( $post_id );
 		}
 
+		// return the local file, while WordPress works with it (e.g. to create the sizes of an exported image again).
+		if ( Local_Work::get_instance()->is_open( $post_id ) ) {
+			return Local_Work::get_instance()->get_local_file( $post_id );
+		}
+
+		// return the local file of an exported image with local working copy (e.g. for image optimizers).
+		$working_copy = Working_Copies::get_instance()->get_local_file( $post_id );
+		if ( '' !== $working_copy ) {
+			return $working_copy;
+		}
+
 		// get the external file object.
 		$external_file_obj = $this->get_file( $post_id );
 
@@ -898,6 +1045,12 @@ class Files {
 			return $result;
 		}
 
+		// use the exported size, if it exists (delivered according to the proxy setting of the file).
+		$exported_size = Sizes::get_instance()->image_downsize( $external_file_obj, $size );
+		if ( false !== $exported_size ) {
+			return $exported_size;
+		}
+
 		// if requested size is a string, get its sizes.
 		if ( is_string( $size ) ) {
 			$size = array(
@@ -910,7 +1063,7 @@ class Files {
 		// we just return the original URL with requested sizes.
 		if ( ! $external_file_obj->is_locally_saved() && ! $external_file_obj->get_file_type_obj()->is_proxy_enabled() ) {
 			return array(
-				$external_file_obj->get_url( true ),
+				$external_file_obj->get_url(),
 				$size[0],
 				$size[1],
 			);
@@ -1142,6 +1295,12 @@ class Files {
 			false === $external_file_obj->is_locally_saved()
 			&& $external_file_obj->get_file_type_obj()->has_thumbs()
 		) {
+			// use the exported sizes of the image, if they exist.
+			$exported_sources = Sizes::get_instance()->get_srcset( $sources, $attachment_id );
+			if ( false !== $exported_sources ) {
+				return $exported_sources;
+			}
+
 			// return empty array as we cannot optimize external images.
 			return array();
 		}
@@ -1234,8 +1393,8 @@ class Files {
 		// get the file ID.
 		$post_id = absint( filter_input( INPUT_GET, 'post', FILTER_SANITIZE_NUMBER_INT ) );
 
-		// bail if post ID is not given.
-		if ( 0 === $post_id ) {
+		// bail if post ID is not given or the user is not allowed to edit this file.
+		if ( 0 === $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
 			wp_safe_redirect( wp_get_referer() );
 			exit;
 		}
@@ -1333,9 +1492,9 @@ class Files {
 			return $image_meta;
 		}
 
-		// bail if given file could have thumbs.
+		// bail if given file could have thumbs: add its exported sizes, if they exist.
 		if ( $external_file_obj->get_file_type_obj()->has_thumbs() ) {
-			return $image_meta;
+			return Sizes::get_instance()->add_sizes_to_srcset_meta( $image_meta, $image_src, $external_file_obj );
 		}
 
 		// remove the file-setting from array.
@@ -1456,11 +1615,11 @@ class Files {
 	 * @return void
 	 */
 	public function use_filter_options( WP_Query $query ): void {
-		// get filter value.
-		$filter = filter_input( INPUT_GET, 'admin_filter_media_external_files', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		// get filter value (from the list view or the grid view of the media library).
+		$filter = Tables::get_instance()->get_requested_filter( $query );
 
-		// bail if filter is not set.
-		if ( is_null( $filter ) ) {
+		// bail if filter is not set or not the ID of an external source.
+		if ( is_null( $filter ) || ! is_numeric( $filter ) ) {
 			return;
 		}
 

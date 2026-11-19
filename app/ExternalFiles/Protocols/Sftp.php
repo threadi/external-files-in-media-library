@@ -44,11 +44,11 @@ class Sftp extends Protocol_Base {
 	);
 
 	/**
-	 * List of SSH connections.
+	 * List of SSH connections, shared by all objects in this request (e.g. for the files of an import run).
 	 *
 	 * @var array<WP_Filesystem_SSH2>
 	 */
-	private array $ssh_connections = array();
+	private static array $ssh_connections = array();
 
 	/**
 	 * Initialize the object to handle SFTP/SSH-connections.
@@ -78,6 +78,119 @@ class Sftp extends Protocol_Base {
 	 */
 	public function get_title(): string {
 		return __( 'SFTP/SSH', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Return whether this protocol could list the files of a directory page by page.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		// bail if no credentials are set.
+		if ( ! $this->has_fields_with_credentials() ) {
+			return false;
+		}
+
+		// get the path.
+		$path = wp_parse_url( $this->get_url(), PHP_URL_PATH );
+
+		// bail if no path is given.
+		if ( ! is_string( $path ) ) {
+			return false;
+		}
+
+		// get the connection.
+		$ssh_connection = $this->get_connection( $this->get_url() );
+
+		// return whether the path is a directory.
+		return $ssh_connection && $ssh_connection->is_dir( $path );
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object.
+	 *
+	 * Like the import of a directory, only the files directly in the directory are used.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 */
+	public function get_file_list( string $cursor ): array|false {
+		// get the complete list of the directory, loaded once per request.
+		$files = $this->get_cached_file_list(
+			function () {
+				// get the path.
+				$path = wp_parse_url( $this->get_url(), PHP_URL_PATH );
+
+				// bail if no path is given.
+				if ( ! is_string( $path ) ) {
+					return false;
+				}
+
+				// get the connection.
+				$ssh_connection = $this->get_connection( $this->get_url() );
+
+				// bail if connection could not be established.
+				if ( ! $ssh_connection ) {
+					return false;
+				}
+
+				// get the list of the directory.
+				$file_list = $ssh_connection->dirlist( $path );
+
+				// bail if list could not be loaded.
+				if ( ! is_array( $file_list ) ) {
+					Log::get_instance()->create( __( 'SFTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+					return false;
+				}
+
+				// collect the files.
+				$files = array();
+				foreach ( $file_list as $filename => $settings ) {
+					// not all servers return all data for each file.
+					$settings = wp_parse_args(
+						$settings,
+						array(
+							'size'        => 0,
+							'lastmodunix' => 0,
+						)
+					);
+
+					// bail if this is a directory.
+					if ( 'd' === $settings['type'] ) {
+						continue;
+					}
+
+					// add the file.
+					$files[] = array(
+						'url'           => trailingslashit( $this->get_url() ) . $filename,
+						'filesize'      => absint( $settings['size'] ),
+						'last-modified' => absint( $settings['lastmodunix'] ),
+					);
+				}
+
+				// return the list.
+				return $files;
+			},
+			'' === $cursor
+		);
+
+		// bail on errors.
+		if ( false === $files ) {
+			return false;
+		}
+
+		// return the requested page.
+		return $this->get_file_list_page( $files, $cursor );
 	}
 
 	/**
@@ -319,29 +432,51 @@ class Sftp extends Protocol_Base {
 			return array();
 		}
 
-		// get the contents of the file.
-		$file_content = $ssh_connection->get_contents( $file_path );
+		// get WP Filesystem-handler.
+		$wp_filesystem = Helper::get_wp_filesystem();
 
-		// bail if file content could not be read.
-		if ( ! $file_content ) {
+		// set the file as tmp-file for import with appropriate file extension.
+		$tmp_file_name       = wp_tempnam();
+		$results['tmp-file'] = str_replace( '.tmp', '', $tmp_file_name . '.' . $mime_type['ext'] );
+
+		// remove the file of "wp_tempnam()", if it is not used.
+		if ( $results['tmp-file'] !== $tmp_file_name ) {
+			$wp_filesystem->delete( $tmp_file_name );
+		}
+
+		// download the file directly into the tmp file, so it is not loaded completely into memory.
+		$downloaded = Helper::download_from_remote_filesystem( $ssh_connection, $file_path, $results['tmp-file'] );
+
+		// bail if the file could not be downloaded or is empty.
+		if ( false === $downloaded || ( true === $downloaded && 0 === wp_filesize( $results['tmp-file'] ) ) ) {
+			// remove the incomplete tmp file.
+			if ( $wp_filesystem->exists( $results['tmp-file'] ) ) {
+				$wp_filesystem->delete( $results['tmp-file'] );
+			}
+
 			Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 			// return empty array as we got not the file.
 			return array();
 		}
 
-		// get WP Filesystem-handler.
-		$wp_filesystem = Helper::get_wp_filesystem();
-
-		// set the file as tmp-file for import.
-		$results['tmp-file'] = wp_tempnam();
-
-		// set the file as tmp-file for import with appropriate file extension.
-		$results['tmp-file'] = str_replace( '.tmp', '', $results['tmp-file'] . '.' . $mime_type['ext'] );
-
-		// and save the file there.
+		// load the file via its content, if the connection could not download it directly.
 		try {
-			$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+			if ( is_null( $downloaded ) ) {
+				// get the contents of the file.
+				$file_content = $ssh_connection->get_contents( $file_path );
+
+				// bail if file content could not be read.
+				if ( ! $file_content ) {
+					Log::get_instance()->create( __( 'SFTP-URL could not be not read.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+
+					// return empty array as we got not the file.
+					return array();
+				}
+
+				// and save the file there.
+				$wp_filesystem->put_contents( $results['tmp-file'], $file_content );
+			}
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -393,8 +528,8 @@ class Sftp extends Protocol_Base {
 			return false;
 		}
 
-		// get the fields.
-		$fields = $this->get_fields();
+		// get the fields for this URL.
+		$fields = $this->get_fields_for_url( $url );
 
 		// bail if fields are missing.
 		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
@@ -423,8 +558,8 @@ class Sftp extends Protocol_Base {
 		}
 
 		// check if connection is already in the cache.
-		if ( ! empty( $this->ssh_connections[ md5( $connection_arguments_json ) ] ) ) {
-			return $this->ssh_connections[ md5( $connection_arguments_json ) ];
+		if ( ! empty( self::$ssh_connections[ md5( $connection_arguments_json ) ] ) ) {
+			return self::$ssh_connections[ md5( $connection_arguments_json ) ];
 		}
 
 		// get the connection.
@@ -438,7 +573,7 @@ class Sftp extends Protocol_Base {
 		}
 
 		// add connection to the list.
-		$this->ssh_connections[ md5( $connection_arguments_json ) ] = $connection;
+		self::$ssh_connections[ md5( $connection_arguments_json ) ] = $connection;
 
 		// return the connection object.
 		return $connection;

@@ -1,5 +1,64 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Added quickstart for the most common tasks (offloading, protected downloads, embedding, synchronization, import), incl. installation of needed extensions
+- Added migration from other offload plugins (WP Offload Media, Advanced Media Offloader, Stowaway, Offload Media – Cloud Storage)
+- Added setup help "Where do I find these details?" for all services
+- Added credentials of all services via constants, also several connections per service
+- Added protection of external sources on copies of the website (e.g. staging)
+- Added private files (Dropbox and the extensions for S3, Google Cloud Storage, Google Drive and WebDAV)
+- Added support for external files as WooCommerce downloads
+- Added export in the background via the queue with retries
+- Added export of image sizes, original images and image formats like WebP and AVIF
+- Added optional folder structure for exported files
+- Added buttons and WP CLI commands to export all files, export sizes, restore exported files as local files and delete local copies
+- Added restore of exported files on deactivation, uninstallation and reset
+- Added editing, regenerating and renaming of exported images
+- Added working copies to optimize exported images later
+- Added support for image optimizers (Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media, Modern Image Formats)
+- Added support for Instant Images, Media Cleaner, Media Bulk Download, Image Watermark, Media File Renamer and Prevent Files / Folders Access
+- Added replacement of local URLs of exported files during output and redirection of missing local files
+- Added import of large directories in the background with progress in the admin bar
+- Added connection test for all services with export
+- Added check for existing files with the same name before the export
+- Added overview of services with their features and help tab "What is possible?"
+- Added search in the settings and in the command palette of WordPress
+- Added caching headers for files delivered by the proxy
+- Added states, filter and actions for pending and failed exports in the media library
+- Added index for faster lookup of external files by their URL
+- Added new WP CLI commands, hooks and methods
+- Added documentation in docs/
+- Added live tests and instructions for AI agents to the repository
+
+### Changed
+
+- Restructured the settings into topics (Delivery, Status, Integrations, Advanced)
+- Reduced database queries in each request significantly
+- Optimized the database table of the queue for many entries
+- Encrypted values are bound to their purpose
+- Stricter capability checks for bulk actions, the queue, the quickstart and the connection test
+- No export while the primary external source for exports is unavailable
+- Synchronizations continue in the background if necessary
+- Connections to FTP, FTPS and SFTP are reused during a request
+- Compatible with Windows-based hostings
+- Optimized support for "Prevent Direct Access"
+
+### Fixed
+
+- Fixed missing permission checks for several actions and external sources of other users
+- Fixed several issues with Dropbox (expiring URLs, shared links, private files, connections per user)
+- Fixed high memory usage with large files (FTP, SFTP, Dropbox, proxy)
+- Fixed deletion and overwriting of exported files on external sources
+- Fixed exported files being deleted during uninstallation or reset
+- Fixed export of images with sizes created by the browser or other plugins
+- Fixed image editor for exported images
+- Fixed several issues of the proxy (HTTP status, HEAD requests, former proxy URLs)
+- Fixed several issues of the queue and of imports
+- Fixed further bugs (multisite, SQLite, WooCommerce, block editor, command palette)
+
 ## [5.6.2] - 06.11.2026
 
 ### Changed
@@ -9,7 +68,7 @@
 ### Fixed
 
 - Fixed detection of URLs if proxy on every file type is disabled
-- Fixed URL encoding if
+- Fixed URL encoding if URL uses german umlauts
 
 ## [5.6.1] - 24.10.2026
 
@@ -402,7 +461,7 @@
 - Added new URL-import dialog in backend
 - Added option to delete synchronized files of single directory archive with one click
 - Added option to export each newly uploaded file in media library to external sources, which are reachable via web
--> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
+  -> optionally, you can delete the local files, thereby outsourcing (offloading) all your files and saving storage space
 - Added option to export each file in media library to external source as described above
 - Added option to export only files with specific file types or sizes, configurable as global setting for per external source
 - Introduced file handling extensions and added 3 of them (date, queue, real import)
@@ -430,8 +489,8 @@
 - Added support for the plugin "Advanced Media Offloader" to prevent the offloading of already external files
 - Added support for the plugin "Media Library Assistant" to import external files in its folders incl. sync of them
 - Added compatibility with the plugin "Media Cloud Sync"
--> do not sync external files with external clouds
--> do sync real imported external files
+  -> do not sync external files with external clouds
+  -> do sync real imported external files
 - Added new file types "PDF" and "ZIP" for better supporting the handling of these files
 - Added info about external files in attachment modal
 - Added option to use the files dates during synchronization
@@ -638,7 +697,7 @@
 ### Changed
 
 - Do not download files via http protocol which should not be hosted locally
-=> speed up the import & reduce space usage
+  => speed up the import & reduce space usage
 - Optimized check if HTTP-file should be saved locally by file type
 - Optimized updating or installing log- and queue-tables during plugin update
 - Optimized upload dialog regarding the credential usage if browser used autofill-functions

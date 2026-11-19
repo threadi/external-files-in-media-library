@@ -15,12 +15,19 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results\Url_Result;
 use easyDirectoryListingForWordPress\Crypt;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Services\Services;
 use finfo;
 
 /**
  * Initialize the model for single external file-object.
  */
 class File {
+	/**
+	 * The context for the encryption of the fields (access data) of the file.
+	 *
+	 * Fields saved before this context has been used stay readable.
+	 */
+	public const FIELDS_CONTEXT = 'attachment_fields';
 
 	/**
 	 * The attachment-id of this file (post.ID).
@@ -132,7 +139,7 @@ class File {
 		 * @param File $instance The external file object.
 		 */
 		if ( ! apply_filters( 'efml_file_prevent_proxied_url', $true, $instance ) ) {
-			return $this->url;
+			return $this->get_public_url();
 		}
 
 		// if no permalink structure is set, generate a parameterized URL.
@@ -143,6 +150,70 @@ class File {
 
 		// return link for pretty permalinks.
 		return trailingslashit( get_home_url() ) . Proxy::get_instance()->get_slug() . '/' . $this->get_title();
+	}
+
+	/**
+	 * Return the public URL of the given URL of this file (its own URL, if none is given).
+	 *
+	 * HTTP-URLs are returned unchanged. Files exported via FTP or to a local directory are saved with their FTP-URL or
+	 * their path, which browsers could not load. If their external source has a public URL (the URL for exported files
+	 * in its export settings), the URL below it is returned, e.g. "https://example.com/files/image-300x200.jpg" for
+	 * "file:///var/www/files/image-300x200.jpg". Otherwise the given URL is returned unchanged.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL (e.g. of a size of this file), empty for the URL of this file.
+	 *
+	 * @return string
+	 */
+	public function get_public_url( string $url = '' ): string {
+		// use the URL of this file, if none is given.
+		if ( '' === $url ) {
+			$url = $this->get_url( true );
+		}
+
+		// use HTTP-URLs and URLs of private files unchanged.
+		$public_url = $url;
+		if ( '' !== $url && ! $this->is_http_url( $url ) && ! $this->is_private() && absint( get_post_meta( $this->get_id(), 'eml_exported_file', true ) ) > 0 ) {
+			// check the external sources of this file.
+			$term_ids = wp_get_object_terms( $this->get_id(), \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_name(), array( 'fields' => 'ids' ) );
+			foreach ( is_array( $term_ids ) ? $term_ids : array() as $term_id ) {
+				// get its path and its public URL.
+				$path       = (string) get_term_meta( absint( $term_id ), 'path', true );
+				$export_url = (string) get_term_meta( absint( $term_id ), 'efml_export_url', true );
+
+				// bail if one of them is missing, the public URL is no HTTP-URL or the URL is not located in the path.
+				if ( '' === $path || '' === $export_url || ! $this->is_http_url( $export_url ) || ! str_starts_with( $url, trailingslashit( $path ) ) ) {
+					continue;
+				}
+
+				// get the URL below the public URL.
+				$public_url = trailingslashit( $export_url ) . ltrim( substr( $url, strlen( trailingslashit( $path ) ) ), '/' );
+				break;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the public URL of a URL of an external file.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $public_url The public URL (the given URL, if none is known).
+		 * @param string $url        The given URL.
+		 * @param File   $instance   The external file object.
+		 */
+		return (string) apply_filters( 'efml_file_public_url', $public_url, $url, $instance );
+	}
+
+	/**
+	 * Return whether the given URL is an HTTP-URL, which browsers could load.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_http_url( string $url ): bool {
+		return in_array( strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ), array( 'http', 'https' ), true );
 	}
 
 	/**
@@ -395,6 +466,83 @@ class File {
 	}
 
 	/**
+	 * Return whether this file must be delivered via the proxy, independent of the proxy setting of its file type.
+	 *
+	 * This is the case for files, which are not saved locally and whose URL could not be loaded by a browser,
+	 * e.g. files exported via FTP (with an "ftp://" URL) or to a local directory (with a "file://" URL), and for
+	 * files, which are saved privately on their external source.
+	 *
+	 * @return bool
+	 */
+	public function is_proxy_required(): bool {
+		// bail if file is locally saved, as WordPress delivers it then.
+		if ( $this->is_locally_saved() ) {
+			return false;
+		}
+
+		// get the URL of this file.
+		$url = $this->get_url( true );
+
+		// the proxy is required, if the file is saved privately on its external source or if its URL is not an
+		// HTTP-URL without public URL (e.g. exported via FTP or to a local directory without public URL).
+		$required = '' !== $url && ( $this->is_private() || ! $this->is_http_url( $this->get_public_url( $url ) ) );
+
+		/**
+		 * Filter whether the given file must be delivered via the proxy, independent of the proxy setting
+		 * of its file type.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param bool $required True if the proxy is required.
+		 * @param File $external_file_obj The external file object.
+		 */
+		return (bool) apply_filters( 'efml_file_proxy_required', $required, $this );
+	}
+
+	/**
+	 * Return whether this file is saved privately on its external source.
+	 *
+	 * Private files are not public available on their external source. They are always delivered via the proxy.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_private(): bool {
+		return 1 === absint( get_post_meta( $this->get_id(), 'efml_private_file', true ) );
+	}
+
+	/**
+	 * Set whether this file is saved privately on its external source.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param bool $private_file Whether the file is private (true) or not (false).
+	 *
+	 * @return void
+	 */
+	public function set_private( bool $private_file ): void {
+		// remove the marker, if the file is not private.
+		if ( ! $private_file ) {
+			$this->remove_private();
+			return;
+		}
+
+		// set in the database.
+		update_post_meta( $this->get_id(), 'efml_private_file', 1 );
+	}
+
+	/**
+	 * Remove the marker for a private file.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return void
+	 */
+	public function remove_private(): void {
+		delete_post_meta( $this->get_id(), 'efml_private_file' );
+	}
+
+	/**
 	 * Set if this file is locally saved.
 	 *
 	 * @param bool $locally_saved Whether the file is locally saved (true) or not (false).
@@ -523,13 +671,13 @@ class File {
 			return;
 		}
 
-		// get the content of this file.
-		$body = $wp_filesystem->get_contents( $tmp_file );
-
-		// bail if no contents returned.
-		if ( ! $body ) {
+		// bail if the file is empty.
+		if ( 0 === wp_filesize( $tmp_file ) ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'File is empty! Found during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -539,11 +687,15 @@ class File {
 		}
 
 		// check mime-type of the binary-data and compare it with header-data.
+		// (directly on the file, so it is not loaded completely into memory).
 		$binary_data_info = new finfo( FILEINFO_MIME_TYPE );
-		$binary_mime_type = $binary_data_info->buffer( $body );
+		$binary_mime_type = $binary_data_info->file( $tmp_file );
 		if ( $binary_mime_type !== $mime_type ) {
 			// add log entry.
 			Log::get_instance()->create( __( 'Mime type mismatch during adding this file for proxy!', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -552,15 +704,21 @@ class File {
 			return;
 		}
 
-		// delete the temporary file.
-		$protocol_handler_obj->cleanup_temp_file( $tmp_file );
-
 		// set path including md5-filename and extension.
 		$path = $this->get_cache_file();
 
-		// save the given content to the path.
+		// move the temporary file to the path (or copy it, if it could not be moved).
+		// this does not load the complete file into memory.
 		try {
-			$saved = $wp_filesystem->put_contents( $path, $body );
+			$saved = $wp_filesystem->move( $tmp_file, $path, true ) || $wp_filesystem->copy( $tmp_file, $path, true );
+
+			// set the permissions like put_contents() does it, as the temporary file could have others.
+			if ( $saved ) {
+				$wp_filesystem->chmod( $path );
+			}
+
+			// delete the temporary file, if it still exists.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 		} catch ( Error $e ) {
 			// create the error entry.
 			$error_obj = new Url_Result();
@@ -573,6 +731,9 @@ class File {
 
 			// add log entry.
 			Log::get_instance()->create( __( 'The following error occurred:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', $this->get_url( true ), 'error' );
+
+			// delete the temporary file.
+			$protocol_handler_obj->cleanup_temp_file( $tmp_file );
 
 			// remove our filter.
 			remove_filter( 'efml_http_header_args', array( $this, 'disable_check_for_unsafe_urls' ) );
@@ -651,6 +812,9 @@ class File {
 	 * @return void
 	 */
 	public function delete_cache(): void {
+		// mark the file as changed, so the URLs of the proxy get a new version.
+		Proxy::get_instance()->set_changed( $this->get_id() );
+
 		// bail if is not cached.
 		if ( ! $this->is_cached() ) {
 			return;
@@ -677,7 +841,7 @@ class File {
 		}
 
 		// save as encrypted value in the database.
-		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ) ) );
+		update_post_meta( $this->get_id(), 'eml_fields', Crypt::get_instance()->encrypt( Helper::get_json( $fields ), self::FIELDS_CONTEXT ) );
 	}
 
 	/**
@@ -709,7 +873,7 @@ class File {
 		}
 
 		// return decrypted string.
-		$fields = json_decode( Crypt::get_instance()->decrypt( $field_encoded_json ), true );
+		$fields = json_decode( Crypt::get_instance()->decrypt( $field_encoded_json, self::FIELDS_CONTEXT ), true );
 
 		// bail if fields is not an array.
 		if ( ! is_array( $fields ) ) {
@@ -729,8 +893,16 @@ class File {
 		// prepare the return value.
 		$has_credentials = false;
 
+		// get the fields incl. the values of constants for the service of this file.
+		$fields = Services::get_instance()->apply_constants_to_fields( $this->get_fields(), Services::get_instance()->get_service_names_for_constants( $this->get_service_name() ), $this->get_url( true ) );
+
 		// check for credential fields.
-		foreach ( $this->get_fields() as $field ) {
+		foreach ( $fields as $field ) {
+			// bail if field is not an array.
+			if ( ! is_array( $field ) ) {
+				continue;
+			}
+
 			// bail if this field has no credential marker set.
 			if ( ! isset( $field['credential'] ) ) {
 				continue;
@@ -841,7 +1013,7 @@ class File {
 
 		// prepare import of the temporary file via WP-own functions.
 		$file_array = array(
-			'name'     => $this->get_title(),
+			'name'     => $this->get_local_file_name(),
 			'type'     => $file_data[0]['mime-type'],
 			'tmp_name' => '',
 			'error'    => '0',
@@ -999,6 +1171,53 @@ class File {
 	}
 
 	/**
+	 * Return the file name to use, if this file is saved locally.
+	 *
+	 * WordPress only accepts file names with an allowed extension. The title is used, if it is a valid file name
+	 * (like on any import). Otherwise, e.g. if the title has been changed or is a description from another plugin,
+	 * the name from the URL path (without query string) is used, if it has an allowed extension. As fallback the
+	 * title with the extension of the mime type of this file is used.
+	 *
+	 * @return string
+	 */
+	public function get_local_file_name(): string {
+		// get the title.
+		$title = $this->get_title();
+
+		// use the title, if it has an allowed extension.
+		$file_type = wp_check_filetype( $title );
+		if ( ! empty( $file_type['ext'] ) ) {
+			return $title;
+		}
+
+		// get the name from the URL path, without the query string.
+		$url_name = wp_basename( (string) wp_parse_url( $this->get_url( true ), PHP_URL_PATH ) );
+
+		// use the name from the URL path, if it has an allowed extension.
+		$file_type = wp_check_filetype( $url_name );
+		if ( ! empty( $file_type['ext'] ) ) {
+			$file_name = $url_name;
+		} else {
+			// use the title (or the name from the URL, if no title is set) with the extension of the mime type.
+			$file_name = sanitize_file_name( '' !== trim( $title ) ? $title : $url_name );
+			$extension = $this->get_file_extension();
+			if ( '' !== $extension && '' !== $file_name ) {
+				$file_name .= '.' . $extension;
+			}
+		}
+
+		$instance = $this;
+		/**
+		 * Filter the file name to use, if this file is saved locally.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $file_name The file name.
+		 * @param File   $instance  The external file object.
+		 */
+		return apply_filters( 'efml_local_file_name', $file_name, $instance );
+	}
+
+	/**
 	 * Switch hosting of this file to external.
 	 *
 	 * Only if used protocol supports this.
@@ -1118,6 +1337,9 @@ class File {
 	 * @return void
 	 */
 	public function delete_thumbs(): void {
+		// mark the file as changed, so the URLs of the proxy get a new version.
+		Proxy::get_instance()->set_changed( $this->get_id() );
+
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 

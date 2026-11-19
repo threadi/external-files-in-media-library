@@ -102,6 +102,11 @@ class Log {
 			return;
 		}
 
+		// bail if the table does not exist for the actual website (e.g. after switching to another website in a multisite).
+		if ( ! Helper::is_table_available( 'eml_logs' ) ) {
+			return;
+		}
+
 		// add log entry. The message is reduced to the HTML we use ourselves, as it can contain data from external servers.
 		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prefix . 'eml_logs',

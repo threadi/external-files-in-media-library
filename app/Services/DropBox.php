@@ -12,13 +12,17 @@ defined( 'ABSPATH' ) || exit;
 
 use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Init;
+use easyDirectoryListingForWordPress\Taxonomy;
 use easySettingsForWordPress\Fields\Button;
 use easySettingsForWordPress\Fields\TextInfo;
 use easySettingsForWordPress\Page;
 use easySettingsForWordPress\Section;
 use easySettingsForWordPress\Tab;
 use Error;
+use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
+use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
 use ExternalFilesInMediaLibrary\ExternalFiles\Results;
@@ -27,25 +31,53 @@ use ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Plugin\Settings;
+use ExternalFilesInMediaLibrary\Plugin\Setup;
 use ExternalFilesInMediaLibrary\Services\DropBox\Export;
+use ExternalFilesInMediaLibrary\Services\DropBox\Protocol;
 use GuzzleHttp\Exception\ClientException;
 use Spatie\Dropbox\Client;
+use Throwable;
 use WP_Error;
 use WP_Image_Editor;
 use WP_User;
 use WP_User_Query;
-use WpOrg\Requests\Utility\CaseInsensitiveDictionary;
 
 /**
  * Object to handle support for this platform.
  */
 class DropBox extends Service_Base implements Service {
 	/**
+	 * The context for the encryption of the global access tokens.
+	 */
+	public const ACCESS_TOKENS_OPTION_CONTEXT = 'option:efml_dropbox_access_tokens';
+
+	/**
+	 * The context for the encryption of the access tokens of a user.
+	 */
+	public const ACCESS_TOKENS_USER_CONTEXT = 'usermeta:efml_dropbox_access_tokens';
+
+	/**
 	 * The object name.
 	 *
 	 * @var string
 	 */
 	protected string $name = 'dropbox';
+
+	/**
+	 * The user, whose connection to DropBox is used at the moment (e.g. the owner of the external source of a file).
+	 *
+	 * @var WP_User|false
+	 */
+	private WP_User|false $context_user = false;
+
+	/**
+	 * Marker whether the values of the constants are values of the fields of this service.
+	 *
+	 * Disabled, as only the API credentials of the app could be defined via constants, which are no fields.
+	 *
+	 * @var bool
+	 */
+	protected bool $constants_in_fields = false;
 
 	/**
 	 * The public label.
@@ -115,8 +147,28 @@ class DropBox extends Service_Base implements Service {
 		// hide files with a not allowed type in the directory listing, if enabled.
 		add_filter( 'efml_service_dropbox_hide_file', array( $this, 'prevent_not_allowed_files' ), 10, 4 );
 
+		// download exported files via the API for their restore (also without a user, e.g. via cron).
+		add_filter( 'efml_restore_download_urls', array( $this, 'add_restore_download_url' ), 10, 2 );
+
+		// follow the forwarding of shared links to the file content, also for visitors (e.g. for the proxy).
+		add_filter( 'http_request_args', array( $this, 'follow_forwarding_of_shared_links' ), 20, 2 );
+
+		// load exported files with an expiring URL via the API, also for visitors (e.g. for the proxy).
+		add_filter( 'efml_http_temp_file', array( $this, 'load_exported_file_via_api' ), 10, 2 );
+
+		// use the protocol in each request, e.g. for private files via the proxy and for exports of uploads by users
+		// without the capability for DropBox (imports check the capability via the protocol).
+		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
+
+		// handle shared links of DropBox for each user, who is allowed to add external files: they are public URLs,
+		// which do not use the connection to DropBox (e.g. their conversion to the file itself and the content type).
+		add_filter( 'efml_http_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
+		add_filter( 'efml_files_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
+		add_filter( 'efml_http_header_response', array( $this, 'get_real_request_headers' ), 10, 3 );
+		add_filter( 'efml_import_url', array( $this, 'convert_dropbox_urls' ) );
+
 		// bail if user has no capability for this service.
-		if ( ! defined( 'EFML_SYNC_RUNNING' ) && ! Helper::is_cli() && ! current_user_can( 'efml_cap_' . $this->get_name() ) ) {
+		if ( ! $this->is_import_allowed() ) {
 			return;
 		}
 
@@ -134,12 +186,7 @@ class DropBox extends Service_Base implements Service {
 		add_action( 'wp_ajax_efml_remove_access_token', array( $this, 'remove_access_token_by_ajax' ), 10, 0 );
 
 		// use our own hooks.
-		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
-		add_filter( 'efml_http_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
-		add_filter( 'efml_files_check_content_type', array( $this, 'allow_wrong_content_type' ), 10, 2 );
-		add_filter( 'efml_http_header_response', array( $this, 'get_real_request_headers' ), 10, 3 );
 		add_filter( 'efml_directory_listing', array( $this, 'resort_for_subdirectories' ), 10, 3 );
-		add_filter( 'efml_import_url', array( $this, 'convert_dropbox_urls' ) );
 	}
 
 	/**
@@ -347,6 +394,9 @@ class DropBox extends Service_Base implements Service {
 		if ( 'profile.php' === $pagenow ) {
 			$use_it = true;
 		}
+		if ( Setup::get_instance()->is_setup_page() ) {
+			$use_it = true;
+		}
 
 		// bail if marker is not set.
 		if ( ! $use_it ) {
@@ -393,11 +443,14 @@ class DropBox extends Service_Base implements Service {
 			wp_send_json_error( array( 'detail' => $this->get_not_allowed_dialog() ) );
 		}
 
+		// check whether the API credentials are defined via constants.
+		$api_via_constants = $this->is_api_defined_via_constants();
+
 		// get the API key.
-		$api_key = filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_key = $api_via_constants ? $this->get_api_key() : filter_input( INPUT_POST, 'api_key', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// get the API secret.
-		$api_secret = filter_input( INPUT_POST, 'api_secret', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+		$api_secret = $api_via_constants ? $this->get_api_secret() : filter_input( INPUT_POST, 'api_secret', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
 
 		// bail if any value is missing.
 		if ( empty( $api_key ) || empty( $api_secret ) ) {
@@ -422,9 +475,11 @@ class DropBox extends Service_Base implements Service {
 			exit; // @phpstan-ignore deadCode.unreachable
 		}
 
-		// save the values.
-		$this->set_api_key( $api_key );
-		$this->set_api_secret( $api_secret );
+		// save the values, if they are not defined via constants.
+		if ( ! $api_via_constants ) {
+			$this->set_api_key( $api_key );
+			$this->set_api_secret( $api_secret );
+		}
 
 		// create a random state for this request and save it for the actual user.
 		// It is checked on return from DropBox to prevent that a foreign authorization is saved here.
@@ -445,6 +500,131 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the user for the connection to DropBox: the user set for the actual task (e.g. the owner of the external
+	 * source of a file), otherwise the configured or the actual user.
+	 *
+	 * @return WP_User|false
+	 */
+	protected function get_user(): WP_User|false {
+		// use the user of the actual task, if set.
+		if ( $this->context_user instanceof WP_User ) {
+			return $this->context_user;
+		}
+
+		// use the configured or the actual user.
+		return parent::get_user();
+	}
+
+	/**
+	 * Return the user, whose connection to DropBox is used for the given external source: its owner.
+	 *
+	 * Only if each user has its own connection to DropBox. Returns false, if the connection of the website is used
+	 * or the owner is unknown.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return WP_User|false
+	 */
+	public function get_owner_of_source( int $term_id ): WP_User|false {
+		// bail if the connection of the website is used.
+		if ( 0 === $term_id || $this->is_mode( 'global' ) ) {
+			return false;
+		}
+
+		// bail if this is not an external source of DropBox.
+		if ( $this->get_name() !== get_term_meta( $term_id, 'type', true ) ) {
+			return false;
+		}
+
+		// get the owner of the external source.
+		$user = get_user_by( 'id', absint( get_term_meta( $term_id, 'user_id', true ) ) );
+
+		// return the user, if it exists.
+		return $user instanceof WP_User ? $user : false;
+	}
+
+	/**
+	 * Return the user, whose connection to DropBox is used for the given file: the owner of its external source.
+	 *
+	 * So the file could be loaded with the connection it has been exported with, independent of the actual user
+	 * (e.g. for visitors via the proxy, in cron or for other users). Returns false, if the connection of the website
+	 * is used or the external source is unknown.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID of the file.
+	 *
+	 * @return WP_User|false
+	 */
+	public function get_owner_of_file( int $attachment_id ): WP_User|false {
+		// bail if the connection of the website is used.
+		if ( 0 === $attachment_id || $this->is_mode( 'global' ) ) {
+			return false;
+		}
+
+		// get the external sources of this file: the export sources and the assigned external sources.
+		$term_ids = get_post_meta( $attachment_id, 'efml_export_sources', true );
+		if ( ! is_array( $term_ids ) ) {
+			$term_ids = array();
+		}
+		$assigned = wp_get_object_terms( $attachment_id, Taxonomy::get_instance()->get_name(), array( 'fields' => 'ids' ) );
+		if ( is_array( $assigned ) ) {
+			$term_ids = array_merge( $term_ids, $assigned );
+		}
+
+		// use the owner of the first external source of DropBox.
+		foreach ( array_unique( array_map( 'absint', $term_ids ) ) as $term_id ) {
+			$user = $this->get_owner_of_source( $term_id );
+			if ( $user instanceof WP_User ) {
+				return $user;
+			}
+		}
+
+		// return false as no owner is known.
+		return false;
+	}
+
+	/**
+	 * Return the DropBox client with the connection of the given user (without user: of the actual user).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param WP_User|false $user The user.
+	 *
+	 * @return Client|false
+	 */
+	public function get_client_for_user( WP_User|false $user ): Client|false {
+		$previous           = $this->context_user;
+		$this->context_user = $user;
+		try {
+			return $this->get_client();
+		} finally {
+			$this->context_user = $previous;
+		}
+	}
+
+	/**
+	 * Return the access token data of the given user (without user: of the actual user).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param WP_User|false $user The user.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_access_token_for_user( WP_User|false $user ): array {
+		$previous           = $this->context_user;
+		$this->context_user = $user;
+		try {
+			return $this->get_access_token();
+		} finally {
+			$this->context_user = $previous;
+		}
+	}
+
+	/**
 	 * Return access token data.
 	 *
 	 * @return array<string,mixed>
@@ -452,7 +632,8 @@ class DropBox extends Service_Base implements Service {
 	public function get_access_token(): array {
 		// get it global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
-			$data = Crypt::get_instance()->decrypt( get_option( 'efml_dropbox_access_tokens', array() ) );
+			$data = get_option( 'efml_dropbox_access_tokens', '' );
+			$data = Crypt::get_instance()->decrypt( is_string( $data ) ? $data : '', self::ACCESS_TOKENS_OPTION_CONTEXT );
 		} else {
 			// get current user.
 			$user = $this->get_user();
@@ -463,7 +644,7 @@ class DropBox extends Service_Base implements Service {
 			}
 
 			// get and return the value.
-			$data = Crypt::get_instance()->decrypt( get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ) );
+			$data = Crypt::get_instance()->decrypt( (string) get_user_meta( $user->ID, 'efml_dropbox_access_tokens', true ), self::ACCESS_TOKENS_USER_CONTEXT );
 		}
 
 		// convert JSON to array.
@@ -498,7 +679,7 @@ class DropBox extends Service_Base implements Service {
 			Log::get_instance()->create( __( 'New DropBox API access token has been saved for global usage.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 			// save the updated token.
-			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+			update_option( 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), self::ACCESS_TOKENS_OPTION_CONTEXT ) );
 		}
 
 		// get the user_id from the session if it is not set.
@@ -518,7 +699,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . ( $user instanceof WP_User ? $user->display_name : '' ) . '</em>' ), '', 'info', 2 ); // @phpstan-ignore instanceof.alwaysTrue
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ) ) );
+		update_user_meta( $user_id, 'efml_dropbox_access_tokens', Crypt::get_instance()->encrypt( Helper::get_json( $data ), self::ACCESS_TOKENS_USER_CONTEXT ) );
 	}
 
 	/**
@@ -529,6 +710,12 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_api_key( int $user_id = 0 ): string {
+		// use the value of the constant, if set.
+		$constant_value = $this->get_constant_value( 'api_key' );
+		if ( ! is_null( $constant_value ) ) {
+			return $constant_value;
+		}
+
 		// get the global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'efml_dropbox_api_key', '' );
@@ -551,7 +738,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// return the decrypted API key.
-		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_key', true ) );
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_key', true ), 'usermeta:efml_dropbox_api_key' );
 	}
 
 	/**
@@ -593,7 +780,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API key saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_api_key', Crypt::get_instance()->encrypt( $key ) );
+		update_user_meta( $user_id, 'efml_dropbox_api_key', Crypt::get_instance()->encrypt( $key, 'usermeta:efml_dropbox_api_key' ) );
 	}
 
 	/**
@@ -604,6 +791,12 @@ class DropBox extends Service_Base implements Service {
 	 * @return string
 	 */
 	public function get_api_secret( int $user_id = 0 ): string {
+		// use the value of the constant, if set.
+		$constant_value = $this->get_constant_value( 'api_secret' );
+		if ( ! is_null( $constant_value ) ) {
+			return $constant_value;
+		}
+
 		// get the global, if this is enabled.
 		if ( $this->is_mode( 'global' ) ) {
 			return (string) get_option( 'efml_dropbox_api_secret', '' );
@@ -626,7 +819,7 @@ class DropBox extends Service_Base implements Service {
 		}
 
 		// return the decrypted API key.
-		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_secret', true ) );
+		return Crypt::get_instance()->decrypt( (string) get_user_meta( $user_id, 'efml_dropbox_api_secret', true ), 'usermeta:efml_dropbox_api_secret' );
 	}
 
 	/**
@@ -668,7 +861,7 @@ class DropBox extends Service_Base implements Service {
 		Log::get_instance()->create( sprintf( __( 'New DropBox API secret saved for user %1$s.', 'external-files-in-media-library' ), '<em>' . $user->display_name . '</em>' ), '', 'info', 2 );
 
 		// save the token.
-		update_user_meta( $user_id, 'efml_dropbox_api_secret', Crypt::get_instance()->encrypt( $secret ) );
+		update_user_meta( $user_id, 'efml_dropbox_api_secret', Crypt::get_instance()->encrypt( $secret, 'usermeta:efml_dropbox_api_secret' ) );
 	}
 
 	/**
@@ -798,7 +991,8 @@ class DropBox extends Service_Base implements Service {
 		$account_infos = array();
 		try {
 			$account_infos = $client->getAccountInfo();
-		} catch ( ClientException $e ) {
+		} catch ( \Exception $e ) {
+			// also network errors (e.g. DropBox is not reachable) must not break the request.
 			Log::get_instance()->create( __( 'Error during request of DropBox account infos:', 'external-files-in-media-library' ) . ' <code>' . $e->getMessage() . '</code>', '', 'error' );
 		}
 
@@ -1033,6 +1227,17 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the URL of the web interface of DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 */
+	public function get_platform_url(): string {
+		return 'https://www.dropbox.com';
+	}
+
+	/**
 	 * Return global actions.
 	 *
 	 * @return array<int,array<string,string>>
@@ -1042,7 +1247,7 @@ class DropBox extends Service_Base implements Service {
 			parent::get_global_actions(),
 			array(
 				array(
-					'action' => 'location.href="https://www.dropbox.com";',
+					'action' => 'location.href="' . esc_url( $this->get_platform_url() ) . '";',
 					'label'  => __( 'Go to DropBox', 'external-files-in-media-library' ),
 				),
 				array(
@@ -1216,11 +1421,78 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the dialog to connect DropBox, if it must be connected before it could be used in the setup.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function get_setup_connect_dialog(): array {
+		// bail if OAuth is not possible on this website.
+		if ( ! is_ssl() ) {
+			return array();
+		}
+
+		// bail if DropBox is not connected via OAuth.
+		if ( $this->is_mode( 'manually' ) ) {
+			return array();
+		}
+
+		// bail if DropBox is already connected.
+		if ( ! empty( $this->get_access_token() ) ) {
+			return array();
+		}
+
+		// bail if the connection for the whole website must not be changed by the actual user.
+		if ( $this->is_mode( 'global' ) && ! current_user_can( 'manage_options' ) ) {
+			return array();
+		}
+
+		// return the dialog to connect.
+		return $this->get_connect_dialog();
+	}
+
+	/**
+	 * Return whether DropBox is already connected with this website via OAuth.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function is_connected_via_oauth(): bool {
+		return ! $this->is_mode( 'manually' ) && ! empty( $this->get_access_token() );
+	}
+
+	/**
 	 * Return the connect dialog.
 	 *
 	 * @return array<string,mixed>
 	 */
 	private function get_connect_dialog(): array {
+		// show only a hint, if the API credentials are defined via constants.
+		if ( $this->is_api_defined_via_constants() ) {
+			return array(
+				'className' => 'efml efml-dropbox-dialog',
+				'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
+				'texts'     => array(
+					'<p><strong>' . __( 'The API credentials for your DropBox app are defined as constants, e.g. in your wp-config.php.', 'external-files-in-media-library' ) . '</strong></p>',
+					'<p>' . __( 'Click on the button below to authorize the access to your DropBox.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'buttons'   => array(
+					array(
+						'action'  => 'efml_dropbox_connect();',
+						'variant' => 'primary',
+						'text'    => __( 'Connect now', 'external-files-in-media-library' ),
+					),
+					array(
+						'action'  => 'closeDialog();',
+						'variant' => 'secondary',
+						'text'    => __( 'Cancel', 'external-files-in-media-library' ),
+					),
+				),
+			);
+		}
+
 		return array(
 			'className' => 'efml efml-dropbox-dialog',
 			'title'     => __( 'Connect your DropBox', 'external-files-in-media-library' ),
@@ -1310,6 +1582,28 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
+	 * Return the help for the setup of this service.
+	 *
+	 * @return array{intro?: string, steps?: array<int,string>, hints?: array<int,string>, code?: array{label: string, content: string, hint?: string}, links?: array<int,array{label: string, url: string}>}
+	 */
+	public function get_setup_guide(): array {
+		return array(
+			'intro' => __( 'You do not need to enter access data for Dropbox: connect it via the button, sign in to Dropbox and allow the access. The connection is saved and renewed automatically.', 'external-files-in-media-library' ),
+			'hints' => array(
+				__( 'Use the Dropbox account, whose files you would like to use. To change the account, disconnect it in the settings and connect it again.', 'external-files-in-media-library' ),
+				/* translators: %1$s will be replaced by a URL. */
+				sprintf( __( 'To use your own Dropbox app instead, create it in the Dropbox App Console and define its app key and app secret as constants, see <a href="%1$s" target="_blank">the documentation</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_documentation_url( 'constants' ) ) ),
+			),
+			'links' => array(
+				array(
+					'label' => __( 'Dropbox App Console', 'external-files-in-media-library' ),
+					'url'   => 'https://www.dropbox.com/developers/apps',
+				),
+			),
+		);
+	}
+
+	/**
 	 * Return the form description.
 	 *
 	 * @return string
@@ -1360,7 +1654,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function allow_wrong_content_type( bool $results, string $url ): bool {
 		// bail if this is not a Dropbox URL.
-		if ( ! Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) ) {
+		if ( ! $this->is_content_url( $url ) ) {
 			return $results;
 		}
 
@@ -1393,7 +1687,7 @@ class DropBox extends Service_Base implements Service {
 	 */
 	public function get_real_request_headers( array|WP_Error $response, Http $http_object, string $url ): array|WP_Error {
 		// bail if URL is not a Dropbox content URL.
-		if ( ! Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) ) {
+		if ( ! $this->is_content_url( $url ) ) {
 			return $response;
 		}
 
@@ -1431,59 +1725,186 @@ class DropBox extends Service_Base implements Service {
 	}
 
 	/**
-	 * Convert a given Dropbox URL to its download URL.
+	 * Convert a given shared link of Dropbox to the link of the file itself ("raw=1").
+	 *
+	 * Dropbox forwards this link to a temporary URL of the file content, which expires after 4 hours. Therefore,
+	 * the link itself is used and not the target of its forwarding (as before 6.0.0).
 	 *
 	 * @param string $url The given URL.
 	 *
 	 * @return string
 	 */
 	public function convert_dropbox_urls( string $url ): string {
-		// bail if URL is not a Dropbox URL.
-		if ( ! str_starts_with( $url, 'https://www.dropbox.com/' ) ) {
+		// bail if URL is not a shared link of Dropbox.
+		if ( ! $this->is_shared_link( $url ) ) {
 			return $url;
 		}
 
-		// log this event.
-		Log::get_instance()->create( __( 'Start check for converting the DropBox URL.', 'external-files-in-media-library' ), $url, 'info', 2 );
+		// get the link to the file itself.
+		$raw_url = $this->get_raw_shared_link( $url );
 
-		// create the direct download URL.
-		$dropbox_url = add_query_arg(
-			array(
-				'raw' => 1,
-			),
-			$url
-		);
-
-		// send header request to get the forwarding URL for direct access.
-		$response = wp_get_http_headers( $dropbox_url );
-
-		// bail if result is false.
-		if ( ! $response instanceof CaseInsensitiveDictionary ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Request to DropBox URL results in error.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// return the given URL.
-			return $url;
-		}
-
-		// get the response data.
-		$response_array = $response->getAll();
-
-		// bail if no location is set.
-		if ( empty( $response_array['location'] ) ) {
-			// log this event.
-			Log::get_instance()->create( __( 'No forward URL returned from DropBox.', 'external-files-in-media-library' ), $url, 'error' );
-
-			// return the given URL.
+		// bail if nothing has been changed.
+		if ( $raw_url === $url ) {
 			return $url;
 		}
 
 		// log this event.
 		/* translators: %1$s and %2$s will be replaced by URLs. */
-		Log::get_instance()->create( sprintf( __( 'Converting %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . $url . '</em>', '<em>' . $response_array['location'] . '</em>' ), $response_array['location'], 'info', 2 );
+		Log::get_instance()->create( sprintf( __( 'Converting %1$s to %2$s.', 'external-files-in-media-library' ), '<em>' . esc_html( $url ) . '</em>', '<em>' . esc_html( $raw_url ) . '</em>' ), $raw_url, 'info', 2 );
 
-		// return the forwarding URL to use.
-		return $response_array['location'];
+		// return the link to the file itself.
+		return $raw_url;
+	}
+
+	/**
+	 * Return whether the given URL is a shared link of Dropbox (e.g. "https://www.dropbox.com/scl/fi/…").
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	public function is_shared_link( string $url ): bool {
+		// bail if the URL is not on the domain of Dropbox.
+		if ( ! Helper::is_url_on_domain( $url, 'dropbox.com' ) ) {
+			return false;
+		}
+
+		// get the path of the URL.
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+
+		// return whether the path is the path of a shared link.
+		return is_string( $path ) && 1 === preg_match( '#^/(s|sh|scl)/#i', $path );
+	}
+
+	/**
+	 * Return the link to the file itself for the given shared link of Dropbox.
+	 *
+	 * It uses "raw=1" instead of "dl=0" or "dl=1", so Dropbox delivers the file itself (and not a page about it).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The shared link.
+	 *
+	 * @return string
+	 */
+	public function get_raw_shared_link( string $url ): string {
+		return add_query_arg( array( 'raw' => 1 ), remove_query_arg( 'dl', $url ) );
+	}
+
+	/**
+	 * Return whether the given URL delivers the content of a file in Dropbox: a shared link or the temporary URL
+	 * it forwards to.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return bool
+	 */
+	private function is_content_url( string $url ): bool {
+		return Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) || $this->is_shared_link( $url );
+	}
+
+	/**
+	 * Allow the forwarding of shared links of Dropbox to the content of the file.
+	 *
+	 * The HTTP requests of this plugin do not follow forwardings. Shared links of Dropbox always forward to a
+	 * temporary URL of the file content, so they could not be loaded without it (e.g. by the proxy).
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param array<string,mixed> $parsed_args The arguments of the request.
+	 * @param string              $url         The requested URL.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function follow_forwarding_of_shared_links( array $parsed_args, string $url ): array {
+		// bail if this is not a shared link of Dropbox.
+		if ( ! $this->is_shared_link( $url ) ) {
+			return $parsed_args;
+		}
+
+		// bail if forwardings are already allowed.
+		if ( ! empty( $parsed_args['redirection'] ) ) {
+			return $parsed_args;
+		}
+
+		// allow the forwardings.
+		$parsed_args['redirection'] = 3;
+
+		// return the resulting arguments.
+		return $parsed_args;
+	}
+
+	/**
+	 * Load an exported file via the Dropbox API, if its saved URL is a temporary URL of Dropbox.
+	 *
+	 * Before 6.0.0 the export saved the temporary URL of the file content, which expires after 4 hours. The API
+	 * loads the file via its path in Dropbox, which is saved during the export.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string|null $tmp_file The path of the temporary file, null to download it via HTTP.
+	 * @param string      $url      The requested URL.
+	 *
+	 * @return string|null
+	 */
+	public function load_exported_file_via_api( string|null $tmp_file, string $url ): string|null {
+		// bail if another temporary file is already set.
+		if ( is_string( $tmp_file ) && '' !== $tmp_file ) {
+			return $tmp_file;
+		}
+
+		// bail if this is not a temporary URL of Dropbox.
+		if ( ! Helper::is_url_on_domain( $url, 'dropboxusercontent.com' ) ) {
+			return $tmp_file;
+		}
+
+		// get the external file with this URL.
+		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
+
+		// bail if no file uses this URL.
+		if ( ! $external_file_obj instanceof File ) {
+			return $tmp_file;
+		}
+
+		// get the path of the file in Dropbox.
+		$path = get_post_meta( $external_file_obj->get_id(), 'efml_dropbox_path', true );
+
+		// bail if it is unknown (e.g. for imported files).
+		if ( empty( $path ) || ! is_string( $path ) ) {
+			return $tmp_file;
+		}
+
+		// bail if no client is available (e.g. if the owner of its external source has removed the connection).
+		if ( ! $this->get_client_for_user( $this->get_owner_of_file( $external_file_obj->get_id() ) ) instanceof Client ) {
+			return $tmp_file;
+		}
+
+		// load the file via the API (with the connection of the owner of its external source).
+		$protocol_obj = new Protocol( $this->get_name() . $path );
+		$protocol_obj->set_fields( $external_file_obj->get_fields() );
+		$protocol_obj->set_external_file( $external_file_obj );
+		try {
+			$file = $protocol_obj->get_temp_file( $this->get_name() . $path, Helper::get_wp_filesystem() );
+		} catch ( Throwable $e ) {
+			// log this event.
+			Log::get_instance()->create( __( 'The exported file could not be loaded via the Dropbox API:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $url, 'error' );
+
+			// use the HTTP download.
+			return $tmp_file;
+		}
+
+		// bail if the file could not be loaded.
+		if ( ! is_string( $file ) || '' === $file ) {
+			return $tmp_file;
+		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The exported file has been loaded via the Dropbox API, as its saved URL is a temporary URL of Dropbox.', 'external-files-in-media-library' ), $url, 'info', 2 );
+
+		// return the temporary file.
+		return $file;
 	}
 
 	/**
@@ -1676,7 +2097,7 @@ class DropBox extends Service_Base implements Service {
 		$this->set_access_token( $data );
 
 		// forward user.
-		wp_safe_redirect( $this->get_config_url() );
+		wp_safe_redirect( $this->get_oauth_return_url() );
 		exit;
 	}
 
@@ -1813,5 +2234,221 @@ class DropBox extends Service_Base implements Service {
 	 */
 	protected function has_credentials(): bool {
 		return true;
+	}
+
+	/**
+	 * Return the definitions of the values, which could be defined via constants.
+	 *
+	 * DropBox is using OAuth, so only the API credentials of the app could be defined via constants.
+	 * The tokens are saved in the database, as they will be refreshed regularly.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	public function get_constant_field_definitions(): array {
+		// bail if this service does not support constants.
+		if ( ! $this->is_fields_via_constants_enabled() ) {
+			return array();
+		}
+
+		// return the definitions.
+		return array(
+			'api_key'    => array(
+				'name'       => 'api_key',
+				'type'       => 'text',
+				'label'      => __( 'App key', 'external-files-in-media-library' ),
+				'credential' => true,
+			),
+			'api_secret' => array(
+				'name'       => 'api_secret',
+				'type'       => 'password',
+				'label'      => __( 'App secret', 'external-files-in-media-library' ),
+				'credential' => true,
+			),
+		);
+	}
+
+	/**
+	 * Return whether the API credentials are defined via constants.
+	 *
+	 * @return bool
+	 */
+	private function is_api_defined_via_constants(): bool {
+		return ! empty( $this->get_constant_values() );
+	}
+
+	/**
+	 * Return whether this service supports the complete connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_connection_test(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the client for the connection test.
+	 *
+	 * @return Client
+	 * @throws Exception If no client could be loaded (e.g. without access token).
+	 */
+	private function get_connection_test_client(): Client {
+		// get the client.
+		$client = $this->get_client();
+
+		// bail if no client could be loaded.
+		if ( ! $client instanceof Client ) {
+			throw new Exception( esc_html__( 'Your website is not connected with DropBox. Connect it in the settings first.', 'external-files-in-media-library' ) );
+		}
+
+		// return the client.
+		return $client;
+	}
+
+	/**
+	 * Return the path of the directory for the connection test in DropBox.
+	 *
+	 * @return string
+	 */
+	private function get_connection_test_path(): string {
+		// get the directory and remove the mark of this service like the export does it (e.g. "DropBox/Photos/" results in "/Photos/").
+		$directory = (string) preg_replace( '#^DropBox#i', '', $this->get_connection_test_directory() );
+
+		// return the path with leading and trailing slash.
+		return '/' . trim( $directory, '/' ) . ( '' !== trim( $directory, '/' ) ? '/' : '' );
+	}
+
+	/**
+	 * List the directory in DropBox for the connection test.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_list(): string {
+		// get the client.
+		$client = $this->get_connection_test_client();
+
+		// list the directory.
+		try {
+			$client->listFolder( '/' === $this->get_connection_test_path() ? '' : $this->get_connection_test_path() );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The directory could not be read in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The directory could not be read in DropBox. Check the log for details.', 'external-files-in-media-library' ) );
+		}
+
+		// return the message.
+		return __( 'The directory could be read.', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Upload the test file to DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $local_file The absolute path to the local test file.
+	 * @param string $file_name  The name of the test file.
+	 *
+	 * @return string
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_upload( string $local_file, string $file_name ): string {
+		// get the client.
+		$client = $this->get_connection_test_client();
+
+		// upload the file.
+		try {
+			$client->upload( $this->get_connection_test_path() . $file_name, (string) Helper::get_wp_filesystem()->get_contents( $local_file ) );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The test file could not be uploaded to DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The test file could not be uploaded to DropBox. Check the permissions of the app in DropBox and the log for details.', 'external-files-in-media-library' ) );
+		}
+
+		// return the path of the file like the export does it.
+		return 'DropBox' . $this->get_connection_test_path() . $file_name;
+	}
+
+	/**
+	 * Check whether a public link could be created for the test file, like the export does it for public files.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url The URL of the uploaded file.
+	 *
+	 * @return bool|null
+	 */
+	protected function test_connection_public( string $url ): ?bool {
+		try {
+			$shared_file_data = $this->get_connection_test_client()->createSharedLinkWithSettings( (string) preg_replace( '#^DropBox#i', '', $url ) );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'No public link could be created for the test file in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			return false;
+		}
+
+		// return whether a link has been created.
+		return ! empty( $shared_file_data['url'] );
+	}
+
+	/**
+	 * Delete the test file in DropBox.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param string $url       The URL of the uploaded file.
+	 * @param string $file_name The name of the test file.
+	 *
+	 * @return void
+	 * @throws Exception If the step failed.
+	 */
+	protected function test_connection_delete( string $url, string $file_name ): void {
+		try {
+			$this->get_connection_test_client()->delete( $this->get_connection_test_path() . $file_name );
+		} catch ( \Exception $e ) {
+			Log::get_instance()->create( __( 'The test file could not be deleted in DropBox. Error:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_directory(), 'error' );
+			throw new Exception( esc_html__( 'The test file could not be deleted in DropBox.', 'external-files-in-media-library' ) );
+		}
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'Dropbox, cloud', 'search terms for the Dropbox service, separated by commas', 'external-files-in-media-library' );
+	}
+
+	/**
+	 * Add the path of an exported file for the Dropbox API as first URL for its restore.
+	 *
+	 * The public URL of an exported file is the target of its shared link, which could expire. The API
+	 * downloads the file via its path, which is saved during the export.
+	 *
+	 * @param array<int,string> $urls              List of URLs.
+	 * @param File              $external_file_obj The external file object.
+	 *
+	 * @return array<int,string>
+	 */
+	public function add_restore_download_url( array $urls, File $external_file_obj ): array {
+		// bail if this is not a file of this service.
+		if ( $this->get_name() !== get_post_meta( $external_file_obj->get_id(), 'eml_service', true ) ) {
+			return $urls;
+		}
+
+		// get the path of the file in Dropbox.
+		$path = get_post_meta( $external_file_obj->get_id(), 'efml_dropbox_path', true );
+
+		// bail if it is unknown.
+		if ( empty( $path ) || ! is_string( $path ) ) {
+			return $urls;
+		}
+
+		// add it as first URL.
+		array_unshift( $urls, $this->get_name() . $path );
+
+		// return the list.
+		return array_values( array_unique( $urls ) );
 	}
 }

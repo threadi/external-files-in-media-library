@@ -32,6 +32,15 @@ class Multisite extends Service_Base implements Service {
 	protected string $name = 'multisite';
 
 	/**
+	 * Marker whether values of fields could be defined via constants (true) or not (false).
+	 *
+	 * Disabled as this service does not use any credentials.
+	 *
+	 * @var bool
+	 */
+	protected bool $fields_via_constants = false;
+
+	/**
 	 * The public label.
 	 *
 	 * @var string
@@ -618,5 +627,14 @@ class Multisite extends Service_Base implements Service {
 
 		// set the service name.
 		$external_file_obj->set_service_name( $this->get_name() );
+	}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'multisite, network, website', 'search terms for the multisite service, separated by commas', 'external-files-in-media-library' );
 	}
 }

@@ -143,4 +143,13 @@ class Xml extends Url_List_Base {
 	 * @return void
 	 */
 	public function cli(): void {}
+
+	/**
+	 * Return further search terms of this service, separated by commas.
+	 *
+	 * @return string
+	 */
+	protected function get_keywords(): string {
+		return _x( 'XML, list, URL list, sitemap, feed, RSS', 'search terms for the XML service, separated by commas', 'external-files-in-media-library' );
+	}
 }

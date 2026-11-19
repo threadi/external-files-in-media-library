@@ -196,6 +196,11 @@ class Rest {
 			return new WP_REST_Response( __( 'Given file does not exist or is not an external file!', 'external-files-in-media-library' ), 404 );
 		}
 
+		// bail if the actual user is not allowed to delete this file.
+		if ( ! current_user_can( 'delete_post', $external_file_obj->get_id() ) ) {
+			return new WP_REST_Response( __( 'You are not allowed to delete this file.', 'external-files-in-media-library' ), 403 );
+		}
+
 		// delete it.
 		$external_file_obj->delete();
 

@@ -60,6 +60,15 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'filebird/filebird.php' );
+	}
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void

@@ -138,7 +138,7 @@ class File extends Protocol_Base {
 			// loop through the directory.
 			foreach ( $file_list as $file => $settings ) {
 				// get file path.
-				$file_path = $url . $file;
+				$file_path = trailingslashit( $url ) . $file;
 
 				// bail if this is not a file.
 				if ( 'd' === $settings['type'] ) {
@@ -239,6 +239,84 @@ class File extends Protocol_Base {
 		 * @param string $url The used URL.
 		 */
 		return apply_filters( 'efml_external_files_infos', $files, $instance, $url );
+	}
+
+	/**
+	 * Return whether this protocol could list the files of a directory page by page.
+	 *
+	 * @return bool
+	 */
+	public function supports_file_list(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether the URL of this object is a directory.
+	 *
+	 * @return bool
+	 */
+	public function is_directory(): bool {
+		// get the local path.
+		$path = $this->sanitize_local_path( $this->get_url() );
+
+		// return whether it is a directory.
+		return '' !== $path && Helper::get_wp_filesystem()->is_dir( $path );
+	}
+
+	/**
+	 * Return one page of the files in the directory of the URL of this object.
+	 *
+	 * Like the import of a directory, only the files directly in the directory are used, not the subdirectories.
+	 *
+	 * @param string $cursor The cursor for the requested page.
+	 *
+	 * @return array{files: array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>, cursor: string}|false
+	 */
+	public function get_file_list( string $cursor ): array|false {
+		// get the complete list of the directory, loaded once per request.
+		$files = $this->get_cached_file_list(
+			function () {
+				// get the local path.
+				$path = $this->sanitize_local_path( $this->get_url() );
+
+				// get the list of the directory.
+				$file_list = '' !== $path ? Helper::get_wp_filesystem()->dirlist( $path ) : false;
+
+				// bail if list could not be loaded.
+				if ( ! is_array( $file_list ) ) {
+					Log::get_instance()->create( __( 'Files could not be loaded from directory.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
+					return false;
+				}
+
+				// collect the files.
+				$files = array();
+				foreach ( $file_list as $file => $settings ) {
+					// bail if this is a directory.
+					if ( 'd' === $settings['type'] ) {
+						continue;
+					}
+
+					// add the file.
+					$files[] = array(
+						'url'           => trailingslashit( $path ) . $file,
+						'filesize'      => absint( $settings['size'] ),
+						'last-modified' => absint( $settings['lastmodunix'] ),
+					);
+				}
+
+				// return the list.
+				return $files;
+			},
+			'' === $cursor
+		);
+
+		// bail on errors.
+		if ( false === $files ) {
+			return false;
+		}
+
+		// return the requested page.
+		return $this->get_file_list_page( $files, $cursor );
 	}
 
 	/**
@@ -423,16 +501,13 @@ class File extends Protocol_Base {
 			return false;
 		}
 
-		// remove protocol and domain from URL.
-		$url_info = wp_parse_url( $url );
+		// get the local file path from the URL (also supports Windows paths like "file:///C:/…").
+		$file_path = Helper::get_local_path_from_url( $url );
 
 		// bail if path could not be loaded.
-		if ( ! isset( $url_info['path'] ) ) {
+		if ( '' === $file_path ) {
 			return false;
 		}
-
-		// get the file path.
-		$file_path = $url_info['path'];
 
 		// bail if the file is not located in the allowed base directory for local files.
 		if ( ! Helper::is_local_path_allowed( $file_path ) ) {
@@ -459,6 +534,27 @@ class File extends Protocol_Base {
 
 		// set the file as tmp-file for import with appropriate file extension.
 		$tmp_file = str_replace( '.tmp', '', $tmp_file_name . '.' . $file_info['extension'] );
+
+		// copy the file directly, if the local filesystem is used directly.
+		// this does not load the complete file into memory (like get_contents() does it).
+		if ( 'direct' === $wp_filesystem->method ) {
+			// delete the tmp file.
+			$wp_filesystem->delete( $tmp_file_name );
+
+			// bail if the file could not be copied or is empty.
+			if ( ! $wp_filesystem->copy( $file_path, $tmp_file, true ) || 0 === wp_filesize( $tmp_file ) ) {
+				// remove the incomplete tmp file.
+				if ( $wp_filesystem->exists( $tmp_file ) ) {
+					$wp_filesystem->delete( $tmp_file );
+				}
+
+				// do nothing more.
+				return false;
+			}
+
+			// return the path to the tmp file.
+			return $tmp_file;
+		}
 
 		// get content of the file.
 		$content = $wp_filesystem->get_contents( $file_path );
@@ -504,13 +600,11 @@ class File extends Protocol_Base {
 	 * @return string
 	 */
 	private function sanitize_local_path( string $url ): string {
-		// get path without the protocol.
-		$path = str_starts_with( $url, 'file://' )
-			? wp_parse_url( $url, PHP_URL_PATH )
-			: $url;
+		// get path without the protocol (also supports Windows paths like "file:///C:/…") with forward slashes.
+		$path = wp_normalize_path( Helper::get_local_path_from_url( $url ) );
 
 		// bail if path could not be read.
-		if ( is_null( $path ) || false === $path ) {
+		if ( '' === $path ) {
 			return '';
 		}
 
@@ -564,23 +658,27 @@ class File extends Protocol_Base {
 			return '';
 		}
 
+		// normalize both paths to forward slashes (on Windows realpath() returns backslashes).
+		$real_path = untrailingslashit( wp_normalize_path( $real_path ) );
+		$base_real = untrailingslashit( wp_normalize_path( $base_real ) );
+
 		// bail if both paths does not match (e.g., for a path outside the web-directory).
-		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . DIRECTORY_SEPARATOR ) ) {
+		if ( $real_path !== $base_real && ! str_starts_with( $real_path, $base_real . '/' ) ) {
 			return '';
 		}
 
 		// add the path in the archive.
 		if ( ! empty( $path_in_archive ) ) {
-			return 'file://' . $real_path . $path_in_archive;
+			return Helper::get_file_url_from_path( $real_path . $path_in_archive );
 		}
 
 		// if the original URL ends with a slash, add it to the real path.
-		if ( str_ends_with( $url, '/' ) ) {
-			$real_path .= DIRECTORY_SEPARATOR;
+		if ( str_ends_with( $url, '/' ) || str_ends_with( $url, '\\' ) ) {
+			$real_path .= '/';
 		}
 
 		// return the real path with protocol.
-		return 'file://' . $real_path;
+		return Helper::get_file_url_from_path( $real_path );
 	}
 
 	/**

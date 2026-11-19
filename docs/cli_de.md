@@ -38,9 +38,9 @@ Löscht die angegebenen URLs aus der Mediathek.
 
 Das folgende Kommando führt zuerst die Kommandos beim Löschen des Plugins aus. Danach wird eine Installation ausgeführt.
 
-Abhängig von deinen Einstellungen im Plugin werden dabei ggfs. vorhandene Dateien aus deiner Mediendatenbank entfernt.
+Abhängig von deinen Einstellungen im Plugin werden dabei ggfs. vorhandene Dateien aus deiner Mediendatenbank entfernt. Exportierte Dateien werden vorher als lokale Dateien an ihren ursprünglichen Pfad zurückgeholt und nie gelöscht. Lässt sich eine davon nicht zurückholen, wird das Plugin nicht zurückgesetzt. Mit `--force` wird es trotzdem zurückgesetzt, die nicht zurückgeholten Dateien bleiben dann exportierte Dateien.
 
-`wp eml reset_plugin`
+`wp eml reset_plugin [--force]`
 
 Diese Funktion kann auch im Backend unter Einstellungen > Externe Dateien in der Mediathek > Erweitert ausgeführt werden.
 
@@ -96,6 +96,62 @@ Dadurch werden alle Einträge in der Warteschlange gelöscht.
 
 ## Mediendateien exportieren
 
-Dadurch werden alle nicht externen Dateien in der Medienbibliothek in die für den Export aktivierten externen Quellen exportiert.
+Dadurch werden alle lokalen Dateien der Mediathek, die noch nicht exportiert sind und deren Dateityp in den Plugin-Einstellungen erlaubt ist, in die externen Quellen mit aktiviertem Export exportiert. Das ist derselbe Export wie über den Button „Vorhandene Dateien exportieren“ in den Export-Einstellungen, nur werden alle Dateien direkt exportiert. Dateien, die nicht exportiert werden konnten, bleiben lokal, sind in der Mediathek markiert und stehen als Fehler in der Warteschlange.
 
 `wp eml export`
+
+## Größen exportierter Bilder exportieren
+
+Dadurch werden die Größen von Bildern, die ohne sie exportiert wurden, in ihre externen Quellen exportiert, sofern deren Dienste das unterstützen. Die Größen werden aus der lokalen Kopie eines Bildes oder aus dem aus seiner externen Quelle heruntergeladenen Bild erzeugt. Das ist dasselbe wie über den Button „Größen jetzt exportieren“ in den Export-Einstellungen, nur werden alle Bilder direkt verarbeitet.
+
+`wp eml export_sizes`
+
+## Exportierte Dateien zurückholen
+
+Dadurch werden alle exportierten Dateien als lokale Dateien an ihren ursprünglichen Pfad in der Mediathek zurückgeholt, z. B. bevor du das Plugin deaktivierst. Die Dateien werden aus ihren externen Quellen heruntergeladen, ihre Größen werden neu erzeugt, und danach sind sie normale lokale Dateien. Deine Inhalte funktionieren so auch ohne das Plugin. Der Export wird dafür ausgeschaltet. Das ist dasselbe Zurückholen wie über den Button „Exportierte Dateien zurückholen“ in den Export-Einstellungen, nur werden alle Dateien direkt zurückgeholt. Dateien, die nicht zurückgeholt werden konnten, bleiben exportierte Dateien und stehen als Fehler in der Warteschlange.
+
+`wp eml localize [--delete-on-target]`
+
+* [--delete-on-target] - Löscht danach die Kopien in den externen Quellen. Ohne diese Angabe bleiben sie erhalten.
+
+## Lokale Kopien exportierter Dateien entfernen
+
+Dadurch werden die lokalen Kopien exportierter Dateien gelöscht, deren lokale Dateien beim Export behalten wurden (Einstellung „Lokale Dateien nicht löschen“), z. B. um Speicherplatz freizugeben. Jede Datei wird vorher aus ihrer externen Quelle geladen, ihre lokale Kopie wird nur gelöscht, wenn das klappt. Größen, Originalbilder und Varianten (z. B. WebP) werden nur gelöscht, wenn sie in der externen Quelle liegen. Von anderen Offload-Plugins übernommene Dateien behalten ihre lokalen Dateien. Das ist dasselbe wie über den Button „Lokale Kopien entfernen“ in den Export-Einstellungen, nur werden alle Dateien direkt bearbeitet. Dateien, die ihre lokalen Kopien behalten haben, stehen als Fehler in der Warteschlange.
+
+`wp eml delete_local_copies`
+
+## Arbeitskopien für Bildoptimierer
+
+Bildoptimierer brauchen die lokalen Dateien der Bilder. „create“ legt lokale Arbeitskopien aller exportierten Bilder an, die weiter aus ihren externen Quellen ausgeliefert werden: das Bild, seine Größen, sein Original und früher gespeicherte Sicherungen der Bildoptimierer, jeweils an ihrem ursprünglichen Pfad. Danach startest du die Massenoptimierung deines Bildoptimierers. „finish“ exportiert die geänderten und neuen Dateien aller Arbeitskopien (optimierte Dateien unter ihrem Namen, neue Dateien wie WebP und die Sicherungen des Bildoptimierers) und entfernt die lokalen Dateien. Arbeitskopien werden von selbst abgeschlossen, sobald ein Bildoptimierer das Ende seiner Arbeit an einem Bild meldet (EWWW Image Optimizer, Imagify, ShortPixel, TinyPNG, Smush). „status“ zeigt die Anzahl der Bilder mit und ohne Arbeitskopie. Das ist dasselbe wie über die Buttons „Exportierte Bilder für Bildoptimierer vorbereiten“ und „Optimierte Bilder exportieren“ in den Export-Einstellungen, nur werden alle Bilder direkt verarbeitet.
+
+`wp eml working_copies <create|finish|status>`
+
+## Hauptseite oder Kopie
+
+Zeigt, ob diese Website die Hauptseite oder eine Kopie davon ist (z. B. eine Staging-Seite). Auf einer Kopie werden keine Dateien in externe Quellen exportiert oder dort gelöscht, und zeitgesteuerte Synchronisierungen pausieren.
+
+`wp eml site status`
+
+Diese Website als Hauptseite festlegen, z. B. nach dem Umzug der Live-Seite auf eine neue Domain oder im Deployment:
+
+`wp eml site main`
+
+Diese Website als Kopie bestätigen (der Schutz bleibt aktiv, der Hinweis im Backend wird ausgeblendet):
+
+`wp eml site copy`
+
+## Umzug von anderen Offload-Plugins
+
+Zeigt den Stand des Umzugs von Dateien anderer Offload-Plugins (siehe [Umzug](migration_de.md)):
+
+`wp eml migration status`
+
+Einen laufenden Umzug ohne Zeitlimit fortsetzen, z. B. wenn WP-Cron abgeschaltet ist:
+
+`wp eml migration run`
+
+Den Umzug aller Dateien oder eines einzelnen Anhangs rückgängig machen. Die Dateien werden dann wieder mit ihren lokalen Dateien und den Daten des anderen Plugins genutzt, aktiviere das andere Plugin danach wieder:
+
+`wp eml migration revert`
+
+`wp eml migration revert --attachment=42`

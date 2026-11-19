@@ -59,18 +59,25 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public static function set_up_before_class(): void {
+		// install the plugin one time before the parent saves the options of the site: since WordPress 7.2 the test
+		// library restores the options to this state after each test class, so options added later would be deleted.
+		if ( ! did_action( 'efml_test_installation_loaded' ) ) {
+			// enable the extended log mode.
+			update_option( 'eml_log_mode', 2 );
+
+			// initialize the plugin.
+			\ExternalFilesInMediaLibrary\Plugin\Install::get_instance()->activation();
+
+			// mark as installed.
+			do_action( 'efml_test_installation_loaded' );
+		}
+
 		parent::set_up_before_class();
 
 		// prepare to load just one time.
 		if ( ! did_action('efml_test_preparation_loaded') ) {
 			// enable error reporting.
 			error_reporting( E_ALL );
-
-			// enable the extended log mode.
-			update_option( 'eml_log_mode', 2 );
-
-			// initialize the plugin.
-			\ExternalFilesInMediaLibrary\Plugin\Install::get_instance()->activation();
 
 			// start with an empty log, as its table is kept between test runs.
 			\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->truncate_log();
@@ -90,6 +97,61 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 			// mark as loaded.
 			do_action('efml_test_preparation_loaded');
 		}
+
+		// start each test class with empty tables of the plugin.
+		self::clean_plugin_tables();
+	}
+
+	/**
+	 * Remove the entries in the tables of the plugin (queue, import runs, log).
+	 *
+	 * The test framework does not clean them between the test classes. And with MySQL some tests save their entries
+	 * permanently, as statements like "ALTER TABLE" or "RENAME TABLE" (used by the tests of updates of the structure)
+	 * end the transaction of the test implicitly.
+	 *
+	 * @return void
+	 */
+	private static function clean_plugin_tables(): void {
+		global $wpdb;
+
+		foreach ( array( 'eml_queue', 'efml_import_runs', 'eml_logs' ) as $table ) {
+			$table = $wpdb->prefix . $table;
+			if ( $table === $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				$wpdb->query( $wpdb->prepare( 'DELETE FROM %i', $table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			}
+		}
+
+		self::commit_transaction();
+	}
+
+	/**
+	 * Prepare each test.
+	 *
+	 * @return void
+	 */
+	public function set_up(): void {
+		parent::set_up();
+
+		// keep "TRUNCATE TABLE" in the transaction of the test (like the test framework does it for "CREATE TABLE").
+		add_filter( 'query', array( self::class, 'make_truncate_transactional' ) );
+	}
+
+	/**
+	 * Change "TRUNCATE TABLE" to "DELETE FROM" during the tests.
+	 *
+	 * With MySQL "TRUNCATE TABLE" ends the transaction of the test implicitly: everything the test has done until then
+	 * would be saved permanently and remain for the following tests (e.g. external sources or the queue), also if the
+	 * test itself resets it later. "DELETE FROM" is part of the transaction and is rolled back after the test.
+	 *
+	 * @param string $query The SQL query.
+	 *
+	 * @return string
+	 */
+	public static function make_truncate_transactional( string $query ): string {
+		if ( 1 === preg_match( '/^\s*TRUNCATE\s+(?:TABLE\s+)?(`?[\w$]+`?)\s*;?\s*$/i', $query, $matches ) ) {
+			return 'DELETE FROM ' . $matches[1];
+		}
+		return $query;
 	}
 
 	/**
@@ -98,8 +160,17 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	 * @return void
 	 */
 	public function tear_down(): void {
+		// use "TRUNCATE TABLE" again (see set_up()).
+		remove_filter( 'query', array( self::class, 'make_truncate_transactional' ) );
+
 		// delete the directories on the test servers, which the test has created.
 		TestServers::cleanup();
+
+		// forget the file type objects of this test, as they are cached per attachment ID, which could be used again
+		// by the next test after the rollback of the database (e.g. with SQLite).
+		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
+		$property->setAccessible( true );
+		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		parent::tear_down();
 	}

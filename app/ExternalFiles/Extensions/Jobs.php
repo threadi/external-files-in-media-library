@@ -104,7 +104,14 @@ class Jobs extends Extension_Base {
 	 * @return void
 	 */
 	public function create(): void {
-		$this->job_id = uniqid( '', true );
+		/**
+		 * Filter the job ID for the files of this import, e.g. to use one job for all files of a directory, which
+		 * are imported one by one.
+		 *
+		 * @since 6.0.0 Available since 6.0.0.
+		 * @param string $job_id The job ID.
+		 */
+		$this->job_id = (string) apply_filters( 'efml_import_job_id', uniqid( '', true ) );
 	}
 
 	/**

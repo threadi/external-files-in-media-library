@@ -1,6 +1,6 @@
 {
     "name": "threadi/efml",
-    "version": "5.6.2",
+    "version": "6.0.0",
     "license": "GPL-2.0-or-later",
     "scripts": {
         "post-install-cmd": [
@@ -12,14 +12,37 @@
             "composer dump-autoload"
         ],
         "phpstan": "vendor/bin/phpstan clear-result-cache && vendor/bin/phpstan analyze",
-        "test": "phpunit",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit"
+        ],
         "test-coverage": "php -d pcov.enabled=1 -d pcov.directory=app vendor/bin/phpunit --coverage-filter app --coverage-text",
         "test-multisite": [
             "@putenv WP_MULTISITE=1",
             "phpunit --filter Multisite"
         ],
         "test-install": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest",
-        "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true"
+        "test-install-during-build": "bash bin/install-wp-tests.sh wordpress_test root 'debian' 127.0.0.1 latest false true",
+        "test-install-live": [
+            "@putenv EFML_ADDONS_DEFAULT_SOURCE=github",
+            "@test-install"
+        ],
+        "test-install-addons": [
+            "@putenv EFML_ADDONS_DEFAULT_SOURCE=github",
+            "bash bin/install-addons.sh"
+        ],
+        "test-live": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit -c phpunit-live.xml.dist"
+        ],
+        "test-with-live": [
+            "@test",
+            "@test-live"
+        ],
+        "test-live-e2e": [
+            "Composer\\Config::disableProcessTimeout",
+            "npx playwright test -c playwright-live.config.ts"
+        ]
     },
     "extra": {
         "mozart": {
@@ -74,8 +97,9 @@
         "ext-openssl": "*",
         "ext-curl": "*",
         "ext-zlib": "*",
-        "threadi/easy-directory-listing-for-wordpress": "^4.4.2",
-        "threadi/easy-settings-for-wordpress": "^3.9.1",
+        "threadi/easy-directory-listing-for-wordpress": "^4.5.0",
+        "threadi/easy-settings-for-wordpress": "^3.10.0",
+        "threadi/easy-setup-for-wordpress": "^1.6.0",
         "threadi/easy-transients-for-wordpress": "^1.4.9",
         "spatie/dropbox-api": "^1.25"
     }

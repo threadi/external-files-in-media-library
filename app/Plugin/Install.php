@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Dependencies\easyTransientsForWordPress\Transients;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions;
+use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Tools;
 use ExternalFilesInMediaLibrary\Plugin\Admin\Admin;
@@ -80,6 +81,9 @@ class Install {
 
 		// initialize the extensions.
 		Extensions::get_instance()->install();
+
+		// initialize the database-table for import runs.
+		Import_Runs::get_instance()->install();
 
 		// enable the settings.
 		Settings::get_instance()->get_settings_obj()->activation();
@@ -155,10 +159,13 @@ class Install {
 		}
 
 		// set flag to enable syncs later.
-		update_option( 'efml_recreate_sync_schedules', 1, false );
+		update_option( 'efml_recreate_sync_schedules', 1, true );
 
 		// set caching options.
 		add_option( 'efml_directory_listing_used', 0, '', true );
+
+		// plan the single events for tasks, which have been interrupted by a deactivation (e.g. delayed exports).
+		Background_Events::get_instance()->resume();
 	}
 
 	/**
@@ -173,5 +180,8 @@ class Install {
 
 		// remove schedules.
 		Schedules::get_instance()->delete_all();
+
+		// remove the single events (e.g. delayed exports), their tasks are planned again after the activation.
+		Background_Events::get_instance()->remove_all();
 	}
 }

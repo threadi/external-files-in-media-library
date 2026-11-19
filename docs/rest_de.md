@@ -30,6 +30,7 @@ von WordPress bereitgestellten Anwendungspasswort erfolgen.
 ### DELETE
 
 * Löscht eine angegeben externe URL
+* Der Benutzer muss die Datei löschen dürfen (sonst Status 403)
 * Parameter:
     * "url" mit der externen URL
 

@@ -147,7 +147,7 @@ class Intro {
 
 		// remove the transient after installation.
 		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->add_dismiss( 365 );
-		Transients::get_instance()->get_transient_by_name( 'eml_welcome' )->delete();
+		Helper::delete_hint( 'eml_welcome' );
 
 		// response with success message.
 		wp_send_json_success();
@@ -273,7 +273,7 @@ class Intro {
 				'step_6_intro'        => __( 'The result of the import will be displayed. If successful, you can go directly to the URL(s) in the media database from here. If an error occurs, you will be given information about the reason.', 'external-files-in-media-library' ),
 				'step_7_title'        => __( 'And now you!', 'external-files-in-media-library' ),
 				/* translators: %1$s and %1$s will be replaced by URLs. */
-				'step_7_intro'        => sprintf( __( 'Now you can store URLs in your media database yourself. Just follow the steps we just showed you.<br><br>Under Media Library > <a href="%1$s" target="_blank">Add External Files</a>, you can discover many more options for importing files besides specifying their URLs.<br><br>If you have any questions, please feel free to <a href="%2$s" target="_blank">contact the support forum</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url(), Helper::get_plugin_support_url() ),
+				'step_7_intro'        => sprintf( __( 'Now you can store URLs in your media database yourself. Just follow the steps we just showed you.<br><br>Under Media Library > <a href="%1$s" target="_blank">Add External Files</a>, you can discover many more options for importing files besides specifying their URLs.<br><br>There you will find the <a href="%2$s">Quick Start</a>, which will help you achieve your goal with your files in just a few steps.<br><br>If you have any questions, please feel free to <a href="%3$s" target="_blank">contact the support forum</a>.', 'external-files-in-media-library' ), Helper::get_add_media_url(), Setup::get_instance()->get_url(), Helper::get_plugin_support_url() ),
 			)
 		);
 	}
@@ -411,6 +411,13 @@ class Intro {
 	 * @return void
 	 */
 	public function reset_intro(): void {
-		delete_option( 'efml_intro' );
+		// remove the option during the uninstallation.
+		if ( defined( 'EFML_DEINSTALLATION_RUNNING' ) ) {
+			delete_option( 'efml_intro' );
+			return;
+		}
+
+		// save the default value otherwise, as the option is read in every request.
+		update_option( 'efml_intro', 0 );
 	}
 }

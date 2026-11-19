@@ -51,6 +51,15 @@ class MediaCloudSync extends ThirdParty_Base implements ThirdParty {
 	}
 
 	/**
+	 * Return the plugin files of the supported plugin.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_plugin_files(): array {
+		return array( 'media-cloud-sync/media-cloud-sync.php' );
+	}
+
+	/**
 	 * Initialize this object.
 	 *
 	 * @return void
