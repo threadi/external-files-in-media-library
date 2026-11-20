@@ -124,6 +124,28 @@ deletes it on its external sources, too.
 Media File Renamer could also rename exported images (also Pro): their files are loaded before, the renamed files are
 exported afterward. The proxy still finds the image via its former name.
 
+### Perfect Images (formerly WP Retina 2x)
+
+Its retina files (`image-300x200@2x.jpg`) and its WebP and AVIF files (`image-300x200.jpg.webp`) are exported together
+with the image, deleted with it and restored with it. The proxy delivers the WebP and AVIF files to browsers, which
+support them. The retina files are only used by Perfect Images, while the image is a local file.
+
+"Regenerate" in its dashboard also works for exported images: their files are loaded before, the new sizes are exported
+afterward. Its other functions for single images (replace the image, the optimized regeneration and the regeneration
+via AI, create, delete or optimize the retina and WebP files) are not possible for external files, as they would change
+the files on their external source directly. Perfect Images shows a hint for them.
+
+### Regenerate Thumbnails, Force Regenerate Thumbnails and Regenerate Thumbnails Advanced
+
+All three create the sizes of exported images again: their original image is loaded for this moment, the new sizes are
+exported and the local files are removed afterward (see [features](features.md)). This also applies to the WP CLI
+command of Force Regenerate Thumbnails.
+
+Files, which you have imported from an external source, have no local files: their sizes are created by the proxy.
+Regenerate Thumbnails shows a hint for them, Force Regenerate Thumbnails skips them and Regenerate Thumbnails Advanced
+marks them as offloaded. So no sizes are created on their external source (e.g. in a local directory) and the external
+source is not contacted (e.g. with an anonymous login on an FTP server).
+
 ### WP Extra File Types
 
 File types, which you allow via WP Extra File Types, could also be used for external files.

@@ -19,7 +19,7 @@
 - Added editing, regenerating and renaming of exported images
 - Added working copies to optimize exported images later
 - Added support for image optimizers (Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media, Modern Image Formats)
-- Added support for Instant Images, Media Cleaner, Media Bulk Download, Image Watermark, Media File Renamer and Prevent Files / Folders Access
+- Added support for Instant Images, Media Cleaner, Media Bulk Download, Image Watermark, Media File Renamer, Perfect Images (WP Retina 2x), Regenerate Thumbnails, Force Regenerate Thumbnails and Prevent Files / Folders Access
 - Added replacement of local URLs of exported files during output and redirection of missing local files
 - Added import of large directories in the background with progress in the admin bar
 - Added connection test for all services with export

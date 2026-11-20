@@ -237,6 +237,45 @@ class Local_Work {
 	}
 
 	/**
+	 * Return whether the given attachment is an external file, whose files could not be used locally by WordPress and
+	 * other plugins (e.g. to create its sizes again): an imported file, which is neither saved locally nor exported.
+	 *
+	 * Its attached file is its URL (e.g. "https://…", "ftp://…" or "file://…" for a local directory as external source):
+	 * plugins, which work with the attached file, would read it from or write files to its external source. Its sizes
+	 * are created by the proxy.
+	 *
+	 * Exported images return false: this object loads their files (see open()). Other exported files return true.
+	 *
+	 * @since 6.0.0 Available since 6.0.0.
+	 *
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return bool
+	 */
+	public function is_without_local_files( int $attachment_id ): bool {
+		// bail if its local files are in use or it has a local working copy.
+		if ( $this->is_open( $attachment_id ) || Working_Copies::get_instance()->is_active( $attachment_id ) ) {
+			return false;
+		}
+
+		// get the external file object.
+		$external_file_obj = Files::get_instance()->get_file( $attachment_id );
+
+		// bail if this is not an external file or it is saved locally.
+		if ( ! $external_file_obj->is_valid() || $external_file_obj->is_locally_saved() ) {
+			return false;
+		}
+
+		// bail if this file has been taken over from another offload plugin, as it still has its local files.
+		if ( is_array( get_post_meta( $attachment_id, Migrations::BACKUP_META, true ) ) ) {
+			return false;
+		}
+
+		// return whether it is not exported or not an image (this object loads the files of exported images only).
+		return 0 === absint( get_post_meta( $attachment_id, 'eml_exported_file', true ) ) || ! wp_attachment_is_image( $attachment_id );
+	}
+
+	/**
 	 * Return whether the given attachment is an exported image, whose files are not local.
 	 *
 	 * @param int $attachment_id The attachment ID.
@@ -697,8 +736,50 @@ class Local_Work {
 			return $metadata;
 		}
 
+		// keep the original image of a scaled or rotated image in the metadata.
+		$metadata = $this->keep_original_image( $attachment_id, $metadata );
+
 		// export them.
 		$this->export_files( $attachment_id, $metadata );
+
+		// return the metadata.
+		return $metadata;
+	}
+
+	/**
+	 * Keep the original image of a scaled or rotated exported image in the metadata, which have been created again.
+	 *
+	 * WordPress names the original image in the metadata only, if it scales or rotates the image while it creates the
+	 * metadata. Other plugins create them without scaling (e.g. "Regenerate Thumbnails Advanced" disables the threshold
+	 * for big images) or from the scaled image (e.g. "Perfect Images" via get_attached_file()). Without the name, the
+	 * exported original image would not be used anymore: later works with the local files and the restore would use
+	 * the scaled image as original image.
+	 *
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param array<string,mixed> $metadata      The new metadata.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function keep_original_image( int $attachment_id, array $metadata ): array {
+		// get the local original image.
+		$original = $this->sessions[ $attachment_id ]['original'];
+
+		// bail if the metadata name an original image or the image has none.
+		if ( ! empty( $metadata['original_image'] ) || '' === $original || $original === $this->sessions[ $attachment_id ]['file'] ) {
+			return $metadata;
+		}
+
+		// bail if the original image does not exist locally.
+		if ( ! file_exists( $original ) ) {
+			return $metadata;
+		}
+
+		// name the original image.
+		$metadata['original_image'] = wp_basename( $original );
+
+		// log this event.
+		/* translators: %1$s will be replaced by a file name. */
+		Log::get_instance()->create( sprintf( __( 'The sizes of the exported image have been created without its original image in the metadata. The original image %1$s is kept.', 'external-files-in-media-library' ), '<code>' . esc_html( wp_basename( $original ) ) . '</code>' ), $this->sessions[ $attachment_id ]['url'], 'info', 2 );
 
 		// return the metadata.
 		return $metadata;

@@ -52,7 +52,7 @@ See [what is possible](https://github.com/threadi/external-files-in-media-librar
 
 ✅ **Image optimizers:** Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media and Modern Image Formats – optimized files and their WebP and AVIF variants are exported, too.
 ✅ **Folders and galleries:** sort, import and synchronize external files with plugins like Filebird, Folders, Real Media Library Lite or NextGen Gallery.
-✅ **Media tools:** Media Cleaner, Media File Renamer, Image Watermark and Media Bulk Download.
+✅ **Media tools:** Media Cleaner, Media File Renamer, Image Watermark, Media Bulk Download, Perfect Images (WP Retina 2x), Regenerate Thumbnails and Force Regenerate Thumbnails.
 ✅ **WooCommerce:** use external URLs in the product import via CSV (also with access data, e.g. for FTP) and external files as downloads.
 ✅ **More:** Instant Images (Unsplash, Pexels and GIPHY as external files), Polylang, Network Media Library, Download Lists with Icons, Document Embedder and Prevent Files / Folders Access.
 

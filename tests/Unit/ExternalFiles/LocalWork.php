@@ -11,7 +11,9 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Export;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Local_Work as Local_Work_Object;
+use ExternalFilesInMediaLibrary\ExternalFiles\Restore;
 use ExternalFilesInMediaLibrary\ExternalFiles\Sizes as Sizes_Object;
+use WP_Error;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use WP_REST_Request;
 
@@ -26,6 +28,13 @@ class LocalWork extends externalFilesTests {
 	 * @var string
 	 */
 	private string $export_directory = '';
+
+	/**
+	 * The number of calls of the simulated route of "Regenerate Thumbnails".
+	 *
+	 * @var int
+	 */
+	private int $regenerate_thumbnails_calls = 0;
 
 	/**
 	 * Prepare the test environment for each test.
@@ -80,6 +89,11 @@ class LocalWork extends externalFilesTests {
 
 		// use the support for the plugin "Media File Renamer" (it is not installed in the tests).
 		\ExternalFilesInMediaLibrary\ThirdParty\MediaFileRenamer::get_instance()->add_hooks();
+
+		// use the support for the plugins, which create the sizes again (they are not installed in the tests).
+		\ExternalFilesInMediaLibrary\ThirdParty\PerfectImages::get_instance()->add_hooks();
+		\ExternalFilesInMediaLibrary\ThirdParty\RegenerateThumbnails::get_instance()->add_hooks();
+		\ExternalFilesInMediaLibrary\ThirdParty\ForceRegenerateThumbnails::get_instance()->add_hooks();
 	}
 
 	/**
@@ -91,6 +105,8 @@ class LocalWork extends externalFilesTests {
 		remove_filter( 'efml_file_base', array( $this, 'get_export_directory' ) );
 		remove_all_filters( 'efml_file_prevent_proxied_url' );
 		remove_filter( 'efml_local_work_allowed', '__return_true' );
+		remove_filter( 'big_image_size_threshold', '__return_false' );
+		remove_filter( 'wp_generate_attachment_metadata', array( $this, 'simulate_perfect_images_files' ), 10 );
 		remove_image_size( 'efml-test' );
 		\ExternalFilesInMediaLibrary\ExternalFiles\Local_Work::get_instance()->close_all();
 		Import_Runs::get_instance()->cancel_all();
@@ -555,5 +571,359 @@ class LocalWork extends externalFilesTests {
 		update_attached_file( $attachment_id, $new_file );
 		wp_update_attachment_metadata( $attachment_id, $metadata );
 		return true;
+	}
+
+	/**
+	 * Create an external image without local files and return its ID: like an image imported via HTTP without a local
+	 * copy, its attached file is its URL.
+	 *
+	 * Files from a local directory are always saved locally during their import, so the local file is removed after
+	 * the import for this test.
+	 *
+	 * @return int
+	 */
+	private function create_image_without_local_files(): int {
+		$directory = $this->export_directory . 'import/';
+		wp_mkdir_p( $directory );
+		$path  = $directory . 'efml-import-' . wp_generate_password( 6, false ) . '.jpg';
+		$image = imagecreatetruecolor( 800, 600 );
+		imagejpeg( $image, $path );
+		$url = 'file://' . $path;
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Import::get_instance()->add_url( $url ) );
+		$external_file_obj = Files::get_instance()->get_file_by_url( $url );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, $external_file_obj );
+
+		// remove the local file and use the URL as attached file.
+		$local_file = get_attached_file( $external_file_obj->get_id(), true );
+		if ( is_string( $local_file ) && file_exists( $local_file ) ) {
+			wp_delete_file( $local_file );
+		}
+		update_post_meta( $external_file_obj->get_id(), '_wp_attached_file', $url );
+		$external_file_obj->set_is_local_saved( false );
+		$this->assertTrue( Local_Work_Object::get_instance()->is_without_local_files( $external_file_obj->get_id() ) );
+		return $external_file_obj->get_id();
+	}
+
+	/**
+	 * Test that the original image of a scaled exported image is kept, if the sizes are created again without
+	 * scaling (like "Regenerate Thumbnails Advanced" does it).
+	 *
+	 * @return void
+	 */
+	public function test_regenerate_without_scaling_keeps_original(): void {
+		$attachment_id = $this->create_exported_image();
+		$this->assertArrayHasKey( Sizes_Object::ORIGINAL, Sizes_Object::get_instance()->get_sizes( $attachment_id, true ) );
+
+		// create the sizes again from the original image without scaling.
+		add_filter( 'big_image_size_threshold', '__return_false' );
+		$file = wp_get_original_image_path( $attachment_id );
+		$this->assertIsString( $file );
+		$this->assertFileExists( $file );
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $file );
+		remove_filter( 'big_image_size_threshold', '__return_false' );
+		$this->assertIsArray( $metadata );
+		$this->assertArrayHasKey( 'original_image', $metadata );
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		Local_Work_Object::get_instance()->close_all();
+
+		// the exported original image is still used.
+		$this->assertArrayHasKey( Sizes_Object::ORIGINAL, Sizes_Object::get_instance()->get_sizes( $attachment_id, true ) );
+		$this->assertNotEmpty( Restore::get_instance()->get_original_paths( $attachment_id )['original'] );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+	}
+
+	/**
+	 * Register a route of the REST API of the plugin "Perfect Images" for the test.
+	 *
+	 * @param string   $route    The route.
+	 * @param callable $callback The callback.
+	 *
+	 * @return void
+	 */
+	private function register_perfect_images_route( string $route, callable $callback ): void {
+		rest_get_server();
+		register_rest_route(
+			'wp-retina-2x/v1',
+			'/' . $route,
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => '__return_true',
+				'callback'            => $callback,
+			)
+		);
+	}
+
+	/**
+	 * Send a request to the REST API of the plugin "Perfect Images" like its dashboard.
+	 *
+	 * @param string              $route         The route.
+	 * @param int                 $attachment_id The attachment ID.
+	 * @param array<string,mixed> $params        Further parameters.
+	 *
+	 * @return \WP_REST_Response
+	 */
+	private function request_perfect_images( string $route, int $attachment_id, array $params = array() ): \WP_REST_Response {
+		$request = new WP_REST_Request( 'POST', '/wp-retina-2x/v1/' . $route );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( array_merge( array( 'mediaId' => $attachment_id ), $params ) ) );
+		return rest_do_request( $request );
+	}
+
+	/**
+	 * Create the sizes again like the plugin "Perfect Images": from the attached file.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function simulate_perfect_images_regenerate( WP_REST_Request $request ): array {
+		$attachment_id = absint( $request->get_param( 'mediaId' ) );
+		do_action( 'wr2x_before_generate_thumbnails', $attachment_id );
+		$file     = (string) get_attached_file( $attachment_id );
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $file );
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		return array( 'success' => true );
+	}
+
+	/**
+	 * Replace the file like the plugin "Perfect Images": the attached file is replaced by the upload.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public function simulate_perfect_images_replace( WP_REST_Request $request ): array {
+		$file = (string) get_attached_file( absint( $request->get_param( 'mediaId' ) ) );
+		if ( file_exists( $file ) ) {
+			wp_delete_file( $file );
+		}
+		file_put_contents( $file, 'replaced' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		return array( 'success' => true );
+	}
+
+	/**
+	 * Create retina and WebP files beside the medium size like the plugin "Perfect Images".
+	 *
+	 * @param mixed $metadata      The metadata.
+	 * @param int   $attachment_id The attachment ID.
+	 *
+	 * @return mixed
+	 */
+	public function simulate_perfect_images_files( mixed $metadata, int $attachment_id ): mixed {
+		if ( ! is_array( $metadata ) || empty( $metadata['sizes']['medium']['file'] ) || empty( $metadata['file'] ) ) {
+			return $metadata;
+		}
+		$directory = trailingslashit( wp_get_upload_dir()['basedir'] ) . trailingslashit( dirname( $metadata['file'] ) );
+		$medium    = $directory . $metadata['sizes']['medium']['file'];
+		$info      = pathinfo( $medium );
+		copy( $medium, $directory . $info['filename'] . '@2x.' . $info['extension'] );
+		$image = imagecreatefromjpeg( $medium );
+		imagewebp( $image, $medium . '.webp' );
+		return $metadata;
+	}
+
+	/**
+	 * Test that "Perfect Images" creates the sizes of an exported image again with its local files.
+	 *
+	 * @return void
+	 */
+	public function test_perfect_images_regenerate(): void {
+		$attachment_id = $this->create_exported_image();
+		$url           = get_post_meta( $attachment_id, '_wp_attached_file', true );
+		$this->register_perfect_images_route( 'regenerate', array( $this, 'simulate_perfect_images_regenerate' ) );
+
+		// add a new size and create the sizes again.
+		add_image_size( 'efml-test', 500, 500, true );
+		$response = $this->request_perfect_images( 'regenerate', $attachment_id );
+		Local_Work_Object::get_instance()->close_all();
+		$data = $response->get_data();
+		$this->assertIsArray( $data );
+		$this->assertTrue( $data['success'] );
+
+		// the new size is exported, the original image is kept, the image is still the exported file.
+		$sizes = Sizes_Object::get_instance()->get_sizes( $attachment_id, true );
+		$this->assertArrayHasKey( 'efml-test', $sizes );
+		$this->assertFileExists( $this->export_directory . $sizes['efml-test']['file'] );
+		$this->assertArrayHasKey( Sizes_Object::ORIGINAL, $sizes );
+		$metadata = get_post_meta( $attachment_id, '_wp_attachment_metadata', true );
+		$this->assertIsArray( $metadata );
+		$this->assertNotEmpty( $metadata['original_image'] );
+		$this->assertEquals( $url, get_post_meta( $attachment_id, '_wp_attached_file', true ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+	}
+
+	/**
+	 * Test that the functions of "Perfect Images", which would change the external source directly, are prevented.
+	 *
+	 * @return void
+	 */
+	public function test_perfect_images_prevented_for_external_files(): void {
+		$this->register_perfect_images_route( 'replace', array( $this, 'simulate_perfect_images_replace' ) );
+		$this->register_perfect_images_route( 'regenerate', array( $this, 'simulate_perfect_images_regenerate' ) );
+
+		// the exported file in the local directory is not replaced.
+		$attachment_id = $this->create_exported_image( 1600, 1200 );
+		$path          = $this->export_directory . wp_basename( (string) get_post_meta( $attachment_id, '_wp_attached_file', true ) );
+		$this->assertFileExists( $path );
+		$hash = md5_file( $path );
+		$data = $this->request_perfect_images( 'replace', $attachment_id )->get_data();
+		$this->assertIsArray( $data );
+		$this->assertFalse( $data['success'] );
+		$this->assertNotEmpty( $data['message'] );
+		$this->assertEquals( $hash, md5_file( $path ) );
+
+		// the optimized regeneration of exported images is prevented.
+		$files = (array) glob( $this->export_directory . '*' );
+		$data  = $this->request_perfect_images( 'regenerate', $attachment_id, array( 'optimized' => true ) )->get_data();
+		$this->assertIsArray( $data );
+		$this->assertFalse( $data['success'] );
+		$this->assertEquals( $files, (array) glob( $this->export_directory . '*' ) );
+
+		// the regeneration of external files without local files is prevented.
+		$data = $this->request_perfect_images( 'regenerate', $this->create_image_without_local_files() )->get_data();
+		$this->assertIsArray( $data );
+		$this->assertFalse( $data['success'] );
+
+		// local files are not affected.
+		$file  = trailingslashit( get_temp_dir() ) . 'efml-local-' . wp_generate_password( 6, false ) . '.jpg';
+		$image = imagecreatetruecolor( 400, 300 );
+		imagejpeg( $image, $file );
+		$local_id = self::factory()->attachment->create_upload_object( $file );
+		wp_delete_file( $file );
+		$this->assertIsInt( $local_id );
+		$data = $this->request_perfect_images( 'regenerate', $local_id )->get_data();
+		$this->assertIsArray( $data );
+		$this->assertTrue( $data['success'] );
+	}
+
+	/**
+	 * Test that the retina and WebP files of "Perfect Images" are exported and deleted together with the image.
+	 *
+	 * @return void
+	 */
+	public function test_perfect_images_files_are_exported_and_deleted(): void {
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'simulate_perfect_images_files' ), 10, 2 );
+		$attachment_id = $this->create_exported_image( 1600, 1200 );
+		remove_filter( 'wp_generate_attachment_metadata', array( $this, 'simulate_perfect_images_files' ), 10 );
+
+		// the files are exported beside the sizes and removed locally.
+		$medium = Sizes_Object::get_instance()->get_sizes( $attachment_id )['medium']['file'];
+		$retina = pathinfo( $medium, PATHINFO_FILENAME ) . '@2x.jpg';
+		$webp   = $medium . '.webp';
+		$this->assertFileExists( $this->export_directory . $retina );
+		$this->assertFileExists( $this->export_directory . $webp );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
+
+		// they are deleted together with the image.
+		wp_delete_attachment( $attachment_id, true );
+		$this->assertFileDoesNotExist( $this->export_directory . $retina );
+		$this->assertFileDoesNotExist( $this->export_directory . $webp );
+	}
+
+	/**
+	 * Test that the retina and WebP files of "Perfect Images" are restored together with the image.
+	 *
+	 * @return void
+	 */
+	public function test_perfect_images_files_are_restored(): void {
+		add_filter( 'wp_generate_attachment_metadata', array( $this, 'simulate_perfect_images_files' ), 10, 2 );
+		$attachment_id = $this->create_exported_image( 1600, 1200 );
+		remove_filter( 'wp_generate_attachment_metadata', array( $this, 'simulate_perfect_images_files' ), 10 );
+		$medium = Sizes_Object::get_instance()->get_sizes( $attachment_id )['medium']['file'];
+
+		// restore the image as local file.
+		$this->assertTrue( Restore::get_instance()->restore_file( $attachment_id ) );
+		$file = get_attached_file( $attachment_id );
+		$this->assertIsString( $file );
+		$this->assertFileExists( $file );
+
+		// the files of the plugin are local files beside the medium size again.
+		$directory = trailingslashit( dirname( $file ) );
+		$this->assertFileExists( $directory . pathinfo( $medium, PATHINFO_FILENAME ) . '@2x.jpg' );
+		$this->assertFileExists( $directory . $medium . '.webp' );
+	}
+
+	/**
+	 * Create the sizes again like the plugin "Regenerate Thumbnails": from the original image, if it exists.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 *
+	 * @return mixed
+	 */
+	public function simulate_regenerate_thumbnails( WP_REST_Request $request ): mixed {
+		++$this->regenerate_thumbnails_calls;
+		$attachment_id = absint( $request->get_param( 'id' ) );
+		$file          = wp_get_original_image_path( $attachment_id );
+		if ( false === $file || ! file_exists( $file ) ) {
+			return new WP_Error( 'regenerate_thumbnails_regenerator_file_not_found', 'The fullsize image file cannot be found.', array( 'status' => 404 ) );
+		}
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $file );
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		return $metadata;
+	}
+
+	/**
+	 * Test that "Regenerate Thumbnails" does not create sizes of imported files on their external source, but of
+	 * exported images with their local files.
+	 *
+	 * @return void
+	 */
+	public function test_regenerate_thumbnails(): void {
+		rest_get_server();
+		register_rest_route(
+			'regenerate-thumbnails/v1',
+			'/regenerate/(?P<id>[\d]+)',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => '__return_true',
+				'callback'            => array( $this, 'simulate_regenerate_thumbnails' ),
+			)
+		);
+
+		// an external file without local files gets the hint, the plugin does not work with its URL.
+		$this->regenerate_thumbnails_calls = 0;
+		$response                          = rest_do_request( new WP_REST_Request( 'POST', '/regenerate-thumbnails/v1/regenerate/' . $this->create_image_without_local_files() ) );
+		$this->assertTrue( $response->is_error() );
+		$this->assertEquals( 400, $response->get_status() );
+		$this->assertSame( 'efml_external_file_without_local_files', $response->as_error()->get_error_code() );
+		$this->assertSame( 0, $this->regenerate_thumbnails_calls );
+
+		// the sizes of an exported image are created again and exported.
+		$exported_id = $this->create_exported_image( 1600, 1200 );
+		add_image_size( 'efml-test', 500, 500, true );
+		$response = rest_do_request( new WP_REST_Request( 'POST', '/regenerate-thumbnails/v1/regenerate/' . $exported_id ) );
+		Local_Work_Object::get_instance()->close_all();
+		$this->assertFalse( $response->is_error() );
+		$this->assertArrayHasKey( 'efml-test', Sizes_Object::get_instance()->get_sizes( $exported_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $exported_id ) );
+	}
+
+	/**
+	 * Test that "Force Regenerate Thumbnails" skips imported files and finds the local files of exported images.
+	 *
+	 * @return void
+	 */
+	public function test_force_regenerate_thumbnails(): void {
+		// external files without local files are skipped.
+		$this->assertTrue( apply_filters( 'regenerate_thumbs_skip_image', false, $this->create_image_without_local_files() ) );
+
+		// the plugin finds the local file of an exported image.
+		$attachment_id = $this->create_exported_image( 1600, 1200 );
+		$this->assertFalse( apply_filters( 'regenerate_thumbs_skip_image', false, $attachment_id ) );
+		$file = get_attached_file( $attachment_id );
+		$this->assertIsString( $file );
+		$this->assertFileExists( $file );
+		$this->assertNotFalse( realpath( $file ) );
+
+		// create the sizes again like the plugin and export them.
+		add_image_size( 'efml-test', 500, 500, true );
+		$original = wp_get_original_image_path( $attachment_id, true );
+		$this->assertIsString( $original );
+		$this->assertFileExists( $original );
+		$metadata = wp_generate_attachment_metadata( $attachment_id, $original );
+		wp_update_attachment_metadata( $attachment_id, $metadata );
+		Local_Work_Object::get_instance()->close_all();
+		$this->assertArrayHasKey( 'efml-test', Sizes_Object::get_instance()->get_sizes( $attachment_id ) );
+		$this->assertEmpty( $this->get_local_files_of( $attachment_id ) );
 	}
 }
