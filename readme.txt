@@ -1,6 +1,6 @@
 === External files in Media Library ===
 Contributors: threadi
-Tags: external files, media library, media, embed
+Tags: offload, external files, media library, cloud storage, embed
 Requires at least: 6.2
 Tested up to: 7.2
 Requires PHP: 8.2
@@ -9,15 +9,19 @@ License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: @@VersionNumber@@
 
-Add external files to your media library to use them in your website. They are integrated as if they were available locally.
+Connect, import, synchronize and offload your media to virtually any external storage: cloud storage, FTP, WebDAV or other WordPress sites.
 
 == Description ==
+
+**The complete external media management solution for WordPress.**
+
+Connect, import, synchronize and offload your media to virtually any external storage. Integrate files from cloud storage, FTP servers, WebDAV and other WordPress installations directly into your media library – they are used as if they were stored locally.
 
 Add one or more files with their URLs under Media > "Add New Media File". You can use these external files anywhere the media library is used.
 
 [youtube https://www.youtube.com/watch?v=abBPWvp1Luk]
 
-== Feature ==
+== Features ==
 
 Embed your files from _AWS S3_, _DropBox_, _Google Drive_, _Google Cloud Storage_, _FTP_, _your local hosting_, another website in your _multisite_, other _WordPress REST APIs_, _YouTube_ or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
 
@@ -48,7 +52,7 @@ See [what is possible](https://github.com/threadi/external-files-in-media-librar
 
 ✅ **Image optimizers:** Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media and Modern Image Formats – optimized files and their WebP and AVIF variants are exported, too.
 ✅ **Folders and galleries:** sort, import and synchronize external files with plugins like Filebird, Folders, Real Media Library Lite or NextGen Gallery.
-✅ **Media tools:** Media Cleaner, Media File Renamer, Image Watermark and Media Bulk Download.
+✅ **Media tools:** Media Cleaner, Media File Renamer, Image Watermark, Media Bulk Download, Perfect Images (WP Retina 2x), Regenerate Thumbnails and Force Regenerate Thumbnails.
 ✅ **WooCommerce:** use external URLs in the product import via CSV (also with access data, e.g. for FTP) and external files as downloads.
 ✅ **More:** Instant Images (Unsplash, Pexels and GIPHY as external files), Polylang, Network Media Library, Download Lists with Icons, Document Embedder and Prevent Files / Folders Access.
 
@@ -60,13 +64,11 @@ You can manage your external files with REST API requests as documented [here](h
 
 == Mass-Import ==
 
-Import complete directories from any supported source: your local hosting, FTP, FTPS, SFTP, Dropbox and, via service plugins, AWS S3 and S3-compatible storages, Google Cloud Storage, Google Drive and WebDAV. Browse to the directory in the plugin or simply enter its path or URL.
+Import complete directories from any supported source: your local hosting, FTP, FTPS, SFTP, Dropbox and, via service plugins, AWS S3 and S3-compatible storages, Google Cloud Storage, Google Drive and WebDAV. Browse to the directory in the plugin or simply enter its path or URL (see [supported protocols](https://github.com/threadi/external-files-in-media-library/blob/master/docs/protocols.md)).
 
 Directories with thousands of files are imported in the background, with the progress shown in the admin bar. Files that are already in your media library are skipped. For scripted imports, use [WP CLI](https://github.com/threadi/external-files-in-media-library/blob/master/docs/cli.md).
 
 You can also import lists of URLs from CSV and XML files, the videos of a YouTube channel, and the contents of ZIP files.
-
-Browse to the directory in the plugin or simply enter its path or URL (see [supported protocols](https://github.com/threadi/external-files-in-media-library/blob/master/docs/protocols.md)).
 
 See [import of directories](https://github.com/threadi/external-files-in-media-library/blob/master/docs/import/directories.md) for details.
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       External files in Media Library
- * Description:       Enables the Media Library to use external files.
+ * Description:       The complete external media management solution for WordPress.
  * Requires at least: 6.2
  * Requires PHP:      8.2
  * Version:           @@VersionNumber@@

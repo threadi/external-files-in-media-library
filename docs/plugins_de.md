@@ -131,6 +131,29 @@ in Media Cleaner, wird sie auch auf ihren externen Quellen gelöscht.
 Media File Renamer kann auch exportierte Bilder umbenennen (auch Pro): Ihre Dateien werden vorher geladen, die
 umbenannten Dateien danach exportiert. Der Proxy findet das Bild weiterhin auch über seinen früheren Namen.
 
+### Perfect Images (früher WP Retina 2x)
+
+Seine Retina-Dateien (`image-300x200@2x.jpg`) und seine WebP- und AVIF-Dateien (`image-300x200.jpg.webp`) werden
+zusammen mit dem Bild exportiert, mit ihm gelöscht und mit ihm zurückgeholt. Der Proxy liefert die WebP- und
+AVIF-Dateien an Browser aus, die sie unterstützen. Die Retina-Dateien nutzt Perfect Images nur, solange das Bild eine
+lokale Datei ist.
+
+„Regenerate“ in seinem Dashboard funktioniert auch für exportierte Bilder: Ihre Dateien werden vorher geladen, die neuen
+Größen danach exportiert. Seine anderen Funktionen für einzelne Bilder (Bild ersetzen, die optimierte Neuerstellung und
+die Neuerstellung per KI, Retina- und WebP-Dateien erstellen, löschen oder optimieren) sind für externe Dateien nicht
+möglich, da sie die Dateien direkt in ihrer externen Quelle ändern würden. Perfect Images zeigt dafür einen Hinweis.
+
+### Regenerate Thumbnails, Force Regenerate Thumbnails und Regenerate Thumbnails Advanced
+
+Alle drei erzeugen die Größen exportierter Bilder neu: Ihr Originalbild wird dafür kurz geladen, die neuen Größen werden
+exportiert und die lokalen Dateien danach entfernt (siehe [Funktionen](features_de.md)). Das gilt auch für den
+WP-CLI-Befehl von Force Regenerate Thumbnails.
+
+Dateien, die du aus einer externen Quelle importiert hast, haben keine lokalen Dateien: Ihre Größen erzeugt der Proxy.
+Regenerate Thumbnails zeigt für sie einen Hinweis, Force Regenerate Thumbnails überspringt sie und Regenerate Thumbnails
+Advanced markiert sie als ausgelagert. So werden keine Größen in ihrer externen Quelle erzeugt (z. B. in einem lokalen
+Verzeichnis) und die externe Quelle wird nicht kontaktiert (z. B. mit einer anonymen Anmeldung an einem FTP-Server).
+
 ### WP Extra File Types
 
 Dateitypen, die du über WP Extra File Types erlaubst, kannst du auch für externe Dateien nutzen.

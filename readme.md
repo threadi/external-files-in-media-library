@@ -69,24 +69,6 @@ I recommend translating this plugin in the [WordPress Translating tool](https://
 
 For manual translation I recommend to use [PoEdit](https://poedit.net/) to translate texts for this plugin.
 
-### Generate pot-file
-
-Run in the main directory:
-
-`wp i18n make-pot . languages/external-files-in-media-library.pot --exclude=svn/`
-
-### Update translation-file
-
-1. Open .po-file of the language in PoEdit.
-2. Go to "Translate" > "Update from POT-file".
-3. After this the new entries are added to the language-file.
-
-### Export translation-file
-
-1. Open .po-file of the language in PoEdit.
-2. Go to "File" > "Save".
-3. Upload the generated .mo-file and the .po-file to the plugin-folder languages/
-
 ## Check for WordPress Coding Standards
 
 ### Initialize

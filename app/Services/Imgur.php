@@ -38,6 +38,11 @@ class Imgur implements Service {
 	private function __clone() {}
 
 	/**
+	 * Define the domain to use.
+	 */
+	private const DOMAIN = 'imgur.com'; // phpcs:ignore PluginCheck.CodeAnalysis.Offloading.OffloadedContent
+
+	/**
 	 * Return instance of this object as singleton.
 	 *
 	 * @return Imgur
@@ -80,7 +85,7 @@ class Imgur implements Service {
 	 */
 	public function add_http_state( array $http_states, string $url ): array {
 		// bail if this is not an imgur-URL.
-		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, self::DOMAIN ) ) {
 			return $http_states;
 		}
 
@@ -101,7 +106,7 @@ class Imgur implements Service {
 	 */
 	public function allow_http_response_without_content_type( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, self::DOMAIN ) ) {
 			return $results;
 		}
 
@@ -119,7 +124,7 @@ class Imgur implements Service {
 	 */
 	public function force_local_saving( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, self::DOMAIN ) ) {
 			return $results;
 		}
 
@@ -137,7 +142,7 @@ class Imgur implements Service {
 	 */
 	public function check_url( bool $results, string $url ): bool {
 		// bail if this is not an imgur-URL.
-		if ( ! Helper::is_url_on_domain( $url, 'imgur.com' ) ) {
+		if ( ! Helper::is_url_on_domain( $url, self::DOMAIN ) ) {
 			return $results;
 		}
 

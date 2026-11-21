@@ -61,7 +61,7 @@ class Ftp extends Protocol_Base {
 		// PHP stops FTP connections with an error, if the timeout is not greater than 0: use 30 seconds like WordPress then.
 		if ( ! defined( 'FS_CONNECT_TIMEOUT' ) ) {
 			$timeout = absint( get_option( 'eml_timeout' ) );
-			define( 'FS_CONNECT_TIMEOUT', $timeout > 0 ? $timeout : 30 );
+			define( 'FS_CONNECT_TIMEOUT', $timeout > 0 ? $timeout : 30 ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WP core constant required by WP_Filesystem_FTPext.
 		}
 
 		// load necessary classes.
