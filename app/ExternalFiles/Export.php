@@ -3805,7 +3805,7 @@ class Export extends Tools_Base {
 		}
 
 		// get the IDs.
-		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT p.`ID` FROM %i p WHERE ' . $query['where'] . ' AND p.`ID` > %d ORDER BY p.`ID` ASC LIMIT %d', array_merge( array( $wpdb->posts ), $query['args'], array( $after_id, max( 1, $limit ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$ids = $wpdb->get_col( $wpdb->prepare( 'SELECT p.`ID` FROM %i p WHERE ' . $query['where'] . ' AND p.`ID` > %d ORDER BY p.`ID` ASC LIMIT %d', array_merge( array( $wpdb->posts ), $query['args'], array( $after_id, max( 1, $limit ) ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Only static placeholders, all values passed via prepare().
 
 		// return them as integers.
 		return array_map( 'absint', $ids );
@@ -3830,7 +3830,7 @@ class Export extends Tools_Base {
 		}
 
 		// return the number.
-		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i p WHERE ' . $query['where'], array_merge( array( $wpdb->posts ), $query['args'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		return absint( $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i p WHERE ' . $query['where'], array_merge( array( $wpdb->posts ), $query['args'] ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Only static placeholders, all values passed via prepare().
 	}
 
 	/**

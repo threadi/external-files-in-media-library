@@ -808,7 +808,7 @@ class Queue extends Extension_Base {
 		}
 
 		// return the entries.
-		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i WHERE ' . implode( ' AND ', $where ) . ' ORDER BY `time` DESC, `id` DESC' . $limit, $args ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+		return Helper::get_db_results( $wpdb->get_results( $wpdb->prepare( 'SELECT `id`, `time` AS `date`, `url`, `fields`, `state`, `type`, `attachment_id`, `attempts`, `run_id` FROM %i WHERE ' . implode( ' AND ', $where ) . ' ORDER BY `time` DESC, `id` DESC' . $limit, $args ), ARRAY_A ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Only static placeholders, all values passed via prepare().
 	}
 
 	/**

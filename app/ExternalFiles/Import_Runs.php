@@ -1652,7 +1652,7 @@ class Import_Runs {
 				update_post_meta( $attachment_id, 'efml_export_queued', time() );
 				delete_post_meta( $attachment_id, 'efml_export_failed' );
 			}
-			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (`time`, `url`, `url_hash`, `fields`, `state`, `options`, `type`, `attachment_id`, `attempts`, `run_id`) VALUES ' . implode( ', ', $values ), $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (`time`, `url`, `url_hash`, `fields`, `state`, `options`, `type`, `attachment_id`, `attempts`, `run_id`) VALUES ' . implode( ', ', $values ), $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 		}
 
 		// return the count of new entries.
@@ -1739,7 +1739,7 @@ class Import_Runs {
 
 		// get the hashes, which are already in the queue for this run.
 		$placeholders = implode( ',', array_fill( 0, count( $entries ), '%s' ) );
-		$existing     = $wpdb->get_col( $wpdb->prepare( 'SELECT `url_hash` FROM %i WHERE `run_id` = %d AND `url_hash` IN (' . $placeholders . ')', array_merge( array( $this->get_queue_table_name(), $run_id ), array_keys( $entries ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+		$existing     = $wpdb->get_col( $wpdb->prepare( 'SELECT `url_hash` FROM %i WHERE `run_id` = %d AND `url_hash` IN (' . $placeholders . ')', array_merge( array( $this->get_queue_table_name(), $run_id ), array_keys( $entries ) ) ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Only static placeholders, all values passed via prepare().
 		foreach ( $existing as $hash ) {
 			unset( $entries[ $hash ] );
 		}
@@ -1758,7 +1758,7 @@ class Import_Runs {
 				$values[] = '(%s, %s, %s, %s, %s, %s, %s, %d)';
 				array_push( $args, $time, $url, $hash, '', 'new', '', 'import', $run_id );
 			}
-			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (`time`, `url`, `url_hash`, `fields`, `state`, `options`, `type`, `run_id`) VALUES ' . implode( ', ', $values ), $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			$wpdb->query( $wpdb->prepare( 'INSERT INTO %i (`time`, `url`, `url_hash`, `fields`, `state`, `options`, `type`, `run_id`) VALUES ' . implode( ', ', $values ), $args ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- Only static placeholders, all values passed via prepare().
 		}
 
 		// return the count of new entries.
