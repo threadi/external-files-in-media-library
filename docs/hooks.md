@@ -4744,6 +4744,25 @@ Version | Description
 
 Source: [app/ExternalFiles/Files.php](ExternalFiles/Files.php), [line 679](ExternalFiles/Files.php#L679-L687)
 
+### `efml_source_platform_url`
+
+*Filter the URL of the platform of an external source (e.g. the website of DropBox).*
+
+**Arguments**
+
+Argument | Type | Description
+-------- | ---- | -----------
+`$platform_url` | `string` | The URL (empty, if not available).
+`$term` | `\WP_Term` | The external source.
+
+**Changelog**
+
+Version | Description
+------- | -----------
+`6.1.0` | Available since 6.1.0.
+
+Source: [app/Plugin/Admin/Directory_Listing.php](Plugin/Admin/Directory_Listing.php), [line 1089](Plugin/Admin/Directory_Listing.php#L1089-L1096)
+
 ### `efml_files_check_content_type`
 
 **Arguments**

@@ -3290,7 +3290,7 @@ class Export extends Tools_Base {
 			return $actions;
 		}
 
-		// bail if the file waits for its export or its export has failed: it gets the action "Export again" instead.
+		// bail if the file waits for its export or its export has failed: it gets the action "Export now" instead.
 		if ( '' !== $this->get_export_state( $post->ID ) ) {
 			return $actions;
 		}

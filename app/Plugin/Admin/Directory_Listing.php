@@ -108,6 +108,7 @@ class Directory_Listing {
 		add_action( 'efml_directory_listing_added', array( $this, 'add_user_mark' ) );
 		add_action( 'efml_directory_listing_added', array( $this, 'add_date' ) );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_option_to_set_name' ), 10, 2 );
+		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_platform_action' ), 10, 2 );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'add_directory_listing_plugins' ) );
 		add_filter( 'efml_directory_listing_objects', array( $this, 'sort_list' ), 100 );
 		add_filter( 'efml_directory_listing_term_allowed', array( $this, 'is_term_allowed_in_listing' ), 10, 2 );
@@ -1067,6 +1068,43 @@ class Directory_Listing {
 		$new_actions['rename'] = '<a href="#" class="easy-dialog-for-wordpress" data-dialog="' . esc_attr( Helper::get_json( $dialog ) ) . '">' . __( 'Rename', 'external-files-in-media-library' ) . '</a>';
 
 		// return list of actions.
+		return $new_actions;
+	}
+
+	/**
+	 * Add the link to the platform of the service (e.g. the website of DropBox) to the actions of an external source.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param array<string,string> $new_actions The list of actions.
+	 * @param WP_Term              $term        The external source.
+	 *
+	 * @return array<string,string>
+	 */
+	public function add_platform_action( array $new_actions, WP_Term $term ): array {
+		// get the service of this external source.
+		$service_obj  = Services::get_instance()->get_service_by_name( (string) get_term_meta( $term->term_id, 'type', true ) );
+		$platform_url = $service_obj instanceof \ExternalFilesInMediaLibrary\Services\Service_Base ? $service_obj->get_platform_url() : '';
+
+		/**
+		 * Filter the URL of the platform of an external source (e.g. the website of DropBox).
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param string $platform_url The URL (empty, if not available).
+		 * @param WP_Term $term The external source.
+		 */
+		$platform_url = (string) apply_filters( 'efml_source_platform_url', $platform_url, $term );
+
+		// bail if no URL is available.
+		if ( '' === $platform_url || ! $service_obj ) {
+			return $new_actions;
+		}
+
+		// add the action.
+		/* translators: %1$s will be replaced by the name of the platform (e.g. DropBox). */
+		$new_actions['platform'] = '<a href="' . esc_url( $platform_url ) . '" target="_blank">' . esc_html( sprintf( __( 'Go to %1$s', 'external-files-in-media-library' ), $service_obj->get_label() ) ) . '</a>';
+
+		// return the list of actions.
 		return $new_actions;
 	}
 

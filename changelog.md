@@ -17,6 +17,7 @@
 - Added settings for uploads of deleted websites
 - Added use of existing files for uploads with the same content
 - Added linking of local files with files of the same content during the synchronization
+- Added link to the platform of the service in the list of external sources
 - Added choice of the availability during the upload
 - Added roles per website, which could choose the availability of files
 - Added filter for own uploads and files of the central media library
@@ -35,6 +36,7 @@
 
 ### Changed
 
+- Renamed "Export again" to "Export now"
 - Faster synchronization with the central media library: daily, without HTTP downloads, unchanged files are skipped
 
 ### Fixed
