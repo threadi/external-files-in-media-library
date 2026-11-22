@@ -44,6 +44,7 @@
 - Fixed deletion of files of the central media library in the other websites
 - Fixed proxy URLs of files from other websites of a multisite
 - Fixed further bugs in multisites
+- Fixed handling of numbered nonces for Directory Listings
 
 ## [6.0.0] - 22.11.2026
 
