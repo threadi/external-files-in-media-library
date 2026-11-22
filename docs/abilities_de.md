@@ -84,6 +84,14 @@ add_filter( 'efml_abilities_mode', function() { return 'all'; } );
 | `export-file` | Eine lokale Datei in die für den Export aktivierten externen Quellen exportieren | `attachment_id` |
 | `set-export-state` | Eine externe Quelle als Exportziel aktivieren oder deaktivieren | `source_id`, `enabled` |
 
+### Zentrale Mediatheken (Multisite)
+
+| Ability | Beschreibung | Eingabe |
+|---|---|---|
+| `network-status` | Gruppen des Netzwerks mit ihrer zentralen Mediathek und dem Zustand ihrer Websites | - |
+| `network-file-usage` | Websites, die eine Datei einer zentralen Mediathek nutzen, mit der Anzahl der Inhalte | `central`, `attachment_id` |
+| `network-set-visibility` | Ändern, welche Websites eine Datei einer zentralen Mediathek nutzen dürfen | `central`, `attachment_id`, `mode`, `sites` |
+
 ## Berechtigungen
 
 Jede Ability prüft die Berechtigungen, die auch im Backend verwendet werden:
@@ -93,6 +101,7 @@ Jede Ability prüft die Berechtigungen, die auch im Backend verwendet werden:
 * `sync-source` und `delete-synced-files` erfordern die Berechtigung für die Synchronisation.
 * `export-file` und `set-export-state` erfordern die Berechtigung für den Export.
 * `add-source` und `delete-source` erfordern die Berechtigungen zum Verwalten bzw. Löschen externer Quellen.
+* `network-status` erfordert `manage_network_options`, `network-file-usage` und `network-set-visibility` erfordern dies oder das Recht, die Datei in der zentralen Mediathek zu bearbeiten. Sie gibt es nur, wenn eine zentrale Mediathek genutzt wird (siehe [Multisite](multisite_de.md)).
 * `import` mit `real_import` erfordert die Berechtigung für den echten Import.
 * `delete` prüft, ob der Benutzer den Anhang löschen darf, `export-file`, `switch-to-local`, `switch-to-external`, `reset-thumbnails` und `check-availability` (für eine einzelne Datei), ob er ihn bearbeiten darf.
 * Benutzer auf der Liste „Zugriff für diese Benutzer verhindern“ können keine Ability nutzen.

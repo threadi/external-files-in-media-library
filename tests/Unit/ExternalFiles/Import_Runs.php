@@ -15,6 +15,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Results;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use WP_Admin_Bar;
 
 /**
@@ -23,6 +24,8 @@ use WP_Admin_Bar;
  * The tests use local directories, as their protocol supports file lists.
  */
 class Import_Runs extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * The local directory with the files.
 	 *
@@ -375,11 +378,14 @@ class Import_Runs extends externalFilesTests {
 	 * Test the synchronization of a directory via run: changed files are updated and files, which do not exist
 	 * anymore, are deleted.
 	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
 	 * @return void
 	 */
-	public function test_synchronization(): void {
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 0 );
+	public function test_synchronization( string $request ): void {
+		$this->enable_synchronization();
 
 		$urls    = $this->add_files( 4 );
 		$url     = 'file://' . $this->directory;
@@ -387,7 +393,7 @@ class Import_Runs extends externalFilesTests {
 		$sync    = Synchronization::get_instance();
 
 		// first synchronization imports all files.
-		$sync->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id );
+		$this->run_sync( $request, $url, $term_id );
 		$this->assert_imported( $urls );
 		$this->assertFalse( $sync->is_running() );
 
@@ -395,16 +401,13 @@ class Import_Runs extends externalFilesTests {
 		$count = $this->get_media_file_count();
 		wp_delete_file( Helper::get_local_path_from_url( $urls[0] ) );
 		$completed = did_action( 'efml_sync_completed' );
-		$sync->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id );
+		$this->run_sync( $request, $url, $term_id );
 
 		$this->assertFalse( Files::get_instance()->get_file_by_url( $urls[0] ) );
 		$this->assert_imported( array_slice( $urls, 1 ) );
 		$this->assertSame( $count - 1, $this->get_media_file_count() );
 		$this->assertSame( $completed + 1, did_action( 'efml_sync_completed' ) );
 		$this->assertFalse( $sync->is_running() );
-
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 1 );
 	}
 
 	/**
@@ -413,8 +416,7 @@ class Import_Runs extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_synchronization_in_background(): void {
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 0 );
+		$this->enable_synchronization();
 
 		$urls    = $this->add_files( 4 );
 		$url     = 'file://' . $this->directory;
@@ -444,9 +446,6 @@ class Import_Runs extends externalFilesTests {
 		$this->assert_imported( array_slice( $urls, 1 ) );
 		$this->assertSame( $count - 1, $this->get_media_file_count() );
 		$this->assertFalse( $sync->is_running() );
-
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 1 );
 	}
 
 	/**
@@ -455,8 +454,7 @@ class Import_Runs extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_synchronization_with_listing_error(): void {
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 0 );
+		$this->enable_synchronization();
 
 		$urls    = $this->add_files( 4 );
 		$url     = 'file://' . $this->directory;
@@ -478,9 +476,6 @@ class Import_Runs extends externalFilesTests {
 		$this->assertSame( $count, $this->get_media_file_count() );
 		$this->assert_imported( $urls );
 		$this->assertSame( '1', $this->get_runs()[1]['listing_failed'] );
-
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 1 );
 	}
 }
 

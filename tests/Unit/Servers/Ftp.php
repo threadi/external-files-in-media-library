@@ -17,6 +17,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use ExternalFilesInMediaLibrary\Tests\ManyFilesTrait;
 use ExternalFilesInMediaLibrary\Tests\StreamWrapperSpy;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
@@ -24,6 +25,7 @@ use ExternalFilesInMediaLibrary\Tests\TestServers;
  */
 class Ftp extends externalFilesTests {
 	use ManyFilesTrait;
+	use SynchronizationTrait;
 
 	/**
 	 * The name of the used test server.
@@ -272,22 +274,24 @@ class Ftp extends externalFilesTests {
 	/**
 	 * Test the synchronization of an external FTP source: new files are imported, deleted files removed.
 	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
 	 * @return void
 	 */
-	public function test_synchronization(): void {
+	public function test_synchronization( string $request ): void {
 		$server    = $this->get_server();
 		$directory = TestServers::create_directory( $server );
 		$url       = TestServers::get_url( $server, $directory );
-
-		// remove synchronized files, which are no longer on the server.
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->enable_synchronization();
 
 		// create the external source.
 		$term_id = Taxonomy::get_instance()->add( 'ftp', $url, TestServers::get_fields( $server ) );
 		$this->assertGreaterThan( 0, $term_id );
 
 		// first synchronization: the files are imported.
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 		$red = Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' );
 		$this->assertInstanceOf( File::class, $red );
 		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
@@ -298,13 +302,11 @@ class Ftp extends externalFilesTests {
 		copy( trailingslashit( TESTS_PLUGIN_DIR ) . 'tests/Data/ftp/subdirectory/example-grey.jpg', $server['root'] . $directory . 'example-grey.jpg' );
 
 		// second synchronization.
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 
 		// the unchanged file is still the same attachment, the deleted file is removed, the new one imported.
 		$this->assertSame( $red_id, Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' )->get_id() );
 		$this->assertFalse( Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
 		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-grey.jpg' ) );
-
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
 	}
 }

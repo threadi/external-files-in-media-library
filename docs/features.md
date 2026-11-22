@@ -73,6 +73,13 @@ On copies of your website (e.g. a staging website), files are not exported to or
 * In the backend: a hint appears on a copy, with the choice to use it as main website
 * Documentation: [WP CLI](cli.md) (`wp eml site`)
 
+### … use one media library for all websites of a multisite
+
+Choose a website of the network as central media library, also several ones in groups: uploads of the websites are saved there, the websites use its files. Deletions, new files and changes of caption and alternative text arrive in all websites. You decide which websites could use a file and which websites could delete files.
+
+* In the backend: network administration → Settings → "External files"
+* Documentation: [Multisite](multisite.md)
+
 ### … automate tasks
 
 * [WP CLI](cli.md) for imports, synchronizations and maintenance

@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
+use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Services\Multisite;
 use WP_Filesystem_Base;
 use WP_Post;
@@ -174,12 +175,73 @@ class Protocol extends Protocol_Base {
 	 * @return bool|string
 	 */
 	public function get_temp_file( string $url, WP_Filesystem_Base $filesystem ): bool|string {
+		// use a copy of the local file of the website, if the URL is a file of a website in this network.
+		$tmp_file = $this->get_local_temp_file( $url );
+		if ( is_string( $tmp_file ) ) {
+			return $tmp_file;
+		}
+
 		// get the HTTP protocol handler.
 		$http_protocol_handler = new Http( $url );
 		$http_protocol_handler->set_fields( $this->get_fields() );
 
 		// return the results from the HTTP handler.
 		return $http_protocol_handler->get_temp_file( $url, $filesystem );
+	}
+
+	/**
+	 * Return a temporary copy of the local file of the given URL of a website in this network (false if it is none).
+	 *
+	 * The websites of a network use the same server: the file is copied instead of loaded via HTTP.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return false|string
+	 */
+	private function get_local_temp_file( string $url ): false|string {
+		// bail if the temporary file should not be saved (the HTTP handler logs this).
+		/** This filter is documented in app/ExternalFiles/Protocols/Http.php */
+		if ( ! apply_filters( 'efml_save_temp_file', true, $url ) ) {
+			return false;
+		}
+
+		// get the website of the URL: the longest matching address (an address could be the beginning of another one).
+		$blog_id = 0;
+		$address = '';
+		foreach ( Helper::get_blogs() as $website ) {
+			$blog_address = (string) get_blogaddress_by_id( absint( $website->blog_id ) ); // @phpstan-ignore property.notFound
+			if ( strlen( $blog_address ) > strlen( $address ) && str_starts_with( $url, $blog_address ) ) {
+				$blog_id = absint( $website->blog_id ); // @phpstan-ignore property.notFound
+				$address = $blog_address;
+			}
+		}
+
+		// bail if it is no website of this network or if the actual user is not allowed to access it.
+		if ( 0 === $blog_id || ! Multisite::get_instance()->is_blog_allowed( $blog_id ) ) {
+			return false;
+		}
+
+		// get the upload directory of the website.
+		switch_to_blog( $blog_id );
+		$upload_dir = wp_get_upload_dir();
+		restore_current_blog();
+
+		// get the local file: it must be in the upload directory of the website.
+		$path      = realpath( ABSPATH . rawurldecode( (string) wp_parse_url( substr( $url, strlen( $address ) ), PHP_URL_PATH ) ) );
+		$base_path = realpath( (string) $upload_dir['basedir'] );
+		if ( ! is_string( $path ) || ! is_string( $base_path ) || ! str_starts_with( $path, trailingslashit( $base_path ) ) || ! is_file( $path ) ) {
+			return false;
+		}
+
+		// copy it to a temporary file.
+		$tmp_file = wp_tempnam( basename( $path ) );
+		if ( ! copy( $path, $tmp_file ) ) {
+			wp_delete_file( $tmp_file );
+			return false;
+		}
+
+		// return the temporary file.
+		return $tmp_file;
 	}
 
 	/**
@@ -202,7 +264,8 @@ class Protocol extends Protocol_Base {
 	 * @return bool
 	 */
 	public function can_change_hosting(): bool {
-		return false;
+		// only a website, which leaves its group, could save the files of the central media library locally.
+		return \ExternalFilesInMediaLibrary\Plugin\Network\Membership::get_instance()->is_making_local();
 	}
 
 	/**

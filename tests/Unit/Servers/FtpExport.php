@@ -41,6 +41,13 @@ class FtpExport extends externalFilesTests {
 	private int $term_id = 0;
 
 	/**
+	 * Temporary files of the test, which are deleted after it (e.g. the large video with 90 MB).
+	 *
+	 * @var array<int,string>
+	 */
+	private array $temp_files = array();
+
+	/**
 	 * Prepare each test: an FTP directory as external source with enabled export.
 	 *
 	 * @return void
@@ -59,6 +66,7 @@ class FtpExport extends externalFilesTests {
 		add_action( 'delete_attachment', array( Export::get_instance(), 'delete_exported_file' ) );
 		add_filter( 'wp_update_attachment_metadata', array( Export::get_instance(), 'update_attachment_metadata' ), 10, 2 );
 		add_action( 'efml_before_sync', array( Export::get_instance(), 'add_sync_filter' ), 10, 3 );
+		add_action( 'efml_after_sync', array( Export::get_instance(), 'remove_sync_filter' ), 10, 0 );
 		add_action( 'pre_delete_term', array( Export::get_instance(), 'on_delete_archive_term' ), 10, 2 );
 	}
 
@@ -73,7 +81,18 @@ class FtpExport extends externalFilesTests {
 		remove_filter( 'wp_update_attachment_metadata', array( Export::get_instance(), 'update_attachment_metadata' ) );
 		remove_action( 'efml_before_sync', array( Export::get_instance(), 'add_sync_filter' ) );
 		remove_action( 'pre_delete_term', array( Export::get_instance(), 'on_delete_archive_term' ) );
-		remove_filter( 'efml_external_file_infos', array( Export::get_instance(), 'prevent_sync_of_exported_file' ), 20 );
+		remove_action( 'efml_after_sync', array( Export::get_instance(), 'remove_sync_filter' ) );
+
+		// reset the marker of a synchronization, if a test stopped during one.
+		Export::get_instance()->remove_sync_filter();
+
+		// delete the temporary files.
+		foreach ( $this->temp_files as $temp_file ) {
+			if ( file_exists( $temp_file ) ) {
+				wp_delete_file( $temp_file );
+			}
+		}
+		$this->temp_files = array();
 		update_option( 'eml_export', 0 );
 		update_option( 'eml_export_main_source', 0 );
 		update_option( 'eml_export_local_files', 0 );
@@ -407,6 +426,7 @@ class FtpExport extends externalFilesTests {
 		// generate a video file with 30 MB (a unique name, as WordPress would rename it otherwise).
 		$size = 90 * MB_IN_BYTES;
 		$tmp  = trailingslashit( get_temp_dir() ) . 'large-' . strtolower( wp_generate_password( 8, false, false ) ) . '.mp4';
+		$this->temp_files[] = $tmp;
 		$file = fopen( $tmp, 'wb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen
 		$this->assertIsResource( $file );
 		// start with the header of an MP4 file, so its content matches its mime type.

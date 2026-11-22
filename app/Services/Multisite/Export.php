@@ -15,6 +15,8 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
+use ExternalFilesInMediaLibrary\Plugin\Network\Media_Library;
+use ExternalFilesInMediaLibrary\Plugin\Network\Propagation;
 use ExternalFilesInMediaLibrary\Services\Multisite;
 use WP_Post;
 
@@ -120,6 +122,12 @@ class Export extends Export_Base {
 			return false;
 		}
 
+		// use an existing file of the central media library with the same content instead of adding the file again.
+		$linked_url = $this->link_duplicate( $attachment_id, $file_path, $requested_blog_id );
+		if ( ! empty( $linked_url ) ) {
+			return $linked_url;
+		}
+
 		// get the tmp file.
 		$tmp_file = $protocol_handler->get_temp_file( $url, $wp_filesystem );
 
@@ -135,6 +143,9 @@ class Export extends Export_Base {
 		if ( 0 === $blog_id ) {
 			return false;
 		}
+
+		// get the website, from which the file is exported.
+		$origin_blog_id = get_current_blog_id();
 
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
@@ -165,8 +176,15 @@ class Export extends Export_Base {
 			'post_author' => Helper::get_current_user_id(),
 		);
 
+		// save the origin of the new file, if it is exported to the central media library.
+		Media_Library::get_instance()->set_pending_origin( $origin_blog_id, $attachment_id );
+
 		// save the temporary file in media library and get its attachment ID.
-		$new_attachment_id = media_handle_sideload( $file_array, 0, null, $post_array );
+		try {
+			$new_attachment_id = media_handle_sideload( $file_array, 0, null, $post_array );
+		} finally {
+			Media_Library::get_instance()->reset_pending_origin();
+		}
 
 		// get the file URL if no error occurred.
 		if ( is_int( $new_attachment_id ) ) {
@@ -211,6 +229,49 @@ class Export extends Export_Base {
 	}
 
 	/**
+	 * Link the given upload to an existing file of the central media library with the same content.
+	 *
+	 * Returns the URL of the existing file or an empty string, if none exists.
+	 *
+	 * @param int    $attachment_id The attachment ID of the upload in the actual website.
+	 * @param string $file_path     The path of the upload.
+	 * @param int    $blog_id       The website with the central media library.
+	 *
+	 * @return string
+	 */
+	private function link_duplicate( int $attachment_id, string $file_path, int $blog_id ): string {
+		// bail if the target is not the central media library of the actual website.
+		if ( Media_Library::get_instance()->get_central_site_id() !== $blog_id ) {
+			return '';
+		}
+
+		// get the website, from which the file is exported.
+		$origin_blog_id = get_current_blog_id();
+
+		// search the file in the central media library.
+		switch_to_blog( $blog_id );
+		$central_id = Media_Library::get_instance()->find_duplicate( $file_path, $origin_blog_id );
+		$target     = $central_id > 0 ? (string) wp_get_attachment_url( $central_id ) : '';
+		restore_current_blog();
+
+		// bail if none has been found.
+		if ( empty( $target ) ) {
+			return '';
+		}
+
+		// save the reference on the upload: it is not an own upload of this website.
+		update_post_meta( $attachment_id, 'efml_multisite_attachment_id', $central_id );
+		update_post_meta( $attachment_id, Media_Library::META_LINKED, 1 );
+		update_post_meta( $attachment_id, Media_Library::META_CENTRAL_ID, $central_id );
+
+		/* translators: %1$s will be replaced by a website title. */
+		Log::get_instance()->create( sprintf( __( 'Used an existing file with the same content in %1$s.', 'external-files-in-media-library' ), '<em>' . get_blogaddress_by_id( $blog_id ) . '</em>' ), $target, 'info', 2 );
+
+		// return the URL of the existing file.
+		return $target;
+	}
+
+	/**
 	 * Delete an exported file.
 	 *
 	 * @param string              $url           The URL to delete.
@@ -250,6 +311,17 @@ class Export extends Export_Base {
 
 			// do nothing more.
 			return false;
+		}
+
+		// do not delete the file in the central media library, if the file is deleted, as the central file has been
+		// deleted or could not be used anymore by this website.
+		if ( Propagation::get_instance()->is_running() ) {
+			return true;
+		}
+
+		// do not delete the file in the central media library, if the upload has been linked to it: it existed before.
+		if ( Media_Library::get_instance()->is_linked( $attachment_id ) ) {
+			return true;
 		}
 
 		// bail if the actual user is not allowed to access this blog.

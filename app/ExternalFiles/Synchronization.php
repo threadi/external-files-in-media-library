@@ -659,8 +659,21 @@ class Synchronization extends Tools_Base {
 			return;
 		}
 
+		/**
+		 * Filter whether the files of the external source could be listed completely during the synchronization.
+		 *
+		 * Only then files, which are not in the list, are deleted. By default, this is the case if any file has been
+		 * imported. Services, which skip unchanged files, use it to mark a complete list without imported files.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param bool $import_result True if the files could be listed completely.
+		 * @param string $url The URL of the external source.
+		 * @param int $term_id The ID of the external source.
+		 */
+		$is_complete = (bool) apply_filters( 'efml_sync_listing_complete', $import_result, $url, $term_id );
+
 		// complete the synchronization.
-		$this->complete( $url, $term_id, $import_result, $term_data );
+		$this->complete( $url, $term_id, $is_complete, $term_data );
 	}
 
 	/**
@@ -821,18 +834,29 @@ class Synchronization extends Tools_Base {
 		);
 		$result = new WP_Query( $query );
 
+		// allow the deletion of the synchronized files, which is prevented in the media library (if enabled).
+		$prevent_deletion_priority = has_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
+		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
+
 		// delete this files.
-		foreach ( $result->get_posts() as $post_id ) {
-			// get the external file object of this attachment.
-			$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
+		try {
+			foreach ( $result->get_posts() as $post_id ) {
+				// get the external file object of this attachment.
+				$external_file_obj = Files::get_instance()->get_file( absint( $post_id ) );
 
-			// bail if object could not be loaded.
-			if ( ! $external_file_obj->is_valid() ) {
-				continue;
+				// bail if object could not be loaded.
+				if ( ! $external_file_obj->is_valid() ) {
+					continue;
+				}
+
+				// delete this file.
+				$external_file_obj->delete();
 			}
-
-			// delete this file.
-			$external_file_obj->delete();
+		} finally {
+			// add the prevent-deletion again, if it was used before.
+			if ( false !== $prevent_deletion_priority ) {
+				add_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ), absint( $prevent_deletion_priority ), 2 );
+			}
 		}
 
 		// log this event.
@@ -1397,6 +1421,11 @@ class Synchronization extends Tools_Base {
 			return $actions;
 		}
 
+		// bail if the deletion of this synchronized file is allowed.
+		if ( ! $this->is_deletion_prevented( $post ) ) {
+			return $actions;
+		}
+
 		// remove the delete action.
 		unset( $actions['delete'] );
 
@@ -1436,8 +1465,37 @@ class Synchronization extends Tools_Base {
 			return $delete;
 		}
 
+		// bail if the deletion of this synchronized file is allowed.
+		if ( ! $this->is_deletion_prevented( $post ) ) {
+			return $delete;
+		}
+
 		// prevent the deletion.
 		return false;
+	}
+
+	/**
+	 * Return whether the deletion of the given synchronized file is prevented.
+	 *
+	 * @param WP_Post $post The post object of the file.
+	 *
+	 * @return bool
+	 */
+	private function is_deletion_prevented( WP_Post $post ): bool {
+		$prevent = true;
+
+		/**
+		 * Filter whether the deletion of a synchronized file in the media library is prevented.
+		 *
+		 * It is only prevented if the option "Delete synchronized files" is enabled.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param bool $prevent True to prevent the deletion.
+		 * @param WP_Post $post The attachment.
+		 *
+		 * @noinspection PhpConditionAlreadyCheckedInspection
+		 */
+		return (bool) apply_filters( 'efml_sync_prevent_deletion', $prevent, $post );
 	}
 
 	/**
@@ -1475,19 +1533,29 @@ class Synchronization extends Tools_Base {
 		 */
 		do_action( 'efml_before_deleting_synced_files', $term_id );
 
-		// get the type name.
-		$type = get_term_meta( $term_id, 'type', true );
+		try {
+			// get the type name.
+			$type = get_term_meta( $term_id, 'type', true );
 
-		// get the listing object by this name.
-		$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
+			// get the listing object by this name.
+			$listing_obj = Directory_Listings::get_instance()->get_directory_listing_object_by_name( $type );
 
-		// bail if listing object could not be found.
-		if ( ! $listing_obj ) {
-			return;
+			// bail if listing object could not be found.
+			if ( ! $listing_obj ) {
+				return;
+			}
+
+			// delete them.
+			$this->delete_synced_files( $term_id );
+		} finally {
+			/**
+			 * Run tasks after the synchronized files of an external source have been deleted with it.
+			 *
+			 * @since 6.1.0 Available since 6.1.0.
+			 * @param int $term_id The used term ID.
+			 */
+			do_action( 'efml_after_deleting_synced_files', $term_id );
 		}
-
-		// delete them.
-		$this->delete_synced_files( $term_id );
 	}
 
 	/**

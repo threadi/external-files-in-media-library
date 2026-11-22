@@ -15,12 +15,15 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
  * Object to test the HTTP support with a real HTTP server (see tests/Servers/http_server.py).
  */
 class Http extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * Return the data of the test server or skip the test.
 	 *
@@ -204,19 +207,21 @@ class Http extends externalFilesTests {
 	/**
 	 * Test the synchronization of a directory listing: new files are imported, deleted files removed.
 	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
 	 * @return void
 	 */
-	public function test_synchronization(): void {
+	public function test_synchronization( string $request ): void {
 		$server    = $this->get_server();
 		$directory = TestServers::create_directory( $server );
 		$url       = $this->get_url( '/files' . $directory );
-
-		// remove synchronized files, which are no longer on the server.
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->enable_synchronization();
 
 		// create the external source and synchronize it.
 		$term_id = Taxonomy::get_instance()->add( 'http', $url, array() );
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 		$red = Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' );
 		$this->assertInstanceOf( File::class, $red );
 		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
@@ -226,13 +231,11 @@ class Http extends externalFilesTests {
 		copy( trailingslashit( TESTS_PLUGIN_DIR ) . 'tests/Data/ftp/subdirectory/example-grey.jpg', $server['root'] . $directory . 'example-grey.jpg' );
 
 		// synchronize again.
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 
 		// the unchanged file is still the same attachment, the deleted file is removed, the new one imported.
 		$this->assertSame( $red->get_id(), Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' )->get_id() );
 		$this->assertFalse( Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
 		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-grey.jpg' ) );
-
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
 	}
 }

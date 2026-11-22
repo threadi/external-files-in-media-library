@@ -73,6 +73,13 @@ Auf Kopien deiner Website (z. B. einer Staging-Website) werden keine Dateien zu 
 * Im Backend: Auf einer Kopie erscheint ein Hinweis, über den du sie auch als Hauptseite festlegen kannst
 * Dokumentation: [WP CLI](cli_de.md) (`wp eml site`)
 
+### … eine Mediathek für alle Websites einer Multisite nutzen
+
+Wähle eine Website des Netzwerks als zentrale Mediathek, auch mehrere in Gruppen: Uploads der Websites werden dort gespeichert, die Websites nutzen ihre Dateien. Löschungen, neue Dateien und Änderungen an Beschriftung und Alternativtext kommen in allen Websites an. Du legst fest, welche Websites eine Datei nutzen und welche Websites Dateien löschen dürfen.
+
+* Im Backend: Netzwerkverwaltung → Einstellungen → „External files“
+* Dokumentation: [Multisite](multisite_de.md)
+
 ### … Aufgaben automatisieren
 
 * [WP CLI](cli_de.md) für Importe, Synchronisierungen und Wartung

@@ -8,11 +8,13 @@
 namespace ExternalFilesInMediaLibrary\Tests\Unit\ExternalFiles;
 
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 
 /**
  * Object to test functions in class ExternalFilesInMediaLibrary\ExternalFiles\Synchronization.
  */
 class Synchronization extends externalFilesTests {
+	use SynchronizationTrait;
 
 	/**
 	 * Test if the synchronized files of an external source are not deleted, if the external source
@@ -21,9 +23,8 @@ class Synchronization extends externalFilesTests {
 	 * @return void
 	 */
 	public function test_sync_does_not_delete_files_if_source_is_not_readable(): void {
-		// enable the deletion of unused files after each sync and allow the deletion of synchronized files.
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 0 );
+		// use the synchronization with the settings of a new installation (unused files are deleted).
+		$this->enable_synchronization();
 
 		// create the external source with a URL, which is not readable.
 		$url     = self::get_faulty_test_file( 'pdf', 'http' );
@@ -44,10 +45,6 @@ class Synchronization extends externalFilesTests {
 		// the file must still exist.
 		$this->assertInstanceOf( \WP_Post::class, get_post( $attachment_id ) );
 		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( self::get_test_file( 'pdf', 'http' ) ) );
-
-		// reset the settings.
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 1 );
 	}
 
 	/**

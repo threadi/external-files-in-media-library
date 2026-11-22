@@ -13,7 +13,9 @@ defined( 'ABSPATH' ) || exit;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
+use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Plugin\Helper;
 use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Multisite\Export;
@@ -46,6 +48,18 @@ class Multisite extends Service_Base implements Service {
 	 * @var string
 	 */
 	protected string $label = 'Multisite';
+
+	/**
+	 * Meta key on imported files: the marker of the state of the file, when it has been imported.
+	 */
+	public const META_STAMP = 'efml_multisite_stamp';
+
+	/**
+	 * External sources, whose files have been listed completely in this request.
+	 *
+	 * @var array<int,bool>
+	 */
+	private array $listed = array();
 
 	/**
 	 * Instance of actual object.
@@ -116,6 +130,8 @@ class Multisite extends Service_Base implements Service {
 		add_filter( 'efml_protocols', array( $this, 'add_protocol' ) );
 		add_filter( 'efml_filter_url_response', array( $this, 'get_multisite_files' ) );
 		add_action( 'efml_after_file_save', array( $this, 'change_service_name' ) );
+		add_action( 'efml_after_file_save', array( $this, 'save_stamp' ), 10, 2 );
+		add_filter( 'efml_sync_listing_complete', array( $this, 'is_listing_complete' ), 10, 3 );
 	}
 
 	/**
@@ -174,6 +190,9 @@ class Multisite extends Service_Base implements Service {
 			return array();
 		}
 
+		// get the actual website, which requests the listing.
+		$requesting_blog_id = get_current_blog_id();
+
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
 
@@ -219,20 +238,16 @@ class Multisite extends Service_Base implements Service {
 				continue;
 			}
 
+			// bail if the requesting website could not use this file of the central media library.
+			if ( ! $this->is_file_visible( $blog_id, $post->ID, $requesting_blog_id ) ) {
+				continue;
+			}
+
 			// get the metadata of this file.
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
-			/**
-			 * Get the file URL.
-			 *
-			 * We have an active Core bug here: https://core.trac.wordpress.org/ticket/25650,
-			 * so we cant use wp_get_attachment_url() atm.
-			 *
-			 * Our solution:
-			 * 1. get_attached_file() gives the absolute path for the file.
-			 * 2. We strip the ABSPATH and add the domain before it.
-			 */
-			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), (string) get_attached_file( $post->ID ) );
+			// get the file URL.
+			$url = $this->get_file_url( $blog_id, $post->ID );
 
 			// collect the data for this file.
 			$entry = array(
@@ -515,6 +530,9 @@ class Multisite extends Service_Base implements Service {
 			return array();
 		}
 
+		// get the actual website, which imports the files.
+		$requesting_blog_id = get_current_blog_id();
+
 		// switch to the given blog.
 		switch_to_blog( $blog_id );
 
@@ -525,6 +543,9 @@ class Multisite extends Service_Base implements Service {
 		if ( 0 === $attachments->found_posts ) {
 			// restore the current blog.
 			restore_current_blog();
+
+			// the list is complete: it is empty.
+			$this->listed[ $term_id ] = true;
 
 			// return empty array.
 			return array();
@@ -540,43 +561,45 @@ class Multisite extends Service_Base implements Service {
 				continue;
 			}
 
+			// bail if the importing website could not use this file of the central media library.
+			if ( ! $this->is_file_visible( $blog_id, $post->ID, $requesting_blog_id ) ) {
+				continue;
+			}
+
 			// get the metadata of this file.
 			$meta_data = wp_get_attachment_metadata( $post->ID );
 
-			/**
-			 * Get the file URL.
-			 *
-			 * We have an active Core bug here: https://core.trac.wordpress.org/ticket/25650,
-			 * so we cant use wp_get_attachment_url() atm.
-			 *
-			 * Our solution:
-			 * 1. get_attached_file() gives the absolute path for the file.
-			 * 2. We strip the ABSPATH and add the domain before it.
-			 */
-			$url = str_replace( ABSPATH, get_blogaddress_by_id( $blog_id ), (string) get_attached_file( $post->ID ) );
+			// get the file URL.
+			$url = $this->get_file_url( $blog_id, $post->ID );
 
-			// download the URL as tmp file.
-			$tmp_file = download_url( $url );
-
-			// bail if download was not successfully.
-			if ( ! is_string( $tmp_file ) ) {
-				// log this event.
-				Log::get_instance()->create( __( 'Could not download file for import. Error:', 'external-files-in-media-library' ) . ' <code>' . wp_json_encode( $tmp_file ) . '</code>', $url, 'error' );
-
-				// do nothing more.
-				continue;
+			// get the size of the file: from its metadata or, for older uploads without it, from the file.
+			// The file is not loaded: the import saves only the reference to it (it is not saved locally).
+			$file_size = is_array( $meta_data ) ? absint( $meta_data['filesize'] ?? 0 ) : 0; // @phpstan-ignore nullCoalesce.offset (older uploads do not have this entry)
+			$path      = (string) get_attached_file( $post->ID );
+			if ( 0 === $file_size && is_file( $path ) ) {
+				$file_size = absint( filesize( $path ) );
 			}
 
 			// collect the data for this file.
 			$entry = array(
-				'title'         => $post->post_title,
+				// the file name is the title, as the proxy uses it in the URL of the file (like for the other services).
+				'title'         => basename( $url ),
 				'local'         => false,
 				'url'           => $url,
 				'last-modified' => $post->post_modified,
-				'filesize'      => is_array( $meta_data ) ? absint( $meta_data['filesize'] ?? 0 ) : 0, // @phpstan-ignore nullCoalesce.offset (older uploads do not have this entry)
+				'filesize'      => $file_size,
 				'mime-type'     => $post->post_mime_type,
-				'tmp-file'      => $tmp_file,
+				'tmp-file'      => '',
+				// marker of the state of the file: the next synchronization skips the file, if it is unchanged.
+				'efml-stamp'    => md5( $url . '|' . $post->post_modified_gmt . '|' . $file_size ),
 			);
+
+			// add the ID and the values of a file of the central media library, so the website uses them.
+			if ( \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::get_instance()->is_central( $blog_id ) ) {
+				$entry['efml-central-id']     = $post->ID;
+				$entry['efml-central-values'] = \ExternalFilesInMediaLibrary\Plugin\Network\Metadata::get_instance()->get_values( $post->ID );
+				$entry['efml-central-hash']   = (string) get_post_meta( $post->ID, \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::META_HASH, true );
+			}
 
 			// add it to the list.
 			$listing[] = $entry;
@@ -585,8 +608,119 @@ class Multisite extends Service_Base implements Service {
 		// switch back to our blog.
 		restore_current_blog();
 
+		// the list is complete: the synchronization could delete files, which are not in it, also if all are skipped.
+		$this->listed[ $term_id ] = true;
+
+		// skip unchanged files, which exist already: they are marked as synchronized without importing them again.
+		$changed = array();
+		foreach ( $listing as $entry ) {
+			$external_file_obj = Files::get_instance()->get_file_by_url( $entry['url'] );
+			if ( $external_file_obj && $external_file_obj->is_valid() && get_post_meta( $external_file_obj->get_id(), self::META_STAMP, true ) === $entry['efml-stamp'] && Synchronization::get_instance()->is_running() ) {
+				Synchronization::get_instance()->mark_as_synced( $external_file_obj );
+				continue;
+			}
+			$changed[] = $entry;
+		}
+
+		// link the files, which the website has already as local files with the same content, instead of importing
+		// them again (e.g. if it joined its group with these files). Only for files, which it does not have yet.
+		$new     = array();
+		$present = array();
+		foreach ( $changed as $entry ) {
+			$external_file_obj = Files::get_instance()->get_file_by_url( $entry['url'] );
+			if ( $external_file_obj && $external_file_obj->is_valid() ) {
+				$present[] = $entry;
+				continue;
+			}
+			$new[] = $entry;
+		}
+		$changed = array_merge( $present, \ExternalFilesInMediaLibrary\Plugin\Network\Linking::get_instance()->link_local_files( $new, $blog_id, $term_id ) );
+
 		// return the resulting list.
-		return $listing;
+		return $changed;
+	}
+
+	/**
+	 * Save the marker of the state of an imported file, so the next synchronization could skip it, if it is unchanged.
+	 *
+	 * @param File                $external_file_obj The external file.
+	 * @param array<string,mixed> $file_data         The data of the file during the import.
+	 *
+	 * @return void
+	 */
+	public function save_stamp( File $external_file_obj, array $file_data ): void {
+		// bail if no marker is given.
+		if ( empty( $file_data['efml-stamp'] ) ) {
+			return;
+		}
+
+		// save it.
+		update_post_meta( $external_file_obj->get_id(), self::META_STAMP, (string) $file_data['efml-stamp'] );
+	}
+
+	/**
+	 * Return whether the files of the given external source of this service could be listed completely, also if all
+	 * files have been skipped as unchanged (then the import does not save any file).
+	 *
+	 * @param bool   $is_complete Whether the files could be listed completely.
+	 * @param string $url         The URL of the external source.
+	 * @param int    $term_id     The ID of the external source.
+	 *
+	 * @return bool
+	 * @noinspection PhpUnusedParameterInspection
+	 */
+	public function is_listing_complete( bool $is_complete, string $url, int $term_id ): bool {
+		// use the marker of the listing of this request.
+		if ( ! $is_complete && ! empty( $this->listed[ $term_id ] ) ) {
+			unset( $this->listed[ $term_id ] );
+			return true;
+		}
+
+		// return the given value.
+		return $is_complete;
+	}
+
+	/**
+	 * Return the URL of the given attachment of the given website, as it is used by the other websites.
+	 *
+	 * Must be called in the given website.
+	 *
+	 * We have an active Core bug here: https://core.trac.wordpress.org/ticket/25650,
+	 * so we cant use wp_get_attachment_url() atm.
+	 *
+	 * Our solution:
+	 * 1. get_attached_file() gives the absolute path for the file.
+	 * 2. We strip the ABSPATH and add the domain before it.
+	 *
+	 * @param int $blog_id       The website.
+	 * @param int $attachment_id The attachment ID.
+	 *
+	 * @return string
+	 */
+	public function get_file_url( int $blog_id, int $attachment_id ): string {
+		return str_replace( ABSPATH, (string) get_blogaddress_by_id( $blog_id ), (string) get_attached_file( $attachment_id ) );
+	}
+
+	/**
+	 * Return whether the given website could use the given file of the given website.
+	 *
+	 * Only files of the central media library of the network could be limited to some websites.
+	 * Must be called in the website of the file.
+	 *
+	 * @param int $blog_id            The website of the file.
+	 * @param int $attachment_id      The attachment ID.
+	 * @param int $requesting_blog_id The website, which wants to use the file.
+	 *
+	 * @return bool
+	 */
+	private function is_file_visible( int $blog_id, int $attachment_id, int $requesting_blog_id ): bool {
+		// all files of other websites are visible.
+		if ( ! \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::get_instance()->is_central( $blog_id ) || $blog_id === $requesting_blog_id ) {
+			return true;
+		}
+
+		// check the visibility of the file of the central media library.
+		return \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::get_instance()->is_visible_for( $attachment_id, $requesting_blog_id );
 	}
 
 	/**

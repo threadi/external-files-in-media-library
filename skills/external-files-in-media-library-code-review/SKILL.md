@@ -101,6 +101,8 @@ Files: `app/ExternalFiles/Synchronization.php`, `app/ExternalFiles/Synchronizati
 - Are files deleted only when they really vanished on the external source (no deletion after a failed listing)?
 - Does the synchronization never delete exported files or files of another external source?
 - Are schedules paused on a copy of the website?
+- Are existing files listed and updated in every request type (AJAX in the backend, cron, WP-CLI)? A file, which is skipped as "already in the media library" during a synchronization, is not marked as synchronized and deleted afterward. Search the protocols and services for `wp_doing_ajax()` and duplicate checks, which do not use `Protocol_Base::check_for_duplicate()` (it respects `efml_duplicate_check`, which the synchronization uses), and for limits of the files per request (e.g. ZIP).
+- Does the cleanup after the synchronization work with the settings of a new installation (synchronized files are protected against deletion)?
 
 ### 7. Delivery, proxy and privacy (GDPR)
 
@@ -260,6 +262,7 @@ Files: `tests/`, `phpstan.neon`, `phpcs.xml.dist`.
 
 - Does every fixed problem have a test which fails without the fix?
 - Do tests clean up (`tear_down()`, files, options, `File_Types` cache) and work in a full run, not only alone? Tests which depend on constants defined by other tests run in separate processes.
+- Do tests create the conditions of a real request (settings of a new installation, hooks registered via `init()`, AJAX in the backend, cron without user) instead of the conditions of the command line? Do synchronization tests use `tests/SynchronizationTrait.php` and synchronize at least twice with a change of the external source?
 - `composer test`, `vendor/bin/phpstan analyse`, `vendor/bin/phpcs .` without new findings.
 
 ## Known problems that came back before
@@ -272,3 +275,5 @@ Check these explicitly, they are easy to break again:
 - P15: the replacement of local URLs was inactive because an option was missing after an update.
 - P16: the deletion of local files after an export deleted the exported original on a local target; the proxy was forced for local targets although it was disabled.
 - D1–D3, B1–B3, O1–O3, R1–R2: see the analysis "Grundsatz 2" in the ToDo of the author (deletion, uploads in bulk, optimizers, renaming).
+- S1: the cleanup after a synchronization was blocked by the protection of synchronized files against deletion (enabled by default); the tests had switched the protection off.
+- S2: synchronizations of DropBox folders and ZIP files started in the backend skipped existing files (and ZIP files after the limit per request) as AJAX request, so all unchanged files were deleted afterward; the tests only ran on the command line.

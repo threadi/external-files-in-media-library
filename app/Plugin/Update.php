@@ -130,6 +130,9 @@ class Update {
 			if ( version_compare( $db_plugin_version, '6.0.0', '<' ) ) {
 				$this->version570();
 			}
+			if ( version_compare( $db_plugin_version, '6.1.0', '<' ) ) {
+				$this->version610();
+			}
 
 			// install the schedules, which are new in this version (or have been missing).
 			Schedules::get_instance()->create_schedules();
@@ -491,5 +494,26 @@ class Update {
 
 		// install the table for the import runs.
 		Import_Runs::get_instance()->install();
+	}
+
+	/**
+	 * To run on the update to version 6.1.0 or newer.
+	 *
+	 * @return void
+	 */
+	private function version610(): void {
+		// save the central media library of older versions as first group of the network.
+		if ( is_multisite() && false === get_site_option( \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::OPTION_GROUPS, false ) ) {
+			$groups = \ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::get_instance()->get_groups();
+			if ( ! empty( $groups ) ) {
+				\ExternalFilesInMediaLibrary\Plugin\Network\Media_Library::get_instance()->set_groups( $groups );
+			}
+		}
+
+		// save the origin of the files in the central media library of the network, which have been exported before.
+		// It runs once for the whole network and is continued via cron, if necessary.
+		if ( is_multisite() && ( 0 === absint( get_site_option( 'efml_network_origins_migrated', 0 ) ) || 0 === absint( get_site_option( 'efml_network_file_info_migrated', 0 ) ) ) ) {
+			\ExternalFilesInMediaLibrary\Plugin\Network\Propagation::get_instance()->run_migration( 5 );
+		}
 	}
 }

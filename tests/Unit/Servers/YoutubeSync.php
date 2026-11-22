@@ -16,6 +16,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Youtube;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 use WP_HTTP_Requests_Response;
 
@@ -23,6 +24,8 @@ use WP_HTTP_Requests_Response;
  * Object to test the synchronization of a YouTube channel.
  */
 class YoutubeSync extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * The URL of the simulated YouTube API.
 	 *
@@ -162,31 +165,35 @@ class YoutubeSync extends externalFilesTests {
 	}
 
 	/**
-	 * Test the synchronization of a YouTube channel via cron, without a user.
+	 * Test the synchronization of a YouTube channel.
+	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
 	 *
 	 * @return void
 	 */
-	public function test_synchronization_via_cron(): void {
+	public function test_synchronization( string $request ): void {
 		$this->set_videos( array( 'video000001', 'video000002' ) );
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->enable_synchronization();
 
-		// run like a scheduled synchronization: via cron, without a user.
-		wp_set_current_user( 0 );
+		// register the hooks of the service like a request with the capability of the service or via cron.
 		add_filter( 'wp_doing_cron', '__return_true' );
 		Youtube::get_instance()->init();
+		remove_filter( 'wp_doing_cron', '__return_true' );
 
 		// the external source is the channel, its URL is created like the schedule does it.
 		$term_id = Taxonomy::get_instance()->add( 'youtube', 'UCtestchannel', array() );
 		$this->assertGreaterThan( 0, $term_id );
 		$url = Youtube::get_instance()->get_url( 'UCtestchannel' );
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 
 		// the videos of the channel are imported as external files.
 		$this->assertSame( array( 'https://www.youtube.com/watch?v=video000001', 'https://www.youtube.com/watch?v=video000002' ), $this->get_videos_of_source( $term_id ) );
 
 		// a removed video is deleted with the next synchronization, a new one is imported.
 		$this->set_videos( array( 'video000002', 'video000003' ) );
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 		$this->assertSame( array( 'https://www.youtube.com/watch?v=video000002', 'https://www.youtube.com/watch?v=video000003' ), $this->get_videos_of_source( $term_id ) );
 	}
 }

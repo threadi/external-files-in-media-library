@@ -84,6 +84,14 @@ add_filter( 'efml_abilities_mode', function() { return 'all'; } );
 | `export-file` | Export a local file to the external sources which are enabled for the export | `attachment_id` |
 | `set-export-state` | Enable or disable an external source as export target | `source_id`, `enabled` |
 
+### Central media libraries (multisite)
+
+| Ability | Description | Input |
+|---|---|---|
+| `network-status` | Groups of the network with their central media library and the state of their websites | - |
+| `network-file-usage` | Websites, which use a file of a central media library, with the number of contents | `central`, `attachment_id` |
+| `network-set-visibility` | Change, which websites could use a file of a central media library | `central`, `attachment_id`, `mode`, `sites` |
+
 ## Permissions
 
 Each ability checks the capabilities which are also used in the backend:
@@ -93,6 +101,7 @@ Each ability checks the capabilities which are also used in the backend:
 * `sync-source` and `delete-synced-files` require the capability for the synchronization.
 * `export-file` and `set-export-state` require the capability for the export.
 * `add-source` and `delete-source` require the capabilities to manage and to delete external sources.
+* `network-status` requires `manage_network_options`, `network-file-usage` and `network-set-visibility` require it or the right to edit the file in the central media library. They exist only if a central media library is used (see [multisite](multisite.md)).
 * `import` with `real_import` requires the capability for the real import.
 * `delete` checks whether the user is allowed to delete the attachment, `export-file`, `switch-to-local`, `switch-to-external`, `reset-thumbnails` and `check-availability` (for a single file) whether the user is allowed to edit it.
 * Users on the list "Prevent access for these users" can not use any ability.
