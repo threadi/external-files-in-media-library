@@ -62,3 +62,4 @@ require "{$_tests_dir}/includes/bootstrap.php";
 // inherit this variable and do not install it again: the installation would delete and create all tables of WordPress,
 // while the main process is still connected to the database and waits for the separate process without any time limit.
 putenv( 'WP_TESTS_SKIP_INSTALL=1' );
+
