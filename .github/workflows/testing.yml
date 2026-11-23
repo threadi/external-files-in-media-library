@@ -42,7 +42,7 @@ jobs:
       # let the other PHP versions finish if one of them fails.
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4', '8.5']
+        php-version: ['8.2', '8.3', '8.4', '8.5', '8.6']
     services:
       database:
         # a fixed LTS version, so a new major release does not break the tests unnoticed.
