@@ -47,7 +47,6 @@ class DelayedUploads extends externalFilesTests {
 
 		// forget the file types of former tests, as attachment IDs could be used again after their rollback.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		// create the directory we use as export target and allow it as base directory for local files.
@@ -140,7 +139,6 @@ class DelayedUploads extends externalFilesTests {
 	 */
 	private function is_queued( int $attachment_id ): bool {
 		$method = new \ReflectionMethod( Queue::class, 'get_export_entry' );
-		$method->setAccessible( true );
 		return ! empty( $method->invoke( Queue::get_instance(), $attachment_id ) );
 	}
 
@@ -269,7 +267,6 @@ class DelayedUploads extends externalFilesTests {
 
 		// simulate a failed size and plan the retry.
 		$method = new \ReflectionMethod( Sizes::class, 'schedule_retry' );
-		$method->setAccessible( true );
 		$method->invoke( $sizes_obj, $attachment_id );
 		$this->assertEquals( 1, (int) get_post_meta( $attachment_id, Sizes::RETRY_META, true ) );
 		$this->assertIsInt( wp_next_scheduled( Sizes::RETRY_HOOK, array( $attachment_id ) ) );
@@ -283,7 +280,6 @@ class DelayedUploads extends externalFilesTests {
 		// after the maximum of attempts, no further attempt is planned.
 		update_post_meta( $attachment_id, Sizes::RETRY_META, 3 );
 		$property = new \ReflectionProperty( Sizes::class, 'retry_planned' );
-		$property->setAccessible( true );
 		$property->setValue( $sizes_obj, array() );
 		$method->invoke( $sizes_obj, $attachment_id );
 		$this->assertEquals( '', get_post_meta( $attachment_id, Sizes::RETRY_META, true ) );

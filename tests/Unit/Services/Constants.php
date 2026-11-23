@@ -420,7 +420,6 @@ class Constants extends externalFilesTests {
 		update_option( 'eml_ftp_credentials_vault', 'user' );
 
 		$method = new \ReflectionMethod( Ftp::get_instance(), 'get_user_settings_table' );
-		$method->setAccessible( true );
 		ob_start();
 		$method->invoke( Ftp::get_instance(), $user_id );
 		$output = (string) ob_get_clean();
@@ -460,7 +459,6 @@ class Constants extends externalFilesTests {
 		// saving another mode (e.g. via the hidden field of the settings) does not change the saved mode.
 		update_option( 'eml_ftp_credentials_vault', 'global' );
 		$method = new \ReflectionMethod( $ftp, 'get_saved_mode' );
-		$method->setAccessible( true );
 		$this->assertEquals( 'user', $method->invoke( $ftp ) );
 
 		// the setting is not editable.
@@ -483,13 +481,11 @@ class Constants extends externalFilesTests {
 	 */
 	private function remove_setting( object $settings_obj, string $name ): void {
 		$by_name = new \ReflectionProperty( $settings_obj, 'settings_by_name' );
-		$by_name->setAccessible( true );
 		$list = $by_name->getValue( $settings_obj );
 		unset( $list[ $name ] );
 		$by_name->setValue( $settings_obj, $list );
 
 		$settings = new \ReflectionProperty( $settings_obj, 'settings' );
-		$settings->setAccessible( true );
 		$settings->setValue( $settings_obj, array_values( array_filter( $settings->getValue( $settings_obj ), static fn( $setting ) => $setting->get_name() !== $name ) ) );
 	}
 

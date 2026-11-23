@@ -70,10 +70,8 @@ class MediaCleaner extends externalFilesTests {
 
 		// start with an empty cache and without a request of Media Cleaner.
 		$property = new ReflectionProperty( Local_Urls::class, 'file_cache' );
-		$property->setAccessible( true );
 		$property->setValue( Local_Urls::get_instance(), array() );
 		$property = new ReflectionProperty( \ExternalFilesInMediaLibrary\ThirdParty\MediaCleaner::class, 'is_scan' );
-		$property->setAccessible( true );
 		$property->setValue( $this->get_object(), false );
 
 		// simulate the core object of Media Cleaner.

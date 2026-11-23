@@ -66,7 +66,6 @@ class UrlList extends externalFilesTests {
 		// forget the lists of former tests: they are cached per attachment ID, which could be used again after the
 		// rollback of the database (e.g. with SQLite), and a cached list is not marked as used again.
 		$property = new \ReflectionProperty( Url_List_Base::class, 'lists' );
-		$property->setAccessible( true );
 		$property->setValue( Csv::get_instance(), array() );
 		$property->setValue( Xml::get_instance(), array() );
 

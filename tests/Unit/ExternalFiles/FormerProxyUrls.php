@@ -83,7 +83,6 @@ class FormerProxyUrls extends externalFilesTests {
 
 		// import it as real local file.
 		$method = new \ReflectionMethod( Real_Import::class, 'import_local' );
-		$method->setAccessible( true );
 		$this->assertTrue( $method->invoke( Real_Import::get_instance(), $external_file_obj ) );
 		$this->assertFalse( Files::get_instance()->get_file( $attachment_id )->is_valid() );
 

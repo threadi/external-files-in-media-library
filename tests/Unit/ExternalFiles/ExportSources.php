@@ -125,7 +125,6 @@ class ExportSources extends externalFilesTests {
 	 */
 	private function set_row_action_sources( ?array $value ): void {
 		$property = new ReflectionProperty( Export::class, 'row_action_sources' );
-		$property->setAccessible( true );
 		$property->setValue( Export::get_instance(), $value );
 	}
 
@@ -138,7 +137,6 @@ class ExportSources extends externalFilesTests {
 	 */
 	private function set_services_initialized( bool $value ): void {
 		$property = new ReflectionProperty( Services::class, 'initialized' );
-		$property->setAccessible( true );
 		$property->setValue( Services::get_instance(), $value );
 	}
 
@@ -308,7 +306,6 @@ class ExportSources extends externalFilesTests {
 	 */
 	public function test_settings_list(): void {
 		$method = new \ReflectionMethod( Export::class, 'get_external_sources_as_name_list' );
-		$method->setAccessible( true );
 
 		// the settings get all, the main external source last.
 		$all = $method->invoke( Export::get_instance(), false );

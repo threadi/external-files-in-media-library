@@ -429,7 +429,6 @@ class Export extends externalFilesTests {
 
 		// test 2: in a later request, the existing local file is not exported with its new metadata.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\Export::class, 'uploads' );
-		$property->setAccessible( true );
 		$property->setValue( $export_obj, array() );
 		$this->assertFalse( $export_obj->is_upload( $attachment_id ) );
 		$export_obj->export_file_by_upload( wp_get_attachment_metadata( $attachment_id ), $attachment_id );

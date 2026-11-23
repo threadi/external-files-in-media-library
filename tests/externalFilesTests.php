@@ -236,7 +236,6 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		// forget the file type objects of this test, as they are cached per attachment ID, which could be used again
 		// by the next test after the rollback of the database (e.g. with SQLite).
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		parent::tear_down();

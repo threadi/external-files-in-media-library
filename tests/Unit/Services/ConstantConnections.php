@@ -149,7 +149,6 @@ class ConstantConnections extends externalFilesTests {
 	 */
 	private function invoke( object $obj, string $method, array $args = array() ): mixed {
 		$reflection = new \ReflectionMethod( $obj, $method );
-		$reflection->setAccessible( true );
 		return $reflection->invokeArgs( $obj, $args );
 	}
 

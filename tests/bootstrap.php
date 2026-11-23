@@ -34,6 +34,16 @@ if ( ! file_exists( "{$_tests_dir}/includes/functions.php" ) ) {
 	exit( 1 );
 }
 
+// Tests in separate processes (@runInSeparateProcess) must not write much to STDERR: PHPUnit 9 reads it only after
+// the end of STDOUT. If the buffer of STDERR is full (about 64 KB, e.g. with many deprecation notices of a new PHP
+// version), the separate process waits for PHPUnit and PHPUnit for the separate process - endlessly. Without the
+// setting "error_log" (e.g. with the php.ini for production in GitHub Actions) PHP logs every error to STDERR.
+// PHPUnit sets "display_errors" to "stderr" in separate processes before it loads this file.
+if ( 'stderr' === ini_get( 'display_errors' ) ) {
+	ini_set( 'error_log', rtrim( sys_get_temp_dir(), '/\\' ) . '/efml-phpunit-errors.log' ); // phpcs:ignore WordPress.PHP.IniSet.Risky
+	ini_set( 'display_errors', '0' ); // phpcs:ignore WordPress.PHP.IniSet.display_errors_Disallowed
+}
+
 // Give access to tests_add_filter() function.
 require_once "{$_tests_dir}/includes/functions.php";
 

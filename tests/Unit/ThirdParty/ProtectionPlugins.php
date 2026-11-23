@@ -62,7 +62,6 @@ class ProtectionPlugins extends externalFilesTests {
 
 		// start with an empty cache.
 		$property = new ReflectionProperty( Local_Urls::class, 'file_cache' );
-		$property->setAccessible( true );
 		$property->setValue( Local_Urls::get_instance(), array() );
 	}
 

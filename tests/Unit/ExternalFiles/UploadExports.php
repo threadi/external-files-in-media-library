@@ -44,7 +44,6 @@ class UploadExports extends externalFilesTests {
 
 		// forget the file types of former tests, as attachment IDs could be used again after their rollback.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		// create the directory we use as export target and allow it as base directory for local files.
@@ -136,7 +135,6 @@ class UploadExports extends externalFilesTests {
 	 */
 	private function get_entry( int $attachment_id ): array {
 		$method = new \ReflectionMethod( Queue::class, 'get_export_entry' );
-		$method->setAccessible( true );
 		return (array) $method->invoke( Queue::get_instance(), $attachment_id );
 	}
 
