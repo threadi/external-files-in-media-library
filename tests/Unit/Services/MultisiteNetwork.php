@@ -62,6 +62,67 @@ class MultisiteNetwork extends externalFilesTests {
 	private int $site_b = 0;
 
 	/**
+	 * The IDs of the websites, which are created one time for all tests of this class.
+	 *
+	 * @var array<int,int>
+	 */
+	private static array $sites = array();
+
+	/**
+	 * Create the websites one time for all tests of this class.
+	 *
+	 * The test framework changes "CREATE TABLE" to "CREATE TEMPORARY TABLE" during a test. MySQL could not use a
+	 * temporary table twice in one query ("Can't reopen table"), but WordPress does that for the media library (e.g.
+	 * "LEFT JOIN posts AS p2" for attachments, meta queries with several conditions or the counts of terms). So the
+	 * websites would return wrong results, if they were created in each test. Here, outside a test, they get real
+	 * tables, and the transaction of each test still resets their content.
+	 *
+	 * @param \WP_UnitTest_Factory $factory The factory of the test framework.
+	 *
+	 * @return void
+	 */
+	public static function wpSetUpBeforeClass( \WP_UnitTest_Factory $factory ): void {
+		if ( ! is_multisite() ) {
+			return;
+		}
+
+		foreach ( array( 0, 1 ) as $index ) {
+			$blog_id               = absint( $factory->blog->create() );
+			self::$sites[ $index ] = $blog_id;
+
+			// install the tables of the plugin in the website, like the activation does it.
+			switch_to_blog( $blog_id );
+			\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->install();
+			\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->install();
+			\ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->install();
+			restore_current_blog();
+		}
+	}
+
+	/**
+	 * Delete the websites of this class with their tables (including the tables of the plugin).
+	 *
+	 * @return void
+	 */
+	public static function wpTearDownAfterClass(): void {
+		$add_plugin_tables = static function ( array $tables ): array {
+			global $wpdb;
+			foreach ( array( 'eml_logs', 'eml_queue', 'efml_import_runs' ) as $table ) {
+				$tables[ $table ] = $wpdb->prefix . $table;
+			}
+			return $tables;
+		};
+		add_filter( 'wpmu_drop_tables', $add_plugin_tables );
+		foreach ( self::$sites as $blog_id ) {
+			if ( get_site( $blog_id ) ) {
+				wp_delete_site( $blog_id );
+			}
+		}
+		remove_filter( 'wpmu_drop_tables', $add_plugin_tables );
+		self::$sites = array();
+	}
+
+	/**
 	 * Prepare each test.
 	 *
 	 * @return void
@@ -78,10 +139,10 @@ class MultisiteNetwork extends externalFilesTests {
 		grant_super_admin( $user_id );
 		wp_set_current_user( $user_id );
 
-		// create the websites.
+		// use the websites (see wpSetUpBeforeClass()).
 		$this->central = get_current_blog_id();
-		$this->site_a  = absint( self::factory()->blog->create() );
-		$this->site_b  = absint( self::factory()->blog->create() );
+		$this->site_a  = self::$sites[0];
+		$this->site_b  = self::$sites[1];
 
 		// answer the requests to the websites with their local files.
 		add_filter( 'pre_http_request', array( $this, 'answer_requests_to_blogs' ), 5, 3 );
@@ -91,12 +152,10 @@ class MultisiteNetwork extends externalFilesTests {
 		Multisite::get_instance()->init();
 		remove_filter( 'wp_doing_cron', '__return_true' );
 
-		// install the tables of the plugin in the websites, like the activation does it.
+		// set the settings of the plugin in the websites, like the activation does it (the tables are installed in
+		// wpSetUpBeforeClass()).
 		foreach ( array( $this->site_a, $this->site_b ) as $blog_id ) {
 			switch_to_blog( $blog_id );
-			\ExternalFilesInMediaLibrary\Plugin\Log::get_instance()->install();
-			\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue::get_instance()->install();
-			\ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs::get_instance()->install();
 			\ExternalFilesInMediaLibrary\Plugin\Settings::get_instance()->save_missing_defaults();
 			restore_current_blog();
 		}
