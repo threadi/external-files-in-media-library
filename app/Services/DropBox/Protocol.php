@@ -13,7 +13,6 @@ defined( 'ABSPATH' ) || exit;
 use Error;
 use Exception;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
-use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocol_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Http;
@@ -195,7 +194,9 @@ class Protocol extends Protocol_Base {
 			do_action( 'efml_dropbox_directory_import_file_check', $file_url );
 
 			// bail if this an AJAX-request, and the file already exist in media library.
-			if ( wp_doing_ajax() && Files::get_instance()->get_file_by_url( $file_url ) ) {
+			// The synchronization disables this check (via "efml_duplicate_check"), as it updates existing files: if they
+			// were skipped, they would not be marked as synchronized and deleted after the synchronization.
+			if ( wp_doing_ajax() && $this->check_for_duplicate( $file_url ) ) {
 				Log::get_instance()->create( __( 'The specified URL already exist in your media library.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
 				// do nothing more.

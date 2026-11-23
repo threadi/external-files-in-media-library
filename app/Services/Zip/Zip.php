@@ -358,6 +358,10 @@ class Zip extends Zip_Base {
 		// get WP Filesystem-handler.
 		$wp_filesystem = Helper::get_wp_filesystem();
 
+		// a synchronization lists all files, also existing ones and also in AJAX-requests (started in the backend):
+		// it updates existing files, and each file, which is not listed, would be deleted after the synchronization.
+		$is_sync = \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->is_running();
+
 		// loop through the files and create the list.
 		for ( $i = 0; $i < $file_count; $i++ ) {
 			// get the name.
@@ -380,12 +384,12 @@ class Zip extends Zip_Base {
 			}
 
 			// bail if this an AJAX-request and the file already exist in media library.
-			if ( wp_doing_ajax() && Files::get_instance()->get_file_by_title( basename( $name ) ) ) {
+			if ( wp_doing_ajax() && ! $is_sync && Files::get_instance()->get_file_by_title( basename( $name ) ) ) {
 				continue;
 			}
 
 			// bail if limit for loaded files has been reached and this is an AJAX-request.
-			if ( wp_doing_ajax() && $loaded_files >= max( 1, absint( get_option( 'eml_zip_import_limit', 10 ) ) ) ) {
+			if ( wp_doing_ajax() && ! $is_sync && $loaded_files >= max( 1, absint( get_option( 'eml_zip_import_limit', 10 ) ) ) ) {
 				// set marker to load more.
 				$results['load_more'] = true;
 				continue;

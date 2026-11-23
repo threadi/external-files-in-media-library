@@ -127,13 +127,18 @@ class FtpsWithoutSessionReuse extends Ftp {
 	/**
 	 * Test the synchronization: no files are imported.
 	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
 	 * @return void
 	 */
-	public function test_synchronization(): void {
+	public function test_synchronization( string $request ): void {
 		$server  = $this->get_server();
 		$url     = TestServers::get_url( $server, '/subdirectory/' );
 		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'ftp', $url, TestServers::get_fields( $server ) );
-		@\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $url, \easyDirectoryListingForWordPress\Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->enable_synchronization();
+		$this->run_sync( $request, $url, $term_id );
 		$this->assertFalse( \ExternalFilesInMediaLibrary\ExternalFiles\Files::get_instance()->get_file_by_url( $url . 'example-grey.jpg' ) );
 	}
 }

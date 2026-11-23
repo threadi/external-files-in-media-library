@@ -129,7 +129,9 @@ class Export extends Tools_Base {
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_options' ), 10, 3 );
 		add_filter( 'efml_directory_listing_column', array( $this, 'add_column_content_files' ), 10, 3 );
 		add_action( 'efml_before_sync', array( $this, 'add_sync_filter' ), 10, 3 );
+		add_action( 'efml_after_sync', array( $this, 'remove_sync_filter' ), 10, 0 );
 		add_action( 'efml_before_deleting_synced_files', array( $this, 'add_sync_filter_during_deletion' ) );
+		add_action( 'efml_after_deleting_synced_files', array( $this, 'remove_sync_filter' ), 10, 0 );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'add_export_in_directory_listing' ), 10, 2 );
 		add_filter( 'efml_directory_listing_item_actions', array( $this, 'remove_listing_delete_action' ), 10, 2 );
 		add_action( 'efml_show_file_info', array( $this, 'add_info_about_export' ) );
@@ -2181,6 +2183,19 @@ class Export extends Tools_Base {
 	}
 
 	/**
+	 * Remove the marker and the filter of the synchronization after it (or a part of it in the background) has ended.
+	 *
+	 * Otherwise, the following exports and deletions of exported files in the same request (e.g. in the queue via
+	 * cron or in WP CLI) would be skipped, as if the synchronization was still running.
+	 *
+	 * @return void
+	 */
+	public function remove_sync_filter(): void {
+		$this->sync_running = false;
+		remove_filter( 'efml_external_file_infos', array( $this, 'prevent_sync_of_exported_file' ), 20 );
+	}
+
+	/**
 	 * Mark sync as running if synced files are deleted.
 	 *
 	 * @return void
@@ -3275,7 +3290,7 @@ class Export extends Tools_Base {
 			return $actions;
 		}
 
-		// bail if the file waits for its export or its export has failed: it gets the action "Export again" instead.
+		// bail if the file waits for its export or its export has failed: it gets the action "Export now" instead.
 		if ( '' !== $this->get_export_state( $post->ID ) ) {
 			return $actions;
 		}

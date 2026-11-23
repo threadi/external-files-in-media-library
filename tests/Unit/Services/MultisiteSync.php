@@ -12,15 +12,17 @@ namespace ExternalFilesInMediaLibrary\Tests\Unit\Services;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
-use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Multisite;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use WP_HTTP_Requests_Response;
 
 /**
  * Object to test the synchronization of the media library of another website in the multisite.
  */
 class MultisiteSync extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * The ID of the other website.
 	 *
@@ -51,8 +53,6 @@ class MultisiteSync extends externalFilesTests {
 	 */
 	public function tear_down(): void {
 		remove_filter( 'pre_http_request', array( $this, 'answer_requests_to_blog' ), 5 );
-		remove_filter( 'wp_doing_cron', '__return_true' );
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
 		parent::tear_down();
 	}
 
@@ -145,34 +145,79 @@ class MultisiteSync extends externalFilesTests {
 	}
 
 	/**
-	 * Test the synchronization of another website via cron, without a user.
+	 * Test the synchronization of another website: its files are imported, a deleted file is deleted with the next
+	 * synchronization.
+	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
 	 *
 	 * @return void
 	 */
-	public function test_synchronization_via_cron(): void {
+	public function test_synchronization( string $request ): void {
 		$this->add_image_to_blog( 'example-red.jpg' );
 		$blue_id = $this->add_image_to_blog( 'example-blue.png' );
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->enable_synchronization();
 
-		// run like a scheduled synchronization: via cron, without a user.
-		wp_set_current_user( 0 );
+		// in the backend a user with access to the other website starts the synchronization.
+		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		grant_super_admin( $user_id );
+		wp_set_current_user( $user_id );
+
+		// register the hooks of the service like a request with the capability of the service or via cron.
 		add_filter( 'wp_doing_cron', '__return_true' );
 		Multisite::get_instance()->init();
+		remove_filter( 'wp_doing_cron', '__return_true' );
 
 		// the external source is the other website.
 		$url     = get_blogaddress_by_id( $this->blog_id );
 		$term_id = Taxonomy::get_instance()->add( 'multisite', $url, array( 'website' => array( 'value' => $this->blog_id ) ) );
 		$this->assertGreaterThan( 0, $term_id );
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 
 		// the files of the other website are imported.
 		$this->assertSame( array( 'example-blue.png', 'example-red.jpg' ), $this->get_files_of_source( $term_id ) );
+		$ids = $this->get_ids_of_source( $term_id );
 
-		// a file deleted on the other website is deleted with the next synchronization.
+		// a file deleted on the other website is deleted with the next synchronization, the other is kept.
 		switch_to_blog( $this->blog_id );
 		wp_delete_attachment( $blue_id, true );
 		restore_current_blog();
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 		$this->assertSame( array( 'example-red.jpg' ), $this->get_files_of_source( $term_id ) );
+
+		// the kept file is still the same attachment.
+		$kept = $this->get_ids_of_source( $term_id );
+		$this->assertCount( 1, $kept );
+		$this->assertContains( $kept[0], $ids );
+	}
+
+	/**
+	 * Return the IDs of the files assigned to the given external source.
+	 *
+	 * @param int $term_id The term ID.
+	 *
+	 * @return array<int,int>
+	 */
+	private function get_ids_of_source( int $term_id ): array {
+		$ids = array_map(
+			'absint',
+			get_posts(
+				array(
+					'post_type'   => 'attachment',
+					'post_status' => 'any',
+					'fields'      => 'ids',
+					'numberposts' => -1,
+					'tax_query'   => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+						array(
+							'taxonomy' => Taxonomy::get_instance()->get_name(),
+							'terms'    => $term_id,
+						),
+					),
+				)
+			)
+		);
+		sort( $ids );
+		return $ids;
 	}
 }

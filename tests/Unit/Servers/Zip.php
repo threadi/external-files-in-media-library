@@ -14,6 +14,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 use ZipArchive;
 
@@ -21,6 +22,15 @@ use ZipArchive;
  * Object to test ZIP files as external source: opening, listing and synchronization.
  */
 class Zip extends externalFilesTests {
+	use SynchronizationTrait;
+
+	/**
+	 * The request, in which the synchronization runs ("ajax" or "cron").
+	 *
+	 * @var string
+	 */
+	private string $request = 'cron';
+
 	/**
 	 * The data of the used server.
 	 *
@@ -109,7 +119,7 @@ class Zip extends externalFilesTests {
 	 * @return void
 	 */
 	private function sync( string $url, int $term_id ): void {
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $this->request, $url, $term_id );
 	}
 
 	/**
@@ -146,25 +156,33 @@ class Zip extends externalFilesTests {
 	}
 
 	/**
-	 * Test the synchronization of a ZIP file via cron, without a user.
+	 * Test the synchronization of a ZIP file.
 	 *
 	 * The files in it are imported and saved locally, removed files are deleted with the next synchronization.
 	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
 	 * @return void
 	 */
-	public function test_synchronization_via_cron(): void {
+	public function test_synchronization( string $request ): void {
 		$url = $this->create_zip(
 			array(
 				'example-red.jpg'         => 'example-red.jpg',
 				'images/example-blue.png' => 'example-blue.png',
 			)
 		);
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->enable_synchronization();
+		$this->request = $request;
 
-		// run like a scheduled synchronization: via cron, without a user.
-		wp_set_current_user( 0 );
+		// the import in the dialog loads only some files of a ZIP per request: the synchronization must load all.
+		update_option( 'eml_zip_import_limit', 1 );
+
+		// register the hooks of the service like a request with the capability of the service or via cron.
 		add_filter( 'wp_doing_cron', '__return_true' );
 		\ExternalFilesInMediaLibrary\Services\Zip::get_instance()->init();
+		remove_filter( 'wp_doing_cron', '__return_true' );
 
 		$term_id = Taxonomy::get_instance()->add( 'zip', $url, array() );
 		$this->assertGreaterThan( 0, $term_id );

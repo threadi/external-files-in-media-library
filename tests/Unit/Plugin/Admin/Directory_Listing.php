@@ -214,4 +214,32 @@ class Directory_Listing extends externalFilesTests {
 		$former = html_entity_decode( esc_attr( \ExternalFilesInMediaLibrary\Plugin\Helper::get_json( $config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK ) ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
 		$this->assertNull( json_decode( $former, true ) );
 	}
+
+	/**
+	 * Test the link to the platform of the service in the list of external sources.
+	 *
+	 * @return void
+	 */
+	public function test_platform_action(): void {
+		// an external source of DropBox gets the link to its website.
+		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'dropbox', '/', array() );
+		$actions = \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->add_platform_action( array(), get_term( $term_id ) );
+		$this->assertArrayHasKey( 'platform', $actions );
+		$this->assertStringContainsString( 'https://www.dropbox.com', $actions['platform'] );
+		$this->assertStringContainsString( 'target="_blank"', $actions['platform'] );
+
+		// it is in the actions of the list.
+		$this->assertArrayHasKey( 'platform', apply_filters( 'efml_directory_listing_item_actions', array(), get_term( $term_id ) ) );
+
+		// an external source of a service without platform does not get it.
+		$this->assertArrayNotHasKey( 'platform', \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->add_platform_action( array(), get_term( $this->term_id ) ) );
+
+		// the URL could be changed.
+		$filter = static function (): string {
+			return '';
+		};
+		add_filter( 'efml_source_platform_url', $filter );
+		$this->assertArrayNotHasKey( 'platform', \ExternalFilesInMediaLibrary\Plugin\Admin\Directory_Listing::get_instance()->add_platform_action( array(), get_term( $term_id ) ) );
+		remove_filter( 'efml_source_platform_url', $filter );
+	}
 }

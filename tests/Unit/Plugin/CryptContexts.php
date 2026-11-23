@@ -104,7 +104,6 @@ class CryptContexts extends externalFilesTests {
 	public function test_run_fields(): void {
 		$fields = array( 'login' => array( 'value' => 'run-user' ) );
 		$method = new ReflectionMethod( Import_Runs::get_instance(), 'get_fields' );
-		$method->setAccessible( true );
 		$errors = $this->count_crypt_errors();
 
 		// a value saved by an older version and a new one.
@@ -149,7 +148,6 @@ class CryptContexts extends externalFilesTests {
 	public function test_global_settings(): void {
 		update_option( 'eml_ftp_credentials_vault', 'global' );
 		$method = new ReflectionMethod( Ftp::get_instance(), 'get_field_values' );
-		$method->setAccessible( true );
 		$errors = $this->count_crypt_errors();
 
 		// saved by an older version.
@@ -175,7 +173,6 @@ class CryptContexts extends externalFilesTests {
 		wp_set_current_user( $user_id );
 		update_option( 'eml_youtube_credentials_vault', 'user' );
 		$method = new ReflectionMethod( Youtube::get_instance(), 'get_field_values' );
-		$method->setAccessible( true );
 		$errors = $this->count_crypt_errors();
 
 		// the services of this plugin use the context.
@@ -227,7 +224,6 @@ class CryptContexts extends externalFilesTests {
 	public function test_error_names_the_value(): void {
 		update_option( 'eml_youtube_credentials_vault', 'global' );
 		$method = new ReflectionMethod( Youtube::get_instance(), 'get_field_values' );
-		$method->setAccessible( true );
 		$before = $this->get_crypt_errors();
 
 		// a value encrypted with another key, e.g. on a copy of another website.

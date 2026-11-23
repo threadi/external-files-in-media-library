@@ -159,7 +159,6 @@ class DropboxOwnerConnection extends externalFilesTests {
 		$this->assertEquals( $this->attachment_id, $protocol->get_external_file()->get_id() );
 
 		$method = new ReflectionMethod( Protocol::class, 'get_owner' );
-		$method->setAccessible( true );
 		$this->assertEquals( $this->owner_id, $method->invoke( $protocol )->ID );
 
 		// a protocol without file (e.g. for an import) uses the actual user.
@@ -173,7 +172,6 @@ class DropboxOwnerConnection extends externalFilesTests {
 	 */
 	public function test_export_uses_owner_of_target(): void {
 		$method = new ReflectionMethod( Export::class, 'get_owner' );
-		$method->setAccessible( true );
 
 		// a new file (not exported yet) with the external source in the credentials.
 		$new_id = self::factory()->attachment->create( array( 'post_mime_type' => 'image/jpeg' ) );

@@ -40,7 +40,6 @@ class Deletion extends externalFilesTests {
 
 		// forget the file types of former tests, as attachment IDs could be used again after their rollback.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		// create the directory we use as export target and allow it as base directory for local files.

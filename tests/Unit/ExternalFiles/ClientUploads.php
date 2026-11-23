@@ -58,7 +58,6 @@ class ClientUploads extends externalFilesTests {
 
 		// forget the file types of former tests, as attachment IDs could be used again after their rollback.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		// enable the client-side media processing and register the routes with it.

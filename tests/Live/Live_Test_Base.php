@@ -189,7 +189,6 @@ abstract class Live_Test_Base extends \WP_UnitTestCase {
 
 		// forget the file type objects, as they are cached per attachment ID.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		parent::tear_down();

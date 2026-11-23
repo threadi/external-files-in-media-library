@@ -14,12 +14,15 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
  * Object to test schedules, the deletion of synchronized files and the protection against their deletion.
  */
 class FtpSynchronizationSettings extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * The data of the used server.
 	 *
@@ -52,11 +55,8 @@ class FtpSynchronizationSettings extends externalFilesTests {
 		// run as administrator.
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 
-		// use the hooks of the synchronization (they are only added during init if the synchronization is enabled).
-		update_option( 'eml_sync', 1 );
-		add_filter( 'pre_delete_attachment', array( Synchronization::get_instance(), 'prevent_deletion' ), 10, 2 );
-		add_action( 'pre_delete_term', array( Synchronization::get_instance(), 'delete_synced_files_on_term_deletion' ), 10, 2 );
-		add_action( 'pre_delete_term', array( Synchronization::get_instance(), 'delete_schedule' ), 10, 2 );
+		// use the synchronization with the settings of a new installation and its hooks.
+		$this->enable_synchronization();
 	}
 
 	/**
@@ -65,12 +65,6 @@ class FtpSynchronizationSettings extends externalFilesTests {
 	 * @return void
 	 */
 	public function tear_down(): void {
-		remove_filter( 'pre_delete_attachment', array( Synchronization::get_instance(), 'prevent_deletion' ) );
-		remove_action( 'pre_delete_term', array( Synchronization::get_instance(), 'delete_synced_files_on_term_deletion' ) );
-		remove_action( 'pre_delete_term', array( Synchronization::get_instance(), 'delete_schedule' ) );
-		update_option( 'eml_sync', 0 );
-		update_option( 'eml_sync_delete_file_on_archive_deletion', 0 );
-
 		// remove the schedule, if one has been created.
 		if ( $this->term_id > 0 ) {
 			$schedule = Synchronization::get_instance()->get_schedule_by_term_id( $this->term_id );

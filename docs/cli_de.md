@@ -155,3 +155,31 @@ Den Umzug aller Dateien oder eines einzelnen Anhangs rückgängig machen. Die Da
 `wp eml migration revert`
 
 `wp eml migration revert --attachment=42`
+
+## Zentrale Mediatheken in einer Multisite
+
+Die zentralen Mediatheken eines Multisite-Netzwerks verwalten (siehe [Multisite](multisite_de.md)):
+
+`wp eml network status`
+
+`wp eml network join 3 2`
+
+`wp eml network visibility 1 42 only --sites=2,3`
+
+`wp eml network usage 1 42`
+
+`wp eml network sync 3`
+
+`wp eml network transfer-local 3 4`
+
+`wp eml network unused 1 --check`
+
+`wp eml network duplicates 1 --merge`
+
+`wp eml network move 1 5`
+
+`wp eml network fix-addresses --dry-run`
+
+`wp eml network digest`
+
+`wp eml network run`

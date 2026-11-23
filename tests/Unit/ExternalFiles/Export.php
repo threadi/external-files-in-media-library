@@ -153,6 +153,34 @@ class Export extends externalFilesTests {
 	}
 
 	/**
+	 * Test if an exported file is deleted on the export target after a synchronization in the same request (e.g. in
+	 * the queue via cron), but not during it.
+	 *
+	 * @return void
+	 */
+	public function test_delete_exported_file_after_synchronization_in_same_request(): void {
+		$attachment_id = $this->add_external_file();
+		$path          = $this->create_file_on_export_target( $attachment_id );
+		update_post_meta( $attachment_id, 'eml_exported_file', time() );
+		update_post_meta( $attachment_id, 'efml_export_sources', array( $this->term_id ) );
+		$export = \ExternalFilesInMediaLibrary\ExternalFiles\Export::get_instance();
+
+		// use the hooks of the enabled export like a request.
+		update_option( 'eml_export', 1 );
+		$export->init();
+
+		// during a synchronization the file is kept.
+		do_action( 'efml_before_sync', 'file://' . $this->export_directory, array(), $this->term_id );
+		$export->delete_exported_file( $attachment_id );
+		$this->assertFileExists( $path );
+
+		// after the synchronization it is deleted.
+		do_action( 'efml_after_sync', 'file://' . $this->export_directory, array(), $this->term_id );
+		$export->delete_exported_file( $attachment_id );
+		$this->assertFileDoesNotExist( $path );
+	}
+
+	/**
 	 * Test if a file, which has been exported to another external source, is not deleted on our export target.
 	 *
 	 * @return void
@@ -401,7 +429,6 @@ class Export extends externalFilesTests {
 
 		// test 2: in a later request, the existing local file is not exported with its new metadata.
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\Export::class, 'uploads' );
-		$property->setAccessible( true );
 		$property->setValue( $export_obj, array() );
 		$this->assertFalse( $export_obj->is_upload( $attachment_id ) );
 		$export_obj->export_file_by_upload( wp_get_attachment_metadata( $attachment_id ), $attachment_id );

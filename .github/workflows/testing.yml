@@ -38,11 +38,13 @@ jobs:
   phpunit:
     name: PHPUnit (PHP ${{ matrix.php-version }})
     runs-on: ubuntu-latest
+    # a hanging test should not block the runner for hours (normally the job needs about 6 minutes).
+    timeout-minutes: 30
     strategy:
       # let the other PHP versions finish if one of them fails.
       fail-fast: false
       matrix:
-        php-version: ['8.2', '8.3', '8.4', '8.5']
+        php-version: ['8.2', '8.3', '8.4', '8.5', '8.6']
     services:
       database:
         # a fixed LTS version, so a new major release does not break the tests unnoticed.
@@ -109,6 +111,11 @@ jobs:
       # the tests for the multisite only run in a multisite.
       - name: Run tests for multisite
         run: composer test-multisite
+
+      # errors of the tests in separate processes are logged to this file (see tests/bootstrap.php).
+      - name: Show errors of tests in separate processes
+        if: always()
+        run: cat /tmp/efml-phpunit-errors.log 2>/dev/null || echo "No errors logged."
 
       - name: Stop test servers
         if: always()

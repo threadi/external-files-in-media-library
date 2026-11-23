@@ -15,12 +15,15 @@ use ExternalFilesInMediaLibrary\Services\Url_List\Protocol;
 use ExternalFilesInMediaLibrary\Services\Url_List_Base;
 use ExternalFilesInMediaLibrary\Services\Xml;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use WP_Error;
 
 /**
  * Object to test the services to import URLs from lists.
  */
 class UrlList extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * The URL of the list on the simulated server.
 	 */
@@ -63,7 +66,6 @@ class UrlList extends externalFilesTests {
 		// forget the lists of former tests: they are cached per attachment ID, which could be used again after the
 		// rollback of the database (e.g. with SQLite), and a cached list is not marked as used again.
 		$property = new \ReflectionProperty( Url_List_Base::class, 'lists' );
-		$property->setAccessible( true );
 		$property->setValue( Csv::get_instance(), array() );
 		$property->setValue( Xml::get_instance(), array() );
 
@@ -615,5 +617,37 @@ class UrlList extends externalFilesTests {
 		$this->assertNull( get_post( $uploaded_id ) );
 		$this->assertFalse( ( new \ExternalFilesInMediaLibrary\Plugin\Schedules\Url_List_Cleanup() )->is_enabled() && ! Xml::get_instance()->is_cleanup_enabled() );
 		update_option( 'eml_csv_cleanup', 1 );
+	}
+
+	/**
+	 * Test the synchronization of a list from a URL: its files are imported, a file removed from the list is deleted
+	 * with the next synchronization, the others are kept.
+	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
+	 * @return void
+	 */
+	public function test_synchronization( string $request ): void {
+		$this->enable_synchronization();
+		$term_id = \easyDirectoryListingForWordPress\Taxonomy::get_instance()->add( 'csv', self::LIST_URL, $this->get_fields_for_url( self::LIST_URL ) );
+		$this->assertGreaterThan( 0, $term_id );
+
+		// the files of the list are imported.
+		$this->run_sync( $request, self::LIST_URL, $term_id );
+		$first = Files::get_instance()->get_file_by_url( 'https://example.com/example.pdf' );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, $first );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, Files::get_instance()->get_file_by_url( 'https://files.example.com/second.pdf' ) );
+
+		// remove the second file from the list.
+		$this->list_content = str_replace( 'https://files.example.com/second.pdf', '', $this->list_content );
+		$this->run_sync( $request, self::LIST_URL, $term_id );
+
+		// the removed file is deleted, the other is still the same attachment.
+		$this->assertFalse( Files::get_instance()->get_file_by_url( 'https://files.example.com/second.pdf' ) );
+		$kept = Files::get_instance()->get_file_by_url( 'https://example.com/example.pdf' );
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, $kept );
+		$this->assertSame( $first->get_id(), $kept->get_id() );
 	}
 }

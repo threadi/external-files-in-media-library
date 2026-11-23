@@ -1,6 +1,6 @@
 <?php
 /**
- * Tests for the state of the export in the media library: filter, "Export again", errors in the log and the
+ * Tests for the state of the export in the media library: filter, "Export now", errors in the log and the
  * growing wait times of further attempts in the queue.
  *
  * @package external-files-in-media-library
@@ -259,6 +259,7 @@ class ExportStates extends externalFilesTests {
 		$failed  = $this->upload_failed();
 		$actions = Tables::get_instance()->add_export_row_actions( array(), get_post( $failed ) );
 		$this->assertArrayHasKey( 'efml-export-again', $actions );
+		$this->assertStringContainsString( 'Export now', $actions['efml-export-again'] );
 		$this->assertArrayHasKey( 'efml-export-errors', $actions );
 		$this->assertStringContainsString( 'errors=1', $actions['efml-export-errors'] );
 		$this->assertStringContainsString( rawurlencode( wp_basename( (string) wp_get_attachment_url( $failed ) ) ), $actions['efml-export-errors'] );

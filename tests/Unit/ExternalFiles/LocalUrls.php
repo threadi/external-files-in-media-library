@@ -94,7 +94,6 @@ class LocalUrls extends externalFilesTests {
 	 */
 	private function reset_cache(): void {
 		$property = new ReflectionProperty( Local_Urls::class, 'file_cache' );
-		$property->setAccessible( true );
 		$property->setValue( Local_Urls::get_instance(), array() );
 	}
 
@@ -519,7 +518,6 @@ class LocalUrls extends externalFilesTests {
 	 */
 	public function test_restore_marker(): void {
 		$method = new \ReflectionMethod( Local_Urls::class, 'is_active' );
-		$method->setAccessible( true );
 
 		// without local paths the marker is restored as 0.
 		delete_post_meta_by_key( Local_Urls::META );

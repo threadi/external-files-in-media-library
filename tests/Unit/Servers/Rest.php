@@ -14,12 +14,15 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
  * Object to test the REST API service with a simulated WordPress REST API (see tests/Servers/http_server.py).
  */
 class Rest extends externalFilesTests {
+	use SynchronizationTrait;
+
 	/**
 	 * Prepare each test: 2 files per page, so the pagination is used with the 5 test files.
 	 *
@@ -140,27 +143,29 @@ class Rest extends externalFilesTests {
 	}
 
 	/**
-	 * Test the synchronization of a website via cron (without user): files are imported, deleted files removed.
+	 * Test the synchronization of a website: files are imported, deleted files removed.
+	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
 	 *
 	 * @return void
 	 */
-	public function test_synchronization_via_cron(): void {
+	public function test_synchronization( string $request ): void {
 		$server    = $this->get_server();
 		$directory = TestServers::create_directory( $server );
 		$url       = TestServers::get_url( $server, '/sites' . $directory );
 		$files_url = TestServers::get_url( $server, '/files' . $directory );
+		$this->enable_synchronization();
 
-		// remove synchronized files, which are no longer on the server.
-		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
-
-		// run like a scheduled synchronization: via cron, without a user.
-		wp_set_current_user( 0 );
+		// register the hooks of the service like a request with the capability of the service or via cron.
 		add_filter( 'wp_doing_cron', '__return_true' );
 		\ExternalFilesInMediaLibrary\Services\Rest::get_instance()->init();
+		remove_filter( 'wp_doing_cron', '__return_true' );
 
 		// create the external source and synchronize it.
 		$term_id = Taxonomy::get_instance()->add( 'rest', $url, array() );
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 
 		// all files with an allowed file type from all pages are imported.
 		$red = Files::get_instance()->get_file_by_url( $files_url . 'example-red.jpg' );
@@ -174,11 +179,8 @@ class Rest extends externalFilesTests {
 
 		// delete a file on the server and synchronize again.
 		unlink( $server['root'] . $directory . 'example-green.jpg' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
-		@Synchronization::get_instance()->sync( $url, Taxonomy::get_instance()->get_entry( $term_id ), $term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->run_sync( $request, $url, $term_id );
 		$this->assertSame( $red->get_id(), Files::get_instance()->get_file_by_url( $files_url . 'example-red.jpg' )->get_id() );
 		$this->assertFalse( Files::get_instance()->get_file_by_url( $files_url . 'example-green.jpg' ) );
-
-		remove_filter( 'wp_doing_cron', '__return_true' );
-		update_option( 'eml_sync_delete_unused_files_after_sync', 0 );
 	}
 }

@@ -9,11 +9,13 @@
 
 namespace ExternalFilesInMediaLibrary\Tests\Unit\Servers;
 
+use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\File;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\Tests\externalFilesTests;
 use ExternalFilesInMediaLibrary\Tests\ManyFilesTrait;
+use ExternalFilesInMediaLibrary\Tests\SynchronizationTrait;
 use ExternalFilesInMediaLibrary\Tests\TestServers;
 
 /**
@@ -21,6 +23,7 @@ use ExternalFilesInMediaLibrary\Tests\TestServers;
  */
 class Sftp extends externalFilesTests {
 	use ManyFilesTrait;
+	use SynchronizationTrait;
 
 	/**
 	 * Return the data of the test server or skip the test.
@@ -92,5 +95,39 @@ class Sftp extends externalFilesTests {
 		foreach ( array( 'example-red.jpg', 'example-green.jpg', 'example-blue.png' ) as $filename ) {
 			$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( TestServers::get_url( $server, $directory . $filename ) ), $filename );
 		}
+	}
+
+	/**
+	 * Test the synchronization of an external SFTP source: new files are imported, deleted files removed.
+	 *
+	 * @dataProvider provide_sync_requests
+	 *
+	 * @param string $request The request, in which the synchronization runs.
+	 *
+	 * @return void
+	 */
+	public function test_synchronization( string $request ): void {
+		$server    = $this->get_server();
+		$directory = TestServers::create_directory( $server );
+		$url       = TestServers::get_url( $server, $directory );
+		$this->enable_synchronization();
+
+		// create the external source and synchronize it.
+		$term_id = Taxonomy::get_instance()->add( 'sftp', $url, TestServers::get_fields( $server ) );
+		$this->assertGreaterThan( 0, $term_id );
+		$this->run_sync( $request, $url, $term_id );
+		$red = Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' );
+		$this->assertInstanceOf( File::class, $red );
+		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
+
+		// change the files on the server: delete one, add one.
+		unlink( $server['root'] . $directory . 'example-green.jpg' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+		copy( trailingslashit( TESTS_PLUGIN_DIR ) . 'tests/Data/ftp/subdirectory/example-grey.jpg', $server['root'] . $directory . 'example-grey.jpg' );
+
+		// the unchanged file is still the same attachment, the deleted file is removed, the new one imported.
+		$this->run_sync( $request, $url, $term_id );
+		$this->assertSame( $red->get_id(), Files::get_instance()->get_file_by_url( $url . 'example-red.jpg' )->get_id() );
+		$this->assertFalse( Files::get_instance()->get_file_by_url( $url . 'example-green.jpg' ) );
+		$this->assertInstanceOf( File::class, Files::get_instance()->get_file_by_url( $url . 'example-grey.jpg' ) );
 	}
 }

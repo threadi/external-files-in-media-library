@@ -17,6 +17,13 @@ use WP_UnitTestCase;
  */
 abstract class externalFilesTests extends WP_UnitTestCase {
 	/**
+	 * The options of the website before the test (see set_up() and restore_options()).
+	 *
+	 * @var array<string,array{0:string,1:string}>
+	 */
+	private array $options_before_test = array();
+
+	/**
 	 * List of test files we use in our tests.
 	 *
 	 * @var array
@@ -132,8 +139,68 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 	public function set_up(): void {
 		parent::set_up();
 
+		// remember the options to restore them after the test, if the test has saved them permanently (see restore_options()).
+		$this->options_before_test = self::get_options();
+
 		// keep "TRUNCATE TABLE" in the transaction of the test (like the test framework does it for "CREATE TABLE").
 		add_filter( 'query', array( self::class, 'make_truncate_transactional' ) );
+	}
+
+	/**
+	 * Return all options of the actual website with their values and autoload settings, read from the database.
+	 *
+	 * @return array<string,array{0:string,1:string}>
+	 */
+	private static function get_options(): array {
+		global $wpdb;
+
+		$options = array();
+		foreach ( (array) $wpdb->get_results( "SELECT option_name, option_value, autoload FROM {$wpdb->options}", ARRAY_A ) as $row ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$options[ (string) $row['option_name'] ] = array( (string) $row['option_value'], (string) $row['autoload'] );
+		}
+		return $options;
+	}
+
+	/**
+	 * Restore the options of the website to their state before the test.
+	 *
+	 * Normally the rollback of the transaction resets them. But with MySQL statements like "ALTER TABLE" (e.g. in the
+	 * tests of updates of the structure or in the update itself) end the transaction of the test implicitly, so its
+	 * options until then would remain for all following tests (e.g. a main export source of a deleted external source).
+	 * Posts, terms and users are deleted after each test class by the test framework, options are not.
+	 *
+	 * @return void
+	 */
+	private function restore_options(): void {
+		global $wpdb;
+
+		if ( empty( $this->options_before_test ) ) {
+			return;
+		}
+
+		$options = self::get_options();
+		if ( $options === $this->options_before_test ) {
+			return;
+		}
+
+		foreach ( array_keys( array_diff_key( $options, $this->options_before_test ) ) as $name ) {
+			$wpdb->delete( $wpdb->options, array( 'option_name' => $name ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		}
+		foreach ( $this->options_before_test as $name => $option ) {
+			if ( ! isset( $options[ $name ] ) || $options[ $name ] !== $option ) {
+				$wpdb->replace( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+					$wpdb->options,
+					array(
+						'option_name'  => $name,
+						'option_value' => $option[0],
+						'autoload'     => $option[1],
+					)
+				);
+			}
+		}
+
+		self::commit_transaction();
+		wp_cache_flush();
 	}
 
 	/**
@@ -169,10 +236,12 @@ abstract class externalFilesTests extends WP_UnitTestCase {
 		// forget the file type objects of this test, as they are cached per attachment ID, which could be used again
 		// by the next test after the rollback of the database (e.g. with SQLite).
 		$property = new \ReflectionProperty( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::class, 'files' );
-		$property->setAccessible( true );
 		$property->setValue( \ExternalFilesInMediaLibrary\ExternalFiles\File_Types::get_instance(), array() );
 
 		parent::tear_down();
+
+		// after the rollback: restore the options, if the test has saved them permanently.
+		$this->restore_options();
 	}
 
 	/**

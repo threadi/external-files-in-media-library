@@ -25,7 +25,6 @@ class SupportedPlugins extends externalFilesTests {
 	public function test_mark_supported_plugins(): void {
 		$obj      = ThirdPartySupport::get_instance();
 		$property = new ReflectionProperty( ThirdPartySupport::class, 'supported_plugin_files' );
-		$property->setAccessible( true );
 		$property->setValue( $obj, null );
 
 		// test 1: the files of the supported plugins.
@@ -92,7 +91,6 @@ class SupportedPlugins extends externalFilesTests {
 	public function test_image_watermark_backups(): void {
 		$obj    = \ExternalFilesInMediaLibrary\ThirdParty\ImageWatermark::get_instance();
 		$method = new ReflectionMethod( \ExternalFilesInMediaLibrary\ThirdParty\ImageWatermark::class, 'get_backup_paths' );
-		$method->setAccessible( true );
 		$base = trailingslashit( wp_normalize_path( wp_get_upload_dir()['basedir'] ) );
 
 		// test 1: the backup in the directory of the plugin with the path of the image.

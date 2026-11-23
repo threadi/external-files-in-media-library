@@ -195,7 +195,6 @@ class DropboxSharedLinks extends externalFilesTests {
 	 */
 	private function get_shared_link( string $path ): string|false {
 		$method = new ReflectionMethod( Export::class, 'get_shared_link' );
-		$method->setAccessible( true );
 		return $method->invoke( Export::get_instance(), array( 'path_lower' => $path ), 'DropBox' . $path );
 	}
 
@@ -229,7 +228,6 @@ class DropboxSharedLinks extends externalFilesTests {
 	 */
 	public function test_unused_upload_is_removed(): void {
 		$method = new ReflectionMethod( Export::class, 'remove_uploaded_file' );
-		$method->setAccessible( true );
 
 		// the file is deleted in Dropbox.
 		$method->invoke( Export::get_instance(), '/photos/red.jpg', 'DropBox/photos/red.jpg', false );

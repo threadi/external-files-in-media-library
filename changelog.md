@@ -1,5 +1,53 @@
 # Changelog
 
+## [6.1.0] - tbd
+
+### Added
+
+- Added own page for the settings of the network
+- Added rights of the websites to delete files of the central media library
+- Added availability of files of the central media library per website, also via bulk action
+- Added confirmation with the usage before deleting files in the whole network
+- Added usage of files of the central media library in the network
+- Added immediate passing of new, changed and deleted files of the central media library to the websites
+- Added passing of caption, description and alternative text to the websites, with own changes per website
+- Added automatic connection of new websites with the central media library
+- Added groups with own central media library each
+- Added leaving of groups: own and used files become local files
+- Added settings for uploads of deleted websites
+- Added use of existing files for uploads with the same content
+- Added linking of local files with files of the same content during the synchronization
+- Added link to the platform of the service in the list of external sources
+- Added choice of the availability during the upload
+- Added roles per website, which could choose the availability of files
+- Added filter for own uploads and files of the central media library
+- Added optional passing of changes of the website the file comes from
+- Added upload space of the websites for their uploads in the central media library
+- Added overview of the network and check in Site Health
+- Added WP-CLI commands, REST API endpoints and abilities for the network
+- Added transfer of local files of websites to their central media library
+- Added filter for files unused in the network
+- Added merging of duplicates in the central media library
+- Added move of a central media library to another website
+- Added check and fix of addresses after a change of the domain
+- Added optional weekly summary of problems via e-mail
+- Added documentation for the central media library
+- Added new hooks and PHP Unit tests
+
+### Changed
+
+- Renamed "Export again" to "Export now"
+- Faster synchronization with the central media library: daily, without HTTP downloads, unchanged files are skipped
+
+### Fixed
+
+- Fixed synchronization deleting unchanged files (Dropbox, ZIP) or not deleting removed files
+- Fixed exports being skipped after a synchronization in the same request
+- Fixed deletion of files of the central media library in the other websites
+- Fixed proxy URLs of files from other websites of a multisite
+- Fixed further bugs in multisites
+- Fixed handling of numbered nonces for Directory Listings
+
 ## [6.0.0] - 22.11.2026
 
 ### Added
