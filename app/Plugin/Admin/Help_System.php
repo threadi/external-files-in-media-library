@@ -95,8 +95,8 @@ class Help_System {
 				'docs_url' => Helper::get_documentation_url( 'features' ),
 			),
 			array(
-				'title'    => __( 'Deliver files privately', 'external-files-in-media-library' ),
-				'text'     => __( 'Save exported files in private storages and deliver them via the proxy or via temporary links, e.g. for WooCommerce downloads.', 'external-files-in-media-library' ),
+				'title'    => __( 'Prevent direct access at the source', 'external-files-in-media-library' ),
+				'text'     => __( 'Export files to external sources without direct access and deliver them via the proxy or via temporary links, e.g. for WooCommerce downloads.', 'external-files-in-media-library' ),
 				'url'      => $settings->get_url( 'eml_proxy' ),
 				'link'     => __( 'Settings for the proxy', 'external-files-in-media-library' ),
 				'docs_url' => Helper::get_documentation_url( 'private-files' ),

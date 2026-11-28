@@ -166,8 +166,9 @@ Prevent Direct Access schützt lokale Dateien im Ordner `_pda` deines Upload-Ver
 dieser Schutz nicht, deshalb:
 
 - Geschützte Dateien werden nicht exportiert, sie bleiben lokale Dateien. Die Mediathek zeigt ein Schloss bei ihnen.
-- Exportierte und andere externe Dateien lassen sich nicht schützen. Speichere sie stattdessen privat auf ihrer externen
-  Quelle (siehe [private Dateien](private-files_de.md)).
+- Exportierte und andere externe Dateien lassen sich mit Prevent Direct Access nicht schützen. Die Option
+  „Direktzugriff beim Anbieter verhindern“ (siehe [Direktzugriff beim Anbieter verhindern](private-files_de.md)) ist
+  kein Ersatz: Sie verhindert nur, dass die Dateien direkt beim Anbieter geladen werden, nicht über deine Website.
 
 ### Prevent Files / Folders Access
 
@@ -203,7 +204,7 @@ ihrer externen Quelle ausgeliefert werden, bleiben dorthin verlinkt.
 
 Das setzt sprechende Permalinks voraus: Ohne sie enthalten die URLs des Proxys einen Query-String
 (`?emlproxy=bild.jpg`), den Simply Static nicht als Datei kopiert. Werkzeuge → „Website-Zustand“ zeigt dann einen
-Hinweis. Private Dateien sind nicht Teil der statischen Website, weil sie kein PHP zum Ausliefern hat.
+Hinweis. Dateien ohne Direktzugriff beim Anbieter sind nicht Teil der statischen Website, weil sie kein PHP zum Ausliefern hat.
 
 ## SEO
 
@@ -227,5 +228,5 @@ sie in der Mediathek jeder Sprache verfügbar sind. Schalte das in den Einstellu
 - **Produktimport per CSV:** Der Importer von WooCommerce bietet an, Produktbilder und Galeriebilder als externe Dateien
   zu importieren: Sie werden nicht in deine Mediathek hochgeladen, sondern von ihrer Quelle ausgeliefert.
 - **Herunterladbare Produkte:** Externe Dateien kannst du als Downloads verwenden. Geschützte Downloads liefert
-  WooCommerce nur an Käufer aus, auch wenn sie privat auf ihrer externen Quelle gespeichert sind (siehe
-  [private Dateien](private-files_de.md)). CDNs speichern sie nicht zwischen.
+  WooCommerce nur an Käufer aus, auch wenn der Direktzugriff bei ihrer externen Quelle verhindert ist (siehe
+  [Direktzugriff beim Anbieter verhindern](private-files_de.md)). CDNs speichern sie nicht zwischen.

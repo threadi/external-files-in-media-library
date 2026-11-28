@@ -24,8 +24,8 @@ The goals are shown in this order:
 | Embed and synchronize external files | all services with synchronization | enable the synchronization, interval, first synchronization |
 | Import local files | local directory of your hosting | import of the directory, optionally copied as real files into your media library |
 | Synchronize files from FTP | FTP, FTPS and SFTP | enable the synchronization, interval, first synchronization |
-| Offload your media library | all services with export | enable the export, the external source as main export, folders by year and month, optionally "Save files privately" and the export of the files already in your media library, connection test |
-| Protected downloads | all services with private files | like offloading, "Save files privately" is preselected, optionally the downloads of WooCommerce |
+| Offload your media library | all services with export | enable the export, the external source as main export, folders by year and month, optionally "Prevent direct access at the source" and the export of the files already in your media library, connection test |
+| Protected downloads | all services, which could prevent direct access | like offloading, "Prevent direct access at the source" is preselected, optionally the downloads of WooCommerce |
 | Central media library for your network | none | one website as central media library for all other websites of the multisite, see below. Only shown in a multisite with at least two websites, for users who could manage the network and as long as the network uses no central media library. |
 | Switch from another offload plugin | the service of the found bucket | take over the files of the other plugin without uploading them again, see [migration](migration.md). Only shown if such files have been found. |
 

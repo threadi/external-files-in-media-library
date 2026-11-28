@@ -1,8 +1,16 @@
-# Private Dateien
+# Direktzugriff beim Anbieter verhindern
 
-Exportierte Dateien müssen nicht öffentlich auf der externen Quelle liegen. Mit der Option **„Dateien privat speichern“** in den Export-Einstellungen einer externen Quelle bleiben z. B. ein Bucket oder ein Ordner privat. Die Website liefert die Dateien dann immer über ihre eigene URL aus.
+Exportierte Dateien müssen nicht öffentlich auf der externen Quelle liegen. Mit der Option **„Direktzugriff beim Anbieter verhindern“** in den Export-Einstellungen einer externen Quelle bleiben z. B. ein Bucket oder ein Ordner geschlossen. Niemand kann die Dateien dann direkt beim Anbieter laden. Die Website liefert sie immer über ihre eigene URL aus.
 
-Erfordert _External Files in Media Library_ 6.0.0 oder neuer.
+Erfordert _External Files in Media Library_ 6.0.0 oder neuer. Bis Version 6.0 hieß die Option „Dateien privat speichern“. In Hooks und im Code des Plugins heißt sie weiterhin „private“.
+
+## Was die Option regelt und was nicht
+
+Die Option regelt, **wo** eine Datei geladen werden kann: nur über deine Website, nicht beim Anbieter. Sie regelt nicht, **wer** sie über deine Website laden darf. Ohne weitere Regeln kann jeder die Datei laden, der die URL deiner Website kennt.
+
+* **WooCommerce:** Dateien von herunterladbaren Produkten bekommen nur Käufer, siehe [WooCommerce](#woocommerce) unten.
+* **Plugins zum Schutz von Dateien** wie Prevent Direct Access schützen nur Dateien im Upload-Verzeichnis, keine externen Dateien (siehe [unterstützte Plugins](plugins_de.md)).
+* **Eigene Regeln:** über den Hook `efml_proxy_allow_delivery`, z. B. um Dateien nur an angemeldete Benutzer auszuliefern.
 
 ## Unterstützte Dienste
 
@@ -14,7 +22,7 @@ Erfordert _External Files in Media Library_ 6.0.0 oder neuer.
 | Google Drive (nur mit Zugangsdaten für die ganze Website) | Proxy-Cache |
 | WebDAV | Proxy-Cache |
 
-Private Dateien auf FTP, SFTP und in lokalen Verzeichnissen werden immer über den Proxy ausgeliefert. Nicht private Dateien dort werden über die öffentliche URL der externen Quelle ausgeliefert (die URL für exportierte Dateien in ihren Export-Einstellungen), wenn der Proxy für ihren Dateityp ausgeschaltet ist, sonst ebenfalls über den Proxy.
+Dateien ohne Direktzugriff auf FTP, SFTP und in lokalen Verzeichnissen werden immer über den Proxy ausgeliefert. Andere Dateien dort werden über die öffentliche URL der externen Quelle ausgeliefert (die URL für exportierte Dateien in ihren Export-Einstellungen), wenn der Proxy für ihren Dateityp ausgeschaltet ist, sonst ebenfalls über den Proxy.
 
 ## Wie die Dateien ausgeliefert werden
 
@@ -26,20 +34,20 @@ In der Mediathek und im Beitragsinhalt steht immer die feste URL der Website, z.
 
 ## Gültigkeit der Links
 
-Unter Einstellungen → Export → **„Gültigkeit von Links zu privaten Dateien (in Minuten)“**, Standard 60 Minuten, höchstens 5040 Minuten (3,5 Tage, da signierte Links von S3 und Google Cloud Storage höchstens 7 Tage gültig sind).
+Unter Einstellungen → Export → **„Gültigkeit von Links zu Dateien ohne Direktzugriff beim Anbieter (in Minuten)“**, Standard 60 Minuten, höchstens 5040 Minuten (3,5 Tage, da signierte Links von S3 und Google Cloud Storage höchstens 7 Tage gültig sind).
 
 Die Links werden für feste Zeitfenster dieser Länge erzeugt. Innerhalb eines Zeitfensters ist der Link immer gleich, damit Browser und Caches die Datei wiederverwenden können. Jeder Link ist für zwei Zeitfenster gültig, also nach jeder Weiterleitung mindestens noch die eingestellte Zeit. Die Weiterleitung selbst darf der Browser bis zum Ende des Zeitfensters zwischenspeichern.
 
 ## Auslieferung prüfen
 
-Proxy-URLs werden nicht auf eine Variante mit Schrägstrich am Ende umgeleitet und beantworten auch HEAD-Anfragen mit den Headern der Datei (z. B. für Link-Checker und CDNs). Eine private Datei ohne Proxy antwortet mit `302` und dem signierten Link im Header `Location`, prüfbar z. B. mit `curl -I https://example.com/emlproxy/datei.pdf` oder im Netzwerk-Tab der Entwicklertools des Browsers.
+Proxy-URLs werden nicht auf eine Variante mit Schrägstrich am Ende umgeleitet und beantworten auch HEAD-Anfragen mit den Headern der Datei (z. B. für Link-Checker und CDNs). Eine Datei ohne Direktzugriff und ohne Proxy antwortet mit `302` und dem signierten Link im Header `Location`, prüfbar z. B. mit `curl -I https://example.com/emlproxy/datei.pdf` oder im Netzwerk-Tab der Entwicklertools des Browsers.
 
 ## WooCommerce
 
 Externe Dateien aus der Mediathek können wie gewohnt als Dateien von herunterladbaren Produkten ausgewählt werden. Nach den Prüfungen von WooCommerce (Bestellung, Anzahl, Ablauf) wird die Datei so ausgeliefert:
 
-* **Private Dateien:** über einen signierten Link mit 5 Minuten Gültigkeit oder, wenn der Dienst das nicht kann, aus dem Cache. Die Proxy-URL liefert diese Dateien nicht mehr an Besucher aus, nur an Benutzer, die die Datei bearbeiten dürfen. Damit lassen sie sich nur über WooCommerce herunterladen.
-* **Öffentliche externe Dateien:** von ihrer externen URL. Wer diese URL kennt, kann die Datei weiterhin abrufen.
+* **Dateien ohne Direktzugriff beim Anbieter:** über einen signierten Link mit 5 Minuten Gültigkeit oder, wenn der Dienst das nicht kann, aus dem Cache. Die Proxy-URL liefert diese Dateien nicht mehr an Besucher aus, nur an Benutzer, die die Datei bearbeiten dürfen. Damit lassen sie sich nur über WooCommerce herunterladen.
+* **Andere externe Dateien:** von ihrer externen URL. Wer diese URL kennt, kann die Datei weiterhin abrufen.
 
 Der Infodialog der Datei in der Mediathek zeigt, in welchen Produkten sie als Download genutzt wird. Die Unterstützung hängt an der Einstellung „Unterstützung für WooCommerce aktivieren“ im Reiter WooCommerce.
 
@@ -47,7 +55,7 @@ Hinweis: WooCommerce prüft die „Genehmigten Download-Verzeichnisse“. Speich
 
 ## Hooks
 
-* `efml_export_private` – ob eine externe Quelle Dateien privat speichert.
+* `efml_export_private` – ob der Direktzugriff bei einer externen Quelle verhindert wird.
 * `efml_private_files_lifetime` – Gültigkeit der Links in Sekunden.
 * `efml_private_file_signed_url` – der signierte Link für eine Datei.
 * `efml_proxy_allow_delivery` – ob der Proxy eine Datei ausliefern darf.

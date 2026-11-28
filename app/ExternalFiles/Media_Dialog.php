@@ -343,7 +343,7 @@ class Media_Dialog extends Tools_Base {
 			. '.media-frame .media-toolbar-secondary>select#media-attachment-efml-filter{grid-row:2}'
 			. '.attachment-preview .efml-media-mark{position:absolute;left:4px;top:4px;z-index:2;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(0,0,0,.15);color:#2271b1;pointer-events:none;--efml-service-icon-size:16px}'
 			. '.attachment-preview .efml-media-mark:after{position:absolute;right:-5px;bottom:-5px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);font:12px/14px dashicons;text-align:center}'
-			. '.attachment-preview .efml-media-mark-private:after{content:"\f160";color:#b32d2e}'
+			. '.attachment-preview .efml-media-mark-private:after{content:"\f332";color:#2271b1}'
 			. '.attachment-preview .efml-media-mark-exported:after{content:"\f13b";color:#2271b1}'
 			. '.efml-media-dialog{padding:16px;height:100%;box-sizing:border-box;overflow:auto}'
 			. '.efml-media-dialog textarea{width:100%;max-width:800px;min-height:10em;font-family:monospace}'
@@ -417,7 +417,7 @@ class Media_Dialog extends Tools_Base {
 		if ( $external_file_obj->is_private() ) {
 			$response['efml_mark'] = 'private';
 			/* translators: %1$s will be replaced by the name of a service, e.g. "Dropbox". */
-			$response['efml_mark_label'] = '' !== $label ? sprintf( __( 'Private external file from %1$s', 'external-files-in-media-library' ), $label ) : __( 'Private external file', 'external-files-in-media-library' );
+			$response['efml_mark_label'] = '' !== $label ? sprintf( __( 'Exported to %1$s, no direct access at the source', 'external-files-in-media-library' ), $label ) : __( 'Exported to an external source, no direct access at the source', 'external-files-in-media-library' );
 		} elseif ( $external_file_obj->is_exported() ) {
 			$response['efml_mark'] = 'exported';
 			/* translators: %1$s will be replaced by the name of a service, e.g. "Dropbox". */

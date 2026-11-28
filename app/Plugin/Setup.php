@@ -482,7 +482,7 @@ class Setup {
 		return array(
 			'type' => 'Text',
 			/* translators: %1$s will be replaced by the URL of the support forum on wordpress.org. */
-			'text' => '<p class="efml-setup-support"><span class="dashicons dashicons-sos" aria-hidden="true"></span> ' . sprintf( __( 'Need help? Feel free to ask in the <a href="%1$s" target="_blank" rel="noopener noreferrer">support forum</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_plugin_support_url() ) ) . '</p>',
+			'text' => '<p class="efml-setup-support"><span class="dashicons dashicons-sos" aria-hidden="true"></span> <strong>' . __( 'Need help?', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Feel free to ask in the <a href="%1$s" target="_blank" rel="noopener noreferrer">support forum</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_plugin_support_url() ) ) . '</p>',
 		);
 	}
 
@@ -689,7 +689,7 @@ class Setup {
 			),
 			'downloads' => array(
 				'label'       => __( 'Protected downloads', 'external-files-in-media-library' ),
-				'description' => __( 'Save files privately on an external storage. Your website delivers them, e.g. as downloads of your WooCommerce products.', 'external-files-in-media-library' ),
+				'description' => __( 'Export files to an external storage without direct access. Your website delivers them, e.g. as downloads of your WooCommerce products.', 'external-files-in-media-library' ),
 				'icon'        => Helper::get_icon( 'core-admin/shield', 'dashicons-shield', '', 32 ),
 				'features'    => array( 'export', 'private' ),
 				'service'     => '',
@@ -815,8 +815,8 @@ class Setup {
 			),
 			'export_private'  => array(
 				'type'  => 'CheckboxControl',
-				'label' => __( 'Save files privately', 'external-files-in-media-library' ),
-				'help'  => __( 'Files are not public available on this external source. Your website delivers them via its own URL.', 'external-files-in-media-library' ),
+				'label' => __( 'Prevent direct access at the source', 'external-files-in-media-library' ),
+				'help'  => __( 'Files could not be loaded directly from this external source, only via the URL of your website.', 'external-files-in-media-library' ),
 			),
 			'export_existing' => array(
 				'type'  => 'CheckboxControl',
@@ -827,7 +827,7 @@ class Setup {
 			'woocommerce'     => array(
 				'type'  => 'CheckboxControl',
 				'label' => __( 'Use external files as downloads of WooCommerce products', 'external-files-in-media-library' ),
-				'help'  => __( 'Private files are delivered via links with limited validity.', 'external-files-in-media-library' ),
+				'help'  => __( 'Files without direct access at the source are delivered via links with limited validity.', 'external-files-in-media-library' ),
 			),
 			'sync'            => array(
 				'type'  => 'CheckboxControl',

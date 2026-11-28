@@ -211,6 +211,7 @@ class Private_Files extends externalFilesTests {
 		$file_obj->set_private( true );
 		$result = \ExternalFilesInMediaLibrary\ExternalFiles\Private_Files::get_instance()->show_private_state_in_info_dialog( $dialog, $file_obj );
 		$this->assertCount( 1, $result['texts'] );
+		$this->assertStringContainsString( 'No direct access at the source', $result['texts'][0] );
 	}
 
 	/**

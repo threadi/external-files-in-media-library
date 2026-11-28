@@ -631,7 +631,7 @@ class Services {
 				'dashicon' => 'dashicons-upload',
 			),
 			'private'   => array(
-				'label'    => __( 'Private files', 'external-files-in-media-library' ),
+				'label'    => __( 'No direct access at the source', 'external-files-in-media-library' ),
 				'icon'     => 'core-admin/shield',
 				'dashicon' => 'dashicons-shield',
 			),

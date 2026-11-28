@@ -24,8 +24,8 @@ Die Ziele erscheinen in dieser Reihenfolge:
 | Externe Dateien einbinden und synchron halten | alle Dienste mit Synchronisierung | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
 | Lokale Dateien importieren | Lokales Verzeichnis deines Hostings | Import des Verzeichnisses, auf Wunsch als echte Dateien in die Mediathek kopiert |
 | Daten von FTP synchronisieren | FTP, FTPS und SFTP | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
-| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Dateien privat speichern“ und der Export der Dateien, die schon in deiner Mediathek liegen, Verbindungstest |
-| Geschützte Downloads | alle Dienste mit privaten Dateien | wie beim Auslagern, „Dateien privat speichern“ ist vorgewählt, auf Wunsch die Downloads von WooCommerce |
+| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Direktzugriff beim Anbieter verhindern“ und der Export der Dateien, die schon in deiner Mediathek liegen, Verbindungstest |
+| Geschützte Downloads | alle Dienste, die den Direktzugriff verhindern können | wie beim Auslagern, „Direktzugriff beim Anbieter verhindern“ ist vorgewählt, auf Wunsch die Downloads von WooCommerce |
 | Zentrale Mediathek für dein Netzwerk | keiner | eine Website als zentrale Mediathek für alle anderen Websites der Multisite, siehe unten. Erscheint nur in einer Multisite mit mindestens zwei Websites, für Benutzer, die das Netzwerk verwalten dürfen, und solange das Netzwerk keine zentrale Mediathek nutzt. |
 | Von einem anderen Offload-Plugin umsteigen | der Dienst des gefundenen Buckets | Dateien des anderen Plugins ohne erneuten Upload übernehmen, siehe [Umzug](migration_de.md). Erscheint nur, wenn solche Dateien gefunden werden. |
 

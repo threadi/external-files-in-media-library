@@ -50,6 +50,7 @@
 - Renamed "Export again" to "Export now"
 - Changed order of the goals in the quickstart: embedding and synchronizing, local files and FTP come first
 - Faster synchronization with the central media library: daily, without HTTP downloads, unchanged files are skipped
+- Renamed the option "Save files privately" to "Prevent direct access at the source", with a clearer description of what it protects
 
 ### Fixed
 

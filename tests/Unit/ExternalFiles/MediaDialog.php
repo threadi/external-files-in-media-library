@@ -248,6 +248,7 @@ class MediaDialog extends externalFilesTests {
 		$this->assertSame( 'exported', wp_prepare_attachment_for_js( $external_id )['efml_mark'] );
 		update_post_meta( $external_id, 'efml_private_file', 1 );
 		$this->assertSame( 'private', wp_prepare_attachment_for_js( $external_id )['efml_mark'] );
+		$this->assertStringContainsString( 'no direct access at the source', wp_prepare_attachment_for_js( $external_id )['efml_mark_label'] );
 
 		// no mark without the capability.
 		wp_set_current_user( $this->get_user( 'administrator', false ) );

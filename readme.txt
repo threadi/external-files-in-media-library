@@ -23,7 +23,7 @@ Add one or more files with their URLs under Media > "Add New Media File". You ca
 
 == Features ==
 
-Embed your files from _AWS S3_, _DropBox_, _Google Drive_, _Google Cloud Storage_, _FTP_, _your local hosting_, another website in your _multisite_, other _WordPress REST APIs_, _YouTube_ or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were uploaded in your media library.
+Embed your files from _AWS S3_, _DropBox_, _Google Drive_, _Google Cloud Storage_, _FTP_, _your local hosting_, another website in your _multisite_, other _WordPress REST APIs_, _YouTube_ or many other possible sources. Use them in your preferred editor such as Block Editor, Elementor, Divi, Classic Editor, WpBakery and many more as if the files were stored normally in your media library.
 
 Automatically synchronize external directories containing files with your media library at intervals you specify.
 
@@ -38,7 +38,7 @@ And even more:
 ✅ Extract ZIP files from any external source into your media library.
 ✅ Import lists of URLs from CSV and XML files (e.g., sitemaps, feeds or exports), uploaded or from a URL.
 ✅ Import and synchronize large directories with thousands of files in the background.
-✅ Save exported files in private storages and deliver them via the proxy or via temporary links, also for WooCommerce downloads.
+✅ Prevent direct access at the source: export files to storages, which are not public, and deliver them via the proxy or via temporary links, also for WooCommerce downloads.
 ✅ Sort exported files into folders by year and month.
 ✅ Keep access data out of your database: define them as constants in your wp-config.php, also for several connections per service.
 ✅ Work safely with copies of your website: on staging websites, nothing is exported to or deleted on your external sources.
@@ -49,8 +49,6 @@ And even more:
 See [what is possible](https://github.com/threadi/external-files-in-media-library/blob/master/docs/features.md) for an overview of all features.
 
 == Support for other plugins ==
-
-External files are regular attachments in your media library, handled by the functions of WordPress itself. That is why other plugins work with them as with uploaded files – including many plugins not listed here.
 
 ✅ **Image optimizers:** Imagify, ShortPixel, Smush, EWWW Image Optimizer, TinyPNG, Converter for Media and Modern Image Formats – optimized files and their WebP and AVIF variants are exported, too.
 ✅ **Folders and galleries:** sort, import and synchronize external files with plugins like Filebird, Folders, Real Media Library Lite or NextGen Gallery.

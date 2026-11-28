@@ -597,7 +597,7 @@ class Service_Base extends Directory_Listing_Base {
 			$steps['public']['skipped'] = false;
 			$steps['public']['success'] = $public;
 			/* translators: %1$s will be replaced by a URL. */
-			$steps['public']['message'] = $public ? sprintf( __( 'The test file is public available under %1$s.', 'external-files-in-media-library' ), $url ) : __( 'The test file is not public available. Files could be imported and exported with the option "Save files privately", but not exported as public files.', 'external-files-in-media-library' );
+			$steps['public']['message'] = $public ? sprintf( __( 'The test file is public available under %1$s.', 'external-files-in-media-library' ), $url ) : __( 'The test file is not public available. Files could be imported and exported with the option "Prevent direct access at the source", but not exported as public files.', 'external-files-in-media-library' );
 		}
 
 		// step 4: delete the test file.

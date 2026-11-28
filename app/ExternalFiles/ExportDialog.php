@@ -186,10 +186,10 @@ class ExportDialog {
 			$form .= '<div><label for="url">' . __( 'URL:', 'external-files-in-media-library' ) . '</label><input type="url" placeholder="https://example.com" name="url" id="url" value="' . esc_url( $url ) . '">' . __( 'This must be the URL where files uploaded to this external source are available.', 'external-files-in-media-library' ) . '</div>';
 		}
 
-		// -> the option to save files privately, if supported by the service.
+		// -> the option to prevent direct access at the source (saved as private files), if supported by the service.
 		if ( $listing_obj->get_export_object()->supports_private_files() ) {
 			$private = absint( get_term_meta( $term_id, 'efml_export_private', true ) );
-			$form   .= '<div><label for="private">' . __( 'Save files privately:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="private" id="private" value="1"' . ( $private > 0 ? ' checked="checked"' : '' ) . '> ' . __( 'Files are not public available on this external source. Your website delivers them via its own URL, either from its cache, if the proxy is enabled for the file type, or via a redirect to a link with limited validity. Applies to newly exported files.', 'external-files-in-media-library' ) . '</div>';
+			$form   .= '<div><label for="private">' . __( 'Prevent direct access at the source:', 'external-files-in-media-library' ) . '</label><input type="checkbox" name="private" id="private" value="1"' . ( $private > 0 ? ' checked="checked"' : '' ) . '> ' . __( 'Files could not be loaded directly from this external source, only via the URL of your website. Your website decides who may load them there, e.g. WooCommerce for downloads of products. Without such rules everyone who knows the URL could load them. Your website delivers them from its cache, if the proxy is enabled for the file type, or via a redirect to a link with limited validity. Applies to newly exported files.', 'external-files-in-media-library' ) . '</div>';
 		}
 
 		// -> the term ID.

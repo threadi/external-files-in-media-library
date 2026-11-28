@@ -97,7 +97,7 @@ class Private_Files {
 	 */
 	public function add_settings( Settings $settings_obj, Section $section, Setting $setting_export ): void {
 		// create the description.
-		$description = __( 'Applies to external sources, which save files privately. If the proxy is not enabled for the file type, your website redirects to a link with limited validity for these files. The link stays the same for this period of time, so browsers can cache the files. Search engines and visitors always see the URL of your website.', 'external-files-in-media-library' );
+		$description = __( 'Applies to external sources with the option "Prevent direct access at the source". If the proxy is not enabled for the file type, your website redirects to a link with limited validity for these files. The link stays the same for this period of time, so browsers can cache the files. Search engines and visitors always see the URL of your website.', 'external-files-in-media-library' );
 
 		// add setting.
 		$setting = $settings_obj->add_setting( 'eml_private_files_lifetime' );
@@ -105,7 +105,7 @@ class Private_Files {
 		$setting->set_type( 'integer' );
 		$setting->set_default( self::DEFAULT_LIFETIME );
 		$field = new Number( $settings_obj );
-		$field->set_title( __( 'Validity of links to private files (in minutes)', 'external-files-in-media-library' ) );
+		$field->set_title( __( 'Validity of links to files without direct access at the source (in minutes)', 'external-files-in-media-library' ) );
 		$field->set_description( $description );
 		$field->set_min( 1 );
 		$field->set_sanitize_callback( array( $this, 'sanitize_lifetime' ) );
@@ -266,7 +266,7 @@ class Private_Files {
 		$window = $this->get_time_window( time() );
 
 		// log this event.
-		Log::get_instance()->create( __( 'Proxy redirects to a signed URL for this private file.', 'external-files-in-media-library' ), '', 'info', 2 );
+		Log::get_instance()->create( __( 'Proxy redirects to a signed URL for this file without direct access at the source.', 'external-files-in-media-library' ), '', 'info', 2 );
 
 		// allow caching of the redirect only by the browser of the visitor until the end of the actual time window.
 		header( 'Cache-Control: private, max-age=' . $window['max_age'] );
@@ -291,7 +291,7 @@ class Private_Files {
 		}
 
 		// add the info.
-		$dialog['texts'][] = '<p><strong>' . __( 'Private', 'external-files-in-media-library' ) . ':</strong> ' . __( 'The file is saved privately on the external source and delivered via your website.', 'external-files-in-media-library' ) . '</p>';
+		$dialog['texts'][] = '<p><strong>' . __( 'No direct access at the source', 'external-files-in-media-library' ) . ':</strong> ' . __( 'The file could not be loaded directly from the external source. Your website delivers it via its own URL.', 'external-files-in-media-library' ) . '</p>';
 
 		// return the resulting dialog.
 		return $dialog;

@@ -3,7 +3,7 @@
 The dialog of WordPress to choose or upload media files (e.g. "Add media", the featured image, the image or gallery block) offers the functions of this plugin, too:
 
 * **Filter for external files** beside the filters of WordPress: all files, only external URLs, no external URLs, the state of the export, your external sources and the further options of other features (e.g. in a multisite). The options, which need the database, are loaded when you point to the filter for the first time.
-* **Mark on the files:** external files show the logo of their service (e.g. Dropbox, FTP) at the top left of their preview, private files with a lock and exported files with a cloud. Its label names the service. Services without own logo show a link.
+* **Mark on the files:** external files show the logo of their service (e.g. Dropbox, FTP) at the top left of their preview, exported files with a cloud and files without direct access at the source with a shield. Its label names the service. Services without own logo show a link.
 * **Tab "Insert from URL":** enter one or more URLs (one per line). The files are added to your media library and selected in the dialog. URLs, which are already in your media library, are not added again: their file is selected.
 * **Tab "From external source":** shows your saved external sources as cards with the logo of their service and their directory listing, like Media → "Your external sources". "Import" adds a file and selects it in the dialog. If the dialog allows only one file, it shows the media library with the file afterward, otherwise you could add further files.
 

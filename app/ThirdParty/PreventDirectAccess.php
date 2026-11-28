@@ -170,7 +170,7 @@ class PreventDirectAccess extends ThirdParty_Base implements ThirdParty {
 
 		// refuse the protection.
 		/* translators: %1$s will be replaced by the name of a plugin. */
-		wp_send_json_error( array( 'message' => sprintf( __( 'External files could not be protected by %1$s, as they are not saved in the uploads directory. Save them privately on their external source instead.', 'external-files-in-media-library' ), 'Prevent Direct Access' ) ) );
+		wp_send_json_error( array( 'message' => sprintf( __( 'External files could not be protected by %1$s, as they are not saved in the uploads directory.', 'external-files-in-media-library' ), 'Prevent Direct Access' ) ) );
 	}
 
 	/**

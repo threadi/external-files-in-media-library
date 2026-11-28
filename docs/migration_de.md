@@ -23,7 +23,7 @@ Die Daten werden direkt aus der Datenbank gelesen. Das andere Plugin muss dafür
 ## Was mit jeder Datei passiert
 
 * Es wird geprüft, ob das Objekt im Bucket existiert. Fehlt es, bleibt der Anhang unverändert und der Grund steht im Protokoll.
-* Der Anhang wird zur externen Datei mit der URL des Objekts, so wie nach einem Export. Private Dateien des anderen Plugins bleiben privat und werden über deine Website ausgeliefert.
+* Der Anhang wird zur externen Datei mit der URL des Objekts, so wie nach einem Export. Private Dateien des anderen Plugins werden zu Dateien ohne Direktzugriff beim Anbieter und über deine Website ausgeliefert.
 * Im Bucket wird nichts hochgeladen, verschoben oder gelöscht. Die Vorschaubilder des anderen Plugins bleiben dort liegen, dieses Plugin erzeugt seine Vorschaubilder selbst.
 * Lokale Kopien der Dateien und die Daten des anderen Plugins bleiben erhalten, damit du zurückwechseln kannst.
 * Bereits übernommene Dateien werden übersprungen. Du kannst den Umzug also wiederholen, z. B. nach einem Fehler.

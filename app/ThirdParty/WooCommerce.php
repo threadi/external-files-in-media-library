@@ -158,7 +158,7 @@ class WooCommerce extends ThirdParty_Base implements ThirdParty {
 		$woocommerce_settings_setting->set_field(
 			array(
 				'title'       => __( 'Enable support for WooCommerce', 'external-files-in-media-library' ),
-				'description' => __( 'If enabled any external hosted images during CSV-import will be handled as external files by this plugin. External files from your media library, which you use as files of downloadable products, will be delivered by WooCommerce after its checks. If they are saved privately on their external source, they can only be downloaded this way.', 'external-files-in-media-library' ),
+				'description' => __( 'If enabled any external hosted images during CSV-import will be handled as external files by this plugin. External files from your media library, which you use as files of downloadable products, will be delivered by WooCommerce after its checks. If direct access at their external source is prevented, they can only be downloaded this way.', 'external-files-in-media-library' ),
 				'type'        => 'Checkbox',
 			)
 		);

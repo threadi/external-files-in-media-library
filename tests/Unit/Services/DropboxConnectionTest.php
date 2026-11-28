@@ -213,7 +213,7 @@ class DropboxConnectionTest extends externalFilesTests {
 
 		$this->assertTrue( $steps[1]['success'] );
 		$this->assertFalse( $steps[2]['success'] );
-		$this->assertStringContainsString( 'Save files privately', $steps[2]['message'] );
+		$this->assertStringContainsString( 'Prevent direct access at the source', $steps[2]['message'] );
 		$this->assertTrue( $steps[3]['success'] );
 	}
 

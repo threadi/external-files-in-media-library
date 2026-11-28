@@ -778,10 +778,7 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 		color: #d63638;
 	}
 	.efml-setup-support {
-		border-top: 1px solid #f0f0f1;
-		color: #646970;
 		margin: 1.5em 0 1em;
-		padding-top: 1em;
 		.dashicons {
 			vertical-align: text-bottom;
 		}

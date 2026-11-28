@@ -158,8 +158,9 @@ Prevent Direct Access protects local files in the folder `_pda` of your uploads 
 on external sources, so:
 
 - Protected files are not exported, they stay local files. The media library shows a lock at them.
-- Exported and other external files could not be protected. Save them privately on their external source instead (see
-  [private files](private-files.md)).
+- Exported and other external files could not be protected by Prevent Direct Access. The option "Prevent direct access
+  at the source" (see [prevent direct access at the source](private-files.md)) is no replacement: it only prevents that
+  the files could be loaded directly from the external source, not via your website.
 
 ### Prevent Files / Folders Access
 
@@ -193,8 +194,8 @@ static website, as their URLs have the form of a file (e.g. `/emlproxy/image.jpg
 from their external source, stay linked there.
 
 This requires pretty permalinks: without them, the URLs of the proxy contain a query string (`?emlproxy=image.jpg`),
-which Simply Static does not copy. Tools → "Site Health" shows a hint in this case. Private files are not part of the
-static website, as it has no PHP to deliver them.
+which Simply Static does not copy. Tools → "Site Health" shows a hint in this case. Files without direct access at the source are
+not part of the static website, as it has no PHP to deliver them.
 
 ## SEO
 
@@ -218,5 +219,5 @@ available in the media library of each language. Enable this in the settings: "I
 - **Product import via CSV:** the importer of WooCommerce offers to import the product images and gallery images as
   external files: they are not uploaded into your media library, but delivered from their source.
 - **Downloadable products:** external files could be used as downloads. Protected downloads are delivered by
-  WooCommerce only to buyers, also if they are saved privately on their external source (see
-  [private files](private-files.md)). CDNs do not cache them.
+  WooCommerce only to buyers, also if direct access at their external source is prevented (see
+  [prevent direct access at the source](private-files.md)). CDNs do not cache them.

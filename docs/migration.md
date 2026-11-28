@@ -23,7 +23,7 @@ The data are read directly from the database. The other plugin does not have to 
 ## What happens with each file
 
 * It is checked whether the object exists in the bucket. If it is missing, the attachment stays unchanged and the reason is logged.
-* The attachment becomes an external file with the URL of the object, like after an export. Private files of the other plugin stay private and are delivered via your website.
+* The attachment becomes an external file with the URL of the object, like after an export. Private files of the other plugin become files without direct access at the source and are delivered via your website.
 * Nothing is uploaded, moved or deleted in the bucket. The thumbnails of the other plugin stay there, this plugin creates its thumbnails itself.
 * Local copies of the files and the data of the other plugin are kept, so you could switch back.
 * Files, which have already been taken over, are skipped. So you could repeat the migration, e.g. after an error.

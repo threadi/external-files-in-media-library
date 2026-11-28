@@ -1,6 +1,6 @@
 ---
 name: external-files-in-media-library
-description: Help someone who runs WordPress with the plugin "External files in Media Library" add external files, connect services, offload (export) their media, deliver files privately, restore exported files and find out why a file is missing, not exported or not shown. Not for developing the plugin.
+description: Help someone who runs WordPress with the plugin "External files in Media Library" add external files, connect services, offload (export) their media, prevent direct access at the source, restore exported files and find out why a file is missing, not exported or not shown. Not for developing the plugin.
 ---
 
 # External files in Media Library (site operators)
@@ -18,7 +18,7 @@ Documentation of all features: the `docs/` folder of the plugin on GitHub (https
 3. **Export (offloading).** New uploads and existing files are copied to an external source and then used from there, to save space on the hosting. Images are exported with their sizes and their original image if the service supports it. Contents which still contain the old local URLs keep working.
 4. **Restore.** Exported files can be brought back as normal local files at their original path at any time.
 5. **Migration** from WP Offload Media, Advanced Media Offloader, Stowaway and Offload Media – Cloud Storage without uploading the files again.
-6. **Private files**, access data as constants in `wp-config.php`, protection of copies of the website (staging).
+6. **Prevent direct access at the source** (internally "private files"), access data as constants in `wp-config.php`, protection of copies of the website (staging).
 
 ## Mental model
 
@@ -52,7 +52,7 @@ The export of an external source is switched on in the list of external sources 
 
 - By default files are delivered via the **proxy** of the website (`/emlproxy/…`). Visitors and search engines only see the URL of the website. This matters for the GDPR: no external URL is embedded in the pages.
 - The proxy can be disabled per file type (*Delivery*). Only then are files and image sizes loaded directly from the external source.
-- **Private files** (option "Save files privately" of an external source) are always delivered via the proxy or via links with limited validity, never with a public URL. Their image sizes are delivered via the proxy, too.
+- **Files without direct access at the source** (option "Prevent direct access at the source" of an external source, called "Save files privately" up to version 6.0, internally "private files") are always delivered via the proxy or via links with limited validity, never with a public URL. Their image sizes are delivered via the proxy, too.
 
 ## Export: what to expect
 
