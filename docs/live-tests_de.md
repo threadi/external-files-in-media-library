@@ -56,8 +56,11 @@ Was je Dienst getestet wird:
 
 - die Verbindung und die Verzeichnisansicht einer gespeicherten externen Quelle,
 - der Import der ersten Datei und ihre Auslieferung an Besucher,
-- die Synchronisierung des Verzeichnisses, wenn es höchstens `EFML_LIVE_MAX_SYNC_FILES` Dateien (Standard 20) und keine
-  Unterverzeichnisse enthält,
+- die Synchronisierung des Verzeichnisses ohne seine Unterverzeichnisse, wenn es höchstens `EFML_LIVE_MAX_SYNC_FILES`
+  Dateien (Standard 20) enthält,
+- mit `EFML_LIVE_SYNC_SUBDIRECTORIES=1`: die Synchronisierung mit den Dateien der Unterverzeichnisse und deren Löschen,
+  wenn die Unterverzeichnisse danach deaktiviert werden (nur für Verzeichnisse mit Unterverzeichnissen; diese können
+  viele Dateien enthalten),
 - der Export eines hochgeladenen Bildes inkl. seiner Größen, seine Auslieferung an Besucher und sein Löschen auf der
   externen Quelle,
 - dasselbe als private Datei (bei Diensten mit privaten Dateien),

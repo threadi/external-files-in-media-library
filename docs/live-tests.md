@@ -56,8 +56,11 @@ What is tested for each service:
 
 - the connection and the directory listing of a saved external source,
 - the import of the first file and its delivery to visitors,
-- the synchronization of the directory, if it contains at most `EFML_LIVE_MAX_SYNC_FILES` files (default 20) and no
-  subdirectories,
+- the synchronization of the directory without its subdirectories, if it contains at most `EFML_LIVE_MAX_SYNC_FILES`
+  files (default 20),
+- with `EFML_LIVE_SYNC_SUBDIRECTORIES=1`: the synchronization with the files of the subdirectories and their deletion,
+  if the subdirectories are disabled afterward (only for directories with subdirectories; they could contain many
+  files),
 - the export of an uploaded image incl. its sizes, its delivery to visitors and its deletion on the external source,
 - the same as private file (for services with private files),
 - the export of an upload of an editor without the capability for the service, who could not import files of it,

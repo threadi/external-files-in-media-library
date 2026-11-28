@@ -198,7 +198,7 @@ class Revert extends Extension_Base {
 		}
 
 		// delete all those files.
-		foreach ( $result->posts as $post_id ) {
+		foreach ( (array) $result->posts as $post_id ) {
 			// bail if the user is not allowed to delete this file.
 			if ( ! current_user_can( 'delete_post', absint( $post_id ) ) ) {
 				continue;

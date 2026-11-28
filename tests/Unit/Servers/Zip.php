@@ -217,6 +217,39 @@ class Zip extends externalFilesTests {
 	}
 
 	/**
+	 * Test that the files in directories of a ZIP are not synchronized, if this is disabled for the external source.
+	 *
+	 * @return void
+	 */
+	public function test_synchronization_without_subdirectories(): void {
+		$url = $this->create_zip(
+			array(
+				'example-red.jpg'         => 'example-red.jpg',
+				'images/example-blue.png' => 'example-blue.png',
+			)
+		);
+		$this->enable_synchronization();
+		$this->request = 'cron';
+		update_option( 'eml_sync_extensions', array( 'sync_subdirectories' ) );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::get_instance()->init();
+		add_filter( 'wp_doing_cron', '__return_true' );
+		\ExternalFilesInMediaLibrary\Services\Zip::get_instance()->init();
+		remove_filter( 'wp_doing_cron', '__return_true' );
+
+		$term_id = Taxonomy::get_instance()->add( 'zip', $url, array() );
+		$this->assertTrue( \ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->supports_subdirectories( $term_id ) );
+
+		// by default, the files in directories of the archive are synchronized.
+		$this->sync( $url, $term_id );
+		$this->assertSame( array( $url . '/example-red.jpg', $url . '/images/example-blue.png' ), array_keys( $this->get_files_of_source( $term_id ) ) );
+
+		// disabled for the external source: only the files in the root of the archive are synchronized.
+		update_term_meta( $term_id, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::SETTING, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::NO );
+		$this->sync( $url, $term_id );
+		$this->assertSame( array( $url . '/example-red.jpg' ), array_keys( $this->get_files_of_source( $term_id ) ) );
+	}
+
+	/**
 	 * Test that other imports of ZIP files are not changed: without the ZIP service, the ZIP is a single file.
 	 *
 	 * @return void

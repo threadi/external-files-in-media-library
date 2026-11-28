@@ -223,8 +223,8 @@ class IFolders extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// assign the file to the categories.
-		foreach ( $folders as $folder_id ) {
+		// assign the file to the folders (the dialog saves them with their ID as key).
+		foreach ( $this->get_ids_from_selection( $folders ) as $folder_id ) {
 			FoldersModel::attachToFolder( 'attachment', $folder_id, array( $external_file_obj->get_id() ) );
 		}
 	}
@@ -243,7 +243,7 @@ class IFolders extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$folders = isset( $_POST['ifolders_folders'] ) ? array_map( 'absint', wp_unslash( $_POST['ifolders_folders'] ) ) : array();
+		$folders = isset( $_POST['ifolders_folders'] ) ? $this->get_ids_from_selection( map_deep( wp_unslash( $_POST['ifolders_folders'] ), 'absint' ) ) : array();
 
 		// assign the file to the categories.
 		foreach ( $folders as $folder_id ) {

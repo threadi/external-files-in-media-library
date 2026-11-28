@@ -14,6 +14,7 @@ use easyDirectoryListingForWordPress\Crypt;
 use easyDirectoryListingForWordPress\Taxonomy;
 use ExternalFilesInMediaLibrary\ExternalFiles\ExportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Queue;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories;
 use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
@@ -514,6 +515,50 @@ class Update {
 		// It runs once for the whole network and is continued via cron, if necessary.
 		if ( is_multisite() && ( 0 === absint( get_site_option( 'efml_network_origins_migrated', 0 ) ) || 0 === absint( get_site_option( 'efml_network_file_info_migrated', 0 ) ) ) ) {
 			\ExternalFilesInMediaLibrary\Plugin\Network\Propagation::get_instance()->run_migration( 5 );
+		}
+
+		// save the use of subdirectories on the external sources, whose service has used them since ever.
+		$this->migrate_subdirectories_setting();
+	}
+
+	/**
+	 * Save the setting to synchronize subdirectories on each external source, whose service uses them by default.
+	 *
+	 * Services like DropBox or archives have always synchronized the files of subdirectories. Their external sources
+	 * keep this as their own setting, so they are not changed by the global setting for subdirectories.
+	 *
+	 * @return void
+	 */
+	public function migrate_subdirectories_setting(): void {
+		// get all external sources.
+		$query = array(
+			'taxonomy'   => Taxonomy::get_instance()->get_name(),
+			'hide_empty' => false,
+			'fields'     => 'ids',
+		);
+		$terms = new WP_Term_Query( $query );
+
+		// bail if no external sources exist.
+		if ( empty( $terms->terms ) ) {
+			return;
+		}
+
+		// check each external source.
+		foreach ( $terms->terms as $term_id ) {
+			$term_id = absint( $term_id );
+
+			// bail if a setting is already saved.
+			if ( '' !== (string) get_term_meta( $term_id, Sync_Subdirectories::SETTING, true ) ) {
+				continue;
+			}
+
+			// bail if the service of this external source does not use subdirectories by default.
+			if ( ! Synchronization::get_instance()->get_subdirectories_default( $term_id ) ) {
+				continue;
+			}
+
+			// save the setting.
+			update_term_meta( $term_id, Sync_Subdirectories::SETTING, Sync_Subdirectories::YES );
 		}
 	}
 }

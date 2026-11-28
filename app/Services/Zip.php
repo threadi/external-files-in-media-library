@@ -119,6 +119,10 @@ class Zip extends Service_Base implements Service {
 		// add settings.
 		add_action( 'init', array( $this, 'add_settings' ), 30 );
 
+		// archives support subdirectories during synchronizations and use them by default (also needed for updates).
+		add_filter( 'efml_sync_supports_subdirectories', array( $this, 'is_zip_source' ), 10, 2 );
+		add_filter( 'efml_sync_subdirectories_default', array( $this, 'is_zip_source' ), 10, 2 );
+
 		// bail if user has no capability for this service.
 		// scheduled synchronizations via cron and WP CLI run without user, but need the hooks for importing.
 		if ( ! $this->is_import_allowed() ) {
@@ -364,12 +368,56 @@ class Zip extends Service_Base implements Service {
 		}
 
 		// the URL of the archive itself (e.g. of a synchronized external source) means all files in it.
-		if ( $this->is_archive_url( $file_path ) ) {
-			$file_path = trailingslashit( $file_path );
+		if ( ! $this->is_archive_url( $file_path ) ) {
+			return $this->get_files_from_zip( $file_path );
 		}
 
-		// return the list of files from this ZIP.
-		return $this->get_files_from_zip( $file_path );
+		// get the files of the archive.
+		$file_path = trailingslashit( $file_path );
+		$files     = $this->get_files_from_zip( $file_path );
+
+		$true = true;
+		/** This filter is documented in app/ExternalFiles/Protocol_Base.php */
+		if ( apply_filters( 'efml_include_subdirectories', $true, $file_path, null ) ) {
+			return $files;
+		}
+
+		// use only the files in the root of the archive.
+		foreach ( $files as $key => $file ) {
+			// bail if this is not a file.
+			if ( ! is_array( $file ) || empty( $file['url'] ) ) {
+				continue;
+			}
+
+			// get the path of the file in the archive.
+			$path_in_archive = str_starts_with( (string) $file['url'], $file_path ) ? substr( (string) $file['url'], strlen( $file_path ) ) : '';
+
+			// remove the file, if it is in a directory of the archive.
+			if ( str_contains( $path_in_archive, '/' ) ) {
+				unset( $files[ $key ] );
+			}
+		}
+
+		// return the files in the root of the archive.
+		return $files;
+	}
+
+	/**
+	 * Return true for external sources of this service: archives support subdirectories and use them by default.
+	 *
+	 * @param bool $return_value The return value.
+	 * @param int  $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function is_zip_source( bool $return_value, int $term_id ): bool {
+		// bail if this is not an external source of this service.
+		if ( $this->get_name() !== get_term_meta( $term_id, 'type', true ) ) {
+			return $return_value;
+		}
+
+		// return true for archives.
+		return true;
 	}
 
 	/**
@@ -717,10 +765,8 @@ class Zip extends Service_Base implements Service {
 			return $config;
 		}
 
-		// bail if nonce does not match.
-		if ( ! check_admin_referer( 'efml-open-zip-nonce', 'nonce' ) ) {
-			return $config;
-		}
+		// check the nonce (WordPress stops the request, if it does not match).
+		check_admin_referer( 'efml-open-zip-nonce', 'nonce' );
 
 		// get the zip handler for this URL.
 		$zip_obj = $this->get_zip_object_by_file( $url );

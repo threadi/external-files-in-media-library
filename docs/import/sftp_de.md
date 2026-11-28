@@ -18,6 +18,9 @@ Die Angabe von einer URL mit sichtbaren Zugangsdaten wird _nicht_ unterstützt.
 
 Beispiel: `sftp://login:password@example.com/example.png`
 
+Der Import eines Verzeichnisses nutzt nur die Dateien direkt darin. Die Synchronisierung kann auch die Dateien seiner
+Unterverzeichnisse nutzen, siehe [Unterverzeichnisse bei der Synchronisierung](directories_de.md#unterverzeichnisse-bei-der-synchronisierung).
+
 ## Beispiele
 
 ### Einzelne Datei

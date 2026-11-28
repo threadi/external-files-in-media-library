@@ -18,7 +18,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle support for this plugin.
  */
-class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
+class RealMediaLibrary extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
 
 	/**
 	 * The term ID used in a sync.
@@ -78,6 +78,9 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		if ( ! Helper::is_plugin_active( 'real-media-library-lite/index.php' ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
@@ -252,5 +255,116 @@ class RealMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	public function add_option_for_folder_import( array $dialog ): array {
 		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to folder of plugin Real Media Library', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'real_media_library';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'Real Media Library';
+	}
+
+	/**
+	 * Return whether the plugin is active and its folders could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return function_exists( 'wp_rml_create_or_return_existing_id' ) && function_exists( 'wp_rml_get_object_by_id' ) && function_exists( 'wp_rml_move' ) && function_exists( '_wp_rml_root' ) && $this->supports_subfolders();
+	}
+
+	/**
+	 * Return the folder of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		return absint( get_term_meta( $term_id, 'rml_folder', true ) );
+	}
+
+	/**
+	 * Return whether Real Media Library could create subfolders: only the Pro version supports them.
+	 *
+	 * @return bool
+	 */
+	private function supports_subfolders(): bool {
+		// get the callback for the main object of the plugin.
+		$callback = array( 'MatthiasWeb\\RealMediaLibrary\\Core', 'getInstance' );
+
+		// bail if the main class does not exist.
+		if ( ! is_callable( $callback ) ) {
+			return false;
+		}
+
+		// get the main object.
+		$core = call_user_func( $callback );
+
+		// return whether this is the Pro version.
+		return is_object( $core ) && method_exists( $core, 'isPro' ) && true === (bool) $core->isPro();
+	}
+
+	/**
+	 * Return the ID of the folder with the given name in the given parent folder; the folder is created, if it does not
+	 * exist.
+	 *
+	 * @param int    $parent_id The ID of the parent folder (0 for the top level).
+	 * @param string $name      The name of the folder.
+	 *
+	 * @return int The ID of the folder, 0 on errors.
+	 */
+	public function get_or_create_folder( int $parent_id, string $name ): int {
+		// get the folder (the top level has its own ID in Real Media Library).
+		$result = wp_rml_create_or_return_existing_id( $name, $parent_id > 0 ? $parent_id : _wp_rml_root(), 0, array(), true );
+
+		// return the ID, if no errors are returned.
+		return is_numeric( $result ) ? absint( $result ) : 0;
+	}
+
+	/**
+	 * Return whether the folder with the given ID exists.
+	 *
+	 * @param int $folder_id The ID of the folder.
+	 *
+	 * @return bool
+	 */
+	public function folder_exists( int $folder_id ): bool {
+		return $folder_id > 0 && function_exists( 'is_rml_folder' ) && is_rml_folder( wp_rml_get_object_by_id( $folder_id ) );
+	}
+
+	/**
+	 * Assign the given file to the given folder (only to this folder).
+	 *
+	 * @param int $attachment_id The ID of the attachment.
+	 * @param int $folder_id     The ID of the folder.
+	 *
+	 * @return void
+	 */
+	public function assign_file( int $attachment_id, int $folder_id ): void {
+		wp_rml_move( $folder_id, array( $attachment_id ), true );
 	}
 }

@@ -213,11 +213,6 @@ class Files {
 				return $url;
 			}
 
-			// bail if baseurl is not a string.
-			if ( ! is_string( $upload_dir['baseurl'] ) ) {
-				return $url;
-			}
-
 			// return our own attachment URL.
 			return trailingslashit( $upload_dir['baseurl'] ) . $external_file_obj->get_attachment_url();
 		}
@@ -530,12 +525,14 @@ class Files {
 		$result = new WP_Query( $query );
 
 		// bail if not a single result is in the array.
-		if ( 1 !== $result->post_count ) {
+		$posts = (array) $result->posts;
+		if ( 1 !== count( $posts ) ) {
 			return false;
 		}
 
 		// get the first entry.
-		$attachment_id = absint( $result->posts[0] );
+		$first         = reset( $posts );
+		$attachment_id = $first instanceof WP_Post ? $first->ID : absint( $first );
 
 		// get the external file object for this attachment.
 		$external_file_obj = $this->get_file( $attachment_id );
@@ -1098,6 +1095,15 @@ class Files {
 				'height' => 0,
 			);
 		}
+
+		// make sure that width and height are set.
+		$image_data = array_merge(
+			array(
+				'width'  => 0,
+				'height' => 0,
+			),
+			$image_data
+		);
 
 		// bail if both sizes are 0.
 		if ( 0 === $size[0] && 0 === $size[1] ) {

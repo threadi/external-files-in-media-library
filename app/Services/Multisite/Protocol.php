@@ -136,7 +136,8 @@ class Protocol extends Protocol_Base {
 		$result = new WP_Query( $query );
 
 		// bail on no result.
-		if ( 0 === $result->found_posts ) {
+		$posts = (array) $result->posts;
+		if ( empty( $posts ) ) {
 			// return to our blog.
 			restore_current_blog();
 
@@ -145,7 +146,7 @@ class Protocol extends Protocol_Base {
 		}
 
 		// get the post object.
-		$post_obj = $result->posts[0];
+		$post_obj = reset( $posts );
 
 		// bail if post object could not be loaded.
 		if ( ! $post_obj instanceof WP_Post ) {

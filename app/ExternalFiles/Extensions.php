@@ -146,6 +146,7 @@ class Extensions {
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Specific_Date',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_File_Type',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_By_Size',
+			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories',
 			'\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Zip',
 		);
 

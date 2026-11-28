@@ -389,12 +389,8 @@ class Local extends Service_Base implements Service {
 			return $result;
 		}
 
-		// list of directories to ignore.
-		$ignore_list = array(
-			'node_modules',
-			'vendor',
-			'tmp',
-		);
+		// list of directories to ignore: the same as for the synchronization of local directories.
+		$ignore_list = ( new \ExternalFilesInMediaLibrary\ExternalFiles\Protocols\File( $directory ) )->get_excluded_directories();
 
 		// return true to hide this directory if it is in the ignore list.
 		if ( in_array( basename( $path ), $ignore_list, true ) ) {

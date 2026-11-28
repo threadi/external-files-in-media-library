@@ -653,6 +653,57 @@ class FtpExport extends externalFilesTests {
 	}
 
 	/**
+	 * Test that the synchronization with subdirectories neither imports exported files in folders nor their sizes.
+	 *
+	 * Other files with the same name are synchronized.
+	 *
+	 * @return void
+	 */
+	public function test_synchronization_of_export_source_with_folders(): void {
+		update_option( 'uploads_use_yearmonth_folders', 1 );
+		update_option( 'eml_export_folders', 1 );
+		$this->create_export_source();
+		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		update_option( 'eml_sync_extensions', array( 'sync_subdirectories' ) );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::get_instance()->init();
+		update_term_meta( $this->term_id, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::SETTING, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::YES );
+
+		// export an image with its sizes in a folder.
+		$file = trailingslashit( get_temp_dir() ) . 'efml-ftp-folder.jpg';
+		imagejpeg( imagecreatetruecolor( 800, 600 ), $file );
+		$attachment_id = @self::factory()->attachment->create_upload_object( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$this->assertIsInt( $attachment_id );
+		$this->assertTrue( @Export::get_instance()->export_file( $attachment_id ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		$folders = get_post_meta( $attachment_id, 'efml_export_folders', true );
+		$this->assertIsArray( $folders );
+		$this->assertNotEmpty( $folders[ $this->term_id ] );
+		$sizes = \ExternalFilesInMediaLibrary\ExternalFiles\Sizes::get_instance()->get_sizes( $attachment_id, true );
+		$this->assertNotEmpty( $sizes );
+
+		// a file with the same name in another directory, which has not been exported.
+		mkdir( $this->get_server_path( 'other' ), 0777 ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
+		copy( $this->get_server_path( trailingslashit( (string) $folders[ $this->term_id ] ) . 'efml-ftp-folder.jpg' ), $this->get_server_path( 'other/efml-ftp-folder.jpg' ) );
+
+		// synchronize.
+		$source_url = TestServers::get_url( $this->server, $this->directory );
+		@\ExternalFilesInMediaLibrary\ExternalFiles\Synchronization::get_instance()->sync( $source_url, Taxonomy::get_instance()->get_entry( $this->term_id ), $this->term_id ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		// the exported image is still the same attachment and its sizes have not been imported.
+		$this->assertInstanceOf( \WP_Post::class, get_post( $attachment_id ) );
+		$folder_url = $source_url . trailingslashit( (string) $folders[ $this->term_id ] );
+		$this->assertSame( $attachment_id, Files::get_instance()->get_file_by_url( $folder_url . 'efml-ftp-folder.jpg' )->get_id() );
+		foreach ( $sizes as $size ) {
+			if ( 'efml-ftp-folder.jpg' === $size['file'] ) {
+				continue;
+			}
+			$this->assertFalse( Files::get_instance()->get_file_by_url( $folder_url . $size['file'] ), $size['file'] );
+		}
+
+		// the other file with the same name is synchronized.
+		$this->assertInstanceOf( \ExternalFilesInMediaLibrary\ExternalFiles\File::class, Files::get_instance()->get_file_by_url( $source_url . 'other/efml-ftp-folder.jpg' ) );
+	}
+
+	/**
 	 * Test that the deletion of the main export source removes it as main export source.
 	 *
 	 * @return void

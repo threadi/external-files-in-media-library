@@ -116,9 +116,56 @@ class Sftp extends Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could use the files of subdirectories during a synchronization.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the files of the given directory on the given connection, also of its subdirectories, if they should be used.
+	 *
+	 * Links to directories are never followed.
+	 *
+	 * @param WP_Filesystem_Base $ssh_connection The connection.
+	 * @param string             $path           The path of the directory.
+	 *
+	 * @return array<string,array<string,mixed>>|false
+	 */
+	private function get_files_of_directory( WP_Filesystem_Base $ssh_connection, string $path ): array|false {
+		return $this->get_directory_entries(
+			$path,
+			static function ( string $directory ) use ( $ssh_connection ) {
+				return $ssh_connection->dirlist( $directory );
+			},
+			static function ( string $directory ) use ( $ssh_connection ): bool {
+				// bail if this is not a connection via SSH2.
+				if ( ! $ssh_connection instanceof WP_Filesystem_SSH2 || ! function_exists( 'ssh2_sftp_lstat' ) ) {
+					return false;
+				}
+
+				// bail if the SFTP connection does not exist.
+				$sftp_link = $ssh_connection->sftp_link;
+				if ( ! is_resource( $sftp_link ) ) {
+					return false;
+				}
+
+				// get the data of the entry itself (not of its target).
+				$stat = @ssh2_sftp_lstat( $sftp_link, $directory ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+				// return whether this is a link.
+				return is_array( $stat ) && 0120000 === ( absint( $stat['mode'] ) & 0170000 );
+			}
+		);
+	}
+
+	/**
 	 * Return one page of the files in the directory of the URL of this object.
 	 *
-	 * Like the import of a directory, only the files directly in the directory are used.
+	 * Like the import of a directory, only the files directly in the directory are used, during a synchronization
+	 * also the files of the subdirectories, if this is enabled.
 	 *
 	 * @param string $cursor The cursor for the requested page.
 	 *
@@ -145,7 +192,7 @@ class Sftp extends Protocol_Base {
 				}
 
 				// get the list of the directory.
-				$file_list = $ssh_connection->dirlist( $path );
+				$file_list = $this->get_files_of_directory( $ssh_connection, $path );
 
 				// bail if list could not be loaded.
 				if ( ! is_array( $file_list ) ) {
@@ -156,20 +203,6 @@ class Sftp extends Protocol_Base {
 				// collect the files.
 				$files = array();
 				foreach ( $file_list as $filename => $settings ) {
-					// not all servers return all data for each file.
-					$settings = wp_parse_args(
-						$settings,
-						array(
-							'size'        => 0,
-							'lastmodunix' => 0,
-						)
-					);
-
-					// bail if this is a directory.
-					if ( 'd' === $settings['type'] ) {
-						continue;
-					}
-
 					// add the file.
 					$files[] = array(
 						'url'           => trailingslashit( $this->get_url() ) . $filename,
@@ -249,8 +282,8 @@ class Sftp extends Protocol_Base {
 			 */
 			do_action( 'efml_sftp_directory_import_start', $this->get_url() );
 
-			// get the files from SFTP directory as list.
-			$file_list = $ssh_connection->dirlist( $path );
+			// get the files from SFTP directory as list (also from its subdirectories, if they should be used).
+			$file_list = $this->get_files_of_directory( $ssh_connection, $path );
 			if ( empty( $file_list ) ) {
 				Log::get_instance()->create( __( 'SFTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
 
@@ -532,13 +565,13 @@ class Sftp extends Protocol_Base {
 		$fields = $this->get_fields_for_url( $url );
 
 		// bail if fields are missing.
-		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
+		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) || ! is_string( $fields['login']['value'] ) || ! is_string( $fields['password']['value'] ) ) {
 			return false;
 		}
 
 		// define ssh/sftp connection parameter.
 		$connection_arguments = array(
-			'port'     => $this->get_port_by_url( $parse_url ),
+			'port'     => absint( $this->get_port_by_url( $parse_url ) ),
 			'hostname' => $parse_url['host'],
 			'username' => $fields['login']['value'],
 			'password' => $fields['password']['value'],

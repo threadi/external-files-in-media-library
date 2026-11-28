@@ -20,7 +20,9 @@ use WP_Post;
 /**
  * Object to handle support for this plugin.
  */
-class Folders extends ThirdParty_Base implements ThirdParty {
+class Folders extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
+	use Folder_Structure_Taxonomy;
+
 
 	/**
 	 * The term ID used in a sync.
@@ -84,6 +86,9 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		// remove additional options from this plugin for external files.
 		add_filter( 'media_row_actions', array( $this, 'remove_media_action' ), 20, 2 );
 		add_action( 'add_meta_boxes', array( $this, 'remove_meta_boxes' ), 20, 2 );
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
@@ -188,17 +193,17 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		// get the term ID.
 		$term_id = absint( $fields['term_id'] );
 
-		// get our fields from request.
-		$folders_categories = isset( $_POST['fields']['folders_folder'] ) ? array_map( 'absint', wp_unslash( $_POST['fields']['folders_folder'] ) ) : array();
+		// get the chosen folder (the field of the dialog has the ID "folder_for_media").
+		$folder = isset( $fields['folder_for_media'] ) ? absint( $fields['folder_for_media'] ) : 0;
 
-		// if categories is empty, just remove the setting.
-		if ( empty( $folders_categories ) ) {
+		// if no folder is chosen, just remove the setting.
+		if ( 0 === $folder ) {
 			delete_term_meta( $term_id, 'folders_folder' );
 			return;
 		}
 
 		// save the setting.
-		update_term_meta( $term_id, 'folders_folder', $folders_categories );
+		update_term_meta( $term_id, 'folders_folder', $folder );
 	}
 
 	/**
@@ -323,5 +328,84 @@ class Folders extends ThirdParty_Base implements ThirdParty {
 		// remove the box to replace or rename this media file.
 		remove_meta_box( 'folders-replace-box', 'attachment', 'side' );
 		remove_meta_box( 'folders-replace-file-name', 'attachment', 'side' );
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'folders';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'Folders';
+	}
+
+	/**
+	 * Return whether the plugin is active and its folders could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return Helper::is_plugin_active( 'folders/folders.php' ) && $this->is_folder_taxonomy_usable();
+	}
+
+	/**
+	 * Return the folder of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		// get the setting (a single folder, in older versions also saved as list).
+		$folder = get_term_meta( $term_id, 'folders_folder', true );
+		return is_array( $folder ) ? $this->get_single_folder( $folder, false ) : absint( $folder );
+	}
+
+	/**
+	 * Return the taxonomy of the folders.
+	 *
+	 * @return string
+	 */
+	protected function get_folder_taxonomy(): string {
+		return 'media_folder';
+	}
+
+	/**
+	 * Save the data, which the plugin Folders saves for new folders.
+	 *
+	 * @param int $folder_id The ID of the new folder.
+	 * @param int $parent_id The ID of its parent folder.
+	 *
+	 * @return void
+	 */
+	protected function after_folder_created( int $folder_id, int $parent_id ): void {
+		// save the user, who created the folder, and its order like the plugin does it.
+		add_term_meta( $folder_id, 'created_by', get_current_user_id() );
+		$children = get_term_children( $parent_id, $this->get_folder_taxonomy() );
+		update_term_meta( $folder_id, 'wcp_custom_order', ( is_array( $children ) ? count( $children ) : 0 ) + 1 );
+
+		// reset the cache of the plugin for the folders.
+		delete_transient( 'premio_folders_without_trash' );
 	}
 }

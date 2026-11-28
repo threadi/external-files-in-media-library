@@ -109,4 +109,24 @@ class DropboxSync extends externalFilesTests {
 		$this->run_sync( $request, 'DropBox/Photos', $term_id );
 		$this->assertSame( array( '/Photos/Red.jpg', '/Photos/Green.jpg', '/Photos/Sub/Blue.png', '/Photos/Sub/White.jpg' ), $this->get_names() );
 	}
+
+	/**
+	 * Test that the files of subfolders are synchronized by default and not, if this is disabled for the external source.
+	 *
+	 * @return void
+	 */
+	public function test_subfolders_could_be_disabled(): void {
+		update_option( 'eml_sync_extensions', array( 'sync_subdirectories' ) );
+		\ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::get_instance()->init();
+		$term_id = Taxonomy::get_instance()->add( 'dropbox', 'DropBox/Photos', array() );
+
+		// by default, the files of subfolders are synchronized (like before).
+		$this->run_sync( 'cron', 'DropBox/Photos', $term_id );
+		$this->assertSame( array( '/Photos/Red.jpg', '/Photos/Green.jpg', '/Photos/Sub/Blue.png', '/Photos/Sub/Black.jpg', '/Photos/Sub/White.jpg' ), $this->get_names() );
+
+		// disabled for the external source: the files of the subfolder are deleted.
+		update_term_meta( $term_id, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::SETTING, \ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories::NO );
+		$this->run_sync( 'cron', 'DropBox/Photos', $term_id );
+		$this->assertSame( array( '/Photos/Red.jpg', '/Photos/Green.jpg' ), $this->get_names() );
+	}
 }

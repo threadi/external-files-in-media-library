@@ -10,11 +10,13 @@
 namespace ExternalFilesInMediaLibrary\Tests\Live;
 
 use ExternalFilesInMediaLibrary\ExternalFiles\Export;
+use ExternalFilesInMediaLibrary\ExternalFiles\Extensions\Sync_Subdirectories;
 use ExternalFilesInMediaLibrary\ExternalFiles\Export_Base;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
 use ExternalFilesInMediaLibrary\ExternalFiles\Sizes;
+use ExternalFilesInMediaLibrary\ExternalFiles\Synchronization;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Error;
@@ -142,12 +144,15 @@ class ServicesTest extends Live_Test_Base {
 
 		$term_id = $this->add_source( $name );
 
+		// synchronize only the files of the directory itself, also for services, which use subdirectories by default.
+		$this->set_subdirectories( $term_id, Sync_Subdirectories::NO );
+
 		// bail if the directory is empty or too large.
 		$listing = $this->run_ability( 'list-directory', array( 'source_id' => $term_id ) );
 		$count   = count( (array) ( $listing['files'] ?? array() ) );
 		$max     = absint( Env::get_instance()->get( 'EFML_LIVE_MAX_SYNC_FILES', '20' ) );
-		if ( 0 === $count || ! empty( $listing['truncated'] ) || $count > $max || ! empty( $listing['directories'] ) ) {
-			$this->markTestSkipped( 'The directory of the external source is empty, contains subdirectories or more than ' . $max . ' files (EFML_LIVE_MAX_SYNC_FILES).' );
+		if ( 0 === $count || ! empty( $listing['truncated'] ) || $count > $max ) {
+			$this->markTestSkipped( 'The directory of the external source is empty or contains more than ' . $max . ' files (EFML_LIVE_MAX_SYNC_FILES).' );
 		}
 
 		// synchronize it.
@@ -177,6 +182,98 @@ class ServicesTest extends Live_Test_Base {
 			)
 		);
 		$this->assertCount( count( $ids ), (array) ( $again['files'] ?? array() ), 'The second synchronization has changed the number of files.' );
+
+		// delete the synchronized files.
+		$this->run_ability( 'delete-synced-files', array( 'source_id' => $term_id ) );
+	}
+
+	/**
+	 * Enable the option for subdirectories and set it for the given external source.
+	 *
+	 * @param int    $term_id The ID of the external source.
+	 * @param string $value   The setting: Sync_Subdirectories::YES or Sync_Subdirectories::NO.
+	 *
+	 * @return void
+	 */
+	private function set_subdirectories( int $term_id, string $value ): void {
+		update_option( 'eml_sync_extensions', array( 'sync_subdirectories' ) );
+		Sync_Subdirectories::get_instance()->init();
+		update_term_meta( $term_id, Sync_Subdirectories::SETTING, $value );
+	}
+
+	/**
+	 * Return the IDs of the files of the given external source in the media library.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return array<int,int>
+	 */
+	private function get_synced_ids( int $term_id ): array {
+		$files = $this->run_ability(
+			'list-files',
+			array(
+				'source_id' => $term_id,
+				'per_page'  => 100,
+			)
+		);
+		return array_values( array_filter( array_map( fn( $file ) => absint( is_array( $file ) ? ( $file['attachment_id'] ?? 0 ) : 0 ), (array) ( $files['files'] ?? array() ) ) ) );
+	}
+
+	/**
+	 * Test the synchronization with the files of subdirectories and their deletion, if this is disabled afterward.
+	 *
+	 * The test runs only with EFML_LIVE_SYNC_SUBDIRECTORIES=1, as the subdirectories of an external source could
+	 * contain many files. The directory itself must contain at most EFML_LIVE_MAX_SYNC_FILES files.
+	 *
+	 * @dataProvider services_with_listing
+	 *
+	 * @param string $name The name of the service.
+	 *
+	 * @return void
+	 */
+	public function test_synchronization_of_subdirectories( string $name ): void {
+		// bail if this test is not enabled.
+		if ( '1' !== Env::get_instance()->get( 'EFML_LIVE_SYNC_SUBDIRECTORIES', '' ) ) {
+			$this->markTestSkipped( 'The synchronization of subdirectories is only tested with EFML_LIVE_SYNC_SUBDIRECTORIES=1.' );
+		}
+
+		$this->get_service( $name );
+
+		// bail if the service does not support the synchronization.
+		$listing_obj = Services::get_instance()->get_service_by_name( $name );
+		if ( ! $listing_obj instanceof Service_Base || $listing_obj->is_sync_disabled() ) {
+			$this->markTestSkipped( 'The service does not support the synchronization.' );
+		}
+
+		$term_id = $this->add_source( $name );
+
+		// bail if the service does not support subdirectories (e.g. an older version of an extension).
+		if ( ! Synchronization::get_instance()->supports_subdirectories( $term_id ) ) {
+			$this->markTestSkipped( 'The service does not support subdirectories.' );
+		}
+
+		// bail if the directory has no subdirectories with files or is too large.
+		$listing = $this->run_ability( 'list-directory', array( 'source_id' => $term_id ) );
+		$count   = count( (array) ( $listing['files'] ?? array() ) );
+		$max     = absint( Env::get_instance()->get( 'EFML_LIVE_MAX_SYNC_FILES', '20' ) );
+		if ( empty( $listing['directories'] ) || ! empty( $listing['truncated'] ) || $count > $max ) {
+			$this->markTestSkipped( 'The directory of the external source has no subdirectories or contains more than ' . $max . ' files (EFML_LIVE_MAX_SYNC_FILES).' );
+		}
+
+		// synchronize with subdirectories: more files than in the directory itself are in the media library.
+		update_option( 'eml_sync_delete_unused_files_after_sync', 1 );
+		$this->set_subdirectories( $term_id, Sync_Subdirectories::YES );
+		$this->synchronize( $term_id );
+		$ids = $this->get_synced_ids( $term_id );
+		foreach ( $ids as $attachment_id ) {
+			$this->remember_attachment( $attachment_id );
+		}
+		$this->assertGreaterThan( $count, count( $ids ), 'The synchronization has not added the files of the subdirectories.' . $this->get_log_errors() );
+
+		// synchronize without subdirectories: only the files of the directory itself are kept.
+		$this->set_subdirectories( $term_id, Sync_Subdirectories::NO );
+		$this->synchronize( $term_id );
+		$this->assertCount( $count, $this->get_synced_ids( $term_id ), 'The files of the subdirectories have not been deleted.' . $this->get_log_errors() );
 
 		// delete the synchronized files.
 		$this->run_ability( 'delete-synced-files', array( 'source_id' => $term_id ) );

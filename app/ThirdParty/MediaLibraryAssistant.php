@@ -16,7 +16,9 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle support for this plugin.
  */
-class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
+class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
+	use Folder_Structure_Taxonomy;
+
 
 	/**
 	 * The term ID used in a sync.
@@ -76,6 +78,9 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		if ( ! Helper::is_plugin_active( 'media-library-assistant/index.php' ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
@@ -277,7 +282,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 			delete_term_meta( $term_id, 'mla_categories' );
 		} else {
 			// save the setting.
-			update_term_meta( $term_id, 'mla_categories', array_flip( $categories ) );
+			update_term_meta( $term_id, 'mla_categories', $this->get_ids_from_selection( $categories ) );
 		}
 
 		// get our fields from request.
@@ -288,7 +293,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 			delete_term_meta( $term_id, 'mla_tags' );
 		} else {
 			// save the setting.
-			update_term_meta( $term_id, 'mla_tags', array_flip( $tags ) );
+			update_term_meta( $term_id, 'mla_tags', $this->get_ids_from_selection( $tags ) );
 		}
 	}
 
@@ -379,7 +384,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$categories = isset( $_POST['mla_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['mla_categories'] ) ) : array();
+		$categories = isset( $_POST['mla_categories'] ) ? $this->get_ids_from_selection( map_deep( wp_unslash( $_POST['mla_categories'] ), 'absint' ) ) : array();
 
 		// assign the file to the categories.
 		foreach ( $categories as $cat_id ) {
@@ -401,7 +406,7 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$categories = isset( $_POST['mla_tags'] ) ? array_map( 'absint', wp_unslash( $_POST['mla_tags'] ) ) : array();
+		$categories = isset( $_POST['mla_tags'] ) ? $this->get_ids_from_selection( map_deep( wp_unslash( $_POST['mla_tags'] ), 'absint' ) ) : array();
 
 		// assign the file to the categories.
 		foreach ( $categories as $cat_id ) {
@@ -420,5 +425,64 @@ class MediaLibraryAssistant extends ThirdParty_Base implements ThirdParty {
 		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to tags', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_tag_selection( array() ) . '</div></details>';
 		return $dialog;
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'media_library_assistant';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'Media Library Assistant';
+	}
+
+	/**
+	 * Return whether the plugin is active and its folders could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return Helper::is_plugin_active( 'media-library-assistant/index.php' ) && $this->is_folder_taxonomy_usable();
+	}
+
+	/**
+	 * Return the folder of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		return $this->get_single_folder( get_term_meta( $term_id, 'mla_categories', true ), false );
+	}
+
+	/**
+	 * Return the taxonomy of the folders.
+	 *
+	 * @return string
+	 */
+	protected function get_folder_taxonomy(): string {
+		return 'attachment_category';
 	}
 }

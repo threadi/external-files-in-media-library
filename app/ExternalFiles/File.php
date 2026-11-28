@@ -965,15 +965,6 @@ class File {
 		// get the upload directory settings.
 		$upload_dir = wp_get_upload_dir();
 
-		// bail if baseurl is not a string.
-		if ( ! is_string( $upload_dir['baseurl'] ) ) {
-			// log this event.
-			Log::get_instance()->create( __( 'Upload directory could not be detected.', 'external-files-in-media-library' ), $this->get_url( true ), 'error' );
-
-			// do nothing more.
-			return false;
-		}
-
 		$instance = $this;
 		/**
 		 * Run tasks before we switch a file to local.
@@ -1123,15 +1114,6 @@ class File {
 		$meta_data = wp_get_attachment_metadata( $this->get_id() );
 		if ( ! empty( $meta_data['sizes'] ) ) {
 			foreach ( $meta_data['sizes'] as $meta_file ) {
-				// bail if "meta_file" is not an array.
-				if ( ! is_array( $meta_file ) ) {
-					continue;
-				}
-
-				// bail if file is not a string.
-				if ( ! is_string( $meta_file['file'] ) ) {
-					continue;
-				}
 
 				// add the file to the list.
 				$files[] = trailingslashit( $upload_dir['basedir'] ) . trailingslashit( dirname( $local_path ) ) . $meta_file['file'];

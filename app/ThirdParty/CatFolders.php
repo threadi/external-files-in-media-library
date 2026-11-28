@@ -17,7 +17,7 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle support for this plugin.
  */
-class CatFolders extends ThirdParty_Base implements ThirdParty {
+class CatFolders extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
 
 	/**
 	 * The term ID used in a sync.
@@ -77,6 +77,9 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 		if ( ! Helper::is_plugin_active( 'catfolders/catfolders.php' ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_folder_selection' ), 10, 2 );
@@ -271,5 +274,91 @@ class CatFolders extends ThirdParty_Base implements ThirdParty {
 	public function add_option_for_folder_import( array $dialog ): array {
 		$dialog['texts'][] = '<details><summary>' . __( 'Import in a specific folder of CatFolder', 'external-files-in-media-library' ) . '</summary><div><label for="catfolders">' . __( 'Choose a folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'catfolders';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'CatFolders';
+	}
+
+	/**
+	 * Return whether the plugin is active and its folders could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return Helper::is_plugin_active( 'catfolders/catfolders.php' ) && method_exists( '\\CatFolders\\Models\\FolderModel', 'create_or_get' ) && method_exists( '\\CatFolders\\Models\\FolderModel', 'isFolderExist' ) && method_exists( '\\CatFolders\\Models\\FolderModel', 'set_attachments' );
+	}
+
+	/**
+	 * Return the folder of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		return absint( get_term_meta( $term_id, 'catfolder', true ) );
+	}
+
+	/**
+	 * Return the ID of the folder with the given name in the given parent folder; the folder is created, if it does not
+	 * exist.
+	 *
+	 * @param int    $parent_id The ID of the parent folder (0 for the top level).
+	 * @param string $name      The name of the folder.
+	 *
+	 * @return int The ID of the folder, 0 on errors.
+	 */
+	public function get_or_create_folder( int $parent_id, string $name ): int {
+		return absint( FolderModel::create_or_get( $name, $parent_id ) );
+	}
+
+	/**
+	 * Return whether the folder with the given ID exists.
+	 *
+	 * @param int $folder_id The ID of the folder.
+	 *
+	 * @return bool
+	 */
+	public function folder_exists( int $folder_id ): bool {
+		return $folder_id > 0 && FolderModel::isFolderExist( $folder_id );
+	}
+
+	/**
+	 * Assign the given file to the given folder (only to this folder).
+	 *
+	 * @param int $attachment_id The ID of the attachment.
+	 * @param int $folder_id     The ID of the folder.
+	 *
+	 * @return void
+	 */
+	public function assign_file( int $attachment_id, int $folder_id ): void {
+		FolderModel::set_attachments( $folder_id, array( $attachment_id ), false );
 	}
 }

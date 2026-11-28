@@ -678,7 +678,7 @@ class Admin {
 
 		// log these errors.
 		foreach ( $errors->errors as $key => $errors ) {
-			_doing_it_wrong( '\easySettingsForWordPress\Settings::add_settings()', '<em>' . esc_html( $key ) . '</em>: ' . esc_html( implode( ' ', $errors ) ), '1.0.0' );
+			_doing_it_wrong( '\easySettingsForWordPress\Settings::add_settings()', '<em>' . esc_html( (string) $key ) . '</em>: ' . esc_html( implode( ' ', $errors ) ), '1.0.0' );
 		}
 	}
 

@@ -15,7 +15,7 @@ Add files via their URLs or choose a service, e.g. FTP, Dropbox, YouTube, anothe
 
 ### … synchronize directories automatically
 
-Save a directory as external source and let new, changed and deleted files be synchronized at an interval you choose. Large directories with thousands of files are imported in the background.
+Save a directory as external source and let new, changed and deleted files be synchronized at an interval you choose. Large directories with thousands of files are imported in the background. Optionally, the files of subdirectories are synchronized too.
 
 * In the backend: Media → "Your external sources", settings → "Synchronization"
 * Documentation: [Directories](import/directories.md)

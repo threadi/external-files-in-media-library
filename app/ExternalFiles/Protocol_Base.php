@@ -11,6 +11,7 @@ namespace ExternalFilesInMediaLibrary\ExternalFiles;
 defined( 'ABSPATH' ) || exit;
 
 use ExternalFilesInMediaLibrary\Plugin\Helper;
+use ExternalFilesInMediaLibrary\Plugin\Log;
 use ExternalFilesInMediaLibrary\Services\Service_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use WP_Filesystem_Base;
@@ -305,8 +306,8 @@ class Protocol_Base {
 	 * @return array<int,array{url: string, media-url?: string, filesize?: int, last-modified?: int}>|false
 	 */
 	protected function get_cached_file_list( callable $loader, bool $reload = false ): array|false {
-		// get the key for this directory.
-		$key = static::class . '|' . $this->get_url();
+		// get the key for this directory (with the depth of subdirectories, as the list depends on it).
+		$key = static::class . '|' . $this->get_url() . '|' . ( $this->is_subdirectories_enabled() ? $this->get_subdirectories_max_depth() : 0 );
 
 		// load the list, if it is not cached or the first page is requested (e.g. by a new run).
 		if ( $reload || ! isset( self::$file_list_cache[ $key ] ) ) {
@@ -352,6 +353,321 @@ class Protocol_Base {
 			'files'  => $page,
 			'cursor' => $next < count( $files ) ? (string) $next : '',
 		);
+	}
+
+	/**
+	 * Return whether this protocol could use the files of subdirectories during a synchronization.
+	 *
+	 * Only then the option for subdirectories is shown in the configuration of the synchronization.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether this protocol uses the files of subdirectories by default.
+	 *
+	 * This is the behavior of the protocol without any setting, also for the import of a directory. Services, which
+	 * use subdirectories since ever (e.g. Dropbox), return true.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return bool
+	 */
+	public function get_subdirectories_default(): bool {
+		return false;
+	}
+
+	/**
+	 * Return whether the files of subdirectories should be used for the URL of this object.
+	 *
+	 * Without the synchronization this is always the default of the protocol (see get_subdirectories_default()).
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return bool
+	 */
+	public function is_subdirectories_enabled(): bool {
+		// get the default of this protocol.
+		$default = $this->get_subdirectories_default();
+
+		// bail if this protocol does not support subdirectories.
+		if ( ! $this->supports_subdirectories() ) {
+			return $default;
+		}
+
+		$url      = $this->get_url();
+		$instance = $this;
+
+		/**
+		 * Filter whether the files of subdirectories should be used.
+		 *
+		 * The setting of the synchronization uses this filter during a synchronization.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param bool $default True to use the files of subdirectories (the default of the protocol or the service).
+		 * @param string $url The URL of the directory.
+		 * @param Protocol_Base|null $instance The protocol object, null if the files are not listed via a protocol (e.g. in archives).
+		 */
+		return (bool) apply_filters( 'efml_include_subdirectories', $default, $url, $instance );
+	}
+
+	/**
+	 * Return the maximum depth of subdirectories, whose files are used.
+	 *
+	 * The depth 1 means the direct subdirectories of the directory.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return int
+	 */
+	public function get_subdirectories_max_depth(): int {
+		$instance = $this;
+
+		/**
+		 * Filter the maximum depth of subdirectories, whose files are used.
+		 *
+		 * If the depth is lowered, files in deeper subdirectories are deleted during the next synchronization,
+		 * if unused files are deleted after the synchronization.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param int $depth The maximum depth (1 for the direct subdirectories).
+		 * @param Protocol_Base $instance The protocol object.
+		 */
+		return max( 1, absint( apply_filters( 'efml_subdirectories_max_depth', 10, $instance ) ) );
+	}
+
+	/**
+	 * Return the names of the directories, which are never used as subdirectories (e.g. "node_modules").
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_excluded_directories(): array {
+		$list = array(
+			'node_modules',
+			'vendor',
+			'tmp',
+			'.git',
+			'.svn',
+		);
+
+		$instance = $this;
+
+		/**
+		 * Filter the names of the directories, which are never used as subdirectories.
+		 *
+		 * The list is used for each protocol (e.g. FTP, SFTP or local directories). Use the protocol object or its
+		 * name to change the list for a single service.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param array<int,string> $list List of directory names.
+		 * @param Protocol_Base $instance The protocol object.
+		 */
+		$list = apply_filters( 'efml_subdirectories_excluded', $list, $instance );
+
+		// return the list.
+		return array_values( array_map( 'strval', (array) $list ) );
+	}
+
+	/**
+	 * Return the path of the directory of the given file URL relative to the URL of this object.
+	 *
+	 * The result is empty for files directly in the directory of this object or for files outside of it. The parts
+	 * of the path are separated by "/".
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param string $file_url The URL of the file.
+	 *
+	 * @return string
+	 */
+	public function get_relative_directory( string $file_url ): string {
+		// get the base URL and the URL of the file in the same form.
+		$base = trailingslashit( $this->normalize_url_for_relative_directory( $this->get_url() ) );
+		$file = $this->normalize_url_for_relative_directory( $file_url );
+
+		// bail if the file is not in the directory.
+		if ( ! str_starts_with( $file, $base ) ) {
+			return '';
+		}
+
+		// get the directory of the file relative to the base.
+		$directory = dirname( substr( $file, strlen( $base ) ) );
+
+		// return the directory, empty for files directly in the base directory.
+		return '.' === $directory ? '' : $directory;
+	}
+
+	/**
+	 * Return the given URL in the form, which is used to compare the URLs of files with the URL of this object.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	protected function normalize_url_for_relative_directory( string $url ): string {
+		return $url;
+	}
+
+	/**
+	 * Return the entries of the given directory, with the entries of its subdirectories, if they should be used.
+	 *
+	 * The loader returns the list of a single directory in the form of WP_Filesystem_Base::dirlist() (the names as
+	 * keys, the data with "type", "size" and "lastmodunix" as values) or false on errors. It gets the path and true
+	 * as second parameter for subdirectories. The result contains only
+	 * files, with their path relative to the given directory as key (e.g. "subdirectory/file.jpg"), sorted by the
+	 * directories and the names, so the list is the same on each request.
+	 *
+	 * Subdirectories, which could not be read, are skipped (see skip_subdirectory()). Subdirectories, which are links
+	 * (if the callback for links is given), which are in the list of excluded directories or which are deeper than the
+	 * maximum depth, are not used.
+	 *
+	 * @param string        $path     The path of the directory for the loader.
+	 * @param callable      $loader   The callback to load the entries of a directory by its path.
+	 * @param callable|null $is_link  Optional callback, which returns whether the given path is a link.
+	 * @param string        $base_url The URL of the directory, with which the URLs of its files start (default: the URL of this object).
+	 *
+	 * @return array<string,array<string,mixed>>|false
+	 */
+	protected function get_directory_entries( string $path, callable $loader, ?callable $is_link = null, string $base_url = '' ): array|false {
+		// get the entries of the directory itself.
+		$entries = $loader( $path );
+
+		// bail if the directory could not be read.
+		if ( ! is_array( $entries ) ) {
+			return false;
+		}
+
+		// return the entries with the entries of the subdirectories.
+		return $this->collect_directory_entries( $entries, $path, '' !== $base_url ? $base_url : $this->get_url(), '', 1, $loader, $is_link, $this->is_subdirectories_enabled() );
+	}
+
+	/**
+	 * Collect the files of the given entries of a directory and of its subdirectories.
+	 *
+	 * @param array<int|string,mixed> $entries   The entries of the directory.
+	 * @param string                  $path      The path of the directory for the loader.
+	 * @param string                  $base_url  The URL of the main directory.
+	 * @param string                  $prefix    The path of the directory relative to the main directory (with trailing slash).
+	 * @param int                     $depth     The depth of the subdirectories of this directory.
+	 * @param callable                $loader    The callback to load the entries of a directory by its path.
+	 * @param callable|null           $is_link   Optional callback, which returns whether the given path is a link.
+	 * @param bool                    $recursive Whether the subdirectories should be used.
+	 *
+	 * @return array<string,array<string,mixed>>
+	 */
+	private function collect_directory_entries( array $entries, string $path, string $base_url, string $prefix, int $depth, callable $loader, ?callable $is_link, bool $recursive ): array {
+		// sort the entries by their names, so the list is the same on each request.
+		ksort( $entries, SORT_STRING );
+
+		// collect the files and the subdirectories.
+		$files       = array();
+		$directories = array();
+		foreach ( $entries as $name => $settings ) {
+			// get the name.
+			$name = (string) $name;
+
+			// bail for the entries of the directory itself.
+			if ( '' === $name || '.' === $name || '..' === $name ) {
+				continue;
+			}
+
+			// not all servers return all data for each file.
+			$settings = wp_parse_args(
+				is_array( $settings ) ? $settings : array(),
+				array(
+					'type'        => 'f',
+					'size'        => 0,
+					'lastmodunix' => 0,
+				)
+			);
+
+			// remember subdirectories.
+			if ( 'd' === $settings['type'] ) {
+				$directories[] = $name;
+				continue;
+			}
+
+			// add the file.
+			$files[ $prefix . $name ] = $settings;
+		}
+
+		// bail if subdirectories should not be used.
+		if ( ! $recursive || empty( $directories ) ) {
+			return $files;
+		}
+
+		// bail if the maximum depth is reached.
+		if ( $depth > $this->get_subdirectories_max_depth() ) {
+			return $files;
+		}
+
+		// get the excluded directories.
+		$excluded = $this->get_excluded_directories();
+
+		// add the files of the subdirectories.
+		foreach ( $directories as $name ) {
+			// bail if this directory is excluded.
+			if ( in_array( $name, $excluded, true ) ) {
+				continue;
+			}
+
+			// get the path of the subdirectory.
+			$sub_path = trailingslashit( $path ) . $name;
+
+			// bail if the subdirectory is a link (links are never followed).
+			if ( is_callable( $is_link ) && $is_link( $sub_path ) ) {
+				continue;
+			}
+
+			// get the entries of the subdirectory (the loader gets true as second parameter for subdirectories).
+			$sub_entries = $loader( $sub_path, true );
+
+			// skip the subdirectory, if it could not be read.
+			if ( ! is_array( $sub_entries ) ) {
+				$this->skip_subdirectory( trailingslashit( $base_url ) . $prefix . $name );
+				continue;
+			}
+
+			// add its files.
+			$files = array_merge( $files, $this->collect_directory_entries( $sub_entries, $sub_path, $base_url, $prefix . $name . '/', $depth + 1, $loader, $is_link, true ) );
+		}
+
+		// return the list of files.
+		return $files;
+	}
+
+	/**
+	 * Mark the given subdirectory as skipped, as it could not be read.
+	 *
+	 * During a synchronization, the files in skipped subdirectories are not deleted.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param string $url The URL of the subdirectory.
+	 *
+	 * @return void
+	 */
+	protected function skip_subdirectory( string $url ): void {
+		// log this event.
+		Log::get_instance()->create( __( 'The subdirectory could not be read and has been skipped.', 'external-files-in-media-library' ), $url, 'info', 1, Import::get_instance()->get_identifier() );
+
+		$instance = $this;
+
+		/**
+		 * Run action if a subdirectory has been skipped, as it could not be read.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param string $url The URL of the subdirectory.
+		 * @param Protocol_Base $instance The protocol object.
+		 */
+		do_action( 'efml_subdirectory_skipped', $url, $instance );
 	}
 
 	/**

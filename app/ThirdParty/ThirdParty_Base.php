@@ -57,4 +57,34 @@ class ThirdParty_Base {
 		}
 		return false;
 	}
+
+	/**
+	 * Return the IDs of the folders or categories of the given selection.
+	 *
+	 * The configuration dialog saves checkboxes with the ID as key (e.g. array( 5 => 1 )), lists contain the IDs as
+	 * values (e.g. array( 5, 7 )).
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param mixed $selection The selection.
+	 *
+	 * @return array<int,int>
+	 */
+	protected function get_ids_from_selection( mixed $selection ): array {
+		// bail if nothing is selected.
+		if ( empty( $selection ) ) {
+			return array();
+		}
+
+		// use a single value.
+		if ( ! is_array( $selection ) ) {
+			$selection = array( $selection );
+		}
+
+		// get the IDs from the values of a list or from the keys of a map.
+		$ids = array_is_list( $selection ) ? $selection : array_keys( $selection );
+
+		// return the valid IDs.
+		return array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+	}
 }

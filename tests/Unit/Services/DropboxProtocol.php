@@ -115,6 +115,11 @@ class DropboxFakeClient extends Client {
 				continue;
 			}
 			$folder = dirname( $file );
+
+			// without recursion, only the files directly in the folder are listed.
+			if ( ! $recursive && trailingslashit( $folder ) !== $prefix ) {
+				continue;
+			}
 			if ( '/' !== $folder && ! isset( $folders[ $folder ] ) && $folder . '/' !== $prefix ) {
 				$folders[ $folder ] = true;
 				$entries[]          = $this->get_folder_entry( $folder );

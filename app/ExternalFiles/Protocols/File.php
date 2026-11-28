@@ -102,8 +102,8 @@ class File extends Protocol_Base {
 			 */
 			do_action( 'efml_file_directory_import_start', $url );
 
-			// get the files.
-			$file_list = $wp_filesystem->dirlist( $url );
+			// get the files (also from its subdirectories, if they should be used).
+			$file_list = $this->get_files_of_directory( $url );
 
 			// bail if list could not be loaded.
 			if ( ! is_array( $file_list ) ) {
@@ -264,9 +264,62 @@ class File extends Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could use the files of subdirectories during a synchronization.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the files of the given local directory, also of its subdirectories, if they should be used.
+	 *
+	 * Links to directories are never followed. Links to files are used like before.
+	 *
+	 * @param string $path The path of the directory.
+	 *
+	 * @return array<string,array<string,mixed>>|false
+	 */
+	private function get_files_of_directory( string $path ): array|false {
+		// get WP_Filesystem object.
+		$wp_filesystem = Helper::get_wp_filesystem();
+
+		// return the list.
+		return $this->get_directory_entries(
+			$path,
+			static function ( string $directory ) use ( $wp_filesystem ) {
+				return $wp_filesystem->dirlist( $directory );
+			},
+			static function ( string $directory ): bool {
+				return is_link( $directory );
+			},
+			$path
+		);
+	}
+
+	/**
+	 * Return the given URL in the form, which is used to compare the URLs of files with the URL of this object.
+	 *
+	 * Local files are listed with their real path, without the protocol "file://".
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return string
+	 */
+	protected function normalize_url_for_relative_directory( string $url ): string {
+		// get the real path.
+		$path = $this->sanitize_local_path( $url );
+
+		// return the path or the normalized URL, if no real path could be found (e.g. for deleted files).
+		return '' !== $path ? $path : wp_normalize_path( Helper::get_local_path_from_url( $url ) );
+	}
+
+	/**
 	 * Return one page of the files in the directory of the URL of this object.
 	 *
-	 * Like the import of a directory, only the files directly in the directory are used, not the subdirectories.
+	 * Like the import of a directory, only the files directly in the directory are used, during a synchronization
+	 * also the files of the subdirectories, if this is enabled.
 	 *
 	 * @param string $cursor The cursor for the requested page.
 	 *
@@ -280,7 +333,7 @@ class File extends Protocol_Base {
 				$path = $this->sanitize_local_path( $this->get_url() );
 
 				// get the list of the directory.
-				$file_list = '' !== $path ? Helper::get_wp_filesystem()->dirlist( $path ) : false;
+				$file_list = '' !== $path ? $this->get_files_of_directory( $path ) : false;
 
 				// bail if list could not be loaded.
 				if ( ! is_array( $file_list ) ) {
@@ -291,11 +344,6 @@ class File extends Protocol_Base {
 				// collect the files.
 				$files = array();
 				foreach ( $file_list as $file => $settings ) {
-					// bail if this is a directory.
-					if ( 'd' === $settings['type'] ) {
-						continue;
-					}
-
 					// add the file.
 					$files[] = array(
 						'url'           => trailingslashit( $path ) . $file,

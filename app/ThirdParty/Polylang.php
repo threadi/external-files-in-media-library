@@ -173,7 +173,7 @@ class Polylang extends ThirdParty_Base implements ThirdParty {
 
 			// copy the post meta fields.
 			$post_meta = get_post_custom( $external_file_obj->get_id() );
-			foreach ( $post_meta as $key => $values ) {
+			foreach ( is_array( $post_meta ) ? $post_meta : array() as $key => $values ) {
 				foreach ( $values as $value ) {
 					add_post_meta( $post_id, $key, maybe_unserialize( $value ) );
 				}

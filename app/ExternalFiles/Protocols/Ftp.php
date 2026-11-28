@@ -169,9 +169,47 @@ class Ftp extends Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could use the files of subdirectories during a synchronization.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories(): bool {
+		return true;
+	}
+
+	/**
+	 * Return the files of the given directory on the given connection, also of its subdirectories, if they should be used.
+	 *
+	 * Links to directories are never followed, as FTP servers return them as links and not as directories.
+	 *
+	 * @param WP_Filesystem_Base $ftp_connection The connection.
+	 * @param string             $path           The path of the directory.
+	 *
+	 * @return array<string,array<string,mixed>>|false
+	 */
+	private function get_files_of_directory( WP_Filesystem_Base $ftp_connection, string $path ): array|false {
+		return $this->get_directory_entries(
+			$path,
+			static function ( string $directory, bool $is_subdirectory = false ) use ( $ftp_connection ) {
+				// get the list.
+				$list = $ftp_connection->dirlist( $directory );
+
+				// an empty subdirectory is returned as error: it is empty, if it could be opened.
+				if ( false === $list && $is_subdirectory && $ftp_connection->is_dir( $directory ) ) {
+					return array();
+				}
+
+				// return the list.
+				return $list;
+			}
+		);
+	}
+
+	/**
 	 * Return one page of the files in the directory of the URL of this object.
 	 *
-	 * Like the import of a directory, only the files directly in the directory are used.
+	 * Like the import of a directory, only the files directly in the directory are used, during a synchronization
+	 * also the files of the subdirectories, if this is enabled.
 	 *
 	 * @param string $cursor The cursor for the requested page.
 	 *
@@ -198,7 +236,7 @@ class Ftp extends Protocol_Base {
 				}
 
 				// get the list of the directory.
-				$file_list = $ftp_connection->dirlist( $path );
+				$file_list = $this->get_files_of_directory( $ftp_connection, $path );
 
 				// bail if list could not be loaded.
 				if ( ! is_array( $file_list ) ) {
@@ -209,20 +247,6 @@ class Ftp extends Protocol_Base {
 				// collect the files.
 				$files = array();
 				foreach ( $file_list as $filename => $settings ) {
-					// not all servers return all data for each file.
-					$settings = wp_parse_args(
-						$settings,
-						array(
-							'size'        => 0,
-							'lastmodunix' => 0,
-						)
-					);
-
-					// bail if this is a directory.
-					if ( 'd' === $settings['type'] ) {
-						continue;
-					}
-
 					// add the file.
 					$files[] = array(
 						'url'           => trailingslashit( $this->get_url() ) . $filename,
@@ -308,8 +332,8 @@ class Ftp extends Protocol_Base {
 			 */
 			do_action( 'efml_ftp_directory_import_start', $url );
 
-			// get the files from FTP directory as list.
-			$file_list = $ftp_connection->dirlist( $path );
+			// get the files from FTP directory as list (also from its subdirectories, if they should be used).
+			$file_list = $this->get_files_of_directory( $ftp_connection, $path );
 			if ( empty( $file_list ) ) {
 				/* translators: %1$s will be replaced by the file-URL */
 				Log::get_instance()->create( __( 'FTP-directory returns no files.', 'external-files-in-media-library' ), $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
@@ -583,18 +607,20 @@ class Ftp extends Protocol_Base {
 		$fields = $this->get_fields_for_url( $url );
 
 		// bail if fields are missing.
-		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) ) {
+		if ( empty( $fields['login']['value'] ) || empty( $fields['password']['value'] ) || ! is_string( $fields['login']['value'] ) || ! is_string( $fields['password']['value'] ) ) {
 			return false;
 		}
 
-		// define ftp connection parameter.
+		// define ftp connection parameter (WordPress uses SSL only with the connection type "ftps").
 		$connection_arguments = array(
-			'port'            => $this->get_port_by_url( $parse_url ),
-			'hostname'        => $parse_url['host'],
-			'username'        => $fields['login']['value'],
-			'password'        => $fields['password']['value'],
-			'connection_type' => $parse_url['scheme'],
+			'port'     => absint( $this->get_port_by_url( $parse_url ) ),
+			'hostname' => $parse_url['host'],
+			'username' => $fields['login']['value'],
+			'password' => $fields['password']['value'],
 		);
+		if ( 'ftps' === $parse_url['scheme'] ) {
+			$connection_arguments['connection_type'] = 'ftps';
+		}
 
 		// bail if hostname is not set.
 		if ( empty( $connection_arguments['hostname'] ) ) {

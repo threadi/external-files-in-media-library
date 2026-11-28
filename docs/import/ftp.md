@@ -20,6 +20,9 @@ The specification of a URL with visible access data is _not_ supported.
 
 Example: `ftp://login:password@example.com/example.png`
 
+The import of a directory uses only the files directly in it. The synchronization could also use the files of its
+subdirectories, see [subdirectories during the synchronization](directories.md#subdirectories-during-the-synchronization).
+
 ## Examples
 
 ### Single file

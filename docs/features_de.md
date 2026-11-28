@@ -15,7 +15,7 @@ Füge Dateien über ihre URL hinzu oder wähle einen Dienst, z. B. FTP, Dropbox,
 
 ### … Verzeichnisse automatisch abgleichen
 
-Speichere ein Verzeichnis als externe Quelle und lass neue, geänderte und gelöschte Dateien in einem Intervall deiner Wahl abgleichen. Große Verzeichnisse mit tausenden Dateien werden im Hintergrund importiert.
+Speichere ein Verzeichnis als externe Quelle und lass neue, geänderte und gelöschte Dateien in einem Intervall deiner Wahl abgleichen. Große Verzeichnisse mit tausenden Dateien werden im Hintergrund importiert. Optional werden auch die Dateien von Unterverzeichnissen abgeglichen.
 
 * Im Backend: Medien → „Deine externen Quellen“, Einstellungen → „Synchronisierung“
 * Dokumentation: [Verzeichnisse](import/directories_de.md)

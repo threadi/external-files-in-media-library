@@ -32,15 +32,25 @@
 - Added check and fix of addresses after a change of the domain
 - Added optional weekly summary of problems via e-mail
 - Added documentation for the central media library
+- Added option to synchronize the files of subdirectories, globally and for each external source
+- Added default for subdirectories per service: DropBox and ZIP files keep their subdirectories
+- Added protection of files in subdirectories, which could not be read during a synchronization
+- Added option to take over the folder structure of subdirectories in FileBird, CatFolders, Folders, Folderly, Media Library Organizer, Media Library Assistant, Enhanced Media Library and Real Media Library (with subfolders)
 - Added new hooks and PHP Unit tests
 
 ### Changed
 
+- External sources of DropBox and ZIP files get the setting to synchronize subdirectories with this update
+- Exported files are recognized by their URL and their path during the synchronization, also their sizes in folders
+- The directories ".git" and ".svn" are hidden in the listing of local directories
 - Renamed "Export again" to "Export now"
 - Faster synchronization with the central media library: daily, without HTTP downloads, unchanged files are skipped
 
 ### Fixed
 
+- Fixed saving of the chosen folder of the plugin Folders in the configuration of the synchronization
+- Fixed assignment of synchronized files to the chosen categories of Folderly, iFolders, Media Library Organizer, Media Library Assistant and Enhanced Media Library (only one or a wrong category had been used)
+- Fixed saving of the categories of Enhanced Media Library in the configuration of the synchronization
 - Fixed synchronization deleting unchanged files (Dropbox, ZIP) or not deleting removed files
 - Fixed exports being skipped after a synchronization in the same request
 - Fixed deletion of files of the central media library in the other websites

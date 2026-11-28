@@ -153,14 +153,6 @@ class Export extends Export_Base {
 		// get the upload directory settings.
 		$upload_dir = wp_get_upload_dir();
 
-		// bail if baseurl is not a string.
-		if ( ! is_string( $upload_dir['baseurl'] ) ) {
-			restore_current_blog();
-
-			// do nothing more.
-			return false;
-		}
-
 		// prepare import of the file via WP-own functions.
 		$file_array = array(
 			'name'     => basename( $url ),

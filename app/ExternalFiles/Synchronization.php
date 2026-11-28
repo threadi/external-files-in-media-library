@@ -57,6 +57,18 @@ class Synchronization extends Tools_Base {
 	private int $running_term_id = 0;
 
 	/**
+	 * The ID of the external source, whose synchronization (or a part of it) is actually running with its hooks.
+	 *
+	 * @var int
+	 */
+	private int $hooks_term_id = 0;
+
+	/**
+	 * Name of the term meta with the URLs of the subdirectories, which have been skipped during the synchronization.
+	 */
+	public const SKIPPED_DIRECTORIES_META = 'efml_sync_skipped_directories';
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -96,6 +108,9 @@ class Synchronization extends Tools_Base {
 		if ( 1 !== absint( get_option( 'eml_sync' ) ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories in folder plugins (if enabled for an external source).
+		Folder_Structure::get_instance()->init();
 
 		// use our own hooks.
 		add_filter( 'efml_directory_listing_columns', array( $this, 'add_columns' ) );
@@ -596,8 +611,11 @@ class Synchronization extends Tools_Base {
 			delete_post_meta( $post_id, 'eml_synced' );
 		}
 
+		// forget the subdirectories, which have been skipped during the last synchronization.
+		delete_term_meta( $term_id, self::SKIPPED_DIRECTORIES_META );
+
 		// add the hooks, which are only used during the synchronization (e.g. to disable the duplicate check).
-		$this->add_sync_hooks();
+		$this->add_sync_hooks( $term_id );
 
 		/**
 		 * Allow to add additional tasks before sync is running.
@@ -697,7 +715,7 @@ class Synchronization extends Tools_Base {
 	 */
 	public function start_part( string $url, int $term_id ): void {
 		// add the hooks, which are only used during the synchronization.
-		$this->add_sync_hooks();
+		$this->add_sync_hooks( $term_id );
 
 		/** This action is documented in app/ExternalFiles/Synchronization.php */
 		do_action( 'efml_before_sync', $url, $this->get_term_data( $term_id ), $term_id );
@@ -838,6 +856,9 @@ class Synchronization extends Tools_Base {
 		$prevent_deletion_priority = has_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 		remove_filter( 'pre_delete_attachment', array( $this, 'prevent_deletion' ) );
 
+		// get the subdirectories, which could not be read: their files are not deleted.
+		$skipped_directories = $this->get_skipped_directories( $term_id );
+
 		// delete this files.
 		try {
 			foreach ( $result->get_posts() as $post_id ) {
@@ -846,6 +867,11 @@ class Synchronization extends Tools_Base {
 
 				// bail if object could not be loaded.
 				if ( ! $external_file_obj->is_valid() ) {
+					continue;
+				}
+
+				// bail if the file is in a subdirectory, which could not be read.
+				if ( ! empty( $skipped_directories ) && $this->is_in_skipped_directory( $external_file_obj->get_url( true ), $skipped_directories ) ) {
 					continue;
 				}
 
@@ -866,9 +892,14 @@ class Synchronization extends Tools_Base {
 	/**
 	 * Add the hooks, which are only used during the synchronization.
 	 *
+	 * @param int $term_id The ID of the synchronized external source.
+	 *
 	 * @return void
 	 */
-	private function add_sync_hooks(): void {
+	private function add_sync_hooks( int $term_id ): void {
+		// remember the external source for the hooks.
+		$this->hooks_term_id = $term_id;
+
 		foreach ( $this->get_sync_hooks() as $hook ) {
 			add_filter( $hook[0], $hook[1], $hook[2], $hook[3] );
 		}
@@ -883,6 +914,151 @@ class Synchronization extends Tools_Base {
 		foreach ( $this->get_sync_hooks() as $hook ) {
 			remove_filter( $hook[0], $hook[1], $hook[2] );
 		}
+
+		// forget the external source for the hooks.
+		$this->hooks_term_id = 0;
+	}
+
+	/**
+	 * Save the given subdirectory as skipped for the actual synchronized external source.
+	 *
+	 * Files in skipped subdirectories are not deleted after the synchronization, as they could not be listed.
+	 *
+	 * @param string $url The URL of the skipped subdirectory.
+	 *
+	 * @return void
+	 */
+	public function add_skipped_directory( string $url ): void {
+		// bail if no synchronization is running.
+		if ( 0 === $this->hooks_term_id ) {
+			return;
+		}
+
+		// get the actual list.
+		$list = $this->get_skipped_directories( $this->hooks_term_id );
+
+		// bail if the URL is already in the list (e.g. as the list has been loaded again in another request).
+		if ( in_array( $url, $list, true ) ) {
+			return;
+		}
+
+		// add the URL and save the list.
+		$list[] = $url;
+		update_term_meta( $this->hooks_term_id, self::SKIPPED_DIRECTORIES_META, $list );
+	}
+
+	/**
+	 * Return the URLs of the subdirectories, which have been skipped during the synchronization of the given external source.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return array<int,string>
+	 */
+	public function get_skipped_directories( int $term_id ): array {
+		// get the list.
+		$list = get_term_meta( $term_id, self::SKIPPED_DIRECTORIES_META, true );
+
+		// return it as list of strings.
+		return is_array( $list ) ? array_values( array_map( 'strval', $list ) ) : array();
+	}
+
+	/**
+	 * Return whether the given URL is in one of the given skipped directories.
+	 *
+	 * @param string            $url The URL of the file.
+	 * @param array<int,string> $skipped_directories The URLs of the skipped directories.
+	 *
+	 * @return bool
+	 */
+	private function is_in_skipped_directory( string $url, array $skipped_directories ): bool {
+		// local files are saved with "file://", their directories are listed without it.
+		$url = (string) preg_replace( '#^file://#', '', $url );
+
+		foreach ( $skipped_directories as $directory ) {
+			if ( str_starts_with( $url, trailingslashit( (string) preg_replace( '#^file://#', '', $directory ) ) ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Return the protocol object for the URL of the given external source.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return Protocol_Base|false
+	 */
+	public function get_protocol_of_source( int $term_id ): Protocol_Base|false {
+		// get the service of the external source.
+		$service_obj = Services::get_instance()->get_service_by_name( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if the service could not be found.
+		if ( ! $service_obj ) {
+			return false;
+		}
+
+		// get the term data.
+		$term_data = Taxonomy::get_instance()->get_entry( $term_id );
+
+		// bail if term data could not be loaded.
+		if ( empty( $term_data ) ) {
+			return false;
+		}
+
+		// return the protocol object for the URL of this external source.
+		return Protocols::get_instance()->get_protocol_object_for_url( $service_obj->get_url( (string) $term_data['directory'] ), $term_data['fields'] );
+	}
+
+	/**
+	 * Return whether the files of subdirectories could be used during the synchronization of the given external source.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories( int $term_id ): bool {
+		// get the protocol object.
+		$protocol_obj = $this->get_protocol_of_source( $term_id );
+
+		// get whether the protocol supports subdirectories.
+		$supports = $protocol_obj && $protocol_obj->supports_subdirectories();
+
+		/**
+		 * Filter whether the files of subdirectories could be used during the synchronization of the given external source.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param bool $supports True if subdirectories are supported.
+		 * @param int $term_id The ID of the external source.
+		 */
+		return (bool) apply_filters( 'efml_sync_supports_subdirectories', $supports, $term_id );
+	}
+
+	/**
+	 * Return whether the files of subdirectories are used by default during the synchronization of the given external source.
+	 *
+	 * This is the default of its service, which is used, if nothing else is set for the external source.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return bool
+	 */
+	public function get_subdirectories_default( int $term_id ): bool {
+		// get the protocol object.
+		$protocol_obj = $this->get_protocol_of_source( $term_id );
+
+		// get the default of the protocol.
+		$default = $protocol_obj && $protocol_obj->get_subdirectories_default();
+
+		/**
+		 * Filter whether the files of subdirectories are used by default during the synchronization of the given
+		 * external source (the default of its service).
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 * @param bool $default True if subdirectories are used by default.
+		 * @param int $term_id The ID of the external source.
+		 */
+		return (bool) apply_filters( 'efml_sync_subdirectories_default', $default, $term_id );
 	}
 
 	/**
@@ -1186,6 +1362,9 @@ class Synchronization extends Tools_Base {
 
 			// update the sync title on each file.
 			array( 'efml_file_import_before_save', array( $this, 'update_sync_title' ), 10, 1 ),
+
+			// remember subdirectories, which could not be read, so their files are not deleted.
+			array( 'efml_subdirectory_skipped', array( $this, 'add_skipped_directory' ), 10, 1 ),
 		);
 	}
 
@@ -1573,10 +1752,11 @@ class Synchronization extends Tools_Base {
 		// remove all synced files from this URL.
 		foreach ( $this->get_synced_files_by_term( $term_id ) as $post_id ) {
 			// get the file name.
-			$file_name = get_post_field( 'post_name', $post_id );
+			$post      = get_post( $post_id );
+			$file_name = $post instanceof \WP_Post ? $post->post_name : '';
 
 			// do not update the progress, if "post_name" could not be loaded.
-			if ( is_string( $file_name ) ) {
+			if ( '' !== $file_name ) {
 				// update the title in AJAX progress modal.
 				/* translators: %1$s will be replaced by a file name. */
 				update_option( 'eml_delete_synced_files_title', sprintf( __( 'Deletion of synchronized file %1$s ...', 'external-files-in-media-library' ), $file_name ) );
@@ -1629,7 +1809,7 @@ class Synchronization extends Tools_Base {
 		// loop through all timestamps of the cron system.
 		foreach ( _get_cron_array() as $hooks ) {
 			// bail if no sync event exists on this timestamp.
-			if ( ! isset( $hooks['eml_sync'] ) || ! is_array( $hooks['eml_sync'] ) ) {
+			if ( ! isset( $hooks['eml_sync'] ) ) {
 				continue;
 			}
 
@@ -1652,7 +1832,7 @@ class Synchronization extends Tools_Base {
 				$schedule_obj->set_args( $event['args'] );
 
 				// set interval.
-				$schedule_obj->set_interval( Helper::get_interval_by_time( absint( $event['interval'] ) ) );
+				$schedule_obj->set_interval( Helper::get_interval_by_time( absint( $event['interval'] ?? 0 ) ) );
 
 				// return this object.
 				return $schedule_obj;

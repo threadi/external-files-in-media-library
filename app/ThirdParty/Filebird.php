@@ -18,7 +18,7 @@ use FileBird\Model\Folder;
 /**
  * Object to handle support for this plugin.
  */
-class Filebird extends ThirdParty_Base implements ThirdParty {
+class Filebird extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
 
 	/**
 	 * The term ID used in a sync.
@@ -78,6 +78,9 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 		if ( ! Helper::is_plugin_active( 'filebird/filebird.php' ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_folder_selection' ), 10, 2 );
@@ -272,5 +275,95 @@ class Filebird extends ThirdParty_Base implements ThirdParty {
 	public function add_option_for_folder_import( array $dialog ): array {
 		$dialog['texts'][] = '<details><summary>' . __( 'Import in a specific folder of Filebird', 'external-files-in-media-library' ) . '</summary><div><label for="filebirdfolders">' . __( 'Choose folder:', 'external-files-in-media-library' ) . '</label>' . $this->get_folder_selection( 0 ) . '</div></details>';
 		return $dialog;
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'filebird';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'FileBird';
+	}
+
+	/**
+	 * Return whether the plugin is active and its folders could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return Helper::is_plugin_active( 'filebird/filebird.php' ) && method_exists( '\\FileBird\\Model\\Folder', 'newOrGet' ) && method_exists( '\\FileBird\\Model\\Folder', 'isFolderExist' ) && method_exists( '\\FileBird\\Model\\Folder', 'assignFolder' );
+	}
+
+	/**
+	 * Return the folder of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		return absint( get_term_meta( $term_id, 'fildbirdfolder', true ) );
+	}
+
+	/**
+	 * Return the ID of the folder with the given name in the given parent folder; the folder is created, if it does not
+	 * exist.
+	 *
+	 * @param int    $parent_id The ID of the parent folder (0 for the top level).
+	 * @param string $name      The name of the folder.
+	 *
+	 * @return int The ID of the folder, 0 on errors.
+	 */
+	public function get_or_create_folder( int $parent_id, string $name ): int {
+		// get or create the folder.
+		$result = Folder::newOrGet( $name, $parent_id );
+
+		// return its ID.
+		return is_array( $result ) && ! empty( $result['id'] ) ? absint( $result['id'] ) : 0;
+	}
+
+	/**
+	 * Return whether the folder with the given ID exists.
+	 *
+	 * @param int $folder_id The ID of the folder.
+	 *
+	 * @return bool
+	 */
+	public function folder_exists( int $folder_id ): bool {
+		return $folder_id > 0 && Folder::isFolderExist( $folder_id );
+	}
+
+	/**
+	 * Assign the given file to the given folder (only to this folder).
+	 *
+	 * @param int $attachment_id The ID of the attachment.
+	 * @param int $folder_id     The ID of the folder.
+	 *
+	 * @return void
+	 */
+	public function assign_file( int $attachment_id, int $folder_id ): void {
+		Folder::assignFolder( $folder_id, array( $attachment_id ), Languages::get_instance()->get_current_lang() );
 	}
 }

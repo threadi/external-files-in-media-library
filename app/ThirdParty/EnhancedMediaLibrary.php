@@ -16,7 +16,9 @@ use ExternalFilesInMediaLibrary\Plugin\Helper;
 /**
  * Object to handle support for this plugin.
  */
-class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
+class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty, Folder_Structure_Interface {
+	use Folder_Structure_Taxonomy;
+
 
 	/**
 	 * The term ID used in a sync.
@@ -76,6 +78,9 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		if ( ! Helper::is_plugin_active( 'enhanced-media-library/enhanced-media-library.php' ) ) {
 			return;
 		}
+
+		// take over the structure of subdirectories during synchronizations.
+		add_filter( 'efml_folder_structure_integrations', array( $this, 'add_folder_structure_integration' ) );
 
 		// add hooks.
 		add_filter( 'efml_sync_configure_form', array( $this, 'add_category_selection' ), 10, 2 );
@@ -163,7 +168,7 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		// create the HTML-code.
 		$form = '';
 		foreach ( $terms as $term ) {
-			$form .= '<label for="eml_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="eml_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="eml_categories" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
+			$form .= '<label for="eml_category_' . absint( $term->term_id ) . '"><input type="checkbox" id="eml_category_' . absint( $term->term_id ) . '" class="eml-use-for-import eml-multi" name="eml_categories[]" value="' . absint( $term->term_id ) . '"' . ( isset( $mark[ $term->term_id ] ) ? ' checked' : '' ) . '> ' . esc_html( $term->name ) . '</label>';
 		}
 
 		// return the resulting HTML-code.
@@ -243,10 +248,8 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 			return;
 		}
 
-		// assign the file to the categories.
-		foreach ( $categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
-		}
+		// assign the file to the categories (the dialog saves them with their ID as key).
+		wp_set_object_terms( $external_file_obj->get_id(), $this->get_ids_from_selection( $categories ), 'media_category' );
 	}
 
 	/**
@@ -263,12 +266,15 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 		}
 
 		// get our fields from request.
-		$eml_categories = isset( $_POST['eml_categories'] ) ? array_map( 'absint', wp_unslash( $_POST['eml_categories'] ) ) : array();
+		$eml_categories = isset( $_POST['eml_categories'] ) ? $this->get_ids_from_selection( map_deep( wp_unslash( $_POST['eml_categories'] ), 'absint' ) ) : array();
+
+		// bail if no categories are chosen.
+		if ( empty( $eml_categories ) ) {
+			return;
+		}
 
 		// assign the file to the categories.
-		foreach ( $eml_categories as $cat_id => $enabled ) {
-			wp_set_object_terms( $external_file_obj->get_id(), $cat_id, 'media_category' );
-		}
+		wp_set_object_terms( $external_file_obj->get_id(), $eml_categories, 'media_category' );
 	}
 
 	/**
@@ -281,5 +287,64 @@ class EnhancedMediaLibrary extends ThirdParty_Base implements ThirdParty {
 	public function add_option_for_folder_import( array $dialog ): array {
 		$dialog['texts'][] = '<details><summary>' . __( 'Assign files to the categories', 'external-files-in-media-library' ) . '</summary><div>' . $this->get_category_selection( array() ) . '</div></details>';
 		return $dialog;
+	}
+
+	/**
+	 * Add this integration to the list of folder plugins, which could take over the structure of subdirectories.
+	 *
+	 * @param array<int,mixed> $integrations List of integrations.
+	 *
+	 * @return array<int,mixed>
+	 */
+	public function add_folder_structure_integration( array $integrations ): array {
+		$integrations[] = $this;
+		return $integrations;
+	}
+
+	/**
+	 * Return the internal name of this integration.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_name(): string {
+		return 'enhanced_media_library';
+	}
+
+	/**
+	 * Return the title of the folder plugin.
+	 *
+	 * @return string
+	 */
+	public function get_folder_structure_title(): string {
+		return 'Enhanced Media Library';
+	}
+
+	/**
+	 * Return whether the plugin is active and its categories could be created.
+	 *
+	 * @return bool
+	 */
+	public function is_folder_structure_available(): bool {
+		return Helper::is_plugin_active( 'enhanced-media-library/enhanced-media-library.php' ) && $this->is_folder_taxonomy_usable();
+	}
+
+	/**
+	 * Return the category of the given external source, under which the structure is created.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return int
+	 */
+	public function get_target_folder( int $term_id ): int {
+		return $this->get_single_folder( get_term_meta( $term_id, 'eml_categories', true ), true );
+	}
+
+	/**
+	 * Return the taxonomy of the categories.
+	 *
+	 * @return string
+	 */
+	protected function get_folder_taxonomy(): string {
+		return 'media_category';
 	}
 }

@@ -54,6 +54,28 @@ class Export extends Tools_Base {
 	private bool $sync_running = false;
 
 	/**
+	 * The ID of the external source, which is actually synchronized.
+	 *
+	 * @var int
+	 */
+	private int $sync_term_id = 0;
+
+	/**
+	 * The URL of the external source, which is actually synchronized.
+	 *
+	 * @var string
+	 */
+	private string $sync_url = '';
+
+	/**
+	 * The URLs and the relative paths of the files, which have been exported to the actually synchronized external
+	 * source (loaded once per synchronization and request).
+	 *
+	 * @var array{urls: array<string,bool>, paths: array<string,bool>}|null
+	 */
+	private ?array $exported_files_of_sync = null;
+
+	/**
 	 * List of attachment IDs, which have been uploaded in this request or whose export as upload is running.
 	 *
 	 * @var array<int,bool>
@@ -2146,13 +2168,19 @@ class Export extends Tools_Base {
 		// set marker for running sync to prevent export of synced files.
 		$this->sync_running = true;
 
-		// get URL for export files for the used term.
-		$export_url = (string) get_term_meta( $term_id, 'efml_export_url', true );
-
-		// bail if no URL is set.
-		if ( empty( $export_url ) ) {
+		// bail if this external source has never been used for exports (no URL for exported files is set).
+		if ( empty( get_term_meta( $term_id, 'efml_export_url', true ) ) ) {
+			$this->sync_term_id           = 0;
+			$this->exported_files_of_sync = null;
 			return;
 		}
+
+		// remember the external source, as its exported files are not synchronized (in any directory of it).
+		if ( $this->sync_term_id !== $term_id || $this->sync_url !== $url ) {
+			$this->exported_files_of_sync = null;
+		}
+		$this->sync_term_id = $term_id;
+		$this->sync_url     = $url;
 
 		// use hooks.
 		add_filter( 'efml_external_file_infos', array( $this, 'prevent_sync_of_exported_file' ), 20, 2 );
@@ -2191,7 +2219,10 @@ class Export extends Tools_Base {
 	 * @return void
 	 */
 	public function remove_sync_filter(): void {
-		$this->sync_running = false;
+		$this->sync_running           = false;
+		$this->sync_term_id           = 0;
+		$this->sync_url               = '';
+		$this->exported_files_of_sync = null;
 		remove_filter( 'efml_external_file_infos', array( $this, 'prevent_sync_of_exported_file' ), 20 );
 	}
 
@@ -2214,21 +2245,131 @@ class Export extends Tools_Base {
 	 * @return array<string,mixed>
 	 */
 	public function prevent_sync_of_exported_file( array $results, string $url ): array {
-		// get the external files object for this URL.
-		$external_file_obj = Files::get_instance()->get_file_by_title( basename( $url ) );
-
-		// bail if external file is not valid.
-		if ( ! $external_file_obj instanceof File || ! $external_file_obj->is_valid() ) {
-			return $results;
-		}
-
 		// bail if this is not an exported file.
-		if ( 0 === absint( get_post_meta( $external_file_obj->get_id(), 'eml_exported_file', true ) ) ) {
+		if ( ! $this->is_exported_file_of_sync( $url ) ) {
 			return $results;
 		}
+
+		// log this event.
+		Log::get_instance()->create( __( 'The file has been exported to this external source and is not synchronized.', 'external-files-in-media-library' ), $url, 'info', 2 );
 
 		// return empty array as this is an exported file.
 		return array();
+	}
+
+	/**
+	 * Return whether the given URL is a file, which has been exported to the actually synchronized external source.
+	 *
+	 * This includes the sizes and the original image of exported images. The files are compared with their URL and
+	 * with their path in the external source (e.g. "2026/11/image.jpg"), as the URL of an exported file could be
+	 * another than the URL used by the synchronization (e.g. its public URL).
+	 *
+	 * @param string $url The URL of the file to synchronize.
+	 *
+	 * @return bool
+	 */
+	public function is_exported_file_of_sync( string $url ): bool {
+		// bail if no synchronization is running.
+		if ( 0 === $this->sync_term_id ) {
+			return false;
+		}
+
+		// get the exported files of this external source.
+		$exported_files = $this->get_exported_files_of_sync();
+
+		// return true, if the URL is the URL of an exported file.
+		if ( isset( $exported_files['urls'][ $url ] ) ) {
+			return true;
+		}
+
+		// return whether the path of the file in the external source is the path of an exported file.
+		$path = $this->get_path_in_sync_source( $url );
+		return '' !== $path && isset( $exported_files['paths'][ $path ] );
+	}
+
+	/**
+	 * Return the path of the given URL relative to the actually synchronized external source.
+	 *
+	 * @param string $url The URL of the file.
+	 *
+	 * @return string
+	 */
+	private function get_path_in_sync_source( string $url ): string {
+		// get the protocol object of the external source.
+		$protocol_obj = Protocols::get_instance()->get_protocol_object_for_url( $this->sync_url );
+
+		// bail if no protocol could be found.
+		if ( ! $protocol_obj ) {
+			return '';
+		}
+
+		// get the directory of the file in the external source.
+		$directory = $protocol_obj->get_relative_directory( $url );
+
+		// return the path with the file name.
+		return ( '' !== $directory ? trailingslashit( $directory ) : '' ) . wp_basename( $url );
+	}
+
+	/**
+	 * Return the URLs and the paths of the files, which have been exported to the actually synchronized external source.
+	 *
+	 * @return array{urls: array<string,bool>, paths: array<string,bool>}
+	 */
+	private function get_exported_files_of_sync(): array {
+		// return the list, if it has already been loaded.
+		if ( is_array( $this->exported_files_of_sync ) ) {
+			return $this->exported_files_of_sync;
+		}
+
+		// collect the URLs and the paths.
+		$urls  = array();
+		$paths = array();
+		foreach ( $this->get_exported_files_by_term( $this->sync_term_id ) as $attachment_id ) {
+			// get the URL of the exported file.
+			$file_url = (string) get_post_meta( $attachment_id, EFML_POST_META_URL, true );
+			if ( '' !== $file_url ) {
+				$urls[ $file_url ] = true;
+			}
+
+			// get the folder of the file on this external source.
+			$folders = get_post_meta( $attachment_id, 'efml_export_folders', true );
+			$folder  = is_array( $folders ) && ! empty( $folders[ $this->sync_term_id ] ) ? trailingslashit( (string) $folders[ $this->sync_term_id ] ) : '';
+
+			// get the file name of the exported file.
+			$file_name = (string) get_post_meta( $attachment_id, 'efml_export_filename', true );
+			if ( '' === $file_name && '' !== $file_url ) {
+				$file_name = wp_basename( $file_url );
+			}
+			if ( '' !== $file_name ) {
+				$paths[ ltrim( $folder . $file_name, '/' ) ] = true;
+			}
+
+			// add the sizes and the original image of exported images (also former ones, which are kept).
+			$sizes_data = Sizes::get_instance()->get_data( $attachment_id );
+			$entries    = array_merge( (array) ( $sizes_data['terms'][ $this->sync_term_id ] ?? array() ), (array) ( $sizes_data['former'][ $this->sync_term_id ] ?? array() ) );
+			foreach ( $entries as $entry ) {
+				// add its URLs.
+				foreach ( array( 'url', 'target' ) as $key ) {
+					if ( ! empty( $entry[ $key ] ) ) {
+						$urls[ (string) $entry[ $key ] ] = true;
+					}
+				}
+
+				// add its path.
+				if ( ! empty( $entry['file'] ) ) {
+					$paths[ ltrim( $folder . wp_basename( (string) $entry['file'] ), '/' ) ] = true;
+				}
+			}
+		}
+
+		// save the list for this synchronization.
+		$this->exported_files_of_sync = array(
+			'urls'  => $urls,
+			'paths' => $paths,
+		);
+
+		// return the list.
+		return $this->exported_files_of_sync;
 	}
 
 	/**

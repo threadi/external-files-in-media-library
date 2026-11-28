@@ -216,7 +216,7 @@ class Multisite extends Service_Base implements Service {
 		);
 
 		// add each attachment to the list.
-		foreach ( $results->posts as $post ) {
+		foreach ( (array) $results->posts as $post ) {
 			// bail if result is not "WP_Post".
 			if ( ! $post instanceof WP_Post ) {
 				continue;
@@ -555,7 +555,7 @@ class Multisite extends Service_Base implements Service {
 		$listing = array();
 
 		// check each attachment.
-		foreach ( $attachments->posts as $post ) {
+		foreach ( (array) $attachments->posts as $post ) {
 			// bail if post is not "WP_Post".
 			if ( ! $post instanceof WP_Post ) {
 				continue;

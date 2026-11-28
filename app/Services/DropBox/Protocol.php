@@ -287,6 +287,40 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
+	 * Return the path of the directory of the given file URL relative to the folder of the URL of this object.
+	 *
+	 * DropBox paths are not case-sensitive and the URLs of the files use the path as shown in DropBox.
+	 *
+	 * @param string $file_url The URL of the file.
+	 *
+	 * @return string
+	 */
+	public function get_relative_directory( string $file_url ): string {
+		// get the DropBox object.
+		$dropbox_obj = DropBox::get_instance();
+
+		// bail if this is not a DropBox URL.
+		if ( 0 !== stripos( $file_url, $dropbox_obj->get_name() ) ) {
+			return '';
+		}
+
+		// get the path of the file and of the folder.
+		$file_path = substr( $file_url, strlen( $dropbox_obj->get_name() ) );
+		$base      = trailingslashit( rtrim( $this->get_dropbox_path(), '/' ) );
+
+		// bail if the file is not in the folder.
+		if ( 0 !== stripos( $file_path, $base ) ) {
+			return '';
+		}
+
+		// get the directory of the file relative to the folder.
+		$directory = dirname( substr( $file_path, strlen( $base ) ) );
+
+		// return the directory, empty for files directly in the folder.
+		return '.' === $directory ? '' : $directory;
+	}
+
+	/**
 	 * Return the DropBox client for the fields of this object.
 	 *
 	 * For an external file it uses the connection of the owner of its external source, if each user has its own
@@ -337,6 +371,26 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
+	 * Return whether this protocol could use the files of subdirectories during a synchronization.
+	 *
+	 * @return bool
+	 */
+	public function supports_subdirectories(): bool {
+		return true;
+	}
+
+	/**
+	 * Return whether this protocol uses the files of subdirectories by default.
+	 *
+	 * DropBox has always used the files of subfolders.
+	 *
+	 * @return bool
+	 */
+	public function get_subdirectories_default(): bool {
+		return true;
+	}
+
+	/**
 	 * Return whether the URL of this object is a folder in DropBox.
 	 *
 	 * @return bool
@@ -367,7 +421,7 @@ class Protocol extends Protocol_Base {
 	}
 
 	/**
-	 * Return one page of the files in the folder of the URL of this object, also from its subfolders.
+	 * Return one page of the files in the folder of the URL of this object, also from its subfolders (if they should be used).
 	 *
 	 * @param string $cursor The cursor for the requested page.
 	 *
@@ -384,7 +438,7 @@ class Protocol extends Protocol_Base {
 
 		// get the page from DropBox.
 		try {
-			$result = '' === $cursor ? $client->listFolder( $this->get_dropbox_path(), true ) : $client->listFolderContinue( $cursor );
+			$result = '' === $cursor ? $client->listFolder( $this->get_dropbox_path(), $this->is_subdirectories_enabled() ) : $client->listFolderContinue( $cursor );
 		} catch ( ClientException | BadRequest $e ) {
 			// log this event.
 			Log::get_instance()->create( __( 'Error during request of DropBox file:', 'external-files-in-media-library' ) . ' <code>' . esc_html( $e->getMessage() ) . '</code>', $this->get_url(), 'error', 0, Import::get_instance()->get_identifier() );
@@ -667,7 +721,7 @@ class Protocol extends Protocol_Base {
 	 */
 	private function get_entries_of_folder( Client $client, string $path ): array {
 		// get the first part.
-		$result  = $client->listFolder( $path, true );
+		$result  = $client->listFolder( $path, $this->is_subdirectories_enabled() );
 		$entries = ! empty( $result['entries'] ) ? $result['entries'] : array();
 
 		// get the following parts.
