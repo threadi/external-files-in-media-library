@@ -81,6 +81,31 @@ class Setup {
 	public const FIELD_EXPORT_URL = 'efml_setup_export_url';
 
 	/**
+	 * The name of the field with the website, which provides the central media library of the network.
+	 */
+	public const FIELD_NETWORK_CENTRAL = 'efml_setup_network_central';
+
+	/**
+	 * The name of the field to transfer the local files of the websites to the central media library.
+	 */
+	public const FIELD_NETWORK_EXISTING = 'efml_setup_network_existing';
+
+	/**
+	 * The name of the field to hide the options of this plugin in the websites, which use the central media library.
+	 */
+	public const FIELD_NETWORK_HIDE = 'efml_setup_network_hide';
+
+	/**
+	 * The name of the field to confirm the setup of the central media library.
+	 */
+	public const FIELD_NETWORK_CONFIRM = 'efml_setup_network_confirm';
+
+	/**
+	 * The name of the field with the hint for the support forum, which is shown in every step.
+	 */
+	public const FIELD_SUPPORT = 'efml_setup_support';
+
+	/**
 	 * The prefix of the fields with the access data of a service.
 	 */
 	public const FIELD_PREFIX = 'efml_setup_field_';
@@ -168,6 +193,13 @@ class Setup {
 	private ?int $local_files_count = null;
 
 	/**
+	 * Cache for the websites of the network as list of ID and label.
+	 *
+	 * @var array<int,string>|null
+	 */
+	private ?array $network_sites = null;
+
+	/**
 	 * Constructor, not used as this a Singleton object.
 	 */
 	private function __construct() {}
@@ -236,6 +268,7 @@ class Setup {
 		// load the files of other offload plugins and the number of local files again.
 		$this->migration_sources = null;
 		$this->local_files_count = null;
+		$this->network_sites     = null;
 
 		// get the setup object.
 		$setup_obj = \easySetupForWordPress\Setup::get_instance();
@@ -401,33 +434,184 @@ class Setup {
 		$steps   = array();
 		$steps[] = $this->get_goal_step();
 
-		// add the step to choose the files of another offload plugin or a service, if the goal does not define it.
-		if ( ! is_null( $goal ) && 'migrate' === $goal['action'] ) {
-			$steps[] = $this->get_migration_source_step();
-		} elseif ( is_null( $goal ) || '' === $goal['service'] ) {
-			$steps[] = $this->get_service_step();
-		}
+		if ( ! is_null( $goal ) && 'network' === $goal['action'] ) {
+			// add the step to configure the central media library of the network: it needs no service.
+			$steps[] = $this->get_network_step();
+		} else {
+			// add the step to choose the files of another offload plugin or a service, if the goal does not define it.
+			if ( ! is_null( $goal ) && 'migrate' === $goal['action'] ) {
+				$steps[] = $this->get_migration_source_step();
+			} elseif ( is_null( $goal ) || '' === $goal['service'] ) {
+				$steps[] = $this->get_service_step();
+			}
 
-		// add the steps to install the extension of the chosen service, if it is needed.
-		if ( $this->has_install_steps() ) {
-			$steps[] = $this->get_install_step();
-			$steps[] = $this->get_install_result_step();
-		}
+			// add the steps to install the extension of the chosen service, if it is needed.
+			if ( $this->has_install_steps() ) {
+				$steps[] = $this->get_install_step();
+				$steps[] = $this->get_install_result_step();
+			}
 
-		// add the steps for the access data and the options.
-		$steps[] = $this->get_access_step();
-		$steps[] = $this->get_options_step();
+			// add the steps for the access data and the options.
+			$steps[] = $this->get_access_step();
+			$steps[] = $this->get_options_step();
+		}
 
 		// add the process.
 		$steps[] = array(
 			'runSetup' => array(
 				'type'  => 'ProgressBar',
-				'label' => __( 'The quickstart is configuring your external source', 'external-files-in-media-library' ),
+				'label' => ! is_null( $goal ) && 'network' === $goal['action'] ? __( 'The quickstart is configuring the central media library', 'external-files-in-media-library' ) : __( 'The quickstart is configuring your external source', 'external-files-in-media-library' ),
 			),
 		);
 
+		// add the hint for the support forum at the end of each step, directly above the buttons.
+		foreach ( $steps as $index => $step ) {
+			$steps[ $index ][ self::FIELD_SUPPORT ] = $this->get_support_field();
+		}
+
 		// number the steps from 1.
 		$this->setup = (array) array_combine( range( 1, count( $steps ) ), $steps );
+	}
+
+	/**
+	 * Return the field with the hint for the support forum.
+	 *
+	 * @return array<string,string>
+	 */
+	private function get_support_field(): array {
+		return array(
+			'type' => 'Text',
+			/* translators: %1$s will be replaced by the URL of the support forum on wordpress.org. */
+			'text' => '<p class="efml-setup-support"><span class="dashicons dashicons-sos" aria-hidden="true"></span> <strong>' . __( 'Need help?', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Feel free to ask in the <a href="%1$s" target="_blank" rel="noopener noreferrer">support forum</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_plugin_support_url() ) ) . '</p>',
+		);
+	}
+
+	/**
+	 * Return whether the goal to set up a central media library for the network could be offered.
+	 *
+	 * Only in a multisite with at least two websites, for users who could manage the network and only as long as the
+	 * network does not use a central media library: changing existing groups is done in the network administration.
+	 *
+	 * @return bool
+	 */
+	public function is_network_goal_available(): bool {
+		// bail if this is not a multisite or the user could not manage it.
+		if ( ! is_multisite() || ! current_user_can( 'manage_network_options' ) ) {
+			return false;
+		}
+
+		// bail if the network uses a central media library already or one is moved at the moment.
+		if ( Network\Media_Library::get_instance()->is_active() || Network\Move::get_instance()->is_running() ) {
+			return false;
+		}
+
+		// the network needs at least two websites.
+		return count( $this->get_network_sites() ) > 1;
+	}
+
+	/**
+	 * Return the websites of the network as list of ID and label.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_network_sites(): array {
+		// bail if this is not a multisite.
+		if ( ! is_multisite() ) {
+			return array();
+		}
+
+		// load them once per request.
+		if ( is_null( $this->network_sites ) ) {
+			$this->network_sites = array();
+			foreach ( Helper::get_blogs() as $website ) {
+				$blog_id                         = absint( $website->blog_id ); // @phpstan-ignore property.notFound
+				$this->network_sites[ $blog_id ] = Network\Media_Library::get_instance()->get_site_label( $blog_id );
+			}
+			ksort( $this->network_sites );
+		}
+
+		// return them.
+		return $this->network_sites;
+	}
+
+	/**
+	 * Return the fields of the step to configure the central media library of the network.
+	 *
+	 * @return array<string,mixed>
+	 */
+	private function get_network_step(): array {
+		// get the chosen goal.
+		$goal = $this->get_chosen_goal();
+
+		// show a hint if the goal could not be used.
+		if ( is_null( $goal ) || ! $this->is_network_goal_available() ) {
+			return array(
+				'help'                        => array(
+					'type' => 'Text',
+					'text' => '<p>' . esc_html__( 'Please choose what you would like to do on the first page of this quickstart.', 'external-files-in-media-library' ) . '</p>',
+				),
+				'efml_setup_network_unusable' => array(
+					'type'     => 'CardControl',
+					'options'  => array(),
+					'required' => true,
+				),
+			);
+		}
+
+		// get the websites.
+		$sites = $this->get_network_sites();
+
+		// collect them as options.
+		$options = array();
+		foreach ( $sites as $blog_id => $label ) {
+			$options[] = array(
+				'label' => $label,
+				'value' => (string) $blog_id,
+			);
+		}
+
+		// use the main website as default, if it is part of the list.
+		$default = isset( $sites[ get_main_site_id() ] ) ? get_main_site_id() : (int) array_key_first( $sites );
+
+		// return the fields.
+		return array(
+			'chosen'                     => $this->get_headline( $goal['label'], $goal['icon'] ),
+			'intro'                      => array(
+				'type' => 'Text',
+				/* translators: %1$d will be replaced by a number. */
+				'text' => '<p>' . sprintf( esc_html( _n( 'One website provides the central media library. The other %1$d website of your network uses its files, its new uploads are saved there.', 'One website provides the central media library. The other %1$d websites of your network use its files, their new uploads are saved there.', count( $sites ) - 1, 'external-files-in-media-library' ) ), count( $sites ) - 1 ) . '</p>',
+			),
+			self::FIELD_NETWORK_CENTRAL  => array(
+				'type'     => 'SelectControl',
+				'label'    => __( 'Which website should provide the central media library?', 'external-files-in-media-library' ),
+				'help'     => __( 'Its files stay where they are. Usually this is the main website of your network.', 'external-files-in-media-library' ),
+				'options'  => $options,
+				'default'  => (string) $default,
+				'required' => true,
+			),
+			self::FIELD_NETWORK_EXISTING => array(
+				'type'    => 'CheckboxControl',
+				'label'   => __( 'Transfer the files, which the other websites already have, to the central media library', 'external-files-in-media-library' ),
+				'help'    => __( 'They are transferred in the background. Files with the same content are linked to the existing file. Otherwise they stay local files of their website and you could transfer them later in the network administration.', 'external-files-in-media-library' ),
+				'default' => 0,
+			),
+			self::FIELD_NETWORK_HIDE     => array(
+				'type'    => 'CheckboxControl',
+				'label'   => __( 'Hide the options of this plugin in the other websites', 'external-files-in-media-library' ),
+				'help'    => __( 'Their users just use the files of the central media library.', 'external-files-in-media-library' ),
+				'default' => 0,
+			),
+			'network_hint'               => array(
+				'type' => 'Text',
+				/* translators: %1$s will be replaced by a URL. */
+				'text' => '<p><span class="dashicons dashicons-info" aria-hidden="true"></span> ' . sprintf( __( 'Further settings, e.g. groups with several central media libraries, which websites could delete files and for which websites new uploads are available, are in the <a href="%1$s">network administration</a>. They use their defaults until you change them.', 'external-files-in-media-library' ), esc_url( Network\Settings::get_instance()->get_url() ) ) . '</p>',
+			),
+			self::FIELD_NETWORK_CONFIRM  => array(
+				'type'     => 'CheckboxControl',
+				'label'    => __( 'I have created a backup of my network and want to set up the central media library now', 'external-files-in-media-library' ),
+				'required' => true,
+			),
+		);
 	}
 
 	/**
@@ -442,45 +626,13 @@ class Setup {
 	 * - options: the options to offer (see @get_option_definitions()).
 	 * - defaults: the default values of the options.
 	 * - action: what should happen after the external source has been created ("export", "sync", "import" or empty).
+	 *   The action "network" sets up a central media library for the multisite instead of an external source.
 	 *
 	 * @return array<string,array{label: string, description: string, icon: string, features: array<int,string>, service: string, options: array<int,string>, defaults: array<string,int|string>, action: string}>
 	 */
 	public function get_goals(): array {
-		// define the goals.
+		// define the goals in the order, in which most users use the plugin.
 		$goals = array(
-			'offload'   => array(
-				'label'       => __( 'Offload your media library', 'external-files-in-media-library' ),
-				'description' => __( 'New files in your media library are saved on an external storage and delivered from there.', 'external-files-in-media-library' ),
-				'icon'        => Helper::get_icon( 'core-admin/upload', 'dashicons-upload', '', 32 ),
-				'features'    => array( 'export' ),
-				'service'     => '',
-				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'export_existing' ),
-				'defaults'    => array(
-					'export'          => 1,
-					'export_main'     => 1,
-					'export_folders'  => 1,
-					'export_private'  => 0,
-					'export_existing' => 0,
-				),
-				'action'      => 'export',
-			),
-			'downloads' => array(
-				'label'       => __( 'Protected downloads', 'external-files-in-media-library' ),
-				'description' => __( 'Save files privately on an external storage. Your website delivers them, e.g. as downloads of your WooCommerce products.', 'external-files-in-media-library' ),
-				'icon'        => Helper::get_icon( 'core-admin/shield', 'dashicons-shield', '', 32 ),
-				'features'    => array( 'export', 'private' ),
-				'service'     => '',
-				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'woocommerce', 'export_existing' ),
-				'defaults'    => array(
-					'export'          => 1,
-					'export_main'     => 1,
-					'export_folders'  => 1,
-					'export_private'  => 1,
-					'woocommerce'     => 1,
-					'export_existing' => 0,
-				),
-				'action'      => 'export',
-			),
 			'sync'      => array(
 				'label'       => __( 'Embed and synchronize external files', 'external-files-in-media-library' ),
 				'description' => __( 'Use files of an external storage in your media library and keep them up to date automatically.', 'external-files-in-media-library' ),
@@ -519,7 +671,54 @@ class Setup {
 				),
 				'action'      => 'sync',
 			),
+			'offload'   => array(
+				'label'       => __( 'Offload your media library', 'external-files-in-media-library' ),
+				'description' => __( 'New files in your media library are saved on an external storage and delivered from there.', 'external-files-in-media-library' ),
+				'icon'        => Helper::get_icon( 'core-admin/upload', 'dashicons-upload', '', 32 ),
+				'features'    => array( 'export' ),
+				'service'     => '',
+				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'export_existing' ),
+				'defaults'    => array(
+					'export'          => 1,
+					'export_main'     => 1,
+					'export_folders'  => 1,
+					'export_private'  => 0,
+					'export_existing' => 0,
+				),
+				'action'      => 'export',
+			),
+			'downloads' => array(
+				'label'       => __( 'Protected downloads', 'external-files-in-media-library' ),
+				'description' => __( 'Save files privately on an external storage. Your website delivers them, e.g. as downloads of your WooCommerce products.', 'external-files-in-media-library' ),
+				'icon'        => Helper::get_icon( 'core-admin/shield', 'dashicons-shield', '', 32 ),
+				'features'    => array( 'export', 'private' ),
+				'service'     => '',
+				'options'     => array( 'export', 'export_main', 'export_folders', 'export_private', 'woocommerce', 'export_existing' ),
+				'defaults'    => array(
+					'export'          => 1,
+					'export_main'     => 1,
+					'export_folders'  => 1,
+					'export_private'  => 1,
+					'woocommerce'     => 1,
+					'export_existing' => 0,
+				),
+				'action'      => 'export',
+			),
 		);
+
+		// add the goal to set up a central media library, if this is a multisite and the user could manage it.
+		if ( $this->is_network_goal_available() ) {
+			$goals['network'] = array(
+				'label'       => __( 'Central media library for your network', 'external-files-in-media-library' ),
+				'description' => __( 'All websites of your multisite use the files of one website. Their uploads are saved there.', 'external-files-in-media-library' ),
+				'icon'        => Helper::get_icon( 'core-admin/networking', 'dashicons-networking', '', 32 ),
+				'features'    => array(),
+				'service'     => '',
+				'options'     => array(),
+				'defaults'    => array(),
+				'action'      => 'network',
+			);
+		}
 
 		// add the goal to switch from another offload plugin, if its files have been found.
 		$migration_labels = array_unique( array_column( $this->get_migration_sources(), 'label' ) );
@@ -760,6 +959,15 @@ class Setup {
 				'type' => 'Text',
 				/* translators: %1$s will be replaced by the names of plugins, %2$s by a URL. */
 				'text' => '<p><span class="dashicons dashicons-info"></span> ' . sprintf( _n( '<strong>%1$s is active, but has not offloaded any files of the media library yet.</strong> As soon as it has, you can switch from it here without uploading the files again. If you are sure it has offloaded files, check the <a href="%2$s">log</a>.', '<strong>%1$s are active, but have not offloaded any files of the media library yet.</strong> As soon as they have, you can switch from them here without uploading the files again. If you are sure they have offloaded files, check the <a href="%2$s">log</a>.', count( $labels ), 'external-files-in-media-library' ), esc_html( implode( ', ', $labels ) ), esc_url( Helper::get_log_url() ) ) . '</p>',
+			);
+		}
+
+		// explain why the goal for the central media library is missing, if the network uses one already.
+		if ( is_multisite() && current_user_can( 'manage_network_options' ) && Network\Media_Library::get_instance()->is_active() ) {
+			$fields['network_hint'] = array(
+				'type' => 'Text',
+				/* translators: %1$s will be replaced by a URL. */
+				'text' => '<p><span class="dashicons dashicons-networking"></span> ' . sprintf( __( '<strong>Your network already uses a central media library.</strong> Change it in the <a href="%1$s">network administration</a>.', 'external-files-in-media-library' ), esc_url( Network\Settings::get_instance()->get_url() ) ) . '</p>',
 			);
 		}
 
@@ -1176,6 +1384,11 @@ class Setup {
 
 		// bail if no goal has been chosen.
 		if ( is_null( $goal ) ) {
+			return '';
+		}
+
+		// the central media library of the network uses no service.
+		if ( 'network' === $goal['action'] ) {
 			return '';
 		}
 
@@ -1958,6 +2171,11 @@ class Setup {
 			return false;
 		}
 
+		// the central media library of the network uses no service.
+		if ( 'network' === $goal['action'] ) {
+			return false;
+		}
+
 		// return the service of the chosen files of another offload plugin.
 		if ( 'migrate' === $goal['action'] ) {
 			$source = $this->get_chosen_migration_source();
@@ -2334,6 +2552,18 @@ class Setup {
 		// get the chosen goal and service.
 		$goal        = $this->get_chosen_goal();
 		$listing_obj = $this->get_chosen_service();
+
+		// set up the central media library of the network, which needs no external source.
+		if ( ! is_null( $goal ) && 'network' === $goal['action'] ) {
+			// set the max steps of this process.
+			update_option( 'esfw_max_steps', absint( get_option( 'esfw_max_steps' ) ) + 2 );
+
+			// run it and remove the values of this setup, if it has been set up.
+			if ( $this->run_network_process() ) {
+				$this->clear_answers();
+			}
+			return;
+		}
 
 		// set the max steps of this process.
 		update_option( 'esfw_max_steps', absint( get_option( 'esfw_max_steps' ) ) + 4 );
@@ -2727,6 +2957,118 @@ class Setup {
 
 		/* translators: %1$d and %2$d will be replaced by numbers. */
 		$this->add_process_message( sprintf( __( '%1$d of %2$d files have been taken over. The others are taken over in the background, the progress is shown in the admin bar.', 'external-files-in-media-library' ), $result['done'], $result['total'] ), true );
+	}
+
+	/**
+	 * Set up the central media library of the network with the chosen values.
+	 *
+	 * Uses one group with all websites of the network, like the network administration does it for networks of
+	 * versions before 6.1.0.
+	 *
+	 * @return bool True if the central media library has been set up.
+	 */
+	private function run_network_process(): bool {
+		// bail if the goal could not be used (anymore), e.g. as the user is not allowed to manage the network.
+		if ( ! $this->is_network_goal_available() ) {
+			$this->add_process_message( __( 'The central media library could not be set up: your network uses one already, one is moved at the moment or you are not allowed to manage the network.', 'external-files-in-media-library' ), false );
+			return false;
+		}
+
+		// bail if the setup has not been confirmed.
+		if ( 1 !== absint( $this->get_value( self::FIELD_NETWORK_CONFIRM ) ) ) {
+			$this->add_process_message( __( 'Nothing has been changed, as the setup of the central media library has not been confirmed.', 'external-files-in-media-library' ), false );
+			return false;
+		}
+
+		// get the chosen website.
+		$central = absint( $this->get_value( self::FIELD_NETWORK_CENTRAL ) );
+		$sites   = $this->get_network_sites();
+
+		// bail if it is not a website of this network.
+		if ( ! isset( $sites[ $central ] ) ) {
+			$this->add_process_message( __( 'The chosen website does not exist in your network. Please start again.', 'external-files-in-media-library' ), false );
+			return false;
+		}
+
+		// step 1: use the central media library in all websites.
+		$this->set_process_label( __( 'Connecting the websites with the central media library.', 'external-files-in-media-library' ) );
+		$hide = 1 === absint( $this->get_value( self::FIELD_NETWORK_HIDE ) );
+		Network\Settings::get_instance()->apply( $central, $hide ? 1 : 0 );
+		Network\Media_Library::get_instance()->reset_sites();
+		$this->update_process_step();
+
+		// bail if it has not been saved.
+		if ( ! Network\Media_Library::get_instance()->is_central( $central ) ) {
+			/* translators: %1$s will be replaced by a URL. */
+			$this->add_process_message( sprintf( __( 'The central media library could not be set up. Details are in the <a href="%1$s">log</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_log_url() ) ), false );
+			return false;
+		}
+
+		// add the messages.
+		$members = Network\Media_Library::get_instance()->get_sites( $central );
+		/* translators: %1$s will be replaced by the name of a website, %2$d by a number. */
+		$this->add_process_message( sprintf( _n( '%1$s is now the central media library of %2$d website.', '%1$s is now the central media library of %2$d websites.', count( $members ), 'external-files-in-media-library' ), '<em>' . esc_html( $sites[ $central ] ) . '</em>', count( $members ) ), true );
+		$this->add_process_message( __( 'New uploads of these websites are saved in the central media library. The websites get its files with their synchronization in the background.', 'external-files-in-media-library' ), true );
+		if ( $hide ) {
+			$this->add_process_message( __( 'The options of this plugin are hidden in these websites.', 'external-files-in-media-library' ), true );
+		}
+
+		// step 2: transfer the local files of the websites, if this has been chosen.
+		$this->set_process_label( __( 'Starting the transfer of the local files.', 'external-files-in-media-library' ) );
+		if ( 1 === absint( $this->get_value( self::FIELD_NETWORK_EXISTING ) ) ) {
+			$this->run_network_transfer( array_keys( $members ) );
+		} else {
+			/* translators: %1$s will be replaced by a URL. */
+			$this->add_process_message( sprintf( __( 'Files, which the websites already have, stay local files of their website. You could transfer them in the <a href="%1$s">overview of the network</a>.', 'external-files-in-media-library' ), esc_url( Network\Settings::get_instance()->get_url( 'overview' ) ) ), true );
+		}
+		$this->update_process_step();
+
+		// forward to the overview of the network.
+		update_user_meta( get_current_user_id(), self::FORWARD_META, Network\Settings::get_instance()->get_url( 'overview' ) );
+
+		// return true as it has been set up.
+		return true;
+	}
+
+	/**
+	 * Start the transfer of the local files of the given websites to their central media library.
+	 *
+	 * @param array<int,int> $sites The websites.
+	 *
+	 * @return void
+	 */
+	private function run_network_transfer( array $sites ): void {
+		// start it for each website with local files.
+		$started = 0;
+		$errors  = array();
+		foreach ( $sites as $blog_id ) {
+			// bail if the website has no local files.
+			if ( 0 === Network\Existing::get_instance()->count( $blog_id ) ) {
+				continue;
+			}
+
+			// start it.
+			$result = Network\Existing::get_instance()->start( $blog_id );
+
+			// collect the errors.
+			if ( $result instanceof WP_Error ) {
+				$errors[] = esc_html( Network\Media_Library::get_instance()->get_site_label( $blog_id ) . ': ' . $result->get_error_message() );
+				continue;
+			}
+
+			++$started;
+		}
+
+		// show the result.
+		if ( $started > 0 ) {
+			/* translators: %1$d will be replaced by a number, %2$s by a URL. */
+			$this->add_process_message( sprintf( _n( 'The local files of %1$d website are transferred to the central media library in the background. The <a href="%2$s">overview of the network</a> shows the progress.', 'The local files of %1$d websites are transferred to the central media library in the background. The <a href="%2$s">overview of the network</a> shows the progress.', $started, 'external-files-in-media-library' ), $started, esc_url( Network\Settings::get_instance()->get_url( 'overview' ) ) ), true );
+		} elseif ( empty( $errors ) ) {
+			$this->add_process_message( __( 'The websites have no local files, which could be transferred.', 'external-files-in-media-library' ), true );
+		}
+		if ( ! empty( $errors ) ) {
+			$this->add_process_message( __( 'The transfer of the local files could not be started for these websites:', 'external-files-in-media-library' ) . '<ul><li>' . implode( '</li><li>', $errors ) . '</li></ul>', false );
+		}
 	}
 
 	/**

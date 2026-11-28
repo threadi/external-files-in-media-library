@@ -6,6 +6,8 @@ In einer Multisite kannst du die Mediathek einer Website als zentrale Mediathek 
 
 Netzwerkverwaltung → Einstellungen → „External files“. Erstelle vorher eine Sicherung von allem.
 
+Für eine erste zentrale Mediathek für alle Websites kannst du auch den [Schnellstart](setup_de.md) nutzen (Ziel „Zentrale Mediathek für dein Netzwerk“). Er fragt nur nach der Website mit der zentralen Mediathek und legt eine Gruppe mit allen anderen Websites an.
+
 * **Groups:** Jede Gruppe hat einen Namen und eine Website mit ihrer zentralen Mediathek. Eine Gruppe fügst du in der letzten Zeile der Tabelle hinzu.
 * **Websites:** Wähle die Gruppe jeder Website. Jede Website gehört höchstens zu einer Gruppe. Eine zentrale Mediathek gehört nur zu ihrer eigenen Gruppe.
 * **New websites join:** der ersten Gruppe (Standard), keiner Gruppe oder einer gewählten Gruppe.

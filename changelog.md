@@ -36,6 +36,8 @@
 - Added default for subdirectories per service: DropBox and ZIP files keep their subdirectories
 - Added protection of files in subdirectories, which could not be read during a synchronization
 - Added option to take over the folder structure of subdirectories in FileBird, CatFolders, Folders, Folderly, Media Library Organizer, Media Library Assistant, Enhanced Media Library and Real Media Library (with subfolders)
+- Added goal "Central media library for your network" to the quickstart in multisites
+- Added hint for the support forum in each step of the quickstart
 - Added new hooks and PHP Unit tests
 
 ### Changed
@@ -44,6 +46,7 @@
 - Exported files are recognized by their URL and their path during the synchronization, also their sizes in folders
 - The directories ".git" and ".svn" are hidden in the listing of local directories
 - Renamed "Export again" to "Export now"
+- Changed order of the goals in the quickstart: embedding and synchronizing, local files and FTP come first
 - Faster synchronization with the central media library: daily, without HTTP downloads, unchanged files are skipped
 
 ### Fixed

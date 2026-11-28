@@ -13,20 +13,36 @@ Du findest ihn unter Medien → „Externe Dateien hinzufügen“ als zweite Kac
 5. **Verbindung prüfen und Optionen wählen:** Der Schnellstart prüft die Verbindung mit deinen Angaben. Klappt das nicht, siehst du den Grund und gehst zurück, um die Angaben zu korrigieren. Klappt es, wählst du die Optionen des Ziels. Sie sind passend vorbelegt.
 6. **Einrichten:** Der Schnellstart legt die externe Quelle an, setzt die Einstellungen und zeigt dir das Ergebnis jedes Schritts.
 
+Jeder Schritt zeigt direkt über seinen Buttons einen Hinweis auf das [Supportforum](https://wordpress.org/support/plugin/external-files-in-media-library/).
+
 ## Ziele
+
+Die Ziele erscheinen in dieser Reihenfolge:
 
 | Ziel | Dienst | Was der Schnellstart einrichtet |
 |---|---|---|
-| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Dateien privat speichern“ und der Export der Dateien, die schon in deiner Mediathek liegen, Verbindungstest |
-| Geschützte Downloads | alle Dienste mit privaten Dateien | wie beim Auslagern, „Dateien privat speichern“ ist vorgewählt, auf Wunsch die Downloads von WooCommerce |
 | Externe Dateien einbinden und synchron halten | alle Dienste mit Synchronisierung | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
 | Lokale Dateien importieren | Lokales Verzeichnis deines Hostings | Import des Verzeichnisses, auf Wunsch als echte Dateien in die Mediathek kopiert |
 | Daten von FTP synchronisieren | FTP, FTPS und SFTP | Synchronisierung aktivieren, Intervall, erste Synchronisierung |
+| Mediathek auslagern | alle Dienste mit Export | Export aktivieren, externe Quelle als Hauptexport, Ordner nach Jahr und Monat, optional „Dateien privat speichern“ und der Export der Dateien, die schon in deiner Mediathek liegen, Verbindungstest |
+| Geschützte Downloads | alle Dienste mit privaten Dateien | wie beim Auslagern, „Dateien privat speichern“ ist vorgewählt, auf Wunsch die Downloads von WooCommerce |
+| Zentrale Mediathek für dein Netzwerk | keiner | eine Website als zentrale Mediathek für alle anderen Websites der Multisite, siehe unten. Erscheint nur in einer Multisite mit mindestens zwei Websites, für Benutzer, die das Netzwerk verwalten dürfen, und solange das Netzwerk keine zentrale Mediathek nutzt. |
 | Von einem anderen Offload-Plugin umsteigen | der Dienst des gefundenen Buckets | Dateien des anderen Plugins ohne erneuten Upload übernehmen, siehe [Umzug](migration_de.md). Erscheint nur, wenn solche Dateien gefunden werden. |
 
 Große Verzeichnisse werden wie gewohnt im Hintergrund importiert bzw. synchronisiert, den Fortschritt siehst du in der Admin-Leiste.
 
 Beim Auslagern und bei geschützten Downloads bietet der Schnellstart an, auch die Dateien zu exportieren, die schon in deiner Mediathek liegen. Die Option ist standardmäßig aus und nennt die Anzahl dieser Dateien. Wählst du sie, werden die Dateien am Ende des Schnellstarts nacheinander im Hintergrund exportiert, den Fortschritt siehst du in der Admin-Leiste. Sonst werden nur neue Dateien exportiert: Die vorhandenen Dateien kannst du später über Einstellungen → „Export“ → „Vorhandene Dateien exportieren“ exportieren oder in der Listenansicht der Mediathek mit der Massenaktion „Zu externer Quelle exportieren“.
+
+## Zentrale Mediathek für dein Netzwerk
+
+In einer Multisite richtet dieses Ziel eine [zentrale Mediathek](multisite_de.md) mit den minimal nötigen Angaben ein. Es braucht keinen Dienst und keine Zugangsdaten und hat daher nach dem Ziel nur einen Schritt:
+
+* **Website mit der zentralen Mediathek:** Die Hauptwebsite ist vorgewählt. Alle anderen Websites des Netzwerks nutzen ihre Dateien, ihre neuen Uploads werden dort gespeichert.
+* **Dateien übertragen, die die anderen Websites schon haben** (standardmäßig aus): Ihre lokalen Dateien werden im Hintergrund in die zentrale Mediathek übertragen. Sonst bleiben sie lokale Dateien und können später in der Übersicht des Netzwerks übertragen werden.
+* **Optionen dieses Plugins in den anderen Websites ausblenden** (standardmäßig aus).
+* **Bestätigung**, dass du eine Sicherung deines Netzwerks erstellt hast.
+
+Der Schnellstart legt eine Gruppe mit allen Websites an, wie es die Netzwerkverwaltung tut. Alle weiteren Einstellungen (weitere Gruppen, Rechte zum Löschen, Verfügbarkeit neuer Uploads, …) behalten ihre Standardwerte und lassen sich jederzeit in der Netzwerkverwaltung unter Einstellungen → „External files“ ändern. Am Ende leitet der Schnellstart zur Übersicht des Netzwerks weiter. Nutzt das Netzwerk bereits eine zentrale Mediathek, wird das Ziel nicht angeboten und der erste Schritt verweist auf die Netzwerkverwaltung.
 
 ## Zugangsdaten
 
@@ -36,7 +52,7 @@ Die Werte, die du im Schnellstart eingibst, werden nur für die Dauer der Einric
 
 Der Schnellstart nutzt die Bibliothek [easy-setup-for-wordpress](https://github.com/threadi/easy-setup-for-wordpress) ab Version 1.6.0. Mit diesen Hooks passt du sie an:
 
-* `efml_setup_goals`: Ziele ändern oder ergänzen. Jedes Ziel hat die Schlüssel `label`, `description`, `icon`, `features` (Funktionen, die ein Dienst unterstützen muss, z. B. `export`, `private`, `sync`), `service` (fester Dienst oder leer), `options`, `defaults` und `action` (`export`, `sync`, `import` oder leer).
+* `efml_setup_goals`: Ziele ändern oder ergänzen. Jedes Ziel hat die Schlüssel `label`, `description`, `icon`, `features` (Funktionen, die ein Dienst unterstützen muss, z. B. `export`, `private`, `sync`), `service` (fester Dienst oder leer), `options`, `defaults` und `action` (`export`, `sync`, `import`, `network` oder leer).
 * `efml_setup_option_definitions`: Optionen ändern oder ergänzen, die die Ziele anbieten können.
 * `efml_setup_option_available`: Festlegen, ob eine Option für einen Dienst angeboten wird.
 * `efml_setup_apply_option`: Den gewählten Wert einer eigenen Option speichern.

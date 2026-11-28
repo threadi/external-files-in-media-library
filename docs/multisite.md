@@ -6,6 +6,8 @@ In a multisite you can use the media library of one website as central media lib
 
 Network administration → Settings → "External files". Create a backup of everything beforehand.
 
+For a first central media library for all websites you could also use the [quickstart](setup.md) (goal "Central media library for your network"). It asks only for the website with the central media library and creates one group with all other websites.
+
 * **Groups:** each group has a name and a website with its central media library. Add a group in the last row of the table.
 * **Websites:** choose the group of each website. Each website belongs to one group at most. A central media library belongs to its own group only.
 * **New websites join:** the first group (default), no group or a chosen group.

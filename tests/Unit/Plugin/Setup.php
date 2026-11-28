@@ -171,7 +171,9 @@ class Setup extends externalFilesTests {
 	 */
 	public function test_goals(): void {
 		$goals = \ExternalFilesInMediaLibrary\Plugin\Setup::get_instance()->get_goals();
-		$this->assertEquals( array( 'offload', 'downloads', 'sync', 'local', 'ftp' ), array_keys( $goals ) );
+		// in the order, in which most users use the plugin; without the goal for the network outside a multisite.
+		$this->assertEquals( array( 'sync', 'local', 'ftp', 'offload', 'downloads' ), array_keys( $goals ) );
+		$this->assertFalse( \ExternalFilesInMediaLibrary\Plugin\Setup::get_instance()->is_network_goal_available() );
 		$this->assertEquals( 'local', $goals['local']['service'] );
 		$this->assertEquals( array( 'export', 'private' ), $goals['downloads']['features'] );
 
@@ -231,6 +233,23 @@ class Setup extends externalFilesTests {
 		$this->assertContains( 'local', $services );
 		$this->assertContains( 'ftp', $services );
 		$this->assertNotContains( 'youtube', $services );
+	}
+
+	/**
+	 * Test the hint for the support forum: the last field of each step, directly above the buttons.
+	 *
+	 * @return void
+	 */
+	public function test_support_hint_in_each_step(): void {
+		foreach ( array( '', 'local', 'offload' ) as $goal ) {
+			$this->set_value( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_GOAL, $goal );
+			foreach ( $this->get_steps() as $number => $fields ) {
+				$names = array_keys( $fields );
+				$this->assertEquals( \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SUPPORT, end( $names ), 'Step ' . $number . ' of goal "' . $goal . '"' );
+				$this->assertEquals( 'Text', $fields[ \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SUPPORT ]['type'] );
+				$this->assertStringContainsString( \ExternalFilesInMediaLibrary\Plugin\Helper::get_plugin_support_url(), $fields[ \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SUPPORT ]['text'] );
+			}
+		}
 	}
 
 	/**
@@ -427,7 +446,7 @@ class Setup extends externalFilesTests {
 		$steps = $this->get_steps();
 
 		// the step explains, that nothing must be entered, directly below the headline and before the help.
-		$this->assertEquals( array( 'chosen', 'help', 'guide' ), array_keys( $steps[3] ) );
+		$this->assertEquals( array( 'chosen', 'help', 'guide', \ExternalFilesInMediaLibrary\Plugin\Setup::FIELD_SUPPORT ), array_keys( $steps[3] ) );
 		$this->assertStringContainsString( 'already connected', $steps[3]['help']['text'] );
 		$this->assertStringContainsString( 'efml-setup-check-success', $steps[3]['help']['text'] );
 

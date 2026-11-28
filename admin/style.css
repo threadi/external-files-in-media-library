@@ -852,6 +852,12 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 	.efml-setup-check-failed .dashicons, .efml-setup-result-failed > .dashicons {
 		color: #d63638;
 	}
+	.efml-setup-support {
+		margin: 1.5em 0 1em;
+		.dashicons {
+			vertical-align: text-bottom;
+		}
+	}
 	.efml-setup-result {
 		list-style: none;
 		margin: 0 0 1em;
