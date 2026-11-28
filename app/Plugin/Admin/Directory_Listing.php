@@ -30,6 +30,7 @@ use ExternalFilesInMediaLibrary\Services\Service_Plugin_Base;
 use ExternalFilesInMediaLibrary\Services\Services;
 use ExternalFilesInMediaLibrary\Services\WebDav;
 use Throwable;
+use WP_Error;
 use WP_REST_Request;
 use WP_Screen;
 use WP_Term;
@@ -987,6 +988,110 @@ class Directory_Listing {
 	 */
 	public function is_term_allowed_in_listing( bool $allowed, int $term_id ): bool {
 		return $allowed && $this->is_source_allowed_for_current_user( $term_id );
+	}
+
+	/**
+	 * Return the service of the given external source, if the actual user could use it in the directory listing.
+	 *
+	 * Checks the same as the page of the directory listing: the external source must be allowed for the user, its
+	 * service must exist and be allowed for the user and its credentials must not be blocked by constants.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return Directory_Listing_Base|WP_Error
+	 */
+	public function check_source_for_listing( int $term_id ): Directory_Listing_Base|WP_Error {
+		// bail if the actual user is not allowed to use this external source.
+		if ( ! $this->is_source_allowed_for_current_user( $term_id ) ) {
+			return new WP_Error( 'efml_source_not_allowed', __( 'Access not allowed!', 'external-files-in-media-library' ) . ' ' . __( 'This entry has been saved by another user.', 'external-files-in-media-library' ) );
+		}
+
+		// get its service.
+		$listing_obj = Services::get_instance()->get_service_by_name( (string) get_term_meta( $term_id, 'type', true ) );
+
+		// bail if the service does not exist or is a plugin, which is not active.
+		if ( ! $listing_obj instanceof Directory_Listing_Base || ( method_exists( $listing_obj, 'is_plugin' ) && $listing_obj->is_plugin() ) ) {
+			return new WP_Error( 'efml_source_without_service', __( 'Requested service for external files could not be found!', 'external-files-in-media-library' ) );
+		}
+
+		// bail if the user is not allowed to use the service.
+		if ( ! current_user_can( 'efml_cap_' . $listing_obj->get_name() ) ) {
+			return new WP_Error( 'efml_service_not_allowed', __( 'Missing permission to use this service for external files! Contact your administrator for clarification.', 'external-files-in-media-library' ) );
+		}
+
+		// bail if the credentials of its service are defined via constants for another server.
+		if ( Services::get_instance()->is_source_blocked_by_constants( $term_id ) ) {
+			return new WP_Error( 'efml_source_blocked_by_constants', Services::get_instance()->get_blocked_source_hint( $term_id ) );
+		}
+
+		// return the service.
+		return $listing_obj;
+	}
+
+	/**
+	 * Return the card of a saved external source: the logo and the name of its service, its name and its path.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param WP_Term                                $term        The external source.
+	 * @param Directory_Listing_Base                 $listing_obj Its service.
+	 * @param string                                 $url         The URL the card links to.
+	 * @param array{target?: string, class?: string} $args        Further settings for the card (see Helper::get_card()).
+	 *
+	 * @return string
+	 */
+	public function get_source_card( WP_Term $term, Directory_Listing_Base $listing_obj, string $url, array $args = array() ): string {
+		// show the path, if the name of the external source differs from it.
+		$description = wp_strip_all_tags( $listing_obj->get_label() );
+		$path        = get_term_meta( $term->term_id, 'path', true );
+		if ( is_string( $path ) && '' !== $path && $path !== $term->name ) {
+			$description .= ' · ' . $path;
+		}
+
+		// return the card.
+		return Helper::get_card( $url, Helper::get_service_icon( $listing_obj->get_name() ), $term->name, $description, $args );
+	}
+
+	/**
+	 * Return the configuration of the directory listing for the given external source and its service, if the actual
+	 * user could use it.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param int $term_id The ID of the external source.
+	 *
+	 * @return array{listing: Directory_Listing_Base, config: array<string,mixed>}|WP_Error
+	 */
+	public function get_listing_config_for_source( int $term_id ): array|WP_Error {
+		// check the external source.
+		$listing_obj = $this->check_source_for_listing( $term_id );
+
+		// bail if it could not be used.
+		if ( $listing_obj instanceof WP_Error ) {
+			return $listing_obj;
+		}
+
+		// get its path.
+		$url = get_term_meta( $term_id, 'path', true );
+
+		// bail if it is not usable.
+		if ( ! is_string( $url ) || '' === $url ) {
+			return new WP_Error( 'efml_source_without_path', __( 'URL of saved external source could not be loaded.', 'external-files-in-media-library' ) );
+		}
+
+		// create the configuration.
+		$config              = $listing_obj->get_config();
+		$config['nonce']     = wp_create_nonce( $this->get_nonce_name() );
+		$config['term']      = $term_id;
+		$config['directory'] = $url;
+
+		// return the service and the configuration.
+		return array(
+			'listing' => $listing_obj,
+			'config'  => $config,
+		);
 	}
 
 	/**

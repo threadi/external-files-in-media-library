@@ -126,7 +126,7 @@ class Forms {
 		wp_enqueue_style(
 			'eml-admin',
 			Helper::get_plugin_url() . 'admin/style.css',
-			array(),
+			array( Helper::register_components_style() ),
 			Helper::get_file_version( Helper::get_plugin_dir() . 'admin/style.css' ),
 		);
 

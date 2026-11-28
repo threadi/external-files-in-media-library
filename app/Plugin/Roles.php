@@ -248,9 +248,10 @@ class Roles {
 				$role_obj->remove_cap( 'efml_cap_' . $service->get_name() );
 			}
 
-			// remove the caps for each tool.
+			// remove the caps for each tool (they are saved as "efml_cap_tools_<name>", see save_capabilities_for_tools()).
 			foreach ( Tools::get_instance()->get_tools_as_objects() as $tools_obj ) {
 				$role_obj->remove_cap( 'efml_cap_' . $tools_obj->get_name() );
+				$role_obj->remove_cap( 'efml_cap_tools_' . $tools_obj->get_name() );
 			}
 
 			// compatibility with < 5.0.0.

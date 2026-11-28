@@ -110,6 +110,7 @@ class Tools {
 		$list = array(
 			'ExternalFilesInMediaLibrary\ExternalFiles\Export',
 			'ExternalFilesInMediaLibrary\ExternalFiles\Synchronization',
+			'ExternalFilesInMediaLibrary\ExternalFiles\Media_Dialog',
 		);
 
 		/**

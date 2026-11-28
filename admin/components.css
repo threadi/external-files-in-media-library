@@ -1,0 +1,172 @@
+/**
+ * Shared components of this plugin: the logos of the services and the cards for objects like external sources.
+ *
+ * Loaded on the pages of this plugin (as dependency of its admin styles) and in the media dialog of the editors.
+ *
+ * @package external-files-in-media-library
+ */
+
+/* the logos of the services: the element with the class "efml-<name of the service>" gets them on its child */
+.efml-local > *:before, .efml-file > *:before, span.efml-service-icon.efml-local:before, span.efml-service-icon.efml-file:before {
+	content: "\f163";
+}
+
+.efml-multisite > *:before, span.efml-service-icon.efml-multisite:before {
+	content: "\f541";
+}
+
+.efml-import > *:before, .efml-http > *:before, span.efml-service-icon.efml-import:before, span.efml-service-icon.efml-http:before {
+	content: "\f317";
+}
+
+.efml-ftp > *:before, span.efml-service-icon.efml-ftp:before {
+	content: "\f504";
+}
+
+.efml-youtube > *:before, span.efml-service-icon.efml-youtube:before {
+	content: "\f19b";
+}
+
+.efml-directory > *:before, span.efml-service-icon.efml-directory:before {
+	content: "\f501";
+}
+
+.efml-zip > *:before, span.efml-service-icon.efml-zip:before {
+	content: "\f498";
+}
+
+.efml-google-drive > *:not(.button):before, span.efml-service-icon.efml-google-drive:before {
+	content: "\f18b";
+}
+
+.efml-google-cloud-storage > *:not(.button):before, span.efml-service-icon.efml-google-cloud-storage:before {
+	content: "\f18b";
+}
+
+.efml-hello-dolly > *:before, span.efml-service-icon.efml-hello-dolly:before {
+	content: "\f118";
+}
+
+.efml-rest > *:before, span.efml-service-icon.efml-rest:before {
+	content: "\f120";
+}
+
+.efml-csv > *:before, span.efml-service-icon.efml-csv:before {
+	content: "\f495";
+}
+
+.efml-xml > *:before, span.efml-service-icon.efml-xml:before {
+	content: "\f475";
+}
+
+.efml-dropbox > *:before, span.efml-service-icon.efml-dropbox:before {
+	background-image: url(../gfx/dropbox_icon.svg);
+	background-size: contain;
+	background-repeat: no-repeat;
+	content: "";
+	width: 16px;
+	height: 16px;
+}
+
+.efml-aws-s3 > *:not(.button):before, span.efml-service-icon.efml-aws-s3:before {
+	content: "\f162";
+}
+
+.efml-webdav > *:before, span.efml-service-icon.efml-webdav:before {
+	background-image: url(../gfx/webdav.svg);
+	background-repeat: no-repeat;
+	background-size: contain;
+	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
+	content: '';
+	height: 16px;
+	width: 16px;
+}
+
+/**
+ * The logo of a service as icon in its own size: <span class="efml-service-icon efml-<name>"></span>.
+ *
+ * It shows the logos of the rules above and the logos of extensions, which use the rule ".efml-<name>:before"
+ * (their size is replaced by the size of the icon). Services without logo show a link. The size could be changed
+ * with the variable --efml-service-icon-size.
+ */
+span.efml-service-icon {
+	display: inline-block;
+	flex: 0 0 auto;
+	height: var(--efml-service-icon-size, 16px);
+	line-height: 1;
+	vertical-align: middle;
+	width: var(--efml-service-icon-size, 16px);
+}
+/* the class twice: this size wins against the sizes of the logos above and of extensions */
+span.efml-service-icon.efml-service-icon:before {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	display: block;
+	font-family: dashicons, sans-serif;
+	font-size: var(--efml-service-icon-size, 16px);
+	height: var(--efml-service-icon-size, 16px);
+	line-height: 1;
+	margin: 0;
+	text-align: center;
+	width: var(--efml-service-icon-size, 16px);
+}
+:where(span.efml-service-icon):before {
+	content: "\f103";
+}
+span.efml-service-icon.efml-service-icon-add:before {
+	content: "\f543";
+}
+
+/**
+ * Cards for objects like external sources: icon, label and description.
+ */
+.efml-cards {
+	display: grid;
+	gap: 12px;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	margin: 8px 0 16px;
+	padding: 0;
+}
+.efml-card {
+	align-items: flex-start;
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	box-sizing: border-box;
+	color: inherit;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	height: 100%;
+	padding: 16px;
+	text-decoration: none;
+	--efml-service-icon-size: 32px;
+	&:hover {
+		border-color: #949494;
+		color: inherit;
+	}
+	&:focus {
+		box-shadow: none;
+	}
+	&:focus-visible {
+		outline: 2px solid #3858e9;
+		outline-offset: 1px;
+	}
+	.efml-card-label {
+		color: #1d2327;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 1.3;
+		overflow-wrap: anywhere;
+	}
+	.efml-card-description {
+		color: #757575;
+		font-size: 12px;
+		line-height: 1.4;
+		overflow-wrap: anywhere;
+	}
+	&.efml-card-add {
+		border-style: dashed;
+	}
+}

@@ -12,6 +12,7 @@ Add files via their URLs or choose a service, e.g. FTP, Dropbox, YouTube, anothe
 
 * In the backend: Media → "Add external files" or "Add New Media File"
 * Documentation: [Quick start](quickstart.md), [protocols](protocols.md), [import of single files and directories](import/directories.md)
+* In the media dialog of the editors: the tabs "Insert from URL" and "From external source", see [media dialog](media-dialog.md)
 
 ### … synchronize directories automatically
 
@@ -92,6 +93,7 @@ Choose a website of the network as central media library, also several ones in g
 * **Choose a service:** Media → "Add external files" shows all services as tiles. Icons show which features each service offers (synchronization, export, private files, access data via constants). Use the filter "Feature" above the tiles to show only services with a specific feature. Services from extensions, which are not installed, are marked as "Extension" and could be installed there. Why some services need an extension is explained in [extensions](extensions.md).
 * **Command palette:** Press `Ctrl + K` (`Cmd + K` on macOS) on any page of the backend and enter e.g. "FTP", "S3", "Export" or the name of one of your external sources. Services are also found by other names, e.g. "Nextcloud" for WebDAV or "Hetzner" for the S3 extension. The command palette is available on all pages of the backend since WordPress 6.9. It also finds single settings, e.g. "offload" or "timeout", and opens them highlighted.
 * **Search in the settings:** The field at the top right of the settings filters the settings of the actual tab while typing. The tabs show the number of their matches, a list below the settings shows the matches in other tabs and pages of this plugin. Settings, which are only shown if another setting is enabled, are listed with a link to this setting.
+* **Media dialog:** The filter for external files and a mark on external, exported and private files are also in the dialog to choose media files, see [media dialog](media-dialog.md).
 * **Help:** The tab "Help" at the top right of the pages of this plugin starts with "What is possible?".
 
 ## Structure of the settings

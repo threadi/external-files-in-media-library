@@ -1072,6 +1072,114 @@ class Helper {
 	}
 
 	/**
+	 * Register the styles of the shared components (logos of the services, cards) and return their handle.
+	 *
+	 * Use the handle as dependency of other styles or enqueue it.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return string
+	 */
+	public static function register_components_style(): string {
+		// register them once.
+		if ( ! wp_style_is( 'efml-components', 'registered' ) ) {
+			wp_register_style(
+				'efml-components',
+				self::get_plugin_url() . 'admin/components.css',
+				array(),
+				self::get_file_version( self::get_plugin_dir() . 'admin/components.css' )
+			);
+		}
+
+		// return the handle.
+		return 'efml-components';
+	}
+
+	/**
+	 * Return the allowed HTML for cards (see get_card()): the HTML of icons and the link of the card.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return array<string,array<string,bool>>
+	 */
+	public static function get_allowed_html_for_cards(): array {
+		return array_merge(
+			self::get_allowed_html_for_icons(),
+			array(
+				'a' => array(
+					'href'   => true,
+					'class'  => true,
+					'target' => true,
+					'rel'    => true,
+				),
+			)
+		);
+	}
+
+	/**
+	 * Return the HTML of a card for an object, e.g. an external source (see admin/components.css).
+	 *
+	 * Show several cards in an element with the class "efml-cards".
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param string                                 $url         The URL the card links to.
+	 * @param string                                 $icon        The HTML of its icon (e.g. from get_service_icon()).
+	 * @param string                                 $label       Its label.
+	 * @param string                                 $description Its description (text).
+	 * @param array{target?: string, class?: string} $args Further settings: the target of the link and further classes.
+	 *
+	 * @return string
+	 */
+	public static function get_card( string $url, string $icon, string $label, string $description = '', array $args = array() ): string {
+		// collect the attributes of the link.
+		$attributes = ' href="' . esc_url( $url ) . '" class="efml-card' . ( ! empty( $args['class'] ) ? ' ' . esc_attr( $args['class'] ) : '' ) . '"';
+		if ( ! empty( $args['target'] ) ) {
+			$attributes .= ' target="' . esc_attr( $args['target'] ) . '" rel="noopener noreferrer"';
+		}
+
+		// return the card.
+		return '<a' . $attributes . '>' . $icon . '<span class="efml-card-label">' . esc_html( $label ) . '</span>' . ( '' !== $description ? '<span class="efml-card-description">' . esc_html( $description ) . '</span>' : '' ) . '</a>';
+	}
+
+	/**
+	 * Enqueue the styles of the shared components outside the pages of this plugin (e.g. in the media dialog) and let
+	 * extensions add the styles with the logos of their services.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return void
+	 */
+	public static function enqueue_components_style(): void {
+		// enqueue our styles.
+		wp_enqueue_style( self::register_components_style() );
+
+		/**
+		 * Enqueue the styles with the logos of the services of an extension, where this plugin shows them outside
+		 * of its pages: in the media dialog of the editors and in its tab "From external source".
+		 *
+		 * The logos use the rule ".efml-<name of the service>:before" (or ".efml-<name> > *:before"), their size is
+		 * set by this plugin. Use "efml-components" as dependency of the styles.
+		 *
+		 * @since 6.1.0 Available since 6.1.0.
+		 */
+		do_action( 'efml_enqueue_service_logos' );
+	}
+
+	/**
+	 * Return the HTML of the logo of a service as icon (see admin/components.css).
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @param string $name The name of the service (or of the protocol).
+	 *
+	 * @return string
+	 */
+	public static function get_service_icon( string $name ): string {
+		return '<span class="efml-service-icon efml-' . esc_attr( sanitize_html_class( $name ) ) . '" aria-hidden="true"></span>';
+	}
+
+	/**
 	 * Return the version of the given file.
 	 *
 	 * With WP_DEBUG or plugin-debug enabled its @filemtime().

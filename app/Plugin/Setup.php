@@ -482,7 +482,7 @@ class Setup {
 		return array(
 			'type' => 'Text',
 			/* translators: %1$s will be replaced by the URL of the support forum on wordpress.org. */
-			'text' => '<p class="efml-setup-support"><span class="dashicons dashicons-sos" aria-hidden="true"></span> <strong>' . __( 'Need help?', 'external-files-in-media-library' ) . '</strong> ' . sprintf( __( 'Feel free to ask in the <a href="%1$s" target="_blank" rel="noopener noreferrer">support forum</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_plugin_support_url() ) ) . '</p>',
+			'text' => '<p class="efml-setup-support"><span class="dashicons dashicons-sos" aria-hidden="true"></span> ' . sprintf( __( 'Need help? Feel free to ask in the <a href="%1$s" target="_blank" rel="noopener noreferrer">support forum</a>.', 'external-files-in-media-library' ), esc_url( Helper::get_plugin_support_url() ) ) . '</p>',
 		);
 	}
 

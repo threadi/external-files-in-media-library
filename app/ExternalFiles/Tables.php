@@ -126,11 +126,7 @@ class Tables {
 	 */
 	public function get_filter_options(): array {
 		// define possible options.
-		$options = array(
-			'none'         => __( 'All files', 'external-files-in-media-library' ),
-			'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
-			'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
-		);
+		$options = $this->get_base_filter_options();
 
 		// add the options for the state of the export, if it is enabled or files with these states exist.
 		if ( Export::get_instance()->is_enabled() || $this->has_files_with_export_state() ) {
@@ -145,6 +141,21 @@ class Tables {
 		 * @param array<string,string> $options The list of possible options.
 		 */
 		return apply_filters( 'efml_filter_options', $options );
+	}
+
+	/**
+	 * Return the options of the filter for external files, which are always available.
+	 *
+	 * They need no query, so they could be shown before the further options are loaded (e.g. in the media dialog).
+	 *
+	 * @return array<string,string>
+	 */
+	public function get_base_filter_options(): array {
+		return array(
+			'none'         => __( 'All files', 'external-files-in-media-library' ),
+			'external'     => __( 'only external URLs', 'external-files-in-media-library' ),
+			'non-external' => __( 'no external URLs', 'external-files-in-media-library' ),
+		);
 	}
 
 	/**

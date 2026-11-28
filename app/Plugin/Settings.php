@@ -191,6 +191,7 @@ class Settings {
 			if ( $missing === $value ) {
 				if ( $setting->is_default_set() ) {
 					add_option( $setting->get_name(), $setting->get_default(), '', true );
+					$this->set_tool_capabilities( $setting->get_name(), $setting->get_default() );
 				}
 				continue;
 			}
@@ -203,6 +204,28 @@ class Settings {
 
 		// save the list of checked settings.
 		update_option( self::DEFAULTS_OPTION, $checked, true );
+	}
+
+	/**
+	 * Give the roles the capability of a tool, whose setting with its roles has been saved with its default value.
+	 *
+	 * The save callback of these settings sets the capabilities, but add_option() does not use it. Without this, the
+	 * settings would show the roles as chosen, but they would not have the capability (e.g. for a new tool, if no
+	 * update routine runs as in development mode).
+	 *
+	 * @param string $option The name of the setting.
+	 * @param mixed  $roles  The roles.
+	 *
+	 * @return void
+	 */
+	private function set_tool_capabilities( string $option, mixed $roles ): void {
+		// bail if this is not the setting with the roles of a tool.
+		if ( ! is_array( $roles ) || 1 !== preg_match( '/^eml_tools_settings_.+_allowed_roles$/', $option ) ) {
+			return;
+		}
+
+		// set the capability for the roles.
+		Roles::get_instance()->save_capabilities_for_tools( array_values( array_map( 'strval', $roles ) ), array(), $option );
 	}
 
 	/**

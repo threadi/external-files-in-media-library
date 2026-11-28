@@ -38,6 +38,8 @@
 - Added option to take over the folder structure of subdirectories in FileBird, CatFolders, Folders, Folderly, Media Library Organizer, Media Library Assistant, Enhanced Media Library and Real Media Library (with subfolders)
 - Added goal "Central media library for your network" to the quickstart in multisites
 - Added hint for the support forum in each step of the quickstart
+- Added shared components for the logos of the services and cards of external sources, extensions add their logos via the action efml_enqueue_service_logos
+- Added the functions of this plugin to the media dialog: filter for external files, mark with the logo of the service on external files, tab to insert files from URLs and tab with the external sources as cards (permission per role)
 - Added new hooks and PHP Unit tests
 
 ### Changed
@@ -51,6 +53,8 @@
 
 ### Fixed
 
+- Fixed the uninstallation, which kept the capabilities of the tools (export, synchronization) on the roles
+- Fixed missing capabilities of tools, whose permission setting has been saved with its default value without update routine (e.g. in development mode)
 - Fixed saving of the chosen folder of the plugin Folders in the configuration of the synchronization
 - Fixed assignment of synchronized files to the chosen categories of Folderly, iFolders, Media Library Organizer, Media Library Assistant and Enhanced Media Library (only one or a wrong category had been used)
 - Fixed saving of the categories of Enhanced Media Library in the configuration of the synchronization

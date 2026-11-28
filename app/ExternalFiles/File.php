@@ -512,6 +512,17 @@ class File {
 	}
 
 	/**
+	 * Return whether this file has been exported from the media library to an external source.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return bool
+	 */
+	public function is_exported(): bool {
+		return absint( get_post_meta( $this->get_id(), 'eml_exported_file', true ) ) > 0;
+	}
+
+	/**
 	 * Set whether this file is saved privately on its external source.
 	 *
 	 * @since 6.0.0 Available since 6.0.0.
@@ -1495,6 +1506,20 @@ class File {
 
 		// return the resulting service name.
 		return $service_name;
+	}
+
+	/**
+	 * Return the saved name of the used service, without detecting it via the protocol handler.
+	 *
+	 * Reads only the post meta, e.g. for lists of many files.
+	 *
+	 * @since 6.1.0 Available since 6.1.0.
+	 *
+	 * @return string
+	 */
+	public function get_saved_service_name(): string {
+		$service_name = get_post_meta( $this->get_id(), 'eml_service', true );
+		return is_string( $service_name ) ? $service_name : '';
 	}
 
 	/**

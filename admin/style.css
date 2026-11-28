@@ -413,81 +413,6 @@ body.post-type-attachment .external_files {
 	}
 }
 
-.efml-local > *:before, .efml-file > *:before {
-	content: "\f163";
-}
-
-.efml-multisite > *:before {
-	content: "\f541";
-}
-
-.efml-import > *:before, .efml-http > *:before {
-	content: "\f317";
-}
-
-.efml-ftp > *:before {
-	content: "\f504";
-}
-
-.efml-youtube > *:before {
-	content: "\f19b";
-}
-
-.efml-directory > *:before {
-	content: "\f501";
-}
-
-.efml-zip > *:before {
-	content: "\f498";
-}
-
-.efml-google-drive > *:not(.button):before {
-	content: "\f18b";
-}
-
-.efml-google-cloud-storage > *:not(.button):before {
-	content: "\f18b";
-}
-
-.efml-hello-dolly > *:before {
-	content: "\f118";
-}
-
-.efml-rest > *:before {
-	content: "\f120";
-}
-
-.efml-csv > *:before {
-	content: "\f495";
-}
-
-.efml-xml > *:before {
-	content: "\f475";
-}
-
-.efml-dropbox > *:before {
-	background-image: url(../gfx/dropbox_icon.svg);
-	background-size: contain;
-	background-repeat: no-repeat;
-	content: "";
-	width: 16px;
-	height: 16px;
-}
-
-.efml-aws-s3 > *:not(.button):before {
-	content: "\f162";
-}
-
-.efml-webdav > *:before {
-	background-image: url(../gfx/webdav.svg);
-	background-repeat: no-repeat;
-	background-size: contain;
-	filter: brightness(0) saturate(100%) invert(38%) sepia(50%) saturate(1478%) hue-rotate(176deg) brightness(83%) contrast(81%);
-	content: '';
-	height: 16px;
-	width: 16px;
-}
-
 body.media_page_efml_local_directories, body.plugins_page_efml_service_plugins {
 	.efml-dropbox, .efml-webdav {
 		&>*:before {
@@ -853,7 +778,10 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 		color: #d63638;
 	}
 	.efml-setup-support {
+		border-top: 1px solid #f0f0f1;
+		color: #646970;
 		margin: 1.5em 0 1em;
+		padding-top: 1em;
 		.dashicons {
 			vertical-align: text-bottom;
 		}
@@ -925,4 +853,22 @@ ul#efml-directory-listing-services li.efml-setup-tile > a:before {
 }
 .efml-export-unusable .dashicons {
 	color: #d63638;
+}
+
+/* page with the external sources in the media dialog (iframe or window) */
+.efml-media-dialog-frame {
+	padding: 16px;
+	> :first-child, > h2:first-of-type {
+		margin-top: 0;
+	}
+	.efml-media-dialog-title {
+		align-items: center;
+		display: flex;
+		gap: 8px;
+		--efml-service-icon-size: 24px;
+	}
+	#efml-media-dialog-status {
+		bottom: 0;
+		position: sticky;
+	}
 }

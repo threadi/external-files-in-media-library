@@ -12,6 +12,7 @@ Füge Dateien über ihre URL hinzu oder wähle einen Dienst, z. B. FTP, Dropbox,
 
 * Im Backend: Medien → „Externe Dateien hinzufügen“ oder „Neue Mediendatei hinzufügen“
 * Dokumentation: [Schnellstart](quickstart_de.md), [Protokolle](protocols_de.md), [Import einzelner Dateien und Verzeichnisse](import/directories_de.md)
+* Im Medien-Dialog der Editoren: die Reiter „Von URL einfügen“ und „Aus externer Quelle“, siehe [Medien-Dialog](media-dialog_de.md)
 
 ### … Verzeichnisse automatisch abgleichen
 
@@ -92,6 +93,7 @@ Wähle eine Website des Netzwerks als zentrale Mediathek, auch mehrere in Gruppe
 * **Dienst wählen:** Medien → „Externe Dateien hinzufügen“ zeigt alle Dienste als Kacheln. Icons zeigen, welche Funktionen ein Dienst bietet (Synchronisierung, Export, private Dateien, Zugangsdaten per Konstante). Mit dem Filter „Funktion“ über den Kacheln zeigst du nur Dienste mit einer bestimmten Funktion. Dienste aus Erweiterungen, die nicht installiert sind, sind als „Erweiterung“ markiert und lassen sich dort installieren. Warum manche Dienste eine Erweiterung brauchen, steht unter [Erweiterungen](extensions_de.md).
 * **Befehlspalette:** Drücke auf jeder Seite des Backends `Strg + K` (`Cmd + K` unter macOS) und gib z. B. „FTP“, „S3“, „Export“ oder den Namen einer deiner externen Quellen ein. Dienste werden auch unter anderen Namen gefunden, z. B. „Nextcloud“ für WebDAV oder „Hetzner“ für die S3-Erweiterung. Die Befehlspalette gibt es seit WordPress 6.9 auf allen Seiten des Backends. Sie findet auch einzelne Einstellungen, z. B. „Offload“ oder „Timeout“, und öffnet sie hervorgehoben.
 * **Suche in den Einstellungen:** Das Feld oben rechts in den Einstellungen filtert beim Tippen die Einstellungen des aktuellen Reiters. Die Reiter zeigen die Zahl ihrer Treffer, eine Liste unter den Einstellungen die Treffer in anderen Reitern und Seiten des Plugins. Einstellungen, die erst sichtbar sind, wenn eine andere Einstellung aktiviert ist, stehen mit einem Link auf diese Einstellung in der Liste.
+* **Medien-Dialog:** Den Filter für externe Dateien und eine Markierung an externen, exportierten und privaten Dateien gibt es auch im Dialog zum Auswählen von Mediendateien, siehe [Medien-Dialog](media-dialog_de.md).
 * **Hilfe:** Der Reiter „Hilfe“ oben rechts auf den Seiten dieses Plugins beginnt mit „Was ist möglich?“.
 
 ## Aufbau der Einstellungen

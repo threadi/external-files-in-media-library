@@ -49,6 +49,7 @@
                 <element value="efml_cap_tools_zip"/>
                 <element value="efml_sync"/>
                 <element value="efml_cap_tools_real_import"/>
+                <element value="efml_cap_tools_media_dialog"/>
             </property>
         </properties>
     </rule>

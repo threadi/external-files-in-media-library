@@ -135,11 +135,13 @@ class SetupMultisite extends externalFilesTests {
 			delete_site_option( 'efml_hide_options' );
 			delete_site_option( Media_Library::OPTION_GROUPS );
 			Media_Library::get_instance()->reset_sites();
-		}
-		if ( is_null( $this->request_uri ) ) {
-			unset( $_SERVER['REQUEST_URI'] );
-		} else {
-			$_SERVER['REQUEST_URI'] = $this->request_uri;
+
+			// restore the URI of the request (only changed, if the test has not been skipped).
+			if ( is_null( $this->request_uri ) ) {
+				unset( $_SERVER['REQUEST_URI'] );
+			} else {
+				$_SERVER['REQUEST_URI'] = $this->request_uri;
+			}
 		}
 		parent::tear_down();
 	}

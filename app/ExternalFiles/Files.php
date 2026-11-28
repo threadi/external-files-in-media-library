@@ -131,6 +131,9 @@ class Files {
 		// initialize the export support.
 		Export::get_instance()->init();
 
+		// initialize the functions in the media dialog.
+		Media_Dialog::get_instance()->init();
+
 		// initialize REST API support.
 		Rest::get_instance()->init();
 

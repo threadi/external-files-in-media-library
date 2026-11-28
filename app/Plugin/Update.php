@@ -19,6 +19,7 @@ use ExternalFilesInMediaLibrary\ExternalFiles\File_Types;
 use ExternalFilesInMediaLibrary\ExternalFiles\Files;
 use ExternalFilesInMediaLibrary\ExternalFiles\ImportDialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Import_Runs;
+use ExternalFilesInMediaLibrary\ExternalFiles\Media_Dialog;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols;
 use ExternalFilesInMediaLibrary\ExternalFiles\Protocols\Ftp;
 use ExternalFilesInMediaLibrary\ExternalFiles\Proxy;
@@ -519,6 +520,36 @@ class Update {
 
 		// save the use of subdirectories on the external sources, whose service has used them since ever.
 		$this->migrate_subdirectories_setting();
+
+		// give the roles the capability for the functions in the media dialog (new in this version).
+		$this->add_media_dialog_capability();
+	}
+
+	/**
+	 * Give the roles the capability for the functions in the media dialog.
+	 *
+	 * Uses the saved roles, otherwise the default roles. The option is saved, if it is missing.
+	 *
+	 * @return void
+	 */
+	public function add_media_dialog_capability(): void {
+		// get the option and the default roles.
+		$option  = 'eml_tools_settings_tools_' . Media_Dialog::get_instance()->get_name() . '_allowed_roles';
+		$default = Media_Dialog::get_instance()->get_capability_default();
+
+		// save the default roles, if the option is missing.
+		if ( false === get_option( $option, false ) ) {
+			add_option( $option, $default, '', true );
+		}
+
+		// get the roles.
+		$roles = get_option( $option, $default );
+		if ( ! is_array( $roles ) ) {
+			$roles = $default;
+		}
+
+		// set the capability.
+		Roles::get_instance()->set( array_map( 'strval', $roles ), Media_Dialog::CAPABILITY );
 	}
 
 	/**
